@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, ModelOption, ChatHistoryItem, AppSettings, UploadedFile, ContentPart, PreloadedMessage, SavedChatSession, ChatSettings as IndividualChatSettings } from './types';
 import { 
@@ -11,19 +12,20 @@ import {
     SUPPORTED_IMAGE_MIME_TYPES,
     SUPPORTED_VIDEO_MIME_TYPES, 
     SUPPORTED_AUDIO_MIME_TYPES, 
+    SUPPORTED_PDF_MIME_TYPES, // Added PDF
     ALL_SUPPORTED_MIME_TYPES, 
     PRELOADED_SCENARIO_KEY,
     CHAT_HISTORY_SESSIONS_KEY,
     ACTIVE_CHAT_SESSION_ID_KEY,
     CANVAS_ASSISTANT_SYSTEM_PROMPT,
-    DEFAULT_SYSTEM_INSTRUCTION, // Added for toggling off canvas prompt
+    DEFAULT_SYSTEM_INSTRUCTION, 
 } from './constants';
 import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
 import { ChatInput } from './components/ChatInput';
 import { SettingsModal } from './components/SettingsModal';
 import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
-import { HistorySidebar } from './components/HistorySidebar'; // New Import
+import { HistorySidebar } from './components/HistorySidebar'; 
 import { geminiServiceInstance } from './services/geminiService';
 import { Chat } from '@google/genai';
 import { Paperclip } from 'lucide-react'; 
@@ -51,7 +53,6 @@ const generateSessionTitle = (messages: ChatMessage[]): string => {
 };
 
 
-// Helper to generate CSS variables string from theme colors
 const generateThemeCssVariables = (colors: ThemeColors): string => {
   let css = ':root {\n';
   for (const [key, value] of Object.entries(colors)) {
@@ -70,21 +71,19 @@ const generateThemeCssVariables = (colors: ThemeColors): string => {
   return css;
 };
 
-// Helper function to build ContentPart[] from text and files
 const buildContentParts = (text: string, files: UploadedFile[] | undefined): ContentPart[] => {
-  const dataParts: ContentPart[] = []; // For images, videos, audio
-  const textSegments: string[] = []; // Store individual text pieces (from files and user input)
+  const dataParts: ContentPart[] = []; 
+  const textSegments: string[] = []; 
 
   if (files) {
     files.forEach(file => {
       if (!file.isProcessing && !file.error) {
         if (file.textContent !== undefined && SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) {
-          // Prepend file identifier, then the raw content.
-          // Use a single newline to separate this block from previous/next if needed.
-          // The joining logic below will handle separation between segments.
           textSegments.push(`--- File: ${file.name} (${file.type}) ---\n${file.textContent}\n--- End of File: ${file.name} ---`);
         } else if (file.base64Data && (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) || SUPPORTED_AUDIO_MIME_TYPES.includes(file.type))) {
           dataParts.push({ inlineData: { mimeType: file.type, data: file.base64Data } });
+        } else if (file.fileUri && SUPPORTED_PDF_MIME_TYPES.includes(file.type)) { // Handle PDFs using fileUri
+          dataParts.push({ fileData: { mimeType: file.type, fileUri: file.fileUri } });
         }
       }
     });
@@ -92,23 +91,16 @@ const buildContentParts = (text: string, files: UploadedFile[] | undefined): Con
 
   const userTypedText = text.trim();
   if (userTypedText) {
-    // Add user's text as a separate segment.
-    // If there were files, it will be naturally separated by \n\n later.
-    // If no files, it will be the only text segment.
     textSegments.push(userTypedText);
   }
 
-  // Join all text segments with a double newline.
-  // This ensures separation between file contents and user text, or between multiple files.
-  // Each file's internal content is preserved.
   const combinedTextForPrompt = textSegments.join('\n\n');
   
-  // Final assembly of parts: text part first (if any), then data parts.
   const contentPartsResult: ContentPart[] = [];
-  if (combinedTextForPrompt.trim() !== "") { // Check if there's actual text
+  if (combinedTextForPrompt.trim() !== "") { 
     contentPartsResult.push({ text: combinedTextForPrompt });
   }
-  contentPartsResult.push(...dataParts); // Add data parts regardless
+  contentPartsResult.push(...dataParts); 
   
   return contentPartsResult;
 };
@@ -137,7 +129,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false); 
   const [chatSession, setChatSession] = useState<Chat | null>(null);
 
-  // States for active chat properties (derived from appSettings or active session)
   const [currentChatSettings, setCurrentChatSettings] = useState<IndividualChatSettings>(DEFAULT_CHAT_SETTINGS);
 
   const [inputText, setInputText] = useState<string>('');
@@ -176,16 +167,16 @@ const App: React.FC = () => {
     try {
       const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
       const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
-      sessions.sort((a,b) => b.timestamp - a.timestamp); // Newest first
+      sessions.sort((a,b) => b.timestamp - a.timestamp); 
       setSavedSessions(sessions);
 
       const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
       if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
         loadChatSession(storedActiveId, sessions);
       } else if (sessions.length > 0) {
-        loadChatSession(sessions[0].id, sessions); // Load newest if no active ID or invalid
+        loadChatSession(sessions[0].id, sessions); 
       } else {
-        startNewChat(false); // Start a new chat if no history
+        startNewChat(false); 
       }
     } catch (error) { 
       console.error("Error loading chat history:", error); 
@@ -198,7 +189,7 @@ const App: React.FC = () => {
     
     sessionSaveTimeoutRef.current = window.setTimeout(() => {
         if (currentMessages.length === 0 && (!currentActiveSessionId || !savedSessions.find(s => s.id === currentActiveSessionId))) {
-            return; // Don't save empty new chats until first message
+            return; 
         }
 
         let sessionIdToSave = currentActiveSessionId;
@@ -235,7 +226,7 @@ const App: React.FC = () => {
              setActiveSessionId(sessionIdToSave);
              localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionIdToSave);
         }
-    }, 500); // Debounce saving
+    }, 500); 
   }, [savedSessions]);
 
 
@@ -253,13 +244,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));
     
-    // Apply theme variables
     const themeVariablesStyleTag = document.getElementById('theme-variables');
     if (themeVariablesStyleTag) {
       themeVariablesStyleTag.innerHTML = generateThemeCssVariables(currentTheme.colors);
     }
     
-    // Apply theme class to body
     const bodyClassList = document.body.classList;
     AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
     bodyClassList.add(`theme-${currentTheme.id}`, 'antialiased');
@@ -286,7 +275,7 @@ const App: React.FC = () => {
         let apiParts: ContentPart[];
         if (msg.role === 'user') {
           apiParts = buildContentParts(msg.content, msg.files);
-        } else { // msg.role === 'model'
+        } else { 
           apiParts = [{ text: msg.content || "" }];
         }
         return { role: msg.role as 'user' | 'model', parts: apiParts };
@@ -298,7 +287,6 @@ const App: React.FC = () => {
       setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected. Cannot initialize chat.', timestamp: new Date() }]);
       return null;
     }
-    // setIsLoading(true); // Removed: Let caller manage global isLoading if needed for this specific operation
     try {
       const newSession = await geminiServiceInstance.initializeChat(
         settingsToUse.modelId, settingsToUse.systemInstruction, 
@@ -317,47 +305,62 @@ const App: React.FC = () => {
       setChatSession(null); 
       return null;
     } 
-    // finally { setIsLoading(false); } // Removed
   }, [setMessages, setChatSession]); 
 
   useEffect(() => {
     const fetchAndSetModels = async () => {
       setIsLoading(true); setIsModelsLoading(true); setModelsLoadingError(null);
       
-      const pinnedProModel: ModelOption = { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', isPinned: true };
-      const userRequestedPinnedFlashModel: ModelOption = { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', isPinned: true };
-      const defaultFlashPreviewModel: ModelOption = { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash Preview', isPinned: false };
+      const pinnedInternalModels: ModelOption[] = [
+          { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', isPinned: true },
+          // Map "Gemini 2.5 Flash" to the specific preview ID that supports thinkingConfig
+          { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', isPinned: true },
+          { id: 'gemini-2.5-flash-lite-preview-06-17', name: 'Gemini 2.5 Flash Lite Preview', isPinned: true },
+      ];
+      // This is the ID for the model that explicitly supports thinking config.
+      const explicitFlashPreviewId = 'gemini-2.5-flash';
       
       let modelsFromApi: ModelOption[] = [];
-      try { modelsFromApi = await geminiServiceInstance.getAvailableModels(); } 
-      catch (error) { setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`); }
-      
-      let combinedModels = modelsFromApi.length > 0 
-        ? modelsFromApi.filter(m => 
-            m.id !== pinnedProModel.id && 
-            m.id !== userRequestedPinnedFlashModel.id &&
-            m.id !== defaultFlashPreviewModel.id
-          ) 
-        : [];
-      
-      // Add predefined models, pinned ones first. Order of unshift can affect initial list before sort.
-      combinedModels.unshift(userRequestedPinnedFlashModel);
-      combinedModels.unshift(pinnedProModel);
-      
-      if (!combinedModels.some(m => m.id === defaultFlashPreviewModel.id)) {
-        combinedModels.push(defaultFlashPreviewModel);
+      try { 
+          modelsFromApi = await geminiServiceInstance.getAvailableModels(); 
+      } catch (error) { 
+          setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`); 
       }
       
-      const uniqueModelsById = Array.from(new Map(combinedModels.map(model => [model.id, model])).values());
-      const sortedForDisplay = [...uniqueModelsById].sort((a, b) => 
-        (a.isPinned && !b.isPinned) ? -1 : (!a.isPinned && b.isPinned) ? 1 : a.name.localeCompare(b.name)
-      );
-      setApiModels(sortedForDisplay);
+      const modelMap = new Map<string, ModelOption>();
 
-      const currentModelStillValid = sortedForDisplay.some(m => m.id === appSettings.modelId);
-      if (!currentModelStillValid && sortedForDisplay.length > 0) {
-        setAppSettings(prev => ({ ...prev, modelId: sortedForDisplay[0].id }));
-      } else if (sortedForDisplay.length === 0 && !modelsLoadingError) {
+      // Add API models first
+      modelsFromApi.forEach(model => {
+          modelMap.set(model.id, { ...model, isPinned: false }); // Ensure API models are not marked pinned initially
+      });
+
+      // Add/override with internally defined pinned models to ensure their names and pinned status are correct
+      pinnedInternalModels.forEach(pinnedModel => {
+          modelMap.set(pinnedModel.id, pinnedModel);
+      });
+      
+      // Fallback: if gemini-2.5-flash (the one that supports thinking) wasn't in API or pinned models map, add it.
+      // This ensures it's available, possibly under a more generic "Preview" name if not aliased.
+      if (!modelMap.has(explicitFlashPreviewId)) {
+          modelMap.set(explicitFlashPreviewId, { id: explicitFlashPreviewId, name: 'Gemini 2.5 Flash Preview', isPinned: false });
+      }
+
+      let finalModels = Array.from(modelMap.values());
+      
+      finalModels.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return a.name.localeCompare(b.name);
+      });
+      
+      setApiModels(finalModels);
+
+      const currentModelStillValid = finalModels.some(m => m.id === appSettings.modelId);
+      if (!currentModelStillValid && finalModels.length > 0) {
+        const preferredModelId = finalModels.find(m => m.isPinned)?.id || finalModels[0].id;
+        setAppSettings(prev => ({ ...prev, modelId: preferredModelId }));
+        setCurrentChatSettings(prev => ({ ...prev, modelId: preferredModelId })); 
+      } else if (finalModels.length === 0 && !modelsLoadingError) {
         setModelsLoadingError('No models available to select.');
       }
       setIsModelsLoading(false); setIsLoading(false);
@@ -366,17 +369,13 @@ const App: React.FC = () => {
   }, []); 
 
    useEffect(() => {
-    // This effect ensures the SDK's chat session is kept in sync with the current messages and settings.
-    // It does not set the global setIsLoading state itself, as its primary role is background synchronization.
-    // If this process introduces a user-perceptible delay that needs a global loading indicator,
-    // that could be handled with a separate state or by having this effect manage setIsLoading.
-    // For now, handleSendMessage will manage the primary user-facing isLoading for sends.
     const reinitializeIfNeeded = async () => {
         if (!activeSessionId && messages.length === 0) {
             await initializeCurrentChatSession(currentChatSettings, []);
         } else {
-            // Re-initialize based on current messages and settings.
-            // This ensures `chatSession` is current if messages were loaded or settings changed.
+            // Only reinitialize if settings relevant to the SDK's Chat object have changed.
+            // This prevents reinitialization just for `showThoughts` if it's only a UI toggle.
+            // However, `showThoughts` can affect `thinkingConfig`, so it *is* relevant.
             await initializeCurrentChatSession(currentChatSettings, createChatHistoryForApi(messages));
         }
     };
@@ -389,7 +388,10 @@ const App: React.FC = () => {
     currentChatSettings.topP, 
     currentChatSettings.showThoughts, 
     initializeCurrentChatSession, 
-    messages
+    // messages // Removed `messages` from deps to avoid re-init on every message
+              // Re-add if history needs to be passed to SDK strictly on every change affecting it.
+              // For now, history is passed when a session is loaded or a new one starts.
+              // And when editing a message, history up to that point is rebuilt.
   ]);
 
 
@@ -412,12 +414,13 @@ const App: React.FC = () => {
       setSelectedFiles([]);
       setEditingMessageId(null);
       userScrolledUp.current = false;
-      // Re-initialization of SDK session will happen via useEffect watching currentChatSettings and messages
+      // Re-initialize SDK chat session with loaded history and settings
+      initializeCurrentChatSession(sessionToLoad.settings, createChatHistoryForApi(sessionToLoad.messages));
     } else {
       console.warn(`Session ${sessionId} not found. Starting new chat.`);
       startNewChat(false);
     }
-  }, [savedSessions, isLoading]); 
+  }, [savedSessions, isLoading, initializeCurrentChatSession]); 
 
   const startNewChat = useCallback((saveCurrent: boolean = true) => {
     if (saveCurrent && activeSessionId && messages.length > 0) {
@@ -426,51 +429,97 @@ const App: React.FC = () => {
     if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
 
     setMessages([]);
-    setCurrentChatSettings(appSettings); 
+    
+    // For new chat, use the currently selected model from header (currentChatSettings.modelId)
+    // and reset other chat-specific settings (temp, topP, system instruction, showThoughts)
+    // to the global application defaults.
+    const newChatSessionSettings: IndividualChatSettings = {
+        modelId: currentChatSettings.modelId, // Preserve model selected in header
+        temperature: appSettings.temperature,
+        topP: appSettings.topP,
+        showThoughts: appSettings.showThoughts,
+        systemInstruction: appSettings.systemInstruction,
+    };
+    setCurrentChatSettings(newChatSessionSettings);
+    
     setActiveSessionId(null); 
     localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
     setInputText('');
     setSelectedFiles([]);
     setEditingMessageId(null);
-    setChatSession(null); // Explicitly clear SDK session state
+    setChatSession(null); // Will be re-initialized by the useEffect watching currentChatSettings
     userScrolledUp.current = false;
-    // Re-initialization of SDK session will happen via useEffect watching currentChatSettings and messages (now empty)
   }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession]);
 
 
   const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
     if (!files || files.length === 0) return;
-    setAppFileError(null); 
+    setAppFileError(null);
     const filesArray = Array.isArray(files) ? files : Array.from(files);
-
+  
     for (const file of filesArray) {
       const fileId = `${file.name}-${file.size}-${Date.now()}`;
       if (!ALL_SUPPORTED_MIME_TYPES.includes(file.type)) {
         setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type}` }]);
         continue;
       }
-      setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: true, progress: 0 }]);
-      const reader = new FileReader();
-      reader.onprogress = (event) => event.lengthComputable && setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: Math.round((event.loaded / event.total) * 100) } : f));
-      reader.onloadend = () => {
-        if (typeof reader.result !== 'string') {
-          setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: `Error reading file content.` } : f)); return;
+  
+      // Add file to selectedFiles with processing state
+      const initialFileState: UploadedFile = { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending' };
+      setSelectedFiles(prev => [...prev, initialFileState]);
+  
+      if (SUPPORTED_PDF_MIME_TYPES.includes(file.type)) {
+        // PDF: Upload to Gemini API
+        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
+        try {
+          const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, file.type, file.name);
+          // Assuming uploadFile returns an object with uri and name (resource name from API)
+          setSelectedFiles(prev => prev.map(f => f.id === fileId ? { 
+            ...f, 
+            isProcessing: false, 
+            progress: 100, 
+            fileUri: uploadedFileInfo.uri, 
+            fileApiName: uploadedFileInfo.name, 
+            rawFile: undefined, // Clear raw file after successful upload
+            uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : 'processing_api', // Use state from API if available
+            error: undefined 
+          } : f));
+        } catch (uploadError) {
+          console.error(`Error uploading PDF ${file.name}:`, uploadError);
+          setSelectedFiles(prev => prev.map(f => f.id === fileId ? { 
+            ...f, 
+            isProcessing: false, 
+            error: `Failed to upload to server: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`, 
+            rawFile: undefined,
+            uploadState: 'failed'
+          } : f));
         }
-        let processedData: Partial<UploadedFile> = {};
+      } else {
+        // Other types: FileReader (existing logic)
+        const reader = new FileReader();
+        reader.onprogress = (event) => event.lengthComputable && setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: Math.round((event.loaded / event.total) * 100) } : f));
+        reader.onloadend = () => {
+          if (typeof reader.result !== 'string') {
+            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: `Error reading file content.`, rawFile: undefined, uploadState: 'failed' } : f)); return;
+          }
+          let processedData: Partial<UploadedFile> = {};
+          if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) || SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) {
+            processedData.dataUrl = reader.result as string; processedData.base64Data = (reader.result as string).substring((reader.result as string).indexOf(',') + 1);
+          } else if (SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) {
+            processedData.textContent = reader.result as string;
+          }
+          setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, ...processedData, isProcessing: false, progress: 100, rawFile: undefined, uploadState: 'active', error: undefined } : f));
+        };
+        reader.onerror = () => setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: `Error reading file: ${file.name}`, rawFile: undefined, uploadState: 'failed' } : f));
+        
         if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) || SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) {
-          processedData.dataUrl = reader.result as string; processedData.base64Data = (reader.result as string).substring((reader.result as string).indexOf(',') + 1);
+          reader.readAsDataURL(file);
         } else if (SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) {
-          processedData.textContent = reader.result as string;
-        } else {
-            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: `File type ${file.type} not configured for processing.` } : f)); return;
+          reader.readAsText(file);
         }
-        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, ...processedData, isProcessing: false, progress: 100 } : f));
-      };
-      reader.onerror = () => setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: `Error reading file: ${file.name}` } : f));
-      if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) || SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) reader.readAsDataURL(file);
-      else if (SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) reader.readAsText(file);
+      }
     }
-  }, []);
+  }, [geminiServiceInstance]); // Added geminiServiceInstance dependency
 
   const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);
   const handleAppDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (isAppProcessingFile) { e.dataTransfer.dropEffect = 'none'; return; } if (e.dataTransfer.types.includes('Files')) { e.dataTransfer.dropEffect = 'copy'; if (!isAppDraggingOver) setIsAppDraggingOver(true); } else e.dataTransfer.dropEffect = 'none'; }, [isAppDraggingOver, isAppProcessingFile]);
@@ -482,8 +531,10 @@ const App: React.FC = () => {
     const filesToUse = overrideOptions?.files ?? selectedFiles;
     const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
 
-    if (!textToUse.trim() && filesToUse.filter(f => !f.error && !f.isProcessing).length === 0) return;
-    if (filesToUse.some(f => f.isProcessing)) { setAppFileError("Some files are still processing."); return; }
+    if (!textToUse.trim() && filesToUse.filter(f => !f.error && !f.isProcessing && f.uploadState === 'active').length === 0) return;
+    if (filesToUse.some(f => f.isProcessing || (f.type === 'application/pdf' && f.uploadState !== 'active' && !f.error) )) { 
+        setAppFileError("Some files are still processing or uploading. Please wait."); return; 
+    }
     setAppFileError(null); 
 
     const activeModelId = currentChatSettings.modelId;
@@ -492,8 +543,8 @@ const App: React.FC = () => {
        setIsLoading(false); return;
     }
     
-    setIsLoading(true); // Set loading true for the entire send operation.
-    if (isLoading && abortControllerRef.current) abortControllerRef.current.abort(); // Abort previous if any (isLoading here refers to previous state)
+    setIsLoading(true); 
+    if (isLoading && abortControllerRef.current) abortControllerRef.current.abort(); 
     abortControllerRef.current = new AbortController(); const currentSignal = abortControllerRef.current.signal;
     userScrolledUp.current = false; 
     
@@ -526,7 +577,6 @@ const App: React.FC = () => {
             historyForNewSdkSession || createChatHistoryForApi(baseMessagesForThisTurn)
         );
         if (!newSdkSession) { 
-            // initializeCurrentChatSession already adds error message to `messages`
             setIsLoading(false); 
             return; 
         }
@@ -538,10 +588,12 @@ const App: React.FC = () => {
       setIsLoading(false); return;
     }
 
-    const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: filesToUse.length ? filesToUse : undefined, timestamp: new Date() };
+    // Filter files to include only successfully processed/uploaded ones for the message
+    const successfullyProcessedFiles = filesToUse.filter(f => !f.error && !f.isProcessing && f.uploadState === 'active');
+    const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date() };
      
-    const promptParts = buildContentParts(textToUse.trim(), filesToUse);
-    const hasDataParts = promptParts.some(p => p.inlineData);
+    const promptParts = buildContentParts(textToUse.trim(), successfullyProcessedFiles);
+    const hasDataParts = promptParts.some(p => p.inlineData || p.fileData); // Check for fileData too
     const textContentOfPrompt = promptParts.find(p => p.text !== undefined)?.text ?? "";
     
     const isEmptyPrompt = !hasDataParts && textContentOfPrompt.trim() === "";
@@ -623,7 +675,6 @@ const App: React.FC = () => {
         systemInstruction: newSettings.systemInstruction,
     }); 
     setIsSettingsModalOpen(false); userScrolledUp.current = false;
-    // SDK session will reinitialize via useEffect watching currentChatSettings
   };
 
   const handleEditMessage = (messageId: string) => {
@@ -676,18 +727,13 @@ const App: React.FC = () => {
     }
 
     if (isLoading && abortControllerRef.current) {
-      abortControllerRef.current.abort(); // Abort any ongoing generation
-      // Update loading message to indicate stop, do this before setting messages state for retry
+      abortControllerRef.current.abort(); 
       setMessages(prev => prev.map(m => m.isLoading ? {...m, isLoading: false, content: (m.content || "") + "\n\n[Stopped for retry]"} : m));
       setIsLoading(false); 
     }
     
-    // Remove the failed model message and any subsequent messages from the UI
     setMessages(prev => prev.slice(0, modelMessageIndex));
     
-    // Immediately call handleSendMessage with the user message's details
-    // The `editingId` here tells `handleSendMessage` to truncate history *before* this user message ID
-    // and then resend this user message.
     await handleSendMessage({
         text: userMessageToResend.content || '',
         files: userMessageToResend.files?.map(f => ({ ...f, isProcessing: false, progress: f.error ? 0 : 100, id: f.id || `${f.name}-${f.size}-${Date.now()}` })) || [],
@@ -840,7 +886,7 @@ const App: React.FC = () => {
           setInputText={setInputText}
           selectedFiles={selectedFiles}
           setSelectedFiles={setSelectedFiles}
-          onSendMessage={() => handleSendMessage()} // Default call without overrides
+          onSendMessage={() => handleSendMessage()} 
           isLoading={isLoading} 
           isEditing={!!editingMessageId}
           onStopGenerating={handleStopGenerating}

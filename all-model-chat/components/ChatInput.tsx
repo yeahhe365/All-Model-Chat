@@ -1,12 +1,14 @@
 
+
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Send, Loader2, Edit2, Ban, Paperclip, XCircle, FileText, FileVideo, FileAudio, AlertTriangleIcon } from 'lucide-react'; // Added FileVideo, FileAudio, AlertTriangleIcon
+import { Send, Loader2, Edit2, Ban, Paperclip, XCircle, FileText, FileVideo, FileAudio, AlertTriangleIcon, CheckCircle } from 'lucide-react'; // Added CheckCircle
 import { UploadedFile } from '../types';
 import { 
   SUPPORTED_IMAGE_MIME_TYPES, 
   SUPPORTED_TEXT_MIME_TYPES,
   SUPPORTED_VIDEO_MIME_TYPES, 
   SUPPORTED_AUDIO_MIME_TYPES, 
+  SUPPORTED_PDF_MIME_TYPES, // Added PDF
   ALL_SUPPORTED_MIME_TYPES,
 } from '../constants';
 
@@ -16,12 +18,12 @@ interface ChatInputProps {
   selectedFiles: UploadedFile[]; 
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
   onSendMessage: () => void;
-  isLoading: boolean; // For API call loading
+  isLoading: boolean; 
   isEditing: boolean;
   onStopGenerating: () => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
-  isProcessingFile: boolean; // Global: true if ANY file is being processed by FileReader
-  fileError: string | null;    // Global app-level file error (e.g. "too many files")
+  isProcessingFile: boolean; 
+  fileError: string | null;    
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 44;
@@ -37,8 +39,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isEditing,
   onStopGenerating,
   onProcessFiles,
-  isProcessingFile, // True if any file is actively being read by FileReader
-  fileError, // General app-level file error
+  isProcessingFile, 
+  fileError, 
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -125,25 +127,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setSelectedFiles(prevFiles => prevFiles.filter(f => f.id !== fileIdToRemove));
   };
 
-  const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.isProcessing && !f.error);
+  const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');
   const canSend = (inputText.trim() !== '' || hasSuccessfullyProcessedFiles) && !isProcessingFile && !isLoading;
 
   return (
     <div
       className="px-2 pt-2 pb-1 bg-[var(--theme-bg-primary)] border-t border-[var(--theme-border-primary)]"
     >
-      {fileError && ( // Display general app-level file error
+      {fileError && ( 
         <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">
           {fileError}
         </div>
       )}
-      {/* Container for selected file previews and their individual statuses */}
       {selectedFiles.length > 0 && (
         <div className="mb-2 p-2 space-y-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)] overflow-x-auto">
           <div className="flex gap-3">
             {selectedFiles.map((file) => (
               <div key={file.id} className="relative group flex-shrink-0 w-28 text-center">
-                {!file.isProcessing && ( // Show remove button only if not actively processing this specific file
+                {(!file.isProcessing || file.uploadState === 'failed' || file.error ) && ( 
                   <button
                     onClick={() => removeSelectedFile(file.id)}
                     className="absolute -top-1.5 -right-1.5 p-0.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-danger)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-accent)] rounded-full opacity-50 group-hover:opacity-100 transition-all z-10"
@@ -153,7 +154,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     <XCircle size={18} />
                   </button>
                 )}
-                {/* File Preview Area */}
                 <div className="h-20 w-full rounded border border-[var(--theme-border-secondary)] flex flex-col items-center justify-center bg-[var(--theme-bg-tertiary)] overflow-hidden">
                   {file.error ? (
                     <AlertTriangleIcon size={32} className="text-[var(--theme-text-danger)]" />
@@ -167,17 +167,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     <FileVideo size={32} className="text-[var(--theme-text-tertiary)]" />
                   ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) ? (
                     <FileAudio size={32} className="text-[var(--theme-text-tertiary)]" />
-                  ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) ? (
+                  ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? ( // Explicitly not PDF for FileText icon here
                     <FileText size={32} className="text-[var(--theme-text-tertiary)]" />
+                  ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (
+                    <FileText size={32} className="text-red-500" /> // Using FileText for PDF, styled differently
                   ) : ( 
-                    <FileText size={32} className="text-[var(--theme-text-tertiary)]" /> // Fallback for unsupported (but added) types
+                    <FileText size={32} className="text-[var(--theme-text-tertiary)]" /> 
                   )}
                 </div>
-                {/* File Name */}
                 <div className="text-xs text-[var(--theme-text-tertiary)] mt-0.5 truncate w-full" title={file.name}>{file.name}</div>
                 
-                {/* Progress Bar and Status */}
-                {file.isProcessing && typeof file.progress === 'number' && (
+                {file.isProcessing && file.uploadState !== 'uploading' && typeof file.progress === 'number' && (
                   <div className="w-full bg-[var(--theme-border-secondary)] rounded-full h-1.5 mt-1">
                     <div 
                       className="bg-[var(--theme-bg-accent)] h-1.5 rounded-full transition-all duration-150 ease-linear" 
@@ -185,14 +185,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     ></div>
                   </div>
                 )}
-                {file.isProcessing && (
+                {file.uploadState === 'uploading' && (
+                    <div className="text-xs text-[var(--theme-text-link)] mt-0.5 flex items-center justify-center">
+                        <Loader2 size={12} className="animate-spin mr-1" /> Uploading...
+                    </div>
+                )}
+                {file.isProcessing && file.uploadState !== 'uploading' && (
                      <div className="text-xs text-[var(--theme-text-link)] mt-0.5">{file.progress ?? 0}%</div>
                 )}
                 {file.error && (
                   <div className="text-xs text-[var(--theme-text-danger)] mt-0.5 truncate" title={file.error}>Error</div>
                 )}
-                 {!file.isProcessing && !file.error && file.progress === 100 && (
-                     <div className="text-xs text-green-500 mt-0.5">Ready</div>
+                 {!file.isProcessing && !file.error && file.uploadState === 'active' && (
+                     <div className="text-xs text-green-500 mt-0.5 flex items-center justify-center">
+                         <CheckCircle size={12} className="mr-1" /> Ready
+                     </div>
                  )}
               </div>
             ))}
@@ -217,14 +224,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             maxHeight: `${MAX_TEXTAREA_HEIGHT_PX}px`,
             resize: 'none' 
           }}
-          disabled={isProcessingFile} // Disable textarea if any file is globally processing
+          disabled={isProcessingFile} 
           aria-label="Chat message input"
           onFocus={(e) => adjustTextareaHeight(e.target)} 
         />
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isProcessingFile} // Disable if any file is being globally processed
+          disabled={isProcessingFile} 
           className="p-2.5 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-attach)] rounded-md border border-[var(--theme-border-secondary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Attach file(s)"
           title="Attach file(s)"
@@ -240,7 +247,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           aria-hidden="true"
           multiple 
         />
-        {isLoading ? ( // API loading
+        {isLoading ? ( 
           <button
             type="button"
             onClick={onStopGenerating}

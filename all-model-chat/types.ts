@@ -1,52 +1,62 @@
 
 
-import { Chat, Part } from "@google/genai";
-import { ThemeColors } from './constants'; // Added ThemeColors import
+
+import { Chat, Part, File as GeminiFile } from "@google/genai"; // Added GeminiFile import
+import { ThemeColors } from './constants'; 
 
 export interface UploadedFile {
-  id: string; // Unique identifier for the file instance during processing
-  name: string;
-  type: string; // MIME type
+  id: string; 
+  name: string; // Original filename
+  type: string; 
   size: number;
-  dataUrl?: string; // For image preview (base64 data URL) - optional
-  base64Data?: string; // Raw base64 data for image API (without prefix) - optional
-  textContent?: string; // Raw text content for text-based files - optional
-  isProcessing?: boolean; // True while FileReader is active for this file
-  progress?: number; // 0-100, for FileReader progress
-  error?: string; // Error message if FileReader fails or other processing error
+  dataUrl?: string; 
+  base64Data?: string; 
+  textContent?: string; 
+  isProcessing?: boolean; 
+  progress?: number; 
+  error?: string; 
+  
+  // Fields for API uploaded files like PDFs
+  rawFile?: File; // Temporary storage for the browser File object before API upload
+  fileUri?: string; // URI returned by Gemini API (e.g., "files/xxxxxxxx")
+  fileApiName?: string; // Full resource name from API (e.g., "files/xxxxxxxx")
+  uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed'; // State of the file on Gemini API
 }
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model' | 'error';
-  content: string; // Primary text content, can be empty if only a file is sent
-  files?: UploadedFile[]; // If files were sent with this user message
+  content: string; 
+  files?: UploadedFile[]; 
   timestamp: Date;
-  thoughts?: string; // Optional: To store thinking summary from the model
-  isLoading?: boolean; // Optional: To indicate if this specific message is currently being streamed
-  generationStartTime?: Date; // Optional: Timestamp when model response generation started
-  generationEndTime?: Date;   // Optional: Timestamp when model response generation finished
+  thoughts?: string; 
+  isLoading?: boolean; 
+  generationStartTime?: Date; 
+  generationEndTime?: Date;   
 }
 
 export interface ModelOption {
-  id:string; // e.g., "models/gemini-2.5-flash-preview-04-17"
-  name: string; // User-friendly display name
-  isPinned?: boolean; // Optional flag to indicate if the model is "forced" or "pinned"
+  id:string; 
+  name: string; 
+  isPinned?: boolean; 
 }
 
-// Defines the structure for a part of a content message (e.g., text or inline data)
+// Defines the structure for a part of a content message
 export interface ContentPart {
   text?: string;
   inlineData?: {
     mimeType: string;
-    data: string; // base64 encoded string (the raw data, not data URL)
+    data: string; 
+  };
+  fileData?: { // Added for referencing uploaded files like PDFs
+    mimeType: string;
+    fileUri: string;
   };
 }
 
-// Defines the structure for a single item in the chat history for API
 export interface ChatHistoryItem {
   role: 'user' | 'model';
-  parts: ContentPart[]; // Now an array of ContentPart
+  parts: ContentPart[]; 
 }
 
 export interface ChatSettings {
@@ -55,22 +65,20 @@ export interface ChatSettings {
   topP: number;
   showThoughts: boolean;
   systemInstruction: string;
-  // themeId is global, not per-session
 }
 
-// Stored in localStorage
 export interface SavedChatSession {
   id: string;
   title: string;
-  timestamp: number; // ISO string or number (Date.now())
+  timestamp: number; 
   messages: ChatMessage[];
   settings: ChatSettings;
 }
 
 
 export interface AppSettings extends ChatSettings {
- themeId: string; // Global theme setting
- baseFontSize: number; // Global base font size in pixels
+ themeId: string; 
+ baseFontSize: number; 
 }
 
 
@@ -92,7 +100,7 @@ export interface GeminiService {
     onError: (error: Error) => void,
     onComplete: () => void
   ) => Promise<void>;
-  sendMessageNonStream: ( // Added for non-streaming responses
+  sendMessageNonStream: ( 
     chat: Chat,
     modelId: string,
     promptParts: ContentPart[],
@@ -101,9 +109,9 @@ export interface GeminiService {
     onComplete: (fullText: string, thoughtsText?: string) => void
   ) => Promise<void>;
   getAvailableModels: () => Promise<ModelOption[]>;
+  uploadFile: (file: File, mimeType: string, displayName: string) => Promise<GeminiFile>; // Added for PDF uploads
 }
 
-// Interface for parts that might include a 'thought' marker
 export interface ThoughtSupportingPart extends Part {
     thought?: any;
 }
@@ -115,16 +123,14 @@ export interface MessageListProps {
   onScrollContainerScroll: () => void;
   onEditMessage: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
-  onRetryMessage: (messageId: string) => void; // Added onRetryMessage
+  onRetryMessage: (messageId: string) => void; 
   showThoughts: boolean;
-  themeColors: ThemeColors; // Added for PNG export styling
-  baseFontSize: number; // Added to control message font size
+  themeColors: ThemeColors; 
+  baseFontSize: number; 
 }
 
-// New interface for preloaded messages
 export interface PreloadedMessage {
-  id: string; // Unique ID for list management
+  id: string; 
   role: 'user' | 'model';
   content: string;
-  // files?: UploadedFile[]; // Future: Consider supporting files in preloads
 }

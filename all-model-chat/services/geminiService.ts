@@ -1,6 +1,7 @@
 
 
-import { GoogleGenAI, Chat, Part, Model, Content, GenerateContentResponse } from "@google/genai";
+
+import { GoogleGenAI, Chat, Part, Model, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig } from "@google/genai"; // Added GeminiFile, UploadFileConfig
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 
 const API_KEY = process.env.API_KEY;
@@ -17,32 +18,24 @@ const geminiServiceImpl: GeminiService = {
   getAvailableModels: async (): Promise<ModelOption[]> => {
     if (!API_KEY) {
         console.warn("Cannot fetch models: API_KEY is not set.");
-        // Return a minimal predefined list if API key is not set, to allow UI to show something
-        return [{ id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash (Default)' }];
+        return [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default)' }];
     }
 
     const predefinedModelsOnError: ModelOption[] = [
-      { id: 'gemini-2.5-flash-preview-04-17', name: 'Gemini 2.5 Flash (Fallback)' },
+      { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Fallback)' },
     ];
 
     try {
       const modelPager = await ai.models.list(); 
       const availableModels: ModelOption[] = [];
       for await (const model of modelPager) {
-        // Check if the model supports 'generateContent' action
-        // Some SDKs might use `model.supportedGenerationMethods` or similar
-        // For @google/genai, checking for a common action like 'generateContent' in supportedActions
-        // or just including all listed models if the property is not consistently available.
-        // For simplicity, let's assume all listed models are usable or filter if specific criteria are known.
-        // Example: if (model.supportedGenerationMethods && model.supportedGenerationMethods.includes("generateContent"))
-        // Or if 'supportedActions' is available:
          if (model.supportedActions && model.supportedActions.includes('generateContent')) {
             availableModels.push({
-                id: model.name, // e.g., "models/gemini-2.5-flash-preview-04-17"
+                id: model.name, 
                 name: model.displayName || model.name.split('/').pop() || model.name,
-                isPinned: false, // No models are pinned by default
+                isPinned: false, 
             });
-        } else if (!model.supportedActions) { // If supportedActions is not present, cautiously add
+        } else if (!model.supportedActions) { 
             availableModels.push({
                 id: model.name,
                 name: model.displayName || model.name.split('/').pop() || model.name,
@@ -64,11 +57,35 @@ const geminiServiceImpl: GeminiService = {
     }
   },
 
+  uploadFile: async (file: File, mimeType: string, displayName: string): Promise<GeminiFile> => {
+    if (!API_KEY) {
+      console.error("Cannot upload file: API_KEY is not set.");
+      throw new Error("API Key not configured. Cannot upload file.");
+    }
+    try {
+      // The SDK's upload method expects a 'file' property that can be a File object
+      // and a 'config' property for mimeType and displayName.
+      const uploadConfig: UploadFileConfig = { mimeType, displayName };
+      
+      // The SDK's 'file' parameter in 'upload' can take a browser File object directly.
+      const uploadedFile = await ai.files.upload({
+        file: file, // Pass the browser File object here
+        config: uploadConfig,
+      });
+      // The 'uploadedFile' object returned here is the SDK's File object,
+      // which includes properties like 'name' (resource name), 'uri', 'mimeType', 'state', etc.
+      return uploadedFile;
+    } catch (error) {
+      console.error(`Failed to upload file "${displayName}" to Gemini API:`, error);
+      throw error; // Re-throw to be handled by the caller in App.tsx
+    }
+  },
+
   initializeChat: async (
     modelId: string,
     systemInstruction: string,
     config: { temperature?: number; topP?: number },
-    showThoughts: boolean,
+    showThoughts: boolean, // UI flag for displaying thoughts
     history?: ChatHistoryItem[] 
   ): Promise<Chat | null> => {
     if (!API_KEY) {
@@ -95,20 +112,29 @@ const geminiServiceImpl: GeminiService = {
       if (config.topP !== undefined) chatConfig.topP = config.topP;
       if (chatConfig.systemInstruction === undefined) delete chatConfig.systemInstruction;
 
-      // Apply thinkingConfig based on model and showThoughts preference
-      if (modelId.includes('gemini-2.5-flash-preview-04-17')) { 
-        if (showThoughts) {
-          // For flash models, omitting thinkingConfig defaults to enabled with thoughts.
-          // No explicit thinkingConfig needed here if that's the desired default.
-        } else {
-          chatConfig.thinkingConfig = { thinkingBudget: 0 }; // Disable thinking
-        }
-      } else if (showThoughts) { 
-         // For other models that might support includeThoughts explicitly (if any in the future)
-         chatConfig.thinkingConfig = { includeThoughts: true };
+      // 1. gemini-2.5-flash-lite-preview-06-17
+      if (modelId === 'gemini-2.5-flash-lite-preview-06-17') {
+        chatConfig.thinkingConfig = { thinkingBudget: 24576, includeThoughts: true };
       }
+      // 2. gemini-2.5-pro
+      else if (modelId === 'gemini-2.5-pro') {
+        chatConfig.thinkingConfig = { thinkingBudget: 32768 };
+        if (showThoughts) { // UI flag determines if thoughts are included
+          chatConfig.thinkingConfig.includeThoughts = true;
+        }
+      }
+      // 3. gemini-2.5-flash
+      else if (modelId === 'gemini-2.5-flash') {
+        if (showThoughts) { // UI flag: Show Thoughts ON
+          chatConfig.thinkingConfig = { thinkingBudget: 24576, includeThoughts: true };
+        } else { // UI flag: Show Thoughts OFF (low latency mode for this model)
+          chatConfig.thinkingConfig = { thinkingBudget: 0 };
+          // No includeThoughts: true here, as budget 0 means disable thinking.
+        }
+      }
+      // 4. For all other models, thinkingConfig is omitted (default behavior)
       
-      // Clean up empty thinkingConfig object
+      // Ensure thinkingConfig is not an empty object if it was somehow set and then cleared.
       if (chatConfig.thinkingConfig && Object.keys(chatConfig.thinkingConfig).length === 0) {
         delete chatConfig.thinkingConfig;
       }
@@ -121,7 +147,7 @@ const geminiServiceImpl: GeminiService = {
       return chat;
     } catch (error) {
       console.error(`Failed to initialize Gemini chat with model ${modelId}:`, error);
-      throw error; // Re-throw to be caught by App.tsx
+      throw error; 
     }
   },
 
@@ -147,7 +173,7 @@ const geminiServiceImpl: GeminiService = {
         if (chunkResponse.candidates &&
             chunkResponse.candidates[0]?.content?.parts &&
             chunkResponse.candidates[0].content.parts.length > 0) {
-          for (const part of chunkResponse.candidates[0].content.parts) { // part is SDK's Part
+          for (const part of chunkResponse.candidates[0].content.parts) { 
             if ('text' in part && typeof part.text === 'string' && part.text.length > 0) {
               const pAsThoughtSupporting = part as ThoughtSupportingPart; 
               if (pAsThoughtSupporting.thought) {

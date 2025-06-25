@@ -1,32 +1,30 @@
 
 
 
-import { ModelOption, AppSettings } from './types'; // Removed Theme, ThemeColors from this import
+import { ModelOption, AppSettings } from './types'; 
 
-// AVAILABLE_MODELS is removed as models will be fetched dynamically.
+export const DEFAULT_MODEL_ID = 'gemini-2.5-pro'; 
 
-export const DEFAULT_MODEL_ID = 'gemini-2.5-pro'; // Updated default model
-
-const MARKDOWN_FORMATTING_INSTRUCTIONS = ``; // Cleared all system prompt words
+const MARKDOWN_FORMATTING_INSTRUCTIONS = ``; 
 
 export const DEFAULT_SYSTEM_INSTRUCTION = MARKDOWN_FORMATTING_INSTRUCTIONS;
 
-export const DEFAULT_TEMPERATURE = 1.0; // Changed from 0.8 to 1.0
-export const DEFAULT_TOP_P = 0.95; // Remains 0.95 as per image
+export const DEFAULT_TEMPERATURE = 1.0; 
+export const DEFAULT_TOP_P = 0.95; 
 export const DEFAULT_SHOW_THOUGHTS = true;
-export const DEFAULT_IS_STREAMING_ENABLED = true; // Added new default
-export const DEFAULT_BASE_FONT_SIZE = 20; // Default base font size in pixels, CHANGED from 16 to 20
+export const DEFAULT_IS_STREAMING_ENABLED = true; 
+export const DEFAULT_BASE_FONT_SIZE = 18; 
 
 export const SUPPORTED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
 export const SUPPORTED_TEXT_MIME_TYPES = [
   'text/html',
   'text/plain',
   'application/javascript',
-  'text/javascript', // often used for JS
+  'text/javascript', 
   'text/css',
   'application/json',
   'application/xml',
-  'text/xml', // often used for XML
+  'text/xml', 
   'text/markdown',
 ];
 export const SUPPORTED_VIDEO_MIME_TYPES = [
@@ -34,38 +32,30 @@ export const SUPPORTED_VIDEO_MIME_TYPES = [
   'video/mpeg',
   'video/webm',
   'video/ogg',
-  'video/quicktime', // .mov
-  'video/x-msvideo', // .avi
-  'video/x-matroska', // .mkv
+  'video/quicktime', 
+  'video/x-msvideo', 
+  'video/x-matroska', 
   'video/flv',
-  // Add other common video types supported by Gemini if needed
 ];
 export const SUPPORTED_AUDIO_MIME_TYPES = [
-  'audio/mpeg', // .mp3
+  'audio/mpeg', 
   'audio/ogg',
   'audio/wav',
   'audio/aac',
-  'audio/webm', // audio in webm container
+  'audio/webm', 
   'audio/flac',
-  'audio/mp4', // m4a is audio/mp4
-  // Add other common audio types supported by Gemini if needed
+  'audio/mp4', 
 ];
+export const SUPPORTED_PDF_MIME_TYPES = ['application/pdf']; // Added PDF
 
 export const ALL_SUPPORTED_MIME_TYPES = [
     ...SUPPORTED_IMAGE_MIME_TYPES, 
     ...SUPPORTED_TEXT_MIME_TYPES,
     ...SUPPORTED_VIDEO_MIME_TYPES,
     ...SUPPORTED_AUDIO_MIME_TYPES,
+    ...SUPPORTED_PDF_MIME_TYPES, // Added PDF
 ];
 
-// MAX_FILE_SIZE_MB and MAX_FILE_SIZE_BYTES removed
-
-// Theme Definitions
-// ThemeColors interface moved to types.ts to avoid circular dependencies if constants needs types.
-// For now, it's fine here as types.ts only imports ThemeColors from constants.
-// However, if constants.ts started importing something from types.ts that depends on ThemeColors,
-// it would be better to have ThemeColors defined in types.ts.
-// Keeping it here for now as per current structure.
 
 export interface ThemeColors {
   // Backgrounds
@@ -93,8 +83,8 @@ export interface ThemeColors {
   textPrimary: string;
   textSecondary: string;
   textTertiary: string;
-  textAccent: string; // Usually for text on accent backgrounds
-  textDanger: string; // Usually for text on danger backgrounds
+  textAccent: string; 
+  textDanger: string; 
   textLink: string;
   textCode: string;
   bgUserMessageText: string;
@@ -115,14 +105,14 @@ export interface ThemeColors {
   iconUser: string;
   iconModel: string;
   iconError: string;
-  iconThought: string; // For the "Assistant's Thoughts" toggle
-  iconSettings: string; // Settings icon in header
-  iconClearChat: string; // Clear chat icon in header - Will be "New Chat"
-  iconSend: string; // Send button icon
-  iconAttach: string; // Attach file icon
-  iconStop: string; // Stop generating icon
-  iconEdit: string; // Edit message icon
-  iconHistory: string; // History toggle icon
+  iconThought: string; 
+  iconSettings: string; 
+  iconClearChat: string; 
+  iconSend: string; 
+  iconAttach: string; 
+  iconStop: string; 
+  iconEdit: string; 
+  iconHistory: string; 
 }
 
 export interface Theme {
@@ -132,14 +122,14 @@ export interface Theme {
 }
 
 export const DARK_THEME_COLORS: ThemeColors = {
-  bgPrimary: '#111827',      // gray-900
-  bgSecondary: '#1f2937',    // gray-800
-  bgTertiary: '#374151',     // gray-700
-  bgAccent: '#0ea5e9',       // sky-500
-  bgAccentHover: '#0284c7',  // sky-600
-  bgDanger: '#dc2626',       // red-600
-  bgDangerHover: '#b91c1c',  // red-700
-  bgInput: '#374151',        // gray-700
+  bgPrimary: '#111827',      
+  bgSecondary: '#1f2937',    
+  bgTertiary: '#374151',     
+  bgAccent: '#0ea5e9',       
+  bgAccentHover: '#0284c7',  
+  bgDanger: '#dc2626',       
+  bgDangerHover: '#b91c1c',  
+  bgInput: '#374151',        
   bgCodeBlock: 'rgba(0, 0, 0, 0.3)', 
   bgCodeBlockHeader: 'rgba(17, 24, 39, 0.7)', 
   bgUserMessage: '#0ea5e9',   
@@ -308,7 +298,15 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 <hr class="section-divider">
 <h3><span class="material-icons-outlined">functions</span>2. 数学（可选）</h3>
 <ul>
-<li><strong>数学：</strong><strong class="strong-emphasis">必须</strong>使用 MathJax (CHTML) 在 HTML 页面内渲染。</strong><strong class="strong-emphasis">严格</strong>按照下面的示例格式提供数学内容，使用 MathJax 指定的“标记”将 LaTeX 代码包裹起来。</li>
+    <li><span class="material-icons-outlined">layers</span><strong>渲染引擎：</strong><strong class="strong-emphasis">必须</strong>使用 MathJax (CHTML) 在 HTML 页面内渲染。</li>
+    <li>
+        <span class="material-icons-outlined" style="color: #dc3545;">rule_folder</span>
+        <strong class="text-danger">强制性定界符规则:</strong> 所有数学公式 <strong class="text-danger">必须</strong> 使用指定的定界符包裹，<strong class="text-danger">不可省略</strong>。
+        <ul style="padding-left: 20px; margin-top: 0.8em; list-style-type: disc;">
+            <li style="padding-left: 5px; margin-bottom: 0.3em; position: static;">行内公式: <strong class="strong-emphasis">必须</strong>使用 <code>\\(...\\)</code>。</li>
+            <li style="padding-left: 5px; position: static;">行间公式: <strong class="strong-emphasis">必须</strong>使用 <code>\\[...\\]</code>。</li>
+        </ul>
+    </li>
 </ul>
 <div class="two-col-grid-container">
 <div class="col">
@@ -327,11 +325,12 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 <li><span class="material-icons-outlined" style="color:#28a745">colorize</span><strong class="text-accent2">代码高亮：</strong>如果包含代码块，将使用 <strong class="strong-emphasis">Prism.js</strong> 进行语法高亮。</li>
 <li><span class="material-icons-outlined" style="color:#28a745">content_copy</span><strong class="text-accent2">复制功能提示：</strong>页面中出现的任何代码块，其右上角将自动提供“复制”按钮，点击即可复制代码到剪贴板，并显示操作成功提示（“已复制!”）。</li>
 </ul>
-<p style="margin-top: 1.8em; margin-bottom: 0.8em;">下面是一个 JavaScript 代码块示例，右上角会自动显示一个 <strong class="strong-emphasis">“复制”</strong> 按钮：</p>
+ <p style="margin-top: 1.8em; margin-bottom: 0.8em;">下面是一个 JavaScript 代码块示例，右上角会自动显示一个 <strong class="strong-emphasis">“复制”</strong> 按钮：</p>
 <pre><code class="language-javascript">function greet(name) {
-// 返回一个问候字符串
-return \`你好, \${name}! 欢迎使用 Canvas 助手。\`;
+  // 返回一个问候字符串
+  return \`你好, \${name}! 欢迎使用 Canvas 助手。\`;
 }
+
 // 调用函数并打印到控制台
 console.log(greet('开发者'));</code></pre>
 <hr class="section-divider">
@@ -383,100 +382,101 @@ console.log(greet('开发者'));</code></pre>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
+
 <script>
 document.addEventListener('DOMContentLoaded',()=>{
-document.querySelectorAll('pre > code[class*="language-"]').forEach(e=>{
-const t=e.parentNode;
-if(t.parentNode.classList.contains('code-wrapper'))return;
-const o=document.createElement('div');
-o.className='code-wrapper',t.parentNode.insertBefore(o,t),o.appendChild(t);
-const n=document.createElement('button');
-n.className='copy-button',n.textContent='复制',n.title='复制代码到剪贴板',o.appendChild(n);
-let a=null;
-const i=n.textContent,r=n.style.backgroundColor;
-n.addEventListener('click',()=>{
-a&&clearTimeout(a),
-navigator.clipboard.writeText(e.textContent).then(()=>{
-n.textContent='已复制!',
-n.style.backgroundColor='#28a745',
-a=setTimeout(()=>{n.textContent=i,n.style.backgroundColor=r,a=null},1800)
-})
-})
-});
+    document.querySelectorAll('pre > code[class*="language-"]').forEach(e=>{
+        const t=e.parentNode;
+        if(t.parentNode.classList.contains('code-wrapper'))return;
+        const o=document.createElement('div');
+        o.className='code-wrapper',t.parentNode.insertBefore(o,t),o.appendChild(t);
+        const n=document.createElement('button');
+        n.className='copy-button',n.textContent='复制',n.title='复制代码到剪贴板',o.appendChild(n);
+        let a=null;
+        const i=n.textContent,r=n.style.backgroundColor;
+        n.addEventListener('click',()=>{
+            a&&clearTimeout(a),
+            navigator.clipboard.writeText(e.textContent).then(()=>{
+                n.textContent='已复制!',
+                n.style.backgroundColor='#28a745',
+                a=setTimeout(()=>{n.textContent=i,n.style.backgroundColor=r,a=null},1800)
+            })
+         })
+     });
 
-const e=document.getElementById('graph-output'),
-t=document.getElementById('zoom-button'),
-o=document.getElementById('layout-toggle-button'),
-n=document.getElementById('download-button'),
-a=document.getElementById('zoom-modal'),
-i=document.getElementById('zoom-content'),
-r=document.getElementById('close-zoom');
-let l=null,s=null,c='LR';
+    const e=document.getElementById('graph-output'),
+          t=document.getElementById('zoom-button'),
+          o=document.getElementById('layout-toggle-button'),
+          n=document.getElementById('download-button'),
+          a=document.getElementById('zoom-modal'),
+          i=document.getElementById('zoom-content'),
+          r=document.getElementById('close-zoom');
+    let l=null,s=null,c='LR';
+   
+    const u=setInterval(()=>{
+        if("undefined"!=typeof Viz&&void 0!==Viz.prototype.renderSVGElement){
+             clearInterval(u);
+            (s=new Viz({worker:void 0}))&&(p(),m(c));
+         }
+        },100);
 
-const u=setInterval(()=>{
-if("undefined"!=typeof Viz&&void 0!==Viz.prototype.renderSVGElement){
-clearInterval(u);
-(s=new Viz({worker:void 0}))&&(p(),m(c));
-}
-},100);
+    const S = \`
+        digraph SimpleGraph {
+         graph [labelloc=t, label="简单流程图示例", fontsize=18, fontname="Inter, sans-serif", bgcolor="transparent", pad="0.5", splines=ortho];
+         node [fontname="Inter, sans-serif", fontsize=11, style="filled,rounded", color="#666", shape=box, margin="0.2,0.1"];
+         edge [fontsize=9, fontname="Inter, sans-serif", color="#888", arrowsize=0.7];
+         A [label="步骤 A", fillcolor="#E0E7FF"];
+         B [label="步骤 B", fillcolor="#D1FAE5"];
+         C [label="步骤 C", fillcolor="#FEF3C7"];
+         A -> B [label="过程 1"];
+         B -> C [label="过程 2"];
+        }\`;
+    
+    const g=e=>{l&&l.zoomWithWheel&&(e.preventDefault(),l.zoomWithWheel(e))};
+    
+    function p(){
+        if(!o||!s)return;
+        const e='TB'===c?'LR':'TB';
+        o.textContent=e,o.title=\`切换到 \${e} 布局\`,o.disabled=!1;
+     }
 
-const S = \`
-digraph SimpleGraph {
-graph [labelloc=t, label="简单流程图示例", fontsize=18, fontname="Inter, sans-serif", bgcolor="transparent", pad="0.5", splines=ortho];
-node [fontname="Inter, sans-serif", fontsize=11, style="filled,rounded", color="#666", shape=box, margin="0.2,0.1"];
-edge [fontsize=9, fontname="Inter, sans-serif", color="#888", arrowsize=0.7];
-A [label="步骤 A", fillcolor="#E0E7FF"];
-B [label="步骤 B", fillcolor="#D1FAE5"];
-C [label="步骤 C", fillcolor="#FEF3C7"];
-A -> B [label="过程 1"];
-B -> C [label="过程 2"];
-}\`;
+    async function m(d){
+        if(!s || !e || !i) return;
+         const rButtons = [o,t,n];
+         rButtons.forEach(btn => { if(btn) btn.disabled = true; });
+         if (e) e.innerHTML = ""; 
 
-const g=e=>{l&&l.zoomWithWheel&&(e.preventDefault(),l.zoomWithWheel(e))};
+        let u=S.replace(/rankdir\\s*=\\s*"\\w+"\\s*,?/gi,'');
+        const h=u.match(/(\\s*graph\\s*\\[)([^\\)]*?)(\\s*\\])/);
+        if(h){
+            let e=h[2].trim();
+            e.length>0&&!e.endsWith(',')&&(e+=','),u=u.replace(/(\\s*graph\\s*\\[)[^\\)]*?(\\s*\\])/,\`$1 \${e} rankdir="\${d}" $2\`)
+        }
+       
+        const svgElement = await s.renderSVGElement(u);
+        e.appendChild(svgElement);
+        i.innerHTML = "";
+        i.appendChild(svgElement.cloneNode(true));
+        const zoomSvg = i.querySelector('svg');
+         if(zoomSvg && "undefined" != typeof Panzoom) {
+            if(l && l.destroy) {
+                 i.removeEventListener('wheel', g);
+                 l.destroy();
+             }
+            l = Panzoom(zoomSvg, { maxZoom: 15, minZoom: .05, contain: "outside", canvas: true });
+            i.addEventListener('wheel', g, { passive: false });
+         }
+        c = d;
+        
+         p();
+         rButtons.forEach(btn => { if(btn) btn.disabled = false; });
+       }
 
-function p(){
-if(!o||!s)return;
-const e='TB'===c?'LR':'TB';
-o.textContent=e,o.title=\`切换到 \${e} 布局\`,o.disabled=!1;
-}
-
-async function m(d){
-if(!s || !e || !i) return;
-const rButtons = [o,t,n];
-rButtons.forEach(btn => { if(btn) btn.disabled = true; });
-if (e) e.innerHTML = "";
-
-let u=S.replace(/rankdir\\s*=\\s*"\\w+"\\s*,?/gi,'');
-const h=u.match(/(\\s*graph\\s*\\[)([^\\)]*?)(\\s*\\])/);
-if(h){
-let e=h[2].trim();
-e.length>0&&!e.endsWith(',')&&(e+=','),u=u.replace(/(\\s*graph\\s*\\[)[^\\)]*?(\\s*\\])/,\`$1 \${e} rankdir="\${d}" $2\`)
-}
-
-const svgElement = await s.renderSVGElement(u);
-e.appendChild(svgElement);
-i.innerHTML = "";
-i.appendChild(svgElement.cloneNode(true));
-const zoomSvg = i.querySelector('svg');
-if(zoomSvg && "undefined" != typeof Panzoom) {
-if(l && l.destroy) {
-i.removeEventListener('wheel', g);
-l.destroy();
-}
-l = Panzoom(zoomSvg, { maxZoom: 15, minZoom: .05, contain: "outside", canvas: true });
-i.addEventListener('wheel', g, { passive: false });
-}
-c = d;
-
-p();
-rButtons.forEach(btn => { if(btn) btn.disabled = false; });
-}
-
-e&&o&&t&&n&&a&&i&&r&&(o.addEventListener('click',()=>m('TB'===c?'LR':'TB')),t.addEventListener('click',()=>{l&&(a.style.display="flex",document.body.style.overflow="hidden",l.reset({animate:!0}),r.focus())}));
-const h=()=>{a.style.display="none",document.body.style.overflow=""};
-r&&r.addEventListener('click',h),document.addEventListener('keydown',e=>{"Escape"===e.key&&h()});
-
-setTimeout(()=>{void 0!==window.Prism&&Prism.highlightAll&&Prism.highlightAll()},300)
+     e&&o&&t&&n&&a&&i&&r&&(o.addEventListener('click',()=>m('TB'===c?'LR':'TB')),t.addEventListener('click',()=>{l&&(a.style.display="flex",document.body.style.overflow="hidden",l.reset({animate:!0}),r.focus())}));
+     const h=()=>{a.style.display="none",document.body.style.overflow=""};
+     r&&r.addEventListener('click',h),document.addEventListener('keydown',e=>{"Escape"===e.key&&h()});
+     
+     setTimeout(()=>{void 0!==window.Prism&&Prism.highlightAll&&Prism.highlightAll()},300)
 });
 </script>
 </body>

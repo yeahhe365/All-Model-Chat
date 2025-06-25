@@ -1,8 +1,7 @@
 
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ChatMessage, MessageListProps, UploadedFile } from '../types'; // Updated MessageListProps import
-import { User, Bot, AlertTriangle, Edit3, ChevronDown, ChevronUp, ClipboardCopy, Check, Loader2, FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw } from 'lucide-react'; // Added FileVideo, FileAudio, ImageIcon, AlertCircle, FileCode2, Trash2, X, Maximize, Minimize, RotateCw
+import { ChatMessage, MessageListProps, UploadedFile } from '../types'; 
+import { User, Bot, AlertTriangle, Edit3, ChevronDown, ChevronUp, ClipboardCopy, Check, Loader2, FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand } from 'lucide-react'; 
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
@@ -12,6 +11,7 @@ import {
     SUPPORTED_TEXT_MIME_TYPES, 
     SUPPORTED_VIDEO_MIME_TYPES, 
     SUPPORTED_AUDIO_MIME_TYPES, 
+    SUPPORTED_PDF_MIME_TYPES, // Added PDF
     ThemeColors 
 } from '../constants';
 
@@ -19,10 +19,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { HtmlPreviewModal } from './HtmlPreviewModal'; // Added import for HtmlPreviewModal
+import { HtmlPreviewModal } from './HtmlPreviewModal'; 
 
 
-// Interface for ExportMessageButton props
 interface ExportMessageButtonProps {
   markdownContent: string;
   messageId: string;
@@ -38,16 +37,16 @@ const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdownConte
     setExportState('exporting');
 
     const tempDiv = document.createElement('div');
-    tempDiv.className = 'markdown-body'; // Apply base markdown styles
+    tempDiv.className = 'markdown-body'; 
     tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px'; // Position off-screen
-    tempDiv.style.top = '-9999px';  // Position off-screen
-    tempDiv.style.width = '800px';  // Define a reasonable width for the image
-    tempDiv.style.padding = '24px'; // Simulate message bubble padding
-    tempDiv.style.backgroundColor = themeColors.bgModelMessage; // Message bubble background
-    tempDiv.style.color = themeColors.bgModelMessageText;     // Default text color for the bubble
+    tempDiv.style.left = '-9999px'; 
+    tempDiv.style.top = '-9999px';  
+    tempDiv.style.width = '800px';  
+    tempDiv.style.padding = '24px'; 
+    tempDiv.style.backgroundColor = themeColors.bgModelMessage; 
+    tempDiv.style.color = themeColors.bgModelMessageText;     
     tempDiv.style.border = `1px solid ${themeColors.borderSecondary}`;
-    tempDiv.style.borderRadius = '8px'; // Rounded corners for the bubble
+    tempDiv.style.borderRadius = '8px'; 
     
     const rawHtml = marked.parse(markdownContent); 
     tempDiv.innerHTML = DOMPurify.sanitize(rawHtml as string);
@@ -390,6 +389,7 @@ const ICON_LOADER_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="1
 const ICON_CHEVRON_DOWN_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
 const ICON_CHEVRON_UP_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
 const ICON_MAXIMIZE_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+const ICON_EXTERNAL_LINK_SVG_STRING = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>`;
 
 
 const CODE_BLOCK_FOLDABLE_LINE_THRESHOLD = 8;
@@ -398,16 +398,14 @@ const isHtmlContent = (codeElement: HTMLElement, textContent: string): boolean =
   if (codeElement.classList.contains('language-html') || codeElement.classList.contains('language-svg')) return true;
   const s = textContent.trim().toLowerCase();
   if (s.startsWith('<!doctype html>') || (s.includes('<html') && s.includes('</html>')) || (s.includes('<body') && s.includes('</body>')) || (s.includes('<head') && s.includes('</head>'))) return true;
-  // Check for SVG specifically if not caught by language class
   if (s.startsWith('<svg') && s.includes('</svg>')) return true;
   
   const commonHtmlTags = ['<div', '<p', '<span', '<a', '<table', '<form', '<button', '<input', '<script', '<style'];
   const hasHtmlTags = commonHtmlTags.some(tag => s.includes(tag));
   const hasClosingTag = /<\/[a-z]+>/.test(s);
   if (hasHtmlTags && hasClosingTag && (s.match(/</g)?.length || 0) > 1) {
-      // Avoid misidentifying SVG as generic HTML if it's not already class-tagged
-      if ((s.includes('<svg') && s.includes('</svg>')) && !(s.includes('<body') || s.includes('<!doctype html>'))) return true; // It's SVG
-      if (!(s.includes('<svg') && s.includes('</svg>'))) return true; // It's likely general HTML
+      if ((s.includes('<svg') && s.includes('</svg>')) && !(s.includes('<body') || s.includes('<!doctype html>'))) return true; 
+      if (!(s.includes('<svg') && s.includes('</svg>'))) return true; 
   }
   return false;
 };
@@ -415,7 +413,7 @@ const isHtmlContent = (codeElement: HTMLElement, textContent: string): boolean =
 const createUtilityButton = (
     initialIconSvg: string, initialAriaLabel: string, initialTitle: string,
     actionCallback: (iconContainer: HTMLSpanElement, button: HTMLButtonElement) => Promise<void> | void,
-    noSuccessStateChange?: boolean // Optional flag
+    noSuccessStateChange?: boolean 
   ): HTMLButtonElement => {
     const button = document.createElement('button');
     button.className = 'code-block-utility-button p-1.5 rounded-md shadow-sm transition-colors focus:outline-none flex items-center justify-center';
@@ -433,10 +431,10 @@ const createUtilityButton = (
       iconContainer.innerHTML = ICON_LOADER_SVG_STRING;
       try {
         await actionCallback(iconContainer, button);
-         if (!noSuccessStateChange) { // Only change to success if not opted out
+         if (!noSuccessStateChange) { 
             iconContainer.innerHTML = ICON_CHECK_SVG_STRING;
             button.setAttribute('aria-label', `${initialTitle.split(' ')[0]} successful!`);
-        } else { // If opted out, revert to initial icon immediately after action
+        } else { 
             iconContainer.innerHTML = initialIconSvg;
         }
       } catch (err) {
@@ -449,7 +447,7 @@ const createUtilityButton = (
           iconContainer.innerHTML = initialIconSvg;
           button.setAttribute('aria-label', initialAriaLabel);
           button.title = initialTitle;
-        }, noSuccessStateChange ? 500 : 2000); // Shorter timeout if no success state change
+        }, noSuccessStateChange ? 500 : 2000); 
       }
     });
     return button;
@@ -459,7 +457,6 @@ const createCopyButtonForCodeBlock = (codeText: string): HTMLButtonElement => {
   return createUtilityButton(ICON_COPY_SVG_STRING, 'Copy code to clipboard', 'Copy code',
     async (iconContainer, button) => {
       await navigator.clipboard.writeText(codeText);
-      // Success state (check mark) handled by createUtilityButton's default behavior
     }
   );
 };
@@ -480,17 +477,34 @@ const createDownloadButton = (codeText: string, mimeType: string = 'text/plain',
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url; a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-      // Success state (check mark) handled by createUtilityButton's default behavior
     }
   );
 };
 
-const createHtmlPreviewButton = (codeText: string, onPreview: (html: string) => void): HTMLButtonElement => {
-  return createUtilityButton(ICON_MAXIMIZE_SVG_STRING, 'Preview HTML in modal', 'Preview HTML',
-    async () => { // iconContainer and button are not used here for state change
-      onPreview(codeText);
+const createHtmlModalPreviewButton = (
+    codeText: string, 
+    onPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void
+): HTMLButtonElement => {
+  return createUtilityButton(ICON_MAXIMIZE_SVG_STRING, 'Preview HTML in modal', 'Modal Preview',
+    async () => { 
+      onPreview(codeText, { initialTrueFullscreen: false });
     },
-    true // noSuccessStateChange = true, because the modal opening is the success
+    true 
+  );
+};
+
+const createHtmlTrueFullscreenPreviewButton = (
+  codeText: string,
+  onPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void
+): HTMLButtonElement => {
+  return createUtilityButton(
+    ICON_EXTERNAL_LINK_SVG_STRING, 
+    'Preview HTML in true fullscreen',
+    'True Fullscreen Preview',
+    async () => {
+      onPreview(codeText, { initialTrueFullscreen: true });
+    },
+    true
   );
 };
 
@@ -619,6 +633,14 @@ const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick }) => {
             <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
           </div>
         </>
+      ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( // Added PDF display
+        <>
+          <FileText size={24} className="text-red-500 flex-shrink-0" /> 
+          <div className={textClasses}>
+            <span className={nameClass} title={file.name}>{file.name}</span>
+            <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
+          </div>
+        </>
       ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
           <FileText size={24} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
@@ -627,7 +649,7 @@ const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick }) => {
             <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
           </div>
         </>
-      ) : ( // Fallback for errored files or unrecognized (but somehow passed) types
+      ) : ( 
         <>
           <AlertCircle size={24} className={`${file.error ? 'text-[var(--theme-text-danger)]' : 'text-[var(--theme-text-tertiary)]'} flex-shrink-0`} />
            <div className={textClasses}>
@@ -664,7 +686,6 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
 
   useEffect(() => {
     if (file) {
-      // Reset state when a new file is opened or modal is reopened
       setScale(1);
       setPosition({ x: 0, y: 0 });
     }
@@ -675,14 +696,14 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
     event.preventDefault();
 
     const rect = viewportRef.current.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left; // Mouse X relative to viewport
-    const mouseY = event.clientY - rect.top; // Mouse Y relative to viewport
+    const mouseX = event.clientX - rect.left; 
+    const mouseY = event.clientY - rect.top; 
 
     const newScale = event.deltaY < 0 
       ? Math.min(MAX_SCALE, scale * ZOOM_SPEED_FACTOR) 
       : Math.max(MIN_SCALE, scale / ZOOM_SPEED_FACTOR);
     
-    if (newScale === scale) return; // No change in scale (already at min/max)
+    if (newScale === scale) return; 
 
     const newPositionX = mouseX - (mouseX - position.x) * (newScale / scale);
     const newPositionY = mouseY - (mouseY - position.y) * (newScale / scale);
@@ -692,7 +713,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
   }, [scale, position, file]);
 
   const handleMouseDown = (event: React.MouseEvent<HTMLImageElement>) => {
-    if (!file || event.button !== 0) return; // Only main button
+    if (!file || event.button !== 0) return; 
     event.preventDefault();
     setIsDragging(true);
     setDragStart({ 
@@ -719,7 +740,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
   };
   
   const handleMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isDragging) { // If mouse leaves viewport while dragging, stop dragging
+    if (isDragging) { 
         handleMouseUp(event);
     }
   };
@@ -748,7 +769,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
   }, [file, onClose]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === viewportRef.current) { // Click on backdrop itself
+    if (event.target === viewportRef.current) { 
         onClose();
     }
   };
@@ -765,7 +786,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
       onClick={handleBackdropClick}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave} // Added to handle mouse leaving viewport
+      onMouseLeave={handleMouseLeave} 
     >
         <h2 id="image-zoom-modal-title" className="sr-only">Zoomed Image: {file.name}</h2>
         <div 
@@ -778,7 +799,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
             alt={`Zoomed view of ${file.name}`}
             style={{
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-              transformOrigin: '0 0', // Ensures scaling is relative to top-left for zoom-to-mouse
+              transformOrigin: '0 0', 
               transition: isDragging ? 'none' : 'transform 0.05s ease-out',
               maxWidth: '100%',
               maxHeight: '100%',
@@ -815,6 +836,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
+  const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
 
   const toggleThoughts = (messageId: string) => {
     setExpandedThoughts(prev => ({ ...prev, [messageId]: !(prev[messageId] ?? false) }));
@@ -828,14 +850,16 @@ export const MessageList: React.FC<MessageListProps> = ({
     setZoomedFile(null);
   };
 
-  const handleOpenHtmlPreview = useCallback((htmlContent: string) => {
+  const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
     setHtmlToPreview(htmlContent);
+    setInitialTrueFullscreenRequest(options?.initialTrueFullscreen ?? false);
     setIsHtmlPreviewModalOpen(true);
   }, []);
 
   const handleCloseHtmlPreview = useCallback(() => {
     setIsHtmlPreviewModalOpen(false);
     setHtmlToPreview(null);
+    setInitialTrueFullscreenRequest(false);
   }, []);
 
 
@@ -930,7 +954,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         let languageClass = Array.from(currentCodeElement.classList).find(cls => cls.startsWith('language-'));
         let language = languageClass ? languageClass.replace('language-', '') : 'txt';
         let mimeType = 'text/plain';
-        if (language === 'html' || language === 'xml' || language === 'svg') mimeType = 'text/html'; // Consider SVG as HTML for download
+        if (language === 'html' || language === 'xml' || language === 'svg') mimeType = 'text/html'; 
         else if (language === 'javascript' || language === 'js' || language === 'typescript' || language === 'ts') mimeType = 'application/javascript';
         else if (language === 'css') mimeType = 'text/css';
         else if (language === 'json') mimeType = 'application/json';
@@ -945,7 +969,8 @@ export const MessageList: React.FC<MessageListProps> = ({
           actionsContainer.innerHTML = ''; 
           
           if (isLikelyHTML) {
-            actionsContainer.appendChild(createHtmlPreviewButton(currentCodeText, handleOpenHtmlPreview));
+            actionsContainer.appendChild(createHtmlTrueFullscreenPreviewButton(currentCodeText, handleOpenHtmlPreview));
+            actionsContainer.appendChild(createHtmlModalPreviewButton(currentCodeText, handleOpenHtmlPreview));
           }
           actionsContainer.appendChild(createDownloadButton(currentCodeText, downloadMimeType, `snippet.${finalLanguage}`));
           actionsContainer.appendChild(createCopyButtonForCodeBlock(currentCodeText));
@@ -1230,6 +1255,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         onClose={handleCloseHtmlPreview}
         htmlContent={htmlToPreview}
         themeColors={themeColors}
+        initialTrueFullscreenRequest={initialTrueFullscreenRequest}
       />
     )}
     </>
