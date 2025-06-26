@@ -251,7 +251,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false, // Default to using environment variables
   apiKey: null,
-  apiUrl: null,
+  apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
 };
 
 export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
