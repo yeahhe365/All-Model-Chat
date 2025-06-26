@@ -11,7 +11,7 @@ import {
     SUPPORTED_TEXT_MIME_TYPES, 
     SUPPORTED_VIDEO_MIME_TYPES, 
     SUPPORTED_AUDIO_MIME_TYPES, 
-    SUPPORTED_PDF_MIME_TYPES, // Added PDF
+    SUPPORTED_PDF_MIME_TYPES, 
     ThemeColors 
 } from '../constants';
 
@@ -593,15 +593,28 @@ const MessageTimer: React.FC<{ startTime?: Date; endTime?: Date; isLoading?: boo
 interface FileDisplayProps {
   file: UploadedFile;
   onImageClick?: (file: UploadedFile) => void;
+  isFromMessageList?: boolean; // New prop to distinguish context
 }
 
-const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick }) => {
+const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList }) => {
   const commonClasses = "flex items-center gap-2 p-2 rounded-md bg-[var(--theme-bg-input)] bg-opacity-50 border border-[var(--theme-border-secondary)]";
   const textClasses = "text-sm";
   const nameClass = "font-medium truncate block";
   const detailsClass = "text-xs text-[var(--theme-text-tertiary)]";
+  const [idCopied, setIdCopied] = useState(false);
 
   const isClickableImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error && onImageClick;
+
+  const handleCopyId = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!file.fileApiName) return;
+    navigator.clipboard.writeText(file.fileApiName)
+      .then(() => {
+        setIdCopied(true);
+        setTimeout(() => setIdCopied(false), 2000);
+      })
+      .catch(err => console.error("Failed to copy file ID:", err));
+  };
 
   const imageElement = (
       <img 
@@ -609,12 +622,14 @@ const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick }) => {
         alt={file.name} 
         className={`max-w-[120px] sm:max-w-[150px] max-h-40 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
         aria-label={`Uploaded image: ${file.name}`}
-        onClick={isClickableImage ? () => onImageClick(file) : undefined}
+        onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
+        tabIndex={isClickableImage ? 0 : -1} 
+        onKeyDown={isClickableImage ? (e) => { if ((e.key === 'Enter' || e.key === ' ') && onImageClick) onImageClick(file); } : undefined}
       />
   );
   
   return (
-    <div className={`${commonClasses} ${file.error ? 'border-[var(--theme-bg-danger)]' : ''}`}>
+    <div className={`${commonClasses} ${file.error ? 'border-[var(--theme-bg-danger)]' : ''} relative group`}>
       {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error ? (
         imageElement
       ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
@@ -633,7 +648,7 @@ const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick }) => {
             <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
           </div>
         </>
-      ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( // Added PDF display
+      ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( 
         <>
           <FileText size={24} className="text-red-500 flex-shrink-0" /> 
           <div className={textClasses}>
@@ -660,6 +675,18 @@ const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick }) => {
       )}
       {file.error && (
         <p className="text-xs text-[var(--theme-text-danger)] ml-auto pl-2 flex-shrink-0" title={file.error}>Error</p>
+      )}
+      {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
+        <button
+          onClick={handleCopyId}
+          title={idCopied ? "File ID Copied!" : "Copy File ID (e.g., files/xyz123)"}
+          aria-label={idCopied ? "File ID Copied!" : "Copy File ID"}
+          className={`absolute top-1 right-1 p-0.5 rounded-full bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] transition-all
+                      ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]'}
+                      opacity-0 group-hover:opacity-100 focus:opacity-100`}
+        >
+          {idCopied ? <Check size={14} /> : <ClipboardCopy size={14} />}
+        </button>
       )}
     </div>
   );
@@ -769,7 +796,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
   }, [file, onClose]);
 
   const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === viewportRef.current) { 
+    if (event.target === viewportRef.current?.parentElement) { // Check if click is on the direct parent (backdrop)
         onClose();
     }
   };
@@ -834,9 +861,13 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [expandedThoughts, setExpandedThoughts] = useState<Record<string, boolean>>({});
   const [expandedCodeBlocks, setExpandedCodeBlocks] = useState<Record<string, boolean>>({});
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
+  
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
+  const [_previewedMessageId, setPreviewedMessageId] = useState<string | null>(null); // Underscore to indicate it's for context if needed
+  const previewedCodeBlockGlobalIdRef = useRef<string | null>(null);
+
 
   const toggleThoughts = (messageId: string) => {
     setExpandedThoughts(prev => ({ ...prev, [messageId]: !(prev[messageId] ?? false) }));
@@ -850,8 +881,15 @@ export const MessageList: React.FC<MessageListProps> = ({
     setZoomedFile(null);
   };
 
-  const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
+  const handleOpenHtmlPreview = useCallback((
+      htmlContent: string, 
+      options?: { initialTrueFullscreen?: boolean },
+      messageId?: string, // Added messageId
+      codeBlockId?: string // Added codeBlockId
+    ) => {
     setHtmlToPreview(htmlContent);
+    if (messageId) setPreviewedMessageId(messageId);
+    if (codeBlockId) previewedCodeBlockGlobalIdRef.current = codeBlockId;
     setInitialTrueFullscreenRequest(options?.initialTrueFullscreen ?? false);
     setIsHtmlPreviewModalOpen(true);
   }, []);
@@ -860,6 +898,8 @@ export const MessageList: React.FC<MessageListProps> = ({
     setIsHtmlPreviewModalOpen(false);
     setHtmlToPreview(null);
     setInitialTrueFullscreenRequest(false);
+    setPreviewedMessageId(null);
+    previewedCodeBlockGlobalIdRef.current = null;
   }, []);
 
 
@@ -968,12 +1008,26 @@ export const MessageList: React.FC<MessageListProps> = ({
         if (actionsContainer) {
           actionsContainer.innerHTML = ''; 
           
+          const modalPreviewButtonCallback = (htmlFromButton: string, optsFromButton?: { initialTrueFullscreen?: boolean }) => {
+              handleOpenHtmlPreview(htmlFromButton, optsFromButton, messageDomId, uniqueCodeBlockId);
+          };
+          const trueFullscreenButtonCallback = (htmlFromButton: string, optsFromButton?: { initialTrueFullscreen?: boolean }) => {
+              handleOpenHtmlPreview(htmlFromButton, optsFromButton, messageDomId, uniqueCodeBlockId);
+          };
+
           if (isLikelyHTML) {
-            actionsContainer.appendChild(createHtmlTrueFullscreenPreviewButton(currentCodeText, handleOpenHtmlPreview));
-            actionsContainer.appendChild(createHtmlModalPreviewButton(currentCodeText, handleOpenHtmlPreview));
+            actionsContainer.appendChild(createHtmlTrueFullscreenPreviewButton(currentCodeText, trueFullscreenButtonCallback));
+            actionsContainer.appendChild(createHtmlModalPreviewButton(currentCodeText, modalPreviewButtonCallback));
           }
           actionsContainer.appendChild(createDownloadButton(currentCodeText, downloadMimeType, `snippet.${finalLanguage}`));
           actionsContainer.appendChild(createCopyButtonForCodeBlock(currentCodeText));
+        }
+        
+        // Live update htmlToPreview if this block is being previewed
+        if (isHtmlPreviewModalOpen && previewedCodeBlockGlobalIdRef.current === uniqueCodeBlockId) {
+          if (htmlToPreview !== currentCodeText) {
+            setHtmlToPreview(currentCodeText);
+          }
         }
         
         const toggleButton = headerDiv.querySelector<HTMLButtonElement>('.code-block-toggle-button');
@@ -1036,7 +1090,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       });
     };
     setupInteractiveCodeBlocks();
-  }, [messages, expandedCodeBlocks, showThoughts, handleOpenHtmlPreview]); 
+  }, [messages, expandedCodeBlocks, showThoughts, handleOpenHtmlPreview, isHtmlPreviewModalOpen, htmlToPreview]); 
 
   return (
     <>
@@ -1190,7 +1244,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                   {msg.files && msg.files.length > 0 && (
                     <div className="mb-2 space-y-2">
                       {msg.files.map((file) => (
-                         <FileDisplay key={file.id} file={file} onImageClick={handleImageClick} />
+                         <FileDisplay key={file.id} file={file} onImageClick={handleImageClick} isFromMessageList={true} />
                       ))}
                     </div>
                   )}
@@ -1249,7 +1303,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         themeColors={themeColors}
       />
     )}
-    {isHtmlPreviewModalOpen && htmlToPreview && (
+    {isHtmlPreviewModalOpen && htmlToPreview !== null && ( // Ensure htmlToPreview is not null before rendering
       <HtmlPreviewModal
         isOpen={isHtmlPreviewModalOpen}
         onClose={handleCloseHtmlPreview}

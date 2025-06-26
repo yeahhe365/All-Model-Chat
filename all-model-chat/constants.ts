@@ -249,6 +249,9 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   ...DEFAULT_CHAT_SETTINGS,
   themeId: DEFAULT_THEME_ID,
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
+  useCustomApiConfig: false, // Default to using environment variables
+  apiKey: null,
+  apiUrl: null,
 };
 
 export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
@@ -291,7 +294,7 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 <ul>
 <li><span class="material-icons-outlined">dynamic_feed</span>利用 HTML 的灵活特性并发挥其优势。</li>
 <li><span class="material-icons-outlined">palette</span><strong class="strong-emphasis">必须</strong>使用不同的颜色来突出或强调文本。</li>
-<li><span class="material-icons-outlined">emoji_objects</span><strong>图标使用：</strong>图标应增强理解、引导注意力并改善视觉效果，而非无处不在。</li>
+<li><span class="material-icons-outlined">emoji_objects</span><strong>图标使用：</strong>图标应增强理解、引导注意力并改善视觉效果、而非无处不在。</li>
 </ul>
 </div>
 </div>

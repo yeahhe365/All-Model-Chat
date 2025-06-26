@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Download, Maximize, Minimize, Expand } from 'lucide-react'; 
+import { X, Download, Maximize, Minimize, Expand, RotateCw } from 'lucide-react'; 
 import { ThemeColors } from '../constants';
 
 interface HtmlPreviewModalProps {
@@ -141,6 +141,19 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  const handleRefresh = useCallback(() => {
+    if (iframeRef.current && htmlContent) {
+      // Temporarily clear srcdoc to force a full reload if the content is identical
+      // Some browsers might optimize if srcdoc is set to the exact same string.
+      iframeRef.current.srcdoc = ' '; 
+      requestAnimationFrame(() => {
+        if (iframeRef.current) { // Check if still mounted
+          iframeRef.current.srcdoc = htmlContent;
+        }
+      });
+    }
+  }, [htmlContent]);
   
   const FullscreenToggleButton: React.FC = () => (
     <button
@@ -178,6 +191,14 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 title="Download HTML"
             >
                 <Download size={20} /> 
+            </button>
+            <button
+              onClick={handleRefresh}
+              className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+              aria-label="Refresh HTML content"
+              title="Refresh HTML"
+            >
+              <RotateCw size={20} />
             </button>
             <button
               onClick={onClose}

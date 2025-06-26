@@ -79,10 +79,14 @@ export interface SavedChatSession {
 export interface AppSettings extends ChatSettings {
  themeId: string; 
  baseFontSize: number; 
+ useCustomApiConfig: boolean; // Added for custom API config toggle
+ apiKey: string | null;
+ apiUrl: string | null;
 }
 
 
 export interface GeminiService {
+  updateApiKeyAndUrl: (apiKey: string | null, apiUrl: string | null) => void;
   initializeChat: (
     modelId: string,
     systemInstruction: string,
@@ -109,7 +113,8 @@ export interface GeminiService {
     onComplete: (fullText: string, thoughtsText?: string) => void
   ) => Promise<void>;
   getAvailableModels: () => Promise<ModelOption[]>;
-  uploadFile: (file: File, mimeType: string, displayName: string) => Promise<GeminiFile>; // Added for PDF uploads
+  uploadFile: (file: File, mimeType: string, displayName: string) => Promise<GeminiFile>; 
+  getFileMetadata: (fileApiName: string) => Promise<GeminiFile | null>; // Added to get file metadata
 }
 
 export interface ThoughtSupportingPart extends Part {

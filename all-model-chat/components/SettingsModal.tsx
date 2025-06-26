@@ -1,12 +1,11 @@
 
 
-
 import React, { useState, useEffect } from 'react';
 import { ModelOption, AppSettings, ChatSettings as IndividualChatSettings } from '../types';
-import { Loader2, X, Info, Pin, Wand2, RotateCcw, Ban, Save } from 'lucide-react'; 
+import { Loader2, X, Info, Pin, Wand2, RotateCcw, Ban, Save, Eye, EyeOff, KeyRound, Server, ToggleLeft, ToggleRight, Settings2 } from 'lucide-react'; 
 import { 
     DEFAULT_CHAT_SETTINGS,
-    DEFAULT_APP_SETTINGS, // Import to get default baseFontSize
+    DEFAULT_APP_SETTINGS, 
     DEFAULT_THEME_ID as APP_DEFAULT_THEME_ID, 
     Theme
 } from '../constants';
@@ -32,6 +31,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isModelsLoading,
   modelsLoadingError
 }) => {
+  const [useCustomApiConfig, setUseCustomApiConfig] = useState(currentSettings.useCustomApiConfig);
+  const [apiKey, setApiKey] = useState(currentSettings.apiKey);
+  const [apiUrl, setApiUrl] = useState(currentSettings.apiUrl);
+  const [showApiKey, setShowApiKey] = useState(false);
+  
   const [modelId, setModelId] = useState(currentSettings.modelId);
   const [temperature, setTemperature] = useState(currentSettings.temperature);
   const [topP, setTopP] = useState(currentSettings.topP);
@@ -40,8 +44,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [themeId, setThemeId] = useState(currentSettings.themeId); 
   const [baseFontSize, setBaseFontSize] = useState(currentSettings.baseFontSize);
 
+
   useEffect(() => {
     if (isOpen) {
+      setUseCustomApiConfig(currentSettings.useCustomApiConfig ?? DEFAULT_APP_SETTINGS.useCustomApiConfig);
+      setApiKey(currentSettings.apiKey ?? null);
+      setApiUrl(currentSettings.apiUrl ?? null);
+      setShowApiKey(false);
+      
       setModelId(currentSettings.modelId || DEFAULT_CHAT_SETTINGS.modelId);
       setTemperature(currentSettings.temperature ?? DEFAULT_CHAT_SETTINGS.temperature);
       setTopP(currentSettings.topP ?? DEFAULT_CHAT_SETTINGS.topP);
@@ -55,10 +65,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave({ modelId, temperature, topP, showThoughts, systemInstruction, themeId, baseFontSize }); 
+    onSave({ 
+        modelId, temperature, topP, showThoughts, systemInstruction, 
+        themeId, baseFontSize, 
+        useCustomApiConfig, 
+        apiKey: useCustomApiConfig ? apiKey : null, 
+        apiUrl: useCustomApiConfig ? apiUrl : null 
+    }); 
   };
   
   const handleResetToDefaults = () => {
+    setUseCustomApiConfig(DEFAULT_APP_SETTINGS.useCustomApiConfig);
+    setApiKey(DEFAULT_APP_SETTINGS.apiKey);
+    setApiUrl(DEFAULT_APP_SETTINGS.apiUrl);
+    setShowApiKey(false);
+
     setModelId(DEFAULT_CHAT_SETTINGS.modelId);
     setTemperature(DEFAULT_CHAT_SETTINGS.temperature); 
     setTopP(DEFAULT_CHAT_SETTINGS.topP);           
@@ -69,12 +90,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
   
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
+  const inputBaseClasses = "w-full p-2.5 border rounded-md focus:ring-1 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
+  const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
+  const disabledInputClasses = "bg-[var(--theme-bg-secondary)] border-[var(--theme-border-primary)] opacity-60 cursor-not-allowed";
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <div className="bg-[var(--theme-bg-tertiary)] p-6 rounded-lg shadow-xl w-full max-w-lg transform transition-all scale-100 opacity-100">
         <div className="flex justify-between items-center mb-6">
-          <h2 id="settings-title" className="text-xl font-semibold text-[var(--theme-text-link)]">Chat Settings</h2>
+          <h2 id="settings-title" className="text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
+             <Settings2 size={22} className="mr-2 opacity-80" /> Chat Settings
+          </h2>
           <button
             onClick={onClose}
             className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors"
@@ -85,6 +112,88 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
 
         <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-3 -mr-3 custom-scrollbar"> 
+          {/* API Configuration Section */}
+          <div className="space-y-4 p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
+            <h3 className="text-md font-semibold text-[var(--theme-text-primary)] flex items-center mb-3">
+              <KeyRound size={18} className="mr-2 text-[var(--theme-text-link)] opacity-80" />
+              API Configuration
+            </h3>
+
+            {/* Use Custom API Config Toggle */}
+            <div className="flex items-center justify-between py-1">
+              <label htmlFor="use-custom-api-config-toggle" className="text-sm font-medium text-[var(--theme-text-secondary)]">
+                Use Custom API Configuration
+              </label>
+              <button
+                id="use-custom-api-config-toggle"
+                onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}
+                className={`p-1 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] ${
+                  useCustomApiConfig ? 'bg-[var(--theme-bg-accent)] focus:ring-[var(--theme-bg-accent)]' : 'bg-[var(--theme-bg-input)] focus:ring-[var(--theme-border-focus)]'
+                }`}
+                aria-pressed={useCustomApiConfig}
+              >
+                {useCustomApiConfig ? <ToggleRight size={28} className="text-white" /> : <ToggleLeft size={28} className="text-[var(--theme-text-tertiary)]" />}
+              </button>
+            </div>
+            {!useCustomApiConfig && (
+                 <p className="text-xs text-[var(--theme-text-tertiary)] flex items-center bg-[var(--theme-bg-info)] bg-opacity-30 p-2 rounded-md border border-[var(--theme-border-secondary)]">
+                    <Info size={14} className="mr-1.5 flex-shrink-0 text-[var(--theme-text-info)]" />
+                    Currently using default API setup (via `process.env.API_KEY`). Enable toggle for custom settings.
+                </p>
+            )}
+
+            {/* API Key */}
+            <div className={`${!useCustomApiConfig ? 'opacity-50' : ''}`}>
+              <label htmlFor="api-key-input" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Gemini API Key</label>
+              <div className="relative">
+                <input
+                  id="api-key-input"
+                  type={showApiKey ? 'text' : 'password'}
+                  value={apiKey || ''}
+                  onChange={(e) => setApiKey(e.target.value || null)}
+                  className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} pr-10`}
+                  placeholder={useCustomApiConfig ? "Enter your Gemini API Key" : "Using default"}
+                  aria-label="Gemini API Key input"
+                  disabled={!useCustomApiConfig}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute inset-y-0 right-0 px-3 flex items-center text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:cursor-not-allowed"
+                  aria-label={showApiKey ? "Hide API Key" : "Show API Key"}
+                  disabled={!useCustomApiConfig}
+                >
+                  {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {useCustomApiConfig && (
+                <p className="mt-1 text-xs text-[var(--theme-text-tertiary)]">
+                    Your custom API key for Gemini services.
+                </p>
+              )}
+            </div>
+
+            {/* API URL */}
+            <div className={`${!useCustomApiConfig ? 'opacity-50' : ''}`}>
+              <label htmlFor="api-url-input" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Gemini API URL (Optional)</label>
+              <input
+                id="api-url-input"
+                type="text"
+                value={apiUrl || ''}
+                onChange={(e) => setApiUrl(e.target.value || null)}
+                className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses}`}
+                placeholder={useCustomApiConfig ? "e.g., https://your-proxy.com/v1beta" : "Using default"}
+                aria-label="Gemini API URL input"
+                disabled={!useCustomApiConfig}
+              />
+               {useCustomApiConfig && (
+                <p className="mt-1 text-xs text-[var(--theme-text-tertiary)]">
+                    Advanced: Override default API endpoint. Standard SDK may not use this directly.
+                </p>
+               )}
+            </div>
+          </div>
+          
           {/* Theme Selection */}
           <div>
             <label htmlFor="theme-select" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">Theme (Global)</label>
