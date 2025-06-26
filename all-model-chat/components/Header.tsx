@@ -1,7 +1,10 @@
 
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, FilePlus2, Wand2 } from 'lucide-react'; 
 import { ModelOption } from '../types';
+import { translations } from '../utils/appUtils';
 
 interface HeaderProps {
   onNewChat: () => void; // Changed from onClearChat
@@ -19,6 +22,7 @@ interface HeaderProps {
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean; // New prop for canvas prompt status
+  t: (key: keyof typeof translations) => string;
 }
 
 const MOBILE_BREAKPOINT = 640; // Tailwind's sm breakpoint
@@ -39,6 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   isHistorySidebarOpen,
   onLoadCanvasPrompt,
   isCanvasPromptActive, // Destructure new prop
+  t,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
@@ -103,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
           {!isMobileView && (
-            <h1 className="text-lg sm:text-xl font-bold text-[var(--theme-text-link)] whitespace-nowrap">All Model Chat</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-[var(--theme-text-link)] whitespace-nowrap">{t('headerTitle')}</h1>
           )}
           
           {!isMobileView && (
@@ -159,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
         <label htmlFor="streaming-toggle-header" className="flex items-center cursor-pointer select-none py-1.5 px-1 sm:px-2 rounded-lg hover:bg-[var(--theme-bg-input)] transition-colors" title={isStreamingEnabled ? "Streaming enabled" : "Streaming disabled"}>
-            <span className="mr-1 text-xs text-[var(--theme-text-secondary)]">Stream</span>
+            <span className="mr-1 text-xs text-[var(--theme-text-secondary)]">{t('headerStream')}</span>
             <div className="relative">
                 <input
                 id="streaming-toggle-header"
@@ -203,7 +208,7 @@ export const Header: React.FC<HeaderProps> = ({
           onClick={onNewChat}
           className="p-2.5 sm:p-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-clear-chat)] rounded-lg shadow transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg-accent)] focus:ring-opacity-50 flex items-center justify-center"
           aria-label="Start a new chat session"
-          title={`New Chat (${newChatShortcut})`}
+          title={`${t('headerNewChat')} (${newChatShortcut})`}
         >
           <FilePlus2 size={window.innerWidth < MOBILE_BREAKPOINT ? 14 : 16} />
         </button>

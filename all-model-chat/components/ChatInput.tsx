@@ -1,4 +1,6 @@
 
+
+
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Send, Loader2, Edit2, Ban, Paperclip, XCircle, FileText, FileVideo, FileAudio, AlertTriangleIcon, CheckCircle, Link2, ClipboardCopy, Check, Plus, X, UploadCloud, FileSignature, Save } from 'lucide-react'; // Added Save icon
 import { UploadedFile } from '../types';
@@ -10,6 +12,7 @@ import {
   SUPPORTED_PDF_MIME_TYPES,
   ALL_SUPPORTED_MIME_TYPES,
 } from '../constants';
+import { translations } from '../utils/appUtils';
 
 interface ChatInputProps {
   inputText: string;
@@ -25,7 +28,8 @@ interface ChatInputProps {
   onAddFileById: (fileId: string) => Promise<void>;
   onCancelUpload: (fileId: string) => void; // New prop for cancelling upload
   isProcessingFile: boolean; 
-  fileError: string | null;    
+  fileError: string | null;
+  t: (key: keyof typeof translations) => string;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 44; // approx for p-2.5 and text-base line height
@@ -157,7 +161,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onAddFileById,
   onCancelUpload,
   isProcessingFile, 
-  fileError, 
+  fileError,
+  t,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -467,7 +472,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             onPaste={handlePaste}
-            placeholder="询问任何问题"
+            placeholder={t('chatInputPlaceholder')}
             className="flex-grow p-2 sm:p-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] overflow-y-auto text-sm sm:text-base"
             rows={1}
             style={{ 

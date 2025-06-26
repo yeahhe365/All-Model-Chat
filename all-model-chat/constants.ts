@@ -1,9 +1,16 @@
 
 
 
+
 import { ModelOption, AppSettings } from './types'; 
 
 export const DEFAULT_MODEL_ID = 'gemini-2.5-pro'; 
+
+export const TAB_CYCLE_MODELS: string[] = [
+    'gemini-2.5-pro',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite-preview-06-17',
+];
 
 const MARKDOWN_FORMATTING_INSTRUCTIONS = ``; 
 
@@ -255,6 +262,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   useCustomApiConfig: false, // Default to using environment variables
   apiKey: null,
   apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
+  language: 'system',
 };
 
 export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>

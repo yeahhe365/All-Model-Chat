@@ -87,6 +87,7 @@ export interface AppSettings extends ChatSettings {
  useCustomApiConfig: boolean; // Added for custom API config toggle
  apiKey: string | null;
  apiUrl: string | null;
+ language: 'en' | 'zh' | 'system';
 }
 
 
