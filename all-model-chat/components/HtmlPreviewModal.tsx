@@ -29,6 +29,8 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
+  const iconSize = window.innerWidth < 640 ? 18 : 20;
+
 
   const enterTrueFullscreen = useCallback(async () => {
     if (iframeRef.current && document.fullscreenEnabled) {
@@ -158,13 +160,18 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   const FullscreenToggleButton: React.FC = () => (
     <button
       onClick={isTrueFullscreen ? exitTrueFullscreen : enterTrueFullscreen}
-      className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+      className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
       aria-label={isTrueFullscreen ? "Exit true fullscreen" : "Enter true fullscreen"}
       title={isTrueFullscreen ? "Exit Fullscreen" : "Enter Fullscreen (Browser)"}
     >
-      {isTrueFullscreen ? <Minimize size={20} /> : <Expand size={20} strokeWidth={2.5} />}
+      {isTrueFullscreen ? <Minimize size={iconSize} /> : <Expand size={iconSize} strokeWidth={2.5} />}
     </button>
   );
+
+  const handleIframeError = (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
+    console.error("Iframe loading error:", event);
+    // You could potentially display a message to the user here
+  };
 
   return (
     <div
@@ -178,47 +185,48 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
         className="bg-[var(--theme-bg-primary)] w-full h-full shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()} 
       >
-        <header className="py-1.5 sm:py-2 px-3 sm:px-4 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0 bg-[var(--theme-bg-secondary)]">
-          <h2 id="html-preview-modal-title" className="text-base sm:text-lg font-semibold text-[var(--theme-text-link)] truncate pr-2" title={previewTitle}>
+        <header className="py-1 px-2 sm:py-1.5 sm:px-3 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0 bg-[var(--theme-bg-secondary)]">
+          <h2 id="html-preview-modal-title" className="text-sm sm:text-base font-semibold text-[var(--theme-text-link)] truncate pr-2" title={previewTitle}>
             {previewTitle}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <FullscreenToggleButton />
             <button
                 onClick={handleDownload}
-                className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+                className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
                 aria-label="Download HTML content"
                 title="Download HTML"
             >
-                <Download size={20} /> 
+                <Download size={iconSize} /> 
             </button>
             <button
               onClick={handleRefresh}
-              className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
-              aria-label="Refresh HTML content"
-              title="Refresh HTML"
+              className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+              aria-label="Refresh preview content"
+              title="Refresh Preview"
             >
-              <RotateCw size={20} />
+              <RotateCw size={iconSize} />
             </button>
-            <button
-              onClick={onClose}
-              className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
-              aria-label="Close HTML preview"
-              title="Close (Esc)"
-            >
-              <X size={22} />
-            </button>
+            {!isTrueFullscreen && (
+                <button
+                onClick={onClose}
+                className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+                aria-label="Close HTML preview"
+                title="Close Preview (Esc)"
+                >
+                <X size={iconSize + 2} />
+                </button>
+            )}
           </div>
         </header>
-        <div className="flex-grow w-full h-full overflow-hidden bg-white"> 
+        <div className="flex-grow relative bg-[var(--theme-bg-secondary)]">
           <iframe
             ref={iframeRef}
             srcDoc={htmlContent}
-            title={previewTitle}
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-modals" 
-            className="w-full h-full border-none"
-            aria-label="HTML content preview area"
-            allowFullScreen // Important for Fullscreen API
+            title="HTML Content Preview"
+            className="w-full h-full border-none bg-white" 
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+            onError={handleIframeError}
           />
         </div>
       </div>

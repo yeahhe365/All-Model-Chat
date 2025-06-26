@@ -82,7 +82,14 @@
     body {
       scrollbar-width: thin; /* For Firefox */
       scrollbar-color: var(--theme-scrollbar-thumb) var(--theme-scrollbar-track); /* For Firefox */
+      font-size: 16px; /* Base font size for mobile */
     }
+    @media (min-width: 640px) { /* sm breakpoint */
+      body {
+        font-size: 18px; /* Default base font size for larger screens */
+      }
+    }
+
     /* For Webkit browsers */
     body::-webkit-scrollbar {
       width: 8px;
@@ -100,8 +107,8 @@
     .markdown-body {
       background-color: transparent !important; /* Override github-markdown-css default bg */
       color: var(--theme-text-primary) !important; /* Inherit text color from parent */
-      font-size: 1.8rem; /* Updated from 2.0rem to match new 18px default base */
-      line-height: 1.7; 
+      font-size: 1rem; /* Base size for markdown, App.tsx will set specific size based on user settings */
+      line-height: 1.6; 
     }
     .markdown-body p,
     .markdown-body ul,
@@ -111,19 +118,44 @@
     .markdown-body table,
     .markdown-body dl {
       margin-top: 0;
-      margin-bottom: 28px; /* Increased from 26px */
+      margin-bottom: 1em; /* Adjusted default margin */
     }
     /* Remove bottom margin from the last element within markdown content to prevent extra space in message bubbles */
     .markdown-body > :last-child {
       margin-bottom: 0px !important;
     }
     .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
-      margin-top: 38px; /* Increased from 34px */
-      margin-bottom: 26px; /* Increased from 23px */
+      margin-top: 1.5em; 
+      margin-bottom: 0.8em; 
       font-weight: 600;
       color: var(--theme-text-primary) !important; /* Ensure headings also inherit color */
       border-bottom-color: var(--theme-border-secondary) !important;
     }
+    .markdown-body h1 { font-size: 1.8em; }
+    .markdown-body h2 { font-size: 1.5em; }
+    .markdown-body h3 { font-size: 1.25em; }
+    @media (min-width: 640px) { /* sm breakpoint */
+      .markdown-body {
+        line-height: 1.7;
+      }
+      .markdown-body p,
+      .markdown-body ul,
+      .markdown-body ol,
+      .markdown-body blockquote,
+      .markdown-body pre,
+      .markdown-body table,
+      .markdown-body dl {
+        margin-bottom: 28px; /* Increased from 26px */
+      }
+      .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+        margin-top: 38px; /* Increased from 34px */
+        margin-bottom: 26px; /* Increased from 23px */
+      }
+      .markdown-body h1 { font-size: 2em; }
+      .markdown-body h2 { font-size: 1.75em; }
+      .markdown-body h3 { font-size: 1.5em; }
+    }
+
     /* Styling for inline code */
     .markdown-body code:not(pre code) {
       background-color: var(--markdown-code-bg) !important;
@@ -134,24 +166,31 @@
       border-radius: 3px;
     }
     .markdown-body pre {
-      /* highlight.js theme (a11y-dark) will set background on pre code.hljs */
-      /* We can set our themed background on <pre> itself if needed, */
-      /* but let's allow highlight.js theme to control its specific code block background for better color harmony. */
-      /* background-color: var(--markdown-pre-bg) !important; */
-      padding: 12px !important;
-      padding-top: 2.8rem !important; /* Adjusted to make space for copy button */
+      padding: 10px !important; /* Mobile padding */
+      padding-top: 2.5rem !important; /* Mobile padding top for header */
       border-radius: 6px !important;
       overflow: auto;
       position: relative !important; /* Added for positioning the copy button */
       border: 1px solid var(--theme-border-secondary);
     }
+     @media (min-width: 640px) { /* sm breakpoint */
+        .markdown-body pre {
+            padding: 12px !important;
+            padding-top: 2.8rem !important; /* Adjusted to make space for copy button */
+        }
+     }
     /* Styling for code inside pre, primarily for font size and to ensure it doesn't get another background */
     .markdown-body pre code, .markdown-body pre code.hljs {
       background-color: transparent !important; /* Ensure code tag itself is transparent, pre code.hljs from theme provides actual bg */
       color: inherit !important; /* Inherit color from pre (which inherits from markdown-body) or let hljs override */
       padding: 0 !important; /* highlight.js theme usually adds padding to pre code.hljs */
-      font-size: 0.9rem !important; /* Remains 0.9rem */
+      font-size: 0.85rem !important; /* Mobile font size */
     }
+     @media (min-width: 640px) { /* sm breakpoint */
+        .markdown-body pre code, .markdown-body pre code.hljs {
+            font-size: 0.9rem !important;
+        }
+     }
     .markdown-body a {
         color: var(--markdown-link-text) !important;
     }
@@ -187,10 +226,26 @@
     .code-block-header {
         background-color: var(--theme-bg-code-block-header) !important;
         border-bottom: 1px solid var(--theme-border-secondary) !important;
+        height: 2.5rem; /* Mobile header height */
+        padding-left: 0.5rem; /* Mobile padding */
+        padding-right: 0.5rem; /* Mobile padding */
+    }
+    @media (min-width: 640px) { /* sm breakpoint */
+      .code-block-header {
+        height: 2.8rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
     }
     .code-block-utility-button {
         background-color: var(--theme-bg-tertiary) !important;
         color: var(--theme-text-secondary) !important;
+        padding: 0.25rem; /* Mobile padding */
+    }
+    @media (min-width: 640px) { /* sm breakpoint */
+      .code-block-utility-button {
+        padding: 0.375rem; /* p-1.5 */
+      }
     }
     .code-block-utility-button:hover {
         background-color: var(--theme-bg-secondary) !important;
@@ -201,6 +256,7 @@
     }
     .code-block-toggle-button {
         color: var(--theme-text-tertiary) !important;
+        font-size: 0.75rem; /* text-xs */
     }
     .code-block-toggle-button:hover {
         color: var(--theme-text-secondary) !important;
@@ -209,26 +265,19 @@
         ring: 1px solid var(--theme-border-focus) !important;
     }
 
-    /* Override highlight.js theme background on pre if our variable is set and we want it to win */
-    /* pre.hljs might be set by some themes, pre code.hljs by others. a11y-dark uses pre code.hljs */
-    /* If you want your theme's pre background to always win: */
-    /* .markdown-body pre { background-color: var(--markdown-pre-bg) !important; } */
-    /* If you want highlight.js theme's background (recommended for syntax color harmony): */
-    /* Ensure the above line is commented out or remove !important if highlight.js CSS is loaded after this style block. */
-    /* The current setup attempts to make `pre code` transparent, allowing `pre code.hljs` background to show. */
-    /* And `pre` itself has `var(--markdown-pre-bg)`. This might cause double background. */
-    /* Let's simplify: `pre` has our theme's background. `pre code.hljs` will have its specific bg from a11y-dark. */
-    /* To avoid conflict and ensure a11y-dark's background is used for the code area: */
     .markdown-body pre {
       background-color: var(--markdown-pre-bg) !important; /* This is the outer pre background */
     }
     .markdown-body pre code.hljs { /* This is from highlight.js theme */
-      /* a11y-dark sets padding and background here. Let it. */
-      /* We override our .markdown-body pre code's transparent bg to let this one win for highlighted blocks */
       background-color: #2b2b2b !important; /* Specific to a11y-dark, or remove if other themes are used */
       color: #f8f8f2 !important; /* Specific to a11y-dark */
-      padding: 1em !important; /* Specific to a11y-dark */
+      padding: 0.8em !important; /* Mobile padding for hljs */
     }
+     @media (min-width: 640px) { /* sm breakpoint */
+        .markdown-body pre code.hljs {
+            padding: 1em !important;
+        }
+     }
      .markdown-body pre code:not(.hljs) { /* Non-highlighted code inside pre, e.g. language not found */
         background-color: transparent !important; /* Make sure it's transparent */
         color: var(--theme-text-code) !important; /* Use a fallback color */
@@ -238,6 +287,24 @@
     .katex {
       font-family: 'KaTeX_Main', 'Times New Roman', serif !important;
     }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: var(--theme-scrollbar-track);
+        border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: var(--theme-scrollbar-thumb);
+        border-radius: 3px;
+    }
+    .custom-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: var(--theme-scrollbar-thumb) var(--theme-scrollbar-track);
+    }
+
 
   </style>
 <script type="importmap">
@@ -256,6 +323,7 @@
     "remark-gfm": "https://esm.sh/remark-gfm@^4.0.0",
     "remark-math": "https://esm.sh/remark-math@^6.0.0",
     "rehype-katex": "https://esm.sh/rehype-katex@^7.0.0",
+    "rehype-highlight": "https://esm.sh/rehype-highlight@^7.0.0",
     "katex": "https://esm.sh/katex@0.16.9/dist/katex.mjs"
   }
 }

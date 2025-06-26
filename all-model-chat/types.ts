@@ -1,7 +1,7 @@
 
 
 
-import { Chat, Part, File as GeminiFile } from "@google/genai"; // Added GeminiFile import
+import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai"; // Added GeminiFile and UsageMetadata import
 import { ThemeColors } from './constants'; 
 
 export interface UploadedFile {
@@ -20,7 +20,8 @@ export interface UploadedFile {
   rawFile?: File; // Temporary storage for the browser File object before API upload
   fileUri?: string; // URI returned by Gemini API (e.g., "files/xxxxxxxx")
   fileApiName?: string; // Full resource name from API (e.g., "files/xxxxxxxx")
-  uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed'; // State of the file on Gemini API
+  uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled'; // State of the file on Gemini API
+  abortController?: AbortController; // Added for cancelling uploads
 }
 
 export interface ChatMessage {
@@ -33,6 +34,10 @@ export interface ChatMessage {
   isLoading?: boolean; 
   generationStartTime?: Date; 
   generationEndTime?: Date;   
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  cumulativeTotalTokens?: number; // Added for cumulative token count
 }
 
 export interface ModelOption {
@@ -102,7 +107,7 @@ export interface GeminiService {
     onChunk: (chunk: string) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: () => void
+    onComplete: (usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
   sendMessageNonStream: ( 
     chat: Chat,
@@ -110,10 +115,10 @@ export interface GeminiService {
     promptParts: ContentPart[],
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (fullText: string, thoughtsText?: string) => void
+    onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
   getAvailableModels: () => Promise<ModelOption[]>;
-  uploadFile: (file: File, mimeType: string, displayName: string) => Promise<GeminiFile>; 
+  uploadFile: (file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>; // Added AbortSignal
   getFileMetadata: (fileApiName: string) => Promise<GeminiFile | null>; // Added to get file metadata
 }
 

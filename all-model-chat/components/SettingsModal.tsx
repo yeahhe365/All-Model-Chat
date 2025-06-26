@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { ModelOption, AppSettings, ChatSettings as IndividualChatSettings } from '../types';
 import { Loader2, X, Info, Pin, Wand2, RotateCcw, Ban, Save, Eye, EyeOff, KeyRound, Server, ToggleLeft, ToggleRight, Settings2 } from 'lucide-react'; 
@@ -90,32 +91,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
   
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
-  const inputBaseClasses = "w-full p-2.5 border rounded-md focus:ring-1 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
+  const inputBaseClasses = "w-full p-2 sm:p-2.5 border rounded-md focus:ring-1 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
   const disabledInputClasses = "bg-[var(--theme-bg-secondary)] border-[var(--theme-border-primary)] opacity-60 cursor-not-allowed";
+  const iconSize = window.innerWidth < 640 ? 16 : 18;
+  const headingIconSize = window.innerWidth < 640 ? 20 : 22;
+  const actionButtonIconSize = window.innerWidth < 640 ? 14 : 16;
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-      <div className="bg-[var(--theme-bg-tertiary)] p-6 rounded-lg shadow-xl w-full max-w-lg transform transition-all scale-100 opacity-100">
-        <div className="flex justify-between items-center mb-6">
-          <h2 id="settings-title" className="text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
-             <Settings2 size={22} className="mr-2 opacity-80" /> Chat Settings
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div className="bg-[var(--theme-bg-tertiary)] p-4 sm:p-6 rounded-lg shadow-xl w-full max-w-md sm:max-w-lg transform transition-all scale-100 opacity-100">
+        <div className="flex justify-between items-center mb-4 sm:mb-6">
+          <h2 id="settings-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
+             <Settings2 size={headingIconSize} className="mr-2 opacity-80" /> Chat Settings
           </h2>
           <button
             onClick={onClose}
             className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors"
             aria-label="Close settings"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-3 -mr-3 custom-scrollbar"> 
+        <div className="space-y-4 sm:space-y-5 max-h-[70vh] overflow-y-auto pr-2 sm:pr-3 -mr-2 sm:-mr-3 custom-scrollbar"> 
           {/* API Configuration Section */}
-          <div className="space-y-4 p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
-            <h3 className="text-md font-semibold text-[var(--theme-text-primary)] flex items-center mb-3">
-              <KeyRound size={18} className="mr-2 text-[var(--theme-text-link)] opacity-80" />
+          <div className="space-y-3 sm:space-y-4 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
+            <h3 className="text-base sm:text-md font-semibold text-[var(--theme-text-primary)] flex items-center mb-2 sm:mb-3">
+              <KeyRound size={iconSize} className="mr-2 text-[var(--theme-text-link)] opacity-80" />
               API Configuration
             </h3>
 
@@ -127,17 +131,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <button
                 id="use-custom-api-config-toggle"
                 onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}
-                className={`p-1 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] ${
+                className={`p-0.5 sm:p-1 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] ${
                   useCustomApiConfig ? 'bg-[var(--theme-bg-accent)] focus:ring-[var(--theme-bg-accent)]' : 'bg-[var(--theme-bg-input)] focus:ring-[var(--theme-border-focus)]'
                 }`}
                 aria-pressed={useCustomApiConfig}
               >
-                {useCustomApiConfig ? <ToggleRight size={28} className="text-white" /> : <ToggleLeft size={28} className="text-[var(--theme-text-tertiary)]" />}
+                {useCustomApiConfig ? <ToggleRight size={iconSize + 4} className="text-white" /> : <ToggleLeft size={iconSize + 4} className="text-[var(--theme-text-tertiary)]" />}
               </button>
             </div>
             {!useCustomApiConfig && (
-                 <p className="text-xs text-[var(--theme-text-tertiary)] flex items-center bg-[var(--theme-bg-info)] bg-opacity-30 p-2 rounded-md border border-[var(--theme-border-secondary)]">
-                    <Info size={14} className="mr-1.5 flex-shrink-0 text-[var(--theme-text-info)]" />
+                 <p className="text-xs text-[var(--theme-text-tertiary)] flex items-center bg-[var(--theme-bg-info)] bg-opacity-30 p-1.5 sm:p-2 rounded-md border border-[var(--theme-border-secondary)]">
+                    <Info size={12} className="mr-1.5 flex-shrink-0 text-[var(--theme-text-info)]" />
                     Currently using default API setup (via `process.env.API_KEY`). Enable toggle for custom settings.
                 </p>
             )}
@@ -151,7 +155,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   type={showApiKey ? 'text' : 'password'}
                   value={apiKey || ''}
                   onChange={(e) => setApiKey(e.target.value || null)}
-                  className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} pr-10`}
+                  className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} pr-8 sm:pr-10`}
                   placeholder={useCustomApiConfig ? "Enter your Gemini API Key" : "Using default"}
                   aria-label="Gemini API Key input"
                   disabled={!useCustomApiConfig}
@@ -159,11 +163,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute inset-y-0 right-0 px-3 flex items-center text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:cursor-not-allowed"
+                  className="absolute inset-y-0 right-0 px-2 sm:px-3 flex items-center text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:cursor-not-allowed"
                   aria-label={showApiKey ? "Hide API Key" : "Show API Key"}
                   disabled={!useCustomApiConfig}
                 >
-                  {showApiKey ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showApiKey ? <EyeOff size={iconSize-2} /> : <Eye size={iconSize-2} />}
                 </button>
               </div>
               {useCustomApiConfig && (
@@ -202,7 +206,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   id="theme-select"
                   value={themeId}
                   onChange={(e) => setThemeId(e.target.value)}
-                  className="bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm rounded-lg focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] block w-full p-2.5 appearance-none pr-8"
+                  className="bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm rounded-lg focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] block w-full p-2 sm:p-2.5 appearance-none pr-8"
                   aria-label="Select application theme"
                 >
                   {availableThemes.map((theme) => (
@@ -243,19 +247,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div>
             <label htmlFor="model-select" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1">AI Model (Current/New Chats)</label>
             {isModelsLoading ? (
-              <div className="flex items-center justify-start bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-secondary)] text-sm rounded-lg p-2.5 w-full">
-                <Loader2 size={16} className="animate-spin mr-2 text-[var(--theme-text-link)]" />
+              <div className="flex items-center justify-start bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-secondary)] text-sm rounded-lg p-2 sm:p-2.5 w-full">
+                <Loader2 size={iconSize-2} className="animate-spin mr-2 text-[var(--theme-text-link)]" />
                 <span>Loading models...</span>
               </div>
             ) : modelsLoadingError ? (
-                 <div className="text-sm text-[var(--theme-text-danger)] p-2.5 bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{modelsLoadingError}</div>
+                 <div className="text-sm text-[var(--theme-text-danger)] p-2 sm:p-2.5 bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{modelsLoadingError}</div>
             ) : (
               <div className="relative">
                 <select
                   id="model-select"
                   value={modelId}
                   onChange={(e) => setModelId(e.target.value)}
-                  className="bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm rounded-lg focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] block w-full p-2.5 appearance-none pr-8"
+                  className="bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm rounded-lg focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] block w-full p-2 sm:p-2.5 appearance-none pr-8"
                   disabled={availableModels.length === 0}
                   aria-label="Select AI Model for current or new chats"
                 >
@@ -279,7 +283,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 System Prompt (Current/New Chats)
                 {isSystemPromptSet && (
                     <span 
-                        className="ml-2 w-2.5 h-2.5 bg-[var(--theme-bg-success)] opacity-70 rounded-full" 
+                        className="ml-2 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[var(--theme-bg-success)] opacity-70 rounded-full" 
                         title="System prompt is active for current/new chats"
                         aria-label="System prompt is active for current/new chats"
                     ></span>
@@ -289,8 +293,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               id="system-prompt-input"
               value={systemInstruction}
               onChange={(e) => setSystemInstructionLocal(e.target.value)}
-              rows={4}
-              className="w-full p-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-y text-sm"
+              rows={3}
+              className="w-full p-2 sm:p-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-y text-sm"
               placeholder="e.g., You are a helpful AI assistant that speaks like a pirate."
               aria-label="System prompt text area for current or new chats"
             />
@@ -339,7 +343,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               type="checkbox"
               checked={showThoughts}
               onChange={(e) => setShowThoughts(e.target.checked)}
-              className="h-4 w-4 text-[var(--theme-bg-accent)] bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] rounded focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:ring-offset-1 focus:ring-offset-[var(--theme-bg-tertiary)]"
+              className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[var(--theme-bg-accent)] bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] rounded focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:ring-offset-1 focus:ring-offset-[var(--theme-bg-tertiary)]"
               aria-labelledby="show-thoughts-label"
             />
             <label id="show-thoughts-label" htmlFor="show-thoughts" className="ml-2 text-sm text-[var(--theme-text-secondary)]">
@@ -348,36 +352,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-[var(--theme-border-primary)]">
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-[var(--theme-border-primary)]">
           <button
             onClick={handleResetToDefaults}
             type="button"
-            className="px-3 py-2 border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 sm:w-auto flex items-center gap-2 text-sm"
+            className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
             aria-label="Reset settings to default"
             title="Reset to Defaults"
           >
-            <RotateCcw size={16} />
+            <RotateCcw size={actionButtonIconSize} />
             <span>Reset</span>
           </button>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
             <button
               onClick={onClose}
               type="button"
-              className="sm:flex-initial px-3 py-2 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 flex items-center gap-2 text-sm"
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
               aria-label="Cancel settings changes"
               title="Cancel"
             >
-              <Ban size={16} />
+              <Ban size={actionButtonIconSize} />
               <span>Cancel</span>
             </button>
             <button
               onClick={handleSave}
               type="button"
-              className="sm:flex-initial px-3 py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-75 flex items-center gap-2 text-sm"
+              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
               aria-label="Save chat settings"
               title="Save Settings"
             >
-              <Save size={16} />
+              <Save size={actionButtonIconSize} />
               <span>Save</span>
             </button>
           </div>

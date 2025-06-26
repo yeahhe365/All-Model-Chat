@@ -1,5 +1,7 @@
 
-import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState } from "@google/genai";
+
+
+import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -98,13 +100,22 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async uploadFile(file: File, mimeType: string, displayName: string): Promise<GeminiFile> {
+    async uploadFile(file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
         if (!this.ai) {
             console.error("Cannot upload file: API client not initialized.");
             throw new Error("API client not initialized. Configure API Key in settings.");
         }
+        if (signal.aborted) {
+            console.log(`Upload for "${displayName}" cancelled before starting.`);
+            const abortError = new Error("Upload cancelled by user.");
+            abortError.name = "AbortError";
+            throw abortError;
+        }
+
         try {
             const uploadConfig: UploadFileConfig = { mimeType, displayName };
+            // Note: The SDK's uploadFile doesn't directly take a signal for the HTTP request itself.
+            // Cancellation here primarily affects the polling loop.
             let uploadedFile = await this.ai.files.upload({
                 file: file,
                 config: uploadConfig,
@@ -112,28 +123,40 @@ class GeminiServiceImpl implements GeminiService {
 
             const startTime = Date.now();
             while (uploadedFile.state === 'PROCESSING' && (Date.now() - startTime) < MAX_POLLING_DURATION_MS) {
+                if (signal.aborted) {
+                    console.log(`Polling for "${displayName}" cancelled by user.`);
+                    // Even if cancelled, the file *might* still become active on the backend.
+                    // However, from the client's perspective, we are stopping.
+                    // We'll throw an error that the App.tsx can catch to mark as 'cancelled'.
+                    const abortError = new Error("Upload polling cancelled by user.");
+                    abortError.name = "AbortError";
+                    throw abortError;
+                }
                 console.log(`File "${displayName}" is PROCESSING. Polling again in ${POLLING_INTERVAL_MS / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
+                
+                if (signal.aborted) { // Check again after timeout
+                     const abortError = new Error("Upload polling cancelled by user after timeout.");
+                     abortError.name = "AbortError";
+                     throw abortError;
+                }
+
                 try {
                     uploadedFile = await this.ai.files.get({ name: uploadedFile.name });
                 } catch (pollError) {
                     console.error(`Error polling for file status "${displayName}":`, pollError);
-                    // If polling fails catastrophically, re-throw or return the file in its last known state (PROCESSING),
-                    // which might lead to it being treated as failed by the UI or stuck in processing.
-                    // For now, let's assume the upload failed if polling breaks.
                     throw new Error(`Polling failed for file ${displayName}. Original error: ${pollError instanceof Error ? pollError.message : String(pollError)}`);
                 }
             }
 
             if (uploadedFile.state === 'PROCESSING') {
                 console.warn(`File "${displayName}" is still PROCESSING after ${MAX_POLLING_DURATION_MS / 1000}s. Returning current state.`);
-                // You might want to throw an error or handle this as a timeout/failure.
-                // For now, it will be treated as 'processing_api' by App.tsx, and the button won't show.
             }
             
             return uploadedFile;
         } catch (error) {
             console.error(`Failed to upload and process file "${displayName}" to Gemini API:`, error);
+            // Re-throw to be handled by App.tsx
             throw error;
         }
     }
@@ -228,19 +251,23 @@ class GeminiServiceImpl implements GeminiService {
         onChunk: (chunk: string) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
-        onComplete: () => void
+        onComplete: (usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
         if (!this.ai) {
              onError(new Error("API client not initialized. Cannot send message."));
              onComplete();
              return;
         }
+        let finalUsageMetadata: UsageMetadata | undefined = undefined;
         try {
             const result = await chat.sendMessageStream({ message: promptParts as Part[] });
             for await (const chunkResponse of result) {
                 if (abortSignal.aborted) {
                     console.log("Streaming aborted by signal.");
                     break;
+                }
+                if (chunkResponse.usageMetadata) {
+                    finalUsageMetadata = chunkResponse.usageMetadata;
                 }
                 if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
                     for (const part of chunkResponse.candidates[0].content.parts) {
@@ -261,7 +288,7 @@ class GeminiServiceImpl implements GeminiService {
             console.error("Error sending message to Gemini (stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
         } finally {
-            onComplete();
+            onComplete(finalUsageMetadata);
         }
     }
 
@@ -271,23 +298,23 @@ class GeminiServiceImpl implements GeminiService {
         promptParts: ContentPart[],
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
-        onComplete: (fullText: string, thoughtsText?: string) => void
+        onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
          if (!this.ai) {
              onError(new Error("API client not initialized. Cannot send message."));
-             onComplete("", "");
+             onComplete("", "", undefined);
              return;
         }
         try {
             if (abortSignal.aborted) {
                 console.log("Non-streaming call prevented by abort signal before starting.");
-                onComplete("", "");
+                onComplete("", "", undefined);
                 return;
             }
             const response: GenerateContentResponse = await chat.sendMessage({ message: promptParts as Part[] });
             if (abortSignal.aborted) {
                 console.log("Non-streaming call completed, but aborted by signal before processing response.");
-                onComplete("", "");
+                onComplete("", "", undefined);
                 return;
             }
             let fullText = "";
@@ -307,7 +334,7 @@ class GeminiServiceImpl implements GeminiService {
             if (!fullText && response.text) {
                 fullText = response.text;
             }
-            onComplete(fullText, thoughtsText || undefined);
+            onComplete(fullText, thoughtsText || undefined, response.usageMetadata);
         } catch (error) {
             console.error("Error sending message to Gemini (non-stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));

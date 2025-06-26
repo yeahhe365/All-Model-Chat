@@ -27,11 +27,17 @@ import { SettingsModal } from './components/SettingsModal';
 import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
 import { HistorySidebar } from './components/HistorySidebar';
 import { geminiServiceInstance } from './services/geminiService';
-import { Chat } from '@google/genai';
+import { Chat, UsageMetadata } from '@google/genai';
 import { Paperclip } from 'lucide-react';
 
 const STREAMING_ENABLED_KEY = 'chatAppIsStreamingEnabled';
 const APP_SETTINGS_KEY = 'chatAppSettings';
+
+const TAB_CYCLE_MODELS = [
+    'gemini-2.5-pro',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite-preview-06-17',
+];
 
 
 const generateUniqueId = () => `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -185,8 +191,21 @@ const App: React.FC = () => {
 
     sessionSaveTimeoutRef.current = window.setTimeout(() => {
         if (currentMessages.length === 0 && (!currentActiveSessionId || !savedSessions.find(s => s.id === currentActiveSessionId))) {
-            return;
+             // If messages are empty AND it's not an existing saved session, don't create a new empty session history entry.
+            // However, if it IS an existing session that's just been cleared, we DO want to save its empty state.
+            const isExistingSession = currentActiveSessionId && savedSessions.find(s => s.id === currentActiveSessionId);
+            if (!isExistingSession) {
+                 // If it's a truly new session (activeSessionId is null or not in savedSessions) and it's empty, don't save.
+                if (activeSessionId && !localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY)) {
+                    // This means it was a new chat that never got saved, and then got cleared.
+                    // Remove any temp active ID.
+                    localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+                    setActiveSessionId(null); // Ensure UI reflects this too
+                }
+                return;
+            }
         }
+
 
         let sessionIdToSave = currentActiveSessionId;
         let isNewSessionInHistory = false;
@@ -200,7 +219,13 @@ const App: React.FC = () => {
             id: sessionIdToSave,
             title: generateSessionTitle(currentMessages),
             timestamp: Date.now(),
-            messages: currentMessages,
+            messages: currentMessages.map(msg => ({ 
+                ...msg,
+                files: msg.files?.map(f => {
+                    const { abortController, ...rest } = f; 
+                    return rest;
+                })
+            })),
             settings: currentSettingsToSave,
         };
 
@@ -221,14 +246,24 @@ const App: React.FC = () => {
         if (isNewSessionInHistory && sessionIdToSave) {
              setActiveSessionId(sessionIdToSave);
              localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionIdToSave);
+        } else if (!currentActiveSessionId && sessionIdToSave) {
+            // This case handles when an unsaved chat (activeSessionId was null) gets its first messages
+            // and thus its first save. We need to set it as active.
+            setActiveSessionId(sessionIdToSave);
+            localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionIdToSave);
         }
     }, 500);
-  }, [savedSessions]);
+  }, [savedSessions, activeSessionId]);
 
 
   useEffect(() => {
+    // Save if messages exist, OR if it's an existing session (even if messages are cleared for it).
     if (messages.length > 0 || (activeSessionId && savedSessions.find(s => s.id === activeSessionId))) {
         saveCurrentChatSession(messages, activeSessionId, currentChatSettings);
+    } else if (messages.length === 0 && !activeSessionId && localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY)) {
+        // This case handles if a new chat was started, active ID set, then cleared before any messages saved.
+        // We should remove the orphaned active ID.
+        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
     }
   }, [messages, activeSessionId, currentChatSettings, saveCurrentChatSession, savedSessions]);
 
@@ -253,6 +288,9 @@ const App: React.FC = () => {
     const bodyClassList = document.body.classList;
     AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
     bodyClassList.add(`theme-${currentTheme.id}`, 'antialiased');
+    
+    document.body.style.fontSize = `${appSettings.baseFontSize}px`;
+
 
   }, [appSettings, currentTheme]);
 
@@ -317,7 +355,7 @@ const App: React.FC = () => {
           { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', isPinned: true },
           { id: 'gemini-2.5-flash-lite-preview-06-17', name: 'Gemini 2.5 Flash Lite Preview', isPinned: true },
       ];
-      const explicitFlashPreviewId = 'gemini-2.5-flash';
+      const explicitFlashPreviewId = 'gemini-2.5-flash'; // Ensure this one is present even if API doesn't list it by this exact ID
 
       let modelsFromApi: ModelOption[] = [];
       try {
@@ -328,14 +366,15 @@ const App: React.FC = () => {
 
       const modelMap = new Map<string, ModelOption>();
       modelsFromApi.forEach(model => {
-          modelMap.set(model.id, { ...model, isPinned: false });
+          modelMap.set(model.id, { ...model, isPinned: false }); // API models are not pinned by default here
       });
       pinnedInternalModels.forEach(pinnedModel => {
-          modelMap.set(pinnedModel.id, pinnedModel);
+          modelMap.set(pinnedModel.id, pinnedModel); // Set or override with pinned models
       });
-      if (!modelMap.has(explicitFlashPreviewId)) {
+      if (!modelMap.has(explicitFlashPreviewId)) { // Add if missing after API + pinned
           modelMap.set(explicitFlashPreviewId, { id: explicitFlashPreviewId, name: 'Gemini 2.5 Flash Preview', isPinned: false });
       }
+
 
       let finalModels = Array.from(modelMap.values());
       finalModels.sort((a, b) => {
@@ -357,25 +396,27 @@ const App: React.FC = () => {
       setIsModelsLoading(false); setIsLoading(false);
     };
     fetchAndSetModels();
-  }, [appSettings.apiKey, appSettings.apiUrl, appSettings.useCustomApiConfig]); // Re-fetch models if API key/URL or custom config toggle changes
+  }, [appSettings.apiKey, appSettings.apiUrl, appSettings.useCustomApiConfig]); 
 
    useEffect(() => {
     const reinitializeIfNeeded = async () => {
         if (!activeSessionId && messages.length === 0) {
+            // New, empty chat session, initialize with current settings
             await initializeCurrentChatSession(currentChatSettings, []);
         } else {
+            // Existing session or messages present, reinitialize with history
             await initializeCurrentChatSession(currentChatSettings, createChatHistoryForApi(messages));
         }
     };
     reinitializeIfNeeded();
   }, [
-    activeSessionId,
-    currentChatSettings.modelId,
-    currentChatSettings.systemInstruction,
-    currentChatSettings.temperature,
-    currentChatSettings.topP,
-    currentChatSettings.showThoughts,
+    activeSessionId, 
+    currentChatSettings.modelId, 
+    currentChatSettings.systemInstruction, 
+    currentChatSettings.temperature, 
+    currentChatSettings.topP, 
     initializeCurrentChatSession,
+    // messages, // Removing messages from here to prevent re-init on every message change, only on settings change
   ]);
 
 
@@ -390,6 +431,7 @@ const App: React.FC = () => {
         timestamp: new Date(m.timestamp),
         generationStartTime: m.generationStartTime ? new Date(m.generationStartTime) : undefined,
         generationEndTime: m.generationEndTime ? new Date(m.generationEndTime) : undefined,
+        cumulativeTotalTokens: m.cumulativeTotalTokens,
       })));
       setCurrentChatSettings(sessionToLoad.settings);
       setActiveSessionId(sessionToLoad.id);
@@ -398,12 +440,11 @@ const App: React.FC = () => {
       setSelectedFiles([]);
       setEditingMessageId(null);
       userScrolledUp.current = false;
-      initializeCurrentChatSession(sessionToLoad.settings, createChatHistoryForApi(sessionToLoad.messages));
     } else {
       console.warn(`Session ${sessionId} not found. Starting new chat.`);
       startNewChat(false);
     }
-  }, [savedSessions, isLoading, initializeCurrentChatSession]);
+  }, [savedSessions, isLoading ]);
 
   const startNewChat = useCallback((saveCurrent: boolean = true) => {
     if (saveCurrent && activeSessionId && messages.length > 0) {
@@ -427,9 +468,100 @@ const App: React.FC = () => {
     setInputText('');
     setSelectedFiles([]);
     setEditingMessageId(null);
-    setChatSession(null);
+    setChatSession(null); 
     userScrolledUp.current = false;
+    setTimeout(() => {
+        document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+    }, 0);
   }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession]);
+
+  const handleClearCurrentChat = useCallback(() => {
+    if (isLoading && abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setMessages([]); 
+    setInputText('');
+    setSelectedFiles([]);
+    setEditingMessageId(null);
+    setAppFileError(null);
+    userScrolledUp.current = false; 
+    
+    setTimeout(() => {
+        document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+    }, 0);
+  }, [isLoading]);
+
+  const handleSelectModelInHeader = useCallback((modelId: string) => {
+    if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
+    setCurrentChatSettings(prev => ({ ...prev, modelId: modelId }));
+    setAppSettings(prev => ({ ...prev, modelId: modelId }));
+    userScrolledUp.current = false;
+  }, [isLoading, setCurrentChatSettings, setAppSettings]);
+
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        const activeElement = document.activeElement as HTMLElement;
+        
+        const isGenerallyInputFocused = 
+            activeElement && (
+                activeElement.tagName.toLowerCase() === 'input' ||
+                activeElement.tagName.toLowerCase() === 'textarea' ||
+                activeElement.tagName.toLowerCase() === 'select' ||
+                activeElement.isContentEditable
+            );
+
+        if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'n') {
+            event.preventDefault();
+            startNewChat(true); 
+        } 
+        else if (event.key === 'Delete') {
+            if (isSettingsModalOpen || isPreloadedMessagesModalOpen) {
+                return; 
+            }
+            const chatTextareaAriaLabel = 'Chat message input';
+            const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === chatTextareaAriaLabel;
+            
+            if (isGenerallyInputFocused) { // Check if any input is focused
+                if (isChatTextareaFocused && (activeElement as HTMLTextAreaElement).value.trim() === '') {
+                    event.preventDefault();
+                    handleClearCurrentChat(); 
+                }
+            } else { // No input focused, clear chat globally
+                event.preventDefault();
+                handleClearCurrentChat();
+            }
+        } else if (event.key === 'Tab' && TAB_CYCLE_MODELS.length > 0) {
+            const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
+
+            if (isChatTextareaFocused || !isGenerallyInputFocused) { // Cycle if chat textarea focused OR no general input is focused
+                event.preventDefault();
+                const currentModelId = currentChatSettings.modelId;
+                const currentIndex = TAB_CYCLE_MODELS.indexOf(currentModelId);
+                let nextIndex: number;
+
+                if (currentIndex === -1) { // Current model not in cycle list, start from first
+                    nextIndex = 0;
+                } else {
+                    nextIndex = (currentIndex + 1) % TAB_CYCLE_MODELS.length;
+                }
+                const newModelId = TAB_CYCLE_MODELS[nextIndex];
+                if (newModelId) {
+                    handleSelectModelInHeader(newModelId);
+                }
+            }
+            // If isGenerallyInputFocused is true AND isChatTextareaFocused is false,
+            // it means some *other* input/textarea/select/contentEditable has focus.
+            // In this case, we do nothing and allow default Tab behavior.
+        }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader]);
 
 
   const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
@@ -437,17 +569,18 @@ const App: React.FC = () => {
     setAppFileError(null);
     const filesArray = Array.isArray(files) ? files : Array.from(files);
 
-    for (const file of filesArray) {
-      const fileId = `${file.name}-${file.size}-${Date.now()}`;
+    const uploadPromises = filesArray.map(async (file) => {
+      const fileId = `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const controller = new AbortController();
+
       if (!ALL_SUPPORTED_MIME_TYPES.includes(file.type)) {
-        setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type}`, uploadState: 'failed' }]);
-        continue;
+        setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type}`, uploadState: 'failed', abortController: controller }]);
+        return; 
       }
 
-      const initialFileState: UploadedFile = { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending' };
+      const initialFileState: UploadedFile = { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
       setSelectedFiles(prev => [...prev, initialFileState]);
 
-      // Generate dataUrl for image previews
       if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -464,11 +597,10 @@ const App: React.FC = () => {
         reader.readAsDataURL(file);
       }
 
-      // Update state to indicate uploading process has started for this file
       setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
       try {
-        const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, file.type, file.name);
+        const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, file.type, file.name, controller.signal);
         setSelectedFiles(prev => prev.map(f => f.id === fileId ? {
           ...f,
           isProcessing: false,
@@ -477,20 +609,50 @@ const App: React.FC = () => {
           fileApiName: uploadedFileInfo.name,
           rawFile: undefined,
           uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'),
-          error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined) // Preserve existing read error
+          error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined),
+          abortController: undefined,
         } : f));
       } catch (uploadError) {
         console.error(`Error uploading file ${file.name}:`, uploadError);
+        let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
+        let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
+
+        if (uploadError instanceof Error && uploadError.name === 'AbortError') {
+            errorMsg = "Upload cancelled by user.";
+            uploadStateUpdate = 'cancelled';
+        }
         setSelectedFiles(prev => prev.map(f => f.id === fileId ? {
           ...f,
           isProcessing: false,
-          error: `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`,
+          error: errorMsg,
           rawFile: undefined,
-          uploadState: 'failed'
+          uploadState: uploadStateUpdate,
+          abortController: undefined,
         } : f));
       }
-    }
-  }, []);
+    });
+
+    await Promise.allSettled(uploadPromises);
+
+  }, [setSelectedFiles, setAppFileError]);
+
+  const handleCancelFileUpload = useCallback((fileIdToCancel: string) => {
+    setSelectedFiles(prevFiles =>
+      prevFiles.map(file => {
+        if (file.id === fileIdToCancel && file.abortController) {
+          console.log(`Cancelling upload for ${file.name}`);
+          file.abortController.abort();
+          return {
+            ...file,
+            isProcessing: false, 
+            error: "Cancelling...", 
+            uploadState: 'failed', 
+          };
+        }
+        return file;
+      })
+    );
+  }, [setSelectedFiles]);
 
   const handleAddFileById = useCallback(async (fileApiId: string) => {
     setAppFileError(null);
@@ -544,10 +706,7 @@ const App: React.FC = () => {
                 uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'),
                 error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined,
             };
-            // Attempt to generate dataUrl for images added by ID, if possible (might require another mechanism if direct data isn't available)
-             if (SUPPORTED_IMAGE_MIME_TYPES.includes(newFile.type) && newFile.fileUri /* explore ways to get data if needed */) {
-                // For now, we don't have direct image data from getFileMetadata for preview.
-                // This could be a future enhancement if the API provides a way to get a thumbnail or if we make assumptions.
+             if (SUPPORTED_IMAGE_MIME_TYPES.includes(newFile.type) && newFile.fileUri ) {
             }
             setSelectedFiles(prev => prev.map(f => f.id === tempClientFileId ? newFile : f));
         } else {
@@ -559,7 +718,7 @@ const App: React.FC = () => {
         setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
         setSelectedFiles(prev => prev.map(f => f.id === tempClientFileId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error: ${error instanceof Error ? error.message : "Unknown"}`, uploadState: 'failed' } : f));
     }
-  }, [selectedFiles]);
+  }, [selectedFiles, setSelectedFiles, setAppFileError]);
 
 
   const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);
@@ -605,7 +764,7 @@ const App: React.FC = () => {
         if (editMsgIndex !== -1) {
             baseMessagesForThisTurn = baseMessagesForThisTurn.slice(0, editMsgIndex);
             historyForNewSdkSession = createChatHistoryForApi(baseMessagesForThisTurn);
-            setMessages(baseMessagesForThisTurn);
+            setMessages(baseMessagesForThisTurn); 
             needsSdkReinitialization = true;
         }
         if (!overrideOptions) {
@@ -643,28 +802,85 @@ const App: React.FC = () => {
         setIsLoading(false);
         return;
     }
+    
+    let lastCumulativeTotalBeforeUserMessage = 0;
+    if (baseMessagesForThisTurn.length > 0) {
+        for (let i = baseMessagesForThisTurn.length - 1; i >= 0; i--) {
+            if (typeof baseMessagesForThisTurn[i].cumulativeTotalTokens === 'number') {
+                lastCumulativeTotalBeforeUserMessage = baseMessagesForThisTurn[i].cumulativeTotalTokens!;
+                break;
+            }
+        }
+    }
+    const userMsgWithPotentialCumulative = { ...userMessage, cumulativeTotalTokens: lastCumulativeTotalBeforeUserMessage };
 
-    setMessages(prevMessages => [...prevMessages, userMessage]);
+
+    setMessages(prevMessages => [...prevMessages, userMsgWithPotentialCumulative]);
 
     const modelMessageId = generateUniqueId();
     setMessages(prev => [ ...prev, { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() } ]);
+
+
+    const processModelMessageCompletion = (
+        prevMessages: ChatMessage[],
+        modelMsgId: string,
+        finalContent: string,
+        finalThoughts: string | undefined,
+        usageMeta?: UsageMetadata,
+        isAborted?: boolean
+    ) => {
+        let latestPrevCumulativeTotal = 0;
+        const potentialPreviousMessages = prevMessages.filter(m => m.id !== modelMsgId);
+        if (potentialPreviousMessages.length > 0) {
+            for (let i = potentialPreviousMessages.length - 1; i >= 0; i--) {
+                if (typeof potentialPreviousMessages[i].cumulativeTotalTokens === 'number') {
+                    latestPrevCumulativeTotal = potentialPreviousMessages[i].cumulativeTotalTokens!;
+                    break;
+                }
+            }
+        }
+        
+        const currentTurnTotalTokens = usageMeta?.totalTokenCount || 0;
+        const newCumulativeTotal = latestPrevCumulativeTotal + currentTurnTotalTokens;
+
+        return prevMessages.map(msg => {
+            if (msg.id === modelMsgId) {
+                let c = finalContent;
+                if (isAborted && !c.includes("[Stopped by user]")) c = c ? c + "\n\n[Stopped by user]" : "[Stopped by user]";
+                return {
+                    ...msg,
+                    isLoading: false,
+                    content: c,
+                    thoughts: currentChatSettings.showThoughts && finalThoughts ? finalThoughts : msg.thoughts,
+                    generationEndTime: new Date(),
+                    promptTokens: usageMeta?.promptTokenCount,
+                    completionTokens: usageMeta?.candidatesTokenCount,
+                    totalTokens: currentTurnTotalTokens,
+                    cumulativeTotalTokens: newCumulativeTotal,
+                };
+            }
+            return msg;
+        });
+    };
+
 
     if (isStreamingEnabled) {
         await geminiServiceInstance.sendMessageStream(sdkSessionForThisTurn, activeModelId, promptParts, currentSignal,
             (chunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)),
             (thoughtChunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)),
-            (error) => { setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; },
-            () => {
+            (error) => { 
+                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); 
+                setIsLoading(false); 
+                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; 
+            },
+            (usageMetadata) => {
                 const wasAborted = currentSignal.aborted;
                 setMessages(prev => {
-                    const finalMessages = prev.map(msg => {
-                        if (msg.id === modelMessageId && msg.isLoading) {
-                            let c = msg.content;
-                            if (wasAborted && !c.includes("[Stopped by user]")) c = c ? c + "\n\n[Stopped by user]" : "[Stopped by user]";
-                            return { ...msg, isLoading: false, content: c, generationEndTime: new Date() };
-                        }
-                        return msg;
-                    });
+                    const loadingMsg = prev.find(m => m.id === modelMessageId);
+                    const currentContent = loadingMsg?.content || "";
+                    const currentThoughts = loadingMsg?.thoughts;
+
+                    const finalMessages = processModelMessageCompletion(prev, modelMessageId, currentContent, currentThoughts, usageMetadata, wasAborted);
                     saveCurrentChatSession(finalMessages, activeSessionId, currentChatSettings);
                     return finalMessages;
                 });
@@ -672,20 +888,17 @@ const App: React.FC = () => {
                 if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
             }
         );
-    } else {
+    } else { 
         await geminiServiceInstance.sendMessageNonStream(sdkSessionForThisTurn, activeModelId, promptParts, currentSignal,
-            (error) => { setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; },
-            (fullText, thoughtsText) => {
+            (error) => { 
+                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); 
+                setIsLoading(false); 
+                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; 
+            },
+            (fullText, thoughtsText, usageMetadata) => {
                 const wasAborted = currentSignal.aborted;
-                setMessages(prev => {
-                    const finalMessages = prev.map(msg => {
-                        if (msg.id === modelMessageId) {
-                            let c = fullText;
-                            if (wasAborted && !c.includes("[Stopped by user]")) c = c ? c + "\n\n[Stopped by user]" : "[Stopped by user]";
-                            return { ...msg, content: c, thoughts: currentChatSettings.showThoughts && thoughtsText ? thoughtsText : msg.thoughts, isLoading: false, generationEndTime: new Date() };
-                        }
-                        return msg;
-                    });
+                 setMessages(prev => {
+                    const finalMessages = processModelMessageCompletion(prev, modelMessageId, fullText, thoughtsText, usageMetadata, wasAborted);
                     saveCurrentChatSession(finalMessages, activeSessionId, currentChatSettings);
                     return finalMessages;
                 });
@@ -748,6 +961,7 @@ const App: React.FC = () => {
     const updatedMessages = messages.filter(msg => msg.id !== messageId);
     setMessages(updatedMessages);
 
+
     if (editingMessageId === messageId) { setEditingMessageId(null); setInputText(''); setSelectedFiles([]); setAppFileError(null); }
 
     userScrolledUp.current = false;
@@ -779,24 +993,16 @@ const App: React.FC = () => {
       setMessages(prev => prev.map(m => m.isLoading ? {...m, isLoading: false, content: (m.content || "") + "\n\n[Stopped for retry]"} : m));
       setIsLoading(false);
     }
-
-    setMessages(prev => prev.slice(0, modelMessageIndex));
+    
+    setMessages(prev => prev.slice(0, modelMessageIndex -1));
 
     await handleSendMessage({
         text: userMessageToResend.content || '',
         files: userMessageToResend.files?.map(f => ({ ...f, isProcessing: false, progress: f.error ? 0 : 100, id: f.id || `${f.name}-${f.size}-${Date.now()}` })) || [],
-        editingId: userMessageToResend.id
     });
   };
 
 
-  const handleSelectModelInHeader = (modelId: string) => {
-    if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
-    // Update both current chat settings and app settings for persistence
-    setCurrentChatSettings(prev => ({ ...prev, modelId: modelId }));
-    setAppSettings(prev => ({ ...prev, modelId: modelId }));
-    userScrolledUp.current = false;
-  };
 
   const handleToggleStreaming = () => setIsStreamingEnabled(prev => !prev);
   const handleToggleHistorySidebar = () => setIsHistorySidebarOpen(prev => !prev);
@@ -875,9 +1081,9 @@ const App: React.FC = () => {
         onDrop={handleAppDrop}
       >
         {isAppDraggingOver && (
-          <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-20 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-2">
-            <Paperclip size={64} className="text-[var(--theme-bg-accent)] opacity-60 mb-4" />
-            <p className="text-2xl font-semibold text-[var(--theme-bg-accent)] opacity-85">Drop files anywhere to upload</p>
+          <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-20 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2">
+            <Paperclip size={window.innerWidth < 640 ? 48 : 64} className="text-[var(--theme-bg-accent)] opacity-60 mb-2 sm:mb-4" />
+            <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-bg-accent)] opacity-85 text-center px-2">Drop files anywhere to upload</p>
           </div>
         )}
         <Header
@@ -943,6 +1149,7 @@ const App: React.FC = () => {
           onCancelEdit={handleCancelEdit}
           onProcessFiles={handleProcessAndAddFiles}
           onAddFileById={handleAddFileById}
+          onCancelUpload={handleCancelFileUpload}
           isProcessingFile={isAppProcessingFile}
           fileError={appFileError}
         />

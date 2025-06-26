@@ -40,6 +40,10 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const [isProcessingImport, setIsProcessingImport] = useState(false);
 
   const importFileRef = useRef<HTMLInputElement>(null);
+  const headingIconSize = window.innerWidth < 640 ? 20 : 24;
+  const actionIconSize = window.innerWidth < 640 ? 14 : 16;
+  const listItemIconSize = window.innerWidth < 640 ? 12 : 14;
+
 
   useEffect(() => {
     if (isOpen) {
@@ -174,11 +178,11 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="scenarios-title">
-      <div className="bg-[var(--theme-bg-tertiary)] p-5 sm:p-6 rounded-lg shadow-xl w-full max-w-2xl flex flex-col transform transition-all scale-100 opacity-100 max-h-[90vh]">
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h2 id="scenarios-title" className="text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
-            <MessageSquare size={24} className="mr-2 opacity-80" />
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="scenarios-title">
+      <div className="bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md sm:max-w-2xl flex flex-col transform transition-all scale-100 opacity-100 max-h-[90vh]">
+        <div className="flex justify-between items-center mb-3 sm:mb-4">
+          <h2 id="scenarios-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
+            <MessageSquare size={headingIconSize} className="mr-2 opacity-80" />
             Manage Preloaded Scenarios
           </h2>
           <button
@@ -186,31 +190,31 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
             className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors"
             aria-label="Close scenarios manager"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Feedback Area */}
         {feedback && (
-          <div className={`mb-4 p-3 rounded-md text-sm flex items-center
+          <div className={`mb-3 sm:mb-4 p-2 sm:p-3 rounded-md text-xs sm:text-sm flex items-center
             ${feedback.type === 'success' ? 'bg-[var(--theme-bg-success)] text-[var(--theme-text-success)]' : ''}
             ${feedback.type === 'error' ? 'bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)]' : ''}
             ${feedback.type === 'info' ? 'bg-[var(--theme-bg-info)] text-[var(--theme-text-info)]' : ''}
           `}>
-            {feedback.type === 'success' && <CheckCircle size={18} className="mr-2" />}
-            {feedback.type === 'error' && <AlertTriangle size={18} className="mr-2" />}
+            {feedback.type === 'success' && <CheckCircle size={actionIconSize} className="mr-1.5 sm:mr-2" />}
+            {feedback.type === 'error' && <AlertTriangle size={actionIconSize} className="mr-1.5 sm:mr-2" />}
             {feedback.message}
           </div>
         )}
 
         {/* Message Editor/Adder */}
-        <div className="mb-6 p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)] shadow">
-          <h3 className="text-sm font-medium text-[var(--theme-text-secondary)] mb-3">{editingMessage ? 'Edit Message' : 'Add New Message'}</h3>
-          <div className="flex items-center gap-2 mb-2">
+        <div className="mb-4 sm:mb-6 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)] shadow">
+          <h3 className="text-xs sm:text-sm font-medium text-[var(--theme-text-secondary)] mb-2 sm:mb-3">{editingMessage ? 'Edit Message' : 'Add New Message'}</h3>
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
             <select
               value={newMessageRole}
               onChange={(e) => setNewMessageRole(e.target.value as 'user' | 'model')}
-              className="bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] p-2 w-auto"
+              className="bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-xs sm:text-sm rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] p-1.5 sm:p-2 w-auto"
               aria-label="Select message role"
             >
               <option value="user">User</option>
@@ -220,49 +224,49 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
               id="new-message-content"
               value={newMessageContent}
               onChange={(e) => setNewMessageContent(e.target.value)}
-              rows={3}
-              className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm resize-y"
+              rows={2}
+              className="flex-grow p-1.5 sm:p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-xs sm:text-sm resize-y"
               placeholder="Enter message content..."
               aria-label="Message content input"
             />
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-1.5 sm:gap-2">
             {editingMessage && (
                 <button
                     onClick={() => { setEditingMessage(null); setNewMessageContent(''); setNewMessageRole('user'); }}
-                    className="px-3 py-1.5 text-xs bg-[var(--theme-bg-input)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-secondary)] rounded-md transition-colors"
+                    className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs bg-[var(--theme-bg-input)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-secondary)] rounded-md transition-colors"
                 >
                     Cancel Edit
                 </button>
             )}
             <button
               onClick={handleAddOrUpdateMessage}
-              className="px-3 py-1.5 text-xs bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors flex items-center"
+              className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors flex items-center"
             >
-              <PlusCircle size={14} className="mr-1" /> {editingMessage ? 'Update Message' : 'Add Message'}
+              <PlusCircle size={listItemIconSize} className="mr-1" /> {editingMessage ? 'Update Message' : 'Add Message'}
             </button>
           </div>
         </div>
         
         {/* Messages List */}
-        <div className="flex-grow overflow-y-auto mb-4 custom-scrollbar pr-1 -mr-1">
+        <div className="flex-grow overflow-y-auto mb-3 sm:mb-4 custom-scrollbar pr-0.5 sm:pr-1 -mr-0.5 sm:-mr-1">
           {messages.length === 0 ? (
-            <p className="text-sm text-[var(--theme-text-tertiary)] text-center py-4">No messages in this scenario yet. Add some above!</p>
+            <p className="text-xs sm:text-sm text-[var(--theme-text-tertiary)] text-center py-3 sm:py-4">No messages in this scenario yet. Add some above!</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5 sm:space-y-2">
               {messages.map((msg, index) => (
-                <li key={msg.id} className="p-2.5 bg-[var(--theme-bg-input)] rounded-md border border-[var(--theme-border-secondary)] flex items-start gap-2 text-sm">
-                  <div className={`p-1.5 rounded-full ${msg.role === 'user' ? 'bg-[var(--theme-icon-user)]' : 'bg-[var(--theme-icon-model)]'} text-white mt-0.5`}>
-                     {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
+                <li key={msg.id} className="p-2 sm:p-2.5 bg-[var(--theme-bg-input)] rounded-md border border-[var(--theme-border-secondary)] flex items-start gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                  <div className={`p-1 sm:p-1.5 rounded-full ${msg.role === 'user' ? 'bg-[var(--theme-icon-user)]' : 'bg-[var(--theme-icon-model)]'} text-white mt-0.5`}>
+                     {msg.role === 'user' ? <User size={listItemIconSize} /> : <Bot size={listItemIconSize} />}
                   </div>
                   <div className="flex-grow min-w-0">
                     <p className="text-[var(--theme-text-primary)] whitespace-pre-wrap break-words">{msg.content}</p>
                   </div>
-                  <div className="flex-shrink-0 flex items-center gap-2 ml-2">
-                    <button onClick={() => moveMessage(index, 'up')} disabled={index === 0} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed" title="Move up"><ChevronUp size={16} /></button>
-                    <button onClick={() => moveMessage(index, 'down')} disabled={index === messages.length - 1} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed" title="Move down"><ChevronDown size={16} /></button>
-                    <button onClick={() => handleEditMessage(msg)} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title="Edit message"><Edit3 size={15} /></button>
-                    <button onClick={() => handleDeleteMessage(msg.id)} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)]" title="Delete message"><Trash2 size={15} /></button>
+                  <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-1 sm:ml-2">
+                    <button onClick={() => moveMessage(index, 'up')} disabled={index === 0} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed" title="Move up"><ChevronUp size={actionIconSize-2} /></button>
+                    <button onClick={() => moveMessage(index, 'down')} disabled={index === messages.length - 1} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] disabled:opacity-30 disabled:cursor-not-allowed" title="Move down"><ChevronDown size={actionIconSize-2} /></button>
+                    <button onClick={() => handleEditMessage(msg)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title="Edit message"><Edit3 size={actionIconSize-2} /></button>
+                    <button onClick={() => handleDeleteMessage(msg.id)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)]" title="Delete message"><Trash2 size={actionIconSize-2} /></button>
                   </div>
                 </li>
               ))}
@@ -271,69 +275,69 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
         </div>
 
         {/* Action Buttons at the bottom */}
-        <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] space-y-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="mt-auto pt-3 sm:pt-4 border-t border-[var(--theme-border-primary)] space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
                         onClick={handleImportClick}
                         disabled={isProcessingImport}
-                        className="flex-1 sm:flex-auto px-4 py-2 text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="flex-1 sm:flex-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                         title="Import scenario from JSON file"
                     >
-                        {isProcessingImport ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />} Import
+                        {isProcessingImport ? <Loader2 size={actionIconSize} className="animate-spin" /> : <UploadCloud size={actionIconSize} />} Import
                     </button>
                     <input type="file" ref={importFileRef} onChange={handleFileImport} accept=".json" className="hidden" />
 
                     <button
                         onClick={handleExport}
                         disabled={messages.length === 0}
-                        className="flex-1 sm:flex-auto px-4 py-2 text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="flex-1 sm:flex-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                         title="Export current scenario to JSON file"
                     >
-                        <DownloadCloud size={16} /> Export
+                        <DownloadCloud size={actionIconSize} /> Export
                     </button>
                 </div>
                  <button
                     onClick={handleLoadLiberatorScenario}
-                    className="w-full sm:w-auto px-4 py-2 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors flex items-center justify-center gap-1.5"
+                    className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
                     title="Load the predefined 'Liberator' scenario"
                 >
-                    <Zap size={16} /> Load Liberator Scenario
+                    <Zap size={actionIconSize} /> Load Liberator Scenario
                 </button>
             </div>
-             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-[var(--theme-border-secondary)]">
+             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-[var(--theme-border-secondary)]">
                 <button
                     onClick={handleClearAll}
                     disabled={messages.length === 0}
-                    className="w-full sm:w-auto px-4 py-2 text-sm bg-[var(--theme-bg-danger)] bg-opacity-30 hover:bg-opacity-50 text-[var(--theme-text-danger)] border border-[var(--theme-bg-danger)] rounded-md transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-danger)] bg-opacity-30 hover:bg-opacity-50 text-[var(--theme-text-danger)] border border-[var(--theme-bg-danger)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                     title="Clear scenario editor"
                 >
-                    <Trash2 size={16} /> Clear
+                    <Trash2 size={actionIconSize} /> Clear
                 </button>
-                <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 w-full sm:w-auto">
+                <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
                         onClick={onClose}
                         type="button"
-                        className="w-full sm:w-auto px-4 py-2 text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1.5"
+                        className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
                         title="Close editor"
                     >
-                        <X size={16} /> Close
+                        <X size={actionIconSize} /> Close
                     </button>
                     <button
                         onClick={handleLoadCurrentScenario}
                         disabled={messages.length === 0}
-                        className="w-full sm:w-auto px-4 py-2 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors flex items-center justify-center gap-1.5 disabled:bg-green-500/50 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5 disabled:bg-green-500/50 disabled:cursor-not-allowed"
                         title="Load scenario into chat"
                     >
-                        <CheckCircle size={16} /> Load
+                        <CheckCircle size={actionIconSize} /> Load
                     </button>
                     <button
                         onClick={handleSaveAndClose}
                         type="button"
-                        className="w-full sm:w-auto px-4 py-2 text-sm bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors flex items-center justify-center gap-1.5"
+                        className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
                         title="Save scenario & close"
                     >
-                        <Save size={16} /> Save
+                        <Save size={actionIconSize} /> Save
                     </button>
                 </div>
             </div>
