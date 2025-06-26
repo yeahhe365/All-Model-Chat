@@ -3,12 +3,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { ModelOption, AppSettings, ChatSettings as IndividualChatSettings } from '../types';
-import { Loader2, X, Info, Pin, Wand2, RotateCcw, Ban, Save, Eye, EyeOff, KeyRound, Server, ToggleLeft, ToggleRight, Settings2 } from 'lucide-react'; 
+import { Loader2, X, Info, Pin, Wand2, RotateCcw, Ban, Save, Eye, EyeOff, KeyRound, Server, ToggleLeft, ToggleRight, Settings2, Trash2 } from 'lucide-react'; 
 import { 
     DEFAULT_CHAT_SETTINGS,
     DEFAULT_APP_SETTINGS, 
     DEFAULT_THEME_ID as APP_DEFAULT_THEME_ID, 
-    Theme
+    Theme,
+    APP_SETTINGS_KEY,
+    STREAMING_ENABLED_KEY,
+    PRELOADED_SCENARIO_KEY,
+    CHAT_HISTORY_SESSIONS_KEY,
+    ACTIVE_CHAT_SESSION_ID_KEY
 } from '../constants';
 
 interface SettingsModalProps {
@@ -88,6 +93,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setSystemInstructionLocal(DEFAULT_CHAT_SETTINGS.systemInstruction);
     setThemeId(APP_DEFAULT_THEME_ID); 
     setBaseFontSize(DEFAULT_APP_SETTINGS.baseFontSize);
+  };
+
+  const handleClearCache = () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to clear all cached application data?\n\nThis will remove:\n- Saved settings\n- Chat history\n- Preloaded scenarios\n\nThis action cannot be undone."
+    );
+    if (confirmed) {
+      localStorage.removeItem(APP_SETTINGS_KEY);
+      localStorage.removeItem(STREAMING_ENABLED_KEY);
+      localStorage.removeItem(PRELOADED_SCENARIO_KEY);
+      localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+      localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+      window.location.reload();
+    }
   };
   
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
@@ -352,39 +371,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         </div>
 
-        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-[var(--theme-border-primary)]">
-          <button
-            onClick={handleResetToDefaults}
-            type="button"
-            className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-            aria-label="Reset settings to default"
-            title="Reset to Defaults"
-          >
-            <RotateCcw size={actionButtonIconSize} />
-            <span>Reset</span>
-          </button>
-          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+        <div className="mt-6 sm:mt-8 flex flex-col justify-between items-center gap-3 pt-3 sm:pt-4 border-t border-[var(--theme-border-primary)]">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 w-full">
             <button
-              onClick={onClose}
+              onClick={handleResetToDefaults}
               type="button"
-              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-              aria-label="Cancel settings changes"
-              title="Cancel"
+              className="px-2.5 py-1.5 sm:px-3 sm:py-2 border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-primary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+              aria-label="Reset settings to default"
+              title="Reset to Defaults"
             >
-              <Ban size={actionButtonIconSize} />
-              <span>Cancel</span>
+              <RotateCcw size={actionButtonIconSize} />
+              <span>Reset</span>
             </button>
-            <button
-              onClick={handleSave}
-              type="button"
-              className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
-              aria-label="Save chat settings"
-              title="Save Settings"
-            >
-              <Save size={actionButtonIconSize} />
-              <span>Save</span>
-            </button>
+            <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+              <button
+                onClick={onClose}
+                type="button"
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-secondary)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+                aria-label="Cancel settings changes"
+                title="Cancel"
+              >
+                <Ban size={actionButtonIconSize} />
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={handleSave}
+                type="button"
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 sm:px-3 sm:py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+                aria-label="Save chat settings"
+                title="Save Settings"
+              >
+                <Save size={actionButtonIconSize} />
+                <span>Save</span>
+              </button>
+            </div>
           </div>
+          <button
+            onClick={handleClearCache}
+            type="button"
+            className="w-full mt-2 px-2.5 py-1.5 sm:px-3 sm:py-2 border border-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)] hover:bg-opacity-10 rounded-md transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--theme-bg-danger)] focus:ring-opacity-75 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+            aria-label="Clear all cached application data"
+            title="Clear All Cached Data (localStorage)"
+          >
+            <Trash2 size={actionButtonIconSize} />
+            <span>Clear All Cached Data</span>
+          </button>
         </div>
       </div>
     </div>

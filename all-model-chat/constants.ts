@@ -233,6 +233,9 @@ export const AVAILABLE_THEMES: Theme[] = [
 
 export const DEFAULT_THEME_ID = 'light';
 
+// localStorage keys
+export const APP_SETTINGS_KEY = 'chatAppSettings';
+export const STREAMING_ENABLED_KEY = 'chatAppIsStreamingEnabled';
 export const PRELOADED_SCENARIO_KEY = 'chatPreloadedScenario';
 export const CHAT_HISTORY_SESSIONS_KEY = 'chatHistorySessions';
 export const ACTIVE_CHAT_SESSION_ID_KEY = 'activeChatSessionId';
@@ -277,7 +280,7 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 <div class="prompt-container">
 <p class="mandatory-requirement" style="margin-top:1em">
 <span class="material-icons-outlined">error_outline</span>
-<span>绝对强制性要求：您提供的每个响应都必须是结构完整且语法有效的 HTML 文档。这意味着以 <code>&lt;!DOCTYPE html&gt;</code> 开头并以 <code>&lt;/html&gt;</code> 结尾，<strong>所有输出内容都要完整地包含在此 HTML 结构中</strong>。HTML 代码必须放在 Markdown 代码块中，使用 “<code>\`\`\`</code>” 符号。请勿添加注释。此段要求不要显示到最终的页面上。
+<span>绝对强制性要求：您提供的每个响应都必须是结构完整且语法有效的 HTML 文档。这意味着以 <code>&lt;!DOCTYPE html&gt;</code> 开头并以 <code>&lt;/html&gt;</code> 结尾，<strong>所有输出内容都要完整地包含在此 HTML 结构中</strong>。HTML 代码必须放在 Markdown 代码块中，使用 “<code>\\\`\\\`\\\`</code>” 符号。请勿添加注释。此段要求不要显示到最终的页面上。
 </span>
 </p>
 <p>在遵守上述<strong class="text-danger">绝对强制性要求</strong>的同时，所有响应还必须遵循以下原则。<strong class="text-accent1"></strong></p>
@@ -331,7 +334,7 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
  <p style="margin-top: 1.8em; margin-bottom: 0.8em;">下面是一个 JavaScript 代码块示例，右上角会自动显示一个 <strong class="strong-emphasis">“复制”</strong> 按钮：</p>
 <pre><code class="language-javascript">function greet(name) {
   // 返回一个问候字符串
-  return \`你好, \${name}! 欢迎使用 Canvas 助手。\`;
+  return \\\`你好, \${name}! 欢迎使用 Canvas 助手。\\\`;
 }
 
 // 调用函数并打印到控制台
@@ -423,7 +426,7 @@ document.addEventListener('DOMContentLoaded',()=>{
          }
         },100);
 
-    const S = \`
+    const S = \\\`
         digraph SimpleGraph {
          graph [labelloc=t, label="简单流程图示例", fontsize=18, fontname="Inter, sans-serif", bgcolor="transparent", pad="0.5", splines=ortho];
          node [fontname="Inter, sans-serif", fontsize=11, style="filled,rounded", color="#666", shape=box, margin="0.2,0.1"];
@@ -433,14 +436,14 @@ document.addEventListener('DOMContentLoaded',()=>{
          C [label="步骤 C", fillcolor="#FEF3C7"];
          A -> B [label="过程 1"];
          B -> C [label="过程 2"];
-        }\`;
+        }\\\`;
     
     const g=e=>{l&&l.zoomWithWheel&&(e.preventDefault(),l.zoomWithWheel(e))};
     
     function p(){
         if(!o||!s)return;
         const e='TB'===c?'LR':'TB';
-        o.textContent=e,o.title=\`切换到 \${e} 布局\`,o.disabled=!1;
+        o.textContent=e,o.title=\\\`切换到 \${e} 布局\\\`,o.disabled=!1;
      }
 
     async function m(d){
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         const h=u.match(/(\\s*graph\\s*\\[)([^\\)]*?)(\\s*\\])/);
         if(h){
             let e=h[2].trim();
-            e.length>0&&!e.endsWith(',')&&(e+=','),u=u.replace(/(\\s*graph\\s*\\[)[^\\)]*?(\\s*\\])/,\`$1 \${e} rankdir="\${d}" $2\`)
+            e.length>0&&!e.endsWith(',')&&(e+=','),u=u.replace(/(\\s*graph\\s*\\[)[^\\)]*?(\\s*\\])/,\\\`$1 \${e} rankdir="\${d}" $2\\\`)
         }
        
         const svgElement = await s.renderSVGElement(u);

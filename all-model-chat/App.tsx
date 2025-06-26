@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, ModelOption, ChatHistoryItem, AppSettings, UploadedFile, ContentPart, PreloadedMessage, SavedChatSession, ChatSettings as IndividualChatSettings } from './types';
 import {
@@ -14,6 +15,8 @@ import {
     SUPPORTED_AUDIO_MIME_TYPES,
     SUPPORTED_PDF_MIME_TYPES,
     ALL_SUPPORTED_MIME_TYPES,
+    APP_SETTINGS_KEY, // Import from constants
+    STREAMING_ENABLED_KEY, // Import from constants
     PRELOADED_SCENARIO_KEY,
     CHAT_HISTORY_SESSIONS_KEY,
     ACTIVE_CHAT_SESSION_ID_KEY,
@@ -29,9 +32,6 @@ import { HistorySidebar } from './components/HistorySidebar';
 import { geminiServiceInstance } from './services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 import { Paperclip } from 'lucide-react';
-
-const STREAMING_ENABLED_KEY = 'chatAppIsStreamingEnabled';
-const APP_SETTINGS_KEY = 'chatAppSettings';
 
 const TAB_CYCLE_MODELS = [
     'gemini-2.5-pro',
