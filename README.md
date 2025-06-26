@@ -1,6 +1,6 @@
 # All Model Chat
 
-[![All Model Chat 截图](https://github.com/user-attachments/assets/82281880-c34d-471e-b944-df66abf96267)](https://github.com/user-attachments/assets/82281880-c34d-471e-b944-df66abf96267)
+![PixPin_2025-06-27_00-21-54](https://github.com/user-attachments/assets/ec6f5ee9-2d3b-47e3-9fec-49e6602d3d18)
 
 **在线体验：[在 Google AI Studio 试用 All Model Chat](https://aistudio.google.com/app/prompts?state=%7B%22ids%22:%5B%22169U2Al5556WX7bcWYdaPwHvzoAU7PqW_%22%5D,%22action%22:%22open%22,%22userId%22:%22102038139080022776927%22,%22resourceKeys%22:%7B%7D%7D&usp=sharing)**
 
