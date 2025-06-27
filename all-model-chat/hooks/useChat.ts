@@ -168,7 +168,11 @@ export const useChat = (appSettings: AppSettings) => {
     
     const initializeCurrentChatSession = useCallback(async (settingsToUse: IndividualChatSettings, history?: ChatHistoryItem[]) => {
         if (!settingsToUse.modelId) {
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected. Cannot initialize chat.', timestamp: new Date() }]);
+            const errorContent = 'No model selected. Cannot initialize chat.';
+            setMessages(prev => {
+                if (prev.length > 0 && prev[prev.length - 1].content === errorContent) return prev;
+                return [...prev, { id: generateUniqueId(), role: 'error', content: errorContent, timestamp: new Date() }];
+            });
             return null;
         }
         try {
@@ -179,17 +183,27 @@ export const useChat = (appSettings: AppSettings) => {
             );
             setChatSession(newSession);
             if (!newSession) {
-                setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'Failed to initialize chat session. Check API Key, network, and selected model.', timestamp: new Date() }]);
+                const errorContent = 'Failed to initialize chat session. Check API Key, network, and selected model.';
+                setMessages(prev => {
+                    if (prev.length > 0 && prev[prev.length - 1].content === errorContent) return prev;
+                    return [...prev, { id: generateUniqueId(), role: 'error', content: errorContent, timestamp: new Date() }];
+                });
             }
             return newSession;
         } catch (error) {
             console.error("Error initializing chat session:", error);
             const errorMsg = error instanceof Error ? error.message : String(error);
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: `Error initializing chat: ${errorMsg}`, timestamp: new Date() }]);
+            const fullErrorContent = `Error initializing chat: ${errorMsg}`;
+            setMessages(prev => {
+                if (prev.length > 0 && prev[prev.length - 1].content === fullErrorContent) {
+                    return prev;
+                }
+                return [...prev, { id: generateUniqueId(), role: 'error', content: fullErrorContent, timestamp: new Date() }];
+            });
             setChatSession(null);
             return null;
         }
-    }, []);
+    }, [setMessages, setChatSession]);
 
 
     // Chat session re-initialization
