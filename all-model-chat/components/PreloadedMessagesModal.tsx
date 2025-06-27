@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { PreloadedMessage } from '../types';
 import { X, PlusCircle, Trash2, Edit3, ChevronUp, ChevronDown, UploadCloud, DownloadCloud, AlertTriangle, CheckCircle, Loader2, MessageSquare, User, Bot, Zap, Save } from 'lucide-react'; // Added Save icon
@@ -38,24 +37,35 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const [newMessageContent, setNewMessageContent] = useState('');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isProcessingImport, setIsProcessingImport] = useState(false);
+  const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
 
   const importFileRef = useRef<HTMLInputElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const headingIconSize = window.innerWidth < 640 ? 20 : 24;
   const actionIconSize = window.innerWidth < 640 ? 14 : 16;
   const listItemIconSize = window.innerWidth < 640 ? 12 : 14;
 
-
   useEffect(() => {
     if (isOpen) {
+      setIsActuallyOpen(true);
       setMessages(initialMessages);
       setEditingMessage(null);
       setNewMessageContent('');
       setNewMessageRole('user');
-      setFeedback(null); // Clear feedback when modal opens
+      setFeedback(null);
+      const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    } else {
+      const timer = setTimeout(() => setIsActuallyOpen(false), 300);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, initialMessages]);
 
-  if (!isOpen) return null;
+  if (!isActuallyOpen) return null;
+
+  const handleClose = () => {
+    if (isOpen) onClose();
+  };
 
   const showFeedback = (type: 'success' | 'error' | 'info', message: string, duration: number = 3000) => {
     setFeedback({ type, message });
@@ -113,7 +123,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const handleSaveAndClose = () => {
     onSaveScenario(messages);
     showFeedback('success', 'Scenario saved!');
-    setTimeout(onClose, 700); // Give time for feedback to be seen
+    setTimeout(handleClose, 700); // Give time for feedback to be seen
   };
 
   const handleLoadCurrentScenario = () => {
@@ -124,13 +134,13 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     onSaveScenario(messages); // Save current state before loading
     onLoadScenario(messages);
     showFeedback('success', 'Current scenario loaded into chat!');
-    setTimeout(onClose, 700);
+    setTimeout(handleClose, 700);
   };
 
   const handleLoadLiberatorScenario = () => {
     onLoadScenario(liberatorScenario);
     showFeedback('success', 'Liberator scenario loaded!');
-    setTimeout(onClose, 700);
+    setTimeout(handleClose, 700);
   };
   
   const handleClearAll = () => {
@@ -178,15 +188,25 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="scenarios-title">
-      <div className="bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md sm:max-w-2xl flex flex-col transform transition-all scale-100 opacity-100 max-h-[90vh]">
+    <div 
+        className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" 
+        role="dialog" 
+        aria-modal="true" 
+        aria-labelledby="scenarios-title"
+        onClick={handleClose}
+    >
+      <div 
+        className={`bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md sm:max-w-2xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-3 sm:mb-4">
           <h2 id="scenarios-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
             <MessageSquare size={headingIconSize} className="mr-2 opacity-80" />
             Manage Preloaded Scenarios
           </h2>
           <button
-            onClick={onClose}
+            ref={closeButtonRef}
+            onClick={handleClose}
             className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors"
             aria-label="Close scenarios manager"
           >
@@ -316,7 +336,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                 </button>
                 <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3 w-full sm:w-auto">
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         type="button"
                         className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5"
                         title="Close editor"

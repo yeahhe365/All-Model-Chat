@@ -1,15 +1,9 @@
-
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, PreloadedMessage } from './types';
-import {
-    CANVAS_ASSISTANT_SYSTEM_PROMPT,
-    DEFAULT_SYSTEM_INSTRUCTION,
-    TAB_CYCLE_MODELS,
-    AVAILABLE_THEMES
-} from './constants';
+import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
+import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
+import { AVAILABLE_THEMES } from './constants/themeConstants';
 import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
 import { ChatInput } from './components/ChatInput';
@@ -39,10 +33,10 @@ const App: React.FC = () => {
       isAppProcessingFile,
       savedSessions,
       activeSessionId,
-      isStreamingEnabled,
       apiModels,
       isModelsLoading,
       modelsLoadingError,
+      isSwitchingModel,
       messagesEndRef,
       scrollContainerRef,
       preloadedMessages,
@@ -58,7 +52,6 @@ const App: React.FC = () => {
       handleCancelEdit,
       handleDeleteMessage,
       handleRetryMessage,
-      handleToggleStreaming,
       handleDeleteChatHistorySession,
       handleSavePreloadedScenario,
       handleLoadPreloadedScenario,
@@ -76,7 +69,7 @@ const App: React.FC = () => {
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
-  const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(false);
+  const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
@@ -86,6 +79,7 @@ const App: React.FC = () => {
         topP: newSettings.topP,
         showThoughts: newSettings.showThoughts,
         systemInstruction: newSettings.systemInstruction,
+        ttsVoice: newSettings.ttsVoice,
     });
     setIsSettingsModalOpen(false);
   };
@@ -105,6 +99,15 @@ const App: React.FC = () => {
     }));
   };
   
+  const handleSuggestionClick = (text: string) => {
+    setInputText(text);
+    // Focus the textarea after a tick to ensure state update has rendered
+    setTimeout(() => {
+        const textarea = document.querySelector('textarea[aria-label="Chat message input"]');
+        (textarea as HTMLTextAreaElement)?.focus();
+    }, 0);
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -170,6 +173,7 @@ const App: React.FC = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
     if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return "Loading models...";
     if (isModelsLoading && modelIdToDisplay && !apiModels.find(m => m.id === modelIdToDisplay)) return "Verifying model...";
+    if (isSwitchingModel) return "Switching model...";
     const model = apiModels.find(m => m.id === modelIdToDisplay);
     if (model) return model.name;
     if (modelIdToDisplay) { let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');}
@@ -179,7 +183,7 @@ const App: React.FC = () => {
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
 
   return (
-    <div className="flex h-screen bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]">
+    <div className={`flex h-screen bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
@@ -191,16 +195,19 @@ const App: React.FC = () => {
         themeColors={currentTheme.colors}
       />
       <div
-        className="flex flex-col flex-grow h-full overflow-hidden relative"
+        className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
         onDragEnter={handleAppDragEnter}
         onDragOver={handleAppDragOver}
         onDragLeave={handleAppDragLeave}
         onDrop={handleAppDrop}
       >
         {isAppDraggingOver && (
-          <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-20 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2">
-            <Paperclip size={window.innerWidth < 640 ? 48 : 64} className="text-[var(--theme-bg-accent)] opacity-60 mb-2 sm:mb-4" />
-            <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-bg-accent)] opacity-85 text-center px-2">Drop files anywhere to upload</p>
+          <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
+            <Paperclip size={window.innerWidth < 640 ? 48 : 64} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
+            <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
+              Release to upload supported files
+            </p>
+             <p className="text-sm text-[var(--theme-text-primary)] opacity-80 mt-2">Images, Videos, Audio, PDFs & Text files</p>
           </div>
         )}
         <Header
@@ -214,8 +221,7 @@ const App: React.FC = () => {
           selectedModelId={currentChatSettings.modelId || appSettings.modelId}
           onSelectModel={handleSelectModelInHeader}
           isModelsLoading={isModelsLoading}
-          isStreamingEnabled={isStreamingEnabled}
-          onToggleStreaming={handleToggleStreaming}
+          isSwitchingModel={isSwitchingModel}
           isHistorySidebarOpen={isHistorySidebarOpen}
           onLoadCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
           isCanvasPromptActive={isCanvasPromptActive}
@@ -255,6 +261,7 @@ const App: React.FC = () => {
           showThoughts={currentChatSettings.showThoughts}
           themeColors={currentTheme.colors}
           baseFontSize={appSettings.baseFontSize}
+          onSuggestionClick={handleSuggestionClick}
         />
         <ChatInput
           inputText={inputText}

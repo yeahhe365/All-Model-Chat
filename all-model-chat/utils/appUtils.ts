@@ -1,12 +1,14 @@
-import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, ThemeColors } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES } from '../constants';
+import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../types';
+import { ThemeColors } from '../constants/themeConstants';
+import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 
 export const translations = {
     // Settings Modal
     settingsTitle: { en: 'App Settings', zh: '应用设置' },
     settingsApiConfig: { en: 'API Configuration', zh: 'API 配置' },
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
-    settingsApiKey: { en: 'Gemini API Key', zh: 'Gemini API 密钥' },
+    settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },
+    settingsApiKeyHelpText: { en: 'You can enter multiple keys, one per line. A random key will be used for each new chat session.', zh: '您可以输入多个密钥，每行一个。每个新聊天会话将随机使用一个密钥。' },
     settingsApiUrl: { en: 'Gemini API URL (Optional)', zh: 'Gemini API URL (可选)' },
     settingsAppearance: { en: 'Appearance', zh: '外观' },
     settingsTheme: { en: 'Theme (Global)', zh: '主题 (全局)' },
@@ -17,6 +19,7 @@ export const translations = {
     settingsLanguageZh: { en: 'Chinese', zh: '中文' },
     settingsChatBehavior: { en: 'Chat Behavior (for New Chats)', zh: '聊天行为 (用于新对话)' },
     settingsModel: { en: 'AI Model', zh: 'AI 模型' },
+    settingsTtsVoice: { en: 'TTS Voice', zh: 'TTS 语音' },
     settingsSystemPrompt: { en: 'System Prompt', zh: '系统提示' },
     settingsTemperature: { en: 'Temperature', zh: '温度' },
     settingsTopP: { en: 'Top P', zh: 'Top P' },
@@ -111,3 +114,35 @@ export const createChatHistoryForApi = (msgs: ChatMessage[]): ChatHistoryItem[] 
         return { role: msg.role as 'user' | 'model', parts: apiParts };
       });
   };
+
+export function pcmBase64ToWavUrl(
+  base64: string,
+  sampleRate = 24_000,
+  numChannels = 1,
+): string {
+  const pcm = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  // Write WAV header
+  const bytesPerSample = 2;
+  const blockAlign = numChannels * bytesPerSample;
+  const wav = new ArrayBuffer(44 + pcm.length);
+  const dv = new DataView(wav);
+
+  let p = 0;
+  const writeStr = (s: string) => [...s].forEach(ch => dv.setUint8(p++, ch.charCodeAt(0)));
+
+  writeStr('RIFF');
+  dv.setUint32(p, 36 + pcm.length, true); p += 4;
+  writeStr('WAVEfmt ');
+  dv.setUint32(p, 16, true); p += 4;        // fmt length
+  dv.setUint16(p, 1, true);  p += 2;        // PCM
+  dv.setUint16(p, numChannels, true); p += 2;
+  dv.setUint32(p, sampleRate, true); p += 4;
+  dv.setUint32(p, sampleRate * blockAlign, true); p += 4;
+  dv.setUint16(p, blockAlign, true); p += 2;
+  dv.setUint16(p, bytesPerSample * 8, true); p += 2;
+  writeStr('data');
+  dv.setUint32(p, pcm.length, true); p += 4;
+
+  new Uint8Array(wav, 44).set(pcm);
+  return URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
+}

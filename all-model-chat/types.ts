@@ -1,8 +1,5 @@
-
-
-
-import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai"; // Added GeminiFile and UsageMetadata import
-import { ThemeColors } from './constants'; 
+import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/ai/generativelanguage";
+import { ThemeColors } from './constants/themeConstants'; 
 
 export interface UploadedFile {
   id: string; 
@@ -38,6 +35,7 @@ export interface ChatMessage {
   completionTokens?: number;
   totalTokens?: number;
   cumulativeTotalTokens?: number; // Added for cumulative token count
+  audioSrc?: string; // For TTS responses
 }
 
 export interface ModelOption {
@@ -70,6 +68,7 @@ export interface ChatSettings {
   topP: number;
   showThoughts: boolean;
   systemInstruction: string;
+  ttsVoice: string;
 }
 
 export interface SavedChatSession {
@@ -88,6 +87,7 @@ export interface AppSettings extends ChatSettings {
  apiKey: string | null;
  apiUrl: string | null;
  language: 'en' | 'zh' | 'system';
+ isStreamingEnabled: boolean;
 }
 
 
@@ -118,6 +118,7 @@ export interface GeminiService {
     onError: (error: Error) => void,
     onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
+  generateSpeech: (modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
   getAvailableModels: () => Promise<ModelOption[]>;
   uploadFile: (file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>; // Added AbortSignal
   getFileMetadata: (fileApiName: string) => Promise<GeminiFile | null>; // Added to get file metadata
@@ -138,6 +139,7 @@ export interface MessageListProps {
   showThoughts: boolean;
   themeColors: ThemeColors; 
   baseFontSize: number; 
+  onSuggestionClick?: (suggestion: string) => void;
 }
 
 export interface PreloadedMessage {

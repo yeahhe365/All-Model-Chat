@@ -1,75 +1,75 @@
-
-
-
 import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
+import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
 class GeminiServiceImpl implements GeminiService {
-    private ai: GoogleGenAI | null = null;
-    private currentApiKey: string | null = null;
+    private apiKeyString: string | null = null;
     private currentApiUrl: string | null = null; // Stored for future use if SDK supports custom endpoints or for proxies
 
     constructor() {
-        // Initial attempt to use environment variable if no user setting is immediately available.
-        // App.tsx will call updateApiKeyAndUrl with stored/default settings on load.
-        const envApiKey = process.env.API_KEY;
-        if (envApiKey) {
-            this.initializeClient(envApiKey);
-        } else {
-            console.warn(
-              "No API_KEY found in environment. Gemini API will be unavailable until configured in settings."
-            );
-        }
+        // The service is now primarily configured via the updateApiKeyAndUrl method,
+        // which is called by the useAppSettings hook on app initialization.
+        // This ensures settings from localStorage are applied correctly from the start.
+        console.log("GeminiService created. Awaiting configuration from settings.");
     }
+    
+    private _getClient(): GoogleGenAI | null {
+        if (!this.apiKeyString) {
+            console.warn("Cannot get Gemini client: API Key not configured.");
+            return null;
+        }
+        
+        const keys = this.apiKeyString.split('\n').map(k => k.trim()).filter(Boolean);
+        if (keys.length === 0) {
+            console.warn("Cannot get Gemini client: No valid API keys found in configuration string.");
+            return null;
+        }
 
-    private initializeClient(apiKey: string): void {
+        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+        
         try {
-            this.ai = new GoogleGenAI({ apiKey });
-            this.currentApiKey = apiKey;
-            console.log("Gemini API client initialized/updated.");
+            return new GoogleGenAI({ apiKey: randomKey });
         } catch (error) {
-            console.error("Failed to initialize GoogleGenAI client:", error);
-            this.ai = null; // Ensure client is null on error
-            this.currentApiKey = null;
-            // Optionally, re-throw or handle more gracefully depending on app requirements
+            console.error("Failed to initialize GoogleGenAI client with a randomly selected key:", error);
+            return null;
         }
     }
 
     public updateApiKeyAndUrl(newApiKey: string | null, newApiUrl: string | null): void {
-        const effectiveApiKey = newApiKey || process.env.API_KEY;
-
-        if (effectiveApiKey) {
-            if (!this.ai || this.currentApiKey !== effectiveApiKey) {
-                const source = newApiKey ? "User Settings" : "Environment Variable";
-                console.log(`Initializing/Updating Gemini client. API Key source: ${source}`);
-                this.initializeClient(effectiveApiKey);
-            }
-        } else {
-            console.warn("No API Key provided in settings or environment. Gemini API will be unavailable.");
-            this.ai = null; // Invalidate client if no key
-            this.currentApiKey = null;
-        }
+        // The effective key is the user-provided key, or falls back to the environment variable.
+        this.apiKeyString = newApiKey ?? process.env.API_KEY ?? null;
         this.currentApiUrl = newApiUrl;
+
+        if (this.apiKeyString) {
+            const source = newApiKey !== null ? "User Settings" : "Environment Variable";
+            const keyCount = this.apiKeyString.split('\n').map(k => k.trim()).filter(Boolean).length;
+            console.log(`Gemini service API keys updated. Source: ${source}. Found ${keyCount} key(s).`);
+        } else {
+             console.warn("Gemini Service Update: No API Key provided in settings or environment. API will be unavailable.");
+        }
+
         if (newApiUrl) {
             console.log(`Custom API URL set to: ${newApiUrl}. Note: The current SDK version may not use this directly for standard calls.`);
         }
     }
 
     async getAvailableModels(): Promise<ModelOption[]> {
-        if (!this.ai) {
+        const ai = this._getClient();
+        if (!ai) {
              console.warn("Cannot fetch models: API client not initialized. Configure API Key.");
              return [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default - API Key Needed)' }];
         }
 
-        const predefinedModelsOnError: ModelOption[] = [
-          { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Fallback)' },
-        ];
+        const predefinedModelsOnError: ModelOption[] = TAB_CYCLE_MODELS.map(id => ({
+            id: id,
+            name: `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')} (Fallback)`.replace(/\b\w/g, l => l.toUpperCase()),
+        }));
 
         try {
-          const modelPager = await this.ai.models.list(); 
+          const modelPager = await ai.models.list(); 
           const availableModels: ModelOption[] = [];
           for await (const model of modelPager) {
              if (model.supportedActions && model.supportedActions.includes('generateContent')) {
@@ -101,7 +101,8 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async uploadFile(file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
-        if (!this.ai) {
+        const ai = this._getClient();
+        if (!ai) {
             console.error("Cannot upload file: API client not initialized.");
             throw new Error("API client not initialized. Configure API Key in settings.");
         }
@@ -116,7 +117,7 @@ class GeminiServiceImpl implements GeminiService {
             const uploadConfig: UploadFileConfig = { mimeType, displayName };
             // Note: The SDK's uploadFile doesn't directly take a signal for the HTTP request itself.
             // Cancellation here primarily affects the polling loop.
-            let uploadedFile = await this.ai.files.upload({
+            let uploadedFile = await ai.files.upload({
                 file: file,
                 config: uploadConfig,
             });
@@ -142,7 +143,7 @@ class GeminiServiceImpl implements GeminiService {
                 }
 
                 try {
-                    uploadedFile = await this.ai.files.get({ name: uploadedFile.name });
+                    uploadedFile = await ai.files.get({ name: uploadedFile.name });
                 } catch (pollError) {
                     console.error(`Error polling for file status "${displayName}":`, pollError);
                     throw new Error(`Polling failed for file ${displayName}. Original error: ${pollError instanceof Error ? pollError.message : String(pollError)}`);
@@ -162,7 +163,8 @@ class GeminiServiceImpl implements GeminiService {
     }
     
     async getFileMetadata(fileApiName: string): Promise<GeminiFile | null> {
-        if (!this.ai) {
+        const ai = this._getClient();
+        if (!ai) {
             console.error("Cannot get file metadata: API client not initialized.");
             throw new Error("API client not initialized. Configure API Key in settings.");
         }
@@ -171,7 +173,7 @@ class GeminiServiceImpl implements GeminiService {
             throw new Error('Invalid file ID format. Expected "files/your_file_id".');
         }
         try {
-            const file = await this.ai.files.get({ name: fileApiName });
+            const file = await ai.files.get({ name: fileApiName });
             return file;
         } catch (error) {
             console.error(`Failed to get metadata for file "${fileApiName}" from Gemini API:`, error);
@@ -183,6 +185,55 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
+    async generateSpeech(modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
+        const ai = this._getClient();
+        if (!ai) {
+            throw new Error("API client not initialized. Configure API Key in settings.");
+        }
+        if (!text.trim()) {
+            throw new Error("TTS input text cannot be empty.");
+        }
+
+        try {
+            // The modelId should now come with the 'models/' prefix from useChat.ts
+            const response = await ai.models.generateContent({
+                model: modelId,
+                contents: text,
+                config: {
+                    responseModalities: ['AUDIO'],
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+                    },
+                },
+            });
+
+            if (abortSignal.aborted) {
+                const abortError = new Error("Speech generation cancelled by user.");
+                abortError.name = "AbortError";
+                throw abortError;
+            }
+
+            const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+            if (typeof audioData === 'string' && audioData.length > 0) {
+                return audioData;
+            }
+            
+            console.error("TTS response did not contain expected audio data structure:", JSON.stringify(response, null, 2));
+
+            const textError = response.text;
+            if (textError) {
+                throw new Error(`TTS generation failed: ${textError}`);
+            }
+
+            throw new Error('No audio data found in TTS response.');
+
+        } catch (error) {
+            console.error(`Failed to generate speech with model ${modelId}:`, error);
+            throw error;
+        }
+    }
+
 
     async initializeChat(
         modelId: string,
@@ -191,7 +242,8 @@ class GeminiServiceImpl implements GeminiService {
         showThoughts: boolean,
         history?: ChatHistoryItem[]
     ): Promise<Chat | null> {
-        if (!this.ai) {
+        const ai = this._getClient();
+        if (!ai) {
             console.error("Cannot initialize chat: API client not initialized.");
             throw new Error("API client not initialized. Configure API Key in settings.");
         }
@@ -231,7 +283,7 @@ class GeminiServiceImpl implements GeminiService {
                 delete chatConfig.thinkingConfig;
             }
 
-            const chat: Chat = this.ai.chats.create({
+            const chat: Chat = ai.chats.create({
                 model: modelId,
                 config: chatConfig,
                 history: typedHistory,
@@ -253,11 +305,8 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
-        if (!this.ai) {
-             onError(new Error("API client not initialized. Cannot send message."));
-             onComplete();
-             return;
-        }
+        // This method uses the passed-in chat object, which is already tied to a specific
+        // client instance with a specific (randomly chosen) API key. No client needed here.
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
         try {
             const result = await chat.sendMessageStream({ message: promptParts as Part[] });
@@ -300,11 +349,7 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
-         if (!this.ai) {
-             onError(new Error("API client not initialized. Cannot send message."));
-             onComplete("", "", undefined);
-             return;
-        }
+        // This method also operates on the passed-in chat object. No client needed.
         try {
             if (abortSignal.aborted) {
                 console.log("Non-streaming call prevented by abort signal before starting.");

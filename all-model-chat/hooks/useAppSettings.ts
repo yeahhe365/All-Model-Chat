@@ -1,13 +1,7 @@
-
-
-
 import { useState, useEffect } from 'react';
 import { AppSettings } from '../types';
-import {
-    DEFAULT_APP_SETTINGS,
-    APP_SETTINGS_KEY,
-    AVAILABLE_THEMES,
-} from '../constants';
+import { DEFAULT_APP_SETTINGS, APP_SETTINGS_KEY } from '../constants/appConstants';
+import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
 import { geminiServiceInstance } from '../services/geminiService';
 import { generateThemeCssVariables } from '../utils/appUtils';
 
@@ -26,7 +20,7 @@ export const useAppSettings = () => {
 
     const [language, setLanguage] = useState<'en' | 'zh'>('en');
 
-    const currentTheme = AVAILABLE_THEMES.find(t => t.id === appSettings.themeId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_APP_SETTINGS.themeId)!;
+    const currentTheme = AVAILABLE_THEMES.find(t => t.id === appSettings.themeId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
 
     useEffect(() => {
         localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));

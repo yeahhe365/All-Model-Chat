@@ -1,8 +1,6 @@
-
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Download, Maximize, Minimize, Expand, RotateCw } from 'lucide-react'; 
-import { ThemeColors } from '../constants';
+import { ThemeColors } from './constants/themeConstants';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -40,7 +38,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
   const iconSize = window.innerWidth < 640 ? 18 : 20;
-  const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
+
 
   const enterTrueFullscreen = useCallback(async () => {
     if (iframeRef.current && document.fullscreenEnabled) {
@@ -75,12 +73,6 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
         }
     }
   }, []);
-
-  const handleClose = useCallback(() => {
-    if (isOpen) {
-        onClose();
-    }
-  }, [isOpen, onClose]);
   
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -89,7 +81,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 
       if (isTrueFullscreen && !isNowInTrueFullscreenForIframe) {
         // We were in true fullscreen for *this iframe*, and now we are not.
-        handleClose(); // Close the modal.
+        onClose(); // Close the modal.
       }
       setIsTrueFullscreen(isNowInTrueFullscreenForIframe);
     };
@@ -101,16 +93,8 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
     };
-  }, [isTrueFullscreen, handleClose, iframeRef]);
+  }, [isTrueFullscreen, onClose, iframeRef]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsActuallyOpen(true);
-    } else {
-      const timer = setTimeout(() => setIsActuallyOpen(false), 300); // Match animation duration
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -119,7 +103,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
           // Browser will handle exiting true fullscreen.
           // The 'fullscreenchange' event listener above will then call onClose().
         } else {
-          handleClose(); // Not in true fullscreen, so close the modal directly.
+          onClose(); // Not in true fullscreen, so close the modal directly.
         }
       }
     };
@@ -139,10 +123,10 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, handleClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen]);
+  }, [isOpen, onClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen]);
 
 
-  if (!isActuallyOpen || !htmlContent) {
+  if (!isOpen || !htmlContent) {
     return null;
   }
   
@@ -203,10 +187,10 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="html-preview-modal-title"
-      onClick={isTrueFullscreen ? undefined : handleClose} // Prevent closing by backdrop click when in true fullscreen
+      onClick={isTrueFullscreen ? undefined : onClose} // Prevent closing by backdrop click when in true fullscreen
     >
       <div
-        className={`bg-[var(--theme-bg-primary)] w-full h-full shadow-2xl flex flex-col overflow-hidden ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        className="bg-[var(--theme-bg-primary)] w-full h-full shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()} 
       >
         <header className="py-1 px-2 sm:py-1.5 sm:px-3 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0 bg-[var(--theme-bg-secondary)]">
@@ -233,7 +217,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             </button>
             {!isTrueFullscreen && (
                 <button
-                onClick={handleClose}
+                onClick={onClose}
                 className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
                 aria-label="Close HTML preview"
                 title="Close Preview (Esc)"

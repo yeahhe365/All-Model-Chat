@@ -171,7 +171,7 @@
       padding: 10px !important; /* Mobile padding */
       padding-top: 2.5rem !important; /* Mobile padding top for header */
       border-radius: 6px !important;
-      overflow: auto;
+      overflow: hidden; /* Changed from auto to hidden for wrapper */
       position: relative !important; /* Added for positioning the copy button */
       border: 1px solid var(--theme-border-secondary);
     }
@@ -187,6 +187,8 @@
       color: inherit !important; /* Inherit color from pre (which inherits from markdown-body) or let hljs override */
       padding: 0 !important; /* highlight.js theme usually adds padding to pre code.hljs */
       font-size: 0.85rem !important; /* Mobile font size */
+      overflow-x: auto;
+      display: block;
     }
      @media (min-width: 640px) { /* sm breakpoint */
         .markdown-body pre code, .markdown-body pre code.hljs {
@@ -240,31 +242,25 @@
       }
     }
     .code-block-utility-button {
-        background-color: var(--theme-bg-tertiary) !important;
-        color: var(--theme-text-secondary) !important;
-        padding: 0.25rem; /* Mobile padding */
+      background-color: transparent !important;
+      color: var(--theme-text-tertiary) !important;
+      padding: 0.25rem; /* p-1 */
+      line-height: 1;
     }
-    @media (min-width: 640px) { /* sm breakpoint */
+    @media (min-width: 640px) {
       .code-block-utility-button {
         padding: 0.375rem; /* p-1.5 */
       }
     }
     .code-block-utility-button:hover {
-        background-color: var(--theme-bg-secondary) !important;
+        background-color: var(--theme-bg-tertiary) !important;
         color: var(--theme-text-primary) !important;
     }
-    .code-block-utility-button:focus {
-        ring: 1px solid var(--theme-border-focus) !important;
-    }
-    .code-block-toggle-button {
-        color: var(--theme-text-tertiary) !important;
-        font-size: 0.75rem; /* text-xs */
-    }
-    .code-block-toggle-button:hover {
-        color: var(--theme-text-secondary) !important;
-    }
-     .code-block-toggle-button:focus {
-        ring: 1px solid var(--theme-border-focus) !important;
+    .code-block-utility-button:focus-visible {
+        outline: none;
+        background-color: var(--theme-bg-tertiary) !important;
+        color: var(--theme-text-primary) !important;
+        box-shadow: 0 0 0 2px var(--theme-border-focus);
     }
 
     .markdown-body pre {
@@ -306,8 +302,191 @@
         scrollbar-width: thin;
         scrollbar-color: var(--theme-scrollbar-thumb) var(--theme-scrollbar-track);
     }
+  </style>
+  <style>
+    /* UI/UX Enhancement Styles */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
+    @keyframes modalEnter {
+      from { opacity: 0; transform: scale(0.97) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
 
+    @keyframes modalExit {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to { opacity: 0; transform: scale(0.97) translateY(10px); }
+    }
+
+    @keyframes appFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    #root {
+      animation: appFadeIn 0.5s ease-out both;
+    }
+
+    /* Subtle gradient for main chat background */
+    .chat-bg-enhancement {
+      background-color: var(--theme-bg-secondary); /* Fallback */
+      background-image: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.025), transparent 70%);
+    }
+    body.theme-light .chat-bg-enhancement {
+      background-image: radial-gradient(ellipse at 50% 100%, rgba(0, 0, 0, 0.02), transparent 70%);
+    }
+
+    /* Staggered animation for messages */
+    .message-container-animate {
+      animation: fadeInUp 0.4s ease-out both;
+    }
+    
+    .welcome-message-animate {
+      animation: fadeInUp 0.6s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    
+    .drag-overlay-animate {
+      animation: fadeIn 0.3s ease-out both;
+    }
+
+    /* Transitions for hover actions */
+    .message-actions {
+      opacity: 0;
+      transform: translateX(var(--actions-translate-x, 8px));
+      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    }
+
+    .group:hover .message-actions {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Modal animation */
+    .modal-enter-animation {
+      animation: modalEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    
+    .modal-exit-animation {
+      animation: modalExit 0.3s cubic-bezier(0.7, 0, 0.84, 0) both;
+    }
+
+    /* Soft shadows */
+    .shadow-premium {
+      box-shadow: 0 4px 20px -5px rgba(0,0,0,0.25), 0 2px 10px -4px rgba(0,0,0,0.2);
+    }
+    body.theme-light .shadow-premium {
+      box-shadow: 0 4px 15px -2px rgba(0,0,0,0.08), 0 2px 8px -3px rgba(0,0,0,0.06);
+    }
+    
+    /* Textarea focus glow */
+    .chat-textarea-glow {
+      transition: box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+    }
+    .chat-textarea-glow:focus {
+        --tw-ring-color: var(--theme-border-focus);
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), 0 0 16px -1px var(--tw-ring-color), var(--tw-shadow, 0 0 #0000);
+        border-color: var(--theme-border-focus);
+    }
+
+    /* Interaction & Feedback Animations */
+    @keyframes formSendPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.995); }
+        100% { transform: scale(1); }
+    }
+    .form-send-animate {
+        animation: formSendPulse 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes fileSuccessRing {
+      from {
+        box-shadow: 0 0 0 0px var(--theme-text-success);
+      }
+      to {
+        box-shadow: 0 0 0 8px transparent;
+      }
+    }
+    .newly-active-file-animate .file-preview-box {
+      animation: fileSuccessRing 0.8s ease-out;
+      border-color: var(--theme-text-success);
+      transition: border-color 0.3s;
+    }
+
+    /* Tooltip styles */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tooltip-text {
+      visibility: hidden;
+      width: 240px;
+      background-color: var(--theme-bg-tertiary);
+      color: var(--theme-text-primary);
+      text-align: left;
+      border-radius: 6px;
+      padding: 8px 12px;
+      position: absolute;
+      z-index: 10;
+      bottom: 140%; /* Position above the icon */
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.2s, visibility 0.2s;
+      font-size: 0.8rem;
+      font-weight: normal;
+      line-height: 1.4;
+      box-shadow: 0 4px 15px -2px rgba(0,0,0,0.15), 0 2px 8px -3px rgba(0,0,0,0.1);
+      border: 1px solid var(--theme-border-secondary);
+      pointer-events: none;
+    }
+
+    .tooltip-container:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .tooltip-text::after { /* Tooltip arrow */
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: var(--theme-bg-tertiary) transparent transparent transparent;
+    }
+
+    /* Suggestion Bubbles for Empty Chat */
+    .suggestion-bubble {
+        background-color: var(--theme-bg-tertiary);
+        border: 1px solid var(--theme-border-secondary);
+        color: var(--theme-text-secondary);
+        padding: 8px 16px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease-out;
+    }
+    .suggestion-bubble:hover {
+        background-color: var(--theme-bg-input);
+        color: var(--theme-text-primary);
+        border-color: var(--theme-border-focus);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    body.theme-light .suggestion-bubble:hover {
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
   </style>
 <script type="importmap">
 {
