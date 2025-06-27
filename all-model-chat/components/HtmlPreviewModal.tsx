@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Download, Maximize, Minimize, Expand, RotateCw } from 'lucide-react'; 
-import { ThemeColors } from '../constants';
+import { ThemeColors } from '../constants/themeConstants';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
