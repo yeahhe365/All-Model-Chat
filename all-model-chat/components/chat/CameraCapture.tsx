@@ -14,9 +14,10 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
 
   useEffect(() => {
     let active = true;
+    let mediaStream: MediaStream | null = null;
     const startCamera = async () => {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         if(active) {
             setStream(mediaStream);
             if (videoRef.current) {
@@ -32,9 +33,9 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
 
     return () => {
       active = false;
-      stream?.getTracks().forEach(track => track.stop());
+      mediaStream?.getTracks().forEach(track => track.stop());
     };
-  }, [stream]);
+  }, []);
 
   const handleCapture = useCallback(() => {
     if (videoRef.current && canvasRef.current && stream) {

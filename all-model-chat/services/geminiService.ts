@@ -8,6 +8,7 @@ const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 class GeminiServiceImpl implements GeminiService {
     private apiKeyString: string | null = null;
     private currentApiUrl: string | null = null; // Stored for future use if SDK supports custom endpoints or for proxies
+    private isCustomConfigEnabled: boolean = false;
 
     constructor() {
         // The service is now primarily configured via the updateApiKeyAndUrl method,
@@ -38,7 +39,21 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    public updateApiKeyAndUrl(newApiKey: string | null, newApiUrl: string | null): void {
+    private _getApiClientOrThrow(): GoogleGenAI {
+        const ai = this._getClient();
+        if (!ai) {
+            if (this.isCustomConfigEnabled) {
+                const silentError = new Error("API key is not configured in custom settings.");
+                silentError.name = "SilentError";
+                throw silentError;
+            }
+            throw new Error("API client not initialized. Configure API Key in settings.");
+        }
+        return ai;
+    }
+
+    public updateApiKeyAndUrl(newApiKey: string | null, newApiUrl: string | null, useCustomApiConfig: boolean): void {
+        this.isCustomConfigEnabled = useCustomApiConfig;
         // The effective key is the user-provided key, or falls back to the environment variable.
         this.apiKeyString = newApiKey ?? process.env.API_KEY ?? null;
         this.currentApiUrl = newApiUrl;
@@ -101,11 +116,7 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async uploadFile(file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
-        const ai = this._getClient();
-        if (!ai) {
-            console.error("Cannot upload file: API client not initialized.");
-            throw new Error("API client not initialized. Configure API Key in settings.");
-        }
+        const ai = this._getApiClientOrThrow();
         if (signal.aborted) {
             console.log(`Upload for "${displayName}" cancelled before starting.`);
             const abortError = new Error("Upload cancelled by user.");
@@ -163,11 +174,7 @@ class GeminiServiceImpl implements GeminiService {
     }
     
     async getFileMetadata(fileApiName: string): Promise<GeminiFile | null> {
-        const ai = this._getClient();
-        if (!ai) {
-            console.error("Cannot get file metadata: API client not initialized.");
-            throw new Error("API client not initialized. Configure API Key in settings.");
-        }
+        const ai = this._getApiClientOrThrow();
         if (!fileApiName || !fileApiName.startsWith('files/')) {
             console.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
             throw new Error('Invalid file ID format. Expected "files/your_file_id".');
@@ -186,10 +193,7 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async generateSpeech(modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
-        const ai = this._getClient();
-        if (!ai) {
-            throw new Error("API client not initialized. Configure API Key in settings.");
-        }
+        const ai = this._getApiClientOrThrow();
         if (!text.trim()) {
             throw new Error("TTS input text cannot be empty.");
         }
@@ -242,11 +246,7 @@ class GeminiServiceImpl implements GeminiService {
         showThoughts: boolean,
         history?: ChatHistoryItem[]
     ): Promise<Chat | null> {
-        const ai = this._getClient();
-        if (!ai) {
-            console.error("Cannot initialize chat: API client not initialized.");
-            throw new Error("API client not initialized. Configure API Key in settings.");
-        }
+        const ai = this._getApiClientOrThrow();
         if (!modelId) {
             console.error("Cannot initialize chat: modelId is not provided.");
             throw new Error("Model ID not provided. Cannot initialize chat.");

@@ -92,7 +92,7 @@ export interface AppSettings extends ChatSettings {
 
 
 export interface GeminiService {
-  updateApiKeyAndUrl: (apiKey: string | null, apiUrl: string | null) => void;
+  updateApiKeyAndUrl: (apiKey: string | null, apiUrl: string | null, useCustomApiConfig: boolean) => void;
   initializeChat: (
     modelId: string,
     systemInstruction: string,

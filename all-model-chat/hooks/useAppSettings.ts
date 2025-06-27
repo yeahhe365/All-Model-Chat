@@ -13,7 +13,7 @@ export const useAppSettings = () => {
         // Initialize gemini service with loaded/default settings
         const apiKeyToUse = loadedSettings.useCustomApiConfig ? loadedSettings.apiKey : null;
         const apiUrlToUse = loadedSettings.useCustomApiConfig ? loadedSettings.apiUrl : null;
-        geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse);
+        geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse, loadedSettings.useCustomApiConfig);
 
         return loadedSettings;
     });
@@ -28,7 +28,7 @@ export const useAppSettings = () => {
         // Update Gemini service based on useCustomApiConfig toggle
         const apiKeyToUse = appSettings.useCustomApiConfig ? appSettings.apiKey : null;
         const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
-        geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse);
+        geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse, appSettings.useCustomApiConfig);
 
         const themeVariablesStyleTag = document.getElementById('theme-variables');
         if (themeVariablesStyleTag) {

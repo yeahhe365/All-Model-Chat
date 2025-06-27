@@ -32,7 +32,8 @@ export const useChat = (appSettings: AppSettings) => {
     const { isStreamingEnabled } = appSettings;
 
     // Model fetching via custom hook
-    const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels(appSettings);
+    const { isModelsLoading, modelsLoadingError } = useModels(appSettings);
+    const apiModels = useModels(appSettings).apiModels;
     
     // Refs for managing UI behavior and async operations
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -191,6 +192,10 @@ export const useChat = (appSettings: AppSettings) => {
             }
             return newSession;
         } catch (error) {
+            if (error instanceof Error && error.name === 'SilentError') {
+                setChatSession(null);
+                return null;
+            }
             console.error("Error initializing chat session:", error);
             const errorMsg = error instanceof Error ? error.message : String(error);
             const fullErrorContent = `Error initializing chat: ${errorMsg}`;
@@ -203,7 +208,7 @@ export const useChat = (appSettings: AppSettings) => {
             setChatSession(null);
             return null;
         }
-    }, [setMessages, setChatSession]);
+    }, []);
 
 
     // Chat session re-initialization
@@ -223,7 +228,7 @@ export const useChat = (appSettings: AppSettings) => {
             setIsSwitchingModel(false);
         };
         reinitializeIfNeeded();
-    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP, initializeCurrentChatSession, messages]);
+    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP, messages]);
 
 
     const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
@@ -338,6 +343,10 @@ export const useChat = (appSettings: AppSettings) => {
                 const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, file.type, file.name, controller.signal);
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
+                if (uploadError instanceof Error && uploadError.name === 'SilentError') {
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'API key not configured', uploadState: 'failed', abortController: undefined } : f));
+                    return;
+                }
                 let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
                 let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
                 if (uploadError instanceof Error && uploadError.name === 'AbortError') {
@@ -384,6 +393,11 @@ export const useChat = (appSettings: AppSettings) => {
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Not Found: ${fileApiId}`, isProcessing: false, error: 'File not found.', uploadState: 'failed' } : f));
             }
         } catch (error) {
+            if (error instanceof Error && error.name === 'SilentError') {
+                setAppFileError('API key not configured.');
+                setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Config Error: ${fileApiId}`, isProcessing: false, error: 'API key not configured', uploadState: 'failed' } : f));
+                return;
+            }
             setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
             setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error`, uploadState: 'failed' } : f));
         }
@@ -433,6 +447,12 @@ export const useChat = (appSettings: AppSettings) => {
                 } : msg));
                 
             } catch (error) {
+                 if (error instanceof Error && error.name === 'SilentError') {
+                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
+                    setIsLoading(false);
+                    if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+                    return;
+                }
                 const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
                 setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
                     ...msg,
@@ -468,7 +488,14 @@ export const useChat = (appSettings: AppSettings) => {
 
         if (!sdkSessionForThisTurn || needsSdkReinitialization) {
             const newSdkSession = await initializeCurrentChatSession(currentChatSettings, historyForNewSdkSession || createChatHistoryForApi(baseMessagesForThisTurn));
-            if (!newSdkSession) { setIsLoading(false); return; }
+            if (!newSdkSession) { 
+                const errorMsg = appSettings.useCustomApiConfig && (!appSettings.apiKey || !appSettings.apiKey.trim())
+                    ? 'API key is not configured in settings. Please add a valid key to send messages.'
+                    : 'Chat session unavailable. Check API key and network.';
+                setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: errorMsg, timestamp: new Date() }]);
+                setIsLoading(false);
+                return;
+            }
             sdkSessionForThisTurn = newSdkSession;
         }
 
@@ -487,10 +514,37 @@ export const useChat = (appSettings: AppSettings) => {
         setMessages(prev => [ ...prev, { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() } ]);
 
         const processModelMessageCompletion = (prevMsgs: ChatMessage[], modelId: string, finalContent: string, finalThoughts: string | undefined, usageMeta?: UsageMetadata, isAborted?: boolean) => {
-            const loadingMsg = prevMsgs.find(m => m.id === modelId);
-            const prevTotal = loadingMsg?.cumulativeTotalTokens || 0;
+            const loadingMsgIndex = prevMsgs.findIndex(m => m.id === modelId);
+            if (loadingMsgIndex === -1) return prevMsgs;
+        
+            const loadingMsg = prevMsgs[loadingMsgIndex];
+            const prevUserMsg = prevMsgs[loadingMsgIndex - 1];
+            const prevTotal = prevUserMsg?.cumulativeTotalTokens || 0;
             const turnTokens = usageMeta?.totalTokenCount || 0;
-            return prevMsgs.map(msg => msg.id === modelId ? { ...msg, isLoading: false, content: finalContent + (isAborted ? "\n\n[Stopped by user]" : ""), thoughts: currentChatSettings.showThoughts ? finalThoughts : msg.thoughts, generationEndTime: new Date(), promptTokens: usageMeta?.promptTokenCount, completionTokens: usageMeta?.candidatesTokenCount, totalTokens: turnTokens, cumulativeTotalTokens: prevTotal + turnTokens } : msg);
+            const promptTokens = usageMeta?.promptTokenCount;
+            const completionTokens = usageMeta?.candidatesTokenCount;
+        
+            const updatedMessages = [...prevMsgs];
+            updatedMessages[loadingMsgIndex] = {
+                ...loadingMsg,
+                isLoading: false,
+                content: finalContent + (isAborted ? "\n\n[Stopped by user]" : ""),
+                thoughts: currentChatSettings.showThoughts ? finalThoughts : loadingMsg.thoughts,
+                generationEndTime: new Date(),
+                promptTokens,
+                completionTokens,
+                totalTokens: turnTokens,
+                cumulativeTotalTokens: prevTotal + turnTokens
+            };
+        
+            // Propagate the new cumulative total to subsequent messages if any
+            for (let i = loadingMsgIndex + 1; i < updatedMessages.length; i++) {
+                const prevMsgInLoop = updatedMessages[i - 1];
+                const turnTotal = updatedMessages[i].totalTokens || 0;
+                updatedMessages[i].cumulativeTotalTokens = (prevMsgInLoop.cumulativeTotalTokens || 0) + turnTotal;
+            }
+        
+            return updatedMessages;
         };
 
         if (isStreamingEnabled) {
@@ -521,7 +575,7 @@ export const useChat = (appSettings: AppSettings) => {
                 }
             );
         }
-    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, chatSession, isStreamingEnabled, initializeCurrentChatSession, saveCurrentChatSession, activeSessionId, editingMessageId ]);
+    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, chatSession, isStreamingEnabled, initializeCurrentChatSession, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings ]);
     
     // UI Action Handlers
     const handleStopGenerating = () => {
