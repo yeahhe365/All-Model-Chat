@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
               disabled={isModelsLoading || isLoading || isSwitchingModel}
-              className={`w-[5.5rem] sm:w-[6.5rem] md:w-[7.5rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
+              className={`w-[6.6rem] sm:w-[7.8rem] md:w-[9rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
               title={`Current Model: ${displayModelName}. Click to change.`}
               aria-label={`Current AI Model: ${displayModelName}. Click to change model.`}
               aria-haspopup="listbox"
