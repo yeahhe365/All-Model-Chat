@@ -41,8 +41,43 @@ export const useChat = (appSettings: AppSettings) => {
     const abortControllerRef = useRef<AbortController | null>(null);
     const sessionSaveTimeoutRef = useRef<number | null>(null);
 
-    // --- FUNCTION DEFINITIONS ---
-    // The order of these definitions is important to avoid "used before declared" errors.
+    // Initial data loading
+    useEffect(() => {
+        try {
+            const storedScenario = localStorage.getItem(PRELOADED_SCENARIO_KEY);
+            if (storedScenario) setPreloadedMessages(JSON.parse(storedScenario));
+        } catch (error) { console.error("Error loading preloaded scenario:", error); }
+
+        try {
+            const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
+            const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
+            sessions.sort((a,b) => b.timestamp - a.timestamp);
+            setSavedSessions(sessions);
+
+            const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
+                loadChatSession(storedActiveId, sessions);
+            } else if (sessions.length > 0) {
+                loadChatSession(sessions[0].id, sessions);
+            } else {
+                startNewChat(false);
+            }
+        } catch (error) {
+            console.error("Error loading chat history:", error);
+            startNewChat(false);
+        }
+    }, []);
+
+    // Effect to validate current model against available models
+    useEffect(() => {
+        if (!isModelsLoading && apiModels.length > 0) {
+            const currentModelStillValid = apiModels.some(m => m.id === appSettings.modelId);
+            if (!currentModelStillValid) {
+                const preferredModelId = apiModels.find(m => m.isPinned)?.id || apiModels[0].id;
+                setCurrentChatSettings(prev => ({ ...prev, modelId: preferredModelId }));
+            }
+        }
+    }, [isModelsLoading, apiModels, appSettings.modelId]);
 
     const saveCurrentChatSession = useCallback((currentMessages: ChatMessage[], currentActiveSessionId: string | null, currentSettingsToSave: IndividualChatSettings) => {
         if (sessionSaveTimeoutRef.current) clearTimeout(sessionSaveTimeoutRef.current);
@@ -100,7 +135,108 @@ export const useChat = (appSettings: AppSettings) => {
                  localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionIdToSave);
             }
         }, 500);
-    }, [savedSessions, activeSessionId, setActiveSessionId]);
+    }, [savedSessions, activeSessionId]);
+
+    // Session saving logic
+    useEffect(() => {
+        if (messages.length > 0 || (activeSessionId && savedSessions.find(s => s.id === activeSessionId))) {
+            saveCurrentChatSession(messages, activeSessionId, currentChatSettings);
+        } else if (messages.length === 0 && !activeSessionId && localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY)) {
+            localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+        }
+    }, [messages, activeSessionId, currentChatSettings, saveCurrentChatSession, savedSessions]);
+
+    // File processing state
+    useEffect(() => {
+        const anyFileProcessing = selectedFiles.some(file => file.isProcessing);
+        setIsAppProcessingFile(anyFileProcessing);
+    }, [selectedFiles]);
+    
+    // Scrolling logic
+    const scrollToBottom = useCallback(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, []);
+
+    const handleScroll = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (container) userScrolledUp.current = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100;
+    }, []);
+
+    useEffect(() => {
+        if (!userScrolledUp.current) scrollToBottom();
+    }, [messages, scrollToBottom]);
+    
+    const initializeCurrentChatSession = useCallback(async (settingsToUse: IndividualChatSettings, history?: ChatHistoryItem[]) => {
+        if (!settingsToUse.modelId) {
+            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected. Cannot initialize chat.', timestamp: new Date() }]);
+            return null;
+        }
+        try {
+            const newSession = await geminiServiceInstance.initializeChat(
+                settingsToUse.modelId, settingsToUse.systemInstruction,
+                { temperature: settingsToUse.temperature, topP: settingsToUse.topP },
+                settingsToUse.showThoughts, history
+            );
+            setChatSession(newSession);
+            if (!newSession) {
+                setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'Failed to initialize chat session. Check API Key, network, and selected model.', timestamp: new Date() }]);
+            }
+            return newSession;
+        } catch (error) {
+            console.error("Error initializing chat session:", error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: `Error initializing chat: ${errorMsg}`, timestamp: new Date() }]);
+            setChatSession(null);
+            return null;
+        }
+    }, []);
+
+
+    // Chat session re-initialization
+    useEffect(() => {
+        const reinitializeIfNeeded = async () => {
+            const isTtsModel = currentChatSettings.modelId.includes('-tts');
+            if (isTtsModel) {
+                setChatSession(null); // No chat session for TTS models
+                setIsSwitchingModel(false);
+                return;
+            }
+            if (!activeSessionId && messages.length === 0) {
+                await initializeCurrentChatSession(currentChatSettings, []);
+            } else {
+                await initializeCurrentChatSession(currentChatSettings, createChatHistoryForApi(messages));
+            }
+            setIsSwitchingModel(false);
+        };
+        reinitializeIfNeeded();
+    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP, initializeCurrentChatSession, messages]);
+
+
+    const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
+        const sessionsToSearch = allSessions || savedSessions;
+        const sessionToLoad = sessionsToSearch.find(s => s.id === sessionId);
+        if (sessionToLoad) {
+            if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
+
+            setMessages(sessionToLoad.messages.map(m => ({
+                ...m,
+                timestamp: new Date(m.timestamp),
+                generationStartTime: m.generationStartTime ? new Date(m.generationStartTime) : undefined,
+                generationEndTime: m.generationEndTime ? new Date(m.generationEndTime) : undefined,
+                cumulativeTotalTokens: m.cumulativeTotalTokens,
+            })));
+            setCurrentChatSettings(sessionToLoad.settings);
+            setActiveSessionId(sessionToLoad.id);
+            localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionToLoad.id);
+            setInputText('');
+            setSelectedFiles([]);
+            setEditingMessageId(null);
+            userScrolledUp.current = false;
+        } else {
+            console.warn(`Session ${sessionId} not found. Starting new chat.`);
+            startNewChat(false);
+        }
+    }, [savedSessions, isLoading ]);
 
     const startNewChat = useCallback((saveCurrent: boolean = true) => {
         if (saveCurrent && activeSessionId && messages.length > 0) {
@@ -132,57 +268,6 @@ export const useChat = (appSettings: AppSettings) => {
         }, 0);
     }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession]);
     
-    const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
-        const sessionsToSearch = allSessions || savedSessions;
-        const sessionToLoad = sessionsToSearch.find(s => s.id === sessionId);
-        if (sessionToLoad) {
-            if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
-
-            setMessages(sessionToLoad.messages.map(m => ({
-                ...m,
-                timestamp: new Date(m.timestamp),
-                generationStartTime: m.generationStartTime ? new Date(m.generationStartTime) : undefined,
-                generationEndTime: m.generationEndTime ? new Date(m.generationEndTime) : undefined,
-                cumulativeTotalTokens: m.cumulativeTotalTokens,
-            })));
-            setCurrentChatSettings(sessionToLoad.settings);
-            setActiveSessionId(sessionToLoad.id);
-            localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionToLoad.id);
-            setInputText('');
-            setSelectedFiles([]);
-            setEditingMessageId(null);
-            userScrolledUp.current = false;
-        } else {
-            console.warn(`Session ${sessionId} not found. Starting new chat.`);
-            startNewChat(false);
-        }
-    }, [savedSessions, isLoading, startNewChat]);
-
-    const initializeCurrentChatSession = useCallback(async (settingsToUse: IndividualChatSettings, history?: ChatHistoryItem[]) => {
-        if (!settingsToUse.modelId) {
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected. Cannot initialize chat.', timestamp: new Date() }]);
-            return null;
-        }
-        try {
-            const newSession = await geminiServiceInstance.initializeChat(
-                settingsToUse.modelId, settingsToUse.systemInstruction,
-                { temperature: settingsToUse.temperature, topP: settingsToUse.topP },
-                settingsToUse.showThoughts, history
-            );
-            setChatSession(newSession);
-            if (!newSession) {
-                setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'Failed to initialize chat session. Check API Key, network, and selected model.', timestamp: new Date() }]);
-            }
-            return newSession;
-        } catch (error) {
-            console.error("Error initializing chat session:", error);
-            const errorMsg = error instanceof Error ? error.message : String(error);
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: `Error initializing chat: ${errorMsg}`, timestamp: new Date() }]);
-            setChatSession(null);
-            return null;
-        }
-    }, []);
-
     const handleClearCurrentChat = useCallback(() => {
         if (isLoading && abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -208,6 +293,7 @@ export const useChat = (appSettings: AppSettings) => {
         userScrolledUp.current = false;
     }, [isLoading, currentChatSettings.modelId]);
     
+    // File Handlers
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
         setAppFileError(null);
@@ -489,96 +575,7 @@ export const useChat = (appSettings: AppSettings) => {
     const handleAppDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (isAppProcessingFile) { e.dataTransfer.dropEffect = 'none'; return; } if (e.dataTransfer.types.includes('Files')) { e.dataTransfer.dropEffect = 'copy'; if (!isAppDraggingOver) setIsAppDraggingOver(true); } else e.dataTransfer.dropEffect = 'none'; }, [isAppDraggingOver, isAppProcessingFile]);
     const handleAppDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsAppDraggingOver(false); }, []);
     const handleAppDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsAppDraggingOver(false); if (isAppProcessingFile) return; const files = e.dataTransfer.files; if (files?.length) await handleProcessAndAddFiles(files); }, [isAppProcessingFile, handleProcessAndAddFiles]);
-
-    const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, []);
-
-    const handleScroll = useCallback(() => {
-        const container = scrollContainerRef.current;
-        if (container) userScrolledUp.current = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100;
-    }, []);
-
-    // --- useEffect HOOKS ---
     
-    // Initial data loading
-    useEffect(() => {
-        try {
-            const storedScenario = localStorage.getItem(PRELOADED_SCENARIO_KEY);
-            if (storedScenario) setPreloadedMessages(JSON.parse(storedScenario));
-        } catch (error) { console.error("Error loading preloaded scenario:", error); }
-
-        try {
-            const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
-            const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
-            sessions.sort((a,b) => b.timestamp - a.timestamp);
-            setSavedSessions(sessions);
-
-            const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
-            if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
-                loadChatSession(storedActiveId, sessions);
-            } else if (sessions.length > 0) {
-                loadChatSession(sessions[0].id, sessions);
-            } else {
-                startNewChat(false);
-            }
-        } catch (error) {
-            console.error("Error loading chat history:", error);
-            startNewChat(false);
-        }
-    }, [loadChatSession, startNewChat]);
-
-    // Effect to validate current model against available models
-    useEffect(() => {
-        if (!isModelsLoading && apiModels.length > 0) {
-            const currentModelStillValid = apiModels.some(m => m.id === appSettings.modelId);
-            if (!currentModelStillValid) {
-                const preferredModelId = apiModels.find(m => m.isPinned)?.id || apiModels[0].id;
-                setCurrentChatSettings(prev => ({ ...prev, modelId: preferredModelId }));
-            }
-        }
-    }, [isModelsLoading, apiModels, appSettings.modelId]);
-
-    // Session saving logic
-    useEffect(() => {
-        if (messages.length > 0 || (activeSessionId && savedSessions.find(s => s.id === activeSessionId))) {
-            saveCurrentChatSession(messages, activeSessionId, currentChatSettings);
-        } else if (messages.length === 0 && !activeSessionId && localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY)) {
-            localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-        }
-    }, [messages, activeSessionId, currentChatSettings, saveCurrentChatSession, savedSessions]);
-
-    // File processing state
-    useEffect(() => {
-        const anyFileProcessing = selectedFiles.some(file => file.isProcessing);
-        setIsAppProcessingFile(anyFileProcessing);
-    }, [selectedFiles]);
-    
-    // Scrolling logic
-    useEffect(() => {
-        if (!userScrolledUp.current) scrollToBottom();
-    }, [messages, scrollToBottom]);
-    
-    // Chat session re-initialization
-    useEffect(() => {
-        const reinitializeIfNeeded = async () => {
-            const isTtsModel = currentChatSettings.modelId.includes('-tts');
-            if (isTtsModel) {
-                setChatSession(null); // No chat session for TTS models
-                setIsSwitchingModel(false);
-                return;
-            }
-            if (!activeSessionId && messages.length === 0) {
-                await initializeCurrentChatSession(currentChatSettings, []);
-            } else {
-                await initializeCurrentChatSession(currentChatSettings, createChatHistoryForApi(messages));
-            }
-            setIsSwitchingModel(false);
-        };
-        reinitializeIfNeeded();
-    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP, initializeCurrentChatSession, messages]);
-
-
     return {
         messages,
         setMessages,
