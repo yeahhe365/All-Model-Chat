@@ -11,11 +11,33 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
   const [isInitializing, setIsInitializing] = useState(true);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [volume, setVolume] = useState(0); // For visualization
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<number | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Refs for audio analysis
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const animationFrameIdRef = useRef<number | null>(null);
+
+  const stopAudioAnalysis = useCallback(() => {
+    if (animationFrameIdRef.current) {
+      cancelAnimationFrame(animationFrameIdRef.current);
+      animationFrameIdRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close();
+    }
+    sourceRef.current?.disconnect();
+    audioContextRef.current = null;
+    analyserRef.current = null;
+    sourceRef.current = null;
+    setVolume(0);
+  }, []);
 
   const startRecording = useCallback(async () => {
     setAudioBlob(null);
@@ -23,7 +45,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
+        
+        // --- Setup MediaRecorder for recording ---
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
         mediaRecorderRef.current = mediaRecorder;
 
         mediaRecorder.ondataavailable = (event) => {
@@ -35,6 +59,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             setAudioBlob(blob);
             audioUrlRef.current = URL.createObjectURL(blob);
             stream.getTracks().forEach(track => track.stop());
+            stopAudioAnalysis(); // Stop analysis when recording stops
         };
 
         audioChunksRef.current = [];
@@ -45,11 +70,34 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
         timerIntervalRef.current = window.setInterval(() => {
             setRecordingTime(prevTime => prevTime + 1);
         }, 1000);
+
+        // --- Setup Web Audio API for visualization ---
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512;
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        audioContextRef.current = audioContext;
+        analyserRef.current = analyser;
+        sourceRef.current = source;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        const draw = () => {
+            if (!analyserRef.current) return;
+            analyserRef.current.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
+            setVolume(average);
+            animationFrameIdRef.current = requestAnimationFrame(draw);
+        };
+        draw();
+
     } catch (err) {
         console.error("Error accessing microphone:", err);
         setError("Could not access microphone. Please check permissions.");
     }
-  }, []);
+  }, [stopAudioAnalysis]);
 
   useEffect(() => {
     setIsInitializing(true);
@@ -67,14 +115,16 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
       mediaRecorderRef.current?.stream?.getTracks().forEach(track => track.stop());
+      stopAudioAnalysis();
     };
-  }, []);
+  }, [stopAudioAnalysis]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      // stopAudioAnalysis is called in onstop handler of MediaRecorder
     }
   }, [isRecording]);
 
@@ -127,11 +177,21 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             </div>
         );
     }
+    
+    // Map volume (0-255) to a scale factor (e.g., 1 to 1.5) and opacity (e.g., 0.2 to 0.7)
+    const scale = 1 + (volume / 255) * 0.5;
+    const opacity = 0.2 + (volume / 255) * 0.5;
+
     return (
         <div className="w-full max-w-sm bg-[var(--theme-bg-secondary)] rounded-lg p-6 text-white text-center">
             <h3 className="text-xl font-semibold mb-2 text-[var(--theme-text-primary)]">{isRecording ? "Recording..." : "Ready to Record"}</h3>
             <div className="relative mb-6 h-24 flex items-center justify-center">
-                {isRecording && <div className="absolute w-24 h-24 bg-red-500/30 rounded-full animate-ping"></div>}
+                {isRecording && (
+                    <div
+                        className="absolute w-24 h-24 bg-red-500 rounded-full transition-transform duration-100 ease-out"
+                        style={{ transform: `scale(${scale})`, opacity: opacity }}
+                    ></div>
+                )}
                 <div className="relative w-24 h-24 bg-[var(--theme-bg-tertiary)] rounded-full flex items-center justify-center">
                     <p className="text-3xl font-mono text-[var(--theme-text-primary)]">{formatTime(recordingTime)}</p>
                 </div>

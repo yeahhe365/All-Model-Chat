@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, FilePlus2, Wand2 } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations } from '../utils/appUtils';
@@ -43,6 +43,33 @@ export const Header: React.FC<HeaderProps> = ({
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
+  
+  const [isModelNameOverflowing, setIsModelNameOverflowing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
+  const singleInstanceRef = useRef<HTMLSpanElement>(null);
+
+  const displayModelName = isModelsLoading && !currentModelName ? "Loading models..." : currentModelName;
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const singleInstance = singleInstanceRef.current;
+    const contentWrapper = contentWrapperRef.current;
+
+    if (container && singleInstance && contentWrapper) {
+        const isOverflowing = singleInstance.scrollWidth > container.clientWidth;
+        
+        if (isOverflowing !== isModelNameOverflowing) {
+            setIsModelNameOverflowing(isOverflowing);
+        }
+        
+        if (isOverflowing) {
+            // pl-4 is 1rem = 16px
+            const scrollAmount = singleInstance.scrollWidth + 16;
+            contentWrapper.style.setProperty('--marquee-scroll-amount', `-${scrollAmount}px`);
+        }
+    }
+  }, [displayModelName, isModelNameOverflowing]);
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -67,8 +94,6 @@ export const Header: React.FC<HeaderProps> = ({
     onSelectModel(modelId);
     setIsModelSelectorOpen(false);
   };
-
-  const displayModelName = isModelsLoading && !currentModelName ? "Loading models..." : currentModelName;
 
   const canvasPromptButtonBaseClasses = "p-2 sm:p-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-100";
   const canvasPromptButtonActiveClasses = `bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] shadow-premium`;
@@ -100,15 +125,27 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
               disabled={isModelsLoading || isLoading || isSwitchingModel}
-              className={`text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start whitespace-nowrap flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
+              className={`w-[5.5rem] sm:w-[6.5rem] md:w-[7.5rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
               title={`Current Model: ${displayModelName}. Click to change.`}
               aria-label={`Current AI Model: ${displayModelName}. Click to change model.`}
               aria-haspopup="listbox"
               aria-expanded={isModelSelectorOpen}
             >
-              {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)]" /> : null}
-              <span className="truncate max-w-[150px] sm:max-w-[180px] md:max-w-[220px]">{displayModelName}</span>
-              <ChevronDown size={12} className={`transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+               <div ref={containerRef} className="flex-1 overflow-hidden">
+                    <div ref={contentWrapperRef} className={`flex w-max items-center ${isModelNameOverflowing ? 'horizontal-scroll-marquee' : ''}`}>
+                        <span ref={singleInstanceRef} className="flex items-center gap-1 whitespace-nowrap">
+                            {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
+                            <span>{displayModelName}</span>
+                        </span>
+                        {isModelNameOverflowing && (
+                            <span className="flex items-center gap-1 whitespace-nowrap pl-4">
+                                {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
+                                <span>{displayModelName}</span>
+                            </span>
+                        )}
+                    </div>
+                </div>
+              <ChevronDown size={12} className={`transition-transform duration-200 flex-shrink-0 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isModelSelectorOpen && (
