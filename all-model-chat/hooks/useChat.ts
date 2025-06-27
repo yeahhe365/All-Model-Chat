@@ -228,7 +228,7 @@ export const useChat = (appSettings: AppSettings) => {
             setIsSwitchingModel(false);
         };
         reinitializeIfNeeded();
-    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP, messages]);
+    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP]);
 
 
     const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
