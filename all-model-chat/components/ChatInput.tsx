@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic } from 'lucide-react';
+import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2 } from 'lucide-react';
 import { UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 import { translations } from '../utils/appUtils';
@@ -7,6 +7,7 @@ import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 import { CreateTextFileEditor } from './chat/CreateTextFileEditor';
 import { CameraCapture } from './chat/CameraCapture';
 import { AudioRecorder } from './chat/AudioRecorder';
+import { geminiServiceInstance } from '../services/geminiService';
 
 interface ChatInputProps {
   inputText: string;
@@ -57,6 +58,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
@@ -68,6 +71,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
+
 
   const adjustTextareaHeight = useCallback((target: HTMLTextAreaElement | null) => {
     if (!target) return;
@@ -193,6 +200,69 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setIsAttachMenuOpen(false);
   };
 
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+
+  const handleStartRecording = useCallback(async () => {
+    setTranscriptionError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setTranscriptionError("Audio recording is not supported by your browser.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setIsRecording(true);
+      
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+        
+        stream.getTracks().forEach(track => track.stop());
+        
+        setIsTranscribing(true);
+        setTranscriptionError(null);
+        try {
+          const transcribedText = await geminiServiceInstance.transcribeAudio(audioFile);
+          setInputText(prev => (prev ? prev.trim() + ' ' : '') + transcribedText);
+          textareaRef.current?.focus();
+        } catch (error) {
+          console.error('Transcription error:', error);
+          const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+          setTranscriptionError(`Transcription failed: ${errorMessage}`);
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+      
+      mediaRecorder.start();
+    } catch (err) {
+      console.error("Error starting recording:", err);
+      setTranscriptionError("Could not access microphone. Please grant permission.");
+      setIsRecording(false);
+    }
+  }, [setInputText]);
+
+  const handleToggleRecording = useCallback(() => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
+    }
+  }, [isRecording, handleStartRecording, handleStopRecording]);
+
+
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
   const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');
   const canSend = (inputText.trim() !== '' || hasSuccessfullyProcessedFiles) && !isProcessingFile && !isLoading && !isAddingById && !isModalOpen;
@@ -259,6 +329,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {fileError}
               </div>
             )}
+            {transcriptionError && ( 
+                <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 text-xs sm:text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">
+                    {transcriptionError}
+                </div>
+            )}
             {selectedFiles.length > 0 && (
               <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar">
                 <div className="flex gap-2 sm:gap-3">
@@ -287,16 +362,37 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
         
         <form onSubmit={handleSubmit} className={`flex items-end gap-2 sm:gap-3 px-1.5 sm:px-2 pb-1.5 sm:pb-2 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-          <textarea
-            ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress} onPaste={handlePaste}
-            placeholder={t('chatInputPlaceholder')}
-            className="flex-grow p-2 sm:p-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] overflow-y-auto text-sm sm:text-base resize-none custom-scrollbar chat-textarea-glow"
-            rows={1}
-            style={{ minHeight: `${currentInitialTextareaHeight}px`, maxHeight: `${MAX_TEXTAREA_HEIGHT_PX}px` }}
-            aria-label="Chat message input"
-            onFocus={(e) => adjustTextareaHeight(e.target)} disabled={isModalOpen} 
-          />
+          <div className="relative flex-grow">
+            <textarea
+              ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
+              onKeyPress={handleKeyPress} onPaste={handlePaste}
+              placeholder={t('chatInputPlaceholder')}
+              className="flex-grow w-full p-2 sm:p-2.5 pr-12 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] overflow-y-auto text-sm sm:text-base resize-none custom-scrollbar chat-textarea-glow"
+              rows={1}
+              style={{ minHeight: `${currentInitialTextareaHeight}px`, maxHeight: `${MAX_TEXTAREA_HEIGHT_PX}px` }}
+              aria-label="Chat message input"
+              onFocus={(e) => adjustTextareaHeight(e.target)} disabled={isModalOpen || isRecording || isTranscribing} 
+            />
+            <div className="absolute right-2.5 bottom-2.5 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={handleToggleRecording}
+                disabled={isLoading || isProcessingFile || isAddingById || isModalOpen || isTranscribing}
+                className={`p-1.5 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isRecording ? 'mic-recording-animate' : 
+                    'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'
+                }`}
+                aria-label={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')}
+                title={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')}
+              >
+                  {isTranscribing 
+                      ? <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" /> 
+                      : <Mic size={20} />
+                  }
+              </button>
+            </div>
+          </div>
+
           <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2 relative">
             <button
               ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}

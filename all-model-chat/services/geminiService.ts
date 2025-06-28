@@ -5,6 +5,23 @@ import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (base64Data) {
+                resolve(base64Data);
+            } else {
+                reject(new Error("Failed to extract base64 data from file."));
+            }
+        };
+        reader.onerror = error => reject(error);
+    });
+};
+
 class GeminiServiceImpl implements GeminiService {
     private apiKeyString: string | null = null;
     private currentApiUrl: string | null = null; // Stored for future use if SDK supports custom endpoints or for proxies
@@ -325,6 +342,46 @@ class GeminiServiceImpl implements GeminiService {
 
         } catch (error) {
             console.error(`Failed to generate speech with model ${modelId}:`, error);
+            throw error;
+        }
+    }
+
+    async transcribeAudio(audioFile: File): Promise<string> {
+        const ai = this._getApiClientOrThrow();
+
+        const audioBase64 = await fileToBase64(audioFile);
+
+        const audioPart = {
+            inlineData: {
+                mimeType: audioFile.type,
+                data: audioBase64,
+            },
+        };
+
+        const textPart = {
+            text: "转录此音频",
+        };
+
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-preview-04-17',
+                contents: { parts: [audioPart, textPart] },
+                config: {
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
+            });
+
+            if (response.text) {
+                return response.text;
+            } else {
+                const safetyFeedback = response.candidates?.[0]?.finishReason;
+                if (safetyFeedback && safetyFeedback !== 'STOP') {
+                     throw new Error(`Transcription failed due to safety settings: ${safetyFeedback}`);
+                }
+                throw new Error("Transcription failed. The model returned an empty response.");
+            }
+        } catch (error) {
+            console.error("Error during audio transcription:", error);
             throw error;
         }
     }

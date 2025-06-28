@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Mic, StopCircle, Check, X, Trash2, Loader2 } from 'lucide-react';
 
 interface AudioRecorderProps {
-  onRecord: (file: File) => void;
+  onRecord: (file: File) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -12,6 +12,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [volume, setVolume] = useState(0); // For visualization
+  const [isSaving, setIsSaving] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const timerIntervalRef = useRef<number | null>(null);
@@ -128,11 +129,12 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
     }
   }, [isRecording]);
 
-  const handleSave = () => {
-    if (audioBlob) {
+  const handleSave = async () => {
+    if (audioBlob && !isSaving) {
+      setIsSaving(true);
       const fileName = `recording-${new Date().toISOString().slice(0,19)}.webm`;
       const file = new File([audioBlob], fileName, { type: 'audio/webm' });
-      onRecord(file);
+      await onRecord(file);
     }
   };
   
@@ -171,8 +173,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                 <h3 className="text-lg mb-4 text-[var(--theme-text-primary)]">Preview Recording</h3>
                 <audio src={audioUrlRef.current} controls className="w-full mb-6" />
                 <div className="flex justify-center gap-4">
-                    <button onClick={handleDiscard} className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg-tertiary)] rounded-lg hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)]"><Trash2 size={20} /> Discard</button>
-                    <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg-accent)] rounded-lg hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)]"><Check size={20} /> Save</button>
+                    <button onClick={handleDiscard} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg-tertiary)] rounded-lg hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed"><Trash2 size={20} /> Discard</button>
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--theme-bg-accent)] rounded-lg hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:opacity-50 disabled:cursor-not-allowed w-32">
+                        {isSaving ? <Loader2 size={20} className="animate-spin" /> : <><Check size={20} /> <span>Save</span></>}
+                    </button>
                 </div>
             </div>
         );

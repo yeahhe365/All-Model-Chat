@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage, ModelOption, ChatHistoryItem, AppSettings, UploadedFile, ContentPart, PreloadedMessage, SavedChatSession, ChatSettings as IndividualChatSettings } from '../types';
 import { DEFAULT_CHAT_SETTINGS, PRELOADED_SCENARIO_KEY, CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES } from '../constants/fileConstants';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 import { generateUniqueId, generateSessionTitle, buildContentParts, createChatHistoryForApi, pcmBase64ToWavUrl } from '../utils/appUtils';
@@ -349,7 +349,11 @@ export const useChat = (appSettings: AppSettings) => {
                 return; 
             }
 
-            const initialFileState: UploadedFile = { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
+            const isConsideredText = file.type.startsWith('text/') || SUPPORTED_TEXT_MIME_TYPES.includes(file.type);
+            const typeForState = isConsideredText ? 'text/plain' : file.type;
+            const mimeTypeForUpload = isConsideredText ? 'text/plain' : file.type;
+
+            const initialFileState: UploadedFile = { id: fileId, name: file.name, type: typeForState, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
             setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
@@ -362,7 +366,7 @@ export const useChat = (appSettings: AppSettings) => {
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
             try {
-                const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, file.type, file.name, controller.signal);
+                const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, mimeTypeForUpload, file.name, controller.signal);
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
                 if (uploadError instanceof Error && uploadError.name === 'SilentError') {

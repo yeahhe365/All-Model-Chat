@@ -338,6 +338,22 @@
       animation: marquee-scroll 8s linear infinite;
     }
 
+    @keyframes micPulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+      }
+    }
+    .mic-recording-animate {
+      animation: micPulse 2s infinite;
+      background-color: var(--theme-bg-danger);
+      color: var(--theme-text-danger);
+    }
 
     #root {
       animation: appFadeIn 0.5s ease-out both;

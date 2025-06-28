@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Camera, X } from 'lucide-react';
+import { Camera, X, Loader2 } from 'lucide-react';
 
 interface CameraCaptureProps {
-  onCapture: (file: File) => void;
+  onCapture: (file: File) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -11,6 +11,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -37,25 +38,31 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
     };
   }, []);
 
-  const handleCapture = useCallback(() => {
-    if (videoRef.current && canvasRef.current && stream) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext('2d');
-      if (context) {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const fileName = `photo-${new Date().toISOString().slice(0, 19)}.jpg`;
-            const file = new File([blob], fileName, { type: 'image/jpeg' });
-            onCapture(file);
-          }
-        }, 'image/jpeg', 0.9);
+  const handleCapture = useCallback(async () => {
+    if (isCapturing || !videoRef.current || !canvasRef.current || !stream) return;
+    setIsCapturing(true);
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+      
+      if (blob) {
+        const fileName = `photo-${new Date().toISOString().slice(0, 19)}.jpg`;
+        const file = new File([blob], fileName, { type: 'image/jpeg' });
+        await onCapture(file);
+      } else {
+        console.error("Failed to create blob from canvas.");
+        setIsCapturing(false);
       }
+    } else {
+        setIsCapturing(false);
     }
-  }, [onCapture, stream]);
+  }, [onCapture, stream, isCapturing]);
 
   return (
     <div 
@@ -80,11 +87,15 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
         <div className="flex items-center justify-center p-4 bg-black/30">
             <button 
                 onClick={handleCapture} 
-                disabled={!stream || !!error} 
+                disabled={!stream || !!error || isCapturing} 
                 className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full flex items-center justify-center ring-4 ring-white/30 hover:ring-white/50 transition disabled:bg-gray-400 disabled:ring-gray-500"
                 aria-label="Take picture"
             >
-            <Camera size={32} className="text-gray-800" />
+            {isCapturing ? (
+              <Loader2 size={32} className="animate-spin text-gray-800" />
+            ) : (
+              <Camera size={32} className="text-gray-800" />
+            )}
             </button>
         </div>
       </div>
