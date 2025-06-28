@@ -24,6 +24,7 @@ export const translations = {
     settingsTemperature: { en: 'Temperature', zh: '温度' },
     settingsTopP: { en: 'Top P', zh: 'Top P' },
     settingsShowThoughts: { en: "Show Assistant's Thoughts", zh: '显示助手思考过程' },
+    settingsTranscriptionThinking: { en: 'Enable Thinking for Voice Input', zh: '启用语音输入思考功能' },
     settingsReset: { en: 'Reset', zh: '重置' },
     settingsClearCache: { en: 'Clear Cache', zh: '清除缓存' },
     settingsCancel: { en: 'Cancel', zh: '取消' },

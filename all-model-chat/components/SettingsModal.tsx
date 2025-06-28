@@ -122,6 +122,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             isModelsLoading={isModelsLoading}
             modelsLoadingError={modelsLoadingError}
             availableModels={availableModels}
+            transcriptionModelId={settings.transcriptionModelId}
+            setTranscriptionModelId={(val) => updateSetting('transcriptionModelId', val)}
             ttsVoice={settings.ttsVoice}
             setTtsVoice={(val) => updateSetting('ttsVoice', val)}
             systemInstruction={settings.systemInstruction}
@@ -134,6 +136,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setShowThoughts={(val) => updateSetting('showThoughts', val)}
             isStreamingEnabled={settings.isStreamingEnabled}
             setIsStreamingEnabled={(val) => updateSetting('isStreamingEnabled', val)}
+            isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled}
+            setIsTranscriptionThinkingEnabled={(val) => updateSetting('isTranscriptionThinkingEnabled', val)}
             t={t}
           />
         </div>

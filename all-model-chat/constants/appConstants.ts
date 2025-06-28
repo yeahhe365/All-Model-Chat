@@ -16,6 +16,14 @@ export const DEFAULT_SHOW_THOUGHTS = true;
 export const DEFAULT_IS_STREAMING_ENABLED = true; 
 export const DEFAULT_BASE_FONT_SIZE = 18; 
 export const DEFAULT_TTS_VOICE = 'Zephyr';
+export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-2.5-flash';
+export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
+
+export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default)' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
+    { id: 'gemini-2.5-flash-lite-preview-06-17', name: 'Gemini 2.5 Flash Lite (Fastest)' },
+];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [
     { id: 'Zephyr', name: 'Zephyr (Bright)' },
@@ -74,4 +82,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
+  transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
+  isTranscriptionThinkingEnabled: DEFAULT_TRANSCRIPTION_THINKING_ENABLED,
 };

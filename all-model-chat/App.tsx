@@ -287,6 +287,8 @@ const App: React.FC = () => {
           aspectRatio={aspectRatio}
           setAspectRatio={setAspectRatio}
           t={t}
+          transcriptionModelId={appSettings.transcriptionModelId}
+          isTranscriptionThinkingEnabled={appSettings.isTranscriptionThinkingEnabled}
         />
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2 } from 'lucide-react';
 import { UploadedFile } from '../types';
@@ -29,10 +30,12 @@ interface ChatInputProps {
   isVeoModel?: boolean;
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
+  transcriptionModelId?: string;
+  isTranscriptionThinkingEnabled?: boolean;
 }
 
-const INITIAL_TEXTAREA_HEIGHT_PX = 44;
-const MAX_TEXTAREA_HEIGHT_PX = (window.innerWidth < 640 ? 40 : INITIAL_TEXTAREA_HEIGHT_PX) * 3;
+const INITIAL_TEXTAREA_HEIGHT_PX = 40;
+const MAX_TEXTAREA_HEIGHT_PX = 256; 
 
 const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
     let styles = {};
@@ -53,13 +56,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
   isImagenModel, isVeoModel, aspectRatio, setAspectRatio,
+  transcriptionModelId, isTranscriptionThinkingEnabled,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
@@ -76,17 +79,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
 
 
-  const adjustTextareaHeight = useCallback((target: HTMLTextAreaElement | null) => {
+  const adjustTextareaHeight = useCallback(() => {
+    const target = textareaRef.current;
     if (!target) return;
-    target.style.height = 'auto';
+    const currentInitialHeight = window.innerWidth < 640 ? 36 : INITIAL_TEXTAREA_HEIGHT_PX;
+    target.style.height = 'auto'; // Reset height to get the actual scroll height
     const scrollHeight = target.scrollHeight;
-    const currentInitialHeight = window.innerWidth < 640 ? 40 : INITIAL_TEXTAREA_HEIGHT_PX;
-    const currentMaxHeight = MAX_TEXTAREA_HEIGHT_PX;
-    const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, currentMaxHeight));
+    const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
     target.style.height = `${newHeight}px`;
   }, []);
 
-  useEffect(() => { adjustTextareaHeight(textareaRef.current); }, [inputText, adjustTextareaHeight]);
+  useEffect(() => { adjustTextareaHeight(); }, [inputText, adjustTextareaHeight]);
 
   useEffect(() => {
     if (prevIsProcessingFileRef.current && !isProcessingFile && !isAddingById && justInitiatedFileOpRef.current) {
@@ -149,7 +152,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (canSend) {
         onSendMessage();
         setIsAnimatingSend(true);
-        setTimeout(() => setIsAnimatingSend(false), 400); // Match animation duration
+        setTimeout(() => setIsAnimatingSend(false), 400); 
     }
   };
 
@@ -200,14 +203,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setIsAttachMenuOpen(false);
   };
 
-  const handleStopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  const handleToggleRecording = useCallback(async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
       setIsRecording(false);
+      return;
     }
-  }, [isRecording]);
 
-  const handleStartRecording = useCallback(async () => {
     setTranscriptionError(null);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setTranscriptionError("Audio recording is not supported by your browser.");
@@ -219,22 +221,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+      const audioChunks: Blob[] = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data);
-      };
-
+      mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
-        
         stream.getTracks().forEach(track => track.stop());
-        
         setIsTranscribing(true);
         setTranscriptionError(null);
         try {
-          const transcribedText = await geminiServiceInstance.transcribeAudio(audioFile);
+          const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
+          const transcribedText = await geminiServiceInstance.transcribeAudio(audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
           setInputText(prev => (prev ? prev.trim() + ' ' : '') + transcribedText);
           textareaRef.current?.focus();
         } catch (error) {
@@ -245,204 +243,100 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           setIsTranscribing(false);
         }
       };
-      
       mediaRecorder.start();
     } catch (err) {
       console.error("Error starting recording:", err);
       setTranscriptionError("Could not access microphone. Please grant permission.");
       setIsRecording(false);
     }
-  }, [setInputText]);
-
-  const handleToggleRecording = useCallback(() => {
-    if (isRecording) {
-      handleStopRecording();
-    } else {
-      handleStartRecording();
-    }
-  }, [isRecording, handleStartRecording, handleStopRecording]);
-
+  }, [isRecording, setInputText, transcriptionModelId, isTranscriptionThinkingEnabled]);
 
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
   const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');
   const canSend = (inputText.trim() !== '' || hasSuccessfullyProcessedFiles) && !isProcessingFile && !isLoading && !isAddingById && !isModalOpen;
-  const currentInitialTextareaHeight = window.innerWidth < 640 ? 40 : INITIAL_TEXTAREA_HEIGHT_PX;
-  const attachIconSize = window.innerWidth < 640 ? 20 : 22;
-  const sendIconSize = window.innerWidth < 640 ? 20 : 22;
-  const showAspectRatio = isImagenModel || isVeoModel;
+  
+  const attachIconSize = 22;
+  const micIconSize = 22;
+  const sendIconSize = 22;
 
+  const buttonBaseClass = "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)]";
+  
   return (
     <>
-      {showCamera && (
-        <CameraCapture 
-          onCapture={handlePhotoCapture}
-          onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }}
-        />
-      )}
-      {showRecorder && (
-        <AudioRecorder 
-          onRecord={handleAudioRecord}
-          onCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }}
-        />
-      )}
-      {showCreateTextFileEditor && (
-        <CreateTextFileEditor 
-          onConfirm={handleConfirmCreateTextFile}
-          onCancel={handleCancelCreateTextFile}
-          isProcessing={isProcessingFile}
-          isLoading={isLoading}
-        />
-      )}
+      {showCamera && ( <CameraCapture onCapture={handlePhotoCapture} onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }} /> )}
+      {showRecorder && ( <AudioRecorder onRecord={handleAudioRecord} onCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }} /> )}
+      {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isLoading} /> )}
 
       <div
         className={`bg-[var(--theme-bg-primary)] border-t border-[var(--theme-border-primary)] ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isModalOpen}
       >
-        <div className="px-1.5 sm:px-2 pt-1.5 sm:pt-2">
-            {showAspectRatio && setAspectRatio && aspectRatio && (
-                <div className="mb-2">
-                    <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
-                        {aspectRatios.map(ratioValue => {
-                            const isSelected = aspectRatio === ratioValue;
-                            return (
-                                <button
-                                    key={ratioValue}
-                                    onClick={() => setAspectRatio(ratioValue)}
-                                    className={`p-2 rounded-lg flex flex-col items-center justify-center min-w-[50px] text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)]
-                                    ${
-                                        isSelected
-                                            ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]'
-                                            : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-secondary)]/50'
-                                    }`}
-                                    title={`Aspect Ratio ${ratioValue}`}
-                                >
-                                    <AspectRatioIcon ratio={ratioValue} />
-                                    <span>{ratioValue}</span>
-                                </button>
-                            );
-                        })}
+        <div className="mx-auto w-full max-w-4xl px-2 sm:px-4">
+            <div className="pt-2">
+                {(isImagenModel || isVeoModel) && setAspectRatio && aspectRatio && (
+                    <div className="mb-2">
+                        <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
+                            {aspectRatios.map(ratioValue => {
+                                const isSelected = aspectRatio === ratioValue;
+                                return ( <button key={ratioValue} onClick={() => setAspectRatio(ratioValue)} className={`p-2 rounded-lg flex flex-col items-center justify-center min-w-[50px] text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] ${isSelected ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-secondary)]/50' }`} title={`Aspect Ratio ${ratioValue}`}> <AspectRatioIcon ratio={ratioValue} /> <span>{ratioValue}</span> </button> );
+                            })}
+                        </div>
+                    </div>
+                )}
+                {fileError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
+                {transcriptionError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{transcriptionError}</div>}
+                {selectedFiles.length > 0 && <div className="mb-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar"> <div className="flex gap-3"> {selectedFiles.map(file => ( <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} /> ))} </div> </div>}
+                {showAddByIdInput && <div className="mb-2 flex items-center gap-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)]"> <input type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)} placeholder="Paste File ID (e.g., files/xyz123)" className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm" aria-label="File ID input" disabled={isAddingById} /> <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm" aria-label="Add file by ID"> <Plus size={16} /> Add </button> <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm" aria-label="Cancel adding file by ID"> <XCircle size={16} /> Cancel </button> </div>}
+            </div>
+            
+            <form onSubmit={handleSubmit} className={`relative py-2 sm:py-3 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
+                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)] p-1.5 sm:p-2 shadow-sm focus-within:border-[var(--theme-border-focus)] focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]/50 transition-all duration-200">
+                    <div className="relative">
+                        <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label="Attach file menu" title="Attach file" aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
+                            <Paperclip size={attachIconSize} />
+                        </button>
+                        {isAttachMenuOpen && (
+                            <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-xl z-20 py-1" role="menu">
+                                {['Upload from Device', 'Take Photo', 'Record Audio', 'Add by File ID', 'Create Text File'].map((item, index) => {
+                                    const icons = [<UploadCloud size={16}/>, <Camera size={16}/>, <Mic size={16}/>, <Link2 size={16}/>, <FileSignature size={16}/>];
+                                    const actions = [() => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); }, () => openActionModal('camera'), () => openActionModal('recorder'), () => openActionModal('id'), () => openActionModal('text')];
+                                    return <button key={item} onClick={actions[index]} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem"> {icons[index]} <span>{item}</span> </button>
+                                })}
+                            </div>
+                        )}
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                    </div>
+
+                    <textarea
+                        ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
+                        onKeyPress={handleKeyPress} onPaste={handlePaste}
+                        placeholder={t('chatInputPlaceholder')}
+                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1.5 sm:py-2 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 custom-scrollbar"
+                        style={{ height: `${window.innerWidth < 640 ? 36 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
+                        aria-label="Chat message input"
+                        onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing}
+                        rows={1}
+                    />
+
+                    <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+                         <button type="button" onClick={handleToggleRecording} disabled={isLoading || isProcessingFile || isAddingById || isModalOpen || isTranscribing} className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] ${isRecording ? 'mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]' : ''}`} aria-label={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')} title={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')}>
+                             {isTranscribing ? <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" /> : <Mic size={micIconSize} />}
+                         </button>
+                        
+                        {isLoading ? ( 
+                            <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label="Stop generating response" title="Stop Generating"><Ban size={sendIconSize} /></button>
+                        ) : isEditing ? (
+                            <>
+                                <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)]`} aria-label="Cancel editing" title="Cancel Edit"><X size={sendIconSize} /></button>
+                                <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label="Update message" title="Update & Send"><Edit2 size={sendIconSize} /></button>
+                            </>
+                        ) : (
+                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label="Send message" title="Send"><Send size={sendIconSize} /></button>
+                        )}
                     </div>
                 </div>
-            )}
-            {fileError && ( 
-              <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 text-xs sm:text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">
-                {fileError}
-              </div>
-            )}
-            {transcriptionError && ( 
-                <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 text-xs sm:text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">
-                    {transcriptionError}
-                </div>
-            )}
-            {selectedFiles.length > 0 && (
-              <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar">
-                <div className="flex gap-2 sm:gap-3">
-                  {selectedFiles.map(file => (
-                    <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} />
-                  ))}
-                </div>
-              </div>
-            )}
-            {showAddByIdInput && (
-              <div className="mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)]">
-                <input
-                  type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)}
-                  placeholder="Paste File ID (e.g., files/xyz123)"
-                  className="flex-grow p-1.5 sm:p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-xs sm:text-sm"
-                  aria-label="File ID input" disabled={isAddingById}
-                />
-                <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-1.5 sm:p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1 text-xs sm:text-sm transition-transform active:scale-95" aria-label="Add file by ID">
-                  <Plus size={14} /> Add
-                </button>
-                <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-1.5 sm:p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1 text-xs sm:text-sm transition-transform active:scale-95" aria-label="Cancel adding file by ID">
-                  <XCircle size={14} /> Cancel
-                </button>
-              </div>
-            )}
+            </form>
         </div>
-        
-        <form onSubmit={handleSubmit} className={`flex items-end gap-2 sm:gap-3 px-1.5 sm:px-2 pb-1.5 sm:pb-2 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-          <div className="relative flex-grow">
-            <textarea
-              ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress} onPaste={handlePaste}
-              placeholder={t('chatInputPlaceholder')}
-              className="flex-grow w-full p-2 sm:p-2.5 pr-12 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] overflow-y-auto text-sm sm:text-base resize-none custom-scrollbar chat-textarea-glow"
-              rows={1}
-              style={{ minHeight: `${currentInitialTextareaHeight}px`, maxHeight: `${MAX_TEXTAREA_HEIGHT_PX}px` }}
-              aria-label="Chat message input"
-              onFocus={(e) => adjustTextareaHeight(e.target)} disabled={isModalOpen || isRecording || isTranscribing} 
-            />
-            <div className="absolute right-2.5 bottom-2.5 flex items-center justify-center">
-              <button
-                type="button"
-                onClick={handleToggleRecording}
-                disabled={isLoading || isProcessingFile || isAddingById || isModalOpen || isTranscribing}
-                className={`p-1.5 rounded-full transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isRecording ? 'mic-recording-animate' : 
-                    'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'
-                }`}
-                aria-label={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')}
-                title={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')}
-              >
-                  {isTranscribing 
-                      ? <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" /> 
-                      : <Mic size={20} />
-                  }
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2 relative">
-            <button
-              ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)}
-              disabled={isProcessingFile || isAddingById || isModalOpen}
-              className={`p-2.5 sm:p-3 rounded-md border border-[var(--theme-border-secondary)] transition-all focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-attach)]'}`}
-              aria-label="Attach file menu" title="Attach file" aria-haspopup="true" aria-expanded={isAttachMenuOpen}
-            >
-              <Paperclip size={attachIconSize} />
-            </button>
-            {isAttachMenuOpen && (
-              <div ref={attachMenuRef} className="absolute bottom-full right-0 mb-1.5 sm:mb-2 w-52 sm:w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg z-20 py-1" role="menu">
-                <button onClick={() => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); }} className="w-full text-left px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-1.5 sm:gap-2" role="menuitem">
-                  <UploadCloud size={14} className="text-[var(--theme-icon-attach)]" /> Upload from Device
-                </button>
-                <button onClick={() => openActionModal('camera')} className="w-full text-left px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-1.5 sm:gap-2" role="menuitem">
-                  <Camera size={14} className="text-[var(--theme-icon-attach)]" /> Take Photo
-                </button>
-                 <button onClick={() => openActionModal('recorder')} className="w-full text-left px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-1.5 sm:gap-2" role="menuitem">
-                  <Mic size={14} className="text-[var(--theme-icon-attach)]" /> Record Audio
-                </button>
-                <button onClick={() => openActionModal('id')} className="w-full text-left px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-1.5 sm:gap-2" role="menuitem">
-                  <Link2 size={14} className="text-[var(--theme-icon-attach)]" /> Add by File ID
-                </button>
-                <button onClick={() => openActionModal('text')} className="w-full text-left px-2.5 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-1.5 sm:gap-2" role="menuitem">
-                  <FileSignature size={14} className="text-[var(--theme-icon-attach)]" /> Create Text File
-                </button>
-              </div>
-            )}
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-            
-            {isLoading ? ( 
-              <button type="button" onClick={onStopGenerating} className="p-2.5 sm:p-3 bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)] rounded-md shadow-md transition-all duration-300 ease-in-out active:scale-95" aria-label="Stop generating response" title="Stop Generating">
-                <Ban size={sendIconSize} />
-              </button>
-            ) : isEditing ? (
-              <>
-                <button type="button" onClick={onCancelEdit} className="p-2.5 sm:p-3 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md border border-[var(--theme-border-secondary)] transition-transform active:scale-95" aria-label="Cancel editing" title="Cancel Edit">
-                  <X size={sendIconSize} />
-                </button>
-                <button type="submit" disabled={!canSend} className="p-2.5 sm:p-3 bg-amber-500 hover:bg-amber-600 text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] transition-transform active:scale-95" aria-label="Update message" title="Update & Send">
-                  <Edit2 size={sendIconSize} />
-                </button>
-              </>
-            ) : (
-              <button type="submit" disabled={!canSend} className="p-2.5 sm:p-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] transition-all duration-300 ease-in-out active:scale-95" aria-label="Send message" title="Send">
-                <Send size={sendIconSize} />
-              </button>
-            )}
-          </div>
-        </form>
       </div>
     </>
   );

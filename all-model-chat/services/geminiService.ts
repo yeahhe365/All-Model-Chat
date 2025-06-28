@@ -346,7 +346,7 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async transcribeAudio(audioFile: File): Promise<string> {
+    async transcribeAudio(audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
         const ai = this._getApiClientOrThrow();
 
         const audioBase64 = await fileToBase64(audioFile);
@@ -359,16 +359,20 @@ class GeminiServiceImpl implements GeminiService {
         };
 
         const textPart = {
-            text: "转录此音频",
+            text: "请将以下音频内容转录为文字。不要对音频中的内容进行任何解释、回答或摘要。只输出纯文本的转录结果。",
+        };
+        
+        const config = {
+          thinkingConfig: {
+            thinkingBudget: isThinkingEnabled ? -1 : 0,
+          },
         };
 
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-preview-04-17',
+                model: modelId,
                 contents: { parts: [audioPart, textPart] },
-                config: {
-                    thinkingConfig: { thinkingBudget: 0 }
-                }
+                config,
             });
 
             if (response.text) {

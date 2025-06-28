@@ -90,6 +90,8 @@ export interface AppSettings extends ChatSettings {
  apiUrl: string | null;
  language: 'en' | 'zh' | 'system';
  isStreamingEnabled: boolean;
+ transcriptionModelId: string;
+ isTranscriptionThinkingEnabled: boolean;
 }
 
 
@@ -123,7 +125,7 @@ export interface GeminiService {
   generateImages: (modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>; // Returns an array of base64 encoded image strings
   generateVideo: (modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>; // Returns array of video URIs
   generateSpeech: (modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
-  transcribeAudio: (audioFile: File) => Promise<string>;
+  transcribeAudio: (audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
   getAvailableModels: () => Promise<ModelOption[]>;
   uploadFile: (file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>; // Added AbortSignal
   getFileMetadata: (fileApiName: string) => Promise<GeminiFile | null>; // Added to get file metadata
