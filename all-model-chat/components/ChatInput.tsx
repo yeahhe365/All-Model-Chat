@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2 } from 'lucide-react';
 import { UploadedFile } from '../types';
@@ -271,8 +272,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         className={`bg-[var(--theme-bg-primary)] border-t border-[var(--theme-border-primary)] ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isModalOpen}
       >
-        <div className="mx-auto w-full max-w-4xl px-2 sm:px-4">
-            <div className="pt-2">
+        <div className="mx-auto w-full max-w-4xl px-2 sm:px-3">
+            <div className="pt-1.5">
                 {(isImagenModel || isVeoModel) && setAspectRatio && aspectRatio && (
                     <div className="mb-2">
                         <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
@@ -289,8 +290,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {showAddByIdInput && <div className="mb-2 flex items-center gap-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)]"> <input type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)} placeholder="Paste File ID (e.g., files/xyz123)" className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm" aria-label="File ID input" disabled={isAddingById} /> <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm" aria-label="Add file by ID"> <Plus size={16} /> Add </button> <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm" aria-label="Cancel adding file by ID"> <XCircle size={16} /> Cancel </button> </div>}
             </div>
             
-            <form onSubmit={handleSubmit} className={`relative py-2 sm:py-3 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)] p-1.5 sm:p-2 shadow-sm focus-within:border-[var(--theme-border-focus)] focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]/50 transition-all duration-200">
+            <form onSubmit={handleSubmit} className={`relative py-1.5 sm:py-2 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
+                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)] p-1.5 sm:p-2 shadow-sm focus-within:border-transparent focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]/50 transition-all duration-200">
                     <div className="relative">
                         <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label="Attach file menu" title="Attach file" aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
                             <Paperclip size={attachIconSize} />
@@ -311,7 +312,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
                         onKeyPress={handleKeyPress} onPaste={handlePaste}
                         placeholder={t('chatInputPlaceholder')}
-                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1.5 sm:py-2 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 custom-scrollbar"
+                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1.5 sm:py-2 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
                         style={{ height: `${window.innerWidth < 640 ? 36 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing}
