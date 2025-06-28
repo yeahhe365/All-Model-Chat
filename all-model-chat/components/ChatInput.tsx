@@ -24,15 +24,34 @@ interface ChatInputProps {
   isProcessingFile: boolean; 
   fileError: string | null;
   t: (key: keyof typeof translations) => string;
+  isImagenModel?: boolean;
+  isVeoModel?: boolean;
+  aspectRatio?: string;
+  setAspectRatio?: (ratio: string) => void;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 44;
 const MAX_TEXTAREA_HEIGHT_PX = (window.innerWidth < 640 ? 40 : INITIAL_TEXTAREA_HEIGHT_PX) * 3;
 
+const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
+    let styles = {};
+    switch (ratio) {
+        case '1:1': styles = { width: '20px', height: '20px' }; break;
+        case '9:16': styles = { width: '12px', height: '21px' }; break;
+        case '16:9': styles = { width: '24px', height: '13.5px' }; break;
+        case '4:3': styles = { width: '20px', height: '15px' }; break;
+        case '3:4': styles = { width: '15px', height: '20px' }; break;
+    }
+    return <div style={styles} className="border-2 border-current rounded-sm mb-1"></div>;
+};
+
+const aspectRatios = ['1:1', '9:16', '16:9', '4:3', '3:4'];
+
 export const ChatInput: React.FC<ChatInputProps> = ({
   inputText, setInputText, selectedFiles, setSelectedFiles, onSendMessage,
   isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
+  isImagenModel, isVeoModel, aspectRatio, setAspectRatio,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -180,6 +199,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const currentInitialTextareaHeight = window.innerWidth < 640 ? 40 : INITIAL_TEXTAREA_HEIGHT_PX;
   const attachIconSize = window.innerWidth < 640 ? 20 : 22;
   const sendIconSize = window.innerWidth < 640 ? 20 : 22;
+  const showAspectRatio = isImagenModel || isVeoModel;
 
   return (
     <>
@@ -205,41 +225,68 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       )}
 
       <div
-        className={`px-1.5 sm:px-2 pt-1.5 sm:pt-2 bg-[var(--theme-bg-primary)] border-t border-[var(--theme-border-primary)] ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
+        className={`bg-[var(--theme-bg-primary)] border-t border-[var(--theme-border-primary)] ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isModalOpen}
       >
-        {fileError && ( 
-          <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 text-xs sm:text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">
-            {fileError}
-          </div>
-        )}
-        {selectedFiles.length > 0 && (
-          <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar">
-            <div className="flex gap-2 sm:gap-3">
-              {selectedFiles.map(file => (
-                <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} />
-              ))}
-            </div>
-          </div>
-        )}
-        {showAddByIdInput && (
-          <div className="mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)]">
-            <input
-              type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)}
-              placeholder="Paste File ID (e.g., files/xyz123)"
-              className="flex-grow p-1.5 sm:p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-xs sm:text-sm"
-              aria-label="File ID input" disabled={isAddingById}
-            />
-            <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-1.5 sm:p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1 text-xs sm:text-sm transition-transform active:scale-95" aria-label="Add file by ID">
-              <Plus size={14} /> Add
-            </button>
-            <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-1.5 sm:p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1 text-xs sm:text-sm transition-transform active:scale-95" aria-label="Cancel adding file by ID">
-              <XCircle size={14} /> Cancel
-            </button>
-          </div>
-        )}
+        <div className="px-1.5 sm:px-2 pt-1.5 sm:pt-2">
+            {showAspectRatio && setAspectRatio && aspectRatio && (
+                <div className="mb-2">
+                    <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
+                        {aspectRatios.map(ratioValue => {
+                            const isSelected = aspectRatio === ratioValue;
+                            return (
+                                <button
+                                    key={ratioValue}
+                                    onClick={() => setAspectRatio(ratioValue)}
+                                    className={`p-2 rounded-lg flex flex-col items-center justify-center min-w-[50px] text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)]
+                                    ${
+                                        isSelected
+                                            ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]'
+                                            : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-secondary)]/50'
+                                    }`}
+                                    title={`Aspect Ratio ${ratioValue}`}
+                                >
+                                    <AspectRatioIcon ratio={ratioValue} />
+                                    <span>{ratioValue}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+            {fileError && ( 
+              <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 text-xs sm:text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">
+                {fileError}
+              </div>
+            )}
+            {selectedFiles.length > 0 && (
+              <div className="mb-1.5 sm:mb-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar">
+                <div className="flex gap-2 sm:gap-3">
+                  {selectedFiles.map(file => (
+                    <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {showAddByIdInput && (
+              <div className="mb-1.5 sm:mb-2 flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-[var(--theme-bg-secondary)] rounded-md border border-[var(--theme-border-secondary)]">
+                <input
+                  type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)}
+                  placeholder="Paste File ID (e.g., files/xyz123)"
+                  className="flex-grow p-1.5 sm:p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-xs sm:text-sm"
+                  aria-label="File ID input" disabled={isAddingById}
+                />
+                <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-1.5 sm:p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1 text-xs sm:text-sm transition-transform active:scale-95" aria-label="Add file by ID">
+                  <Plus size={14} /> Add
+                </button>
+                <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-1.5 sm:p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1 text-xs sm:text-sm transition-transform active:scale-95" aria-label="Cancel adding file by ID">
+                  <XCircle size={14} /> Cancel
+                </button>
+              </div>
+            )}
+        </div>
         
-        <form onSubmit={handleSubmit} className={`flex items-end gap-2 sm:gap-3 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
+        <form onSubmit={handleSubmit} className={`flex items-end gap-2 sm:gap-3 px-1.5 sm:px-2 pb-1.5 sm:pb-2 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
           <textarea
             ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
             onKeyPress={handleKeyPress} onPaste={handlePaste}

@@ -30,22 +30,33 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
   }, [file]);
 
   const handleWheel = useCallback((event: WheelEvent) => {
-    if (!viewportRef.current || !file) return;
+    if (!viewportRef.current || !imageRef.current || !file) return;
     event.preventDefault();
 
     const rect = viewportRef.current.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left; 
-    const mouseY = event.clientY - rect.top; 
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
 
-    const newScale = event.deltaY < 0 
-      ? Math.min(MAX_SCALE, scale * ZOOM_SPEED_FACTOR) 
+    const newScale = event.deltaY < 0
+      ? Math.min(MAX_SCALE, scale * ZOOM_SPEED_FACTOR)
       : Math.max(MIN_SCALE, scale / ZOOM_SPEED_FACTOR);
-    
-    if (newScale === scale) return; 
 
-    const newPositionX = mouseX - (mouseX - position.x) * (newScale / scale);
-    const newPositionY = mouseY - (mouseY - position.y) * (newScale / scale);
-    
+    if (newScale === scale) return;
+
+    // Get the image's layout position (before transforms are applied) relative to its container.
+    // This is crucial for correctly calculating the zoom pivot point when flexbox centering is used.
+    const imageOffsetX = imageRef.current.offsetLeft;
+    const imageOffsetY = imageRef.current.offsetTop;
+
+    const ratio = newScale / scale;
+
+    // This formula calculates the new translation offset (position)
+    // needed to keep the point under the mouse cursor stationary.
+    // It works by finding the point on the untransformed content that is under the cursor,
+    // and adjusting the translation so that after scaling, this same point is still under the cursor.
+    const newPositionX = (mouseX - imageOffsetX) * (1 - ratio) + position.x * ratio;
+    const newPositionY = (mouseY - imageOffsetY) * (1 - ratio) + position.y * ratio;
+
     setPosition({ x: newPositionX, y: newPositionY });
     setScale(newScale);
   }, [scale, position, file]);

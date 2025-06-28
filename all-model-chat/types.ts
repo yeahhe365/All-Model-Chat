@@ -1,5 +1,7 @@
-import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/ai/generativelanguage";
+import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai";
 import { ThemeColors } from './constants/themeConstants'; 
+
+export type { ThemeColors };
 
 export interface UploadedFile {
   id: string; 
@@ -118,6 +120,8 @@ export interface GeminiService {
     onError: (error: Error) => void,
     onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
+  generateImages: (modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>; // Returns an array of base64 encoded image strings
+  generateVideo: (modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>; // Returns array of video URIs
   generateSpeech: (modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
   getAvailableModels: () => Promise<ModelOption[]>;
   uploadFile: (file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>; // Added AbortSignal

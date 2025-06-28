@@ -41,6 +41,8 @@ const App: React.FC = () => {
       scrollContainerRef,
       preloadedMessages,
       isAppDraggingOver,
+      aspectRatio,
+      setAspectRatio,
       loadChatSession,
       startNewChat,
       handleClearCurrentChat,
@@ -181,6 +183,8 @@ const App: React.FC = () => {
   };
 
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
+  const isImagenModel = currentChatSettings.modelId?.includes('imagen');
+  const isVeoModel = currentChatSettings.modelId?.includes('veo-');
 
   return (
     <div className={`flex h-screen bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
@@ -278,6 +282,10 @@ const App: React.FC = () => {
           onCancelUpload={handleCancelFileUpload}
           isProcessingFile={isAppProcessingFile}
           fileError={appFileError}
+          isImagenModel={isImagenModel}
+          isVeoModel={isVeoModel}
+          aspectRatio={aspectRatio}
+          setAspectRatio={setAspectRatio}
           t={t}
         />
       </div>

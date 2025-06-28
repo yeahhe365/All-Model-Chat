@@ -40,7 +40,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       <img 
         src={file.dataUrl} 
         alt={file.name} 
-        className={`max-w-[100px] sm:max-w-[120px] max-h-28 sm:max-h-32 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        className={`max-w-[280px] sm:max-w-[320px] max-h-72 sm:max-h-80 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
         aria-label={`Uploaded image: ${file.name}`}
         onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
         tabIndex={isClickableImage ? 0 : -1} 
@@ -53,13 +53,22 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error ? (
         imageElement
       ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
-        <>
-          <FileVideo size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
-          </div>
-        </>
+        file.dataUrl ? (
+          <video 
+              src={file.dataUrl} 
+              controls 
+              className="max-w-[280px] sm:max-w-[320px] max-h-72 sm:max-h-80 rounded-lg border border-[var(--theme-border-secondary)]"
+              aria-label={`Uploaded video: ${file.name}`}
+          />
+        ) : (
+          <>
+            <FileVideo size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+            <div className={textClasses}>
+              <span className={nameClass} title={file.name}>{file.name}</span>
+              <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
+            </div>
+          </>
+        )
       ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />

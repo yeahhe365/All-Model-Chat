@@ -150,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {isModelSelectorOpen && (
               <div 
-                className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)]/80 backdrop-blur-md border border-[var(--theme-border-primary)] rounded-md shadow-2xl z-20 max-h-60 overflow-y-auto custom-scrollbar shadow-premium"
+                className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-md shadow-2xl z-20 max-h-60 overflow-y-auto custom-scrollbar shadow-premium"
                 role="listbox"
                 aria-labelledby="model-selector-button" 
               >

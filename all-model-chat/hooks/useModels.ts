@@ -23,6 +23,14 @@ export const useModels = (appSettings: { apiKey: string | null, apiUrl: string |
                 { id: 'models/gemini-2.5-pro-preview-tts', name: 'Gemini 2.5 Pro (TTS)', isPinned: true },
                 { id: 'models/gemini-2.5-flash-preview-tts', name: 'Gemini 2.5 Flash (TTS)', isPinned: true },
             ];
+            const imagenModels: ModelOption[] = [
+                { id: 'imagen-3.0-generate-002', name: 'Imagen 3 (Image Generation)', isPinned: true },
+                { id: 'imagen-4.0-generate-preview-06-06', name: 'Imagen 4 Preview (Image Generation)', isPinned: true },
+                { id: 'imagen-4.0-ultra-generate-preview-06-06', name: 'Imagen 4 Ultra (Image Generation)', isPinned: true },
+            ];
+            const veoModels: ModelOption[] = [
+                { id: 'veo-2.0-generate-001', name: 'Veo 2 (Video Generation)', isPinned: true },
+            ];
             
             let modelsFromApi: ModelOption[] = [];
             try {
@@ -41,7 +49,7 @@ export const useModels = (appSettings: { apiKey: string | null, apiUrl: string |
             });
 
             // Add pinned models, overwriting if they exist to ensure they are pinned
-            [...pinnedInternalModels, ...ttsModels].forEach(pinnedModel => {
+            [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels].forEach(pinnedModel => {
                 modelMap.set(pinnedModel.id, pinnedModel);
             });
 

@@ -15,6 +15,7 @@ export const useChat = (appSettings: AppSettings) => {
     const [currentChatSettings, setCurrentChatSettings] = useState<IndividualChatSettings>(DEFAULT_CHAT_SETTINGS);
     const [inputText, setInputText] = useState<string>('');
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [aspectRatio, setAspectRatio] = useState<string>('16:9');
     
     // File and Drag & Drop state
     const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
@@ -103,10 +104,26 @@ export const useChat = (appSettings: AppSettings) => {
                 isNewSessionInHistory = true;
             }
 
+            const existingSession = savedSessions.find(s => s.id === sessionIdToSave);
+            let timestampToUse = Date.now();
+
+            if (existingSession) {
+                // Heuristic to check for genuine user activity vs. just loading a session or changing settings.
+                // If the number of messages and the ID of the last message are the same,
+                // we assume no new message has been added, so we preserve the original timestamp.
+                // This prevents re-ordering the history list just by clicking on a session.
+                const lastExistingMessageId = existingSession.messages.length > 0 ? existingSession.messages[existingSession.messages.length - 1].id : null;
+                const lastCurrentMessageId = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1].id : null;
+
+                if (existingSession.messages.length === currentMessages.length && lastExistingMessageId === lastCurrentMessageId) {
+                    timestampToUse = existingSession.timestamp;
+                }
+            }
+
             const sessionToSave: SavedChatSession = {
                 id: sessionIdToSave,
                 title: generateSessionTitle(currentMessages),
-                timestamp: Date.now(),
+                timestamp: timestampToUse,
                 messages: currentMessages.map(msg => ({ 
                     ...msg,
                     files: msg.files?.map(f => {
@@ -214,12 +231,17 @@ export const useChat = (appSettings: AppSettings) => {
     // Chat session re-initialization
     useEffect(() => {
         const reinitializeIfNeeded = async () => {
-            const isTtsModel = currentChatSettings.modelId.includes('-tts');
-            if (isTtsModel) {
-                setChatSession(null); // No chat session for TTS models
+            const modelId = currentChatSettings.modelId;
+            const isTtsModel = modelId.includes('-tts');
+            const isImagenModel = modelId.includes('imagen');
+            const isVeoModel = modelId.includes('veo-');
+
+            if (isTtsModel || isImagenModel || isVeoModel) {
+                setChatSession(null); // No chat session for these models
                 setIsSwitchingModel(false);
                 return;
             }
+
             if (!activeSessionId && messages.length === 0) {
                 await initializeCurrentChatSession(currentChatSettings, []);
             } else {
@@ -409,9 +431,11 @@ export const useChat = (appSettings: AppSettings) => {
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         const activeModelId = currentChatSettings.modelId;
         const isTtsModel = activeModelId.includes('-tts');
+        const isImagenModel = activeModelId.includes('imagen');
+        const isVeoModel = activeModelId.includes('veo-');
 
-        if (!textToUse.trim() && !isTtsModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
-        if (isTtsModel && !textToUse.trim()) return;
+        if (!textToUse.trim() && !isTtsModel && !isImagenModel && !isVeoModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
+        if ((isTtsModel || isImagenModel || isVeoModel) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { setAppFileError("Wait for files to finish processing."); return; }
         setAppFileError(null);
 
@@ -424,6 +448,60 @@ export const useChat = (appSettings: AppSettings) => {
         userScrolledUp.current = false;
 
         if (!overrideOptions) { setInputText(''); setSelectedFiles([]); }
+
+        // --- Veo Model Logic ---
+        if (isVeoModel) {
+            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
+            const modelMessageId = generateUniqueId();
+            
+            setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
+            
+            try {
+                // For Veo 2, duration is 5-8s. We'll use 8s for simplicity for now.
+                const duration = 8;
+                const generateAudio = false;
+                
+                const videoUris = await geminiServiceInstance.generateVideo(activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
+
+                if (currentSignal.aborted) { throw new Error("aborted"); }
+
+                const generatedFiles: UploadedFile[] = videoUris.map((uri, index) => ({
+                    id: generateUniqueId(),
+                    name: `generated-video-${index + 1}.mp4`,
+                    type: 'video/mp4',
+                    size: 0, // Size is unknown from URI
+                    dataUrl: uri,
+                    uploadState: 'active'
+                }));
+                
+                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
+                    ...msg,
+                    isLoading: false,
+                    content: `Generated video for: "${textToUse.trim()}"`,
+                    files: generatedFiles,
+                    generationEndTime: new Date(),
+                } : msg));
+                
+            } catch (error) {
+                if (error instanceof Error && error.name === 'SilentError') {
+                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
+                } else {
+                    const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
+                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
+                        ...msg,
+                        role: isAborted ? 'model' : 'error',
+                        content: isAborted ? "[Cancelled by user]" : `Video Generation Error: ${error instanceof Error ? error.message : String(error)}`,
+                        isLoading: false,
+                        generationEndTime: new Date()
+                    } : msg));
+                }
+            } finally {
+                setIsLoading(false);
+                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+            }
+            return;
+        }
+
 
         // --- TTS Model Logic ---
         if (isTtsModel) {
@@ -458,6 +536,61 @@ export const useChat = (appSettings: AppSettings) => {
                     ...msg,
                     role: isAborted ? 'model' : 'error',
                     content: isAborted ? "[Cancelled by user]" : `TTS Error: ${error instanceof Error ? error.message : String(error)}`,
+                    isLoading: false,
+                    generationEndTime: new Date()
+                } : msg));
+            } finally {
+                setIsLoading(false);
+                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+            }
+            return;
+        }
+
+        // --- Imagen Model Logic ---
+        if (isImagenModel) {
+            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
+            const modelMessageId = generateUniqueId();
+            
+            setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
+            
+            try {
+                const imageBase64Array = await geminiServiceInstance.generateImages(activeModelId, textToUse.trim(), aspectRatio, currentSignal);
+
+                if (currentSignal.aborted) { throw new Error("aborted"); }
+
+                const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
+                    const dataUrl = `data:image/jpeg;base64,${base64Data}`;
+                    return {
+                        id: generateUniqueId(),
+                        name: `generated-image-${index + 1}.jpeg`,
+                        type: 'image/jpeg',
+                        size: base64Data.length, // approximation
+                        dataUrl,
+                        base64Data,
+                        uploadState: 'active'
+                    };
+                });
+                
+                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
+                    ...msg,
+                    isLoading: false,
+                    content: `Generated image for: "${textToUse.trim()}"`,
+                    files: generatedFiles,
+                    generationEndTime: new Date(),
+                } : msg));
+                
+            } catch (error) {
+                 if (error instanceof Error && error.name === 'SilentError') {
+                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
+                    setIsLoading(false);
+                    if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+                    return;
+                }
+                const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
+                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
+                    ...msg,
+                    role: isAborted ? 'model' : 'error',
+                    content: isAborted ? "[Cancelled by user]" : `Image Generation Error: ${error instanceof Error ? error.message : String(error)}`,
                     isLoading: false,
                     generationEndTime: new Date()
                 } : msg));
@@ -575,7 +708,7 @@ export const useChat = (appSettings: AppSettings) => {
                 }
             );
         }
-    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, chatSession, isStreamingEnabled, initializeCurrentChatSession, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings ]);
+    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, chatSession, isStreamingEnabled, initializeCurrentChatSession, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio ]);
     
     // UI Action Handlers
     const handleStopGenerating = () => {
@@ -674,6 +807,8 @@ export const useChat = (appSettings: AppSettings) => {
         scrollContainerRef,
         userScrolledUp,
         abortControllerRef,
+        aspectRatio,
+        setAspectRatio,
         loadChatSession,
         startNewChat,
         handleClearCurrentChat,
