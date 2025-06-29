@@ -33,14 +33,6 @@ class GeminiServiceImpl implements GeminiService {
         // This ensures settings from localStorage are applied correctly from the start.
         console.log("GeminiService created. Awaiting configuration from settings.");
     }
-
-    private _checkOnlineOrThrow() {
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            const offlineError = new Error("You appear to be offline. Please check your internet connection.");
-            offlineError.name = "OfflineError";
-            throw offlineError;
-        }
-    }
     
     private _getClient(): GoogleGenAI | null {
         if (!this.apiKeyString) {
@@ -65,6 +57,9 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     private _getApiClientOrThrow(): GoogleGenAI {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            throw new Error("You appear to be offline. Please check your network connection.");
+        }
         const ai = this._getClient();
         if (!ai) {
             if (this.isCustomConfigEnabled) {
@@ -97,13 +92,8 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async getAvailableModels(): Promise<ModelOption[]> {
-        this._checkOnlineOrThrow();
-        const ai = this._getClient();
-        if (!ai) {
-             console.warn("Cannot fetch models: API client not initialized. Configure API Key.");
-             return [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default - API Key Needed)' }];
-        }
-
+        const ai = this._getApiClientOrThrow();
+        
         const predefinedModelsOnError: ModelOption[] = TAB_CYCLE_MODELS.map(id => ({
             id: id,
             name: `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')} (Fallback)`.replace(/\b\w/g, l => l.toUpperCase()),
@@ -131,13 +121,15 @@ class GeminiServiceImpl implements GeminiService {
           }
         } catch (error) {
           console.error("Failed to fetch available models from Gemini API:", error);
+          if (error instanceof Error && error.message.includes("offline")) {
+            throw error; // Re-throw offline error to be handled by useModels hook
+          }
           console.warn("Using predefined fallback model list due to API error.");
           return predefinedModelsOnError;
         }
     }
 
     async uploadFile(file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
-        this._checkOnlineOrThrow();
         const ai = this._getApiClientOrThrow();
         if (signal.aborted) {
             console.log(`Upload for "${displayName}" cancelled before starting.`);
@@ -196,7 +188,6 @@ class GeminiServiceImpl implements GeminiService {
     }
     
     async getFileMetadata(fileApiName: string): Promise<GeminiFile | null> {
-        this._checkOnlineOrThrow();
         const ai = this._getApiClientOrThrow();
         if (!fileApiName || !fileApiName.startsWith('files/')) {
             console.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
@@ -216,7 +207,6 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async generateImages(modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
-        this._checkOnlineOrThrow();
         const ai = this._getApiClientOrThrow();
         if (!prompt.trim()) {
             throw new Error("Image generation prompt cannot be empty.");
@@ -255,7 +245,6 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async generateVideo(modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
-        this._checkOnlineOrThrow();
         const ai = this._getApiClientOrThrow();
         if (abortSignal.aborted) {
             const abortError = new Error("Video generation cancelled before starting.");
@@ -314,7 +303,6 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async generateSpeech(modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
-        this._checkOnlineOrThrow();
         const ai = this._getApiClientOrThrow();
         if (!text.trim()) {
             throw new Error("TTS input text cannot be empty.");
@@ -361,7 +349,6 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async transcribeAudio(audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
-        this._checkOnlineOrThrow();
         const ai = this._getApiClientOrThrow();
 
         const audioBase64 = await fileToBase64(audioFile);
@@ -481,7 +468,6 @@ class GeminiServiceImpl implements GeminiService {
         // client instance with a specific (randomly chosen) API key. No client needed here.
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
         try {
-            this._checkOnlineOrThrow();
             const result = await chat.sendMessageStream({ message: promptParts as Part[] });
             for await (const chunkResponse of result) {
                 if (abortSignal.aborted) {
@@ -524,7 +510,6 @@ class GeminiServiceImpl implements GeminiService {
     ): Promise<void> {
         // This method also operates on the passed-in chat object. No client needed.
         try {
-            this._checkOnlineOrThrow();
             if (abortSignal.aborted) {
                 console.log("Non-streaming call prevented by abort signal before starting.");
                 onComplete("", "", undefined);

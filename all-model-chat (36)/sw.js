@@ -1,10 +1,14 @@
-const CACHE_NAME = 'all-model-chat-cache-v1';
+const CACHE_NAME = 'all-model-chat-cache-v2';
 const APP_SHELL_URLS = [
-    '/index.html',
     '/', // This ensures the root is cached.
+    '/index.html',
     '/index.tsx', // The main script.
     '/favicon.png',
-    // We will let the fetch handler cache the manifest and other assets.
+    '/manifest.json',
+    'https://cdn.tailwindcss.com',
+    'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css',
+    'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css',
+    'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',
 ];
 
 // Install the service worker and cache the app shell.
@@ -17,7 +21,7 @@ self.addEventListener('install', (event) => {
                 // It's better to cache them individually to be more robust.
                 return Promise.all(
                     APP_SHELL_URLS.map(url => {
-                        return cache.add(url).catch(reason => {
+                        return cache.add(new Request(url, { mode: 'cors' })).catch(reason => {
                             console.log(`[Service Worker] Failed to cache ${url}: ${reason}`);
                         });
                     })
