@@ -188,7 +188,7 @@ const App: React.FC = () => {
   const isVeoModel = currentChatSettings.modelId?.includes('veo-');
 
   return (
-    <div className={`flex h-screen bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
+    <div className={`flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
