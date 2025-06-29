@@ -87,9 +87,10 @@ export interface SavedChatSession {
 export interface AppSettings extends ChatSettings {
  themeId: string; 
  baseFontSize: number; 
- useCustomApiConfig: boolean; // Added for custom API config toggle
+ useCustomApiConfig: boolean;
  apiKey: string | null;
- apiUrl: string | null;
+ useProxy: boolean;
+ proxyUrl: string | null;
  language: 'en' | 'zh' | 'system';
  isStreamingEnabled: boolean;
  transcriptionModelId: string;
