@@ -1,0 +1,9 @@
+{
+  "name": "All Model Chat",
+  "description": "A React-based chatbot interface that interacts with the Gemini API, featuring system message configuration, streaming responses, context management, and model selection.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "prompt": ""
+}
