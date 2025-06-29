@@ -280,7 +280,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         className={`bg-transparent ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isModalOpen}
       >
-        <div className="mx-auto w-full max-w-4xl px-2 sm:px-3">
+        <div className="mx-auto w-full max-w-4xl px-2 sm:px-3 mb-2 sm:mb-3">
             <div>
                 {(isImagenModel || isVeoModel) && setAspectRatio && aspectRatio && (
                     <div className="mb-2">
