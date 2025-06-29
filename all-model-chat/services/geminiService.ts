@@ -92,13 +92,9 @@ class GeminiServiceImpl implements GeminiService {
         const ai = this._getClient();
         if (!ai) {
              console.warn("Cannot fetch models: API client not initialized. Configure API Key.");
-             return [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default - API Key Needed)' }];
+             // Throw an error to be handled by the caller (useModels hook)
+             throw new Error("API client not initialized. Configure API Key in settings.");
         }
-
-        const predefinedModelsOnError: ModelOption[] = TAB_CYCLE_MODELS.map(id => ({
-            id: id,
-            name: `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')} (Fallback)`.replace(/\b\w/g, l => l.toUpperCase()),
-        }));
 
         try {
           const modelPager = await ai.models.list(); 
@@ -117,13 +113,13 @@ class GeminiServiceImpl implements GeminiService {
           if (availableModels.length > 0) {
             return availableModels.sort((a,b) => a.name.localeCompare(b.name));
           } else {
-             console.warn("API model listing returned no models. Using predefined fallback list.");
-             return predefinedModelsOnError;
+             // If the API returns an empty list, treat it as an error so fallbacks are used.
+             throw new Error("API returned an empty list of models.");
           }
         } catch (error) {
           console.error("Failed to fetch available models from Gemini API:", error);
-          console.warn("Using predefined fallback model list due to API error.");
-          return predefinedModelsOnError;
+          // Re-throw the error for the caller to handle and provide fallbacks.
+          throw error;
         }
     }
 

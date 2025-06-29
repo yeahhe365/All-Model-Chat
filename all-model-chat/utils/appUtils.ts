@@ -114,7 +114,7 @@ export const translations = {
     apiConfig_key_placeholder: { en: 'Enter your Gemini API Key(s)', zh: '输入您的 Gemini API 密钥' },
     apiConfig_key_placeholder_disabled: { en: 'Using default', zh: '使用默认值' },
     apiConfig_apiUrl_placeholder: { en: 'Enter Custom API URL', zh: '输入自定义 API URL' },
-    apiConfig_proxy_url_placeholder: { en: 'e.g., http://api-proxy.me/gemini/v1beta', zh: '例如 http://api-proxy.me/gemini/v1beta' },
+    apiConfig_proxy_url_placeholder: { en: 'e.g., https://api-proxy.me/gemini/v1beta', zh: '例如 https://api-proxy.me/gemini/v1beta' },
     chatBehavior_voiceModel_label: { en: 'Voice Input Model', zh: '语音输入模型' },
     chatBehavior_voiceModel_tooltip: { en: 'Selects the model used for transcribing voice input to text.', zh: '选择用于将语音输入转录为文本的模型。' },
     chatBehavior_transcriptionThinking_tooltip: { en: "When enabled, the model dynamically decides how much to 'think' for optimal accuracy (budget: -1). When disabled, thinking is turned off to prioritize speed (budget: 0).", zh: "启用时，模型会动态决定“思考”量以获得最佳准确性（预算：-1）。禁用时，将关闭思考以优先考虑速度（预算：0）。" },

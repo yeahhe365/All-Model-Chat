@@ -83,7 +83,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   apiKey: null,
   apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
   useProxy: false,
-  proxyUrl: 'http://api-proxy.me/gemini/v1beta',
+  proxyUrl: 'https://api-proxy.me/gemini/v1beta',
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
