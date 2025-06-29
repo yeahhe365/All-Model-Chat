@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas';
 import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, ClipboardCopy, Check, Loader2, AlertCircle, ImageIcon, FileCode2 } from 'lucide-react';
 import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
 import { MessageContent } from './MessageContent';
+import { translations } from '../../utils/appUtils';
 
 // Helper functions and components for message actions
 const generateThemeCssVariables = (colors: ThemeColors): string => {
@@ -37,7 +38,7 @@ const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors,
   return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Chat Export - ${messageId}</title>${styles}</head><body><div class="markdown-body-container"><div class="markdown-body">${contentHtml}</div></div></body></html>`;
 };
 
-const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string; themeColors: ThemeColors; className?: string; type: 'png' | 'html' }> = ({ markdownContent, messageId, themeColors, className, type }) => {
+const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string; themeColors: ThemeColors; className?: string; type: 'png' | 'html', t: (key: keyof typeof translations) => string }> = ({ markdownContent, messageId, themeColors, className, type, t }) => {
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
   const iconSize = window.innerWidth < 640 ? 14 : 16;
 
@@ -93,17 +94,18 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
   };
 
   let icon, title;
+  const upperType = type.toUpperCase();
   switch (exportState) {
-    case 'exporting': icon = <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" />; title = `Exporting ${type.toUpperCase()}...`; break;
-    case 'success': icon = <Check size={iconSize} className="text-[var(--theme-text-success)]" />; title = `${type.toUpperCase()} Exported!`; break;
-    case 'error': icon = <AlertCircle size={iconSize} className="text-[var(--theme-text-danger)]" />; title = "Export failed."; break;
-    default: icon = type === 'png' ? <ImageIcon size={iconSize} /> : <FileCode2 size={iconSize} />; title = `Export as ${type.toUpperCase()}`;
+    case 'exporting': icon = <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" />; title = t('exporting_title').replace('{type}', upperType); break;
+    case 'success': icon = <Check size={iconSize} className="text-[var(--theme-text-success)]" />; title = t('exported_title').replace('{type}', upperType); break;
+    case 'error': icon = <AlertCircle size={iconSize} className="text-[var(--theme-text-danger)]" />; title = t('export_failed_title'); break;
+    default: icon = type === 'png' ? <ImageIcon size={iconSize} /> : <FileCode2 size={iconSize} />; title = t('export_as_title').replace('{type}', upperType);
   }
 
   return <button onClick={handleExport} disabled={exportState === 'exporting'} className={`p-1 rounded-md transition-all text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] ${className}`} aria-label={title} title={title}>{icon}</button>;
 };
 
-const MessageCopyButton: React.FC<{ textToCopy?: string; className?: string }> = ({ textToCopy, className }) => {
+const MessageCopyButton: React.FC<{ textToCopy?: string; className?: string; t: (key: keyof typeof translations) => string }> = ({ textToCopy, className, t }) => {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     if (!textToCopy || copied) return;
@@ -113,7 +115,7 @@ const MessageCopyButton: React.FC<{ textToCopy?: string; className?: string }> =
       setTimeout(() => setCopied(false), 2000);
     } catch (err) { console.error('Failed to copy', err); }
   };
-  return <button onClick={handleCopy} disabled={!textToCopy} className={`p-1 rounded-md transition-all text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] ${className}`} aria-label={copied ? "Copied!" : "Copy content"} title={copied ? "Copied!" : "Copy content"}>{copied ? <Check size={14} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={14} />}</button>;
+  return <button onClick={handleCopy} disabled={!textToCopy} className={`p-1 rounded-md transition-all text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] ${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={14} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={14} />}</button>;
 };
 
 const UserIcon: React.FC = () => <User size={window.innerWidth < 640 ? 20 : 24} className="text-[var(--theme-icon-user)] flex-shrink-0" />;
@@ -131,11 +133,12 @@ interface MessageProps {
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
     themeColors: ThemeColors; 
-    baseFontSize: number; 
+    baseFontSize: number;
+    t: (key: keyof typeof translations) => string;
 }
 
 export const Message: React.FC<MessageProps> = (props) => {
-    const { message, messages, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize } = props;
+    const { message, messages, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t } = props;
     
     const prevMsg = messages[messageIndex - 1];
     const isGrouped = prevMsg &&
@@ -171,16 +174,16 @@ export const Message: React.FC<MessageProps> = (props) => {
               className="message-actions flex flex-col items-center gap-0.5 mt-1 sm:mt-1.5"
               style={{ '--actions-translate-x': message.role === 'user' ? '8px' : '-8px' } as React.CSSProperties}
             >
-                {message.role === 'user' && !message.isLoading && <button onClick={() => onEditMessage(message.id)} title="Edit" aria-label="Edit message" className="p-1 text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"><Edit3 size={actionIconSize} /></button>}
-                {canRetryMessage && <button onClick={() => onRetryMessage(message.id)} title="Retry" aria-label="Retry generating response" className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"><RotateCw size={actionIconSize} /></button>}
-                {(message.content || message.thoughts) && !message.isLoading && <MessageCopyButton textToCopy={message.content} />}
+                {message.role === 'user' && !message.isLoading && <button onClick={() => onEditMessage(message.id)} title={t('edit_button_title')} aria-label={t('edit_button_title')} className="p-1 text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"><Edit3 size={actionIconSize} /></button>}
+                {canRetryMessage && <button onClick={() => onRetryMessage(message.id)} title={t('retry_button_title')} aria-label={t('retry_button_title')} className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"><RotateCw size={actionIconSize} /></button>}
+                {(message.content || message.thoughts) && !message.isLoading && <MessageCopyButton textToCopy={message.content} t={t} />}
                 {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
                     <>
-                        <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} />
-                        <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} />
+                        <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} />
+                        <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} />
                     </>
                 )}
-                {!message.isLoading && <button onClick={() => onDeleteMessage(message.id)} title="Delete" aria-label="Delete message" className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"><Trash2 size={actionIconSize} /></button>}
+                {!message.isLoading && <button onClick={() => onDeleteMessage(message.id)} title={t('delete_button_title')} aria-label={t('delete_button_title')} className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"><Trash2 size={actionIconSize} /></button>}
             </div>
         </div>
     );

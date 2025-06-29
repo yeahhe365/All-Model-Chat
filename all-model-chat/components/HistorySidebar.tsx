@@ -1,8 +1,7 @@
-
-
 import React from 'react';
 import { SavedChatSession } from '../types';
 import { FilePlus2, Trash2, MessageSquare, X } from 'lucide-react';
+import { formatTimestamp, translations } from '../utils/appUtils';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -24,24 +23,9 @@ interface HistorySidebarProps {
     borderSecondary: string;
     iconHistory: string;
   };
+  t: (key: keyof typeof translations) => string;
+  language: 'en' | 'zh';
 }
-
-const formatTimestamp = (timestamp: number): string => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000);
-  const diffMinutes = Math.round(diffSeconds / 60);
-  const diffHours = Math.round(diffMinutes / 60);
-  const diffDays = Math.round(diffHours / 24);
-
-  if (diffSeconds < 60) return `${diffSeconds}s ago`;
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-};
-
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
@@ -52,31 +36,35 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onNewChat,
   onDeleteSession,
   themeColors,
+  t,
+  language
 }) => {
-  if (!isOpen) return null;
   const headingIconSize = window.innerWidth < 640 ? 18 : 20;
   const newChatIconSize = window.innerWidth < 640 ? 16 : 18;
   const deleteIconSize = window.innerWidth < 640 ? 12 : 14;
 
   return (
-    <div 
-        className="h-full flex flex-col w-60 sm:w-64 md:w-72 bg-[var(--theme-bg-secondary)] border-r border-[var(--theme-border-primary)] shadow-lg transition-transform duration-300 ease-in-out flex-shrink-0"
-        style={{
-            transform: isOpen ? 'translateX(0)' : '-translateX(100%)',
-        }}
+    <aside
+        className={`
+          h-full flex flex-col 
+          w-60 sm:w-64 md:w-72 bg-[var(--theme-bg-secondary)] 
+          shadow-lg transition-all duration-300 ease-in-out flex-shrink-0
+          ${isOpen ? 'ml-0 border-r border-[var(--theme-border-primary)]' : '-ml-60 sm:-ml-64 md:-ml-72 border-r-0'}
+        `}
         role="complementary"
-        aria-label="Chat history"
+        aria-label={t('history_title')}
+        aria-hidden={!isOpen}
     >
       <div className="p-2 sm:p-3 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0">
         <h2 className="text-base sm:text-lg font-semibold text-[var(--theme-text-link)] flex items-center">
           <MessageSquare size={headingIconSize} className="mr-1.5 sm:mr-2 opacity-80" />
-          History
+          {t('history_title')}
         </h2>
         <button
           onClick={onToggle}
           className="p-1 sm:p-1.5 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-focus)]"
-          aria-label="Close history sidebar"
-          title="Close History"
+          aria-label={t('historySidebarClose')}
+          title={t('historySidebarClose_short')}
         >
           <X size={headingIconSize} />
         </button>
@@ -85,15 +73,15 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       <button
         onClick={onNewChat}
         className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] focus:outline-none transition-colors border-b border-[var(--theme-border-secondary)]"
-        aria-label="Start a new chat"
+        aria-label={t('headerNewChat_aria')}
       >
         <FilePlus2 size={newChatIconSize} />
-        <span>New Chat</span>
+        <span>{t('headerNewChat')}</span>
       </button>
 
       <div className="flex-grow overflow-y-auto custom-scrollbar">
         {sessions.length === 0 ? (
-          <p className="p-3 sm:p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">No chat history yet.</p>
+          <p className="p-3 sm:p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
         ) : (
           <ul className="py-1.5 sm:py-2">
             {sessions.map((session) => (
@@ -120,14 +108,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       className={`p-0.5 sm:p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity
                         ${session.id === activeSessionId ? 'hover:bg-white/20' : 'hover:bg-[var(--theme-bg-input)]'}
                       `}
-                      aria-label={`Delete chat: ${session.title}`}
-                      title="Delete Chat"
+                      aria-label={t('history_delete_aria').replace('{title}', session.title)}
+                      title={t('history_delete_title')}
                     >
                       <Trash2 size={deleteIconSize} />
                     </button>
                   </div>
                   <div className={`text-xs mt-0.5 ${session.id === activeSessionId ? 'text-white/80' : 'text-[var(--theme-text-tertiary)]'}`}>
-                    {formatTimestamp(session.timestamp)}
+                    {formatTimestamp(session.timestamp, language)}
                   </div>
                 </button>
               </li>
@@ -135,6 +123,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           </ul>
         )}
       </div>
-    </div>
+    </aside>
   );
 };

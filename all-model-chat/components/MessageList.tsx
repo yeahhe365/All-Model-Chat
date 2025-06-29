@@ -3,14 +3,16 @@ import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../typ
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { Message } from './message/Message';
 import { X, Bot } from 'lucide-react';
+import { translations } from '../utils/appUtils';
 
 interface ImageZoomModalProps {
   file: UploadedFile | null;
   onClose: () => void;
   themeColors: ThemeColors;
+  t: (key: keyof typeof translations) => string;
 }
 
-const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeColors }) => {
+const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeColors, t }) => {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -137,7 +139,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave} 
     >
-        <h2 id="image-zoom-modal-title" className="sr-only">Zoomed Image: {file.name}</h2>
+        <h2 id="image-zoom-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', file.name)}</h2>
         <div 
             ref={viewportRef} 
             className="w-full h-full flex items-center justify-center overflow-hidden relative"
@@ -163,8 +165,8 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
         <button
           onClick={onClose}
           className="absolute top-2 right-2 p-1.5 sm:p-2 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] rounded-full shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
-          aria-label="Close image zoom view"
-          title="Close (Esc)"
+          aria-label={t('imageZoom_close_aria')}
+          title={t('imageZoom_close_title')}
         >
           <X size={window.innerWidth < 640 ? 20 : 24} />
         </button>
@@ -179,7 +181,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
-    onSuggestionClick
+    onSuggestionClick, t, language
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
@@ -215,16 +217,16 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div 
       ref={scrollContainerRef}
       onScroll={onScrollContainerScroll}
-      className="flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 bg-[var(--theme-bg-secondary)] custom-scrollbar"
+      className="flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 pb-0 bg-[var(--theme-bg-secondary)] custom-scrollbar"
       aria-live="polite" 
     >
       {messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center text-[var(--theme-text-tertiary)] p-4">
           <div className="max-w-sm mx-auto welcome-message-animate">
               <Bot size={48} className="mx-auto mb-4 opacity-40 text-[var(--theme-text-link)]" />
-              <h2 className="text-xl font-semibold text-[var(--theme-text-primary)] mb-1">Welcome to All Model Chat</h2>
+              <h2 className="text-xl font-semibold text-[var(--theme-text-primary)] mb-1">{t('welcome_title')}</h2>
               <p className="text-sm px-2">
-                  Start a conversation by typing below. You can also attach files, load scenarios via the <span className="font-semibold text-[var(--theme-text-secondary)]">Manage Scenarios</span> button, or configure settings.
+                {t('welcome_p1')} <span className="font-semibold text-[var(--theme-text-secondary)]">{t('welcome_p2')}</span> {t('welcome_p3')}
               </p>
           </div>
         </div>
@@ -243,6 +245,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             showThoughts={showThoughts}
             themeColors={themeColors}
             baseFontSize={baseFontSize}
+            t={t}
           />
         ))
       )}
@@ -253,6 +256,7 @@ export const MessageList: React.FC<MessageListProps> = ({
         file={zoomedFile} 
         onClose={closeImageZoomModal}
         themeColors={themeColors}
+        t={t}
       />
     )}
     {isHtmlPreviewModalOpen && htmlToPreview !== null && (

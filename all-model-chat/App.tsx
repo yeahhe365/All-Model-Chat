@@ -82,6 +82,7 @@ const App: React.FC = () => {
         showThoughts: newSettings.showThoughts,
         systemInstruction: newSettings.systemInstruction,
         ttsVoice: newSettings.ttsVoice,
+        thinkingBudget: newSettings.thinkingBudget,
     });
     setIsSettingsModalOpen(false);
   };
@@ -173,13 +174,13 @@ const App: React.FC = () => {
 
   const getCurrentModelDisplayName = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
-    if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return "Loading models...";
-    if (isModelsLoading && modelIdToDisplay && !apiModels.find(m => m.id === modelIdToDisplay)) return "Verifying model...";
-    if (isSwitchingModel) return "Switching model...";
+    if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return t('appLoadingModels');
+    if (isModelsLoading && modelIdToDisplay && !apiModels.find(m => m.id === modelIdToDisplay)) return t('appVerifyingModel');
+    if (isSwitchingModel) return t('appSwitchingModel');
     const model = apiModels.find(m => m.id === modelIdToDisplay);
     if (model) return model.name;
     if (modelIdToDisplay) { let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');}
-    return apiModels.length === 0 && !isModelsLoading ? "No models available" : "No model selected";
+    return apiModels.length === 0 && !isModelsLoading ? t('appNoModelsAvailable') : t('appNoModelSelected');
   };
 
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
@@ -197,6 +198,8 @@ const App: React.FC = () => {
         onNewChat={() => startNewChat(true)}
         onDeleteSession={handleDeleteChatHistorySession}
         themeColors={currentTheme.colors}
+        t={t}
+        language={language}
       />
       <div
         className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
@@ -209,9 +212,9 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
             <Paperclip size={window.innerWidth < 640 ? 48 : 64} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
             <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
-              Release to upload supported files
+              {t('appDragDropRelease')}
             </p>
-             <p className="text-sm text-[var(--theme-text-primary)] opacity-80 mt-2">Images, Videos, Audio, PDFs & Text files</p>
+             <p className="text-sm text-[var(--theme-text-primary)] opacity-80 mt-2">{t('appDragDropHelpText')}</p>
           </div>
         )}
         <Header
@@ -253,6 +256,7 @@ const App: React.FC = () => {
           onLoadScenario={handleLoadPreloadedScenario}
           onImportScenario={handleImportPreloadedScenario}
           onExportScenario={handleExportPreloadedScenario}
+          t={t}
         />
         <MessageList
           messages={messages}
@@ -266,6 +270,8 @@ const App: React.FC = () => {
           themeColors={currentTheme.colors}
           baseFontSize={appSettings.baseFontSize}
           onSuggestionClick={handleSuggestionClick}
+          t={t}
+          language={language}
         />
         <ChatInput
           inputText={inputText}

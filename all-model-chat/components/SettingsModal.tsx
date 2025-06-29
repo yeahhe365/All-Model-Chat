@@ -134,6 +134,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setTopP={(val) => updateSetting('topP', val)}
             showThoughts={settings.showThoughts}
             setShowThoughts={(val) => updateSetting('showThoughts', val)}
+            thinkingBudget={settings.thinkingBudget}
+            setThinkingBudget={(val) => updateSetting('thinkingBudget', val)}
             isStreamingEnabled={settings.isStreamingEnabled}
             setIsStreamingEnabled={(val) => updateSetting('isStreamingEnabled', val)}
             isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled}

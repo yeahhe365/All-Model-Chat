@@ -52,7 +52,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       {!useCustomApiConfig && (
         <p className="text-xs text-[var(--theme-text-tertiary)] flex items-center bg-[var(--theme-bg-info)] bg-opacity-30 p-2 rounded-md border border-[var(--theme-border-secondary)]">
           <Info size={14} className="mr-2 flex-shrink-0 text-[var(--theme-text-info)]" />
-          Using default API setup from environment. Enable for custom settings.
+          {t('apiConfig_default_info')}
         </p>
       )}
 
@@ -64,7 +64,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           value={apiKey || ''}
           onChange={(e) => setApiKey(e.target.value || null)}
           className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} resize-y min-h-[60px]`}
-          placeholder={useCustomApiConfig ? "Enter your Gemini API Key(s)" : "Using default"}
+          placeholder={useCustomApiConfig ? t('apiConfig_key_placeholder') : t('apiConfig_key_placeholder_disabled')}
           aria-label="Gemini API Key input"
           disabled={!useCustomApiConfig}
         />
@@ -83,7 +83,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           value={apiUrl || ''}
           onChange={(e) => setApiUrl(e.target.value || null)}
           className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses}`}
-          placeholder={useCustomApiConfig ? "e.g., https://your-proxy.com/v1beta" : "Using default"}
+          placeholder={useCustomApiConfig ? t('apiConfig_url_placeholder') : t('apiConfig_key_placeholder_disabled')}
           aria-label="Gemini API URL input"
           disabled={!useCustomApiConfig}
         />

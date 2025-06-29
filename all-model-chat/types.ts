@@ -1,5 +1,6 @@
 import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai";
 import { ThemeColors } from './constants/themeConstants'; 
+import { translations } from "./utils/appUtils";
 
 export type { ThemeColors };
 
@@ -71,6 +72,7 @@ export interface ChatSettings {
   showThoughts: boolean;
   systemInstruction: string;
   ttsVoice: string;
+  thinkingBudget: number;
 }
 
 export interface SavedChatSession {
@@ -102,6 +104,7 @@ export interface GeminiService {
     systemInstruction: string,
     config: { temperature?: number; topP?: number },
     showThoughts: boolean,
+    thinkingBudget: number,
     history?: ChatHistoryItem[]
   ) => Promise<Chat | null>;
   sendMessageStream: (
@@ -147,6 +150,8 @@ export interface MessageListProps {
   themeColors: ThemeColors; 
   baseFontSize: number; 
   onSuggestionClick?: (suggestion: string) => void;
+  t: (key: keyof typeof translations, fallback?: string) => string;
+  language: 'en' | 'zh';
 }
 
 export interface PreloadedMessage {

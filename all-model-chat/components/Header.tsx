@@ -49,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const singleInstanceRef = useRef<HTMLSpanElement>(null);
 
-  const displayModelName = isModelsLoading && !currentModelName ? "Loading models..." : currentModelName;
+  const displayModelName = isModelsLoading && !currentModelName ? t('appLoadingModels') : currentModelName;
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -100,11 +100,11 @@ export const Header: React.FC<HeaderProps> = ({
   const canvasPromptButtonInactiveClasses = `bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-input)]`;
 
   const canvasPromptAriaLabel = isCanvasPromptActive 
-    ? "Canvas Helper system prompt is active. Click to remove." 
-    : "Load Canvas Helper system prompt and save settings";
+    ? t('canvasHelperActive_aria')
+    : t('canvasHelperInactive_aria');
   const canvasPromptTitle = isCanvasPromptActive 
-    ? "Canvas Helper prompt is active. Click to remove." 
-    : "Load Canvas Helper Prompt and save";
+    ? t('canvasHelperActive_title')
+    : t('canvasHelperInactive_title');
 
 
   return (
@@ -113,8 +113,8 @@ export const Header: React.FC<HeaderProps> = ({
         <button
             onClick={onToggleHistorySidebar}
             className="p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
-            aria-label={isHistorySidebarOpen ? "Close history sidebar" : "Open history sidebar"}
-            title={isHistorySidebarOpen ? "Close History" : "Open History"}
+            aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
+            title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
         >
             <Menu size={window.innerWidth < MOBILE_BREAKPOINT ? 18 : 20} />
         </button>
@@ -126,8 +126,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
               disabled={isModelsLoading || isLoading || isSwitchingModel}
               className={`w-[6.6rem] sm:w-[7.8rem] md:w-[9rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
-              title={`Current Model: ${displayModelName}. Click to change.`}
-              aria-label={`Current AI Model: ${displayModelName}. Click to change model.`}
+              title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
+              aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
               aria-haspopup="listbox"
               aria-expanded={isModelSelectorOpen}
             >
@@ -184,7 +184,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </button>
                   ))
                 ) : (
-                  <div className="px-3 py-2 text-xs sm:text-sm text-[var(--theme-text-tertiary)]">No models available.</div>
+                  <div className="px-3 py-2 text-xs sm:text-sm text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
                 )}
               </div>
             )}
@@ -204,16 +204,16 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenScenariosModal}
           className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex items-center justify-center hover:scale-105 active:scale-100"
-          aria-label="Manage Preloaded Scenarios"
-          title="Manage Scenarios"
+          aria-label={t('scenariosManage_aria')}
+          title={t('scenariosManage_title')}
         >
           <MessagesSquare size={window.innerWidth < MOBILE_BREAKPOINT ? 16 : 18} />
         </button>
         <button
           onClick={onOpenSettingsModal} 
           className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex items-center justify-center hover:scale-105 active:scale-100"
-          aria-label="Open Chat Settings"
-          title="Chat Settings"
+          aria-label={t('settingsOpen_aria')}
+          title={t('settingsOpen_title')}
         >
           <Settings size={window.innerWidth < MOBILE_BREAKPOINT ? 16 : 18} />
         </button>
@@ -221,7 +221,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onNewChat}
           className="p-2.5 sm:p-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-clear-chat)] rounded-lg shadow-premium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg-accent)] focus:ring-opacity-50 flex items-center justify-center hover:scale-105 active:scale-100"
-          aria-label="Start a new chat session"
+          aria-label={t('headerNewChat_aria')}
           title={`${t('headerNewChat')} (${newChatShortcut})`}
         >
           <FilePlus2 size={window.innerWidth < MOBILE_BREAKPOINT ? 14 : 16} />

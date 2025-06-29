@@ -262,6 +262,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const buttonBaseClass = "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)]";
   
+  const attachMenuItems = [
+    { label: t('attachMenu_upload'), icon: <UploadCloud size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
+    { label: t('attachMenu_takePhoto'), icon: <Camera size={16}/>, action: () => openActionModal('camera') },
+    { label: t('attachMenu_recordAudio'), icon: <Mic size={16}/>, action: () => openActionModal('recorder') },
+    { label: t('attachMenu_addById'), icon: <Link2 size={16}/>, action: () => openActionModal('id') },
+    { label: t('attachMenu_createText'), icon: <FileSignature size={16}/>, action: () => openActionModal('text') }
+  ];
+
   return (
     <>
       {showCamera && ( <CameraCapture onCapture={handlePhotoCapture} onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }} /> )}
@@ -269,17 +277,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isLoading} /> )}
 
       <div
-        className={`bg-[var(--theme-bg-primary)] border-t border-[var(--theme-border-primary)] ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
+        className={`bg-transparent ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isModalOpen}
       >
         <div className="mx-auto w-full max-w-4xl px-2 sm:px-3">
-            <div className="pt-1.5">
+            <div>
                 {(isImagenModel || isVeoModel) && setAspectRatio && aspectRatio && (
                     <div className="mb-2">
                         <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
                             {aspectRatios.map(ratioValue => {
                                 const isSelected = aspectRatio === ratioValue;
-                                return ( <button key={ratioValue} onClick={() => setAspectRatio(ratioValue)} className={`p-2 rounded-lg flex flex-col items-center justify-center min-w-[50px] text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] ${isSelected ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-secondary)]/50' }`} title={`Aspect Ratio ${ratioValue}`}> <AspectRatioIcon ratio={ratioValue} /> <span>{ratioValue}</span> </button> );
+                                return ( <button key={ratioValue} onClick={() => setAspectRatio(ratioValue)} className={`p-2 rounded-lg flex flex-col items-center justify-center min-w-[50px] text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] ${isSelected ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-secondary)]/50' }`} title={`${t('aspectRatio_title')} ${ratioValue}`}> <AspectRatioIcon ratio={ratioValue} /> <span>{ratioValue}</span> </button> );
                             })}
                         </div>
                     </div>
@@ -287,22 +295,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {fileError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
                 {transcriptionError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{transcriptionError}</div>}
                 {selectedFiles.length > 0 && <div className="mb-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar"> <div className="flex gap-3"> {selectedFiles.map(file => ( <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} /> ))} </div> </div>}
-                {showAddByIdInput && <div className="mb-2 flex items-center gap-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)]"> <input type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)} placeholder="Paste File ID (e.g., files/xyz123)" className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm" aria-label="File ID input" disabled={isAddingById} /> <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm" aria-label="Add file by ID"> <Plus size={16} /> Add </button> <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm" aria-label="Cancel adding file by ID"> <XCircle size={16} /> Cancel </button> </div>}
+                {showAddByIdInput && <div className="mb-2 flex items-center gap-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)]"> <input type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)} placeholder={t('addById_placeholder')} className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm" aria-label={t('addById_aria')} disabled={isAddingById} /> <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm" aria-label={t('addById_button_aria')}> <Plus size={16} /> {t('add_button')} </button> <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm" aria-label={t('cancelAddById_button_aria')}> <XCircle size={16} /> {t('cancel_button')} </button> </div>}
             </div>
             
-            <form onSubmit={handleSubmit} className={`relative py-1.5 sm:py-2 ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)] p-1.5 sm:p-2 shadow-sm focus-within:border-transparent focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]/50 transition-all duration-200">
+            <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
+                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1.5 sm:p-2 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]/50 transition-all duration-200">
                     <div className="relative">
-                        <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label="Attach file menu" title="Attach file" aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
+                        <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
                             <Paperclip size={attachIconSize} />
                         </button>
                         {isAttachMenuOpen && (
                             <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-xl z-20 py-1" role="menu">
-                                {['Upload from Device', 'Take Photo', 'Record Audio', 'Add by File ID', 'Create Text File'].map((item, index) => {
-                                    const icons = [<UploadCloud size={16}/>, <Camera size={16}/>, <Mic size={16}/>, <Link2 size={16}/>, <FileSignature size={16}/>];
-                                    const actions = [() => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); }, () => openActionModal('camera'), () => openActionModal('recorder'), () => openActionModal('id'), () => openActionModal('text')];
-                                    return <button key={item} onClick={actions[index]} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem"> {icons[index]} <span>{item}</span> </button>
-                                })}
+                                {attachMenuItems.map(item => (
+                                    <button key={item.label} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem">
+                                        {item.icon} <span>{item.label}</span>
+                                    </button>
+                                ))}
                             </div>
                         )}
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
@@ -320,19 +328,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     />
 
                     <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-                         <button type="button" onClick={handleToggleRecording} disabled={isLoading || isProcessingFile || isAddingById || isModalOpen || isTranscribing} className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] ${isRecording ? 'mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]' : ''}`} aria-label={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')} title={isRecording ? 'Stop recording' : (isTranscribing ? 'Transcribing...' : 'Start voice input')}>
+                         <button type="button" onClick={handleToggleRecording} disabled={isLoading || isProcessingFile || isAddingById || isModalOpen || isTranscribing} className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] ${isRecording ? 'mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]' : ''}`} aria-label={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))} title={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))}>
                              {isTranscribing ? <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" /> : <Mic size={micIconSize} />}
                          </button>
                         
                         {isLoading ? ( 
-                            <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label="Stop generating response" title="Stop Generating"><Ban size={sendIconSize} /></button>
+                            <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Ban size={sendIconSize} /></button>
                         ) : isEditing ? (
                             <>
-                                <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)]`} aria-label="Cancel editing" title="Cancel Edit"><X size={sendIconSize} /></button>
-                                <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label="Update message" title="Update & Send"><Edit2 size={sendIconSize} /></button>
+                                <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} /></button>
+                                <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} /></button>
                             </>
                         ) : (
-                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label="Send message" title="Send"><Send size={sendIconSize} /></button>
+                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('sendMessage_aria')} title={t('sendMessage_title')}><Send size={sendIconSize} /></button>
                         )}
                     </div>
                 </div>

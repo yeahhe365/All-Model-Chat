@@ -396,6 +396,7 @@ class GeminiServiceImpl implements GeminiService {
         systemInstruction: string,
         config: { temperature?: number; topP?: number },
         showThoughts: boolean,
+        thinkingBudget: number,
         history?: ChatHistoryItem[]
     ): Promise<Chat | null> {
         const ai = this._getApiClientOrThrow();
@@ -418,14 +419,18 @@ class GeminiServiceImpl implements GeminiService {
             if (config.topP !== undefined) chatConfig.topP = config.topP;
             if (chatConfig.systemInstruction === undefined) delete chatConfig.systemInstruction;
             
-            if (modelId === 'gemini-2.5-flash-lite-preview-06-17') {
-                chatConfig.thinkingConfig = { thinkingBudget: 24576, includeThoughts: true };
-            } else if (modelId === 'gemini-2.5-pro') {
-                chatConfig.thinkingConfig = { thinkingBudget: 32768 };
-                if (showThoughts) chatConfig.thinkingConfig.includeThoughts = true;
-            } else if (modelId === 'gemini-2.5-flash') {
+            const modelSupportsThinking = [
+                'gemini-2.5-flash-lite-preview-06-17',
+                'gemini-2.5-pro',
+                'gemini-2.5-flash'
+            ].includes(modelId);
+
+            if (modelSupportsThinking) {
                 if (showThoughts) {
-                    chatConfig.thinkingConfig = { thinkingBudget: 24576, includeThoughts: true };
+                    chatConfig.thinkingConfig = {
+                        thinkingBudget: thinkingBudget,
+                        includeThoughts: true
+                    };
                 } else {
                     chatConfig.thinkingConfig = { thinkingBudget: 0 };
                 }

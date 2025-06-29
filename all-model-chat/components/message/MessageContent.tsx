@@ -11,6 +11,7 @@ import { Loader2, ChevronDown, ChevronUp, Sigma } from 'lucide-react';
 import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { CodeBlock } from './CodeBlock';
+import { translations } from '../../utils/appUtils';
 
 const renderThoughtsMarkdown = (content: string) => {
   const rawMarkup = marked.parse(content || ''); 
@@ -36,7 +37,7 @@ const MessageTimer: React.FC<{ startTime?: Date; endTime?: Date; isLoading?: boo
   return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center">{isLoading && startTime && <Loader2 size={10} className="animate-spin mr-1" />} {elapsedTime || "0.0s"}</span>;
 };
 
-const TokenDisplay: React.FC<{ message: ChatMessage }> = ({ message }) => {
+const TokenDisplay: React.FC<{ message: ChatMessage; t: (key: keyof typeof translations) => string }> = ({ message, t }) => {
   if (message.role !== 'model' || (!message.promptTokens && !message.completionTokens && !message.cumulativeTotalTokens)) return null;
   const parts = [
     typeof message.promptTokens === 'number' && `Input: ${message.promptTokens}`,
@@ -44,7 +45,7 @@ const TokenDisplay: React.FC<{ message: ChatMessage }> = ({ message }) => {
     typeof message.cumulativeTotalTokens === 'number' && `Total: ${message.cumulativeTotalTokens}`,
   ].filter(Boolean);
   if (parts.length === 0) return null;
-  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Token Usage"><Sigma size={10} className="mr-1.5 opacity-80" />{parts.join(' | ')}<span className="ml-1">tokens</span></span>;
+  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Token Usage"><Sigma size={10} className="mr-1.5 opacity-80" />{parts.join(' | ')}<span className="ml-1">{t('tokens_unit')}</span></span>;
 };
 
 interface MessageContentProps {
@@ -53,9 +54,10 @@ interface MessageContentProps {
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
     baseFontSize: number; 
+    t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = ({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize }) => {
+export const MessageContent: React.FC<MessageContentProps> = ({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc } = message;
     const [isThoughtsExpanded, setThoughtsExpanded] = useState(false);
     
@@ -87,7 +89,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({ message, onImage
             {areThoughtsVisible && (
                 <div className="mb-1.5 p-1.5 sm:p-2 bg-[rgba(0,0,0,0.1)] dark:bg-[rgba(0,0,0,0.2)] rounded-md border border-[var(--theme-border-secondary)]">
                     <button onClick={() => setThoughtsExpanded(p => !p)} className="flex items-center justify-between w-full text-xs font-semibold text-[var(--theme-icon-thought)] mb-1 hover:text-[var(--theme-text-link)]" aria-expanded={isThoughtsExpanded}>
-                        <span className="flex items-center">{isLoading && <Loader2 size={12} className="animate-spin mr-1.5" />}Thinking...</span>
+                        <span className="flex items-center">{isLoading && <Loader2 size={12} className="animate-spin mr-1.5" />}{t('thinking_text')}</span>
                         {isThoughtsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
                     {isThoughtsExpanded && <div className="text-xs text-[var(--theme-text-secondary)] markdown-body" dangerouslySetInnerHTML={renderThoughtsMarkdown(thoughts)} />}
@@ -96,7 +98,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({ message, onImage
 
             {showPrimaryThinkingIndicator && (
                 <div className="flex items-center text-sm text-[var(--theme-bg-model-message-text)] py-0.5">
-                    <Loader2 size={16} className="animate-spin mr-2 text-[var(--theme-bg-accent)]" /> Thinking...
+                    <Loader2 size={16} className="animate-spin mr-2 text-[var(--theme-bg-accent)]" /> {t('thinking_text')}
                 </div>
             )}
 
@@ -117,7 +119,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({ message, onImage
             
             {(message.role === 'model' || (message.role === 'error' && generationStartTime)) && (
                 <div className="mt-1 sm:mt-1.5 flex justify-end items-center gap-2 sm:gap-3">
-                    <TokenDisplay message={message} />
+                    <TokenDisplay message={message} t={t} />
                     {(isLoading || (generationStartTime && generationEndTime)) && <MessageTimer startTime={generationStartTime} endTime={generationEndTime} isLoading={isLoading} />}
                 </div>
             )}
