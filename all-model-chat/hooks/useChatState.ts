@@ -12,6 +12,7 @@ export const useChatState = () => {
     const [inputText, setInputText] = useState<string>('');
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [aspectRatio, setAspectRatio] = useState<string>('16:9');
+    const [ttsMessageId, setTtsMessageId] = useState<string | null>(null);
 
     // File state
     const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
@@ -36,6 +37,7 @@ export const useChatState = () => {
         inputText, setInputText,
         editingMessageId, setEditingMessageId,
         aspectRatio, setAspectRatio,
+        ttsMessageId, setTtsMessageId,
         selectedFiles, setSelectedFiles,
         appFileError, setAppFileError,
         isAppProcessingFile, setIsAppProcessingFile,

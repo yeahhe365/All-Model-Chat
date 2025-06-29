@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import html2canvas from 'html2canvas';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, ClipboardCopy, Check, Loader2, AlertCircle, ImageIcon, FileCode2 } from 'lucide-react';
+import hljs from 'highlight.js';
+import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, ClipboardCopy, Check, Loader2, AlertCircle, ImageIcon, FileCode2, Volume2 } from 'lucide-react';
 import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
@@ -29,13 +30,48 @@ const generateThemeCssVariables = (colors: ThemeColors): string => {
 const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors, messageId: string): string => {
   const themeVariablesCss = generateThemeCssVariables(themeColors);
   const styles = `
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css">
     <style id="theme-variables">${themeVariablesCss}</style>
     <style>
       /* Basic styles for HTML export */
       body { background-color: var(--theme-bg-primary); color: var(--theme-text-primary); font-family: sans-serif; padding: 20px; }
       .markdown-body-container { background-color: var(--theme-bg-model-message); color: var(--theme-bg-model-message-text); padding: 20px; border-radius: 8px; max-width: 900px; margin: auto; }
+      /* Override markdown css to match theme */
+      .markdown-body { background-color: transparent !important; color: var(--theme-bg-model-message-text) !important; }
+      .markdown-body code:not(pre > code) { background-color: var(--theme-bg-code-block) !important; color: var(--theme-text-code) !important; }
+      .markdown-body pre { background-color: var(--theme-bg-code-block) !important; }
+      .markdown-body table th, .markdown-body table td { border-color: var(--theme-border-secondary) !important; }
+      .markdown-body blockquote { border-left-color: var(--theme-border-secondary) !important; color: var(--theme-text-tertiary) !important; }
+      .markdown-body a { color: var(--theme-text-link) !important; }
+      .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { color: var(--theme-text-primary) !important; border-bottom-color: var(--theme-border-secondary) !important; }
     </style>`;
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Chat Export - ${messageId}</title>${styles}</head><body><div class="markdown-body-container"><div class="markdown-body">${contentHtml}</div></div></body></html>`;
+  
+  const scripts = `
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('pre code').forEach((el) => {
+          hljs.highlightElement(el);
+        });
+      });
+    </script>
+  `;
+
+  return `<!DOCTYPE html><html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Export - ${messageId}</title>
+    ${styles}
+  </head>
+  <body>
+    <div class="markdown-body-container">
+      <div class="markdown-body">${contentHtml}</div>
+    </div>
+    ${scripts}
+  </body>
+  </html>`;
 };
 
 const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string; themeColors: ThemeColors; className?: string; type: 'png' | 'html', t: (key: keyof typeof translations) => string }> = ({ markdownContent, messageId, themeColors, className, type, t }) => {
@@ -52,7 +88,17 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
             tempDiv.className = 'markdown-body';
             tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.style.width = '800px'; tempDiv.style.padding = '24px';
             tempDiv.style.backgroundColor = themeColors.bgModelMessage; tempDiv.style.color = themeColors.bgModelMessageText;
-            tempDiv.innerHTML = DOMPurify.sanitize(marked.parse(markdownContent) as string);
+            
+            // Parse markdown and sanitize it
+            const rawHtml = marked.parse(markdownContent) as string;
+            tempDiv.innerHTML = DOMPurify.sanitize(rawHtml);
+
+            // Apply syntax highlighting
+            const codeBlocks = tempDiv.querySelectorAll('pre code');
+            codeBlocks.forEach((block) => {
+                hljs.highlightElement(block as HTMLElement);
+            });
+            
             document.body.appendChild(tempDiv);
             const canvas = await html2canvas(tempDiv, { useCORS: true, backgroundColor: themeColors.bgModelMessage, scale: 2 });
             const dataUrl = canvas.toDataURL('image/png');
@@ -134,11 +180,13 @@ interface MessageProps {
     showThoughts: boolean;
     themeColors: ThemeColors; 
     baseFontSize: number;
+    onTextToSpeech: (messageId: string, text: string) => void;
+    ttsMessageId: string | null;
     t: (key: keyof typeof translations) => string;
 }
 
 export const Message: React.FC<MessageProps> = (props) => {
-    const { message, messages, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t } = props;
+    const { message, messages, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t, onTextToSpeech, ttsMessageId } = props;
     
     const prevMsg = messages[messageIndex - 1];
     const isGrouped = prevMsg &&
@@ -149,6 +197,7 @@ export const Message: React.FC<MessageProps> = (props) => {
 
     const actionIconSize = window.innerWidth < 640 ? 14 : 16;
     const canRetryMessage = (message.role === 'model' || (message.role === 'error' && message.generationStartTime)) && !message.isLoading;
+    const isThisMessageLoadingTts = ttsMessageId === message.id;
 
     const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
     const bubbleClasses = `w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-premium flex flex-col min-w-0`;
@@ -179,6 +228,9 @@ export const Message: React.FC<MessageProps> = (props) => {
                 {(message.content || message.thoughts) && !message.isLoading && <MessageCopyButton textToCopy={message.content} t={t} />}
                 {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
                     <>
+                        <button onClick={() => onTextToSpeech(message.id, message.content)} disabled={!!ttsMessageId} title="Read aloud" aria-label="Read message aloud" className="p-1 text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
+                          { isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" /> : <Volume2 size={actionIconSize} /> }
+                        </button>
                         <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} />
                         <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} />
                     </>

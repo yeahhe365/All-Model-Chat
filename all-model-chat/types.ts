@@ -150,6 +150,8 @@ export interface MessageListProps {
   themeColors: ThemeColors; 
   baseFontSize: number; 
   onSuggestionClick?: (suggestion: string) => void;
+  onTextToSpeech: (messageId: string, text: string) => void;
+  ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
 }
@@ -158,4 +160,10 @@ export interface PreloadedMessage {
   id: string; 
   role: 'user' | 'model';
   content: string;
+}
+
+export interface SavedScenario {
+  id: string;
+  title: string;
+  messages: PreloadedMessage[];
 }

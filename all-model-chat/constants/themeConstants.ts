@@ -141,7 +141,7 @@ export const LIGHT_THEME_COLORS: ThemeColors = {
   textAccent: '#ffffff',
   textDanger: '#991b1b',     
   textLink: '#0369a1',       
-  textCode: '#c026d3',       
+  textCode: '#16a34a',       
   bgUserMessageText: '#ffffff',
   bgModelMessageText: '#1f2937', 
   bgErrorMessageText: '#991b1b', 

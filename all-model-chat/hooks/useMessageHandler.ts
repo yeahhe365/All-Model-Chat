@@ -22,6 +22,8 @@ interface MessageHandlerProps {
     aspectRatio: string;
     abortControllerRef: React.MutableRefObject<AbortController | null>;
     userScrolledUp: React.MutableRefObject<boolean>;
+    ttsMessageId: string | null;
+    setTtsMessageId: (id: string | null) => void;
     initializeCurrentChatSession: (settingsToUse: IndividualChatSettings, history?: ChatHistoryItem[]) => Promise<Chat | null>;
     saveCurrentChatSession: (currentMessages: ChatMessage[], currentActiveSessionId: string | null, currentSettingsToSave: IndividualChatSettings) => void;
     activeSessionId: string | null;
@@ -45,6 +47,8 @@ export const useMessageHandler = ({
     aspectRatio,
     abortControllerRef,
     userScrolledUp,
+    ttsMessageId,
+    setTtsMessageId,
     initializeCurrentChatSession,
     saveCurrentChatSession,
     activeSessionId,
@@ -335,6 +339,33 @@ export const useMessageHandler = ({
         }
     }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, chatSession, appSettings.isStreamingEnabled, initializeCurrentChatSession, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef ]);
 
+    const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
+        if (ttsMessageId) return; // Prevent multiple TTS requests at once
+
+        setTtsMessageId(messageId);
+        // User requested Gemini 2.5 Flash TTS
+        const modelId = 'models/gemini-2.5-flash-preview-tts';
+        const voice = appSettings.ttsVoice;
+        const abortController = new AbortController();
+
+        try {
+            const base64Pcm = await geminiServiceInstance.generateSpeech(modelId, text, voice, abortController.signal);
+            const wavUrl = pcmBase64ToWavUrl(base64Pcm);
+            
+            setMessages(prev => prev.map(msg => 
+                msg.id === messageId 
+                    ? { ...msg, audioSrc: wavUrl } 
+                    : msg
+            ));
+
+        } catch (error) {
+            console.error("TTS generation failed:", error);
+            // Optionally add error feedback to the user here
+        } finally {
+            setTtsMessageId(null);
+        }
+    }, [appSettings.ttsVoice, setMessages, setTtsMessageId, ttsMessageId]);
+
     const handleStopGenerating = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort(); 
@@ -381,5 +412,6 @@ export const useMessageHandler = ({
         handleCancelEdit,
         handleDeleteMessage,
         handleRetryMessage,
+        handleTextToSpeech,
     };
 };

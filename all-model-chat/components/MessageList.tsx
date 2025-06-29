@@ -181,7 +181,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
-    onSuggestionClick, t, language
+    onSuggestionClick, onTextToSpeech, ttsMessageId, t, language
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
@@ -245,6 +245,8 @@ export const MessageList: React.FC<MessageListProps> = ({
             showThoughts={showThoughts}
             themeColors={themeColors}
             baseFontSize={baseFontSize}
+            onTextToSpeech={onTextToSpeech}
+            ttsMessageId={ttsMessageId}
             t={t}
           />
         ))

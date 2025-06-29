@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { AppSettings, ChatHistoryItem, ChatSettings as IndividualChatSettings } from '../types';
+import { AppSettings, ChatHistoryItem, ChatSettings as IndividualChatSettings, SavedScenario } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
 import { createChatHistoryForApi, generateUniqueId } from '../utils/appUtils';
 

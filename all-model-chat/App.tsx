@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings, PreloadedMessage } from './types';
+import { AppSettings, PreloadedMessage, SavedScenario } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
@@ -39,7 +39,7 @@ const App: React.FC = () => {
       isSwitchingModel,
       messagesEndRef,
       scrollContainerRef,
-      preloadedMessages,
+      savedScenarios,
       isAppDraggingOver,
       aspectRatio,
       setAspectRatio,
@@ -55,7 +55,7 @@ const App: React.FC = () => {
       handleDeleteMessage,
       handleRetryMessage,
       handleDeleteChatHistorySession,
-      handleSavePreloadedScenario,
+      handleSaveAllScenarios,
       handleLoadPreloadedScenario,
       handleImportPreloadedScenario,
       handleExportPreloadedScenario,
@@ -66,6 +66,8 @@ const App: React.FC = () => {
       handleAppDrop,
       handleCancelFileUpload,
       handleAddFileById,
+      handleTextToSpeech,
+      ttsMessageId,
       setCurrentChatSettings
   } = useChat(appSettings);
 
@@ -259,8 +261,8 @@ const App: React.FC = () => {
         <PreloadedMessagesModal
           isOpen={isPreloadedMessagesModalOpen}
           onClose={() => setIsPreloadedMessagesModalOpen(false)}
-          initialMessages={preloadedMessages}
-          onSaveScenario={handleSavePreloadedScenario}
+          savedScenarios={savedScenarios}
+          onSaveAllScenarios={handleSaveAllScenarios}
           onLoadScenario={handleLoadPreloadedScenario}
           onImportScenario={handleImportPreloadedScenario}
           onExportScenario={handleExportPreloadedScenario}
@@ -278,6 +280,8 @@ const App: React.FC = () => {
           themeColors={currentTheme.colors}
           baseFontSize={appSettings.baseFontSize}
           onSuggestionClick={handleSuggestionClick}
+          onTextToSpeech={handleTextToSpeech}
+          ttsMessageId={ttsMessageId}
           t={t}
           language={language}
         />

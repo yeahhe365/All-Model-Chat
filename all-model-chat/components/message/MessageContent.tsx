@@ -81,7 +81,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({ message, onImage
     return (
         <>
             {files && files.length > 0 && (
-                <div className={`space-y-2 ${content ? 'mb-1.5 sm:mb-2' : ''}`}>
+                <div className={`space-y-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
                     {files.map((file) => <FileDisplay key={file.id} file={file} onImageClick={onImageClick} isFromMessageList={true} />)}
                 </div>
             )}
@@ -102,18 +102,17 @@ export const MessageContent: React.FC<MessageContentProps> = ({ message, onImage
                 </div>
             )}
 
-            {audioSrc && (
-                 <div className="space-y-2">
-                    <p className="text-xs text-[var(--theme-text-tertiary)] italic">Synthesized audio for: "{content}"</p>
-                    <audio src={audioSrc} controls autoPlay className="w-full h-10" />
-                </div>
-            )}
-            
-            {content && !audioSrc && (
+            {content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>
                         {content}
                     </ReactMarkdown>
+                </div>
+            )}
+            
+            {audioSrc && (
+                <div className="mt-2">
+                    <audio src={audioSrc} controls autoPlay className="w-full h-10" />
                 </div>
             )}
             
