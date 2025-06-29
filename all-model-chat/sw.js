@@ -1,7 +1,6 @@
 const CACHE_NAME = 'all-model-chat-cache-v2';
-const API_HOSTS = ['generativelanguage.googleapis.com', 'api-proxy.me'];
+const API_HOSTS = ['generativelanguage.googleapis.com'];
 const GOOGLE_API_HOSTNAME = 'generativelanguage.googleapis.com';
-let proxyUrl = null;
 
 // The app shell includes all the static assets needed to run the app offline.
 const APP_SHELL_URLS = [
@@ -16,11 +15,8 @@ const APP_SHELL_URLS = [
     'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',
 ];
 
-// Listen for messages from the client to set the proxy URL.
+// Listen for messages from the client.
 self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SET_PROXY_URL') {
-        proxyUrl = event.data.url;
-    }
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
@@ -63,25 +59,8 @@ self.addEventListener('activate', (event) => {
 // Fetch: Intercept network requests.
 self.addEventListener('fetch', (event) => {
     const { request } = event;
-    const requestUrl = new URL(request.url);
 
-    // If it's an API call to Google and a proxy is set, reroute it.
-    if (requestUrl.hostname === GOOGLE_API_HOSTNAME && proxyUrl) {
-        const originalUrlString = request.url;
-        // This handles both v1 and v1beta as long as the proxy url is configured correctly.
-        const newUrlString = originalUrlString
-            .replace('https://generativelanguage.googleapis.com/v1beta', proxyUrl)
-            .replace('https://generativelanguage.googleapis.com/v1', proxyUrl);
-        
-        // Only proceed if a replacement was actually made
-        if (newUrlString !== originalUrlString) {
-            const newRequest = new Request(newUrlString, request);
-            event.respondWith(fetch(newRequest));
-            return;
-        }
-    }
-
-    // For other API calls, always go to the network and do not cache.
+    // For API calls, always go to the network and do not cache.
     if (API_HOSTS.some(host => request.url.includes(host))) {
         event.respondWith(fetch(request));
         return;

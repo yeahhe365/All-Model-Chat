@@ -90,8 +90,6 @@ export interface AppSettings extends ChatSettings {
  useCustomApiConfig: boolean;
  apiKey: string | null;
  apiUrl: string | null;
- useProxy: boolean;
- proxyUrl: string | null;
  language: 'en' | 'zh' | 'system';
  isStreamingEnabled: boolean;
  transcriptionModelId: string;

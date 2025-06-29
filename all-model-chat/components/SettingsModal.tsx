@@ -104,10 +104,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setApiKey={(val) => updateSetting('apiKey', val)}
             apiUrl={settings.apiUrl}
             setApiUrl={(val) => updateSetting('apiUrl', val)}
-            useProxy={settings.useProxy}
-            setUseProxy={(val) => updateSetting('useProxy', val)}
-            proxyUrl={settings.proxyUrl}
-            setProxyUrl={(val) => updateSetting('proxyUrl', val)}
             t={t}
           />
           <AppearanceSection
