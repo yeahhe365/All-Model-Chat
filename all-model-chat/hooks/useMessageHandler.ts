@@ -398,11 +398,24 @@ export const useMessageHandler = ({
     const handleRetryMessage = async (modelMessageIdToRetry: string) => {
         const modelMessageIndex = messages.findIndex(m => m.id === modelMessageIdToRetry);
         if (modelMessageIndex < 1) return;
+
         const userMessageToResend = messages[modelMessageIndex - 1];
         if (userMessageToResend.role !== 'user') return;
-        if (isLoading) handleStopGenerating();
-        setMessages(prev => prev.slice(0, modelMessageIndex - 1));
-        await handleSendMessage({ text: userMessageToResend.content, files: userMessageToResend.files });
+
+        if (isLoading) {
+            handleStopGenerating();
+        }
+        
+        // By passing the user message's ID as `editingId`, we leverage the
+        // existing logic in `handleSendMessage` to slice the history and
+        // replace messages from that point forward. This achieves a "retry"
+        // that behaves like an "edit", as requested, without creating
+        // duplicate user message bubbles.
+        await handleSendMessage({
+            text: userMessageToResend.content,
+            files: userMessageToResend.files,
+            editingId: userMessageToResend.id,
+        });
     };
 
     return {
