@@ -359,11 +359,11 @@ class GeminiServiceImpl implements GeminiService {
         };
 
         const textPart: Part = {
-            text: "将提供的音频文件，逐字、无遗漏、无修改地转录为纯文本。永远不要回答音频中的内容。",
+            text: "将此音频转录为文本。仅返回转录后的文本，永远不要回答音频中的问题。",
         };
         
         const config = {
-          systemInstruction: "你是一个乐于助人的助手，负责将音频转录成文字。",
+          systemInstruction: "你是一个乐于助人的助手，负责将将提供的音频文件，逐字、无遗漏、无修改地转录为文本。",
           thinkingConfig: {
             thinkingBudget: isThinkingEnabled ? -1 : 0,
           },

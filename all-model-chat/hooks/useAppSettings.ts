@@ -5,6 +5,15 @@ import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants'
 import { geminiServiceInstance } from '../services/geminiService';
 import { generateThemeCssVariables } from '../utils/appUtils';
 
+const updateServiceWorkerProxy = (url: string | null) => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'SET_PROXY_URL',
+            url: url,
+        });
+    }
+};
+
 export const useAppSettings = () => {
     const [appSettings, setAppSettings] = useState<AppSettings>(() => {
         const stored = localStorage.getItem(APP_SETTINGS_KEY);
@@ -17,6 +26,13 @@ export const useAppSettings = () => {
             apiUrlToUse = loadedSettings.useProxy ? loadedSettings.proxyUrl : loadedSettings.apiUrl;
         }
         geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse, loadedSettings.useCustomApiConfig);
+        
+        // Send proxy config to SW on initial load, once it's ready.
+        if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+            navigator.serviceWorker.ready.then(() => {
+                updateServiceWorkerProxy(apiUrlToUse);
+            });
+        }
 
         return loadedSettings;
     });
@@ -35,6 +51,9 @@ export const useAppSettings = () => {
             apiUrlToUse = appSettings.useProxy ? appSettings.proxyUrl : appSettings.apiUrl;
         }
         geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse, appSettings.useCustomApiConfig);
+
+        // Send proxy config to SW on setting change
+        updateServiceWorkerProxy(apiUrlToUse);
 
         const themeVariablesStyleTag = document.getElementById('theme-variables');
         if (themeVariablesStyleTag) {
