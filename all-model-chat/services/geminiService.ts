@@ -89,16 +89,16 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async getAvailableModels(): Promise<ModelOption[]> {
-        const ai = this._getClient();
-        if (!ai) {
-             console.warn("Cannot fetch models: API client not initialized. Configure API Key.");
-             return [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default - API Key Needed)' }];
-        }
-
         const predefinedModelsOnError: ModelOption[] = TAB_CYCLE_MODELS.map(id => ({
             id: id,
             name: `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')} (Fallback)`.replace(/\b\w/g, l => l.toUpperCase()),
         }));
+
+        const ai = this._getClient();
+        if (!ai) {
+             console.warn("Cannot fetch models: API client not initialized. Configure API Key.");
+             return predefinedModelsOnError;
+        }
 
         try {
           const modelPager = await ai.models.list(); 

@@ -32,26 +32,27 @@ export const useModels = (appSettings: { apiKey: string | null, apiUrl: string |
                 { id: 'veo-2.0-generate-001', name: 'Veo 2 (Video Generation)', isPinned: true },
             ];
             
-            let modelsFromApi: ModelOption[] = [];
-            try {
-                modelsFromApi = await geminiServiceInstance.getAvailableModels();
-            } catch (error) {
-                setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`);
-            }
-
             const modelMap = new Map<string, ModelOption>();
             
-            // Add API models first
-            modelsFromApi.forEach(model => {
-                if (!modelMap.has(model.id)) {
-                    modelMap.set(model.id, { ...model, isPinned: false });
-                }
-            });
-
-            // Add pinned models, overwriting if they exist to ensure they are pinned
+            // Add pinned models first to establish them.
             [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels].forEach(pinnedModel => {
                 modelMap.set(pinnedModel.id, pinnedModel);
             });
+
+            try {
+                // geminiServiceInstance.getAvailableModels() will return fallbacks on error.
+                const modelsFromApi = await geminiServiceInstance.getAvailableModels();
+                
+                // Add models from API, but don't overwrite pinned ones to preserve their pinned status.
+                modelsFromApi.forEach(model => {
+                    if (!modelMap.has(model.id)) {
+                        modelMap.set(model.id, { ...model, isPinned: false });
+                    }
+                });
+            } catch (error) {
+                // This catch is for unexpected errors from the service, though it's designed to not throw.
+                setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`);
+            }
 
             let finalModels = Array.from(modelMap.values());
             finalModels.sort((a, b) => {
