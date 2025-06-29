@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,6 +117,8 @@
       color: var(--theme-text-primary) !important; /* Inherit text color from parent */
       font-size: 1rem; /* Base size for markdown, App.tsx will set specific size based on user settings */
       line-height: 1.6; 
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
     .markdown-body p,
     .markdown-body ul,
@@ -173,17 +176,17 @@
       border-radius: 3px;
     }
     .markdown-body pre {
-      padding: 10px !important; 
-      margin: 0 !important;
-      overflow: auto !important; /* Allow horizontal and vertical scrolling */
-      border-radius: 0 !important;
-      border: none !important;
-      position: static !important;
-      background-color: transparent !important;
+      padding: 10px !important; /* Mobile padding */
+      padding-top: 2.5rem !important; /* Mobile padding top for header */
+      border-radius: 6px !important;
+      overflow: hidden; /* Changed from auto to hidden for wrapper */
+      position: relative !important; /* Added for positioning the copy button */
+      border: 1px solid var(--theme-border-secondary);
     }
      @media (min-width: 640px) { /* sm breakpoint */
         .markdown-body pre {
             padding: 12px !important;
+            padding-top: 2.8rem !important; /* Adjusted to make space for copy button */
         }
      }
     /* Styling for code inside pre, primarily for font size and to ensure it doesn't get another background */
@@ -192,6 +195,7 @@
       color: inherit !important; /* Inherit color from pre (which inherits from markdown-body) or let hljs override */
       padding: 0 !important; /* highlight.js theme usually adds padding to pre code.hljs */
       font-size: 0.85rem !important; /* Mobile font size */
+      overflow-x: auto;
       display: block;
     }
      @media (min-width: 640px) { /* sm breakpoint */
@@ -267,9 +271,8 @@
         box-shadow: 0 0 0 2px var(--theme-border-focus);
     }
 
-    /* The container for the code block now handles the outer background */
-    .code-block-container { 
-        background-color: var(--markdown-pre-bg) !important;
+    .markdown-body pre {
+      background-color: var(--markdown-pre-bg) !important; /* This is the outer pre background */
     }
     .markdown-body pre code.hljs { /* This is from highlight.js theme */
       background-color: #2b2b2b !important; /* Specific to a11y-dark, or remove if other themes are used */
