@@ -188,7 +188,15 @@ const App: React.FC = () => {
   const isVeoModel = currentChatSettings.modelId?.includes('veo-');
 
   return (
-    <div className={`flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
+    <div className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
+      {/* Backdrop for mobile sidebar */}
+      {isHistorySidebarOpen && (
+        <div 
+          onClick={() => setIsHistorySidebarOpen(false)} 
+          className="fixed sm:hidden inset-0 bg-black/60 z-20 transition-opacity duration-300"
+          aria-hidden="true"
+        />
+      )}
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
