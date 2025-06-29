@@ -74,7 +74,7 @@ export const useChat = (appSettings: AppSettings) => {
 
     // 3. History and Session Management
     const historyHandler = useChatHistory({ ...state, appSettings });
-    const { activeSessionId, savedSessions, saveCurrentChatSession } = historyHandler;
+    const { activeSessionId, savedSessions } = historyHandler;
 
     // 4. File and Drag & Drop Management
     const fileHandler = useFileHandling({ ...state });
@@ -88,7 +88,6 @@ export const useChat = (appSettings: AppSettings) => {
         ...historyHandler,
         appSettings,
         initializeCurrentChatSession,
-        saveCurrentChatSession,
         activeSessionId
     });
 

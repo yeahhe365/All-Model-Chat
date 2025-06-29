@@ -19,12 +19,13 @@ interface SettingsModalProps {
   onSave: (newSettings: AppSettings) => void; 
   isModelsLoading: boolean;
   modelsLoadingError: string | null;
+  onClearAllHistory: () => void;
   t: (key: keyof typeof translations) => string;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
-  onSave, isModelsLoading, modelsLoadingError, t
+  onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -59,9 +60,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleClearHistory = () => {
     const confirmed = window.confirm(t('settingsClearHistory_confirm'));
     if (confirmed) {
-      localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
-      localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-      window.location.reload();
+      onClearAllHistory();
+      onClose(); // Close the modal after clearing
     }
   };
 

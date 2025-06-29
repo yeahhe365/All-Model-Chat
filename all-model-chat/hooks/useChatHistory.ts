@@ -213,6 +213,17 @@ export const useChatHistory = ({
         }
     };
 
+    const clearAllHistory = useCallback(() => {
+        if (sessionSaveTimeoutRef.current) {
+            clearTimeout(sessionSaveTimeoutRef.current);
+            sessionSaveTimeoutRef.current = null;
+        }
+        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+        setSavedSessions([]);
+        startNewChat(false);
+    }, [startNewChat, sessionSaveTimeoutRef]);
+
+
     return {
         savedSessions,
         setSavedSessions,
@@ -221,6 +232,7 @@ export const useChatHistory = ({
         loadChatSession,
         startNewChat,
         saveCurrentChatSession,
-        handleDeleteChatHistorySession
+        handleDeleteChatHistorySession,
+        clearAllHistory,
     };
 }
