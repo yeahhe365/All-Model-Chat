@@ -239,8 +239,28 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         try {
           const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
           const transcribedText = await geminiServiceInstance.transcribeAudio(audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
-          setInputText(prev => (prev ? prev.trim() + ' ' : '') + transcribedText);
-          textareaRef.current?.focus();
+          const textarea = textareaRef.current;
+          if (textarea) {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const currentText = textarea.value;
+            const newText = currentText.substring(0, start) + transcribedText + currentText.substring(end);
+            setInputText(newText);
+            
+            // Use requestAnimationFrame to defer the cursor update until after the next paint,
+            // ensuring the DOM has been updated by React.
+            requestAnimationFrame(() => {
+              if (textareaRef.current) {
+                const newCursorPos = start + transcribedText.length;
+                textareaRef.current.focus();
+                textareaRef.current.setSelectionRange(newCursorPos, newCursorPos);
+              }
+            });
+          } else {
+            // Fallback behavior if textarea ref is not available
+            setInputText(prev => (prev ? prev.trim() + ' ' : '') + transcribedText);
+            textareaRef.current?.focus();
+          }
         } catch (error) {
           console.error('Transcription error:', error);
           const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -334,7 +354,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     />
 
                     <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-                         <button type="button" onClick={handleToggleRecording} disabled={isLoading || isProcessingFile || isAddingById || isModalOpen || isTranscribing} className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] ${isRecording ? 'mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]' : ''}`} aria-label={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))} title={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))}>
+                         <button type="button" onClick={handleToggleRecording} disabled={isAddingById || isModalOpen || isTranscribing} className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] ${isRecording ? 'mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]' : ''}`} aria-label={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))} title={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))}>
                              {isTranscribing ? <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" /> : <Mic size={micIconSize} />}
                          </button>
                         

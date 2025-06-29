@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem } from '../types';
-import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 
@@ -227,25 +227,26 @@ export const useMessageHandler = ({
 
         // ---- Regular Text Generation Logic ----
 
-        let baseMessagesForThisTurn = [...messages];
-        let historyForNewSdkSession: ChatHistoryItem[] | undefined = undefined;
-        let needsSdkReinitialization = false;
+        // If editing, find the point to slice the history.
+        const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
+        const baseMessages = editIndex !== -1 ? messages.slice(0, editIndex) : [...messages];
+
+        // Create the new user message to be sent.
+        const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
+        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date() };
+        const promptParts = buildContentParts(textToUse.trim(), successfullyProcessedFiles);
+
+        if (promptParts.length === 0) { setIsLoading(false); return; }
+
+        // Clean up editing state after use.
+        if (effectiveEditingId && !overrideOptions) setEditingMessageId(null);
+
+        // Re-initialize the chat session if necessary (e.g., history was sliced for editing).
         let sdkSessionForThisTurn = chatSession;
-
-        if (effectiveEditingId) {
-            const editMsgIndex = baseMessagesForThisTurn.findIndex(m => m.id === effectiveEditingId);
-            if (editMsgIndex !== -1) {
-                baseMessagesForThisTurn = baseMessagesForThisTurn.slice(0, editMsgIndex);
-                historyForNewSdkSession = createChatHistoryForApi(baseMessagesForThisTurn);
-                setMessages(() => baseMessagesForThisTurn); 
-                needsSdkReinitialization = true;
-            }
-            if (!overrideOptions) setEditingMessageId(null);
-        }
-
-        if (!sdkSessionForThisTurn || needsSdkReinitialization) {
-            const newSdkSession = await initializeCurrentChatSession(currentChatSettings, historyForNewSdkSession || createChatHistoryForApi(baseMessagesForThisTurn));
-            if (!newSdkSession) { 
+        if (editIndex !== -1 || !sdkSessionForThisTurn) {
+            const historyForApi = createChatHistoryForApi(baseMessages);
+            const newSdkSession = await initializeCurrentChatSession(currentChatSettings, historyForApi);
+            if (!newSdkSession) {
                 const errorMsg = appSettings.useCustomApiConfig && (!appSettings.apiKey || !appSettings.apiKey.trim())
                     ? 'API key is not configured in settings. Please add a valid key to send messages.'
                     : 'Chat session unavailable. Check API key and network.';
@@ -256,19 +257,20 @@ export const useMessageHandler = ({
             sdkSessionForThisTurn = newSdkSession;
         }
 
-        if (!sdkSessionForThisTurn) { setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'Chat session unavailable.', timestamp: new Date() }]); setIsLoading(false); return; }
+        if (!sdkSessionForThisTurn) {
+            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'Chat session unavailable.', timestamp: new Date() }]);
+            setIsLoading(false);
+            return;
+        }
 
-        const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
-        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date() };
-        const promptParts = buildContentParts(textToUse.trim(), successfullyProcessedFiles);
-
-        if (promptParts.length === 0) { setIsLoading(false); return; }
-        
-        const lastCumulative = baseMessagesForThisTurn.length > 0 ? (baseMessagesForThisTurn[baseMessagesForThisTurn.length - 1].cumulativeTotalTokens || 0) : 0;
-        setMessages(prev => [...prev, { ...userMessage, cumulativeTotalTokens: lastCumulative }]);
-
+        // Update UI state with base messages, new user message, and a loading indicator for the model.
+        const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
         const modelMessageId = generateUniqueId();
-        setMessages(prev => [ ...prev, { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() } ]);
+        setMessages([
+            ...baseMessages,
+            { ...userMessage, cumulativeTotalTokens: lastCumulative },
+            { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }
+        ]);
 
         const processModelMessageCompletion = (prevMsgs: ChatMessage[], modelId: string, finalContent: string, finalThoughts: string | undefined, usageMeta?: UsageMetadata, isAborted?: boolean) => {
             const loadingMsgIndex = prevMsgs.findIndex(m => m.id === modelId);
