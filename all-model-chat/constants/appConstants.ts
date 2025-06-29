@@ -81,6 +81,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
   apiKey: null,
+  apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
   useProxy: false,
   proxyUrl: 'http://api-proxy.me/gemini/v1beta',
   language: 'system',

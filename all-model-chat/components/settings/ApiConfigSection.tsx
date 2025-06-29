@@ -6,6 +6,8 @@ interface ApiConfigSectionProps {
   setUseCustomApiConfig: (value: boolean) => void;
   apiKey: string | null;
   setApiKey: (value: string | null) => void;
+  apiUrl: string | null;
+  setApiUrl: (value: string | null) => void;
   useProxy: boolean;
   setUseProxy: (value: boolean) => void;
   proxyUrl: string | null;
@@ -18,6 +20,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setUseCustomApiConfig,
   apiKey,
   setApiKey,
+  apiUrl,
+  setApiUrl,
   useProxy,
   setUseProxy,
   proxyUrl,
@@ -60,7 +64,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         </p>
       )}
 
-      <div className={`${!useCustomApiConfig ? 'opacity-50' : ''}`}>
+      <div className={`space-y-4 ${!useCustomApiConfig ? 'opacity-50' : ''}`}>
         <div>
             <label htmlFor="api-key-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiKey')}</label>
             <textarea
@@ -80,7 +84,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             )}
         </div>
         
-        <div className="mt-4">
+        <div>
           <label htmlFor="use-proxy-toggle" className="flex items-center justify-between py-1 cursor-pointer">
             <span className="text-sm font-medium text-[var(--theme-text-secondary)]">
               {t('settingsUseProxy')}
@@ -101,7 +105,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         </div>
         
         {useCustomApiConfig && useProxy && (
-          <div className="mt-2" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+          <div style={{ animation: 'fadeIn 0.3s ease-out both' }}>
             <label htmlFor="proxy-url-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsProxyUrl')}</label>
             <input
               id="proxy-url-input"
@@ -111,13 +115,30 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               className={`${inputBaseClasses} ${enabledInputClasses}`}
               placeholder={t('apiConfig_proxy_url_placeholder')}
               aria-label="Proxy URL input"
-              disabled={!useCustomApiConfig}
             />
              <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">
                 {t('settingsProxyUrlHelpText')}{' '}
                 <a href="https://api-proxy.me/" target="_blank" rel="noopener noreferrer" className="text-[var(--theme-text-link)] underline hover:text-[var(--theme-bg-accent)]">
                     https://api-proxy.me/
                 </a>
+             </p>
+          </div>
+        )}
+
+        {useCustomApiConfig && !useProxy && (
+          <div style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+            <label htmlFor="api-url-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiUrl')}</label>
+            <input
+              id="api-url-input"
+              type="text"
+              value={apiUrl || ''}
+              onChange={(e) => setApiUrl(e.target.value || null)}
+              className={`${inputBaseClasses} ${enabledInputClasses}`}
+              placeholder={t('apiConfig_apiUrl_placeholder')}
+              aria-label="Custom API URL input"
+            />
+             <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">
+                {t('settingsApiUrlHelpText')}
              </p>
           </div>
         )}

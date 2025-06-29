@@ -89,6 +89,7 @@ export interface AppSettings extends ChatSettings {
  baseFontSize: number; 
  useCustomApiConfig: boolean;
  apiKey: string | null;
+ apiUrl: string | null;
  useProxy: boolean;
  proxyUrl: string | null;
  language: 'en' | 'zh' | 'system';
