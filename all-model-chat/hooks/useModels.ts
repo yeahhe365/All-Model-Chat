@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ModelOption } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
-import { TAB_CYCLE_MODELS, CACHED_MODELS_KEY } from '../constants/appConstants';
+import { TAB_CYCLE_MODELS } from '../constants/appConstants';
 
 export const useModels = (appSettings: { apiKey: string | null, apiUrl: string | null, useCustomApiConfig: boolean }) => {
     const [apiModels, setApiModels] = useState<ModelOption[]>([]);
@@ -32,47 +32,37 @@ export const useModels = (appSettings: { apiKey: string | null, apiUrl: string |
                 { id: 'veo-2.0-generate-001', name: 'Veo 2 (Video Generation)', isPinned: true },
             ];
             
-            let allAvailableModels: ModelOption[] = [];
-
+            let modelsFromApi: ModelOption[] = [];
             try {
-                // This is the online path
-                const modelsFromApi = await geminiServiceInstance.getAvailableModels();
-                
-                const modelMap = new Map<string, ModelOption>();
-                modelsFromApi.forEach(model => modelMap.set(model.id, { ...model, isPinned: false }));
-                [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels].forEach(pinnedModel => modelMap.set(pinnedModel.id, pinnedModel));
-                
-                allAvailableModels = Array.from(modelMap.values());
-                localStorage.setItem(CACHED_MODELS_KEY, JSON.stringify(allAvailableModels));
-
+                modelsFromApi = await geminiServiceInstance.getAvailableModels();
             } catch (error) {
-                // This is the offline/error path
-                console.warn(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Trying cache or fallbacks.`);
-                try {
-                    const cached = localStorage.getItem(CACHED_MODELS_KEY);
-                    if (cached) {
-                        allAvailableModels = JSON.parse(cached);
-                    } else {
-                        // No cache available, show error and use only pinned models as fallback
-                        setModelsLoadingError(`Could not fetch models and no cache is available. Using pinned models as fallback.`);
-                        allAvailableModels = [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels];
-                    }
-                } catch (cacheError) {
-                    console.error("Failed to parse cached models:", cacheError);
-                    setModelsLoadingError("Failed to fetch models and cache is corrupted. Using pinned models as fallback.");
-                    allAvailableModels = [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels];
-                }
+                setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`);
             }
+
+            const modelMap = new Map<string, ModelOption>();
             
-            allAvailableModels.sort((a, b) => {
+            // Add API models first
+            modelsFromApi.forEach(model => {
+                if (!modelMap.has(model.id)) {
+                    modelMap.set(model.id, { ...model, isPinned: false });
+                }
+            });
+
+            // Add pinned models, overwriting if they exist to ensure they are pinned
+            [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels].forEach(pinnedModel => {
+                modelMap.set(pinnedModel.id, pinnedModel);
+            });
+
+            let finalModels = Array.from(modelMap.values());
+            finalModels.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return a.name.localeCompare(b.name);
             });
             
-            setApiModels(allAvailableModels);
+            setApiModels(finalModels);
 
-            if (allAvailableModels.length === 0 && !modelsLoadingError) {
+            if (finalModels.length === 0 && !modelsLoadingError) {
                 setModelsLoadingError('No models available to select.');
             }
             setIsModelsLoading(false);

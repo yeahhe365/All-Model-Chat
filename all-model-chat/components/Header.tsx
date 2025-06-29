@@ -9,7 +9,6 @@ interface HeaderProps {
   onOpenScenariosModal: () => void; 
   onToggleHistorySidebar: () => void;
   isLoading: boolean;
-  isOnline: boolean;
   currentModelName?: string;
   availableModels: ModelOption[];
   selectedModelId: string;
@@ -30,7 +29,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenScenariosModal,
   onToggleHistorySidebar,
   isLoading,
-  isOnline,
   currentModelName,
   availableModels,
   selectedModelId,
@@ -121,14 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Menu size={window.innerWidth < MOBILE_BREAKPOINT ? 18 : 20} />
         </button>
         <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <h1 className="text-base sm:text-lg font-bold text-[var(--theme-text-link)] whitespace-nowrap">{t('headerTitle')}</h1>
-            {!isOnline && (
-              <span className="px-2 py-0.5 text-xs font-semibold text-white bg-red-600 rounded-full animate-pulse flex-shrink-0">
-                Offline
-              </span>
-            )}
-          </div>
+          <h1 className="text-base sm:text-lg font-bold text-[var(--theme-text-link)] whitespace-nowrap">{t('headerTitle')}</h1>
           
           <div className="relative mt-0.5" ref={modelSelectorRef}>
             <button

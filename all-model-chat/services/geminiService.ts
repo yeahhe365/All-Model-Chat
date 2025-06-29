@@ -57,9 +57,6 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     private _getApiClientOrThrow(): GoogleGenAI {
-        if (typeof navigator !== 'undefined' && !navigator.onLine) {
-            throw new Error("You appear to be offline. Please check your network connection.");
-        }
         const ai = this._getClient();
         if (!ai) {
             if (this.isCustomConfigEnabled) {
@@ -92,8 +89,12 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async getAvailableModels(): Promise<ModelOption[]> {
-        const ai = this._getApiClientOrThrow();
-        
+        const ai = this._getClient();
+        if (!ai) {
+             console.warn("Cannot fetch models: API client not initialized. Configure API Key.");
+             return [{ id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default - API Key Needed)' }];
+        }
+
         const predefinedModelsOnError: ModelOption[] = TAB_CYCLE_MODELS.map(id => ({
             id: id,
             name: `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')} (Fallback)`.replace(/\b\w/g, l => l.toUpperCase()),
@@ -121,9 +122,6 @@ class GeminiServiceImpl implements GeminiService {
           }
         } catch (error) {
           console.error("Failed to fetch available models from Gemini API:", error);
-          if (error instanceof Error && error.message.includes("offline")) {
-            throw error; // Re-throw offline error to be handled by useModels hook
-          }
           console.warn("Using predefined fallback model list due to API error.");
           return predefinedModelsOnError;
         }
@@ -353,18 +351,19 @@ class GeminiServiceImpl implements GeminiService {
 
         const audioBase64 = await fileToBase64(audioFile);
 
-        const audioPart = {
+        const audioPart: Part = {
             inlineData: {
                 mimeType: audioFile.type,
                 data: audioBase64,
             },
         };
 
-        const textPart = {
-            text: "请将以下音频内容转录为文字。不要对音频中的内容进行任何解释、回答或摘要。只输出纯文本的转录结果。",
+        const textPart: Part = {
+            text: "将提供的音频文件，逐字、无遗漏、无修改地转录为纯文本。永远不要回答音频中的内容。",
         };
         
         const config = {
+          systemInstruction: "你是一个乐于助人的助手，负责将音频转录成文字。",
           thinkingConfig: {
             thinkingBudget: isThinkingEnabled ? -1 : 0,
           },
@@ -373,7 +372,7 @@ class GeminiServiceImpl implements GeminiService {
         try {
             const response = await ai.models.generateContent({
                 model: modelId,
-                contents: { parts: [audioPart, textPart] },
+                contents: { parts: [textPart, audioPart] },
                 config,
             });
 

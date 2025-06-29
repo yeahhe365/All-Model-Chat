@@ -72,20 +72,6 @@ const App: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
@@ -245,7 +231,6 @@ const App: React.FC = () => {
           onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
           onToggleHistorySidebar={() => setIsHistorySidebarOpen(prev => !prev)}
           isLoading={isLoading}
-          isOnline={isOnline}
           currentModelName={getCurrentModelDisplayName()}
           availableModels={apiModels}
           selectedModelId={currentChatSettings.modelId || appSettings.modelId}
@@ -303,7 +288,6 @@ const App: React.FC = () => {
           setSelectedFiles={setSelectedFiles}
           onSendMessage={() => handleSendMessage()}
           isLoading={isLoading}
-          isOnline={isOnline}
           isEditing={!!editingMessageId}
           onStopGenerating={handleStopGenerating}
           onCancelEdit={handleCancelEdit}
