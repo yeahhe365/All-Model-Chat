@@ -32,8 +32,12 @@ class GeminiServiceImpl implements GeminiService {
       try {
           const clientOptions: { apiKey: string; apiEndpoint?: string } = { apiKey };
           if (apiUrl && apiUrl.trim() !== '') {
-            // The SDK uses `apiEndpoint` to specify a custom URL
-            clientOptions.apiEndpoint = apiUrl;
+            // [FIX] robustly handle the apiUrl to extract only the host.
+            // The SDK expects just the hostname, e.g., "generativelanguage.googleapis.com"
+            // and automatically adds the version path like "/v1beta".
+            // This regex removes "http(s)://" and any trailing "/v1beta..." path.
+            const endpointHost = apiUrl.replace(/^(https?:\/\/)|(\/v1beta.*)$/gi, '');
+            clientOptions.apiEndpoint = endpointHost;
           }
           return new GoogleGenAI(clientOptions);
       } catch (error) {
