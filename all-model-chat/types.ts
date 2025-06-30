@@ -1,4 +1,3 @@
-
 import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai";
 import { ThemeColors } from './constants/themeConstants'; 
 import { translations } from "./utils/appUtils";
@@ -100,12 +99,12 @@ export interface AppSettings extends ChatSettings {
 
 
 export interface GeminiService {
-  updateSettings: (newSettings: AppSettings) => void;
-  getAvailableModels: (apiKeyString: string | null) => Promise<ModelOption[]>;
-  uploadFile: (apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>;
-  getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
+  getAvailableModels: (apiKeyString: string | null, apiUrl: string | null) => Promise<ModelOption[]>; // <--- MODIFIED
+  uploadFile: (apiKey: string, apiUrl: string | null, file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>; // <--- MODIFIED
+  getFileMetadata: (apiKey: string, apiUrl: string | null, fileApiName: string) => Promise<GeminiFile | null>; // <--- MODIFIED
   sendMessageStream: (
     apiKey: string,
+    apiUrl: string | null, // <--- ADDED
     modelId: string,
     historyWithLastPrompt: ChatHistoryItem[],
     systemInstruction: string,
@@ -120,6 +119,7 @@ export interface GeminiService {
   ) => Promise<void>;
   sendMessageNonStream: (
     apiKey: string,
+    apiUrl: string | null, // <--- ADDED
     modelId: string,
     historyWithLastPrompt: ChatHistoryItem[],
     systemInstruction: string,
@@ -130,10 +130,10 @@ export interface GeminiService {
     onError: (error: Error) => void,
     onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
-  generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
-  generateVideo: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>;
-  generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
-  transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
+  generateImages: (apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>; // <--- MODIFIED
+  generateVideo: (apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>; // <--- MODIFIED
+  generateSpeech: (apiKey: string, apiUrl: string | null, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>; // <--- MODIFIED
+  transcribeAudio: (apiKey: string, apiUrl: string | null, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>; // <--- MODIFIED
 }
 
 export interface ThoughtSupportingPart extends Part {

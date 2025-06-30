@@ -67,6 +67,8 @@ export const useFileHandling = ({
         
         const keyToUse = getKeyAndLockForFileUpload();
         if (!keyToUse) return;
+        
+        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null; // <-- ADDED
 
         const filesArray = Array.isArray(files) ? files : Array.from(files);
 
@@ -96,7 +98,8 @@ export const useFileHandling = ({
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
             try {
-                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, mimeTypeForUpload, file.name, controller.signal);
+                // <--- MODIFIED CALL
+                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, apiUrlToUse, file, mimeTypeForUpload, file.name, controller.signal);
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
                 if (uploadError instanceof Error && uploadError.name === 'SilentError') {
@@ -113,7 +116,7 @@ export const useFileHandling = ({
             }
         });
         await Promise.allSettled(uploadPromises);
-    }, [setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload]);
+    }, [setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload, appSettings]); // <-- MODIFIED dependencies
 
     const handleCancelFileUpload = useCallback((fileIdToCancel: string) => {
         setSelectedFiles(prevFiles =>
@@ -135,11 +138,14 @@ export const useFileHandling = ({
         const keyToUse = getKeyAndLockForFileUpload();
         if (!keyToUse) return;
 
+        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null; // <-- ADDED
+
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
 
         try {
-            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
+            // <--- MODIFIED CALL
+            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, apiUrlToUse, fileApiId);
             if (fileMetadata) {
                 if (!ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType)) {
                     setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${fileMetadata.mimeType}`, uploadState: 'failed' } : f));
@@ -160,7 +166,7 @@ export const useFileHandling = ({
             setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
             setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error`, uploadState: 'failed' } : f));
         }
-    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload]);
+    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload, appSettings]); // <-- MODIFIED dependencies
 
     // Drag and Drop handlers
     const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);
