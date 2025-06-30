@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SavedChatSession } from '../types';
-import { FilePlus2, Trash2, MessageSquare, X } from 'lucide-react';
+import { FilePlus2, Trash2, MessageSquare, X, Search } from 'lucide-react';
 import { formatTimestamp, translations } from '../utils/appUtils';
 
 interface HistorySidebarProps {
@@ -39,9 +39,25 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   t,
   language
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
   const headingIconSize = window.innerWidth < 640 ? 18 : 20;
   const newChatIconSize = window.innerWidth < 640 ? 16 : 18;
   const deleteIconSize = window.innerWidth < 640 ? 12 : 14;
+
+  const filteredSessions = sessions.filter(session => {
+    if (!searchQuery.trim()) {
+        return true; 
+    }
+    const query = searchQuery.toLowerCase();
+    
+    if (session.title.toLowerCase().includes(query)) {
+        return true;
+    }
+    
+    return session.messages.some(message => 
+        message.content.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <aside
@@ -63,7 +79,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         aria-label={t('history_title')}
         aria-hidden={!isOpen}
     >
-      <div className="p-2 sm:p-3 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0">
+      <div className="p-2 sm:p-3 flex justify-between items-center flex-shrink-0">
         <h2 className="text-base sm:text-lg font-semibold text-[var(--theme-text-link)] flex items-center">
           <MessageSquare size={headingIconSize} className="mr-1.5 sm:mr-2 opacity-80" />
           {t('history_title')}
@@ -78,9 +94,35 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         </button>
       </div>
 
+      <div className="p-2 sm:p-3">
+        <div className="relative">
+            <Search
+                size={16}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-tertiary)] pointer-events-none"
+            />
+            <input
+                type="text"
+                placeholder={t('history_search_placeholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[var(--theme-bg-primary)] border border-[var(--theme-border-primary)] rounded-md pl-8 pr-8 py-1.5 text-sm focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)] transition-colors"
+                aria-label={t('history_search_aria')}
+            />
+            {searchQuery && (
+                <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full"
+                    aria-label={t('history_search_clear_aria')}
+                >
+                    <X size={14} />
+                </button>
+            )}
+        </div>
+      </div>
+
       <button
         onClick={onNewChat}
-        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] focus:outline-none transition-colors border-b border-[var(--theme-border-secondary)]"
+        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] focus:outline-none transition-colors"
         aria-label={t('headerNewChat_aria')}
       >
         <FilePlus2 size={newChatIconSize} />
@@ -90,9 +132,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       <div className="flex-grow overflow-y-auto custom-scrollbar">
         {sessions.length === 0 ? (
           <p className="p-3 sm:p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
+        ) : filteredSessions.length === 0 ? (
+            <p className="p-3 sm:p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_search_no_results')}</p>
         ) : (
           <ul className="py-1.5 sm:py-2">
-            {sessions.map((session) => (
+            {filteredSessions.map((session) => (
               <li key={session.id}>
                 <button
                   onClick={() => onSelectSession(session.id)}

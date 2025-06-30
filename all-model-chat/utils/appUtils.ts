@@ -173,6 +173,10 @@ export const translations = {
     history_empty: { en: 'No chat history yet.', zh: '暂无聊天记录。' },
     history_delete_aria: { en: 'Delete chat: {title}', zh: '删除对话：{title}' },
     history_delete_title: { en: 'Delete Chat', zh: '删除对话' },
+    history_search_placeholder: { en: 'Search history...', zh: '搜索历史...' },
+    history_search_aria: { en: 'Search chat history', zh: '搜索聊天记录' },
+    history_search_clear_aria: { en: 'Clear search', zh: '清除搜索' },
+    history_search_no_results: { en: 'No results found.', zh: '未找到结果。' },
     
     // ChatInputPlaceholder
     chatInputPlaceholder: { en: 'Ask anything...', zh: '询问任何问题' },
