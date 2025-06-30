@@ -84,8 +84,6 @@ export const translations = {
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
     settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },
     settingsApiKeyHelpText: { en: 'You can enter multiple keys, one per line. A random key will be used for each new chat session.', zh: '您可以输入多个密钥，每行一个。每个新聊天会话将随机使用一个密钥。' },
-    settingsApiUrl: { en: 'Custom API URL', zh: '自定义 API URL' },
-    settingsApiUrlHelpText: { en: 'e.g., for a self-hosted endpoint. Leave blank for default.', zh: '例如，用于自托管的端点。留空则使用默认值。' },
     settingsAppearance: { en: 'Appearance', zh: '外观' },
     settingsTheme: { en: 'Theme (Global)', zh: '主题 (全局)' },
     settingsFontSize: { en: 'Base Font Size', zh: '基础字号' },
@@ -115,7 +113,6 @@ export const translations = {
     apiConfig_default_info: { en: 'Using default API setup from environment. Enable for custom settings.', zh: '正在使用环境中的默认 API 配置。启用以进行自定义设置。' },
     apiConfig_key_placeholder: { en: 'Enter your Gemini API Key(s)', zh: '输入您的 Gemini API 密钥' },
     apiConfig_key_placeholder_disabled: { en: 'Using default', zh: '使用默认值' },
-    apiConfig_apiUrl_placeholder: { en: 'Enter Custom API URL', zh: '输入自定义 API URL' },
     chatBehavior_voiceModel_label: { en: 'Voice Input Model', zh: '语音输入模型' },
     chatBehavior_voiceModel_tooltip: { en: 'Selects the model used for transcribing voice input to text.', zh: '选择用于将语音输入转录为文本的模型。' },
     chatBehavior_transcriptionThinking_tooltip: { en: "When enabled, the model dynamically decides how much to 'think' for optimal accuracy (budget: -1). When disabled, thinking is turned off to prioritize speed (budget: 0).", zh: "启用时，模型会动态决定“思考”量以获得最佳准确性（预算：-1）。禁用时，将关闭思考以优先考虑速度（预算：0）。" },
@@ -190,16 +187,14 @@ export const translations = {
     headerModelAriaLabel_action: { en: `Click to change model`, zh: `点击更改模型` },
 };
 
-export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null; apiUrl: string | null } => {
+export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
         return {
             apiKeysString: appSettings.apiKey,
-            apiUrl: appSettings.apiUrl,
         };
     }
     return {
         apiKeysString: process.env.API_KEY || null,
-        apiUrl: null, // Default SDK behavior uses the correct endpoint when this is null
     };
 };
 

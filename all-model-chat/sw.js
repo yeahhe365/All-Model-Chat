@@ -1,6 +1,7 @@
 const CACHE_NAME = 'all-model-chat-cache-v2';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
 const GOOGLE_API_HOSTNAME = 'generativelanguage.googleapis.com';
+const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 
 // The app shell includes all the static assets needed to run the app offline.
 const APP_SHELL_URLS = [
@@ -15,10 +16,15 @@ const APP_SHELL_URLS = [
     'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',
 ];
 
+let proxyUrl = null;
+
 // Listen for messages from the client.
 self.addEventListener('message', (event) => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
+    }
+    if (event.data && event.data.type === 'SET_PROXY_URL') {
+        proxyUrl = event.data.url || null;
     }
 });
 
@@ -60,7 +66,15 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
 
-    // For API calls, always go to the network and do not cache.
+    // Proxy logic: If a proxyUrl is set and the request is for the Gemini API, rewrite the URL.
+    if (proxyUrl && request.url.startsWith(TARGET_URL_PREFIX)) {
+        const newUrl = request.url.replace(TARGET_URL_PREFIX, proxyUrl);
+        const newRequest = new Request(newUrl, request);
+        event.respondWith(fetch(newRequest));
+        return;
+    }
+
+    // For non-proxied API calls, always go to the network and do not cache.
     if (API_HOSTS.some(host => request.url.includes(host))) {
         event.respondWith(fetch(request));
         return;

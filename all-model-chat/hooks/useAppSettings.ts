@@ -41,6 +41,18 @@ export const useAppSettings = () => {
         }
         setLanguage(effectiveLang);
 
+        // Send proxy URL to Service Worker
+        if ('serviceWorker' in navigator) {
+            const postProxyUrlToSw = (registration?: ServiceWorkerRegistration) => {
+                const controller = registration ? registration.active : navigator.serviceWorker.controller;
+                controller?.postMessage({
+                    type: 'SET_PROXY_URL',
+                    url: appSettings.apiProxyUrl,
+                });
+            };
+            navigator.serviceWorker.ready.then(postProxyUrlToSw).catch(e => console.error("SW ready error:", e));
+        }
+
 
     }, [appSettings, currentTheme]);
 

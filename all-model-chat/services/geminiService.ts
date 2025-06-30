@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
+import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata, GoogleGenerativeAI as GoogleGenAIClient } from "@google/genai"; // <--- MODIFIED
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 
@@ -27,18 +27,9 @@ class GeminiServiceImpl implements GeminiService {
         console.log("GeminiService created.");
     }
     
-    private _getClient(apiKey: string, apiUrl?: string | null): GoogleGenAI {
+    private _getClient(apiKey: string): GoogleGenAIClient {
       try {
-          const clientOptions: { apiKey: string; apiEndpoint?: string } = { apiKey };
-          if (apiUrl && apiUrl.trim() !== '') {
-            // [FIX] robustly handle the apiUrl to extract only the host.
-            // The SDK expects just the hostname, e.g., "generativelanguage.googleapis.com"
-            // and automatically adds the version path like "/v1beta".
-            // This regex removes "http(s)://" and any trailing "/v1beta..." path.
-            const endpointHost = apiUrl.replace(/^(https?:\/\/)|(\/v1beta.*)$/gi, '');
-            clientOptions.apiEndpoint = endpointHost;
-          }
-          return new GoogleGenAI(clientOptions);
+          return new GoogleGenAI({ apiKey });
       } catch (error) {
           console.error("Failed to initialize GoogleGenAI client:", error);
           // Re-throw to be caught by the calling function
@@ -46,13 +37,13 @@ class GeminiServiceImpl implements GeminiService {
       }
     }
 
-    private _getApiClientOrThrow(apiKey?: string | null, apiUrl?: string | null): GoogleGenAI {
+    private _getApiClientOrThrow(apiKey?: string | null): GoogleGenAIClient {
         if (!apiKey) {
             const silentError = new Error("API key is not configured in settings or provided.");
             silentError.name = "SilentError";
             throw silentError;
         }
-        return this._getClient(apiKey, apiUrl);
+        return this._getClient(apiKey);
     }
 
     private _buildGenerationConfig(
@@ -93,7 +84,7 @@ class GeminiServiceImpl implements GeminiService {
         return generationConfig;
     }
 
-    async getAvailableModels(apiKeysString: string | null, apiUrl: string | null): Promise<ModelOption[]> {
+    async getAvailableModels(apiKeysString: string | null): Promise<ModelOption[]> {
         const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
         if (keys.length === 0) {
@@ -101,7 +92,7 @@ class GeminiServiceImpl implements GeminiService {
         }
         
         const randomKey = keys[Math.floor(Math.random() * keys.length)];
-        const ai = this._getClient(randomKey, apiUrl); // <-- Pass apiUrl
+        const ai = this._getClient(randomKey);
 
         try {
           const modelPager = await ai.models.list(); 
@@ -130,8 +121,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async uploadFile(apiKey: string, apiUrl: string | null, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+    async uploadFile(apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
+        const ai = this._getApiClientOrThrow(apiKey);
         if (signal.aborted) {
             console.log(`Upload for "${displayName}" cancelled before starting.`);
             const abortError = new Error("Upload cancelled by user.");
@@ -189,8 +180,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
     
-    async getFileMetadata(apiKey: string, apiUrl: string | null, fileApiName: string): Promise<GeminiFile | null> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+    async getFileMetadata(apiKey: string, fileApiName: string): Promise<GeminiFile | null> {
+        const ai = this._getApiClientOrThrow(apiKey);
         if (!fileApiName || !fileApiName.startsWith('files/')) {
             console.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
             throw new Error('Invalid file ID format. Expected "files/your_file_id".');
@@ -208,8 +199,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async generateImages(apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
+        const ai = this._getApiClientOrThrow(apiKey);
         if (!prompt.trim()) {
             throw new Error("Image generation prompt cannot be empty.");
         }
@@ -246,8 +237,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async generateVideo(apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+    async generateVideo(apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
+        const ai = this._getApiClientOrThrow(apiKey);
         if (abortSignal.aborted) {
             const abortError = new Error("Video generation cancelled before starting.");
             abortError.name = "AbortError";
@@ -304,8 +295,8 @@ class GeminiServiceImpl implements GeminiService {
         return videoUris;
     }
 
-    async generateSpeech(apiKey: string, apiUrl: string | null, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+    async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
+        const ai = this._getApiClientOrThrow(apiKey);
         if (!text.trim()) {
             throw new Error("TTS input text cannot be empty.");
         }
@@ -350,8 +341,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async transcribeAudio(apiKey: string, apiUrl: string | null, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+    async transcribeAudio(apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
+        const ai = this._getApiClientOrThrow(apiKey);
 
         const audioBase64 = await fileToBase64(audioFile);
 
@@ -397,7 +388,6 @@ class GeminiServiceImpl implements GeminiService {
 
     async sendMessageStream(
         apiKey: string,
-        apiUrl: string | null, // <-- ADDED
         modelId: string,
         historyWithLastPrompt: ChatHistoryItem[],
         systemInstruction: string,
@@ -410,7 +400,7 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+        const ai = this._getApiClientOrThrow(apiKey);
         const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
 
@@ -454,7 +444,6 @@ class GeminiServiceImpl implements GeminiService {
 
     async sendMessageNonStream(
         apiKey: string,
-        apiUrl: string | null, // <-- ADDED
         modelId: string,
         historyWithLastPrompt: ChatHistoryItem[],
         systemInstruction: string,
@@ -465,7 +454,7 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
-        const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
+        const ai = this._getApiClientOrThrow(apiKey);
         const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         
         try {

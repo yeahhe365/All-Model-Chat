@@ -237,7 +237,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         setIsTranscribing(true);
         setTranscriptionError(null);
         try {
-          const { apiKeysString, apiUrl } = getActiveApiConfig(appSettings);
+          const { apiKeysString } = getActiveApiConfig(appSettings);
           if (!apiKeysString) {
             throw new Error("API Key not configured.");
           }
@@ -251,7 +251,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           
           const transcribedText = await geminiServiceInstance.transcribeAudio(
             keyToUse,
-            apiUrl,
             audioFile,
             modelToUse,
             isTranscriptionThinkingEnabled ?? false,

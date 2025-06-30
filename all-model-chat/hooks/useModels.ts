@@ -14,7 +14,7 @@ export const useModels = (appSettings: AppSettings) => {
             setIsModelsLoading(true);
             setModelsLoadingError(null);
             
-            const { apiKeysString, apiUrl } = getActiveApiConfig(appSettings);
+            const { apiKeysString } = getActiveApiConfig(appSettings);
 
             const pinnedInternalModels: ModelOption[] = TAB_CYCLE_MODELS.map(id => {
                 const name = id.includes('/') 
@@ -37,7 +37,7 @@ export const useModels = (appSettings: AppSettings) => {
             
             let modelsFromApi: ModelOption[] = [];
             try {
-                modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString, apiUrl);
+                modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString);
             } catch (error) {
                 setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`);
             }

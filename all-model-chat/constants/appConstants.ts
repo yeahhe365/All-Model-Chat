@@ -82,7 +82,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
   apiKey: null,
-  apiUrl: 'https://generativelanguage.googleapis.com/v1beta',
+  apiProxyUrl: null,
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
