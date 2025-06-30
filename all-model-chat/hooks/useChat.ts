@@ -30,7 +30,7 @@ export const useChat = (appSettings: AppSettings) => {
     
     // 3. History and Session Management
     const historyHandler = useChatHistory({ ...state, appSettings });
-    const { activeSessionId, savedSessions } = historyHandler;
+    const { activeSessionId, savedSessions, clearAllHistory } = historyHandler;
 
     // 4. File and Drag & Drop Management
     const fileHandler = useFileHandling({ ...state, appSettings });
@@ -107,16 +107,21 @@ export const useChat = (appSettings: AppSettings) => {
     }, [isLoading, state.abortControllerRef, setMessages, state.setInputText, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
 
     const clearCacheAndReload = useCallback(() => {
-        if (sessionSaveTimeoutRef.current) {
-            clearTimeout(sessionSaveTimeoutRef.current);
-            sessionSaveTimeoutRef.current = null;
-        }
+        // This function from useChatHistory handles clearing pending saves,
+        // history-related localStorage, and resetting chat state.
+        clearAllHistory();
+
+        // Clear the remaining app-level settings.
         localStorage.removeItem(APP_SETTINGS_KEY);
         localStorage.removeItem(PRELOADED_SCENARIO_KEY);
-        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
-        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-        window.location.reload();
-    }, [sessionSaveTimeoutRef]);
+
+        // A minimal delay to allow React to process state updates from `clearAllHistory`
+        // before the page reloads. This helps ensure the save effect doesn't fire
+        // with stale data right before reload.
+        setTimeout(() => window.location.reload(), 50);
+
+    }, [clearAllHistory]);
+
 
     return {
         ...state,
