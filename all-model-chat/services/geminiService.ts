@@ -46,6 +46,44 @@ class GeminiServiceImpl implements GeminiService {
         return this._getClient(apiKey);
     }
 
+    private _buildGenerationConfig(
+        modelId: string,
+        systemInstruction: string,
+        config: { temperature?: number; topP?: number },
+        showThoughts: boolean,
+        thinkingBudget: number
+    ): any {
+        const generationConfig: any = {
+            ...config,
+            systemInstruction: systemInstruction || undefined,
+        };
+        if (!generationConfig.systemInstruction) {
+            delete generationConfig.systemInstruction;
+        }
+    
+        // TODO: The models supporting `thinkingConfig` should be verified against the latest API documentation.
+        // The current implementation is based on the existing application logic.
+        const modelSupportsThinking = [
+            'gemini-2.5-flash-lite-preview-06-17',
+            'gemini-2.5-pro',
+            'gemini-2.5-flash'
+        ].includes(modelId);
+    
+        if (modelSupportsThinking) {
+            if (showThoughts) {
+                generationConfig.thinkingConfig = {
+                    thinkingBudget: thinkingBudget,
+                    includeThoughts: true,
+                };
+            } else {
+                // Disabling thoughts is mapped to disabling thinking for performance.
+                generationConfig.thinkingConfig = { thinkingBudget: 0 };
+            }
+        }
+        
+        return generationConfig;
+    }
+
     async getAvailableModels(apiKeysString: string | null): Promise<ModelOption[]> {
         const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
@@ -363,35 +401,9 @@ class GeminiServiceImpl implements GeminiService {
         onComplete: (usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
         const ai = this._getApiClientOrThrow(apiKey);
-
-        const generationConfig: any = {
-            ...config,
-            systemInstruction: systemInstruction || undefined,
-        };
-        if (generationConfig.systemInstruction === undefined) delete generationConfig.systemInstruction;
-
-        const modelSupportsThinking = [
-            'gemini-2.5-flash-lite-preview-06-17',
-            'gemini-2.5-pro',
-            'gemini-2.5-flash'
-        ].includes(modelId);
-
-        if (modelSupportsThinking) {
-            if (showThoughts) {
-                generationConfig.thinkingConfig = {
-                    thinkingBudget: thinkingBudget,
-                    includeThoughts: true
-                };
-            } else {
-                generationConfig.thinkingConfig = { thinkingBudget: 0 };
-            }
-        }
-
-        if (generationConfig.thinkingConfig && Object.keys(generationConfig.thinkingConfig).length === 0) {
-            delete generationConfig.thinkingConfig;
-        }
-
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
+
         try {
             const result = await ai.models.generateContentStream({ 
                 model: modelId,
@@ -443,34 +455,8 @@ class GeminiServiceImpl implements GeminiService {
         onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
         const ai = this._getApiClientOrThrow(apiKey);
-
-        const generationConfig: any = {
-            ...config,
-            systemInstruction: systemInstruction || undefined,
-        };
-        if (generationConfig.systemInstruction === undefined) delete generationConfig.systemInstruction;
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         
-        const modelSupportsThinking = [
-            'gemini-2.5-flash-lite-preview-06-17',
-            'gemini-2.5-pro',
-            'gemini-2.5-flash'
-        ].includes(modelId);
-
-        if (modelSupportsThinking) {
-            if (showThoughts) {
-                generationConfig.thinkingConfig = {
-                    thinkingBudget: thinkingBudget,
-                    includeThoughts: true
-                };
-            } else {
-                generationConfig.thinkingConfig = { thinkingBudget: 0 };
-            }
-        }
-
-        if (generationConfig.thinkingConfig && Object.keys(generationConfig.thinkingConfig).length === 0) {
-            delete generationConfig.thinkingConfig;
-        }
-
         try {
             if (abortSignal.aborted) {
                 console.log("Non-streaming call prevented by abort signal before starting.");
