@@ -94,6 +94,15 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         </button>
       </div>
 
+      <button
+        onClick={onNewChat}
+        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] focus:outline-none transition-colors"
+        aria-label={t('headerNewChat_aria')}
+      >
+        <FilePlus2 size={newChatIconSize} />
+        <span>{t('headerNewChat')}</span>
+      </button>
+
       <div className="p-2 sm:p-3">
         <div className="relative">
             <Search
@@ -119,15 +128,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             )}
         </div>
       </div>
-
-      <button
-        onClick={onNewChat}
-        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] focus:outline-none transition-colors"
-        aria-label={t('headerNewChat_aria')}
-      >
-        <FilePlus2 size={newChatIconSize} />
-        <span>{t('headerNewChat')}</span>
-      </button>
 
       <div className="flex-grow overflow-y-auto custom-scrollbar">
         {sessions.length === 0 ? (

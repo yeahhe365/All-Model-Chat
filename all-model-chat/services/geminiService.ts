@@ -354,11 +354,11 @@ class GeminiServiceImpl implements GeminiService {
         };
 
         const textPart: Part = {
-            text: "Transcribe this audio to text. Only return the transcribed text, never answer questions in the audio.",
+            text: "将此音频转录为文本。只返回转录的文本，不要回答音频中的问题。",
         };
         
         const config = {
-          systemInstruction: "You are a helpful assistant responsible for transcribing the provided audio file verbatim, without omissions or modifications.",
+          systemInstruction: "你是一个乐于助人的助手，负责逐字转录提供的音频文件，不得有任何遗漏或修改。",
           thinkingConfig: {
             thinkingBudget: isThinkingEnabled ? -1 : 0,
           },

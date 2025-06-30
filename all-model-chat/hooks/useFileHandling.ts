@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
 import { generateUniqueId, getActiveApiConfig } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
@@ -76,14 +76,23 @@ export const useFileHandling = ({
             const fileId = generateUniqueId();
             const controller = new AbortController();
 
-            if (!ALL_SUPPORTED_MIME_TYPES.includes(file.type)) {
-                setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type}`, uploadState: 'failed', abortController: controller }]);
+            let effectiveMimeType = file.type;
+            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+
+            // If the MIME type is missing/generic but it has a known text-based extension,
+            // we'll treat it as text/plain. This is the fix.
+            if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
+                effectiveMimeType = 'text/plain';
+            }
+
+            if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
+                setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type || 'unknown'}`, uploadState: 'failed', abortController: controller }]);
                 return; 
             }
 
-            const isConsideredText = file.type.startsWith('text/') || SUPPORTED_TEXT_MIME_TYPES.includes(file.type);
-            const typeForState = isConsideredText ? 'text/plain' : file.type;
-            const mimeTypeForUpload = isConsideredText ? 'text/plain' : file.type;
+            const isConsideredText = effectiveMimeType.startsWith('text/') || SUPPORTED_TEXT_MIME_TYPES.includes(effectiveMimeType);
+            const typeForState = isConsideredText ? 'text/plain' : effectiveMimeType;
+            const mimeTypeForUpload = isConsideredText ? 'text/plain' : effectiveMimeType;
 
             const initialFileState: UploadedFile = { id: fileId, name: file.name, type: typeForState, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
             setSelectedFiles(prev => [...prev, initialFileState]);
