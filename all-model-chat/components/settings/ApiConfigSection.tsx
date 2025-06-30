@@ -58,25 +58,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
       <div className={`space-y-4 ${!useCustomApiConfig ? 'opacity-50' : ''}`}>
         <div>
-          <label htmlFor="api-url-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiUrl')}</label>
-          <input
-            id="api-url-input"
-            type="url"
-            value={apiUrl || ''}
-            onChange={(e) => setApiUrl(e.target.value || null)}
-            className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses}`}
-            placeholder={useCustomApiConfig ? t('apiConfig_url_placeholder') : t('apiConfig_key_placeholder_disabled')}
-            aria-label="Custom API URL input"
-            disabled={!useCustomApiConfig}
-          />
-          {useCustomApiConfig && (
-            <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5 flex items-center">
-              <Info size={14} className="mr-2 flex-shrink-0 text-[var(--theme-text-warning)]" />
-              {t('settingsApiUrlHelpText')}
-            </p>
-          )}
-        </div>
-        <div>
             <label htmlFor="api-key-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiKey')}</label>
             <textarea
               id="api-key-input"
@@ -95,6 +76,23 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             )}
         </div>
         
+        {useCustomApiConfig && (
+          <div style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+            <label htmlFor="api-url-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiUrl')}</label>
+            <input
+              id="api-url-input"
+              type="text"
+              value={apiUrl || ''}
+              onChange={(e) => setApiUrl(e.target.value || null)}
+              className={`${inputBaseClasses} ${enabledInputClasses}`}
+              placeholder={t('apiConfig_apiUrl_placeholder')}
+              aria-label="Custom API URL input"
+            />
+             <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">
+                {t('settingsApiUrlHelpText')}
+             </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -89,8 +89,8 @@ export interface AppSettings extends ChatSettings {
  themeId: string; 
  baseFontSize: number; 
  useCustomApiConfig: boolean;
- apiUrl: string | null;
  apiKey: string | null;
+ apiUrl: string | null;
  language: 'en' | 'zh' | 'system';
  isStreamingEnabled: boolean;
  transcriptionModelId: string;
