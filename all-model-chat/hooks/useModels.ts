@@ -71,7 +71,7 @@ export const useModels = (appSettings: AppSettings) => {
         };
 
         fetchAndSetModels();
-    }, [appSettings.apiKey, appSettings.useCustomApiConfig]);
+    }, [appSettings.apiKey, appSettings.useCustomApiConfig, appSettings.apiUrl]);
 
     return { apiModels, isModelsLoading, modelsLoadingError, setApiModels };
 };

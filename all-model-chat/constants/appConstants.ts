@@ -82,6 +82,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
   apiKey: null,
+  apiUrl: null,
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
