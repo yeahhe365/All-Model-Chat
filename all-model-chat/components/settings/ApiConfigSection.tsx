@@ -83,7 +83,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               id="api-url-input"
               type="text"
               value={apiUrl || ''}
-              onChange={(e) => setApiUrl(e.target.value || null)}
+              onChange={(e) => setApiUrl(e.target.value)}
               className={`${inputBaseClasses} ${enabledInputClasses}`}
               placeholder={t('apiConfig_apiUrl_placeholder')}
               aria-label="Custom API URL input"

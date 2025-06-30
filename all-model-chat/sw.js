@@ -1,6 +1,4 @@
 const CACHE_NAME = 'all-model-chat-cache-v2';
-const API_HOSTS = ['generativelanguage.googleapis.com'];
-const GOOGLE_API_HOSTNAME = 'generativelanguage.googleapis.com';
 
 // The app shell includes all the static assets needed to run the app offline.
 const APP_SHELL_URLS = [
@@ -59,9 +57,11 @@ self.addEventListener('activate', (event) => {
 // Fetch: Intercept network requests.
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+    const url = new URL(request.url);
 
-    // For API calls, always go to the network and do not cache.
-    if (API_HOSTS.some(host => request.url.includes(host))) {
+    // For API calls (to Google's host or custom proxies), always go to the network and do not cache.
+    // We identify API calls by looking for the /v1beta/ path segment, which is more robust than hostname.
+    if (url.pathname.includes('/v1beta/')) {
         event.respondWith(fetch(request));
         return;
     }
