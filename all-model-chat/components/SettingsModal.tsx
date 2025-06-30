@@ -20,12 +20,13 @@ interface SettingsModalProps {
   isModelsLoading: boolean;
   modelsLoadingError: string | null;
   onClearAllHistory: () => void;
+  onClearCache: () => void;
   t: (key: keyof typeof translations) => string;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
-  onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, t
+  onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -68,31 +69,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleClearCache = () => {
     const confirmed = window.confirm(t('settingsClearCache_confirm'));
     if (confirmed) {
-      // Clear localStorage
-      localStorage.removeItem(APP_SETTINGS_KEY);
-      localStorage.removeItem(PRELOADED_SCENARIO_KEY);
-      localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
-      localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-      
-      // Also clear service worker caches and unregister for a full reset
-      if ('serviceWorker' in navigator) {
-        Promise.all([
-          navigator.serviceWorker.getRegistrations().then(registrations => {
-            return Promise.all(registrations.map(reg => reg.unregister()));
-          }),
-          caches.keys().then(keys => {
-            return Promise.all(keys.map(key => caches.delete(key)));
-          })
-        ]).then(() => {
-          console.log('All caches and service workers cleared.');
-          window.location.reload();
-        }).catch(err => {
-          console.error('Error clearing caches or service workers:', err);
-          window.location.reload(); // Still reload even if there's an error
-        });
-      } else {
-         window.location.reload();
-      }
+      onClearCache();
     }
   };
 

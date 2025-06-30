@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { AppSettings, ChatHistoryItem, ChatSettings as IndividualChatSettings, SavedScenario } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
 import { createChatHistoryForApi, generateUniqueId } from '../utils/appUtils';
+import { APP_SETTINGS_KEY, PRELOADED_SCENARIO_KEY, CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 
 import { useModels } from './useModels';
 import { useChatState } from './useChatState';
@@ -21,6 +22,7 @@ export const useChat = (appSettings: AppSettings) => {
         userScrolledUp,
         messagesEndRef,
         scrollContainerRef,
+        sessionSaveTimeoutRef,
     } = state;
 
     // 2. Model fetching via custom hook
@@ -104,6 +106,18 @@ export const useChat = (appSettings: AppSettings) => {
         }, 0);
     }, [isLoading, state.abortControllerRef, setMessages, state.setInputText, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
 
+    const clearCacheAndReload = useCallback(() => {
+        if (sessionSaveTimeoutRef.current) {
+            clearTimeout(sessionSaveTimeoutRef.current);
+            sessionSaveTimeoutRef.current = null;
+        }
+        localStorage.removeItem(APP_SETTINGS_KEY);
+        localStorage.removeItem(PRELOADED_SCENARIO_KEY);
+        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+        window.location.reload();
+    }, [sessionSaveTimeoutRef]);
+
     return {
         ...state,
         ...fileHandler,
@@ -117,6 +131,7 @@ export const useChat = (appSettings: AppSettings) => {
         modelsLoadingError,
         handleSelectModelInHeader,
         handleClearCurrentChat,
+        clearCacheAndReload,
         handleScroll,
     };
 };

@@ -56,6 +56,7 @@ const App: React.FC = () => {
       handleRetryMessage,
       handleDeleteChatHistorySession,
       clearAllHistory,
+      clearCacheAndReload,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
       handleImportPreloadedScenario,
@@ -260,6 +261,7 @@ const App: React.FC = () => {
           isModelsLoading={isModelsLoading}
           modelsLoadingError={modelsLoadingError}
           onClearAllHistory={clearAllHistory}
+          onClearCache={clearCacheAndReload}
           t={t}
         />
         <PreloadedMessagesModal
