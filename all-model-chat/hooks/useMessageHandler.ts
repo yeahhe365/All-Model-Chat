@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem } from '../types';
-import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getActiveApiConfig } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 
@@ -52,17 +52,18 @@ export const useMessageHandler = ({
     activeSessionId,
 }: MessageHandlerProps) => {
 
-    const getKeyForRequest = useCallback((isLockableAction: boolean): { key: string, shouldLock: boolean } | null => {
+    const getKeyForRequest = useCallback((isLockableAction: boolean): { key: string; apiUrl: string | null; shouldLock: boolean } | null => {
+        const { apiKeysString, apiUrl } = getActiveApiConfig(appSettings);
+        
         if (currentChatSettings.lockedApiKey) {
-            return { key: currentChatSettings.lockedApiKey, shouldLock: false };
+            return { key: currentChatSettings.lockedApiKey, apiUrl, shouldLock: false };
         }
         
-        const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
-        if (!keysString) {
+        if (!apiKeysString) {
             setAppFileError("API Key not configured.");
             return null;
         }
-        const availableKeys = keysString.split('\n').map(k => k.trim()).filter(Boolean);
+        const availableKeys = apiKeysString.split('\n').map(k => k.trim()).filter(Boolean);
         if (availableKeys.length === 0) {
             setAppFileError("No valid API keys found.");
             return null;
@@ -70,9 +71,9 @@ export const useMessageHandler = ({
         
         const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
         
-        return { key: randomKey, shouldLock: isLockableAction };
-
-    }, [appSettings.apiKey, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setAppFileError]);
+        return { key: randomKey, apiUrl, shouldLock: isLockableAction };
+    
+    }, [appSettings, currentChatSettings.lockedApiKey, setAppFileError]);
 
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
@@ -97,8 +98,7 @@ export const useMessageHandler = ({
              setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'API key not configured or available.', timestamp: new Date() }]);
              return;
         }
-        const { key: keyToUse, shouldLock: shouldLockKey } = keyInfo;
-        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null; // <-- ADDED
+        const { key: keyToUse, apiUrl: apiUrlToUse, shouldLock: shouldLockKey } = keyInfo;
 
 
         setIsLoading(true);
@@ -121,7 +121,6 @@ export const useMessageHandler = ({
                 const duration = 8;
                 const generateAudio = false;
                 
-                // <--- MODIFIED CALL
                 const videoUris = await geminiServiceInstance.generateVideo(keyToUse, apiUrlToUse, activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
 
                 if (currentSignal.aborted) { throw new Error("aborted"); }
@@ -171,7 +170,6 @@ export const useMessageHandler = ({
             setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
             
             try {
-                // <--- MODIFIED CALL
                 const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, apiUrlToUse, activeModelId, textToUse.trim(), currentChatSettings.ttsVoice, currentSignal);
                 if (currentSignal.aborted) { throw new Error("aborted"); }
                 
@@ -215,7 +213,6 @@ export const useMessageHandler = ({
             setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
             
             try {
-                // <--- MODIFIED CALL
                 const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, apiUrlToUse, activeModelId, textToUse.trim(), aspectRatio, currentSignal);
 
                 if (currentSignal.aborted) { throw new Error("aborted"); }
@@ -345,7 +342,6 @@ export const useMessageHandler = ({
         };
 
         if (appSettings.isStreamingEnabled) {
-            // <--- MODIFIED CALL
             await geminiServiceInstance.sendMessageStream(keyToUse, apiUrlToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
                 (chunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)),
                 (thoughtChunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)),
@@ -368,7 +364,6 @@ export const useMessageHandler = ({
                 }
             );
         } else { 
-            // <--- MODIFIED CALL
             await geminiServiceInstance.sendMessageNonStream(keyToUse, apiUrlToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
                 (error) => { 
                     if (error instanceof Error && error.name === 'SilentError') {
@@ -393,9 +388,8 @@ export const useMessageHandler = ({
 
         const keyInfo = getKeyForRequest(false); // TTS does not lock a key
         if (!keyInfo) return;
+        const { key, apiUrl } = keyInfo;
         
-        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null; // <-- ADDED
-
         setTtsMessageId(messageId);
         // User requested Gemini 2.5 Flash TTS
         const modelId = 'models/gemini-2.5-flash-preview-tts';
@@ -403,8 +397,7 @@ export const useMessageHandler = ({
         const abortController = new AbortController();
 
         try {
-            // <--- MODIFIED CALL
-            const base64Pcm = await geminiServiceInstance.generateSpeech(keyInfo.key, apiUrlToUse, modelId, text, voice, abortController.signal);
+            const base64Pcm = await geminiServiceInstance.generateSpeech(key, apiUrl, modelId, text, voice, abortController.signal);
             const wavUrl = pcmBase64ToWavUrl(base64Pcm);
             
             setMessages(prev => prev.map(msg => 
@@ -419,7 +412,7 @@ export const useMessageHandler = ({
         } finally {
             setTtsMessageId(null);
         }
-    }, [appSettings, setMessages, setTtsMessageId, ttsMessageId, getKeyForRequest]); // <-- MODIFIED dependencies
+    }, [appSettings, setMessages, setTtsMessageId, ttsMessageId, getKeyForRequest]);
 
     const handleStopGenerating = () => {
         if (abortControllerRef.current) {

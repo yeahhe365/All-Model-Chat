@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
-import { translations } from '../utils/appUtils';
+import { translations, getActiveApiConfig } from '../utils/appUtils';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 import { CreateTextFileEditor } from './chat/CreateTextFileEditor';
 import { CameraCapture } from './chat/CameraCapture';
@@ -237,21 +237,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         setIsTranscribing(true);
         setTranscriptionError(null);
         try {
-          const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
-          if (!keysString) {
+          const { apiKeysString, apiUrl } = getActiveApiConfig(appSettings);
+          if (!apiKeysString) {
             throw new Error("API Key not configured.");
           }
-          const availableKeys = keysString.split('\n').map(k => k.trim()).filter(Boolean);
+          const availableKeys = apiKeysString.split('\n').map(k => k.trim()).filter(Boolean);
           if(availableKeys.length === 0) {
             throw new Error("No valid API keys found.");
           }
           const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
 
           const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
-          const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
+          
           const transcribedText = await geminiServiceInstance.transcribeAudio(
             keyToUse,
-            apiUrlToUse,
+            apiUrl,
             audioFile,
             modelToUse,
             isTranscriptionThinkingEnabled ?? false,

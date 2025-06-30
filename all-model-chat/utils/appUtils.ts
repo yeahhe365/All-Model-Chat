@@ -1,4 +1,4 @@
-import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../types';
+import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings } from '../types';
 import { ThemeColors } from '../constants/themeConstants';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 
@@ -188,6 +188,19 @@ export const translations = {
     headerModelSelectorTooltip_action: { en: `Click to change, or press 'Tab' to cycle`, zh: `点击更改，或按 'Tab' 键循环切换` },
     headerModelAriaLabel_current: { en: 'Current AI Model', zh: '当前 AI 模型' },
     headerModelAriaLabel_action: { en: `Click to change model`, zh: `点击更改模型` },
+};
+
+export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null; apiUrl: string | null } => {
+    if (appSettings.useCustomApiConfig) {
+        return {
+            apiKeysString: appSettings.apiKey,
+            apiUrl: appSettings.apiUrl,
+        };
+    }
+    return {
+        apiKeysString: process.env.API_KEY || null,
+        apiUrl: null, // Default SDK behavior uses the correct endpoint when this is null
+    };
 };
 
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations, fallback?: string): string => {

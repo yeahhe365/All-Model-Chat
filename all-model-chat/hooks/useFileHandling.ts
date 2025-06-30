@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES } from '../constants/fileConstants';
-import { generateUniqueId } from '../utils/appUtils';
+import { generateUniqueId, getActiveApiConfig } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface FileHandlingProps {
@@ -33,17 +33,18 @@ export const useFileHandling = ({
         setIsAppProcessingFile(anyFileProcessing);
     }, [selectedFiles, setIsAppProcessingFile]);
 
-    const getKeyAndLockForFileUpload = useCallback((): string | null => {
+    const getKeyAndLockForFileUpload = useCallback((): { key: string; apiUrl: string | null } | null => {
         if (currentChatSettings.lockedApiKey) {
-            return currentChatSettings.lockedApiKey;
+            const { apiUrl } = getActiveApiConfig(appSettings);
+            return { key: currentChatSettings.lockedApiKey, apiUrl };
         }
 
-        const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
-        if (!keysString) {
+        const { apiKeysString, apiUrl } = getActiveApiConfig(appSettings);
+        if (!apiKeysString) {
             setAppFileError("API Key not configured.");
             return null;
         }
-        const availableKeys = keysString.split('\n').map(k => k.trim()).filter(Boolean);
+        const availableKeys = apiKeysString.split('\n').map(k => k.trim()).filter(Boolean);
         if (availableKeys.length === 0) {
             setAppFileError("No valid API keys found.");
             return null;
@@ -57,18 +58,18 @@ export const useFileHandling = ({
             lockedApiKey: keyToUse,
         }));
 
-        return keyToUse;
-    }, [appSettings.apiKey, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setCurrentChatSettings, setAppFileError]);
+        return { key: keyToUse, apiUrl };
+    }, [appSettings, currentChatSettings.lockedApiKey, setCurrentChatSettings, setAppFileError]);
 
 
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
         setAppFileError(null);
         
-        const keyToUse = getKeyAndLockForFileUpload();
-        if (!keyToUse) return;
+        const keyAndUrl = getKeyAndLockForFileUpload();
+        if (!keyAndUrl) return;
         
-        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null; // <-- ADDED
+        const { key: keyToUse, apiUrl: apiUrlToUse } = keyAndUrl;
 
         const filesArray = Array.isArray(files) ? files : Array.from(files);
 
@@ -98,7 +99,6 @@ export const useFileHandling = ({
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
             try {
-                // <--- MODIFIED CALL
                 const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, apiUrlToUse, file, mimeTypeForUpload, file.name, controller.signal);
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
@@ -116,7 +116,7 @@ export const useFileHandling = ({
             }
         });
         await Promise.allSettled(uploadPromises);
-    }, [setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload, appSettings]); // <-- MODIFIED dependencies
+    }, [setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload]);
 
     const handleCancelFileUpload = useCallback((fileIdToCancel: string) => {
         setSelectedFiles(prevFiles =>
@@ -135,16 +135,14 @@ export const useFileHandling = ({
         if (!fileApiId || !fileApiId.startsWith('files/')) { setAppFileError('Invalid File ID format.'); return; }
         if (selectedFiles.some(f => f.fileApiName === fileApiId)) { setAppFileError(`File with ID ${fileApiId} is already added.`); return; }
 
-        const keyToUse = getKeyAndLockForFileUpload();
-        if (!keyToUse) return;
-
-        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null; // <-- ADDED
+        const keyAndUrl = getKeyAndLockForFileUpload();
+        if (!keyAndUrl) return;
+        const { key: keyToUse, apiUrl: apiUrlToUse } = keyAndUrl;
 
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
 
         try {
-            // <--- MODIFIED CALL
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, apiUrlToUse, fileApiId);
             if (fileMetadata) {
                 if (!ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType)) {
@@ -166,7 +164,7 @@ export const useFileHandling = ({
             setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
             setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error`, uploadState: 'failed' } : f));
         }
-    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload, appSettings]); // <-- MODIFIED dependencies
+    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload]);
 
     // Drag and Drop handlers
     const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);
