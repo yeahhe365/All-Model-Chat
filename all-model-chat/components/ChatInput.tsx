@@ -246,10 +246,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             throw new Error("No valid API keys found.");
           }
           const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
-          const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
 
           const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
-          const transcribedText = await geminiServiceInstance.transcribeAudio(keyToUse, apiUrlToUse, audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
+          const transcribedText = await geminiServiceInstance.transcribeAudio(keyToUse, audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
           const textarea = textareaRef.current;
           if (textarea) {
             const start = textarea.selectionStart;

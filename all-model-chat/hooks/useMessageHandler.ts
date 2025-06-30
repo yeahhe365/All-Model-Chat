@@ -52,10 +52,9 @@ export const useMessageHandler = ({
     activeSessionId,
 }: MessageHandlerProps) => {
 
-    const getKeyForRequest = useCallback((isLockableAction: boolean): { key: string; apiUrl: string | null; shouldLock: boolean; } | null => {
+    const getKeyForRequest = useCallback((isLockableAction: boolean): { key: string, shouldLock: boolean } | null => {
         if (currentChatSettings.lockedApiKey) {
-            const apiUrl = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
-            return { key: currentChatSettings.lockedApiKey, apiUrl, shouldLock: false };
+            return { key: currentChatSettings.lockedApiKey, shouldLock: false };
         }
         
         const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
@@ -70,11 +69,10 @@ export const useMessageHandler = ({
         }
         
         const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
-        const apiUrl = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
         
-        return { key: randomKey, apiUrl, shouldLock: isLockableAction };
+        return { key: randomKey, shouldLock: isLockableAction };
 
-    }, [appSettings.apiKey, appSettings.apiUrl, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setAppFileError]);
+    }, [appSettings.apiKey, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setAppFileError]);
 
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
@@ -99,7 +97,7 @@ export const useMessageHandler = ({
              setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'API key not configured or available.', timestamp: new Date() }]);
              return;
         }
-        const { key: keyToUse, apiUrl: apiUrlToUse, shouldLock: shouldLockKey } = keyInfo;
+        const { key: keyToUse, shouldLock: shouldLockKey } = keyInfo;
 
 
         setIsLoading(true);
@@ -122,7 +120,7 @@ export const useMessageHandler = ({
                 const duration = 8;
                 const generateAudio = false;
                 
-                const videoUris = await geminiServiceInstance.generateVideo(keyToUse, apiUrlToUse, activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
+                const videoUris = await geminiServiceInstance.generateVideo(keyToUse, activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
 
                 if (currentSignal.aborted) { throw new Error("aborted"); }
 
@@ -171,7 +169,7 @@ export const useMessageHandler = ({
             setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
             
             try {
-                const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, apiUrlToUse, activeModelId, textToUse.trim(), currentChatSettings.ttsVoice, currentSignal);
+                const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), currentChatSettings.ttsVoice, currentSignal);
                 if (currentSignal.aborted) { throw new Error("aborted"); }
                 
                 const wavUrl = pcmBase64ToWavUrl(base64Pcm);
@@ -214,7 +212,7 @@ export const useMessageHandler = ({
             setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
             
             try {
-                const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, apiUrlToUse, activeModelId, textToUse.trim(), aspectRatio, currentSignal);
+                const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, activeModelId, textToUse.trim(), aspectRatio, currentSignal);
 
                 if (currentSignal.aborted) { throw new Error("aborted"); }
 
@@ -343,7 +341,7 @@ export const useMessageHandler = ({
         };
 
         if (appSettings.isStreamingEnabled) {
-            await geminiServiceInstance.sendMessageStream(keyToUse, apiUrlToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
+            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
                 (chunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)),
                 (thoughtChunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)),
                 (error) => { 
@@ -365,7 +363,7 @@ export const useMessageHandler = ({
                 }
             );
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(keyToUse, apiUrlToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
+            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
                 (error) => { 
                     if (error instanceof Error && error.name === 'SilentError') {
                         setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
@@ -397,7 +395,7 @@ export const useMessageHandler = ({
         const abortController = new AbortController();
 
         try {
-            const base64Pcm = await geminiServiceInstance.generateSpeech(keyInfo.key, keyInfo.apiUrl, modelId, text, voice, abortController.signal);
+            const base64Pcm = await geminiServiceInstance.generateSpeech(keyInfo.key, modelId, text, voice, abortController.signal);
             const wavUrl = pcmBase64ToWavUrl(base64Pcm);
             
             setMessages(prev => prev.map(msg => 

@@ -6,8 +6,6 @@ interface ApiConfigSectionProps {
   setUseCustomApiConfig: (value: boolean) => void;
   apiKey: string | null;
   setApiKey: (value: string | null) => void;
-  apiUrl: string | null;
-  setApiUrl: (value: string | null) => void;
   t: (key: string) => string;
 }
 
@@ -16,8 +14,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setUseCustomApiConfig,
   apiKey,
   setApiKey,
-  apiUrl,
-  setApiUrl,
   t,
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm custom-scrollbar";
@@ -76,23 +72,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             )}
         </div>
         
-        {useCustomApiConfig && (
-          <div style={{ animation: 'fadeIn 0.3s ease-out both' }}>
-            <label htmlFor="api-url-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiUrl')}</label>
-            <input
-              id="api-url-input"
-              type="text"
-              value={apiUrl || ''}
-              onChange={(e) => setApiUrl(e.target.value)}
-              className={`${inputBaseClasses} ${enabledInputClasses}`}
-              placeholder={t('apiConfig_apiUrl_placeholder')}
-              aria-label="Custom API URL input"
-            />
-             <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">
-                {t('settingsApiUrlHelpText')}
-             </p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -106,8 +106,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
             apiKey={settings.apiKey}
             setApiKey={(val) => updateSetting('apiKey', val)}
-            apiUrl={settings.apiUrl}
-            setApiUrl={(val) => updateSetting('apiUrl', val)}
             t={t}
           />
           <AppearanceSection
