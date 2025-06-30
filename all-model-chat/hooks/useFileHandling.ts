@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
-import { AppSettings, UploadedFile } from '../types';
+import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
@@ -11,6 +11,8 @@ interface FileHandlingProps {
     setAppFileError: Dispatch<SetStateAction<string | null>>;
     isAppProcessingFile: boolean;
     setIsAppProcessingFile: Dispatch<SetStateAction<boolean>>;
+    currentChatSettings: IndividualChatSettings;
+    setCurrentChatSettings: Dispatch<SetStateAction<IndividualChatSettings>>;
 }
 
 export const useFileHandling = ({
@@ -20,6 +22,8 @@ export const useFileHandling = ({
     setAppFileError,
     isAppProcessingFile,
     setIsAppProcessingFile,
+    currentChatSettings,
+    setCurrentChatSettings,
 }: FileHandlingProps) => {
 
     const [isAppDraggingOver, setIsAppDraggingOver] = useState<boolean>(false);
@@ -29,7 +33,11 @@ export const useFileHandling = ({
         setIsAppProcessingFile(anyFileProcessing);
     }, [selectedFiles, setIsAppProcessingFile]);
 
-    const getKeyForRequest = useCallback((): string | null => {
+    const getKeyAndLockForFileUpload = useCallback((): string | null => {
+        if (currentChatSettings.lockedApiKey) {
+            return currentChatSettings.lockedApiKey;
+        }
+
         const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
         if (!keysString) {
             setAppFileError("API Key not configured.");
@@ -40,14 +48,24 @@ export const useFileHandling = ({
             setAppFileError("No valid API keys found.");
             return null;
         }
-        return availableKeys[Math.floor(Math.random() * availableKeys.length)];
-    }, [appSettings.apiKey, appSettings.useCustomApiConfig, setAppFileError]);
+        
+        const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+        
+        // Immediately lock this key for the session since a file is being uploaded.
+        setCurrentChatSettings(prev => ({
+            ...prev,
+            lockedApiKey: keyToUse,
+        }));
+
+        return keyToUse;
+    }, [appSettings.apiKey, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setCurrentChatSettings, setAppFileError]);
+
 
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
         setAppFileError(null);
         
-        const keyToUse = getKeyForRequest();
+        const keyToUse = getKeyAndLockForFileUpload();
         if (!keyToUse) return;
 
         const filesArray = Array.isArray(files) ? files : Array.from(files);
@@ -95,7 +113,7 @@ export const useFileHandling = ({
             }
         });
         await Promise.allSettled(uploadPromises);
-    }, [setSelectedFiles, setAppFileError, getKeyForRequest]);
+    }, [setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload]);
 
     const handleCancelFileUpload = useCallback((fileIdToCancel: string) => {
         setSelectedFiles(prevFiles =>
@@ -114,7 +132,7 @@ export const useFileHandling = ({
         if (!fileApiId || !fileApiId.startsWith('files/')) { setAppFileError('Invalid File ID format.'); return; }
         if (selectedFiles.some(f => f.fileApiName === fileApiId)) { setAppFileError(`File with ID ${fileApiId} is already added.`); return; }
 
-        const keyToUse = getKeyForRequest();
+        const keyToUse = getKeyAndLockForFileUpload();
         if (!keyToUse) return;
 
         const tempId = generateUniqueId();
@@ -142,7 +160,7 @@ export const useFileHandling = ({
             setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
             setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error`, uploadState: 'failed' } : f));
         }
-    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyForRequest]);
+    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyAndLockForFileUpload]);
 
     // Drag and Drop handlers
     const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);
