@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { ModelOption } from '../types';
+import { ModelOption, AppSettings } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
 import { TAB_CYCLE_MODELS } from '../constants/appConstants';
 
-export const useModels = (appSettings: { apiKey: string | null, apiUrl: string | null, useCustomApiConfig: boolean }) => {
+export const useModels = (appSettings: AppSettings) => {
     const [apiModels, setApiModels] = useState<ModelOption[]>([]);
     const [modelsLoadingError, setModelsLoadingError] = useState<string | null>(null);
     const [isModelsLoading, setIsModelsLoading] = useState<boolean>(true);
@@ -12,6 +12,8 @@ export const useModels = (appSettings: { apiKey: string | null, apiUrl: string |
         const fetchAndSetModels = async () => {
             setIsModelsLoading(true);
             setModelsLoadingError(null);
+            
+            const apiKeysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
 
             const pinnedInternalModels: ModelOption[] = TAB_CYCLE_MODELS.map(id => {
                 const name = id.includes('/') 
@@ -34,7 +36,7 @@ export const useModels = (appSettings: { apiKey: string | null, apiUrl: string |
             
             let modelsFromApi: ModelOption[] = [];
             try {
-                modelsFromApi = await geminiServiceInstance.getAvailableModels();
+                modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString);
             } catch (error) {
                 setModelsLoadingError(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using fallbacks.`);
             }

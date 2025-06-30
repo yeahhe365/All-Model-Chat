@@ -1,8 +1,6 @@
-
-
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2 } from 'lucide-react';
-import { UploadedFile } from '../types';
+import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 import { translations } from '../utils/appUtils';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
@@ -12,6 +10,7 @@ import { AudioRecorder } from './chat/AudioRecorder';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface ChatInputProps {
+  appSettings: AppSettings;
   inputText: string;
   setInputText: (text: string) => void;
   selectedFiles: UploadedFile[]; 
@@ -53,7 +52,7 @@ const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
 const aspectRatios = ['1:1', '9:16', '16:9', '4:3', '3:4'];
 
 export const ChatInput: React.FC<ChatInputProps> = ({
-  inputText, setInputText, selectedFiles, setSelectedFiles, onSendMessage,
+  appSettings, inputText, setInputText, selectedFiles, setSelectedFiles, onSendMessage,
   isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
   isImagenModel, isVeoModel, aspectRatio, setAspectRatio,
@@ -237,8 +236,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         setIsTranscribing(true);
         setTranscriptionError(null);
         try {
+          const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
+          if (!keysString) {
+            throw new Error("API Key not configured.");
+          }
+          const availableKeys = keysString.split('\n').map(k => k.trim()).filter(Boolean);
+          if(availableKeys.length === 0) {
+            throw new Error("No valid API keys found.");
+          }
+          const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+
           const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
-          const transcribedText = await geminiServiceInstance.transcribeAudio(audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
+          const transcribedText = await geminiServiceInstance.transcribeAudio(keyToUse, audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
           const textarea = textareaRef.current;
           if (textarea) {
             const start = textarea.selectionStart;
@@ -258,7 +267,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             });
           } else {
             // Fallback behavior if textarea ref is not available
-            setInputText(prev => (prev ? prev.trim() + ' ' : '') + transcribedText);
+            setInputText((inputText ? inputText.trim() + ' ' : '') + transcribedText);
             textareaRef.current?.focus();
           }
         } catch (error) {
@@ -276,7 +285,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       // Revert the optimistic UI update if permission is denied or another error occurs.
       setIsRecording(false);
     }
-  }, [isRecording, setInputText, transcriptionModelId, isTranscriptionThinkingEnabled]);
+  }, [isRecording, setInputText, transcriptionModelId, isTranscriptionThinkingEnabled, inputText, appSettings]);
 
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
   const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');

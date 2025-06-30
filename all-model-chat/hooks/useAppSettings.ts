@@ -8,14 +8,7 @@ import { generateThemeCssVariables } from '../utils/appUtils';
 export const useAppSettings = () => {
     const [appSettings, setAppSettings] = useState<AppSettings>(() => {
         const stored = localStorage.getItem(APP_SETTINGS_KEY);
-        const loadedSettings = stored ? { ...DEFAULT_APP_SETTINGS, ...JSON.parse(stored) } : DEFAULT_APP_SETTINGS;
-
-        // Initialize gemini service with loaded/default settings
-        const apiKeyToUse = loadedSettings.useCustomApiConfig ? loadedSettings.apiKey : null;
-        const apiUrlToUse = loadedSettings.useCustomApiConfig ? loadedSettings.apiUrl : null;
-        geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse, loadedSettings.useCustomApiConfig);
-        
-        return loadedSettings;
+        return stored ? { ...DEFAULT_APP_SETTINGS, ...JSON.parse(stored) } : DEFAULT_APP_SETTINGS;
     });
 
     const [language, setLanguage] = useState<'en' | 'zh'>('en');
@@ -24,11 +17,6 @@ export const useAppSettings = () => {
 
     useEffect(() => {
         localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));
-
-        // Update Gemini service based on useCustomApiConfig toggle
-        const apiKeyToUse = appSettings.useCustomApiConfig ? appSettings.apiKey : null;
-        const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
-        geminiServiceInstance.updateApiKeyAndUrl(apiKeyToUse, apiUrlToUse, appSettings.useCustomApiConfig);
 
         const themeVariablesStyleTag = document.getElementById('theme-variables');
         if (themeVariablesStyleTag) {

@@ -73,6 +73,7 @@ export interface ChatSettings {
   systemInstruction: string;
   ttsVoice: string;
   thinkingBudget: number;
+  lockedApiKey?: string | null;
 }
 
 export interface SavedChatSession {
@@ -98,40 +99,39 @@ export interface AppSettings extends ChatSettings {
 
 
 export interface GeminiService {
-  updateApiKeyAndUrl: (apiKey: string | null, apiUrl: string | null, useCustomApiConfig: boolean) => void;
-  initializeChat: (
+  getAvailableModels: (apiKeyString: string | null) => Promise<ModelOption[]>;
+  uploadFile: (apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>;
+  getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
+  sendMessageStream: (
+    apiKey: string,
     modelId: string,
+    historyWithLastPrompt: ChatHistoryItem[],
     systemInstruction: string,
     config: { temperature?: number; topP?: number },
     showThoughts: boolean,
     thinkingBudget: number,
-    history?: ChatHistoryItem[]
-  ) => Promise<Chat | null>;
-  sendMessageStream: (
-    chat: Chat,
-    modelId: string,
-    promptParts: ContentPart[], 
     abortSignal: AbortSignal,
     onChunk: (chunk: string) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
     onComplete: (usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
-  sendMessageNonStream: ( 
-    chat: Chat,
+  sendMessageNonStream: (
+    apiKey: string,
     modelId: string,
-    promptParts: ContentPart[],
+    historyWithLastPrompt: ChatHistoryItem[],
+    systemInstruction: string,
+    config: { temperature?: number; topP?: number },
+    showThoughts: boolean,
+    thinkingBudget: number,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
     onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
-  generateImages: (modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>; // Returns an array of base64 encoded image strings
-  generateVideo: (modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>; // Returns array of video URIs
-  generateSpeech: (modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
-  transcribeAudio: (audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
-  getAvailableModels: () => Promise<ModelOption[]>;
-  uploadFile: (file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>; // Added AbortSignal
-  getFileMetadata: (fileApiName: string) => Promise<GeminiFile | null>; // Added to get file metadata
+  generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
+  generateVideo: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>;
+  generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
+  transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
 }
 
 export interface ThoughtSupportingPart extends Part {

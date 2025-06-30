@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, FilePlus2, Wand2 } from 'lucide-react'; 
+import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, FilePlus2, Wand2, Lock } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations } from '../utils/appUtils';
 
@@ -19,6 +19,7 @@ interface HeaderProps {
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean; // New prop for canvas prompt status
   t: (key: keyof typeof translations) => string;
+  isKeyLocked: boolean;
 }
 
 const MOBILE_BREAKPOINT = 640; // Tailwind's sm breakpoint
@@ -39,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadCanvasPrompt,
   isCanvasPromptActive, // Destructure new prop
   t,
+  isKeyLocked,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
@@ -135,11 +137,13 @@ export const Header: React.FC<HeaderProps> = ({
                     <div ref={contentWrapperRef} className={`flex w-max items-center ${isModelNameOverflowing ? 'horizontal-scroll-marquee' : ''}`}>
                         <span ref={singleInstanceRef} className="flex items-center gap-1 whitespace-nowrap">
                             {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
+                            {isKeyLocked && <Lock size={10} className="mr-1 text-[var(--theme-text-link)]" title="API Key is locked for this session"/>}
                             <span>{displayModelName}</span>
                         </span>
                         {isModelNameOverflowing && (
                             <span className="flex items-center gap-1 whitespace-nowrap pl-4">
                                 {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
+                                {isKeyLocked && <Lock size={10} className="mr-1 text-[var(--theme-text-link)]" title="API Key is locked for this session"/>}
                                 <span>{displayModelName}</span>
                             </span>
                         )}

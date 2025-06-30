@@ -7,7 +7,6 @@ export const useChatState = () => {
     // Core state
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [chatSession, setChatSession] = useState<Chat | null>(null);
     const [currentChatSettings, setCurrentChatSettings] = useState<IndividualChatSettings>(DEFAULT_CHAT_SETTINGS);
     const [inputText, setInputText] = useState<string>('');
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -32,7 +31,6 @@ export const useChatState = () => {
     return {
         messages, setMessages,
         isLoading, setIsLoading,
-        chatSession, setChatSession,
         currentChatSettings, setCurrentChatSettings,
         inputText, setInputText,
         editingMessageId, setEditingMessageId,

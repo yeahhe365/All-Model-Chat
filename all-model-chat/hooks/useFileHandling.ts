@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
-import { UploadedFile } from '../types';
+import { AppSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface FileHandlingProps {
+    appSettings: AppSettings;
     selectedFiles: UploadedFile[];
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setAppFileError: Dispatch<SetStateAction<string | null>>;
@@ -13,6 +14,7 @@ interface FileHandlingProps {
 }
 
 export const useFileHandling = ({
+    appSettings,
     selectedFiles,
     setSelectedFiles,
     setAppFileError,
@@ -27,9 +29,27 @@ export const useFileHandling = ({
         setIsAppProcessingFile(anyFileProcessing);
     }, [selectedFiles, setIsAppProcessingFile]);
 
+    const getKeyForRequest = useCallback((): string | null => {
+        const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
+        if (!keysString) {
+            setAppFileError("API Key not configured.");
+            return null;
+        }
+        const availableKeys = keysString.split('\n').map(k => k.trim()).filter(Boolean);
+        if (availableKeys.length === 0) {
+            setAppFileError("No valid API keys found.");
+            return null;
+        }
+        return availableKeys[Math.floor(Math.random() * availableKeys.length)];
+    }, [appSettings.apiKey, appSettings.useCustomApiConfig, setAppFileError]);
+
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
         setAppFileError(null);
+        
+        const keyToUse = getKeyForRequest();
+        if (!keyToUse) return;
+
         const filesArray = Array.isArray(files) ? files : Array.from(files);
 
         const uploadPromises = filesArray.map(async (file) => {
@@ -58,7 +78,7 @@ export const useFileHandling = ({
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
             try {
-                const uploadedFileInfo = await geminiServiceInstance.uploadFile(file, mimeTypeForUpload, file.name, controller.signal);
+                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, mimeTypeForUpload, file.name, controller.signal);
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
                 if (uploadError instanceof Error && uploadError.name === 'SilentError') {
@@ -75,7 +95,7 @@ export const useFileHandling = ({
             }
         });
         await Promise.allSettled(uploadPromises);
-    }, [setSelectedFiles, setAppFileError]);
+    }, [setSelectedFiles, setAppFileError, getKeyForRequest]);
 
     const handleCancelFileUpload = useCallback((fileIdToCancel: string) => {
         setSelectedFiles(prevFiles =>
@@ -94,11 +114,14 @@ export const useFileHandling = ({
         if (!fileApiId || !fileApiId.startsWith('files/')) { setAppFileError('Invalid File ID format.'); return; }
         if (selectedFiles.some(f => f.fileApiName === fileApiId)) { setAppFileError(`File with ID ${fileApiId} is already added.`); return; }
 
+        const keyToUse = getKeyForRequest();
+        if (!keyToUse) return;
+
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
 
         try {
-            const fileMetadata = await geminiServiceInstance.getFileMetadata(fileApiId);
+            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
             if (fileMetadata) {
                 if (!ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType)) {
                     setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${fileMetadata.mimeType}`, uploadState: 'failed' } : f));
@@ -119,7 +142,7 @@ export const useFileHandling = ({
             setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
             setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error`, uploadState: 'failed' } : f));
         }
-    }, [selectedFiles, setSelectedFiles, setAppFileError]);
+    }, [selectedFiles, setSelectedFiles, setAppFileError, getKeyForRequest]);
 
     // Drag and Drop handlers
     const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);

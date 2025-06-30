@@ -78,7 +78,8 @@ const App: React.FC = () => {
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
-    setCurrentChatSettings({
+    setCurrentChatSettings(prev => ({ // Preserve locked key when changing other settings
+        ...prev,
         modelId: newSettings.modelId,
         temperature: newSettings.temperature,
         topP: newSettings.topP,
@@ -86,7 +87,7 @@ const App: React.FC = () => {
         systemInstruction: newSettings.systemInstruction,
         ttsVoice: newSettings.ttsVoice,
         thinkingBudget: newSettings.thinkingBudget,
-    });
+    }));
     setIsSettingsModalOpen(false);
   };
   
@@ -244,6 +245,7 @@ const App: React.FC = () => {
           onLoadCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
           isCanvasPromptActive={isCanvasPromptActive}
           t={t}
+          isKeyLocked={!!currentChatSettings.lockedApiKey}
         />
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
@@ -288,6 +290,7 @@ const App: React.FC = () => {
           language={language}
         />
         <ChatInput
+          appSettings={appSettings}
           inputText={inputText}
           setInputText={setInputText}
           selectedFiles={selectedFiles}

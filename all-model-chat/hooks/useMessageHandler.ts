@@ -10,8 +10,8 @@ interface MessageHandlerProps {
     setMessages: (updater: (prev: ChatMessage[]) => ChatMessage[]) => void;
     isLoading: boolean;
     setIsLoading: (loading: boolean) => void;
-    chatSession: Chat | null;
     currentChatSettings: IndividualChatSettings;
+    setCurrentChatSettings: (updater: (prev: IndividualChatSettings) => IndividualChatSettings) => void;
     inputText: string;
     setInputText: (text: string) => void;
     selectedFiles: UploadedFile[];
@@ -24,7 +24,6 @@ interface MessageHandlerProps {
     userScrolledUp: React.MutableRefObject<boolean>;
     ttsMessageId: string | null;
     setTtsMessageId: (id: string | null) => void;
-    initializeCurrentChatSession: (settingsToUse: IndividualChatSettings, history?: ChatHistoryItem[]) => Promise<Chat | null>;
     saveCurrentChatSession: (currentMessages: ChatMessage[], currentActiveSessionId: string | null, currentSettingsToSave: IndividualChatSettings) => void;
     activeSessionId: string | null;
 }
@@ -35,8 +34,8 @@ export const useMessageHandler = ({
     setMessages,
     isLoading,
     setIsLoading,
-    chatSession,
     currentChatSettings,
+    setCurrentChatSettings,
     inputText,
     setInputText,
     selectedFiles,
@@ -49,10 +48,32 @@ export const useMessageHandler = ({
     userScrolledUp,
     ttsMessageId,
     setTtsMessageId,
-    initializeCurrentChatSession,
     saveCurrentChatSession,
     activeSessionId,
 }: MessageHandlerProps) => {
+
+    const getKeyForRequest = useCallback((isLockableAction: boolean): { key: string, shouldLock: boolean } | null => {
+        if (currentChatSettings.lockedApiKey) {
+            return { key: currentChatSettings.lockedApiKey, shouldLock: false };
+        }
+        
+        const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
+        if (!keysString) {
+            setAppFileError("API Key not configured.");
+            return null;
+        }
+        const availableKeys = keysString.split('\n').map(k => k.trim()).filter(Boolean);
+        if (availableKeys.length === 0) {
+            setAppFileError("No valid API keys found.");
+            return null;
+        }
+        
+        const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+        
+        return { key: randomKey, shouldLock: isLockableAction };
+
+    }, [appSettings.apiKey, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setAppFileError]);
+
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
         const textToUse = overrideOptions?.text ?? inputText;
@@ -69,6 +90,15 @@ export const useMessageHandler = ({
         setAppFileError(null);
 
         if (!activeModelId) { setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() }]); setIsLoading(false); return; }
+
+        const hasFileId = filesToUse.some(f => f.fileUri);
+        const keyInfo = getKeyForRequest(hasFileId);
+        if (!keyInfo) {
+             setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'API key not configured or available.', timestamp: new Date() }]);
+             return;
+        }
+        const { key: keyToUse, shouldLock: shouldLockKey } = keyInfo;
+
 
         setIsLoading(true);
         if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -90,7 +120,7 @@ export const useMessageHandler = ({
                 const duration = 8;
                 const generateAudio = false;
                 
-                const videoUris = await geminiServiceInstance.generateVideo(activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
+                const videoUris = await geminiServiceInstance.generateVideo(keyToUse, activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
 
                 if (currentSignal.aborted) { throw new Error("aborted"); }
 
@@ -139,7 +169,7 @@ export const useMessageHandler = ({
             setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
             
             try {
-                const base64Pcm = await geminiServiceInstance.generateSpeech(activeModelId, textToUse.trim(), currentChatSettings.ttsVoice, currentSignal);
+                const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), currentChatSettings.ttsVoice, currentSignal);
                 if (currentSignal.aborted) { throw new Error("aborted"); }
                 
                 const wavUrl = pcmBase64ToWavUrl(base64Pcm);
@@ -182,7 +212,7 @@ export const useMessageHandler = ({
             setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
             
             try {
-                const imageBase64Array = await geminiServiceInstance.generateImages(activeModelId, textToUse.trim(), aspectRatio, currentSignal);
+                const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, activeModelId, textToUse.trim(), aspectRatio, currentSignal);
 
                 if (currentSignal.aborted) { throw new Error("aborted"); }
 
@@ -237,42 +267,24 @@ export const useMessageHandler = ({
 
         // Create the new user message to be sent.
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
-        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date() };
         const promptParts = buildContentParts(textToUse.trim(), successfullyProcessedFiles);
 
         if (promptParts.length === 0) { setIsLoading(false); return; }
 
+        const historyForApi = createChatHistoryForApi(baseMessages);
+        const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
+
         // Clean up editing state after use.
         if (effectiveEditingId && !overrideOptions) setEditingMessageId(null);
 
-        // Re-initialize the chat session if necessary (e.g., history was sliced for editing).
-        let sdkSessionForThisTurn = chatSession;
-        if (editIndex !== -1 || !sdkSessionForThisTurn) {
-            const historyForApi = createChatHistoryForApi(baseMessages);
-            const newSdkSession = await initializeCurrentChatSession(currentChatSettings, historyForApi);
-            if (!newSdkSession) {
-                const errorMsg = appSettings.useCustomApiConfig && (!appSettings.apiKey || !appSettings.apiKey.trim())
-                    ? 'API key is not configured in settings. Please add a valid key to send messages.'
-                    : 'Chat session unavailable. Check API key and network.';
-                setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: errorMsg, timestamp: new Date() }]);
-                setIsLoading(false);
-                return;
-            }
-            sdkSessionForThisTurn = newSdkSession;
-        }
-
-        if (!sdkSessionForThisTurn) {
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'Chat session unavailable.', timestamp: new Date() }]);
-            setIsLoading(false);
-            return;
-        }
-
         // Update UI state with base messages, new user message, and a loading indicator for the model.
         const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
+        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date(), cumulativeTotalTokens: lastCumulative };
         const modelMessageId = generateUniqueId();
-        setMessages([
+        
+        setMessages(() => [
             ...baseMessages,
-            { ...userMessage, cumulativeTotalTokens: lastCumulative },
+            userMessage,
             { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }
         ]);
 
@@ -285,7 +297,7 @@ export const useMessageHandler = ({
             const prevTotal = prevUserMsg?.cumulativeTotalTokens || 0;
             const turnTokens = usageMeta?.totalTokenCount || 0;
             const promptTokens = usageMeta?.promptTokenCount;
-            const completionTokens = usageMeta?.candidatesTokenCount;
+            const completionTokens = (promptTokens !== undefined) ? turnTokens - promptTokens : undefined;
         
             const updatedMessages = [...prevMsgs];
             updatedMessages[loadingMsgIndex] = {
@@ -308,39 +320,73 @@ export const useMessageHandler = ({
         
             return updatedMessages;
         };
+        
+        const handleCompletion = (finalMessages: ChatMessage[]) => {
+            let finalSettings = currentChatSettings;
+            if (shouldLockKey) {
+                const newSettings = { ...currentChatSettings, lockedApiKey: keyToUse };
+                setCurrentChatSettings(() => newSettings); // Update state for next render
+                finalSettings = newSettings; // Use for saving immediately
+            }
+            saveCurrentChatSession(finalMessages, activeSessionId, finalSettings);
+            setIsLoading(false);
+            if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+        }
+
+        const chatSettings = {
+            systemInstruction: currentChatSettings.systemInstruction,
+            config: { temperature: currentChatSettings.temperature, topP: currentChatSettings.topP },
+            showThoughts: currentChatSettings.showThoughts,
+            thinkingBudget: currentChatSettings.thinkingBudget,
+        };
 
         if (appSettings.isStreamingEnabled) {
-            await geminiServiceInstance.sendMessageStream(sdkSessionForThisTurn, activeModelId, promptParts, currentSignal,
+            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
                 (chunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)),
                 (thoughtChunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)),
-                (error) => { setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; },
+                (error) => { 
+                    if (error instanceof Error && error.name === 'SilentError') {
+                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
+                    } else {
+                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); 
+                    }
+                    setIsLoading(false); 
+                    if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; 
+                },
                 (usageMetadata) => {
                     setMessages(prev => {
                         const loadingMsg = prev.find(m => m.id === modelMessageId);
                         const finalMsgs = processModelMessageCompletion(prev, modelMessageId, loadingMsg?.content || "", loadingMsg?.thoughts, usageMetadata, currentSignal.aborted);
-                        saveCurrentChatSession(finalMsgs, activeSessionId, currentChatSettings);
+                        handleCompletion(finalMsgs);
                         return finalMsgs;
                     });
-                    setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
                 }
             );
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(sdkSessionForThisTurn, activeModelId, promptParts, currentSignal,
-                (error) => { setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; },
+            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
+                (error) => { 
+                    if (error instanceof Error && error.name === 'SilentError') {
+                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
+                    } else {
+                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); 
+                    }
+                    setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; },
                 (fullText, thoughtsText, usageMetadata) => {
                     setMessages(prev => {
                         const finalMsgs = processModelMessageCompletion(prev, modelMessageId, fullText, thoughtsText, usageMetadata, currentSignal.aborted);
-                        saveCurrentChatSession(finalMsgs, activeSessionId, currentChatSettings);
+                        handleCompletion(finalMsgs);
                         return finalMsgs;
                     });
-                    setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
                 }
             );
         }
-    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, chatSession, appSettings.isStreamingEnabled, initializeCurrentChatSession, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef ]);
+    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, getKeyForRequest, setCurrentChatSettings ]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; // Prevent multiple TTS requests at once
+
+        const keyInfo = getKeyForRequest(false); // TTS does not lock a key
+        if (!keyInfo) return;
 
         setTtsMessageId(messageId);
         // User requested Gemini 2.5 Flash TTS
@@ -349,7 +395,7 @@ export const useMessageHandler = ({
         const abortController = new AbortController();
 
         try {
-            const base64Pcm = await geminiServiceInstance.generateSpeech(modelId, text, voice, abortController.signal);
+            const base64Pcm = await geminiServiceInstance.generateSpeech(keyInfo.key, modelId, text, voice, abortController.signal);
             const wavUrl = pcmBase64ToWavUrl(base64Pcm);
             
             setMessages(prev => prev.map(msg => 
@@ -364,7 +410,7 @@ export const useMessageHandler = ({
         } finally {
             setTtsMessageId(null);
         }
-    }, [appSettings.ttsVoice, setMessages, setTtsMessageId, ttsMessageId]);
+    }, [appSettings.ttsVoice, setMessages, setTtsMessageId, ttsMessageId, getKeyForRequest]);
 
     const handleStopGenerating = () => {
         if (abortControllerRef.current) {

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'reac
 import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
-import { Chat } from '@google/genai';
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -13,7 +12,6 @@ interface ChatHistoryProps {
     setInputText: Dispatch<SetStateAction<string>>;
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
-    setChatSession: Dispatch<SetStateAction<Chat | null>>;
     isLoading: boolean;
     abortControllerRef: React.MutableRefObject<AbortController | null>;
     sessionSaveTimeoutRef: React.MutableRefObject<number | null>;
@@ -29,7 +27,6 @@ export const useChatHistory = ({
     setInputText,
     setSelectedFiles,
     setEditingMessageId,
-    setChatSession,
     isLoading,
     abortControllerRef,
     sessionSaveTimeoutRef,
@@ -124,6 +121,7 @@ export const useChatHistory = ({
             systemInstruction: appSettings.systemInstruction,
             ttsVoice: appSettings.ttsVoice,
             thinkingBudget: appSettings.thinkingBudget,
+            lockedApiKey: null,
         };
         setCurrentChatSettings(newChatSessionSettings);
 
@@ -132,12 +130,11 @@ export const useChatHistory = ({
         setInputText('');
         setSelectedFiles([]);
         setEditingMessageId(null);
-        setChatSession(null); 
         userScrolledUp.current = false;
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setInputText, setSelectedFiles, setEditingMessageId, setChatSession, userScrolledUp]);
+    }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setInputText, setSelectedFiles, setEditingMessageId, userScrolledUp]);
     
     const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
         const sessionsToSearch = allSessions || savedSessions;
@@ -152,7 +149,10 @@ export const useChatHistory = ({
                 generationEndTime: m.generationEndTime ? new Date(m.generationEndTime) : undefined,
                 cumulativeTotalTokens: m.cumulativeTotalTokens,
             })));
-            setCurrentChatSettings(sessionToLoad.settings);
+            setCurrentChatSettings({
+                ...sessionToLoad.settings,
+                lockedApiKey: sessionToLoad.settings.lockedApiKey || null,
+            });
             setActiveSessionId(sessionToLoad.id);
             localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionToLoad.id);
             setInputText('');

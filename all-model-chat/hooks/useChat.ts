@@ -17,8 +17,7 @@ export const useChat = (appSettings: AppSettings) => {
         messages, setMessages,
         isLoading,
         currentChatSettings, setCurrentChatSettings,
-        setChatSession,
-        setIsSwitchingModel,
+        isSwitchingModel, setIsSwitchingModel,
         userScrolledUp,
         messagesEndRef,
         scrollContainerRef,
@@ -27,57 +26,12 @@ export const useChat = (appSettings: AppSettings) => {
     // 2. Model fetching via custom hook
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
     
-    const initializeCurrentChatSession = useCallback(async (settingsToUse: IndividualChatSettings, history?: ChatHistoryItem[]) => {
-        if (!settingsToUse.modelId) {
-            const errorContent = 'No model selected. Cannot initialize chat.';
-            setMessages(prev => {
-                if (prev.length > 0 && prev[prev.length - 1].content === errorContent) return prev;
-                return [...prev, { id: generateUniqueId(), role: 'error', content: errorContent, timestamp: new Date() }];
-            });
-            return null;
-        }
-        try {
-            const newSession = await geminiServiceInstance.initializeChat(
-                settingsToUse.modelId, settingsToUse.systemInstruction,
-                { temperature: settingsToUse.temperature, topP: settingsToUse.topP },
-                settingsToUse.showThoughts,
-                settingsToUse.thinkingBudget,
-                history
-            );
-            setChatSession(newSession);
-            if (!newSession) {
-                const errorContent = 'Failed to initialize chat session. Check API Key, network, and selected model.';
-                setMessages(prev => {
-                    if (prev.length > 0 && prev[prev.length - 1].content === errorContent) return prev;
-                    return [...prev, { id: generateUniqueId(), role: 'error', content: errorContent, timestamp: new Date() }];
-                });
-            }
-            return newSession;
-        } catch (error) {
-            if (error instanceof Error && error.name === 'SilentError') {
-                setChatSession(null);
-                return null;
-            }
-            console.error("Error initializing chat session:", error);
-            const errorMsg = error instanceof Error ? error.message : String(error);
-            const fullErrorContent = `Error initializing chat: ${errorMsg}`;
-            setMessages(prev => {
-                if (prev.length > 0 && prev[prev.length - 1].content === fullErrorContent) {
-                    return prev;
-                }
-                return [...prev, { id: generateUniqueId(), role: 'error', content: fullErrorContent, timestamp: new Date() }];
-            });
-            setChatSession(null);
-            return null;
-        }
-    }, [setMessages, setChatSession]);
-
     // 3. History and Session Management
     const historyHandler = useChatHistory({ ...state, appSettings });
     const { activeSessionId, savedSessions } = historyHandler;
 
     // 4. File and Drag & Drop Management
-    const fileHandler = useFileHandling({ ...state });
+    const fileHandler = useFileHandling({ ...state, appSettings });
 
     // 5. Preloaded Scenario Management
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, setMessages });
@@ -87,14 +41,13 @@ export const useChat = (appSettings: AppSettings) => {
         ...state,
         ...historyHandler,
         appSettings,
-        initializeCurrentChatSession,
         activeSessionId
     });
 
     // Scrolling logic
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, []);
+    }, [messagesEndRef]);
 
     const handleScroll = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -118,30 +71,6 @@ export const useChat = (appSettings: AppSettings) => {
         }
     }, [isModelsLoading, apiModels, appSettings.modelId, setCurrentChatSettings]);
     
-    // Chat session re-initialization
-    useEffect(() => {
-        const reinitializeIfNeeded = async () => {
-            const modelId = currentChatSettings.modelId;
-            const isTtsModel = modelId?.includes('-tts');
-            const isImagenModel = modelId?.includes('imagen');
-            const isVeoModel = modelId?.includes('veo-');
-
-            if (!modelId || isTtsModel || isImagenModel || isVeoModel) {
-                setChatSession(null); // No chat session for these models
-                setIsSwitchingModel(false);
-                return;
-            }
-
-            if (!activeSessionId && messages.length === 0) {
-                await initializeCurrentChatSession(currentChatSettings, []);
-            } else {
-                await initializeCurrentChatSession(currentChatSettings, createChatHistoryForApi(messages));
-            }
-            setIsSwitchingModel(false);
-        };
-        reinitializeIfNeeded();
-    }, [activeSessionId, currentChatSettings.modelId, currentChatSettings.systemInstruction, currentChatSettings.temperature, currentChatSettings.topP, currentChatSettings.showThoughts, currentChatSettings.thinkingBudget, messages, setChatSession, setIsSwitchingModel, initializeCurrentChatSession, currentChatSettings]);
-
     // UI Action Handlers
     const handleSelectModelInHeader = useCallback((modelId: string) => {
         if (isLoading && state.abortControllerRef.current) state.abortControllerRef.current.abort();
@@ -151,6 +80,13 @@ export const useChat = (appSettings: AppSettings) => {
         }
         userScrolledUp.current = false;
     }, [isLoading, currentChatSettings.modelId, setIsSwitchingModel, setCurrentChatSettings, userScrolledUp, state.abortControllerRef]);
+
+    useEffect(() => {
+        if (isSwitchingModel) {
+            const timer = setTimeout(() => setIsSwitchingModel(false), 500); // 500ms for better UX
+            return () => clearTimeout(timer);
+        }
+    }, [isSwitchingModel, setIsSwitchingModel]);
     
     const handleClearCurrentChat = useCallback(() => {
         if (isLoading && state.abortControllerRef.current) {
