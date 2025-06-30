@@ -1,3 +1,4 @@
+
 import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai";
 import { ThemeColors } from './constants/themeConstants'; 
 import { translations } from "./utils/appUtils";
@@ -99,6 +100,7 @@ export interface AppSettings extends ChatSettings {
 
 
 export interface GeminiService {
+  updateSettings: (newSettings: AppSettings) => void;
   getAvailableModels: (apiKeyString: string | null) => Promise<ModelOption[]>;
   uploadFile: (apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>;
   getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;

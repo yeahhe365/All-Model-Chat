@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, PreloadedMessage, SavedScenario } from './types';
@@ -13,6 +14,7 @@ import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { getTranslator } from './utils/appUtils';
+import { geminiServiceInstance } from './services/geminiService';
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
@@ -78,6 +80,7 @@ const App: React.FC = () => {
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
+    geminiServiceInstance.updateSettings(newSettings);
     setAppSettings(newSettings);
     setCurrentChatSettings(prev => ({ // Preserve locked key when changing other settings
         ...prev,

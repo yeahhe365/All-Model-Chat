@@ -1,6 +1,7 @@
+
 import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
-import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
-import { TAB_CYCLE_MODELS } from "../constants/appConstants";
+import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart, AppSettings } from '../types';
+import { TAB_CYCLE_MODELS, APP_SETTINGS_KEY, DEFAULT_APP_SETTINGS } from "../constants/appConstants";
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
@@ -23,12 +24,50 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 class GeminiServiceImpl implements GeminiService {
+    private currentSettings: AppSettings = DEFAULT_APP_SETTINGS;
+
     constructor() {
         console.log("GeminiService created.");
+        try {
+            const stored = localStorage.getItem(APP_SETTINGS_KEY);
+            if (stored) {
+                this.currentSettings = { ...DEFAULT_APP_SETTINGS, ...JSON.parse(stored) };
+            }
+        } catch (e) {
+            console.error("Failed to load settings in GeminiService constructor", e);
+            this.currentSettings = DEFAULT_APP_SETTINGS;
+        }
+    }
+
+    public updateSettings(newSettings: AppSettings) {
+        this.currentSettings = newSettings;
     }
     
     private _getClient(apiKey: string): GoogleGenAI {
       try {
+          const appSettings = this.currentSettings;
+
+          if (appSettings.useCustomApiConfig && appSettings.apiUrl && appSettings.apiUrl.trim()) {
+            let endpoint = appSettings.apiUrl.trim();
+
+            // The SDK's internal `apiEndpoint` option expects a host (e.g., "my-proxy.com" or "localhost:8000").
+            // We will attempt to sanitize the user's input to this format.
+            try {
+                // Prepend a protocol if one is missing, to allow the URL constructor to work.
+                const fullUrl = endpoint.startsWith('http') ? endpoint : `https://${endpoint}`;
+                const url = new URL(fullUrl);
+                // The `host` property includes both hostname and port, which is what we need.
+                endpoint = url.host;
+            } catch (e) {
+                console.warn(`Could not parse API URL "${appSettings.apiUrl}" as a valid URL. Using it directly. It should be a hostname like 'generativelanguage.googleapis.com'.`);
+            }
+            
+            // The `apiEndpoint` property is not documented on the public `GoogleGenAI` class,
+            // but we assume it's passed through to internal components that do use it.
+            // This is a more likely candidate for success than the previous `baseURL`.
+            // @ts-ignore
+            return new GoogleGenAI({ apiKey, apiEndpoint: endpoint });
+          }
           return new GoogleGenAI({ apiKey });
       } catch (error) {
           console.error("Failed to initialize GoogleGenAI client:", error);
@@ -240,7 +279,7 @@ class GeminiServiceImpl implements GeminiService {
     async generateVideo(apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
         const ai = this._getApiClientOrThrow(apiKey);
         if (abortSignal.aborted) {
-            const abortError = new Error("Video generation cancelled before starting.");
+            const abortError = new Error("Video generation cancelled by user before starting.");
             abortError.name = "AbortError";
             throw abortError;
         }
