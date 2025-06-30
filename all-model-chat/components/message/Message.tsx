@@ -170,7 +170,7 @@ const ErrorMsgIcon: React.FC = () => <AlertTriangle size={window.innerWidth < 64
 
 interface MessageProps {
     message: ChatMessage;
-    messages: ChatMessage[];
+    prevMessage?: ChatMessage;
     messageIndex: number;
     onEditMessage: (messageId: string) => void;
     onDeleteMessage: (messageId: string) => void;
@@ -185,15 +185,14 @@ interface MessageProps {
     t: (key: keyof typeof translations) => string;
 }
 
-export const Message: React.FC<MessageProps> = (props) => {
-    const { message, messages, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t, onTextToSpeech, ttsMessageId } = props;
+export const Message: React.FC<MessageProps> = React.memo((props) => {
+    const { message, prevMessage, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t, onTextToSpeech, ttsMessageId } = props;
     
-    const prevMsg = messages[messageIndex - 1];
-    const isGrouped = prevMsg &&
-        prevMsg.role === message.role &&
-        !prevMsg.isLoading &&
+    const isGrouped = prevMessage &&
+        prevMessage.role === message.role &&
+        !prevMessage.isLoading &&
         !message.isLoading &&
-        (new Date(message.timestamp).getTime() - new Date(prevMsg.timestamp).getTime() < 5 * 60 * 1000);
+        (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000);
 
     const actionIconSize = window.innerWidth < 640 ? 14 : 16;
     const canRetryMessage = (message.role === 'model' || (message.role === 'error' && message.generationStartTime)) && !message.isLoading;
@@ -248,9 +247,16 @@ export const Message: React.FC<MessageProps> = (props) => {
         >
             {message.role !== 'user' && iconAndActions}
             <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
-                <MessageContent {...props} />
+                <MessageContent
+                    message={message}
+                    onImageClick={onImageClick}
+                    onOpenHtmlPreview={onOpenHtmlPreview}
+                    showThoughts={showThoughts}
+                    baseFontSize={baseFontSize}
+                    t={t}
+                />
             </div>
             {message.role === 'user' && iconAndActions}
         </div>
     );
-};
+});

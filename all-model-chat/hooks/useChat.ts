@@ -85,7 +85,7 @@ export const useChat = (appSettings: AppSettings) => {
 
     useEffect(() => {
         if (isSwitchingModel) {
-            const timer = setTimeout(() => setIsSwitchingModel(false), 500); // 500ms for better UX
+            const timer = setTimeout(() => setIsSwitchingModel(false), 0);
             return () => clearTimeout(timer);
         }
     }, [isSwitchingModel, setIsSwitchingModel]);

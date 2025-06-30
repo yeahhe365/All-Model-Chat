@@ -189,13 +189,13 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
   
-  const handleImageClick = (file: UploadedFile) => {
+  const handleImageClick = useCallback((file: UploadedFile) => {
     setZoomedFile(file);
-  };
+  }, []);
 
-  const closeImageZoomModal = () => {
+  const closeImageZoomModal = useCallback(() => {
     setZoomedFile(null);
-  };
+  }, []);
 
   const handleOpenHtmlPreview = useCallback((
       htmlContent: string, 
@@ -235,7 +235,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           <Message
             key={msg.id}
             message={msg}
-            messages={messages}
+            prevMessage={index > 0 ? messages[index - 1] : undefined}
             messageIndex={index}
             onEditMessage={onEditMessage}
             onDeleteMessage={onDeleteMessage}

@@ -57,7 +57,7 @@ interface MessageContentProps {
     t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = ({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc } = message;
     const [isThoughtsExpanded, setThoughtsExpanded] = useState(false);
     
@@ -124,4 +124,4 @@ export const MessageContent: React.FC<MessageContentProps> = ({ message, onImage
             )}
         </>
     );
-};
+});

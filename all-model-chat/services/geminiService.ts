@@ -93,9 +93,10 @@ class GeminiServiceImpl implements GeminiService {
         }
 
         try {
-            const uploadConfig: UploadFileConfig = { mimeType, displayName };
-            // Note: The SDK's uploadFile doesn't directly take a signal for the HTTP request itself.
-            // Cancellation here primarily affects the polling loop.
+            // The browser's fetch API requires header values to be ISO-8859-1 compatible.
+            // By encoding the displayName, we prevent errors with filenames containing non-Latin characters.
+            const uploadConfig: UploadFileConfig = { mimeType, displayName: encodeURIComponent(displayName) };
+            
             let uploadedFile = await ai.files.upload({
                 file: file,
                 config: uploadConfig,
