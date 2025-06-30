@@ -248,7 +248,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
 
           const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
-          const transcribedText = await geminiServiceInstance.transcribeAudio(keyToUse, audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
+          const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
+          const transcribedText = await geminiServiceInstance.transcribeAudio(
+            keyToUse,
+            apiUrlToUse,
+            audioFile,
+            modelToUse,
+            isTranscriptionThinkingEnabled ?? false,
+          );
           const textarea = textareaRef.current;
           if (textarea) {
             const start = textarea.selectionStart;
