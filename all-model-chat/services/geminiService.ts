@@ -30,7 +30,9 @@ class GeminiServiceImpl implements GeminiService {
     private _getClient(apiKey: string, apiUrl?: string | null): GoogleGenAI {
       try {
           const clientOptions: { apiKey: string, baseURL?: string } = { apiKey };
-          if (apiUrl) {
+          // If apiUrl is explicitly provided (even as an empty string for same-origin proxies), use it.
+          // If it's null or undefined, don't set baseURL, letting the SDK use its default.
+          if (apiUrl != null) {
             clientOptions.baseURL = apiUrl;
           }
           return new GoogleGenAI(clientOptions);
