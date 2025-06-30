@@ -44,6 +44,7 @@ export const translations = {
     attachMenu_addById: { en: 'Add by File ID', zh: '通过文件 ID 添加' },
     attachMenu_createText: { en: 'Create Text File', zh: '创建文本文件' },
     voiceInput_stop_aria: { en: 'Stop recording', zh: '停止录音' },
+    cancelRecording_aria: { en: 'Cancel recording', zh: '取消录音' },
     voiceInput_transcribing_aria: { en: 'Transcribing...', zh: '转录中...' },
     voiceInput_start_aria: { en: 'Start voice input', zh: '开始语音输入' },
     stopGenerating_aria: { en: 'Stop generating response', zh: '停止生成回应' },

@@ -33,9 +33,10 @@ export const useFileHandling = ({
         setIsAppProcessingFile(anyFileProcessing);
     }, [selectedFiles, setIsAppProcessingFile]);
 
-    const getKeyAndLockForFileUpload = useCallback((): string | null => {
+    const getKeyAndLockForFileUpload = useCallback((): { key: string; apiUrl: string | null } | null => {
         if (currentChatSettings.lockedApiKey) {
-            return currentChatSettings.lockedApiKey;
+            const apiUrl = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
+            return { key: currentChatSettings.lockedApiKey, apiUrl };
         }
 
         const keysString = appSettings.useCustomApiConfig ? appSettings.apiKey : process.env.API_KEY;
@@ -50,6 +51,7 @@ export const useFileHandling = ({
         }
         
         const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+        const apiUrl = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
         
         // Immediately lock this key for the session since a file is being uploaded.
         setCurrentChatSettings(prev => ({
@@ -57,16 +59,16 @@ export const useFileHandling = ({
             lockedApiKey: keyToUse,
         }));
 
-        return keyToUse;
-    }, [appSettings.apiKey, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setCurrentChatSettings, setAppFileError]);
+        return { key: keyToUse, apiUrl };
+    }, [appSettings.apiKey, appSettings.apiUrl, appSettings.useCustomApiConfig, currentChatSettings.lockedApiKey, setCurrentChatSettings, setAppFileError]);
 
 
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
         setAppFileError(null);
         
-        const keyToUse = getKeyAndLockForFileUpload();
-        if (!keyToUse) return;
+        const keyInfo = getKeyAndLockForFileUpload();
+        if (!keyInfo) return;
 
         const filesArray = Array.isArray(files) ? files : Array.from(files);
 
@@ -96,7 +98,7 @@ export const useFileHandling = ({
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
             try {
-                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, mimeTypeForUpload, file.name, controller.signal);
+                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyInfo.key, keyInfo.apiUrl, file, mimeTypeForUpload, file.name, controller.signal);
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
                 if (uploadError instanceof Error && uploadError.name === 'SilentError') {
@@ -132,14 +134,14 @@ export const useFileHandling = ({
         if (!fileApiId || !fileApiId.startsWith('files/')) { setAppFileError('Invalid File ID format.'); return; }
         if (selectedFiles.some(f => f.fileApiName === fileApiId)) { setAppFileError(`File with ID ${fileApiId} is already added.`); return; }
 
-        const keyToUse = getKeyAndLockForFileUpload();
-        if (!keyToUse) return;
+        const keyInfo = getKeyAndLockForFileUpload();
+        if (!keyInfo) return;
 
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
 
         try {
-            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
+            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyInfo.key, keyInfo.apiUrl, fileApiId);
             if (fileMetadata) {
                 if (!ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType)) {
                     setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${fileMetadata.mimeType}`, uploadState: 'failed' } : f));

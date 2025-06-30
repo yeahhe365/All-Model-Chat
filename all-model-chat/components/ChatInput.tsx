@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2 } from 'lucide-react';
+import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 import { translations } from '../utils/appUtils';
@@ -63,6 +63,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingCancelledRef = useRef(false);
 
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
@@ -203,12 +204,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setIsAttachMenuOpen(false);
   };
 
-  const handleToggleRecording = useCallback(async () => {
-    if (isRecording) {
-      mediaRecorderRef.current?.stop();
-      setIsRecording(false);
-      return;
-    }
+    const handleStartRecording = useCallback(async () => {
+    if (isRecording) return;
+    recordingCancelledRef.current = false;
 
     setTranscriptionError(null);
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -216,23 +214,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       return;
     }
 
-    // Optimistically update UI to 'recording' state to provide instant feedback
     setIsRecording(true);
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // If we got the stream, we are good to proceed.
-      // The UI is already showing the recording state.
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       const audioChunks: Blob[] = [];
 
       mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
       mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+
+        if (recordingCancelledRef.current) {
+            return; 
+        }
+
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
+        
         setIsTranscribing(true);
         setTranscriptionError(null);
         try {
@@ -245,9 +246,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             throw new Error("No valid API keys found.");
           }
           const keyToUse = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+          const apiUrlToUse = appSettings.useCustomApiConfig ? appSettings.apiUrl : null;
 
           const modelToUse = transcriptionModelId || 'gemini-2.5-flash';
-          const transcribedText = await geminiServiceInstance.transcribeAudio(keyToUse, audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
+          const transcribedText = await geminiServiceInstance.transcribeAudio(keyToUse, apiUrlToUse, audioFile, modelToUse, isTranscriptionThinkingEnabled ?? false);
           const textarea = textareaRef.current;
           if (textarea) {
             const start = textarea.selectionStart;
@@ -256,8 +258,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             const newText = currentText.substring(0, start) + transcribedText + currentText.substring(end);
             setInputText(newText);
             
-            // Use requestAnimationFrame to defer the cursor update until after the next paint,
-            // ensuring the DOM has been updated by React.
             requestAnimationFrame(() => {
               if (textareaRef.current) {
                 const newCursorPos = start + transcribedText.length;
@@ -266,7 +266,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               }
             });
           } else {
-            // Fallback behavior if textarea ref is not available
             setInputText((inputText ? inputText.trim() + ' ' : '') + transcribedText);
             textareaRef.current?.focus();
           }
@@ -282,10 +281,25 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     } catch (err) {
       console.error("Error starting recording:", err);
       setTranscriptionError("Could not access microphone. Please grant permission.");
-      // Revert the optimistic UI update if permission is denied or another error occurs.
       setIsRecording(false);
     }
   }, [isRecording, setInputText, transcriptionModelId, isTranscriptionThinkingEnabled, inputText, appSettings]);
+
+  const handleStopRecording = useCallback(() => {
+    if (isRecording && mediaRecorderRef.current) {
+      recordingCancelledRef.current = false;
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
+
+  const handleCancelRecording = useCallback(() => {
+    if (isRecording && mediaRecorderRef.current) {
+      recordingCancelledRef.current = true;
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  }, [isRecording]);
 
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
   const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');
@@ -363,9 +377,43 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     />
 
                     <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-                         <button type="button" onClick={handleToggleRecording} disabled={isAddingById || isModalOpen || isTranscribing} className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] ${isRecording ? 'mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]' : ''}`} aria-label={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))} title={isRecording ? t('voiceInput_stop_aria') : (isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria'))}>
-                             {isTranscribing ? <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" /> : <Mic size={micIconSize} />}
-                         </button>
+                         {isRecording ? (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleCancelRecording}
+                                    className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                                    aria-label={t('cancelRecording_aria')}
+                                    title={t('cancelRecording_aria')}
+                                >
+                                    <X size={micIconSize} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleStopRecording}
+                                    className={`${buttonBaseClass} mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]`}
+                                    aria-label={t('voiceInput_stop_aria')}
+                                    title={t('voiceInput_stop_aria')}
+                                >
+                                    <Mic size={micIconSize} />
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleStartRecording}
+                                disabled={isAddingById || isModalOpen || isTranscribing}
+                                className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                                aria-label={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
+                                title={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
+                            >
+                                {isTranscribing ? (
+                                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
+                                ) : (
+                                    <Mic size={micIconSize} />
+                                )}
+                            </button>
+                        )}
                         
                         {isLoading ? ( 
                             <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Ban size={sendIconSize} /></button>

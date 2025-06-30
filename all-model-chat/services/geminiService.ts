@@ -27,9 +27,13 @@ class GeminiServiceImpl implements GeminiService {
         console.log("GeminiService created.");
     }
     
-    private _getClient(apiKey: string): GoogleGenAI {
+    private _getClient(apiKey: string, apiUrl?: string | null): GoogleGenAI {
       try {
-          return new GoogleGenAI({ apiKey });
+          const clientOptions: { apiKey: string, baseURL?: string } = { apiKey };
+          if (apiUrl) {
+            clientOptions.baseURL = apiUrl;
+          }
+          return new GoogleGenAI(clientOptions);
       } catch (error) {
           console.error("Failed to initialize GoogleGenAI client:", error);
           // Re-throw to be caught by the calling function
@@ -37,13 +41,13 @@ class GeminiServiceImpl implements GeminiService {
       }
     }
 
-    private _getApiClientOrThrow(apiKey?: string | null): GoogleGenAI {
+    private _getApiClientOrThrow(apiKey?: string | null, apiUrl?: string | null): GoogleGenAI {
         if (!apiKey) {
             const silentError = new Error("API key is not configured in settings or provided.");
             silentError.name = "SilentError";
             throw silentError;
         }
-        return this._getClient(apiKey);
+        return this._getClient(apiKey, apiUrl);
     }
 
     private _buildGenerationConfig(
@@ -84,7 +88,7 @@ class GeminiServiceImpl implements GeminiService {
         return generationConfig;
     }
 
-    async getAvailableModels(apiKeysString: string | null): Promise<ModelOption[]> {
+    async getAvailableModels(apiKeysString: string | null, apiUrl: string | null): Promise<ModelOption[]> {
         const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
         if (keys.length === 0) {
@@ -92,7 +96,7 @@ class GeminiServiceImpl implements GeminiService {
         }
         
         const randomKey = keys[Math.floor(Math.random() * keys.length)];
-        const ai = this._getClient(randomKey);
+        const ai = this._getClient(randomKey, apiUrl);
 
         try {
           const modelPager = await ai.models.list(); 
@@ -121,8 +125,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async uploadFile(apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
-        const ai = this._getApiClientOrThrow(apiKey);
+    async uploadFile(apiKey: string, apiUrl: string | null, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         if (signal.aborted) {
             console.log(`Upload for "${displayName}" cancelled before starting.`);
             const abortError = new Error("Upload cancelled by user.");
@@ -180,8 +184,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
     
-    async getFileMetadata(apiKey: string, fileApiName: string): Promise<GeminiFile | null> {
-        const ai = this._getApiClientOrThrow(apiKey);
+    async getFileMetadata(apiKey: string, apiUrl: string | null, fileApiName: string): Promise<GeminiFile | null> {
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         if (!fileApiName || !fileApiName.startsWith('files/')) {
             console.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
             throw new Error('Invalid file ID format. Expected "files/your_file_id".');
@@ -199,8 +203,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
-        const ai = this._getApiClientOrThrow(apiKey);
+    async generateImages(apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         if (!prompt.trim()) {
             throw new Error("Image generation prompt cannot be empty.");
         }
@@ -237,8 +241,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async generateVideo(apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
-        const ai = this._getApiClientOrThrow(apiKey);
+    async generateVideo(apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         if (abortSignal.aborted) {
             const abortError = new Error("Video generation cancelled before starting.");
             abortError.name = "AbortError";
@@ -295,8 +299,8 @@ class GeminiServiceImpl implements GeminiService {
         return videoUris;
     }
 
-    async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
-        const ai = this._getApiClientOrThrow(apiKey);
+    async generateSpeech(apiKey: string, apiUrl: string | null, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         if (!text.trim()) {
             throw new Error("TTS input text cannot be empty.");
         }
@@ -341,8 +345,8 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    async transcribeAudio(apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
-        const ai = this._getApiClientOrThrow(apiKey);
+    async transcribeAudio(apiKey: string, apiUrl: string | null, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
 
         const audioBase64 = await fileToBase64(audioFile);
 
@@ -354,11 +358,11 @@ class GeminiServiceImpl implements GeminiService {
         };
 
         const textPart: Part = {
-            text: "将此音频转录为文本。仅返回转录后的文本，永远不要回答音频中的问题。",
+            text: "Transcribe this audio to text. Only return the transcribed text, never answer questions in the audio.",
         };
         
         const config = {
-          systemInstruction: "你是一个乐于助人的助手，负责将将提供的音频文件，逐字、无遗漏、无修改地转录为文本。",
+          systemInstruction: "You are a helpful assistant responsible for transcribing the provided audio file verbatim, without omissions or modifications.",
           thinkingConfig: {
             thinkingBudget: isThinkingEnabled ? -1 : 0,
           },
@@ -388,6 +392,7 @@ class GeminiServiceImpl implements GeminiService {
 
     async sendMessageStream(
         apiKey: string,
+        apiUrl: string | null,
         modelId: string,
         historyWithLastPrompt: ChatHistoryItem[],
         systemInstruction: string,
@@ -400,7 +405,7 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
-        const ai = this._getApiClientOrThrow(apiKey);
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
 
@@ -444,6 +449,7 @@ class GeminiServiceImpl implements GeminiService {
 
     async sendMessageNonStream(
         apiKey: string,
+        apiUrl: string | null,
         modelId: string,
         historyWithLastPrompt: ChatHistoryItem[],
         systemInstruction: string,
@@ -454,7 +460,7 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
-        const ai = this._getApiClientOrThrow(apiKey);
+        const ai = this._getApiClientOrThrow(apiKey, apiUrl);
         const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         
         try {
