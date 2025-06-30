@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata, GoogleGenerativeAI as GoogleGenAIClient } from "@google/genai"; // <--- MODIFIED
+import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 
@@ -27,8 +27,7 @@ class GeminiServiceImpl implements GeminiService {
         console.log("GeminiService created.");
     }
     
-    // <--- MODIFIED METHOD
-    private _getClient(apiKey: string, apiUrl?: string | null): GoogleGenAIClient {
+    private _getClient(apiKey: string, apiUrl?: string | null): GoogleGenAI {
       try {
           const clientOptions: { apiKey: string; apiEndpoint?: string } = { apiKey };
           if (apiUrl && apiUrl.trim() !== '') {
@@ -47,8 +46,7 @@ class GeminiServiceImpl implements GeminiService {
       }
     }
 
-    // <--- MODIFIED METHOD
-    private _getApiClientOrThrow(apiKey?: string | null, apiUrl?: string | null): GoogleGenAIClient {
+    private _getApiClientOrThrow(apiKey?: string | null, apiUrl?: string | null): GoogleGenAI {
         if (!apiKey) {
             const silentError = new Error("API key is not configured in settings or provided.");
             silentError.name = "SilentError";
@@ -95,7 +93,6 @@ class GeminiServiceImpl implements GeminiService {
         return generationConfig;
     }
 
-    // <--- MODIFIED METHOD
     async getAvailableModels(apiKeysString: string | null, apiUrl: string | null): Promise<ModelOption[]> {
         const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
@@ -133,7 +130,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    // <--- MODIFIED METHOD
     async uploadFile(apiKey: string, apiUrl: string | null, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
         const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
         if (signal.aborted) {
@@ -193,7 +189,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
     
-    // <--- MODIFIED METHOD
     async getFileMetadata(apiKey: string, apiUrl: string | null, fileApiName: string): Promise<GeminiFile | null> {
         const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
         if (!fileApiName || !fileApiName.startsWith('files/')) {
@@ -213,7 +208,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    // <--- MODIFIED METHOD
     async generateImages(apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
         const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
         if (!prompt.trim()) {
@@ -252,7 +246,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    // <--- MODIFIED METHOD
     async generateVideo(apiKey: string, apiUrl: string | null, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
         const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
         if (abortSignal.aborted) {
@@ -311,7 +304,6 @@ class GeminiServiceImpl implements GeminiService {
         return videoUris;
     }
 
-    // <--- MODIFIED METHOD
     async generateSpeech(apiKey: string, apiUrl: string | null, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
         const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
         if (!text.trim()) {
@@ -358,7 +350,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    // <--- MODIFIED METHOD
     async transcribeAudio(apiKey: string, apiUrl: string | null, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
         const ai = this._getApiClientOrThrow(apiKey, apiUrl); // <-- Pass apiUrl
 
@@ -404,7 +395,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    // <--- MODIFIED METHOD
     async sendMessageStream(
         apiKey: string,
         apiUrl: string | null, // <-- ADDED
@@ -462,7 +452,6 @@ class GeminiServiceImpl implements GeminiService {
         }
     }
 
-    // <--- MODIFIED METHOD
     async sendMessageNonStream(
         apiKey: string,
         apiUrl: string | null, // <-- ADDED
