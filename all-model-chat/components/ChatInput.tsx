@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle } from 'lucide-react';
+import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getActiveApiConfig } from '../utils/appUtils';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 import { CreateTextFileEditor } from './chat/CreateTextFileEditor';
@@ -59,6 +59,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   transcriptionModelId, isTranscriptionThinkingEnabled,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
@@ -117,6 +118,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       await onProcessFiles(event.target.files);
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (imageInputRef.current) imageInputRef.current.value = "";
   };
   
   const handlePhotoCapture = async (file: File) => {
@@ -318,6 +320,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   
   const attachMenuItems = [
     { label: t('attachMenu_upload'), icon: <UploadCloud size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
+    { label: t('attachMenu_gallery'), icon: <Image size={16}/>, action: () => { imageInputRef.current?.click(); setIsAttachMenuOpen(false); } },
     { label: t('attachMenu_takePhoto'), icon: <Camera size={16}/>, action: () => openActionModal('camera') },
     { label: t('attachMenu_recordAudio'), icon: <Mic size={16}/>, action: () => openActionModal('recorder') },
     { label: t('attachMenu_addById'), icon: <Link2 size={16}/>, action: () => openActionModal('id') },
@@ -368,6 +371,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             </div>
                         )}
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                        <input type="file" ref={imageInputRef} onChange={handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
                     </div>
 
                     <textarea

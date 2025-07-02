@@ -39,6 +39,7 @@ export const translations = {
     attachMenu_title: { en: 'Attach file', zh: '附加文件' },
     attachMenu_aria: { en: 'Attach file menu', zh: '附加文件菜单' },
     attachMenu_upload: { en: 'Upload from Device', zh: '从设备上传' },
+    attachMenu_gallery: { en: 'Gallery', zh: '图库' },
     attachMenu_takePhoto: { en: 'Take Photo', zh: '拍照' },
     attachMenu_recordAudio: { en: 'Record Audio', zh: '录音' },
     attachMenu_addById: { en: 'Add by File ID', zh: '通过文件 ID 添加' },
