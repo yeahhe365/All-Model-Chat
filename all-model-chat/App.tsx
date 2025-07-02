@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings, PreloadedMessage, SavedScenario } from './types';
+import { AppSettings, PreloadedMessage, SavedScenario, UploadedFile } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
@@ -93,6 +93,31 @@ const App: React.FC = () => {
     setIsSettingsModalOpen(false);
   };
   
+  // Memory management for file previews
+  const prevSelectedFilesRef = useRef<UploadedFile[]>([]);
+  useEffect(() => {
+      const prevFiles = prevSelectedFilesRef.current;
+      const currentFiles = selectedFiles;
+
+      // Find files that were in the previous list but not in the current one
+      const removedFiles = prevFiles.filter(
+          prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id)
+      );
+
+      // Revoke their object URLs to free up memory
+      removedFiles.forEach(file => {
+          if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
+              URL.revokeObjectURL(file.dataUrl);
+          }
+      });
+
+      // Update the ref for the next render
+      prevSelectedFilesRef.current = currentFiles;
+  }, [selectedFiles]);
+
+  // Final cleanup on unmount
+  useEffect(() => () => { prevSelectedFilesRef.current.forEach(file => { if (file.dataUrl?.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl) }); }, []);
+
   const handleLoadCanvasHelperPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
     const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_ASSISTANT_SYSTEM_PROMPT;

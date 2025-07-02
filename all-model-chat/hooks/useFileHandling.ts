@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId, getActiveApiConfig } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
@@ -97,11 +97,14 @@ export const useFileHandling = ({
             const initialFileState: UploadedFile = { id: fileId, name: file.name, type: typeForState, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
             setSelectedFiles(prev => [...prev, initialFileState]);
 
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
-                const reader = new FileReader();
-                reader.onload = (e) => setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl: e.target?.result as string } : f));
-                reader.onerror = () => setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, error: "Failed to read file for preview." } : f));
-                reader.readAsDataURL(file);
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || SUPPORTED_VIDEO_MIME_TYPES.includes(file.type)) {
+                try {
+                    const objectUrl = URL.createObjectURL(file);
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl: objectUrl } : f));
+                } catch (error) {
+                    console.error("Error creating object URL", error);
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, error: "Failed to create preview." } : f));
+                }
             }
 
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
