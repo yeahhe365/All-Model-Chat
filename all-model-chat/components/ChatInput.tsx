@@ -120,9 +120,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (imageInputRef.current) imageInputRef.current.value = "";
   };
   
-  const handlePhotoCapture = async (file: File) => {
+  const handlePhotoCapture = (file: File) => {
     justInitiatedFileOpRef.current = true;
-    await onProcessFiles([file]);
+    onProcessFiles([file]);
     setShowCamera(false);
     textareaRef.current?.focus();
   };

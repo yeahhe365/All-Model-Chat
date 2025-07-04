@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Camera, X, Loader2 } from 'lucide-react';
 
 interface CameraCaptureProps {
-  onCapture: (file: File) => Promise<void>;
+  onCapture: (file: File) => void;
   onCancel: () => void;
 }
 
@@ -59,7 +59,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
     };
   }, []);
 
-  const handleCapture = useCallback(async () => {
+  const handleCapture = useCallback(() => {
     if (isCapturing || !videoRef.current || !canvasRef.current || !stream) return;
     setIsCapturing(true);
 
@@ -70,17 +70,19 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
     const context = canvas.getContext('2d');
     if (context) {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
-      
-      if (blob) {
-        const fileName = `photo-${new Date().toISOString().slice(0, 19)}.jpg`;
-        const file = new File([blob], fileName, { type: 'image/jpeg' });
-        await onCapture(file);
-      } else {
-        console.error("Failed to create blob from canvas.");
-        setIsCapturing(false);
-      }
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const fileName = `photo-${new Date().toISOString().slice(0, 19)}.jpg`;
+          const file = new File([blob], fileName, { type: 'image/jpeg' });
+          onCapture(file);
+        } else {
+          console.error("Failed to create blob from canvas.");
+          setError("Failed to create the image file.");
+          setIsCapturing(false);
+        }
+      }, 'image/jpeg', 0.9);
     } else {
+        setError("Could not get canvas context.");
         setIsCapturing(false);
     }
   }, [onCapture, stream, isCapturing]);
