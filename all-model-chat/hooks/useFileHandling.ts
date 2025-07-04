@@ -4,15 +4,6 @@ import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MI
 import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
-const readFileAsDataURL = (fileToRead: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(fileToRead);
-    });
-};
-
 interface FileHandlingProps {
     appSettings: AppSettings;
     selectedFiles: UploadedFile[];
@@ -86,10 +77,10 @@ export const useFileHandling = ({
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
                 try {
-                    const dataUrl = await readFileAsDataURL(file);
+                    const dataUrl = URL.createObjectURL(file);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
                 } catch (error) {
-                    console.error("Error reading file as Data URL", error);
+                    console.error("Error creating object URL for preview", error);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, error: "Failed to create preview." } : f));
                 }
             }

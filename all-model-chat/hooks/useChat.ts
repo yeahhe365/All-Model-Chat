@@ -1,5 +1,5 @@
-import { useEffect, useCallback } from 'react';
-import { AppSettings, ChatHistoryItem, ChatSettings as IndividualChatSettings, SavedScenario } from '../types';
+import { useEffect, useCallback, useRef } from 'react';
+import { AppSettings, ChatHistoryItem, ChatMessage, ChatSettings as IndividualChatSettings, SavedScenario } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
 import { createChatHistoryForApi, generateUniqueId } from '../utils/appUtils';
 import { APP_SETTINGS_KEY, PRELOADED_SCENARIO_KEY, CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
@@ -45,6 +45,37 @@ export const useChat = (appSettings: AppSettings) => {
         appSettings,
         activeSessionId
     });
+
+    // Memory management for file previews in messages (using blob URLs)
+    const messagesForCleanupRef = useRef<ChatMessage[]>([]);
+    useEffect(() => {
+        const prevFiles = messagesForCleanupRef.current.flatMap(m => m.files || []);
+        const currentFiles = messages.flatMap(m => m.files || []);
+
+        const removedFiles = prevFiles.filter(
+            prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id)
+        );
+
+        removedFiles.forEach(file => {
+            if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(file.dataUrl);
+            }
+        });
+
+        messagesForCleanupRef.current = messages;
+    }, [messages]);
+
+    // Final cleanup on component unmount
+    useEffect(() => {
+        return () => {
+            messagesForCleanupRef.current.flatMap(m => m.files || []).forEach(file => {
+                if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(file.dataUrl);
+                }
+            });
+        };
+    }, []); // Empty dependency array means this runs only on mount and its cleanup on unmount
+
 
     // Scrolling logic
     const scrollToBottom = useCallback(() => {
