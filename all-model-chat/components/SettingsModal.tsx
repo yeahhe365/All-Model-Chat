@@ -88,7 +88,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onClick={handleClose}
     >
       <div 
-        className={`bg-[var(--theme-bg-primary)] p-3 sm:p-4 md:p-5 rounded-lg shadow-premium w-full max-w-md sm:max-w-lg md:max-w-xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        className={`bg-[var(--theme-bg-primary)] p-3 sm:p-4 md:p-5 rounded-xl shadow-premium w-full max-w-md sm:max-w-lg md:max-w-xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4 flex-shrink-0">

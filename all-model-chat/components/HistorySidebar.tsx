@@ -96,7 +96,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
       <button
         onClick={onNewChat}
-        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] focus:outline-none transition-colors"
+        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/80"
         aria-label={t('headerNewChat_aria')}
       >
         <FilePlus2 size={newChatIconSize} />
@@ -114,7 +114,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 placeholder={t('history_search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[var(--theme-bg-primary)] border border-[var(--theme-border-primary)] rounded-md pl-8 pr-8 py-1.5 text-sm focus:ring-1 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)] transition-colors"
+                className="w-full bg-[var(--theme-bg-primary)] border border-[var(--theme-border-primary)] rounded-md pl-8 pr-8 py-1.5 text-sm focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)] transition-colors"
                 aria-label={t('history_search_aria')}
             />
             {searchQuery && (
@@ -140,10 +140,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
               <li key={session.id}>
                 <button
                   onClick={() => onSelectSession(session.id)}
-                  className={`w-full text-left px-2.5 py-2 text-xs group focus:outline-none transition-colors
+                  className={`w-full text-left px-2.5 py-2 text-xs group transition-colors focus:outline-none focus:ring-2 focus:ring-inset
                     ${session.id === activeSessionId 
-                      ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' 
-                      : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'
+                      ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] focus:ring-white/50' 
+                      : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] focus:ring-[var(--theme-border-focus)]'
                     }`
                   }
                   aria-current={session.id === activeSessionId ? "page" : undefined}
@@ -157,7 +157,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         e.stopPropagation(); // Prevent selecting the session
                         onDeleteSession(session.id);
                       }}
-                      className={`p-0.5 sm:p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity
+                      className={`p-0.5 sm:p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)]
                         ${session.id === activeSessionId ? 'hover:bg-white/20' : 'hover:bg-[var(--theme-bg-input)]'}
                       `}
                       aria-label={t('history_delete_aria').replace('{title}', session.title)}

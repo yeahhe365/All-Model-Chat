@@ -226,7 +226,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
         onClick={handleClose}
     >
       <div 
-        className={`bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-lg shadow-xl w-full max-w-md sm:max-w-2xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        className={`bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-xl shadow-premium w-full max-w-md sm:max-w-2xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
         onClick={(e) => e.stopPropagation()}
         style={{ transition: 'all 0.3s' }}
       >
@@ -319,7 +319,7 @@ const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave
         <div className="flex-grow flex flex-col min-h-0">
              {/* Title Editor */}
              <div className="mb-4">
-                <label htmlFor="scenario-title" className="text-xs font-medium text-[var(--theme-text-secondary)] mb-1 block">Scenario Title</label>
+                <label htmlFor="scenario-title" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1 block">Scenario Title</label>
                 <input
                     id="scenario-title"
                     type="text"

@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Mic, StopCircle, Check, X, Trash2, Loader2 } from 'lucide-react';
 
@@ -7,218 +8,243 @@ interface AudioRecorderProps {
 }
 
 export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel }) => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [volume, setVolume] = useState(0); // For visualization
-  const [isSaving, setIsSaving] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const timerIntervalRef = useRef<number | null>(null);
-  const audioUrlRef = useRef<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [isInitializing, setIsInitializing] = useState(true);
+    const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [volume, setVolume] = useState(0);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-  // Refs for audio analysis
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const animationFrameIdRef = useRef<number | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const timerIntervalRef = useRef<number | null>(null);
+    const audioUrlRef = useRef<string | null>(null);
+    const recordingCancelledRef = useRef(false);
 
-  const stopAudioAnalysis = useCallback(() => {
-    if (animationFrameIdRef.current) {
-      cancelAnimationFrame(animationFrameIdRef.current);
-      animationFrameIdRef.current = null;
-    }
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close();
-    }
-    sourceRef.current?.disconnect();
-    audioContextRef.current = null;
-    analyserRef.current = null;
-    sourceRef.current = null;
-    setVolume(0);
-  }, []);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const analyserRef = useRef<AnalyserNode | null>(null);
+    const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+    const animationFrameIdRef = useRef<number | null>(null);
 
-  const startRecording = useCallback(async () => {
-    setAudioBlob(null);
-    if(audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+    const stopAudioAnalysis = useCallback(() => {
+        if (animationFrameIdRef.current) {
+            cancelAnimationFrame(animationFrameIdRef.current);
+            animationFrameIdRef.current = null;
+        }
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            audioContextRef.current.close().catch(console.error);
+        }
+        sourceRef.current?.disconnect();
+        audioContextRef.current = null;
+        analyserRef.current = null;
+        sourceRef.current = null;
+        setVolume(0);
+    }, []);
 
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        
-        // --- Setup MediaRecorder for recording ---
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-        mediaRecorderRef.current = mediaRecorder;
+    const cleanupStream = useCallback((stream: MediaStream | null) => {
+        stream?.getTracks().forEach(track => track.stop());
+        stopAudioAnalysis();
+    }, [stopAudioAnalysis]);
 
-        mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) audioChunksRef.current.push(event.data);
-        };
+    const startRecording = useCallback(async () => {
+        setAudioBlob(null);
+        if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+        recordingCancelledRef.current = false;
 
-        mediaRecorder.onstop = () => {
-            const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-            setAudioBlob(blob);
-            audioUrlRef.current = URL.createObjectURL(blob);
-            stream.getTracks().forEach(track => track.stop());
-            stopAudioAnalysis(); // Stop analysis when recording stops
-        };
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+            mediaRecorderRef.current = mediaRecorder;
 
-        audioChunksRef.current = [];
-        mediaRecorder.start();
-        setIsRecording(true);
-        setRecordingTime(0);
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+            };
 
-        timerIntervalRef.current = window.setInterval(() => {
-            setRecordingTime(prevTime => prevTime + 1);
-        }, 1000);
+            mediaRecorder.onstop = () => {
+                cleanupStream(stream);
+                if (recordingCancelledRef.current) return;
+                
+                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                if (blob.size === 0) return;
+                setAudioBlob(blob);
+                audioUrlRef.current = URL.createObjectURL(blob);
+            };
+            
+            audioChunksRef.current = [];
+            mediaRecorder.start();
+            setIsRecording(true);
+            setRecordingTime(0);
 
-        // --- Setup Web Audio API for visualization ---
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 512;
-        const source = audioContext.createMediaStreamSource(stream);
-        source.connect(analyser);
+            timerIntervalRef.current = window.setInterval(() => setRecordingTime(prev => prev + 1), 1000);
 
-        audioContextRef.current = audioContext;
-        analyserRef.current = analyser;
-        sourceRef.current = source;
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            analyser.fftSize = 512;
+            const source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
 
-        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            audioContextRef.current = audioContext;
+            analyserRef.current = analyser;
+            sourceRef.current = source;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        const draw = () => {
-            if (!analyserRef.current) return;
-            analyserRef.current.getByteFrequencyData(dataArray);
-            const average = dataArray.reduce((acc, val) => acc + val, 0) / dataArray.length;
-            setVolume(average);
-            animationFrameIdRef.current = requestAnimationFrame(draw);
-        };
-        draw();
+            const draw = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteTimeDomainData(dataArray);
+                let sumSquares = 0.0;
+                for (const amplitude of dataArray) {
+                    const val = (amplitude / 128.0) - 1.0;
+                    sumSquares += val * val;
+                }
+                const rms = Math.sqrt(sumSquares / dataArray.length);
+                setVolume(rms * 150); // Scale RMS for better visualization
+                animationFrameIdRef.current = requestAnimationFrame(draw);
+            };
+            draw();
 
-    } catch (err) {
-        console.error("Error accessing microphone:", err);
-        setError("Could not access microphone. Please check permissions.");
-    }
-  }, [stopAudioAnalysis]);
-
-  useEffect(() => {
-    setIsInitializing(true);
-    navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-            stream.getTracks().forEach(track => track.stop()); // release the mic immediately
-            setIsInitializing(false);
-        })
-        .catch(err => {
-            console.error("Pre-check mic error:", err);
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
             setError("Could not access microphone. Please check permissions.");
-            setIsInitializing(false);
-        });
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
-      mediaRecorderRef.current?.stream?.getTracks().forEach(track => track.stop());
-      stopAudioAnalysis();
+        }
+    }, [cleanupStream]);
+
+    useEffect(() => {
+        setIsInitializing(true);
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                cleanupStream(stream); // release the mic immediately
+                setIsInitializing(false);
+            })
+            .catch(err => {
+                console.error("Pre-check mic error:", err);
+                setError("Could not access microphone. Please check permissions.");
+                setIsInitializing(false);
+            });
+            
+        return () => {
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+            if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+            mediaRecorderRef.current?.stream?.getTracks().forEach(track => track.stop());
+            stopAudioAnalysis();
+        };
+    }, [cleanupStream, stopAudioAnalysis]);
+
+    const stopRecording = useCallback(() => {
+        if (mediaRecorderRef.current && isRecording) {
+            recordingCancelledRef.current = false;
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        }
+    }, [isRecording]);
+
+    const handleCancel = useCallback(() => {
+        if (isRecording) {
+            recordingCancelledRef.current = true;
+            mediaRecorderRef.current?.stop();
+            setIsRecording(false);
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+        }
+        onCancel();
+    }, [isRecording, onCancel]);
+
+    const handleSave = async () => {
+        if (audioBlob && !isSaving) {
+            setIsSaving(true);
+            const fileName = `recording-${new Date().toISOString().slice(0, 19)}.webm`;
+            const file = new File([audioBlob], fileName, { type: 'audio/webm' });
+            await onRecord(file);
+        }
     };
-  }, [stopAudioAnalysis]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      // stopAudioAnalysis is called in onstop handler of MediaRecorder
-    }
-  }, [isRecording]);
-
-  const handleSave = async () => {
-    if (audioBlob && !isSaving) {
-      setIsSaving(true);
-      const fileName = `recording-${new Date().toISOString().slice(0,19)}.webm`;
-      const file = new File([audioBlob], fileName, { type: 'audio/webm' });
-      await onRecord(file);
-    }
-  };
-  
-  const handleDiscard = () => {
-    setAudioBlob(null);
-    setRecordingTime(0);
-    if(audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
-    audioUrlRef.current = null;
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60).toString().padStart(2, '0');
-    const seconds = (time % 60).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
-  };
-
-  const renderContent = () => {
-    if (isInitializing || error) {
-        return (
-            <div className="w-full max-w-sm bg-[var(--theme-bg-secondary)] rounded-lg p-6 text-white text-center">
-                <h2 className="text-xl font-semibold text-[var(--theme-text-primary)] mb-4">Audio Recorder</h2>
-                <div className="flex items-center justify-center h-24">
-                {isInitializing ? (
-                    <Loader2 size={32} className="animate-spin text-[var(--theme-text-link)]" />
-                ) : (
-                    <p className="text-red-400 p-4 text-center">{error}</p>
-                )}
-                </div>
-                <button onClick={onCancel} className="mt-4 px-6 py-2 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-border-primary)] rounded-lg transition-colors">Close</button>
-            </div>
-        );
-    }
-    if (audioBlob && audioUrlRef.current) {
-        return (
-            <div className="w-full max-w-sm bg-[var(--theme-bg-secondary)] rounded-lg p-6 text-white text-center">
-                <h3 className="text-lg mb-4 text-[var(--theme-text-primary)]">Preview Recording</h3>
-                <audio src={audioUrlRef.current} controls className="w-full mb-6" />
-                <div className="flex justify-center gap-4">
-                    <button onClick={handleDiscard} disabled={isSaving} className="flex items-center gap-2 px-4 py-2 bg-[var(--theme-bg-tertiary)] rounded-lg hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed"><Trash2 size={20} /> Discard</button>
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 px-4 py-2 bg-[var(--theme-bg-accent)] rounded-lg hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:opacity-50 disabled:cursor-not-allowed w-32">
-                        {isSaving ? <Loader2 size={20} className="animate-spin" /> : <><Check size={20} /> <span>Save</span></>}
-                    </button>
-                </div>
-            </div>
-        );
-    }
     
-    // Map volume (0-255) to a scale factor (e.g., 1 to 1.5) and opacity (e.g., 0.2 to 0.7)
-    const scale = 1 + (volume / 255) * 0.5;
-    const opacity = 0.2 + (volume / 255) * 0.5;
+    const handleDiscard = () => {
+        setAudioBlob(null);
+        setRecordingTime(0);
+        if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+    };
+
+    const formatTime = (time: number) => {
+        const minutes = Math.floor(time / 60).toString().padStart(2, '0');
+        const seconds = (time % 60).toString().padStart(2, '0');
+        return `${minutes}:${seconds}`;
+    };
+
+    const scale = 1 + Math.min(volume, 100) / 100 * 0.5;
+    const opacity = 0.2 + Math.min(volume, 100) / 100 * 0.5;
 
     return (
-        <div className="w-full max-w-sm bg-[var(--theme-bg-secondary)] rounded-lg p-6 text-white text-center">
-            <h3 className="text-xl font-semibold mb-2 text-[var(--theme-text-primary)]">{isRecording ? "Recording..." : "Ready to Record"}</h3>
-            <div className="relative mb-6 h-24 flex items-center justify-center">
-                {isRecording && (
-                    <div
-                        className="absolute w-24 h-24 bg-red-500 rounded-full transition-transform duration-100 ease-out"
-                        style={{ transform: `scale(${scale})`, opacity: opacity }}
-                    ></div>
-                )}
-                <div className="relative w-24 h-24 bg-[var(--theme-bg-tertiary)] rounded-full flex items-center justify-center">
-                    <p className="text-3xl font-mono text-[var(--theme-text-primary)]">{formatTime(recordingTime)}</p>
-                </div>
-            </div>
-            <div className="flex justify-center items-center gap-6">
-                <button onClick={onCancel} className="p-3 bg-transparent text-gray-400 hover:text-white rounded-full transition-colors" aria-label="Cancel recording"><X size={24} /></button>
-                {isRecording ? (
-                    <button onClick={stopRecording} className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg" aria-label="Stop recording"><StopCircle size={32} /></button>
+        <div
+            className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm modal-enter-animation"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="audio-recorder-title"
+        >
+            <div
+                className="w-full max-w-sm bg-[var(--theme-bg-secondary)] rounded-2xl shadow-premium p-6 text-center text-[var(--theme-text-primary)] flex flex-col gap-6"
+                onClick={(e) => e.stopPropagation()}
+            >
+                {isInitializing || error ? (
+                    <>
+                        <h2 id="audio-recorder-title" className="text-xl font-semibold">Audio Recorder</h2>
+                        <div className="flex items-center justify-center h-32">
+                            {isInitializing ? (
+                                <Loader2 size={40} className="animate-spin text-[var(--theme-text-link)]" />
+                            ) : (
+                                <p className="text-red-400 p-4 text-center">{error}</p>
+                            )}
+                        </div>
+                        <button onClick={onCancel} className="mt-4 px-6 py-2 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-border-primary)] rounded-lg transition-colors w-full">Close</button>
+                    </>
+                ) : audioBlob && audioUrlRef.current ? (
+                    <>
+                        <h2 id="audio-recorder-title" className="text-xl font-semibold">Preview Recording</h2>
+                        <div className="my-4">
+                            <audio src={audioUrlRef.current} controls className="w-full" />
+                        </div>
+                        <div className="flex justify-center gap-4">
+                            <button onClick={handleDiscard} disabled={isSaving} className="flex items-center justify-center gap-2 w-full py-3 bg-[var(--theme-bg-tertiary)] rounded-lg hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><Trash2 size={20} /> Discard</button>
+                            <button onClick={handleSave} disabled={isSaving} className="flex items-center justify-center gap-2 w-full py-3 bg-[var(--theme-bg-accent)] rounded-lg hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:opacity-50 disabled:cursor-not-allowed">
+                                {isSaving ? <Loader2 size={20} className="animate-spin" /> : <><Check size={20} /> <span>Save</span></>}
+                            </button>
+                        </div>
+                    </>
                 ) : (
-                    <button onClick={startRecording} className="w-16 h-16 bg-blue-500 text-white rounded-full flex items-center justify-center shadow-lg" aria-label="Start recording"><Mic size={32} /></button>
+                    <>
+                        <h2 id="audio-recorder-title" className="text-xl font-semibold">{isRecording ? "Recording..." : "Ready to Record"}</h2>
+                        
+                        <div className="relative w-40 h-40 bg-white dark:bg-[var(--theme-bg-primary)] rounded-full flex items-center justify-center mx-auto my-4 shadow-lg">
+                            {isRecording && (
+                                <div
+                                    className="absolute inset-0 bg-blue-500 rounded-full transition-all duration-150 ease-out pointer-events-none"
+                                    style={{ transform: `scale(${scale})`, opacity: opacity, filter: 'blur(10px)' }}
+                                ></div>
+                            )}
+                            <span className="text-5xl font-mono text-black dark:text-[var(--theme-text-primary)] tabular-nums z-10">{formatTime(recordingTime)}</span>
+                        </div>
+
+                        <div className="flex justify-around items-center w-full">
+                            <button onClick={handleCancel} className="w-14 h-14 flex items-center justify-center bg-gray-200 dark:bg-[var(--theme-bg-tertiary)] hover:bg-gray-300 dark:hover:bg-[var(--theme-border-primary)] text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white rounded-full transition-colors" aria-label="Cancel recording">
+                                <X size={28} />
+                            </button>
+                            
+                            {isRecording ? (
+                                <button onClick={stopRecording} className="w-20 h-20 bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-white rounded-full flex items-center justify-center shadow-lg mic-recording-animate" aria-label="Stop recording">
+                                    <StopCircle size={36} />
+                                </button>
+                            ) : (
+                                <button onClick={startRecording} className="w-20 h-20 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-white rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-105 active:scale-100" aria-label="Start recording">
+                                    <Mic size={36} />
+                                </button>
+                            )}
+                            
+                            <div className="w-14 h-14" />
+                        </div>
+                    </>
                 )}
-                <div style={{width: '60px'}}></div> {/* Spacer */}
             </div>
         </div>
     );
-  };
-  
-  return (
-    <div 
-        className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
-        role="dialog" aria-modal="true" aria-labelledby="audio-recorder-title"
-    >
-        {renderContent()}
-    </div>
-  );
 };

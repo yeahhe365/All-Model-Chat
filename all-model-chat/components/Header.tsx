@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
     setIsModelSelectorOpen(false);
   };
 
-  const canvasPromptButtonBaseClasses = "p-2 sm:p-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-100";
+  const canvasPromptButtonBaseClasses = "p-2 sm:p-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-100";
   const canvasPromptButtonActiveClasses = `bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] shadow-premium`;
   const canvasPromptButtonInactiveClasses = `bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-input)]`;
 
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2">
         <button
             onClick={onToggleHistorySidebar}
-            className="p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
+            className="p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
             aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
             title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
         >
@@ -154,7 +154,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             {isModelSelectorOpen && (
               <div 
-                className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-md shadow-2xl z-20 max-h-60 overflow-y-auto custom-scrollbar shadow-premium"
+                className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 max-h-60 overflow-y-auto custom-scrollbar"
                 role="listbox"
                 aria-labelledby="model-selector-button" 
               >
@@ -207,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         <button
           onClick={onOpenScenariosModal}
-          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex items-center justify-center hover:scale-105 active:scale-100"
+          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
           aria-label={t('scenariosManage_aria')}
           title={t('scenariosManage_title')}
         >
@@ -215,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         <button
           onClick={onOpenSettingsModal} 
-          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-opacity-50 flex items-center justify-center hover:scale-105 active:scale-100"
+          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
           aria-label={t('settingsOpen_aria')}
           title={t('settingsOpen_title')}
         >
@@ -224,7 +224,7 @@ export const Header: React.FC<HeaderProps> = ({
         
         <button
           onClick={onNewChat}
-          className="p-2.5 sm:p-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-clear-chat)] rounded-lg shadow-premium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-bg-accent)] focus:ring-opacity-50 flex items-center justify-center hover:scale-105 active:scale-100"
+          className="p-2.5 sm:p-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-clear-chat)] rounded-lg shadow-premium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-bg-accent)] flex items-center justify-center hover:scale-105 active:scale-100"
           aria-label={t('headerNewChat_aria')}
           title={`${t('headerNewChat')} (${newChatShortcut})`}
         >

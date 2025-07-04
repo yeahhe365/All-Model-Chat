@@ -181,10 +181,12 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     }
   }, [htmlContent]);
   
+  const buttonClasses = "p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
+
   const FullscreenToggleButton: React.FC = () => (
     <button
       onClick={isTrueFullscreen ? exitTrueFullscreen : enterTrueFullscreen}
-      className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+      className={buttonClasses}
       aria-label={isTrueFullscreen ? "Exit true fullscreen" : "Enter true fullscreen"}
       title={isTrueFullscreen ? "Exit Fullscreen" : "Enter Fullscreen (Browser)"}
     >
@@ -217,7 +219,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             <FullscreenToggleButton />
             <button
                 onClick={handleDownload}
-                className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+                className={buttonClasses}
                 aria-label="Download HTML content"
                 title="Download HTML"
             >
@@ -225,7 +227,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             </button>
             <button
               onClick={handleRefresh}
-              className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+              className={buttonClasses}
               aria-label="Refresh preview content"
               title="Refresh Preview"
             >
@@ -234,7 +236,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             {!isTrueFullscreen && (
                 <button
                 onClick={handleClose}
-                className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors"
+                className={buttonClasses}
                 aria-label="Close HTML preview"
                 title="Close Preview (Esc)"
                 >

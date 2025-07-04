@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem } from '../types';
-import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getActiveApiConfig } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 
@@ -52,30 +52,6 @@ export const useMessageHandler = ({
     activeSessionId,
 }: MessageHandlerProps) => {
 
-    const getKeyForRequest = useCallback((isLockableAction: boolean): { key: string; shouldLock: boolean } | null => {
-        const { apiKeysString } = getActiveApiConfig(appSettings);
-        
-        if (currentChatSettings.lockedApiKey) {
-            return { key: currentChatSettings.lockedApiKey, shouldLock: false };
-        }
-        
-        if (!apiKeysString) {
-            setAppFileError("API Key not configured.");
-            return null;
-        }
-        const availableKeys = apiKeysString.split('\n').map(k => k.trim()).filter(Boolean);
-        if (availableKeys.length === 0) {
-            setAppFileError("No valid API keys found.");
-            return null;
-        }
-        
-        const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
-        
-        return { key: randomKey, shouldLock: isLockableAction };
-    
-    }, [appSettings, currentChatSettings.lockedApiKey, setAppFileError]);
-
-
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
         const textToUse = overrideOptions?.text ?? inputText;
         const filesToUse = overrideOptions?.files ?? selectedFiles;
@@ -93,13 +69,14 @@ export const useMessageHandler = ({
         if (!activeModelId) { setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() }]); setIsLoading(false); return; }
 
         const hasFileId = filesToUse.some(f => f.fileUri);
-        const keyInfo = getKeyForRequest(hasFileId);
-        if (!keyInfo) {
-             setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'API key not configured or available.', timestamp: new Date() }]);
-             return;
+        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        if ('error' in keyResult) {
+            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() }]);
+            setIsLoading(false);
+            return;
         }
-        const { key: keyToUse, shouldLock: shouldLockKey } = keyInfo;
-
+        const { key: keyToUse, isNewKey } = keyResult;
+        const shouldLockKey = isNewKey && hasFileId;
 
         setIsLoading(true);
         if (abortControllerRef.current) abortControllerRef.current.abort();
@@ -381,14 +358,18 @@ export const useMessageHandler = ({
                 }
             );
         }
-    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, getKeyForRequest, setCurrentChatSettings ]);
+    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, setCurrentChatSettings ]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; // Prevent multiple TTS requests at once
 
-        const keyInfo = getKeyForRequest(false); // TTS does not lock a key
-        if (!keyInfo) return;
-        const { key } = keyInfo;
+        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        if ('error' in keyResult) {
+            console.error("TTS failed:", keyResult.error);
+            // Optionally add error feedback to the user here
+            return;
+        }
+        const { key } = keyResult;
         
         setTtsMessageId(messageId);
         // User requested Gemini 2.5 Flash TTS
@@ -412,7 +393,7 @@ export const useMessageHandler = ({
         } finally {
             setTtsMessageId(null);
         }
-    }, [appSettings, setMessages, setTtsMessageId, ttsMessageId, getKeyForRequest]);
+    }, [appSettings, currentChatSettings, setMessages, setTtsMessageId, ttsMessageId]);
 
     const handleStopGenerating = () => {
         if (abortControllerRef.current) {

@@ -49,7 +49,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       {isCancellable && (
         <button
           onClick={() => onCancelUpload(file.id)}
-          className="absolute -top-1.5 -right-1.5 p-0.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] hover:text-[var(--theme-text-accent)] rounded-full opacity-75 group-hover:opacity-100 transition-all z-10"
+          className="absolute -top-1.5 -right-1.5 p-0.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] hover:text-[var(--theme-text-accent)] rounded-full opacity-75 group-hover:opacity-100 transition-all z-10 focus:outline-none focus:opacity-100 focus:ring-2 focus:ring-[var(--theme-bg-danger)]"
           aria-label={`Cancel upload for ${file.name}`}
           title={`Cancel Upload`}
         >
@@ -59,14 +59,14 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       {showRemoveButton && !isCancellable && ( 
         <button
           onClick={() => onRemove(file.id)}
-          className="absolute -top-1.5 -right-1.5 p-0.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-danger)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-accent)] rounded-full opacity-50 group-hover:opacity-100 transition-all z-10"
+          className="absolute -top-1.5 -right-1.5 p-0.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-danger)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-accent)] rounded-full opacity-50 group-hover:opacity-100 transition-all z-10 focus:outline-none focus:opacity-100 focus:ring-2 focus:ring-gray-400"
           aria-label={`Remove ${file.name}`}
           title={`Remove ${file.name}`}
         >
           <XCircle size={16} />
         </button>
       )}
-      <div className="file-preview-box h-16 sm:h-20 w-full rounded border border-[var(--theme-border-secondary)] flex flex-col items-center justify-center bg-[var(--theme-bg-tertiary)] overflow-hidden">
+      <div className="file-preview-box h-16 sm:h-20 w-full rounded-lg border border-[var(--theme-border-secondary)] flex flex-col items-center justify-center bg-[var(--theme-bg-tertiary)] overflow-hidden">
         {file.error && file.uploadState !== 'cancelled' ? ( // Don't show error icon if just cancelled
           <AlertTriangleIcon size={iconSize} className="text-[var(--theme-text-danger)]" />
         ) : file.uploadState === 'cancelled' ? (

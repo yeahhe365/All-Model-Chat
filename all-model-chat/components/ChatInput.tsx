@@ -316,7 +316,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const micIconSize = 22;
   const sendIconSize = 22;
 
-  const buttonBaseClass = "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)]";
+  const buttonBaseClass = "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
   
   const attachMenuItems = [
     { label: t('attachMenu_upload'), icon: <UploadCloud size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
@@ -356,13 +356,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
             
             <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1.5 sm:p-2 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]/50 transition-all duration-200">
+                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1.5 sm:p-2 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
                     <div className="relative">
                         <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
                             <Paperclip size={attachIconSize} />
                         </button>
                         {isAttachMenuOpen && (
-                            <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-xl z-20 py-1" role="menu">
+                            <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
                                 {attachMenuItems.map(item => (
                                     <button key={item.label} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem">
                                         {item.icon} <span>{item.label}</span>
@@ -378,7 +378,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
                         onKeyPress={handleKeyPress} onPaste={handlePaste}
                         placeholder={t('chatInputPlaceholder')}
-                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1.5 sm:py-2 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
+                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1 sm:py-1.5 text-lg placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
                         style={{ height: `${window.innerWidth < 640 ? 36 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing}

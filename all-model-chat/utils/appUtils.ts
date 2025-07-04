@@ -1,4 +1,4 @@
-import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings } from '../types';
+import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings, ChatSettings } from '../types';
 import { ThemeColors } from '../constants/themeConstants';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 
@@ -201,6 +201,27 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
     return {
         apiKeysString: process.env.API_KEY || null,
     };
+};
+
+export const getKeyForRequest = (
+    appSettings: AppSettings,
+    currentChatSettings: ChatSettings
+): { key: string; isNewKey: boolean } | { error: string } => {
+    if (currentChatSettings.lockedApiKey) {
+        return { key: currentChatSettings.lockedApiKey, isNewKey: false };
+    }
+
+    const { apiKeysString } = getActiveApiConfig(appSettings);
+    if (!apiKeysString) {
+        return { error: "API Key not configured." };
+    }
+    const availableKeys = apiKeysString.split('\n').map(k => k.trim()).filter(Boolean);
+    if (availableKeys.length === 0) {
+        return { error: "No valid API keys found." };
+    }
+
+    const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+    return { key: randomKey, isNewKey: true };
 };
 
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations, fallback?: string): string => {
