@@ -31,9 +31,6 @@ export const useModels = (appSettings: AppSettings) => {
                 { id: 'imagen-4.0-generate-preview-06-06', name: 'Imagen 4 Preview (Image Generation)', isPinned: true },
                 { id: 'imagen-4.0-ultra-generate-preview-06-06', name: 'Imagen 4 Ultra (Image Generation)', isPinned: true },
             ];
-            const veoModels: ModelOption[] = [
-                { id: 'veo-2.0-generate-001', name: 'Veo 2 (Video Generation)', isPinned: true },
-            ];
             
             let modelsFromApi: ModelOption[] = [];
             try {
@@ -52,7 +49,7 @@ export const useModels = (appSettings: AppSettings) => {
             });
 
             // Add pinned models, overwriting if they exist to ensure they are pinned
-            [...pinnedInternalModels, ...ttsModels, ...imagenModels, ...veoModels].forEach(pinnedModel => {
+            [...pinnedInternalModels, ...ttsModels, ...imagenModels].forEach(pinnedModel => {
                 modelMap.set(pinnedModel.id, pinnedModel);
             });
 

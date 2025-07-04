@@ -77,8 +77,6 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             alt={file.name} 
             className="max-h-full max-w-full h-auto w-auto object-contain" 
           />
-        ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) ? (
-          <FileVideo size={iconSize} className="text-[var(--theme-text-tertiary)]" />
         ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) ? (
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)]" />
         ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (

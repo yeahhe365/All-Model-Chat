@@ -18,7 +18,15 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
     let mediaStream: MediaStream | null = null;
     const startCamera = async () => {
       try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        // Request higher resolution for better photo quality
+        const constraints = {
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 4096 },
+            height: { ideal: 2160 }
+          }
+        };
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
         if(active) {
             setStream(mediaStream);
             if (videoRef.current) {
@@ -27,7 +35,20 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
         }
       } catch (err) {
         console.error("Error accessing camera:", err);
-        if(active) setError("Could not access the camera. Please check permissions and ensure your device has a camera.");
+        // Try again with default constraints as a fallback
+        try {
+            console.log("Falling back to default camera constraints.");
+            mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            if (active) {
+                setStream(mediaStream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                }
+            }
+        } catch (fallbackErr) {
+            console.error("Fallback camera access also failed:", fallbackErr);
+            if(active) setError("Could not access the camera. Please check permissions and ensure your device has a camera.");
+        }
       }
     };
     startCamera();

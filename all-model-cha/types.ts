@@ -129,7 +129,6 @@ export interface GeminiService {
     onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
   ) => Promise<void>;
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
-  generateVideo: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
 }

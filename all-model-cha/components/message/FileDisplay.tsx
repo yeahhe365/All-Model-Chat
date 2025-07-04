@@ -52,23 +52,6 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
     <div className={`${commonClasses} ${file.error ? 'border-[var(--theme-bg-danger)]' : ''} relative group`}>
       {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error ? (
         imageElement
-      ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
-        file.dataUrl ? (
-          <video 
-              src={file.dataUrl} 
-              controls 
-              className="max-w-[280px] sm:max-w-[320px] max-h-72 sm:max-h-80 rounded-lg border border-[var(--theme-border-secondary)]"
-              aria-label={`Uploaded video: ${file.name}`}
-          />
-        ) : (
-          <>
-            <FileVideo size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-            <div className={textClasses}>
-              <span className={nameClass} title={file.name}>{file.name}</span>
-              <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
-            </div>
-          </>
-        )
       ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
@@ -111,7 +94,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
           title={idCopied ? "File ID Copied!" : "Copy File ID (e.g., files/xyz123)"}
           aria-label={idCopied ? "File ID Copied!" : "Copy File ID"}
           className={`absolute top-0.5 right-0.5 sm:top-1 sm:right-1 p-0.5 rounded-full bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] transition-all
-                      ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]'}
+                      ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-link)]'}
                       opacity-0 group-hover:opacity-100 focus:opacity-100`}
         >
           {idCopied ? <Check size={12} /> : <ClipboardCopy size={12} />}

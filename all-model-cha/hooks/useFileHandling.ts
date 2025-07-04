@@ -1,8 +1,17 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
+
+const readFileAsDataURL = (fileToRead: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(fileToRead);
+    });
+};
 
 interface FileHandlingProps {
     appSettings: AppSettings;
@@ -75,12 +84,12 @@ export const useFileHandling = ({
             const initialFileState: UploadedFile = { id: fileId, name: file.name, type: typeForState, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
             setSelectedFiles(prev => [...prev, initialFileState]);
 
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || SUPPORTED_VIDEO_MIME_TYPES.includes(file.type)) {
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
                 try {
-                    const objectUrl = URL.createObjectURL(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl: objectUrl } : f));
+                    const dataUrl = await readFileAsDataURL(file);
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
                 } catch (error) {
-                    console.error("Error creating object URL", error);
+                    console.error("Error reading file as Data URL", error);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, error: "Failed to create preview." } : f));
                 }
             }

@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata, GoogleGenerativeAI as GoogleGenAIClient } from "@google/genai"; // <--- MODIFIED
+import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 
@@ -27,7 +27,7 @@ class GeminiServiceImpl implements GeminiService {
         console.log("GeminiService created.");
     }
     
-    private _getClient(apiKey: string): GoogleGenAIClient {
+    private _getClient(apiKey: string): GoogleGenAI {
       try {
           return new GoogleGenAI({ apiKey });
       } catch (error) {
@@ -37,7 +37,7 @@ class GeminiServiceImpl implements GeminiService {
       }
     }
 
-    private _getApiClientOrThrow(apiKey?: string | null): GoogleGenAIClient {
+    private _getApiClientOrThrow(apiKey?: string | null): GoogleGenAI {
         if (!apiKey) {
             const silentError = new Error("API key is not configured in settings or provided.");
             silentError.name = "SilentError";
@@ -235,64 +235,6 @@ class GeminiServiceImpl implements GeminiService {
             console.error(`Failed to generate images with model ${modelId}:`, error);
             throw error;
         }
-    }
-
-    async generateVideo(apiKey: string, modelId: string, prompt: string, aspectRatio: string, durationSeconds: number, generateAudio: boolean, abortSignal: AbortSignal): Promise<string[]> {
-        const ai = this._getApiClientOrThrow(apiKey);
-        if (abortSignal.aborted) {
-            const abortError = new Error("Video generation cancelled before starting.");
-            abortError.name = "AbortError";
-            throw abortError;
-        }
-    
-        const config: any = {
-            aspectRatio,
-            durationSeconds,
-        };
-        if (modelId.includes('veo-2')) {
-            config.personGeneration = 'dont_allow'; // Per python example
-        }
-    
-        // This is a hypothetical implementation based on the user's Python snippet
-        // and the need for long-polling. The JS SDK may not have these methods yet.
-        // @ts-ignore
-        let operation = await ai.models.generateVideos({
-            model: modelId,
-            prompt,
-            config,
-        });
-    
-        const startTime = Date.now();
-        // @ts-ignore
-        while (operation && !operation.done && (Date.now() - startTime) < MAX_POLLING_DURATION_MS) {
-            if (abortSignal.aborted) {
-                // Cannot guarantee cancellation on the backend, but we stop waiting.
-                const abortError = new Error("Video generation polling cancelled by user.");
-                abortError.name = "AbortError";
-                throw abortError;
-            }
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS * 2.5)); // 5s polling for video
-            
-            try {
-                // @ts-ignore - this is the most speculative part, assumes an operations client
-                operation = await ai.operations.get(operation);
-            } catch (pollError) {
-                console.error(`Error polling for video generation status:`, pollError);
-                throw new Error(`Polling failed for video generation.`);
-            }
-        }
-    
-        // @ts-ignore
-        if (!operation || !operation.done) {
-             throw new Error("Video generation timed out.");
-        }
-    
-        // @ts-ignore
-        const videoUris = operation.response?.generatedVideos?.map(v => v.video.uri) ?? [];
-        if (videoUris.length === 0) {
-             throw new Error("No videos generated. The prompt may have been blocked or the model failed to respond.");
-        }
-        return videoUris;
     }
 
     async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {

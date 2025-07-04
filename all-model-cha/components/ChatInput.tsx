@@ -27,7 +27,6 @@ interface ChatInputProps {
   fileError: string | null;
   t: (key: keyof typeof translations) => string;
   isImagenModel?: boolean;
-  isVeoModel?: boolean;
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
   transcriptionModelId?: string;
@@ -55,7 +54,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   appSettings, inputText, setInputText, selectedFiles, setSelectedFiles, onSendMessage,
   isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
-  isImagenModel, isVeoModel, aspectRatio, setAspectRatio,
+  isImagenModel, aspectRatio, setAspectRatio,
   transcriptionModelId, isTranscriptionThinkingEnabled,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -339,7 +338,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       >
         <div className="mx-auto w-full max-w-4xl px-2 sm:px-3 mb-2 sm:mb-3">
             <div>
-                {(isImagenModel || isVeoModel) && setAspectRatio && aspectRatio && (
+                {isImagenModel && setAspectRatio && aspectRatio && (
                     <div className="mb-2">
                         <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
                             {aspectRatios.map(ratioValue => {

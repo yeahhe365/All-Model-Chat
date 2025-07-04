@@ -59,10 +59,9 @@ export const useMessageHandler = ({
         const activeModelId = currentChatSettings.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
-        const isVeoModel = activeModelId.includes('veo-');
 
-        if (!textToUse.trim() && !isTtsModel && !isImagenModel && !isVeoModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
-        if ((isTtsModel || isImagenModel || isVeoModel) && !textToUse.trim()) return;
+        if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
+        if ((isTtsModel || isImagenModel) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { setAppFileError("Wait for files to finish processing."); return; }
         setAppFileError(null);
 
@@ -85,59 +84,6 @@ export const useMessageHandler = ({
         userScrolledUp.current = false;
 
         if (!overrideOptions) { setInputText(''); setSelectedFiles([]); }
-
-        // --- Veo Model Logic ---
-        if (isVeoModel) {
-            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
-            const modelMessageId = generateUniqueId();
-            
-            setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
-            
-            try {
-                // For Veo 2, duration is 5-8s. We'll use 8s for simplicity for now.
-                const duration = 8;
-                const generateAudio = false;
-                
-                const videoUris = await geminiServiceInstance.generateVideo(keyToUse, activeModelId, textToUse.trim(), aspectRatio, duration, generateAudio, currentSignal);
-
-                if (currentSignal.aborted) { throw new Error("aborted"); }
-
-                const generatedFiles: UploadedFile[] = videoUris.map((uri, index) => ({
-                    id: generateUniqueId(),
-                    name: `generated-video-${index + 1}.mp4`,
-                    type: 'video/mp4',
-                    size: 0, // Size is unknown from URI
-                    dataUrl: uri,
-                    uploadState: 'active'
-                }));
-                
-                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
-                    ...msg,
-                    isLoading: false,
-                    content: `Generated video for: "${textToUse.trim()}"`,
-                    files: generatedFiles,
-                    generationEndTime: new Date(),
-                } : msg));
-                
-            } catch (error) {
-                if (error instanceof Error && error.name === 'SilentError') {
-                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
-                } else {
-                    const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
-                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
-                        ...msg,
-                        role: isAborted ? 'model' : 'error',
-                        content: isAborted ? "[Cancelled by user]" : `Video Generation Error: ${error instanceof Error ? error.message : String(error)}`,
-                        isLoading: false,
-                        generationEndTime: new Date()
-                    } : msg));
-                }
-            } finally {
-                setIsLoading(false);
-                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
-            }
-            return;
-        }
 
         // --- TTS Model Logic ---
         if (isTtsModel) {
