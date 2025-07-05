@@ -9,29 +9,18 @@ import { MessageContent } from './MessageContent';
 import { translations, generateThemeCssVariables } from '../../utils/appUtils';
 
 const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors, messageId: string): string => {
-  const themeVariablesCss = generateThemeCssVariables(themeColors);
-  const styles = `
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css">
-    <style id="theme-variables">${themeVariablesCss}</style>
-    <style>
-      /* Basic styles for HTML export */
-      body { background-color: var(--theme-bg-primary); color: var(--theme-text-primary); font-family: sans-serif; padding: 20px; }
-      .markdown-body-container { background-color: var(--theme-bg-model-message); color: var(--theme-bg-model-message-text); padding: 20px; border-radius: 8px; max-width: 900px; margin: auto; }
-      /* Override markdown css to match theme */
-      .markdown-body { background-color: transparent !important; color: var(--theme-bg-model-message-text) !important; }
-      .markdown-body code:not(pre > code) { background-color: var(--theme-bg-code-block) !important; color: var(--theme-text-code) !important; }
-      .markdown-body pre { background-color: var(--theme-bg-code-block) !important; }
-      .markdown-body table th, .markdown-body table td { border-color: var(--theme-border-secondary) !important; }
-      .markdown-body blockquote { border-left-color: var(--theme-border-secondary) !important; color: var(--theme-text-tertiary) !important; }
-      .markdown-body a { color: var(--theme-text-link) !important; }
-      .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 { color: var(--theme-text-primary) !important; border-bottom-color: var(--theme-border-secondary) !important; }
-    </style>`;
-  
+  let headContent = '';
+  // Clone all style and link tags from the current document's head
+  const headElements = document.head.querySelectorAll('style, link[rel="stylesheet"]');
+  headElements.forEach(el => {
+    headContent += el.outerHTML;
+  });
+
   const scripts = `
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('theme-${themeColors.id === 'pearl' ? 'light' : 'dark'}');
         document.querySelectorAll('pre code').forEach((el) => {
           hljs.highlightElement(el);
         });
@@ -44,11 +33,24 @@ const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors,
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Export - ${messageId}</title>
-    ${styles}
+    ${headContent}
+    <style>
+      body { padding: 20px; }
+      .exported-message-container { max-width: 900px; margin: auto; }
+    </style>
   </head>
   <body>
-    <div class="markdown-body-container">
-      <div class="markdown-body">${contentHtml}</div>
+    <div class="exported-message-container">
+        <div class="flex items-start gap-2 sm:gap-3 group justify-start">
+             <div class="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
+                <div class="h-6 sm:h-7">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${themeColors.iconModel}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v-2"/><path d="M9 13v-2"/></svg>
+                </div>
+            </div>
+            <div class="w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg">
+                <div class="markdown-body">${contentHtml}</div>
+            </div>
+        </div>
     </div>
     ${scripts}
   </body>
@@ -64,158 +66,76 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
     setExportState('exporting');
 
     try {
+        const rawHtml = marked.parse(markdownContent);
+        const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
+
         if (type === 'png') {
             const tempContainer = document.createElement('div');
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '-9999px';
-            tempContainer.style.width = '840px';
+            tempContainer.style.top = '0px';
+            tempContainer.style.width = '840px'; 
             tempContainer.style.padding = '20px';
-            tempContainer.style.backgroundColor = themeColors.bgPrimary;
-            tempContainer.style.backgroundImage = `radial-gradient(ellipse at 50% 100%, ${themeColors.id === 'pearl' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.025)'}, transparent 70%)`;
-
-            const botIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${themeColors.iconModel}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v-2"/><path d="M9 13v-2"/></svg>`;
+            tempContainer.style.boxSizing = 'border-box';
             
-            const themeCss = generateThemeCssVariables(themeColors);
+            // Fetch and inline all stylesheets from the document head
+            const stylePromises = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                .map(el => {
+                    if (el.tagName === 'STYLE') {
+                        return Promise.resolve(`<style>${el.innerHTML}</style>`);
+                    }
+                    if (el.tagName === 'LINK' && (el as HTMLLinkElement).rel === 'stylesheet') {
+                        // Use a proxy or direct fetch if same-origin, but for CDNs, direct fetch might be blocked
+                        // For simplicity, we'll try to fetch, but this may have CORS issues in a real environment.
+                        return fetch((el as HTMLLinkElement).href)
+                            .then(res => res.text())
+                            .then(css => `<style>${css}</style>`)
+                            .catch(err => {
+                                console.warn('Could not fetch stylesheet for export:', (el as HTMLLinkElement).href, err);
+                                return `<!-- Failed to fetch ${(el as HTMLLinkElement).href} -->`;
+                            });
+                    }
+                    return Promise.resolve('');
+                });
             
-            const exportStyles = `
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
-                
-                ${themeCss}
-
-                body {
-                    font-family: 'Inter', sans-serif;
-                    margin: 0;
-                    -webkit-font-smoothing: antialiased;
-                    -moz-osx-font-smoothing: grayscale;
-                }
-
-                * { box-sizing: border-box; }
-
-                .export-wrapper {
-                    display: flex;
-                    align-items: flex-start;
-                    gap: 12px;
-                    width: 100%;
-                    max-width: 800px;
-                }
-
-                .avatar-container {
-                    width: 40px;
-                    height: 40px;
-                    flex-shrink: 0;
-                    display: flex;
-                    align-items: flex-start;
-                    justify-content: center;
-                    padding-top: 4px;
-                }
-
-                .message-bubble {
-                    background-color: var(--theme-bg-model-message);
-                    color: var(--theme-bg-model-message-text);
-                    padding: 12px 16px;
-                    border-radius: 18px;
-                    border-bottom-left-radius: 4px;
-                    max-width: calc(100% - 52px);
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08);
-                    border: 1px solid var(--theme-border-primary);
-                }
-
-                .markdown-body {
-                    font-family: 'Inter', sans-serif;
-                    background-color: transparent !important;
-                    color: var(--theme-bg-model-message-text) !important;
-                    font-size: 16px;
-                    line-height: 1.7;
-                    overflow-wrap: break-word;
-                    word-break: break-word;
-                }
-                .markdown-body > *:first-child { margin-top: 0 !important; }
-                .markdown-body > *:last-child { margin-bottom: 0 !important; }
-                .markdown-body p, .markdown-body ul, .markdown-body ol, .markdown-body blockquote, .markdown-body pre { margin-bottom: 1em !important; }
-
-                .markdown-body code:not(pre > code) {
-                    font-family: 'Fira Code', monospace;
-                    background-color: var(--theme-bg-code-block) !important;
-                    color: var(--theme-text-code) !important;
-                    padding: 0.2em 0.4em;
-                    margin: 0;
-                    font-size: 85%;
-                    border-radius: 6px;
-                }
-                .markdown-body pre {
-                    font-family: 'Fira Code', monospace;
-                    background-color: var(--theme-bg-code-block) !important;
-                    border-radius: 8px !important;
-                    padding: 16px !important;
-                    border: 1px solid var(--theme-border-secondary);
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                }
-                .markdown-body pre code {
-                    font-family: 'Fira Code', monospace !important;
-                    background-color: transparent !important;
-                    white-space: pre-wrap;
-                    word-wrap: break-word;
-                }
-                .markdown-body blockquote {
-                    padding: 0 1em;
-                    color: var(--theme-text-tertiary);
-                    border-left: 0.25em solid var(--theme-border-secondary);
-                }
-                .markdown-body a { color: var(--theme-text-link) !important; text-decoration: underline; }
-                .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
-                    margin-top: 1.5em;
-                    margin-bottom: 0.8em;
-                    font-weight: 600;
-                    color: var(--theme-text-primary) !important;
-                    border-bottom-color: var(--theme-border-secondary) !important;
-                }
-                .markdown-body table { width: 100%; border-collapse: collapse; }
-                .markdown-body table th, .markdown-body table td { border: 1px solid var(--theme-border-secondary) !important; padding: 0.5em 1em; }
-                .markdown-body table th { background-color: var(--theme-bg-tertiary) !important; }
-                .markdown-body img { max-width: 100%; border-radius: 8px; }
-            `;
-
-            const rawHtml = marked.parse(markdownContent);
-            const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
-
+            const allStyles = (await Promise.all(stylePromises)).join('\n');
+            
             tempContainer.innerHTML = `
-                <style>
-                    ${exportStyles}
-                </style>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css">
-                
-                <div class="export-wrapper">
-                    <div class="avatar-container">${botIconSvg}</div>
-                    <div class="message-bubble">
-                        <div class="markdown-body">${sanitizedHtml}</div>
-                    </div>
+                ${allStyles}
+                <div class="export-wrapper p-4" style="background-color: ${themeColors.bgPrimary}; background-image: radial-gradient(ellipse at 50% 100%, ${themeColors.id === 'pearl' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.025)'}, transparent 70%);">
+                    <div class="flex items-start gap-2 sm:gap-3 group justify-start">
+                        <div class="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
+                           <div class="h-6 sm:h-7">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${themeColors.iconModel}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v-2"/><path d="M9 13v-2"/></svg>
+                           </div>
+                       </div>
+                       <div class="w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg">
+                           <div class="markdown-body">${sanitizedHtml}</div>
+                       </div>
+                   </div>
                 </div>
             `;
             
-            const codeBlocks = tempContainer.querySelectorAll('pre code');
-            codeBlocks.forEach((block) => {
+            document.body.appendChild(tempContainer);
+            
+            // Run highlight.js on the temporary container
+            tempContainer.querySelectorAll('pre code').forEach((block) => {
                 hljs.highlightElement(block as HTMLElement);
             });
             
-            document.body.appendChild(tempContainer);
-            
+            // Wait for images to load
             const images = tempContainer.querySelectorAll('img');
-            const promises = Array.from(images).map(img => {
+            const imageLoadPromises = Array.from(images).map(img => {
                 if (img.complete) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.onload = img.onerror = resolve;
-                });
+                return new Promise(resolve => { img.onload = img.onerror = resolve; });
             });
-            await Promise.all(promises);
-            await new Promise(resolve => setTimeout(resolve, 250));
+            await Promise.all(imageLoadPromises);
+            await new Promise(resolve => setTimeout(resolve, 250)); // Small delay for rendering
 
             const canvas = await html2canvas(tempContainer, {
                 useCORS: true,
                 scale: 2.5,
-                backgroundColor: themeColors.bgPrimary,
+                backgroundColor: null, // Transparent, so container's background is used
             });
 
             const dataUrl = canvas.toDataURL('image/png');
@@ -225,8 +145,6 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
             link.click();
             document.body.removeChild(tempContainer);
         } else { // html
-            const rawHtml = marked.parse(markdownContent);
-            const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
             const fullHtmlDoc = generateFullHtmlDocument(sanitizedHtml, themeColors, messageId);
             
             const titleMatch = fullHtmlDoc.match(/<title[^>]*>([^<]+)<\/title>/i);

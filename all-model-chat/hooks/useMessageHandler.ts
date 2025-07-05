@@ -52,6 +52,34 @@ export const useMessageHandler = ({
     activeSessionId,
 }: MessageHandlerProps) => {
 
+    const handleApiError = useCallback((error: unknown, modelMessageId: string, errorPrefix: string = "Error") => {
+        const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
+        if (isAborted) {
+            setMessages(prev => prev.map(msg => 
+                msg.id === modelMessageId && msg.isLoading
+                    ? { ...msg, role: 'model', content: (msg.content || "") + "\n\n[Cancelled by user]", isLoading: false, generationEndTime: new Date() } 
+                    : msg
+            ));
+            return;
+        }
+
+        let errorMessage = "An unknown error occurred.";
+        if (error instanceof Error) {
+            errorMessage = error.name === 'SilentError'
+                ? "API key is not configured in settings."
+                : `${errorPrefix}: ${error.message}`;
+        } else {
+            errorMessage = `${errorPrefix}: ${String(error)}`;
+        }
+
+        setMessages(prev => prev.map(msg => 
+            msg.id === modelMessageId 
+                ? { ...msg, role: 'error', content: errorMessage, isLoading: false, generationEndTime: new Date() } 
+                : msg
+        ));
+    }, [setMessages]);
+
+
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
         const textToUse = overrideOptions?.text ?? inputText;
         const filesToUse = overrideOptions?.files ?? selectedFiles;
@@ -107,20 +135,7 @@ export const useMessageHandler = ({
                 } : msg));
                 
             } catch (error) {
-                 if (error instanceof Error && error.name === 'SilentError') {
-                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
-                    setIsLoading(false);
-                    if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
-                    return;
-                }
-                const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
-                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
-                    ...msg,
-                    role: isAborted ? 'model' : 'error',
-                    content: isAborted ? "[Cancelled by user]" : `TTS Error: ${error instanceof Error ? error.message : String(error)}`,
-                    isLoading: false,
-                    generationEndTime: new Date()
-                } : msg));
+                handleApiError(error, modelMessageId, "TTS Error");
             } finally {
                 setIsLoading(false);
                 if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
@@ -162,20 +177,7 @@ export const useMessageHandler = ({
                 } : msg));
                 
             } catch (error) {
-                 if (error instanceof Error && error.name === 'SilentError') {
-                    setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
-                    setIsLoading(false);
-                    if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
-                    return;
-                }
-                const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
-                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
-                    ...msg,
-                    role: isAborted ? 'model' : 'error',
-                    content: isAborted ? "[Cancelled by user]" : `Image Generation Error: ${error instanceof Error ? error.message : String(error)}`,
-                    isLoading: false,
-                    generationEndTime: new Date()
-                } : msg));
+                handleApiError(error, modelMessageId, "Image Generation Error");
             } finally {
                 setIsLoading(false);
                 if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
@@ -264,37 +266,31 @@ export const useMessageHandler = ({
             thinkingBudget: currentChatSettings.thinkingBudget,
         };
 
+        const streamOnError = (error: Error) => {
+            handleApiError(error, modelMessageId);
+            setIsLoading(false); 
+            if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+        };
+
+        const streamOnComplete = (usageMetadata?: UsageMetadata) => {
+            setMessages(prev => {
+                const loadingMsg = prev.find(m => m.id === modelMessageId);
+                const finalMsgs = processModelMessageCompletion(prev, modelMessageId, loadingMsg?.content || "", loadingMsg?.thoughts, usageMetadata, currentSignal.aborted);
+                handleCompletion(finalMsgs);
+                return finalMsgs;
+            });
+        };
+
         if (appSettings.isStreamingEnabled) {
             await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
                 (chunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)),
                 (thoughtChunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)),
-                (error) => { 
-                    if (error instanceof Error && error.name === 'SilentError') {
-                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
-                    } else {
-                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); 
-                    }
-                    setIsLoading(false); 
-                    if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; 
-                },
-                (usageMetadata) => {
-                    setMessages(prev => {
-                        const loadingMsg = prev.find(m => m.id === modelMessageId);
-                        const finalMsgs = processModelMessageCompletion(prev, modelMessageId, loadingMsg?.content || "", loadingMsg?.thoughts, usageMetadata, currentSignal.aborted);
-                        handleCompletion(finalMsgs);
-                        return finalMsgs;
-                    });
-                }
+                streamOnError,
+                streamOnComplete
             );
         } else { 
             await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
-                (error) => { 
-                    if (error instanceof Error && error.name === 'SilentError') {
-                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: "API key is not configured in settings.", isLoading: false, generationEndTime: new Date() } : msg));
-                    } else {
-                        setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, role: 'error', content: `Error: ${error.message}`, isLoading: false, generationEndTime: new Date() } : msg)); 
-                    }
-                    setIsLoading(false); if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null; },
+                streamOnError,
                 (fullText, thoughtsText, usageMetadata) => {
                     setMessages(prev => {
                         const finalMsgs = processModelMessageCompletion(prev, modelMessageId, fullText, thoughtsText, usageMetadata, currentSignal.aborted);
@@ -304,7 +300,7 @@ export const useMessageHandler = ({
                 }
             );
         }
-    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, setCurrentChatSettings ]);
+    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, handleApiError, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, setCurrentChatSettings ]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; // Prevent multiple TTS requests at once

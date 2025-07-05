@@ -236,12 +236,12 @@ export const MessageList: React.FC<MessageListProps> = ({
               <Zap size={16} className="text-[var(--theme-text-link)]" />
               <span>{t('welcome_suggestion_title')}</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
               {SUGGESTIONS_KEYS.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => onSuggestionClick && onSuggestionClick(t(s.descKey as any))}
-                  className="bg-[var(--theme-bg-tertiary)] border border-transparent hover:border-[var(--theme-border-secondary)] rounded-2xl p-4 text-left h-44 flex flex-col group justify-between hover:bg-[var(--theme-bg-input)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                  className="bg-[var(--theme-bg-tertiary)] border border-transparent hover:border-[var(--theme-border-secondary)] rounded-2xl p-3 sm:p-4 text-left h-40 sm:h-44 flex flex-col group justify-between hover:bg-[var(--theme-bg-input)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
                   style={{ animation: `fadeInUp 0.5s ${0.2 + i * 0.1}s ease-out both` }}
                 >
                   <div>

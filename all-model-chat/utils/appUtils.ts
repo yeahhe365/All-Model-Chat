@@ -67,7 +67,7 @@ export const translations = {
     suggestion_summarize_desc: { en: 'Summarize the following article', zh: '总结下面文章' },
     suggestion_explain_title: { en: 'Explain concept', zh: '解释概念' },
     suggestion_explain_desc: { en: 'Explain this concept to a beginner', zh: '向初学者解释这个概念' },
-    suggestion_translate_title: { en: 'Translate email', zh: '翻译邮件' },
+    suggestion_translate_title: { en: 'Translate', zh: '翻译' },
     suggestion_translate_desc: { en: 'Translate the following to Chinese', zh: '将以下内容翻译成中文' },
     suggestion_ocr_title: { en: 'Extract from image', zh: '从图片提取' },
     suggestion_ocr_desc: { en: 'Extract text from the attached image', zh: '从附加的图片中提取文字' },
