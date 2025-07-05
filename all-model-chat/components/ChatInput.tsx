@@ -78,7 +78,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
-
+  const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
 
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
@@ -110,6 +110,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (isAttachMenuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isAttachMenuOpen]);
+
+  useEffect(() => {
+    if (isWaitingForUpload) {
+        const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
+        if (!filesAreStillProcessing) {
+            // All uploads finished, now send the message
+            onSendMessage();
+            setIsWaitingForUpload(false);
+            setIsAnimatingSend(true);
+            setTimeout(() => setIsAnimatingSend(false), 400);
+        }
+    }
+  }, [isWaitingForUpload, selectedFiles, onSendMessage]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
@@ -149,12 +162,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
+  const canSend = (inputText.trim() !== '' || selectedFiles.length > 0) && !isLoading && !isAddingById && !isModalOpen;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (canSend) {
-        onSendMessage();
-        setIsAnimatingSend(true);
-        setTimeout(() => setIsAnimatingSend(false), 400); 
+        const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
+        if (filesAreStillProcessing) {
+            setIsWaitingForUpload(true);
+        } else {
+            onSendMessage();
+            setIsAnimatingSend(true);
+            setTimeout(() => setIsAnimatingSend(false), 400); 
+        }
     }
   };
 
@@ -307,10 +328,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [isRecording]);
 
-  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-  const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');
-  const canSend = (inputText.trim() !== '' || hasSuccessfullyProcessedFiles) && !isProcessingFile && !isLoading && !isAddingById && !isModalOpen;
-  
   const attachIconSize = 20;
   const micIconSize = 20;
   const sendIconSize = 20;
@@ -357,7 +374,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
                 <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
                     <div className="relative">
-                        <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
+                        <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
                             <Paperclip size={attachIconSize} />
                         </button>
                         {isAttachMenuOpen && (
@@ -380,7 +397,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1 sm:py-1.5 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
                         style={{ height: `${window.innerWidth < 640 ? 32 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
-                        onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing}
+                        onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing || isWaitingForUpload}
                         rows={1}
                     />
 
@@ -410,7 +427,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             <button
                                 type="button"
                                 onClick={handleStartRecording}
-                                disabled={isAddingById || isModalOpen || isTranscribing}
+                                disabled={isAddingById || isModalOpen || isTranscribing || isWaitingForUpload}
                                 className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
                                 aria-label={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
                                 title={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
@@ -431,7 +448,19 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} /></button>
                             </>
                         ) : (
-                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('sendMessage_aria')} title={t('sendMessage_title')}><ArrowUp size={sendIconSize} /></button>
+                            <button 
+                                type="submit" 
+                                disabled={!canSend || isWaitingForUpload} 
+                                className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} 
+                                aria-label={isWaitingForUpload ? "Waiting for upload..." : t('sendMessage_aria')} 
+                                title={isWaitingForUpload ? "Waiting for upload to complete before sending" : t('sendMessage_title')}
+                            >
+                                {isWaitingForUpload ? (
+                                    <Loader2 size={sendIconSize} className="animate-spin" />
+                                ) : (
+                                    <ArrowUp size={sendIconSize} />
+                                )}
+                            </button>
                         )}
                     </div>
                 </div>
