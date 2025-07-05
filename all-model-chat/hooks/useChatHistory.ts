@@ -94,8 +94,12 @@ export const useChatHistory = ({
                     updatedSessions = [sessionToSave, ...prevSessions];
                 }
                 updatedSessions.sort((a,b) => b.timestamp - a.timestamp);
-                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updatedSessions));
-                return updatedSessions;
+
+                // Prune sessions for localStorage, keeping only the last 3
+                const sessionsForStorage = updatedSessions.slice(0, 3);
+                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
+
+                return updatedSessions; // Return the full list to state for the current app session
             });
 
             if ((isNewSessionInHistory || !currentActiveSessionId) && sessionIdToSave) {
@@ -200,7 +204,8 @@ export const useChatHistory = ({
     const handleDeleteChatHistorySession = (sessionId: string) => {
         setSavedSessions(prev => {
             const updated = prev.filter(s => s.id !== sessionId);
-            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updated));
+            const sessionsForStorage = updated.slice(0, 3);
+            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
             return updated;
         });
         if (activeSessionId === sessionId) {

@@ -276,6 +276,15 @@ export const generateThemeCssVariables = (colors: ThemeColors): string => {
   return css;
 };
 
+export const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+};
+
 export const buildContentParts = (text: string, files: UploadedFile[] | undefined): ContentPart[] => {
   const dataParts: ContentPart[] = [];
 

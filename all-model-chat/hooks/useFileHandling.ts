@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface FileHandlingProps {
@@ -77,10 +77,10 @@ export const useFileHandling = ({
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
                 try {
-                    const dataUrl = URL.createObjectURL(file);
+                    const dataUrl = await fileToDataUrl(file);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
                 } catch (error) {
-                    console.error("Error creating object URL for preview", error);
+                    console.error("Error creating data URL for preview", error);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, error: "Failed to create preview." } : f));
                 }
             }
