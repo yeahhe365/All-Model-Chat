@@ -78,7 +78,7 @@ export const DEFAULT_CHAT_SETTINGS = {
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   ...DEFAULT_CHAT_SETTINGS,
-  themeId: 'light', // Corresponds to DEFAULT_THEME_ID from themeConstants
+  themeId: 'pearl', // Corresponds to DEFAULT_THEME_ID from themeConstants
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
   apiKey: null,

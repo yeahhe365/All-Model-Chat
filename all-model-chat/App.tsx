@@ -135,10 +135,14 @@ const App: React.FC = () => {
   
   const handleSuggestionClick = (text: string) => {
     setInputText(text);
-    // Focus the textarea after a tick to ensure state update has rendered
+    // Focus the textarea and move cursor to the end after a tick to ensure state update has rendered
     setTimeout(() => {
-        const textarea = document.querySelector('textarea[aria-label="Chat message input"]');
-        (textarea as HTMLTextAreaElement)?.focus();
+        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+        if (textarea) {
+            textarea.focus();
+            const textLength = textarea.value.length;
+            textarea.setSelectionRange(textLength, textLength);
+        }
     }, 0);
   };
 

@@ -61,6 +61,17 @@ export const translations = {
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
     imageZoom_close_aria: { en: 'Close image zoom view', zh: '关闭图片缩放视图' },
     imageZoom_close_title: { en: 'Close (Esc)', zh: '关闭 (Esc)' },
+    welcome_greeting: { en: 'How can I help you today?', zh: '今天有什么可以帮您？' },
+    welcome_suggestion_title: { en: 'Suggested', zh: '建议' },
+    suggestion_summarize_title: { en: 'Summarize article', zh: '总结文章' },
+    suggestion_summarize_desc: { en: 'Summarize the following article', zh: '总结下面文章' },
+    suggestion_explain_title: { en: 'Explain concept', zh: '解释概念' },
+    suggestion_explain_desc: { en: 'Explain this concept to a beginner', zh: '向初学者解释这个概念' },
+    suggestion_translate_title: { en: 'Translate email', zh: '翻译邮件' },
+    suggestion_translate_desc: { en: 'Translate the following to Chinese', zh: '将以下内容翻译成中文' },
+    suggestion_ocr_title: { en: 'Extract from image', zh: '从图片提取' },
+    suggestion_ocr_desc: { en: 'Extract text from the attached image', zh: '从附加的图片中提取文字' },
+    suggestion_prompt_label: { en: 'Prompt', zh: '提示' },
     welcome_title: { en: 'Welcome to All Model Chat', zh: '欢迎使用 All Model Chat' },
     welcome_p1: { en: 'Start a conversation by typing below. You can also attach files, load scenarios via the', zh: '在下方输入文字开始对话。您也可以附加文件，或通过' },
     welcome_p2: { en: 'Manage Scenarios', zh: '管理场景' },
@@ -171,6 +182,7 @@ export const translations = {
 
     // HistorySidebar.tsx
     history_title: { en: 'History', zh: '历史记录' },
+    history_recent_chats: { en: 'Recent Chats', zh: '近期对话' },
     history_empty: { en: 'No chat history yet.', zh: '暂无聊天记录。' },
     history_delete_aria: { en: 'Delete chat: {title}', zh: '删除对话：{title}' },
     history_delete_title: { en: 'Delete Chat', zh: '删除对话' },
@@ -184,7 +196,7 @@ export const translations = {
     
     // Header
     headerTitle: { en: 'All Model Chat', zh: 'All Model Chat' },
-    headerNewChat: { en: 'New Chat', zh: '新对话' },
+    headerNewChat: { en: 'New Chat', zh: '发起新对话' },
     headerStream: { en: 'Stream', zh: '流式' },
     headerModelSelectorTooltip_current: { en: 'Current Model', zh: '当前模型' },
     headerModelSelectorTooltip_action: { en: `Click to change, or press 'Tab' to cycle`, zh: `点击更改，或按 'Tab' 键循环切换` },

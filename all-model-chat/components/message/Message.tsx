@@ -65,27 +65,165 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
 
     try {
         if (type === 'png') {
-            const tempDiv = document.createElement('div');
-            tempDiv.className = 'markdown-body';
-            tempDiv.style.position = 'absolute'; tempDiv.style.left = '-9999px'; tempDiv.style.width = '800px'; tempDiv.style.padding = '24px';
-            tempDiv.style.backgroundColor = themeColors.bgModelMessage; tempDiv.style.color = themeColors.bgModelMessageText;
-            
-            // Parse markdown and sanitize it
-            const rawHtml = marked.parse(markdownContent) as string;
-            tempDiv.innerHTML = DOMPurify.sanitize(rawHtml);
+            const tempContainer = document.createElement('div');
+            tempContainer.style.position = 'absolute';
+            tempContainer.style.left = '-9999px';
+            tempContainer.style.top = '-9999px';
+            tempContainer.style.width = '840px';
+            tempContainer.style.padding = '20px';
+            tempContainer.style.backgroundColor = themeColors.bgPrimary;
+            tempContainer.style.backgroundImage = `radial-gradient(ellipse at 50% 100%, ${themeColors.id === 'pearl' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.025)'}, transparent 70%)`;
 
-            // Apply syntax highlighting
-            const codeBlocks = tempDiv.querySelectorAll('pre code');
+            const botIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${themeColors.iconModel}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v-2"/><path d="M9 13v-2"/></svg>`;
+            
+            const themeCss = generateThemeCssVariables(themeColors);
+            
+            const exportStyles = `
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+                
+                ${themeCss}
+
+                body {
+                    font-family: 'Inter', sans-serif;
+                    margin: 0;
+                    -webkit-font-smoothing: antialiased;
+                    -moz-osx-font-smoothing: grayscale;
+                }
+
+                * { box-sizing: border-box; }
+
+                .export-wrapper {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 12px;
+                    width: 100%;
+                    max-width: 800px;
+                }
+
+                .avatar-container {
+                    width: 40px;
+                    height: 40px;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: center;
+                    padding-top: 4px;
+                }
+
+                .message-bubble {
+                    background-color: var(--theme-bg-model-message);
+                    color: var(--theme-bg-model-message-text);
+                    padding: 12px 16px;
+                    border-radius: 18px;
+                    border-bottom-left-radius: 4px;
+                    max-width: calc(100% - 52px);
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.08);
+                    border: 1px solid var(--theme-border-primary);
+                }
+
+                .markdown-body {
+                    font-family: 'Inter', sans-serif;
+                    background-color: transparent !important;
+                    color: var(--theme-bg-model-message-text) !important;
+                    font-size: 16px;
+                    line-height: 1.7;
+                    overflow-wrap: break-word;
+                    word-break: break-word;
+                }
+                .markdown-body > *:first-child { margin-top: 0 !important; }
+                .markdown-body > *:last-child { margin-bottom: 0 !important; }
+                .markdown-body p, .markdown-body ul, .markdown-body ol, .markdown-body blockquote, .markdown-body pre { margin-bottom: 1em !important; }
+
+                .markdown-body code:not(pre > code) {
+                    font-family: 'Fira Code', monospace;
+                    background-color: var(--theme-bg-code-block) !important;
+                    color: var(--theme-text-code) !important;
+                    padding: 0.2em 0.4em;
+                    margin: 0;
+                    font-size: 85%;
+                    border-radius: 6px;
+                }
+                .markdown-body pre {
+                    font-family: 'Fira Code', monospace;
+                    background-color: var(--theme-bg-code-block) !important;
+                    border-radius: 8px !important;
+                    padding: 16px !important;
+                    border: 1px solid var(--theme-border-secondary);
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                }
+                .markdown-body pre code {
+                    font-family: 'Fira Code', monospace !important;
+                    background-color: transparent !important;
+                    white-space: pre-wrap;
+                    word-wrap: break-word;
+                }
+                .markdown-body blockquote {
+                    padding: 0 1em;
+                    color: var(--theme-text-tertiary);
+                    border-left: 0.25em solid var(--theme-border-secondary);
+                }
+                .markdown-body a { color: var(--theme-text-link) !important; text-decoration: underline; }
+                .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+                    margin-top: 1.5em;
+                    margin-bottom: 0.8em;
+                    font-weight: 600;
+                    color: var(--theme-text-primary) !important;
+                    border-bottom-color: var(--theme-border-secondary) !important;
+                }
+                .markdown-body table { width: 100%; border-collapse: collapse; }
+                .markdown-body table th, .markdown-body table td { border: 1px solid var(--theme-border-secondary) !important; padding: 0.5em 1em; }
+                .markdown-body table th { background-color: var(--theme-bg-tertiary) !important; }
+                .markdown-body img { max-width: 100%; border-radius: 8px; }
+            `;
+
+            const rawHtml = marked.parse(markdownContent);
+            const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
+
+            tempContainer.innerHTML = `
+                <style>
+                    ${exportStyles}
+                </style>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css">
+                
+                <div class="export-wrapper">
+                    <div class="avatar-container">${botIconSvg}</div>
+                    <div class="message-bubble">
+                        <div class="markdown-body">${sanitizedHtml}</div>
+                    </div>
+                </div>
+            `;
+            
+            const codeBlocks = tempContainer.querySelectorAll('pre code');
             codeBlocks.forEach((block) => {
                 hljs.highlightElement(block as HTMLElement);
             });
             
-            document.body.appendChild(tempDiv);
-            const canvas = await html2canvas(tempDiv, { useCORS: true, backgroundColor: themeColors.bgModelMessage, scale: 2 });
+            document.body.appendChild(tempContainer);
+            
+            const images = tempContainer.querySelectorAll('img');
+            const promises = Array.from(images).map(img => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = img.onerror = resolve;
+                });
+            });
+            await Promise.all(promises);
+            await new Promise(resolve => setTimeout(resolve, 250));
+
+            const canvas = await html2canvas(tempContainer, {
+                useCORS: true,
+                scale: 2.5,
+                backgroundColor: themeColors.bgPrimary,
+            });
+
             const dataUrl = canvas.toDataURL('image/png');
             const link = document.createElement('a');
-            link.href = dataUrl; link.download = `chat-message-${messageId}.png`; link.click();
-            document.body.removeChild(tempDiv);
+            link.href = dataUrl;
+            link.download = `chat-message-${messageId}.png`;
+            link.click();
+            document.body.removeChild(tempContainer);
         } else { // html
             const rawHtml = marked.parse(markdownContent);
             const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
@@ -186,9 +324,9 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
 
     const roleSpecificBubbleClasses = {
-        user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-br-lg',
-        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-bl-lg',
-        error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-bl-lg',
+        user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-lg',
+        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg',
+        error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-lg',
     };
 
     const iconAndActions = (

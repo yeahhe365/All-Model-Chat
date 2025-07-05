@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SavedChatSession } from '../types';
-import { FilePlus2, Trash2, MessageSquare, X, Search } from 'lucide-react';
-import { formatTimestamp, translations } from '../utils/appUtils';
+import { Edit3, Trash2, X, Search, Menu } from 'lucide-react';
+import { translations } from '../utils/appUtils';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -40,8 +40,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   language
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const headingIconSize = window.innerWidth < 640 ? 18 : 20;
-  const newChatIconSize = window.innerWidth < 640 ? 16 : 18;
+  const [isSearching, setIsSearching] = useState(false);
   const deleteIconSize = window.innerWidth < 640 ? 12 : 14;
 
   const filteredSessions = sessions.filter(session => {
@@ -63,7 +62,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     <aside
         className={`
           h-full flex flex-col 
-          w-60 bg-[var(--theme-bg-secondary)] 
+          w-64 bg-[var(--theme-bg-secondary)] 
           shadow-lg ease-in-out duration-300
           
           absolute top-0 left-0 z-30 transition-transform transform 
@@ -79,77 +78,86 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         aria-label={t('history_title')}
         aria-hidden={!isOpen}
     >
-      <div className="p-2 sm:p-3 flex justify-between items-center flex-shrink-0">
-        <h2 className="text-base sm:text-lg font-semibold text-[var(--theme-text-link)] flex items-center">
-          <MessageSquare size={headingIconSize} className="mr-1.5 sm:mr-2 opacity-80" />
-          {t('history_title')}
-        </h2>
+      <div className="p-2 sm:p-3 flex items-center flex-shrink-0 h-[60px] border-b border-[var(--theme-border-primary)]">
+        {isSearching ? (
+            <div className="w-full flex items-center gap-2">
+                <Search size={20} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                <input
+                    type="text"
+                    placeholder={t('history_search_placeholder')}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-transparent border-0 rounded-md py-1.5 text-sm focus:ring-0 outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)] transition-colors"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Escape') setIsSearching(false); }}
+                />
+                <button
+                    onClick={() => {
+                        setIsSearching(false);
+                        setSearchQuery('');
+                    }}
+                    className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-md"
+                    aria-label={t('history_search_clear_aria')}
+                >
+                    <X size={20} />
+                </button>
+            </div>
+        ) : (
+            <div className="w-full flex justify-between items-center">
+                <button
+                    onClick={onToggle}
+                    className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"
+                    aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}
+                >
+                    <Menu size={20} />
+                </button>
+                <button
+                    onClick={() => setIsSearching(true)}
+                    className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md"
+                    aria-label={t('history_search_aria')}
+                >
+                    <Search size={20} />
+                </button>
+            </div>
+        )}
+      </div>
+      
+      <div className="px-3 pt-3">
         <button
-          onClick={onToggle}
-          className="p-1 sm:p-1.5 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--theme-border-focus)]"
-          aria-label={t('historySidebarClose')}
-          title={t('historySidebarClose_short')}
+          onClick={onNewChat}
+          className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-[var(--theme-text-secondary)] font-medium bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] shadow-sm transition-all"
+          aria-label={t('headerNewChat_aria')}
         >
-          <X size={headingIconSize} />
+          <Edit3 size={18} />
+          <span>{t('headerNewChat')}</span>
         </button>
       </div>
 
-      <button
-        onClick={onNewChat}
-        className="flex items-center gap-1.5 sm:gap-2 w-full text-left p-2.5 text-xs sm:text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] focus:bg-[var(--theme-bg-accent)] focus:text-[var(--theme-text-accent)] transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white/80"
-        aria-label={t('headerNewChat_aria')}
-      >
-        <FilePlus2 size={newChatIconSize} />
-        <span>{t('headerNewChat')}</span>
-      </button>
-
-      <div className="p-2 sm:p-3">
-        <div className="relative">
-            <Search
-                size={16}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-tertiary)] pointer-events-none"
-            />
-            <input
-                type="text"
-                placeholder={t('history_search_placeholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[var(--theme-bg-primary)] border border-[var(--theme-border-primary)] rounded-md pl-8 pr-8 py-1.5 text-sm focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-[var(--theme-border-focus)] outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)] transition-colors"
-                aria-label={t('history_search_aria')}
-            />
-            {searchQuery && (
-                <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full"
-                    aria-label={t('history_search_clear_aria')}
-                >
-                    <X size={14} />
-                </button>
-            )}
-        </div>
+      <div className="px-4 pt-4 pb-2">
+        <h3 className="text-xs font-semibold text-[var(--theme-text-tertiary)] tracking-wider uppercase">{t('history_recent_chats')}</h3>
       </div>
 
       <div className="flex-grow overflow-y-auto custom-scrollbar">
-        {sessions.length === 0 ? (
-          <p className="p-3 sm:p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
+        {sessions.length === 0 && !searchQuery ? (
+          <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
         ) : filteredSessions.length === 0 ? (
-            <p className="p-3 sm:p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_search_no_results')}</p>
+            <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_search_no_results')}</p>
         ) : (
-          <ul className="py-1.5 sm:py-2">
+          <ul className="py-1 px-2">
             {filteredSessions.map((session) => (
               <li key={session.id}>
                 <button
                   onClick={() => onSelectSession(session.id)}
-                  className={`w-full text-left px-2.5 py-2 text-xs group transition-colors focus:outline-none focus:ring-2 focus:ring-inset
+                  className={`w-full text-left px-3 py-2 text-sm group transition-colors focus:outline-none rounded-lg my-0.5
                     ${session.id === activeSessionId 
-                      ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] focus:ring-white/50' 
-                      : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] focus:ring-[var(--theme-border-focus)]'
+                      ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' 
+                      : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'
                     }`
                   }
                   aria-current={session.id === activeSessionId ? "page" : undefined}
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-medium truncate block flex-grow pr-1.5 sm:pr-2" title={session.title}>
+                    <span className="font-medium truncate block flex-grow pr-2" title={session.title}>
                       {session.title}
                     </span>
                     <button
@@ -157,17 +165,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         e.stopPropagation(); // Prevent selecting the session
                         onDeleteSession(session.id);
                       }}
-                      className={`p-0.5 sm:p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)]
-                        ${session.id === activeSessionId ? 'hover:bg-white/20' : 'hover:bg-[var(--theme-bg-input)]'}
+                      className={`p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset
+                        ${session.id === activeSessionId ? 'hover:bg-black/10 dark:hover:bg-white/10 focus:ring-white/50' : 'hover:bg-[var(--theme-bg-input)] focus:ring-[var(--theme-border-focus)]'}
                       `}
                       aria-label={t('history_delete_aria').replace('{title}', session.title)}
                       title={t('history_delete_title')}
                     >
                       <Trash2 size={deleteIconSize} />
                     </button>
-                  </div>
-                  <div className={`text-xs mt-0.5 ${session.id === activeSessionId ? 'text-white/80' : 'text-[var(--theme-text-tertiary)]'}`}>
-                    {formatTimestamp(session.timestamp, language)}
                   </div>
                 </button>
               </li>

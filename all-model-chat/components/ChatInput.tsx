@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Send, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image } from 'lucide-react';
+import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getActiveApiConfig } from '../utils/appUtils';
@@ -33,8 +33,8 @@ interface ChatInputProps {
   isTranscriptionThinkingEnabled?: boolean;
 }
 
-const INITIAL_TEXTAREA_HEIGHT_PX = 40;
-const MAX_TEXTAREA_HEIGHT_PX = 256; 
+const INITIAL_TEXTAREA_HEIGHT_PX = 36;
+const MAX_TEXTAREA_HEIGHT_PX = 200; 
 
 const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
     let styles = {};
@@ -83,7 +83,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
     if (!target) return;
-    const currentInitialHeight = window.innerWidth < 640 ? 36 : INITIAL_TEXTAREA_HEIGHT_PX;
+    const currentInitialHeight = window.innerWidth < 640 ? 32 : INITIAL_TEXTAREA_HEIGHT_PX;
     target.style.height = 'auto'; // Reset height to get the actual scroll height
     const scrollHeight = target.scrollHeight;
     const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
@@ -311,11 +311,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const hasSuccessfullyProcessedFiles = selectedFiles.some(f => !f.error && !f.isProcessing && f.uploadState === 'active');
   const canSend = (inputText.trim() !== '' || hasSuccessfullyProcessedFiles) && !isProcessingFile && !isLoading && !isAddingById && !isModalOpen;
   
-  const attachIconSize = 22;
-  const micIconSize = 22;
-  const sendIconSize = 22;
+  const attachIconSize = 20;
+  const micIconSize = 20;
+  const sendIconSize = 20;
 
-  const buttonBaseClass = "h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
+  const buttonBaseClass = "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
   
   const attachMenuItems = [
     { label: t('attachMenu_upload'), icon: <UploadCloud size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
@@ -355,7 +355,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
             
             <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1.5 sm:p-2 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
+                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
                     <div className="relative">
                         <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
                             <Paperclip size={attachIconSize} />
@@ -377,8 +377,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
                         onKeyPress={handleKeyPress} onPaste={handlePaste}
                         placeholder={t('chatInputPlaceholder')}
-                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1 sm:py-1.5 text-lg placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
-                        style={{ height: `${window.innerWidth < 640 ? 36 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
+                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1 sm:py-1.5 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
+                        style={{ height: `${window.innerWidth < 640 ? 32 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing}
                         rows={1}
@@ -399,7 +399,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleStopRecording}
-                                    className={`${buttonBaseClass} mic-recording-animate !bg-[var(--theme-bg-danger)] !text-[var(--theme-text-danger)]`}
+                                    className={`${buttonBaseClass} mic-recording-animate !bg-[var(--theme-bg-danger)] text-[var(--theme-icon-stop)]`}
                                     aria-label={t('voiceInput_stop_aria')}
                                     title={t('voiceInput_stop_aria')}
                                 >
@@ -431,7 +431,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} /></button>
                             </>
                         ) : (
-                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('sendMessage_aria')} title={t('sendMessage_title')}><Send size={sendIconSize} /></button>
+                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('sendMessage_aria')} title={t('sendMessage_title')}><ArrowUp size={sendIconSize} /></button>
                         )}
                     </div>
                 </div>

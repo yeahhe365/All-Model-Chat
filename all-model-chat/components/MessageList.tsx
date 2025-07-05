@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { Message } from './message/Message';
-import { X, Bot } from 'lucide-react';
+import { X, Bot, Zap, ArrowUp } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 
 interface ImageZoomModalProps {
@@ -177,6 +177,12 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
   );
 };
 
+const SUGGESTIONS_KEYS = [
+  { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
+  { titleKey: 'suggestion_explain_title', descKey: 'suggestion_explain_desc' },
+  { titleKey: 'suggestion_translate_title', descKey: 'suggestion_translate_desc' },
+  { titleKey: 'suggestion_ocr_title', descKey: 'suggestion_ocr_desc' },
+];
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
@@ -221,13 +227,34 @@ export const MessageList: React.FC<MessageListProps> = ({
       aria-live="polite" 
     >
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center text-[var(--theme-text-tertiary)] p-4">
-          <div className="max-w-sm mx-auto welcome-message-animate">
-              <Bot size={48} className="mx-auto mb-4 opacity-40 text-[var(--theme-text-link)]" />
-              <h2 className="text-xl font-semibold text-[var(--theme-text-primary)] mb-1">{t('welcome_title')}</h2>
-              <p className="text-sm px-2">
-                {t('welcome_p1')} <span className="font-semibold text-[var(--theme-text-secondary)]">{t('welcome_p2')}</span> {t('welcome_p3')}
-              </p>
+        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl mx-auto px-4 pb-24">
+          <div className="w-full">
+            <h1 className="text-4xl sm:text-5xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
+              {t('welcome_greeting')}
+            </h1>
+            <div className="text-left mb-2 sm:mb-3 flex items-center gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
+              <Zap size={16} className="text-[var(--theme-text-link)]" />
+              <span>{t('welcome_suggestion_title')}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              {SUGGESTIONS_KEYS.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => onSuggestionClick && onSuggestionClick(t(s.descKey as any))}
+                  className="bg-[var(--theme-bg-tertiary)] border border-transparent hover:border-[var(--theme-border-secondary)] rounded-2xl p-4 text-left h-44 flex flex-col group justify-between hover:bg-[var(--theme-bg-input)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                  style={{ animation: `fadeInUp 0.5s ${0.2 + i * 0.1}s ease-out both` }}
+                >
+                  <div>
+                    <h3 className="font-semibold text-base text-[var(--theme-text-primary)]">{t(s.titleKey as any)}</h3>
+                    <p className="text-sm text-[var(--theme-text-secondary)] mt-1">{t(s.descKey as any)}</p>
+                  </div>
+                  <div className="flex justify-between items-center mt-auto text-[var(--theme-text-tertiary)] opacity-70 group-hover:opacity-100 transition-opacity">
+                    <span className="text-sm">{t('suggestion_prompt_label')}</span>
+                    <ArrowUp size={20} />
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       ) : (
