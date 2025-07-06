@@ -89,12 +89,12 @@ export const ONYX_THEME_COLORS: ThemeColors = {
   textSecondary: '#E0E0E0',
   textTertiary: '#8A8A91',
   textAccent: '#FFFFFF',
-  textDanger: '#F85149',
+  textDanger: '#FFFFFF',
   textLink: '#C5C5D2',
   textCode: '#C5C5D2',
   bgUserMessageText: '#FFFFFF',
   bgModelMessageText: '#FFFFFF',
-  bgErrorMessageText: '#F85149',
+  bgErrorMessageText: '#FFFFFF',
 
   // Borders
   borderPrimary: '#444654',

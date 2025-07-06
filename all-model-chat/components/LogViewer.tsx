@@ -147,6 +147,24 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
     setVisibleLevels(prev => ({ ...prev, [level]: !prev[level] }));
   };
 
+  const allApiKeys = (appSettings.apiKey || '')
+    .split('\n')
+    .map(k => k.trim())
+    .filter(Boolean);
+
+  const displayApiKeyUsage = new Map<string, number>();
+  // Add all keys from settings, with usage from the service or 0
+  allApiKeys.forEach(key => {
+    displayApiKeyUsage.set(key, apiKeyUsage.get(key) || 0);
+  });
+  // Also include keys that have usage but might not be in settings anymore
+  apiKeyUsage.forEach((count, key) => {
+    if (!displayApiKeyUsage.has(key)) {
+      displayApiKeyUsage.set(key, count);
+    }
+  });
+
+
   const filteredLogs = logs.filter(log => {
     if (!visibleLevels[log.level]) return false;
     if (filterText.trim() === '') return true;
@@ -178,12 +196,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
           </button>
         </header>
         
-        {appSettings.useCustomApiConfig && apiKeyUsage.size > 0 && (
+        {appSettings.useCustomApiConfig && displayApiKeyUsage.size > 0 && (
           <div className="p-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] text-xs flex-shrink-0">
             <h4 className="font-semibold text-sm mb-2 text-[var(--theme-text-primary)]">API Key Usage</h4>
             <div className="max-h-28 overflow-y-auto custom-scrollbar pr-2 -mr-2">
               <ul className="space-y-1">
-                {Array.from(apiKeyUsage.entries())
+                {Array.from(displayApiKeyUsage.entries())
                   .sort(([, a], [, b]) => b - a)
                   .map(([key, count]) => (
                   <li key={key} className={`flex justify-between items-center p-1.5 rounded-md ${currentChatSettings.lockedApiKey === key ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : ''}`}>
