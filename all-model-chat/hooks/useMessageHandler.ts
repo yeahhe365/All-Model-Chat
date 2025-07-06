@@ -3,6 +3,7 @@ import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatS
 import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
+import { logService } from '../services/logService';
 
 interface MessageHandlerProps {
     appSettings: AppSettings;
@@ -54,6 +55,7 @@ export const useMessageHandler = ({
 
     const handleApiError = useCallback((error: unknown, modelMessageId: string, errorPrefix: string = "Error") => {
         const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
+        logService.error(`API Error (${errorPrefix}) for message ${modelMessageId}`, { error, isAborted });
         if (isAborted) {
             setMessages(prev => prev.map(msg => 
                 msg.id === modelMessageId && msg.isLoading
@@ -87,17 +89,27 @@ export const useMessageHandler = ({
         const activeModelId = currentChatSettings.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
+        
+        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId });
 
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
         if ((isTtsModel || isImagenModel) && !textToUse.trim()) return;
-        if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { setAppFileError("Wait for files to finish processing."); return; }
+        if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
+            logService.warn("Send message blocked: files are still processing.");
+            setAppFileError("Wait for files to finish processing."); 
+            return; 
+        }
         setAppFileError(null);
 
-        if (!activeModelId) { setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() }]); setIsLoading(false); return; }
+        if (!activeModelId) { 
+            logService.error("Send message failed: No model selected.");
+            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() }]); setIsLoading(false); return; 
+        }
 
         const hasFileId = filesToUse.some(f => f.fileUri);
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
+            logService.error("Send message failed: API Key not configured.");
             setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() }]);
             setIsLoading(false);
             return;
@@ -115,6 +127,7 @@ export const useMessageHandler = ({
 
         // --- TTS Model Logic ---
         if (isTtsModel) {
+            logService.info("Handling TTS model request.");
             const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
             const modelMessageId = generateUniqueId();
             
@@ -145,6 +158,7 @@ export const useMessageHandler = ({
 
         // --- Imagen Model Logic ---
         if (isImagenModel) {
+            logService.info("Handling Imagen model request.");
             const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
             const modelMessageId = generateUniqueId();
             
@@ -186,6 +200,7 @@ export const useMessageHandler = ({
         }
 
         // ---- Regular Text Generation Logic ----
+        logService.info("Handling standard text generation request.");
 
         // If editing, find the point to slice the history.
         const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
@@ -250,6 +265,7 @@ export const useMessageHandler = ({
         const handleCompletion = (finalMessages: ChatMessage[]) => {
             let finalSettings = currentChatSettings;
             if (shouldLockKey) {
+                logService.info("Locking API key for this session due to file usage.");
                 const newSettings = { ...currentChatSettings, lockedApiKey: keyToUse };
                 setCurrentChatSettings(() => newSettings); // Update state for next render
                 finalSettings = newSettings; // Use for saving immediately
@@ -307,13 +323,14 @@ export const useMessageHandler = ({
 
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
-            console.error("TTS failed:", keyResult.error);
+            logService.error("TTS failed:", { error: keyResult.error });
             // Optionally add error feedback to the user here
             return;
         }
         const { key } = keyResult;
         
         setTtsMessageId(messageId);
+        logService.info("Requesting TTS for message", { messageId });
         // User requested Gemini 2.5 Flash TTS
         const modelId = 'models/gemini-2.5-flash-preview-tts';
         const voice = appSettings.ttsVoice;
@@ -330,7 +347,7 @@ export const useMessageHandler = ({
             ));
 
         } catch (error) {
-            console.error("TTS generation failed:", error);
+            logService.error("TTS generation failed:", { messageId, error });
             // Optionally add error feedback to the user here
         } finally {
             setTtsMessageId(null);
@@ -338,6 +355,7 @@ export const useMessageHandler = ({
     }, [appSettings, currentChatSettings, setMessages, setTtsMessageId, ttsMessageId]);
 
     const handleStopGenerating = () => {
+        logService.warn("User stopped generation.");
         if (abortControllerRef.current) {
             abortControllerRef.current.abort(); 
             setIsLoading(false);
@@ -346,6 +364,7 @@ export const useMessageHandler = ({
     };
 
     const handleEditMessage = (messageId: string) => {
+        logService.info("User initiated message edit", { messageId });
         const messageToEdit = messages.find(msg => msg.id === messageId);
         if (messageToEdit?.role === 'user') {
             if (isLoading) handleStopGenerating();
@@ -357,9 +376,13 @@ export const useMessageHandler = ({
         }
     };
 
-    const handleCancelEdit = () => { setInputText(''); setSelectedFiles([]); setEditingMessageId(null); setAppFileError(null); };
+    const handleCancelEdit = () => { 
+        logService.info("User cancelled message edit.");
+        setInputText(''); setSelectedFiles([]); setEditingMessageId(null); setAppFileError(null); 
+    };
 
     const handleDeleteMessage = (messageId: string) => {
+        logService.info("User deleted message", { messageId });
         if (messages.find(msg => msg.id === messageId)?.isLoading) handleStopGenerating();
         setMessages(prev => prev.filter(msg => msg.id !== messageId));
         if (editingMessageId === messageId) handleCancelEdit();
@@ -367,6 +390,7 @@ export const useMessageHandler = ({
     };
 
     const handleRetryMessage = async (modelMessageIdToRetry: string) => {
+        logService.info("User retrying message", { modelMessageId: modelMessageIdToRetry });
         const modelMessageIndex = messages.findIndex(m => m.id === modelMessageIdToRetry);
         if (modelMessageIndex < 1) return;
 

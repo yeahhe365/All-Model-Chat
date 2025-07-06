@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { KeyRound, Info } from 'lucide-react';
 
 interface ApiConfigSectionProps {
@@ -20,10 +20,14 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   t,
 }) => {
+  const [isApiKeyFocused, setIsApiKeyFocused] = useState(false);
+
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm custom-scrollbar";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
   const disabledInputClasses = "bg-[var(--theme-bg-secondary)] border-[var(--theme-border-primary)] opacity-60 cursor-not-allowed";
   const iconSize = window.innerWidth < 640 ? 14 : 16;
+
+  const apiKeyBlurClass = !isApiKeyFocused && useCustomApiConfig && apiKey ? 'text-transparent [text-shadow:0_0_5px_var(--theme-text-primary)]' : '';
 
   return (
     <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
@@ -64,7 +68,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               rows={3}
               value={apiKey || ''}
               onChange={(e) => setApiKey(e.target.value || null)}
-              className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} resize-y min-h-[60px]`}
+              onFocus={() => setIsApiKeyFocused(true)}
+              onBlur={() => setIsApiKeyFocused(false)}
+              className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} resize-y min-h-[60px] transition-all duration-200 ease-in-out ${apiKeyBlurClass}`}
               placeholder={useCustomApiConfig ? t('apiConfig_key_placeholder') : t('apiConfig_key_placeholder_disabled')}
               aria-label="Gemini API Key input"
               disabled={!useCustomApiConfig}

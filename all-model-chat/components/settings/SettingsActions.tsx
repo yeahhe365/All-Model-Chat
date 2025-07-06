@@ -1,12 +1,11 @@
 import React from 'react';
-import { RotateCcw, Trash2, Save, Eraser } from 'lucide-react';
+import { RotateCcw, Save, FileText } from 'lucide-react';
 
 interface SettingsActionsProps {
   onSave: () => void;
   onCancel: () => void;
   onReset: () => void;
-  onClearCache: () => void;
-  onClearHistory: () => void;
+  onOpenLogViewer: () => void;
   t: (key: string) => string;
 }
 
@@ -14,8 +13,7 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
   onSave,
   onCancel,
   onReset,
-  onClearCache,
-  onClearHistory,
+  onOpenLogViewer,
   t,
 }) => {
   const actionButtonIconSize = window.innerWidth < 640 ? 12 : 14;
@@ -36,22 +34,13 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
           <span>{t('settingsReset')}</span>
         </button>
         <button
-          onClick={onClearHistory}
+          onClick={onOpenLogViewer}
           type="button"
-          className={`${baseButtonClass} flex-1 sm:flex-initial border border-transparent text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)] hover:bg-opacity-10 focus:ring-[var(--theme-bg-danger)]`}
-          aria-label={t('settingsClearHistory_aria')}
+          className={`${baseButtonClass} flex-1 sm:flex-initial border border-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-secondary)] focus:ring-[var(--theme-border-secondary)]`}
+          aria-label="Open Application Logs (Ctrl+Alt+L)"
         >
-          <Eraser size={actionButtonIconSize} />
-          <span>{t('settingsClearHistory')}</span>
-        </button>
-        <button
-          onClick={onClearCache}
-          type="button"
-          className={`${baseButtonClass} flex-1 sm:flex-initial border border-transparent text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)] hover:bg-opacity-10 focus:ring-[var(--theme-bg-danger)]`}
-          aria-label="Clear all cached application data"
-        >
-          <Trash2 size={actionButtonIconSize} />
-          <span>{t('settingsClearCache')}</span>
+          <FileText size={actionButtonIconSize} />
+          <span>Logs</span>
         </button>
       </div>
 

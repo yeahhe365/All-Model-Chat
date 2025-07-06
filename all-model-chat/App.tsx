@@ -8,11 +8,13 @@ import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
 import { ChatInput } from './components/ChatInput';
 import { SettingsModal } from './components/SettingsModal';
+import { LogViewer } from './components/LogViewer';
 import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { getTranslator } from './utils/appUtils';
+import { logService } from './services/logService';
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
@@ -76,6 +78,7 @@ const App: React.FC = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
+  const [isLogViewerOpen, setIsLogViewerOpen] = useState<boolean>(false);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
@@ -92,6 +95,10 @@ const App: React.FC = () => {
     }));
     setIsSettingsModalOpen(false);
   };
+
+  useEffect(() => {
+    logService.info('App initialized.');
+  }, []);
   
   // Memory management for file previews
   const prevSelectedFilesRef = useRef<UploadedFile[]>([]);
@@ -162,7 +169,10 @@ const App: React.FC = () => {
         if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'n') {
             event.preventDefault();
             startNewChat(true); 
-        } 
+        } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'l') {
+            event.preventDefault();
+            setIsLogViewerOpen(prev => !prev);
+        }
         else if (event.key === 'Delete') {
             if (isSettingsModalOpen || isPreloadedMessagesModalOpen) {
                 return; 
@@ -280,6 +290,10 @@ const App: React.FC = () => {
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
         )}
+        <LogViewer
+            isOpen={isLogViewerOpen}
+            onClose={() => setIsLogViewerOpen(false)}
+        />
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onClose={() => setIsSettingsModalOpen(false)}
@@ -291,6 +305,7 @@ const App: React.FC = () => {
           modelsLoadingError={modelsLoadingError}
           onClearAllHistory={clearAllHistory}
           onClearCache={clearCacheAndReload}
+          onOpenLogViewer={() => setIsLogViewerOpen(true)}
           t={t}
         />
         <PreloadedMessagesModal

@@ -236,7 +236,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               <Zap size={16} className="text-[var(--theme-text-link)]" />
               <span>{t('welcome_suggestion_title')}</span>
             </div>
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {SUGGESTIONS_KEYS.map((s, i) => (
                 <button
                   key={i}

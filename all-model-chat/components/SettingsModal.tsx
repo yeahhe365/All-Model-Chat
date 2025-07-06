@@ -7,6 +7,7 @@ import { translations } from '../utils/appUtils';
 import { ApiConfigSection } from './settings/ApiConfigSection';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
+import { DataManagementSection } from './settings/DataManagementSection';
 import { SettingsActions } from './settings/SettingsActions';
 import { ModelOption } from '../types';
 
@@ -21,12 +22,13 @@ interface SettingsModalProps {
   modelsLoadingError: string | null;
   onClearAllHistory: () => void;
   onClearCache: () => void;
+  onOpenLogViewer: () => void;
   t: (key: keyof typeof translations) => string;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
-  onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, t
+  onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -146,14 +148,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setIsTranscriptionThinkingEnabled={(val) => updateSetting('isTranscriptionThinkingEnabled', val)}
             t={t}
           />
+          <DataManagementSection
+            onClearHistory={handleClearHistory}
+            onClearCache={handleClearCache}
+            t={t}
+          />
         </div>
         
         <SettingsActions
           onSave={handleSave}
           onCancel={handleClose}
           onReset={handleResetToDefaults}
-          onClearHistory={handleClearHistory}
-          onClearCache={handleClearCache}
+          onOpenLogViewer={onOpenLogViewer}
           t={t}
         />
       </div>

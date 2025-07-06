@@ -1,6 +1,7 @@
 import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 import { TAB_CYCLE_MODELS } from "../constants/appConstants";
+import { logService } from "./logService";
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
@@ -24,14 +25,14 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 class GeminiServiceImpl implements GeminiService {
     constructor() {
-        console.log("GeminiService created.");
+        logService.info("GeminiService created.");
     }
     
     private _getClient(apiKey: string): GoogleGenAI {
       try {
           return new GoogleGenAI({ apiKey });
       } catch (error) {
-          console.error("Failed to initialize GoogleGenAI client:", error);
+          logService.error("Failed to initialize GoogleGenAI client:", error);
           // Re-throw to be caught by the calling function
           throw error;
       }
@@ -85,9 +86,11 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async getAvailableModels(apiKeysString: string | null): Promise<ModelOption[]> {
+        logService.info('Fetching available models...');
         const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
         if (keys.length === 0) {
+            logService.warn('getAvailableModels called with no API keys.');
             throw new Error("API client not initialized. Configure API Key in settings.");
         }
         
@@ -109,22 +112,25 @@ class GeminiServiceImpl implements GeminiService {
           }
 
           if (availableModels.length > 0) {
+            logService.info(`Fetched ${availableModels.length} models successfully.`);
             return availableModels.sort((a,b) => a.name.localeCompare(b.name));
           } else {
              // If the API returns an empty list, treat it as an error so fallbacks are used.
+             logService.warn("API returned an empty list of models.");
              throw new Error("API returned an empty list of models.");
           }
         } catch (error) {
-          console.error("Failed to fetch available models from Gemini API:", error);
+          logService.error("Failed to fetch available models from Gemini API:", error);
           // Re-throw the error for the caller to handle and provide fallbacks.
           throw error;
         }
     }
 
     async uploadFile(apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
+        logService.info(`Uploading file: ${displayName}`, { mimeType, size: file.size });
         const ai = this._getApiClientOrThrow(apiKey);
         if (signal.aborted) {
-            console.log(`Upload for "${displayName}" cancelled before starting.`);
+            logService.warn(`Upload for "${displayName}" cancelled before starting.`);
             const abortError = new Error("Upload cancelled by user.");
             abortError.name = "AbortError";
             throw abortError;
@@ -143,7 +149,7 @@ class GeminiServiceImpl implements GeminiService {
             const startTime = Date.now();
             while (uploadedFile.state === 'PROCESSING' && (Date.now() - startTime) < MAX_POLLING_DURATION_MS) {
                 if (signal.aborted) {
-                    console.log(`Polling for "${displayName}" cancelled by user.`);
+                    logService.warn(`Polling for "${displayName}" cancelled by user.`);
                     // Even if cancelled, the file *might* still become active on the backend.
                     // However, from the client's perspective, we are stopping.
                     // We'll throw an error that the App.tsx can catch to mark as 'cancelled'.
@@ -151,7 +157,7 @@ class GeminiServiceImpl implements GeminiService {
                     abortError.name = "AbortError";
                     throw abortError;
                 }
-                console.log(`File "${displayName}" is PROCESSING. Polling again in ${POLLING_INTERVAL_MS / 1000}s...`);
+                logService.debug(`File "${displayName}" is PROCESSING. Polling again in ${POLLING_INTERVAL_MS / 1000}s...`);
                 await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
                 
                 if (signal.aborted) { // Check again after timeout
@@ -163,18 +169,18 @@ class GeminiServiceImpl implements GeminiService {
                 try {
                     uploadedFile = await ai.files.get({ name: uploadedFile.name });
                 } catch (pollError) {
-                    console.error(`Error polling for file status "${displayName}":`, pollError);
+                    logService.error(`Error polling for file status "${displayName}":`, pollError);
                     throw new Error(`Polling failed for file ${displayName}. Original error: ${pollError instanceof Error ? pollError.message : String(pollError)}`);
                 }
             }
 
             if (uploadedFile.state === 'PROCESSING') {
-                console.warn(`File "${displayName}" is still PROCESSING after ${MAX_POLLING_DURATION_MS / 1000}s. Returning current state.`);
+                logService.warn(`File "${displayName}" is still PROCESSING after ${MAX_POLLING_DURATION_MS / 1000}s. Returning current state.`);
             }
             
             return uploadedFile;
         } catch (error) {
-            console.error(`Failed to upload and process file "${displayName}" to Gemini API:`, error);
+            logService.error(`Failed to upload and process file "${displayName}" to Gemini API:`, error);
             // Re-throw to be handled by App.tsx
             throw error;
         }
@@ -183,14 +189,15 @@ class GeminiServiceImpl implements GeminiService {
     async getFileMetadata(apiKey: string, fileApiName: string): Promise<GeminiFile | null> {
         const ai = this._getApiClientOrThrow(apiKey);
         if (!fileApiName || !fileApiName.startsWith('files/')) {
-            console.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
+            logService.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
             throw new Error('Invalid file ID format. Expected "files/your_file_id".');
         }
         try {
+            logService.info(`Fetching metadata for file: ${fileApiName}`);
             const file = await ai.files.get({ name: fileApiName });
             return file;
         } catch (error) {
-            console.error(`Failed to get metadata for file "${fileApiName}" from Gemini API:`, error);
+            logService.error(`Failed to get metadata for file "${fileApiName}" from Gemini API:`, error);
             // Check for specific error types, e.g., not found
             if (error instanceof Error && (error.message.includes('NOT_FOUND') || error.message.includes('404'))) {
                 return null; // File not found is a valid outcome we want to handle
@@ -200,6 +207,7 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
+        logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio });
         const ai = this._getApiClientOrThrow(apiKey);
         if (!prompt.trim()) {
             throw new Error("Image generation prompt cannot be empty.");
@@ -232,12 +240,13 @@ class GeminiServiceImpl implements GeminiService {
             return images;
 
         } catch (error) {
-            console.error(`Failed to generate images with model ${modelId}:`, error);
+            logService.error(`Failed to generate images with model ${modelId}:`, error);
             throw error;
         }
     }
 
     async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
+        logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
         const ai = this._getApiClientOrThrow(apiKey);
         if (!text.trim()) {
             throw new Error("TTS input text cannot be empty.");
@@ -268,7 +277,7 @@ class GeminiServiceImpl implements GeminiService {
                 return audioData;
             }
             
-            console.error("TTS response did not contain expected audio data structure:", JSON.stringify(response, null, 2));
+            logService.error("TTS response did not contain expected audio data structure:", { response });
 
             const textError = response.text;
             if (textError) {
@@ -278,12 +287,13 @@ class GeminiServiceImpl implements GeminiService {
             throw new Error('No audio data found in TTS response.');
 
         } catch (error) {
-            console.error(`Failed to generate speech with model ${modelId}:`, error);
+            logService.error(`Failed to generate speech with model ${modelId}:`, error);
             throw error;
         }
     }
 
     async transcribeAudio(apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> {
+        logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size, thinking: isThinkingEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
 
         const audioBase64 = await fileToBase64(audioFile);
@@ -323,7 +333,7 @@ class GeminiServiceImpl implements GeminiService {
                 throw new Error("Transcription failed. The model returned an empty response.");
             }
         } catch (error) {
-            console.error("Error during audio transcription:", error);
+            logService.error("Error during audio transcription:", error);
             throw error;
         }
     }
@@ -342,6 +352,7 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
+        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget });
         const ai = this._getApiClientOrThrow(apiKey);
         const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
@@ -355,7 +366,7 @@ class GeminiServiceImpl implements GeminiService {
 
             for await (const chunkResponse of result) {
                 if (abortSignal.aborted) {
-                    console.log("Streaming aborted by signal.");
+                    logService.warn("Streaming aborted by signal.");
                     break;
                 }
                 if (chunkResponse.usageMetadata) {
@@ -377,9 +388,10 @@ class GeminiServiceImpl implements GeminiService {
                 }
             }
         } catch (error) {
-            console.error("Error sending message to Gemini (stream):", error);
+            logService.error("Error sending message to Gemini (stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
         } finally {
+            logService.info("Streaming complete.", { usage: finalUsageMetadata });
             onComplete(finalUsageMetadata);
         }
     }
@@ -396,12 +408,13 @@ class GeminiServiceImpl implements GeminiService {
         onError: (error: Error) => void,
         onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
     ): Promise<void> {
+        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget });
         const ai = this._getApiClientOrThrow(apiKey);
         const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
         
         try {
             if (abortSignal.aborted) {
-                console.log("Non-streaming call prevented by abort signal before starting.");
+                logService.warn("Non-streaming call prevented by abort signal before starting.");
                 onComplete("", "", undefined);
                 return;
             }
@@ -411,7 +424,7 @@ class GeminiServiceImpl implements GeminiService {
                 config: generationConfig
             });
             if (abortSignal.aborted) {
-                console.log("Non-streaming call completed, but aborted by signal before processing response.");
+                logService.warn("Non-streaming call completed, but aborted by signal before processing response.");
                 onComplete("", "", undefined);
                 return;
             }
@@ -432,9 +445,10 @@ class GeminiServiceImpl implements GeminiService {
             if (!fullText && response.text) {
                 fullText = response.text;
             }
+            logService.info("Non-stream call complete.", { usage: response.usageMetadata });
             onComplete(fullText, thoughtsText || undefined, response.usageMetadata);
         } catch (error) {
-            console.error("Error sending message to Gemini (non-stream):", error);
+            logService.error("Error sending message to Gemini (non-stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));
         }
     }

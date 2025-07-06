@@ -92,6 +92,7 @@ export const translations = {
 
     // Settings Modal and subcomponents
     settingsTitle: { en: 'App Settings', zh: '应用设置' },
+    settingsDataManagement: { en: 'Data Management', zh: '数据管理' },
     settingsApiConfig: { en: 'API Configuration', zh: 'API 配置' },
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
     settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },
@@ -119,6 +120,7 @@ export const translations = {
     settingsClearHistory_aria: { en: 'Clear all chat history', zh: '清空所有聊天记录' },
     settingsClearHistory_confirm: { en: 'Are you sure you want to clear ALL chat history?\n\nThis action cannot be undone.', zh: '您确定要清除所有聊天记录吗？\n\n此操作无法撤销。' },
     settingsClearCache: { en: 'Clear Cache', zh: '清除缓存' },
+    settingsClearCache_aria: { en: 'Clear all cached application data', zh: '清除所有缓存的应用数据' },
     settingsClearCache_confirm: { en: "Are you sure you want to clear all cached application data?\n\nThis will remove:\n- Saved settings\n- Chat history\n- Preloaded scenarios\n\nThis action cannot be undone.", zh: '您确定要清除所有缓存的应用程序数据吗？\n\n这将删除：\n- 已保存的设置\n- 聊天记录\n- 预加载的场景\n\n此操作无法撤销。'},
     settingsCancel: { en: 'Cancel', zh: '取消' },
     settingsSave: { en: 'Save', zh: '保存' },

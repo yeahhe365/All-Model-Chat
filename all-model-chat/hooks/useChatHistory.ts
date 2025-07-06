@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'reac
 import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
+import { logService } from '../services/logService';
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -59,21 +60,11 @@ export const useChatHistory = ({
             }
 
             const existingSession = savedSessions.find(s => s.id === sessionIdToSave);
-            let timestampToUse = Date.now();
-
-            if (existingSession) {
-                const lastExistingMessageId = existingSession.messages.length > 0 ? existingSession.messages[existingSession.messages.length - 1].id : null;
-                const lastCurrentMessageId = currentMessages.length > 0 ? currentMessages[currentMessages.length - 1].id : null;
-
-                if (existingSession.messages.length === currentMessages.length && lastExistingMessageId === lastCurrentMessageId) {
-                    timestampToUse = existingSession.timestamp;
-                }
-            }
-
+            
             const sessionToSave: SavedChatSession = {
                 id: sessionIdToSave,
                 title: generateSessionTitle(currentMessages),
-                timestamp: timestampToUse,
+                timestamp: Date.now(),
                 messages: currentMessages.map(msg => ({ 
                     ...msg,
                     files: msg.files?.map(f => {
@@ -83,6 +74,27 @@ export const useChatHistory = ({
                 })),
                 settings: currentSettingsToSave,
             };
+
+            if (existingSession) {
+                const areMessagesSame = 
+                    existingSession.messages.length === sessionToSave.messages.length &&
+                    existingSession.messages.every((msg, i) => msg.id === sessionToSave.messages[i].id);
+            
+                const areSettingsSame = JSON.stringify(existingSession.settings) === JSON.stringify(sessionToSave.settings);
+            
+                if (areMessagesSame && areSettingsSame) {
+                    // No need to log or save if nothing has changed. This breaks the loop.
+                    return;
+                }
+    
+                // To be less aggressive with re-ordering, let's reuse the old timestamp
+                // if only settings have changed, but not messages.
+                if (areMessagesSame) {
+                    sessionToSave.timestamp = existingSession.timestamp;
+                }
+            }
+            
+            logService.debug(`Saving session ${sessionIdToSave}`, { isNew: isNewSessionInHistory, messageCount: currentMessages.length });
 
             setSavedSessions(prevSessions => {
                 const existingIndex = prevSessions.findIndex(s => s.id === sessionIdToSave);
@@ -110,6 +122,7 @@ export const useChatHistory = ({
     }, [savedSessions, activeSessionId, sessionSaveTimeoutRef, setActiveSessionId]);
 
     const startNewChat = useCallback((saveCurrent: boolean = true) => {
+        logService.info('Starting new chat.', { saveCurrent });
         if (saveCurrent && activeSessionId && messages.length > 0) {
             saveCurrentChatSession(messages, activeSessionId, currentChatSettings);
         }
@@ -141,6 +154,7 @@ export const useChatHistory = ({
     }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setInputText, setSelectedFiles, setEditingMessageId, userScrolledUp]);
     
     const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
+        logService.info(`Loading chat session: ${sessionId}`);
         const sessionsToSearch = allSessions || savedSessions;
         const sessionToLoad = sessionsToSearch.find(s => s.id === sessionId);
         if (sessionToLoad) {
@@ -164,7 +178,7 @@ export const useChatHistory = ({
             setEditingMessageId(null);
             userScrolledUp.current = false;
         } else {
-            console.warn(`Session ${sessionId} not found. Starting new chat.`);
+            logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat(false);
         }
     }, [savedSessions, isLoading, abortControllerRef, setMessages, setCurrentChatSettings, setActiveSessionId, setInputText, setSelectedFiles, setEditingMessageId, userScrolledUp, startNewChat]);
@@ -172,6 +186,7 @@ export const useChatHistory = ({
     // Initial data loading
     useEffect(() => {
         try {
+            logService.info('Attempting to load chat history from localStorage.');
             const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
             const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
             sessions.sort((a,b) => b.timestamp - a.timestamp);
@@ -181,12 +196,14 @@ export const useChatHistory = ({
             if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
                 loadChatSession(storedActiveId, sessions);
             } else if (sessions.length > 0) {
+                logService.info('No active session ID, loading most recent session.');
                 loadChatSession(sessions[0].id, sessions);
             } else {
+                logService.info('No history found, starting fresh chat.');
                 startNewChat(false);
             }
         } catch (error) {
-            console.error("Error loading chat history:", error);
+            logService.error("Error loading chat history:", error);
             startNewChat(false);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,6 +219,7 @@ export const useChatHistory = ({
     }, [messages, activeSessionId, currentChatSettings, saveCurrentChatSession, savedSessions]);
     
     const handleDeleteChatHistorySession = (sessionId: string) => {
+        logService.info(`Deleting session: ${sessionId}`);
         setSavedSessions(prev => {
             const updated = prev.filter(s => s.id !== sessionId);
             const sessionsForStorage = updated.slice(0, 3);
@@ -219,6 +237,7 @@ export const useChatHistory = ({
     };
 
     const clearAllHistory = useCallback(() => {
+        logService.warn('User clearing all chat history.');
         if (sessionSaveTimeoutRef.current) {
             clearTimeout(sessionSaveTimeoutRef.current);
             sessionSaveTimeoutRef.current = null;
