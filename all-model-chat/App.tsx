@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings, PreloadedMessage, SavedScenario, UploadedFile } from './types';
+import { AppSettings, PreloadedMessage, SavedScenario, UploadedFile, ChatSettings } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
@@ -24,8 +24,8 @@ const App: React.FC = () => {
       messages,
       isLoading,
       currentChatSettings,
-      inputText,
       setInputText,
+      inputText,
       selectedFiles,
       setSelectedFiles,
       editingMessageId,
@@ -293,6 +293,8 @@ const App: React.FC = () => {
         <LogViewer
             isOpen={isLogViewerOpen}
             onClose={() => setIsLogViewerOpen(false)}
+            appSettings={appSettings}
+            currentChatSettings={currentChatSettings}
         />
         <SettingsModal
           isOpen={isSettingsModalOpen}

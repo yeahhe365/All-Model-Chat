@@ -1,7 +1,8 @@
 // components/LogViewer.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, LogLevel, logService } from '../services/logService';
-import { X, Trash2, ChevronDown } from 'lucide-react';
+import { AppSettings, ChatSettings } from '../types';
+import { X, Trash2, ChevronDown, CheckCircle } from 'lucide-react';
 
 const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   INFO: 'text-blue-400',
@@ -9,6 +10,33 @@ const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   ERROR: 'text-red-400',
   DEBUG: 'text-gray-500',
 };
+
+const ObfuscatedApiKey: React.FC<{ apiKey: string }> = ({ apiKey }) => {
+  const [isRevealed, setIsRevealed] = useState(false);
+  
+  if (!apiKey) return null;
+  
+  const prefix = apiKey.slice(0, -6);
+  const suffix = apiKey.slice(-6);
+
+  return (
+    <span 
+      className="inline-flex items-center cursor-pointer group"
+      onMouseDown={() => setIsRevealed(true)}
+      onMouseUp={() => setIsRevealed(false)}
+      onMouseLeave={() => setIsRevealed(false)}
+      onTouchStart={() => setIsRevealed(true)}
+      onTouchEnd={() => setIsRevealed(false)}
+      title="Click and hold to reveal full key"
+    >
+      <span className={`transition-all duration-200 ${isRevealed ? 'blur-none' : 'blur-sm'}`}>
+        {prefix}
+      </span>
+      <span>{suffix}</span>
+    </span>
+  );
+};
+
 
 const LogRow: React.FC<{ log: LogEntry }> = React.memo(({ log }) => {
   const [isDataExpanded, setIsDataExpanded] = useState(false);
@@ -45,10 +73,13 @@ const LogRow: React.FC<{ log: LogEntry }> = React.memo(({ log }) => {
 interface LogViewerProps {
   isOpen: boolean;
   onClose: () => void;
+  appSettings: AppSettings;
+  currentChatSettings: ChatSettings;
 }
 
-export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
+export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettings, currentChatSettings }) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [apiKeyUsage, setApiKeyUsage] = useState<Map<string, number>>(new Map());
   const [filterText, setFilterText] = useState('');
   const [visibleLevels, setVisibleLevels] = useState<Record<LogLevel, boolean>>({
     INFO: true,
@@ -76,6 +107,15 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
     const unsubscribe = logService.subscribe(setLogs);
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isOpen && appSettings.useCustomApiConfig) {
+        const unsubscribe = logService.subscribeToApiKeys(setApiKeyUsage);
+        return () => unsubscribe();
+    } else if (!isOpen) {
+        setApiKeyUsage(new Map());
+    }
+  }, [isOpen, appSettings.useCustomApiConfig]);
 
   useEffect(() => {
     if (autoScroll) {
@@ -137,6 +177,32 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose }) => {
             <X size={22} />
           </button>
         </header>
+        
+        {appSettings.useCustomApiConfig && apiKeyUsage.size > 0 && (
+          <div className="p-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] text-xs flex-shrink-0">
+            <h4 className="font-semibold text-sm mb-2 text-[var(--theme-text-primary)]">API Key Usage</h4>
+            <div className="max-h-28 overflow-y-auto custom-scrollbar pr-2 -mr-2">
+              <ul className="space-y-1">
+                {Array.from(apiKeyUsage.entries())
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([key, count]) => (
+                  <li key={key} className={`flex justify-between items-center p-1.5 rounded-md ${currentChatSettings.lockedApiKey === key ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : ''}`}>
+                    <code className="text-sm text-[var(--theme-text-secondary)] font-mono flex items-center">
+                        <ObfuscatedApiKey apiKey={key} />
+                        {currentChatSettings.lockedApiKey === key && 
+                          <span className="text-xs font-bold text-[var(--theme-text-success)] ml-2 flex items-center gap-1">
+                            <CheckCircle size={12}/>
+                            (Active)
+                          </span>
+                        }
+                    </code>
+                    <span className="font-semibold text-sm text-[var(--theme-text-primary)]">{count} calls</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
         
         <div className="p-2 sm:p-3 border-b border-[var(--theme-border-secondary)] flex flex-wrap items-center gap-x-4 gap-y-2 flex-shrink-0">
           <input

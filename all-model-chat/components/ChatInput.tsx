@@ -33,8 +33,8 @@ interface ChatInputProps {
   isTranscriptionThinkingEnabled?: boolean;
 }
 
-const INITIAL_TEXTAREA_HEIGHT_PX = 36;
-const MAX_TEXTAREA_HEIGHT_PX = 200; 
+const INITIAL_TEXTAREA_HEIGHT_PX = 28;
+const MAX_TEXTAREA_HEIGHT_PX = 150; 
 
 const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
     let styles = {};
@@ -83,7 +83,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
     if (!target) return;
-    const currentInitialHeight = window.innerWidth < 640 ? 32 : INITIAL_TEXTAREA_HEIGHT_PX;
+    const currentInitialHeight = window.innerWidth < 640 ? 24 : INITIAL_TEXTAREA_HEIGHT_PX;
     target.style.height = 'auto'; // Reset height to get the actual scroll height
     const scrollHeight = target.scrollHeight;
     const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
@@ -328,11 +328,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [isRecording]);
 
-  const attachIconSize = 20;
-  const micIconSize = 20;
-  const sendIconSize = 20;
+  const attachIconSize = 18;
+  const micIconSize = 18;
+  const sendIconSize = 18;
 
-  const buttonBaseClass = "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
+  const buttonBaseClass = "h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
   
   const attachMenuItems = [
     { label: t('attachMenu_upload'), icon: <UploadCloud size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
@@ -372,96 +372,103 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
             
             <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
-                <div className="flex items-center gap-2 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
-                    <div className="relative">
-                        <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
-                            <Paperclip size={attachIconSize} />
-                        </button>
-                        {isAttachMenuOpen && (
-                            <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
-                                {attachMenuItems.map(item => (
-                                    <button key={item.label} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem">
-                                        {item.icon} <span>{item.label}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                        <input type="file" ref={imageInputRef} onChange={handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                    </div>
-
+                <div className="flex flex-col gap-1 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-2 py-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
                     <textarea
                         ref={textareaRef} value={inputText} onChange={e => setInputText(e.target.value)}
                         onKeyPress={handleKeyPress} onPaste={handlePaste}
                         placeholder={t('chatInputPlaceholder')}
-                        className="flex-grow w-full bg-transparent border-0 resize-none px-1 py-1 sm:py-1.5 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
-                        style={{ height: `${window.innerWidth < 640 ? 32 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
+                        className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
+                        style={{ height: `${window.innerWidth < 640 ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing || isWaitingForUpload}
                         rows={1}
                     />
+                    <div className="flex items-center justify-between w-full">
+                        {/* Left-side buttons */}
+                        <div className="flex items-center gap-1">
+                             <div className="relative">
+                                <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
+                                    <Paperclip size={attachIconSize} />
+                                </button>
+                                {isAttachMenuOpen && (
+                                    <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
+                                        {attachMenuItems.map(item => (
+                                            <button key={item.label} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem">
+                                                {item.icon} <span>{item.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                                <input type="file" ref={imageInputRef} onChange={handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                            </div>
+                        </div>
 
-                    <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-                         {isRecording ? (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={handleCancelRecording}
-                                    className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]`}
-                                    aria-label={t('cancelRecording_aria')}
-                                    title={t('cancelRecording_aria')}
-                                >
-                                    <X size={micIconSize} />
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleStopRecording}
-                                    className={`${buttonBaseClass} mic-recording-animate !bg-[var(--theme-bg-danger)] text-[var(--theme-icon-stop)]`}
-                                    aria-label={t('voiceInput_stop_aria')}
-                                    title={t('voiceInput_stop_aria')}
-                                >
-                                    <Mic size={micIconSize} />
-                                </button>
-                            </>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={handleStartRecording}
-                                disabled={isAddingById || isModalOpen || isTranscribing || isWaitingForUpload}
-                                className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
-                                aria-label={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
-                                title={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
-                            >
-                                {isTranscribing ? (
-                                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
-                                ) : (
-                                    <Mic size={micIconSize} />
-                                )}
-                            </button>
-                        )}
-                        
-                        {isLoading ? ( 
-                            <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Ban size={sendIconSize} /></button>
-                        ) : isEditing ? (
-                            <>
-                                <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} /></button>
-                                <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} /></button>
-                            </>
-                        ) : (
-                            <button 
-                                type="submit" 
-                                disabled={!canSend || isWaitingForUpload} 
-                                className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} 
-                                aria-label={isWaitingForUpload ? "Waiting for upload..." : t('sendMessage_aria')} 
-                                title={isWaitingForUpload ? "Waiting for upload to complete before sending" : t('sendMessage_title')}
-                            >
-                                {isWaitingForUpload ? (
-                                    <Loader2 size={sendIconSize} className="animate-spin" />
-                                ) : (
-                                    <ArrowUp size={sendIconSize} />
-                                )}
-                            </button>
-                        )}
+                        {/* Right-side buttons */}
+                        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+                            {isRecording ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleStopRecording}
+                                        className={`${buttonBaseClass} mic-recording-animate !bg-[var(--theme-bg-danger)] text-[var(--theme-icon-stop)]`}
+                                        aria-label={t('voiceInput_stop_aria')}
+                                        title={t('voiceInput_stop_aria')}
+                                    >
+                                        <Mic size={micIconSize} />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelRecording}
+                                        className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                                        aria-label={t('cancelRecording_aria')}
+                                        title={t('cancelRecording_aria')}
+                                    >
+                                        <X size={micIconSize} />
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={handleStartRecording}
+                                        disabled={isLoading || isEditing || isAddingById || isModalOpen || isTranscribing || isWaitingForUpload}
+                                        className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                                        aria-label={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
+                                        title={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
+                                    >
+                                        {isTranscribing ? (
+                                            <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
+                                        ) : (
+                                            <Mic size={micIconSize} />
+                                        )}
+                                    </button>
+
+                                    {isLoading ? ( 
+                                        <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Ban size={sendIconSize} /></button>
+                                    ) : isEditing ? (
+                                        <>
+                                            <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} /></button>
+                                            <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} /></button>
+                                        </>
+                                    ) : (
+                                        <button 
+                                            type="submit" 
+                                            disabled={!canSend || isWaitingForUpload} 
+                                            className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} 
+                                            aria-label={isWaitingForUpload ? "Waiting for upload..." : t('sendMessage_aria')} 
+                                            title={isWaitingForUpload ? "Waiting for upload to complete before sending" : t('sendMessage_title')}
+                                        >
+                                            {isWaitingForUpload ? (
+                                                <Loader2 size={sendIconSize} className="animate-spin" />
+                                            ) : (
+                                                <ArrowUp size={sendIconSize} />
+                                            )}
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             </form>

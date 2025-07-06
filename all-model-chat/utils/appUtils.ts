@@ -1,6 +1,7 @@
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings, ChatSettings } from '../types';
 import { ThemeColors } from '../constants/themeConstants';
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
+import { logService } from '../services/logService';
 
 export const translations = {
     // App.tsx
@@ -221,7 +222,14 @@ export const getKeyForRequest = (
     appSettings: AppSettings,
     currentChatSettings: ChatSettings
 ): { key: string; isNewKey: boolean } | { error: string } => {
+    const logUsage = (key: string) => {
+        if (appSettings.useCustomApiConfig) {
+            logService.recordApiKeyUsage(key);
+        }
+    };
+
     if (currentChatSettings.lockedApiKey) {
+        logUsage(currentChatSettings.lockedApiKey);
         return { key: currentChatSettings.lockedApiKey, isNewKey: false };
     }
 
@@ -235,6 +243,7 @@ export const getKeyForRequest = (
     }
 
     const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+    logUsage(randomKey);
     return { key: randomKey, isNewKey: true };
 };
 
@@ -276,15 +285,6 @@ export const generateThemeCssVariables = (colors: ThemeColors): string => {
   css += `  --markdown-table-border: ${colors.borderSecondary};\n`;
   css += '}';
   return css;
-};
-
-export const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
 };
 
 export const buildContentParts = (text: string, files: UploadedFile[] | undefined): ContentPart[] => {

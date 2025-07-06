@@ -11,10 +11,13 @@ export interface LogEntry {
 }
 
 type LogListener = (logs: LogEntry[]) => void;
+type ApiKeyListener = (usage: Map<string, number>) => void;
 
 class LogServiceImpl {
   private logs: LogEntry[] = [];
   private listeners: Set<LogListener> = new Set();
+  private apiKeyUsage: Map<string, number> = new Map();
+  private apiKeyListeners: Set<ApiKeyListener> = new Set();
   private maxLogs = 500;
   private idCounter = 0;
 
@@ -43,6 +46,13 @@ class LogServiceImpl {
       listener([...this.logs]);
     }
   }
+
+  private notifyApiKeyListeners() {
+    const listenersToNotify = Array.from(this.apiKeyListeners);
+    for (const listener of listenersToNotify) {
+      listener(new Map(this.apiKeyUsage));
+    }
+  }
   
   public info(message: string, data?: any) {
     this.addLog('INFO', message, data);
@@ -60,6 +70,13 @@ class LogServiceImpl {
     this.addLog('DEBUG', message, data);
   }
 
+  public recordApiKeyUsage(apiKey: string) {
+    if (!apiKey) return;
+    const currentCount = this.apiKeyUsage.get(apiKey) || 0;
+    this.apiKeyUsage.set(apiKey, currentCount + 1);
+    this.notifyApiKeyListeners();
+  }
+
   public subscribe(listener: LogListener): () => void {
     this.listeners.add(listener);
     // Immediately provide the current logs to the new subscriber
@@ -70,14 +87,25 @@ class LogServiceImpl {
     };
   }
 
+  public subscribeToApiKeys(listener: ApiKeyListener): () => void {
+    this.apiKeyListeners.add(listener);
+    listener(new Map(this.apiKeyUsage)); // Immediately provide current usage
+
+    return () => {
+      this.apiKeyListeners.delete(listener);
+    };
+  }
+
   public getLogs(): LogEntry[] {
     return [...this.logs];
   }
 
   public clearLogs() {
     this.logs = [];
+    this.apiKeyUsage.clear();
     this.notifyListeners();
-    this.info('Logs cleared.');
+    this.notifyApiKeyListeners();
+    this.info('Logs and stats cleared.');
   }
 }
 

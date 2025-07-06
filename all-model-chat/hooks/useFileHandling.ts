@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 
@@ -82,13 +82,10 @@ export const useFileHandling = ({
             setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                try {
-                    const dataUrl = await fileToDataUrl(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
-                } catch (error) {
-                    logService.error("Error creating data URL for preview", { fileName: file.name, error });
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, error: "Failed to create preview." } : f));
-                }
+                // Use URL.createObjectURL for efficient, memory-safe previews.
+                // The blob URL is revoked automatically by cleanup effects in App.tsx/useChat.ts.
+                const dataUrl = URL.createObjectURL(file);
+                setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
             }
 
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
