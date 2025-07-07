@@ -65,32 +65,13 @@ export const useChatHistory = ({
                 id: sessionIdToSave,
                 title: generateSessionTitle(currentMessages),
                 timestamp: Date.now(),
-                messages: currentMessages.map(msg => {
-                    const messageToSave = { ...msg };
-
-                    // If a message is still loading when we save, mark it as interrupted.
-                    if (messageToSave.isLoading) {
-                        messageToSave.isLoading = false;
-                        const interruptedText = "\n\n[Response was interrupted]";
-                        if (messageToSave.content) {
-                            messageToSave.content += interruptedText;
-                        } else {
-                            messageToSave.content = interruptedText;
-                        }
-                        // Ensure role is 'model' even if it was loading as something else.
-                        messageToSave.role = 'model'; 
-                    }
-                    
-                    // Remove non-serializable AbortController from files
-                    if (messageToSave.files) {
-                        messageToSave.files = messageToSave.files.map(f => {
-                            const { abortController, ...rest } = f;
-                            return rest;
-                        });
-                    }
-
-                    return messageToSave;
-                }),
+                messages: currentMessages.map(msg => ({ 
+                    ...msg,
+                    files: msg.files?.map(f => {
+                        const { abortController, ...rest } = f; 
+                        return rest;
+                    })
+                })),
                 settings: currentSettingsToSave,
             };
 
