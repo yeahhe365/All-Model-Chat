@@ -4,6 +4,8 @@ import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../consta
 import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
 import { logService } from '../services/logService';
 
+const MAX_SESSIONS_TO_STORE = 50;
+
 interface ChatHistoryProps {
     appSettings: AppSettings;
     messages: ChatMessage[];
@@ -107,8 +109,8 @@ export const useChatHistory = ({
                 }
                 updatedSessions.sort((a,b) => b.timestamp - a.timestamp);
 
-                // Prune sessions for localStorage, keeping only the last 3
-                const sessionsForStorage = updatedSessions.slice(0, 3);
+                // Prune sessions for localStorage, keeping only the last 50
+                const sessionsForStorage = updatedSessions.slice(0, MAX_SESSIONS_TO_STORE);
                 localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
 
                 return updatedSessions; // Return the full list to state for the current app session
@@ -222,7 +224,7 @@ export const useChatHistory = ({
         logService.info(`Deleting session: ${sessionId}`);
         setSavedSessions(prev => {
             const updated = prev.filter(s => s.id !== sessionId);
-            const sessionsForStorage = updated.slice(0, 3);
+            const sessionsForStorage = updated.slice(0, MAX_SESSIONS_TO_STORE);
             localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
             return updated;
         });
