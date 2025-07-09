@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, PreloadedMessage, SavedScenario, UploadedFile, ChatSettings } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
@@ -7,14 +7,22 @@ import { AVAILABLE_THEMES } from './constants/themeConstants';
 import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
 import { ChatInput } from './components/ChatInput';
-import { SettingsModal } from './components/SettingsModal';
-import { LogViewer } from './components/LogViewer';
-import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { getTranslator } from './utils/appUtils';
 import { logService } from './services/logService';
+
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const LogViewer = lazy(() => import('./components/LogViewer').then(module => ({ default: module.LogViewer })));
+const PreloadedMessagesModal = lazy(() => import('./components/PreloadedMessagesModal').then(module => ({ default: module.PreloadedMessagesModal })));
+
+const SuspenseFallback = () => (
+  <div className="suspense-fallback">
+    <div className="suspense-spinner"></div>
+  </div>
+);
+
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
@@ -290,36 +298,46 @@ const App: React.FC = () => {
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
         )}
-        <LogViewer
-            isOpen={isLogViewerOpen}
-            onClose={() => setIsLogViewerOpen(false)}
-            appSettings={appSettings}
-            currentChatSettings={currentChatSettings}
-        />
-        <SettingsModal
-          isOpen={isSettingsModalOpen}
-          onClose={() => setIsSettingsModalOpen(false)}
-          currentSettings={appSettings}
-          availableModels={apiModels}
-          availableThemes={AVAILABLE_THEMES}
-          onSave={handleSaveSettings}
-          isModelsLoading={isModelsLoading}
-          modelsLoadingError={modelsLoadingError}
-          onClearAllHistory={clearAllHistory}
-          onClearCache={clearCacheAndReload}
-          onOpenLogViewer={() => setIsLogViewerOpen(true)}
-          t={t}
-        />
-        <PreloadedMessagesModal
-          isOpen={isPreloadedMessagesModalOpen}
-          onClose={() => setIsPreloadedMessagesModalOpen(false)}
-          savedScenarios={savedScenarios}
-          onSaveAllScenarios={handleSaveAllScenarios}
-          onLoadScenario={handleLoadPreloadedScenario}
-          onImportScenario={handleImportPreloadedScenario}
-          onExportScenario={handleExportPreloadedScenario}
-          t={t}
-        />
+        
+        <Suspense fallback={<SuspenseFallback />}>
+          {isLogViewerOpen && (
+            <LogViewer
+                isOpen={isLogViewerOpen}
+                onClose={() => setIsLogViewerOpen(false)}
+                appSettings={appSettings}
+                currentChatSettings={currentChatSettings}
+            />
+          )}
+          {isSettingsModalOpen && (
+            <SettingsModal
+              isOpen={isSettingsModalOpen}
+              onClose={() => setIsSettingsModalOpen(false)}
+              currentSettings={appSettings}
+              availableModels={apiModels}
+              availableThemes={AVAILABLE_THEMES}
+              onSave={handleSaveSettings}
+              isModelsLoading={isModelsLoading}
+              modelsLoadingError={modelsLoadingError}
+              onClearAllHistory={clearAllHistory}
+              onClearCache={clearCacheAndReload}
+              onOpenLogViewer={() => setIsLogViewerOpen(true)}
+              t={t}
+            />
+          )}
+          {isPreloadedMessagesModalOpen && (
+            <PreloadedMessagesModal
+              isOpen={isPreloadedMessagesModalOpen}
+              onClose={() => setIsPreloadedMessagesModalOpen(false)}
+              savedScenarios={savedScenarios}
+              onSaveAllScenarios={handleSaveAllScenarios}
+              onLoadScenario={handleLoadPreloadedScenario}
+              onImportScenario={handleImportPreloadedScenario}
+              onExportScenario={handleExportPreloadedScenario}
+              t={t}
+            />
+          )}
+        </Suspense>
+
         <MessageList
           messages={messages}
           messagesEndRef={messagesEndRef}
