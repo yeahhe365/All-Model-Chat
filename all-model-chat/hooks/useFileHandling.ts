@@ -1,50 +1,9 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
-
-const createImageThumbnail = (file: File, maxSize: number = 512): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            if (!e.target?.result) {
-                return reject(new Error("FileReader did not return a result."));
-            }
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let { width, height } = img;
-
-                if (width > height) {
-                    if (width > maxSize) {
-                        height = Math.round(height * (maxSize / width));
-                        width = maxSize;
-                    }
-                } else {
-                    if (height > maxSize) {
-                        width = Math.round(width * (maxSize / height));
-                        height = maxSize;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                    return reject(new Error('Could not get canvas context'));
-                }
-                ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL(file.type)); // Use original mime type
-            };
-            img.onerror = (err) => reject(err);
-            img.src = e.target.result as string;
-        };
-        reader.onerror = (err) => reject(err);
-        reader.readAsDataURL(file);
-    });
-};
 
 interface FileHandlingProps {
     appSettings: AppSettings;
@@ -102,6 +61,8 @@ export const useFileHandling = ({
             let effectiveMimeType = file.type;
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
+            // If the MIME type is missing/generic but it has a known text-based extension,
+            // we'll treat it as text/plain. This is the fix.
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                 effectiveMimeType = 'text/plain';
                 logService.debug(`Assigned mimeType 'text/plain' to file ${file.name} based on extension.`);
@@ -121,11 +82,12 @@ export const useFileHandling = ({
             setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
+                // Use a base64 data URL for durable previews that can be saved in localStorage.
                 try {
-                    const dataUrl = await createImageThumbnail(file);
+                    const dataUrl = await fileToDataUrl(file);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
                 } catch (e) {
-                    logService.error('Error creating data URL for preview thumbnail', { error: e });
+                    logService.error('Error creating data URL for preview', { error: e });
                 }
             }
 

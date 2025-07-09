@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatHistoryItem, ChatMessage, ChatSettings as IndividualChatSettings, SavedScenario } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
 import { createChatHistoryForApi, generateUniqueId } from '../utils/appUtils';
@@ -11,7 +11,9 @@ import { useChatHistory } from './useChatHistory';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { useMessageHandler } from './useMessageHandler';
 
-export const useChat = (appSettings: AppSettings) => {
+type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
+
+export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedInputSetter) => {
     // 1. Central state management
     const state = useChatState();
     const { 
@@ -29,7 +31,7 @@ export const useChat = (appSettings: AppSettings) => {
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
     
     // 3. History and Session Management
-    const historyHandler = useChatHistory({ ...state, appSettings });
+    const historyHandler = useChatHistory({ ...state, appSettings, setCommandedInput });
     const { activeSessionId, savedSessions, clearAllHistory } = historyHandler;
 
     // 4. File and Drag & Drop Management
@@ -43,7 +45,8 @@ export const useChat = (appSettings: AppSettings) => {
         ...state,
         ...historyHandler,
         appSettings,
-        activeSessionId
+        activeSessionId,
+        setCommandedInput
     });
 
     // Memory management for file previews in messages (using blob URLs)
@@ -126,7 +129,7 @@ export const useChat = (appSettings: AppSettings) => {
             state.abortControllerRef.current.abort();
         }
         setMessages([]); 
-        state.setInputText('');
+        setCommandedInput({ text: '', id: Date.now() });
         state.setSelectedFiles([]);
         state.setEditingMessageId(null);
         state.setAppFileError(null);
@@ -135,7 +138,7 @@ export const useChat = (appSettings: AppSettings) => {
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [isLoading, state.abortControllerRef, setMessages, state.setInputText, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
+    }, [isLoading, state.abortControllerRef, setMessages, setCommandedInput, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
 
     const clearCacheAndReload = useCallback(() => {
         // This function from useChatHistory handles clearing pending saves,

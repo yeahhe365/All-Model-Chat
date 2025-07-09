@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings, PreloadedMessage, SavedScenario, UploadedFile, ChatSettings } from './types';
+import { AppSettings } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
@@ -13,33 +13,26 @@ import { useChat } from './hooks/useChat';
 import { getTranslator } from './utils/appUtils';
 import { logService } from './services/logService';
 
-const SettingsModal = lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
-const LogViewer = lazy(() => import('./components/LogViewer').then(module => ({ default: module.LogViewer })));
-const PreloadedMessagesModal = lazy(() => import('./components/PreloadedMessagesModal').then(module => ({ default: module.PreloadedMessagesModal })));
-
-const SuspenseFallback = () => (
-  <div className="suspense-fallback">
-    <div className="suspense-spinner"></div>
-  </div>
-);
-
+// Lazy load modals for code splitting and better initial performance
+const SettingsModal = React.lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
+const LogViewer = React.lazy(() => import('./components/LogViewer').then(module => ({ default: module.LogViewer })));
+const PreloadedMessagesModal = React.lazy(() => import('./components/PreloadedMessagesModal').then(module => ({ default: module.PreloadedMessagesModal })));
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = getTranslator(language);
+  
+  // State for imperatively controlling the ChatInput component's text
+  const [commandedInput, setCommandedInput] = useState<{ text: string; id: number } | null>(null);
 
   const {
       messages,
       isLoading,
       currentChatSettings,
-      setInputText,
-      inputText,
       selectedFiles,
       setSelectedFiles,
       editingMessageId,
-      setEditingMessageId,
       appFileError,
-      setAppFileError,
       isAppProcessingFile,
       savedSessions,
       activeSessionId,
@@ -81,7 +74,7 @@ const App: React.FC = () => {
       handleTextToSpeech,
       ttsMessageId,
       setCurrentChatSettings
-  } = useChat(appSettings);
+  } = useChat(appSettings, setCommandedInput);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
@@ -149,14 +142,12 @@ const App: React.FC = () => {
   };
   
   const handleSuggestionClick = (text: string) => {
-    setInputText(text);
+    setCommandedInput({ text, id: Date.now() });
     // Focus the textarea and move cursor to the end after a tick to ensure state update has rendered
     setTimeout(() => {
         const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
         if (textarea) {
             textarea.focus();
-            const textLength = textarea.value.length;
-            textarea.setSelectionRange(textLength, textLength);
         }
     }, 0);
   };
@@ -298,8 +289,7 @@ const App: React.FC = () => {
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
         )}
-        
-        <Suspense fallback={<SuspenseFallback />}>
+        <Suspense fallback={null}>
           {isLogViewerOpen && (
             <LogViewer
                 isOpen={isLogViewerOpen}
@@ -337,7 +327,6 @@ const App: React.FC = () => {
             />
           )}
         </Suspense>
-
         <MessageList
           messages={messages}
           messagesEndRef={messagesEndRef}
@@ -357,11 +346,11 @@ const App: React.FC = () => {
         />
         <ChatInput
           appSettings={appSettings}
-          inputText={inputText}
-          setInputText={setInputText}
+          commandedInput={commandedInput}
+          onMessageSent={() => setCommandedInput(null)}
           selectedFiles={selectedFiles}
           setSelectedFiles={setSelectedFiles}
-          onSendMessage={() => handleSendMessage()}
+          onSendMessage={(text) => handleSendMessage({ text })}
           isLoading={isLoading}
           isEditing={!!editingMessageId}
           onStopGenerating={handleStopGenerating}

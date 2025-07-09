@@ -29,19 +29,21 @@ const applyImageCachePolicy = (sessions: SavedChatSession[]): SavedChatSession[]
     return sessionsCopy;
 };
 
+type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
+
 interface ChatHistoryProps {
     appSettings: AppSettings;
     messages: ChatMessage[];
     setMessages: Dispatch<SetStateAction<ChatMessage[]>>;
     currentChatSettings: IndividualChatSettings;
     setCurrentChatSettings: Dispatch<SetStateAction<IndividualChatSettings>>;
-    setInputText: Dispatch<SetStateAction<string>>;
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
     isLoading: boolean;
     abortControllerRef: React.MutableRefObject<AbortController | null>;
     sessionSaveTimeoutRef: React.MutableRefObject<number | null>;
     userScrolledUp: React.MutableRefObject<boolean>;
+    setCommandedInput: CommandedInputSetter;
 }
 
 export const useChatHistory = ({
@@ -50,13 +52,13 @@ export const useChatHistory = ({
     setMessages,
     currentChatSettings,
     setCurrentChatSettings,
-    setInputText,
     setSelectedFiles,
     setEditingMessageId,
     isLoading,
     abortControllerRef,
     sessionSaveTimeoutRef,
     userScrolledUp,
+    setCommandedInput,
 }: ChatHistoryProps) => {
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -166,14 +168,14 @@ export const useChatHistory = ({
 
         setActiveSessionId(null);
         localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-        setInputText('');
+        setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]);
         setEditingMessageId(null);
         userScrolledUp.current = false;
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setInputText, setSelectedFiles, setEditingMessageId, userScrolledUp]);
+    }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp]);
     
     const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
@@ -195,7 +197,7 @@ export const useChatHistory = ({
             });
             setActiveSessionId(sessionToLoad.id);
             localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionToLoad.id);
-            setInputText('');
+            setCommandedInput({ text: '', id: Date.now() });
             setSelectedFiles([]);
             setEditingMessageId(null);
             userScrolledUp.current = false;
@@ -203,7 +205,7 @@ export const useChatHistory = ({
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat(false);
         }
-    }, [savedSessions, isLoading, abortControllerRef, setMessages, setCurrentChatSettings, setActiveSessionId, setInputText, setSelectedFiles, setEditingMessageId, userScrolledUp, startNewChat]);
+    }, [savedSessions, isLoading, abortControllerRef, setMessages, setCurrentChatSettings, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp, startNewChat]);
 
     // Initial data loading
     useEffect(() => {

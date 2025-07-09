@@ -8,7 +8,6 @@ export const useChatState = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentChatSettings, setCurrentChatSettings] = useState<IndividualChatSettings>(DEFAULT_CHAT_SETTINGS);
-    const [inputText, setInputText] = useState<string>('');
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [aspectRatio, setAspectRatio] = useState<string>('16:9');
     const [ttsMessageId, setTtsMessageId] = useState<string | null>(null);
@@ -32,7 +31,6 @@ export const useChatState = () => {
         messages, setMessages,
         isLoading, setIsLoading,
         currentChatSettings, setCurrentChatSettings,
-        inputText, setInputText,
         editingMessageId, setEditingMessageId,
         aspectRatio, setAspectRatio,
         ttsMessageId, setTtsMessageId,

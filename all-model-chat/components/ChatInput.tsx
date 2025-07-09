@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect, lazy, Suspense } from 'react';
+import React, { useRef, useState, useCallback, useEffect, Suspense } from 'react';
 import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
@@ -6,23 +6,17 @@ import { translations, getActiveApiConfig } from '../utils/appUtils';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 import { geminiServiceInstance } from '../services/geminiService';
 
-const CreateTextFileEditor = lazy(() => import('./chat/CreateTextFileEditor').then(module => ({ default: module.CreateTextFileEditor })));
-const CameraCapture = lazy(() => import('./chat/CameraCapture').then(module => ({ default: module.CameraCapture })));
-const AudioRecorder = lazy(() => import('./chat/AudioRecorder').then(module => ({ default: module.AudioRecorder })));
-
-const SuspenseFallback = () => (
-  <div className="suspense-fallback">
-    <div className="suspense-spinner"></div>
-  </div>
-);
+const CreateTextFileEditor = React.lazy(() => import('./chat/CreateTextFileEditor').then(module => ({ default: module.CreateTextFileEditor })));
+const CameraCapture = React.lazy(() => import('./chat/CameraCapture').then(module => ({ default: module.CameraCapture })));
+const AudioRecorder = React.lazy(() => import('./chat/AudioRecorder').then(module => ({ default: module.AudioRecorder })));
 
 interface ChatInputProps {
   appSettings: AppSettings;
-  inputText: string;
-  setInputText: (text: string) => void;
+  commandedInput: { text: string; id: number } | null;
+  onMessageSent: () => void;
   selectedFiles: UploadedFile[]; 
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
-  onSendMessage: () => void;
+  onSendMessage: (text: string) => void;
   isLoading: boolean; 
   isEditing: boolean;
   onStopGenerating: () => void;
@@ -58,7 +52,7 @@ const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
 const aspectRatios = ['1:1', '9:16', '16:9', '4:3', '3:4'];
 
 export const ChatInput: React.FC<ChatInputProps> = ({
-  appSettings, inputText, setInputText, selectedFiles, setSelectedFiles, onSendMessage,
+  appSettings, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
   isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
   isImagenModel, aspectRatio, setAspectRatio,
@@ -72,6 +66,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingCancelledRef = useRef(false);
 
+  const [inputText, setInputText] = useState('');
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [fileIdInput, setFileIdInput] = useState('');
@@ -86,6 +81,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
+
+  useEffect(() => {
+    if (commandedInput) {
+      setInputText(commandedInput.text);
+      if (commandedInput.text) {
+        setTimeout(() => {
+          const textarea = textareaRef.current;
+          if (textarea) {
+            textarea.focus();
+            const textLength = textarea.value.length;
+            textarea.setSelectionRange(textLength, textLength);
+          }
+        }, 0);
+      }
+    }
+  }, [commandedInput]);
 
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
@@ -123,13 +134,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
         if (!filesAreStillProcessing) {
             // All uploads finished, now send the message
-            onSendMessage();
+            onSendMessage(inputText);
+            setInputText('');
+            onMessageSent();
             setIsWaitingForUpload(false);
             setIsAnimatingSend(true);
             setTimeout(() => setIsAnimatingSend(false), 400);
         }
     }
-  }, [isWaitingForUpload, selectedFiles, onSendMessage]);
+  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
@@ -179,7 +192,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         if (filesAreStillProcessing) {
             setIsWaitingForUpload(true);
         } else {
-            onSendMessage();
+            onSendMessage(inputText);
+            setInputText('');
+            onMessageSent();
             setIsAnimatingSend(true);
             setTimeout(() => setIsAnimatingSend(false), 400); 
         }
@@ -353,7 +368,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <>
-      <Suspense fallback={<SuspenseFallback />}>
+      <Suspense fallback={null}>
         {showCamera && ( <CameraCapture onCapture={handlePhotoCapture} onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }} /> )}
         {showRecorder && ( <AudioRecorder onRecord={handleAudioRecord} onCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }} /> )}
         {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isLoading} /> )}

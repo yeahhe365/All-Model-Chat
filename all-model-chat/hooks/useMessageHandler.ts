@@ -1,9 +1,11 @@
-import { useCallback } from 'react';
+import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem } from '../types';
 import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 import { logService } from '../services/logService';
+
+type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
 
 interface MessageHandlerProps {
     appSettings: AppSettings;
@@ -13,8 +15,6 @@ interface MessageHandlerProps {
     setIsLoading: (loading: boolean) => void;
     currentChatSettings: IndividualChatSettings;
     setCurrentChatSettings: (updater: (prev: IndividualChatSettings) => IndividualChatSettings) => void;
-    inputText: string;
-    setInputText: (text: string) => void;
     selectedFiles: UploadedFile[];
     setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
     editingMessageId: string | null;
@@ -27,6 +27,7 @@ interface MessageHandlerProps {
     setTtsMessageId: (id: string | null) => void;
     saveCurrentChatSession: (currentMessages: ChatMessage[], currentActiveSessionId: string | null, currentSettingsToSave: IndividualChatSettings) => void;
     activeSessionId: string | null;
+    setCommandedInput: CommandedInputSetter;
 }
 
 export const useMessageHandler = ({
@@ -37,8 +38,6 @@ export const useMessageHandler = ({
     setIsLoading,
     currentChatSettings,
     setCurrentChatSettings,
-    inputText,
-    setInputText,
     selectedFiles,
     setSelectedFiles,
     editingMessageId,
@@ -51,6 +50,7 @@ export const useMessageHandler = ({
     setTtsMessageId,
     saveCurrentChatSession,
     activeSessionId,
+    setCommandedInput,
 }: MessageHandlerProps) => {
 
     const handleApiError = useCallback((error: unknown, modelMessageId: string, errorPrefix: string = "Error") => {
@@ -83,7 +83,7 @@ export const useMessageHandler = ({
 
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
-        const textToUse = overrideOptions?.text ?? inputText;
+        const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         const activeModelId = currentChatSettings.modelId;
@@ -123,7 +123,7 @@ export const useMessageHandler = ({
         const currentSignal = abortControllerRef.current.signal;
         userScrolledUp.current = false;
 
-        if (!overrideOptions) { setInputText(''); setSelectedFiles([]); }
+        if (!overrideOptions) { setSelectedFiles([]); }
 
         // --- TTS Model Logic ---
         if (isTtsModel) {
@@ -316,7 +316,7 @@ export const useMessageHandler = ({
                 }
             );
         }
-    }, [isLoading, inputText, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, handleApiError, setMessages, setIsLoading, setInputText, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, setCurrentChatSettings ]);
+    }, [isLoading, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, handleApiError, setMessages, setIsLoading, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, setCurrentChatSettings ]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; // Prevent multiple TTS requests at once
@@ -368,7 +368,7 @@ export const useMessageHandler = ({
         const messageToEdit = messages.find(msg => msg.id === messageId);
         if (messageToEdit?.role === 'user') {
             if (isLoading) handleStopGenerating();
-            setInputText(messageToEdit.content);
+            setCommandedInput({ text: messageToEdit.content, id: Date.now() });
             setSelectedFiles(messageToEdit.files || []);
             setEditingMessageId(messageId);
             setAppFileError(null);
@@ -378,7 +378,10 @@ export const useMessageHandler = ({
 
     const handleCancelEdit = () => { 
         logService.info("User cancelled message edit.");
-        setInputText(''); setSelectedFiles([]); setEditingMessageId(null); setAppFileError(null); 
+        setCommandedInput({ text: '', id: Date.now() });
+        setSelectedFiles([]); 
+        setEditingMessageId(null); 
+        setAppFileError(null); 
     };
 
     const handleDeleteMessage = (messageId: string) => {
@@ -401,11 +404,6 @@ export const useMessageHandler = ({
             handleStopGenerating();
         }
         
-        // By passing the user message's ID as `editingId`, we leverage the
-        // existing logic in `handleSendMessage` to slice the history and
-        // replace messages from that point forward. This achieves a "retry"
-        // that behaves like an "edit", as requested, without creating
-        // duplicate user message bubbles.
         await handleSendMessage({
             text: userMessageToResend.content,
             files: userMessageToResend.files,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import html2canvas from 'html2canvas';
@@ -225,8 +225,6 @@ interface MessageProps {
 export const Message: React.FC<MessageProps> = React.memo((props) => {
     const { message, prevMessage, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t, onTextToSpeech, ttsMessageId } = props;
     
-    const [actionsVisible, setActionsVisible] = useState(false);
-
     const isGrouped = prevMessage &&
         prevMessage.role === message.role &&
         !prevMessage.isLoading &&
@@ -236,30 +234,6 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     const actionIconSize = window.innerWidth < 640 ? 14 : 16;
     const canRetryMessage = (message.role === 'model' || (message.role === 'error' && message.generationStartTime)) && !message.isLoading;
     const isThisMessageLoadingTts = ttsMessageId === message.id;
-
-    const isMostlyCode = useMemo(() => {
-      if (!message.content) return false;
-      const codeRegex = /```[\s\S]*?```|`[^`]+`/g;
-      const codeMatches = message.content.match(codeRegex);
-      if (!codeMatches) return false;
-      const codeLength = codeMatches.join('').length;
-      return (codeLength / message.content.length) > 0.6;
-    }, [message.content]);
-    
-    const handleMessageWrapperClick = (e: React.MouseEvent) => {
-      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-        e.stopPropagation();
-        setActionsVisible(v => !v);
-      }
-    };
-
-    useEffect(() => {
-        if (!actionsVisible) return;
-        const hide = () => setActionsVisible(false);
-        document.addEventListener('click', hide, { once: true });
-        return () => document.removeEventListener('click', hide);
-    }, [actionsVisible]);
-
 
     const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
     const bubbleClasses = `w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0`;
@@ -287,18 +261,15 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             <div 
               className="message-actions flex flex-col items-center gap-0.5 mt-1 sm:mt-1.5"
               style={{ '--actions-translate-x': message.role === 'user' ? '8px' : '-8px' } as React.CSSProperties}
-              onClick={(e) => e.stopPropagation()}
             >
                 {message.role === 'user' && !message.isLoading && <button onClick={() => onEditMessage(message.id)} title={t('edit_button_title')} aria-label={t('edit_button_title')} className={`${actionButtonClasses} text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><Edit3 size={actionIconSize} /></button>}
                 {canRetryMessage && <button onClick={() => onRetryMessage(message.id)} title={t('retry_button_title')} aria-label={t('retry_button_title')} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><RotateCw size={actionIconSize} /></button>}
                 {(message.content || message.thoughts) && !message.isLoading && <MessageCopyButton textToCopy={message.content} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />}
                 {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
                     <>
-                        {!isMostlyCode && (
-                          <button onClick={() => onTextToSpeech(message.id, message.content)} disabled={!!ttsMessageId} title="Read aloud" aria-label="Read message aloud" className={`${actionButtonClasses} text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed`}>
-                            { isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" /> : <Volume2 size={actionIconSize} /> }
-                          </button>
-                        )}
+                        <button onClick={() => onTextToSpeech(message.id, message.content)} disabled={!!ttsMessageId} title="Read aloud" aria-label="Read message aloud" className={`${actionButtonClasses} text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed`}>
+                          { isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" /> : <Volume2 size={actionIconSize} /> }
+                        </button>
                         <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />
                         <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />
                     </>
@@ -310,10 +281,9 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     return (
         <div 
-            className={`${messageContainerClasses} message-container-animate group ${actionsVisible ? 'actions-visible' : ''}`}
+            className={`${messageContainerClasses} message-container-animate`} 
             data-message-id={message.id} 
             style={{ animationDelay: `${Math.min(messageIndex * 80, 800)}ms` }}
-            onClick={handleMessageWrapperClick}
         >
             {message.role !== 'user' && iconAndActions}
             <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
