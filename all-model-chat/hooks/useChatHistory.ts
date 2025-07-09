@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
 import { logService } from '../services/logService';
-import { imageDbService } from '../services/imageDbService';
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -60,20 +58,6 @@ export const useChatHistory = ({
                 sessionIdToSave = generateUniqueId();
                 isNewSessionInHistory = true;
             }
-            
-            const finalSessionId = sessionIdToSave;
-
-            currentMessages.forEach(msg => {
-                if (msg.files) {
-                    msg.files.forEach(file => {
-                        if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl) {
-                            imageDbService.addImage(finalSessionId, file).catch(err => {
-                                logService.error(`Failed to save image ${file.id} to IndexedDB`, err);
-                            });
-                        }
-                    });
-                }
-            });
 
             const existingSession = savedSessions.find(s => s.id === sessionIdToSave);
             
@@ -84,8 +68,8 @@ export const useChatHistory = ({
                 messages: currentMessages.map(msg => ({ 
                     ...msg,
                     files: msg.files?.map(f => {
-                        const { abortController, rawFile, ...rest } = f; 
-                        return { ...rest, dataUrl: SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) ? undefined : f.dataUrl };
+                        const { abortController, ...rest } = f; 
+                        return rest;
                     })
                 })),
                 settings: currentSettingsToSave,
@@ -96,9 +80,12 @@ export const useChatHistory = ({
                 const areSettingsSame = JSON.stringify(existingSession.settings) === JSON.stringify(sessionToSave.settings);
             
                 if (areMessagesSame && areSettingsSame) {
+                    // No need to log or save if nothing has changed. This breaks the loop.
                     return;
                 }
     
+                // To be less aggressive with re-ordering, let's reuse the old timestamp
+                // if only settings have changed, but not messages.
                 if (areMessagesSame) {
                     sessionToSave.timestamp = existingSession.timestamp;
                 }
@@ -117,9 +104,10 @@ export const useChatHistory = ({
                 }
                 updatedSessions.sort((a,b) => b.timestamp - a.timestamp);
 
+                // Save all updated sessions to localStorage
                 localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updatedSessions));
 
-                return updatedSessions;
+                return updatedSessions; // Return the full list to state for the current app session
             });
 
             if ((isNewSessionInHistory || !currentActiveSessionId) && sessionIdToSave) {
@@ -161,28 +149,14 @@ export const useChatHistory = ({
         }, 0);
     }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setInputText, setSelectedFiles, setEditingMessageId, userScrolledUp]);
     
-    const loadChatSession = useCallback(async (sessionId: string, allSessions?: SavedChatSession[]) => {
+    const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
         const sessionsToSearch = allSessions || savedSessions;
         const sessionToLoad = sessionsToSearch.find(s => s.id === sessionId);
         if (sessionToLoad) {
             if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
 
-            const imagesFromDb = await imageDbService.getImagesForSession(sessionId);
-            const imageMap = new Map(imagesFromDb.map(img => [img.id, img.dataUrl]));
-
-            const messagesWithImages = sessionToLoad.messages.map(msg => {
-                if (!msg.files) return msg;
-                const updatedFiles = msg.files.map(file => {
-                    if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.dataUrl && imageMap.has(file.id)) {
-                        return { ...file, dataUrl: imageMap.get(file.id) };
-                    }
-                    return file;
-                });
-                return { ...msg, files: updatedFiles };
-            });
-
-            setMessages(messagesWithImages.map(m => ({
+            setMessages(sessionToLoad.messages.map(m => ({
                 ...m,
                 timestamp: new Date(m.timestamp),
                 generationStartTime: m.generationStartTime ? new Date(m.generationStartTime) : undefined,
@@ -207,30 +181,27 @@ export const useChatHistory = ({
 
     // Initial data loading
     useEffect(() => {
-        const loadInitialData = async () => {
-            try {
-                logService.info('Attempting to load chat history from localStorage.');
-                const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
-                const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
-                sessions.sort((a,b) => b.timestamp - a.timestamp);
-                setSavedSessions(sessions);
+        try {
+            logService.info('Attempting to load chat history from localStorage.');
+            const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
+            const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
+            sessions.sort((a,b) => b.timestamp - a.timestamp);
+            setSavedSessions(sessions);
 
-                const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
-                if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
-                    await loadChatSession(storedActiveId, sessions);
-                } else if (sessions.length > 0) {
-                    logService.info('No active session ID, loading most recent session.');
-                    await loadChatSession(sessions[0].id, sessions);
-                } else {
-                    logService.info('No history found, starting fresh chat.');
-                    startNewChat(false);
-                }
-            } catch (error) {
-                logService.error("Error loading chat history:", error);
+            const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
+                loadChatSession(storedActiveId, sessions);
+            } else if (sessions.length > 0) {
+                logService.info('No active session ID, loading most recent session.');
+                loadChatSession(sessions[0].id, sessions);
+            } else {
+                logService.info('No history found, starting fresh chat.');
                 startNewChat(false);
             }
-        };
-        loadInitialData();
+        } catch (error) {
+            logService.error("Error loading chat history:", error);
+            startNewChat(false);
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run only once on mount
 
@@ -242,32 +213,9 @@ export const useChatHistory = ({
             localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
         }
     }, [messages, activeSessionId, currentChatSettings, saveCurrentChatSession, savedSessions]);
-
-    // Cleanup logic for old session images
-    useEffect(() => {
-        const cleanupOldImages = async () => {
-            if (savedSessions.length <= 3) return;
-
-            const sessionsToKeep = new Set(savedSessions.slice(0, 3).map(s => s.id));
-            try {
-                const allStoredSessionIds = await imageDbService.getAllSessionIds();
-                const sessionsToDelete = allStoredSessionIds.filter(id => !sessionsToKeep.has(id));
-                
-                if (sessionsToDelete.length > 0) {
-                    logService.info('Cleaning up images from old sessions', { sessionIds: sessionsToDelete });
-                    await Promise.all(sessionsToDelete.map(id => imageDbService.deleteImagesForSession(id)));
-                }
-            } catch (error) {
-                logService.error('Error during old image cleanup', error);
-            }
-        };
-
-        cleanupOldImages();
-    }, [savedSessions]);
     
     const handleDeleteChatHistorySession = (sessionId: string) => {
         logService.info(`Deleting session: ${sessionId}`);
-        imageDbService.deleteImagesForSession(sessionId).catch(err => logService.error(`Failed to delete images for session ${sessionId}`, err));
         setSavedSessions(prev => {
             const updated = prev.filter(s => s.id !== sessionId);
             localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updated));
@@ -289,13 +237,10 @@ export const useChatHistory = ({
             clearTimeout(sessionSaveTimeoutRef.current);
             sessionSaveTimeoutRef.current = null;
         }
-        savedSessions.forEach(session => {
-            imageDbService.deleteImagesForSession(session.id).catch(err => logService.error(`Failed to delete images for session ${session.id}`, err));
-        });
         localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
         setSavedSessions([]);
         startNewChat(false);
-    }, [startNewChat, sessionSaveTimeoutRef, savedSessions]);
+    }, [startNewChat, sessionSaveTimeoutRef]);
 
 
     return {

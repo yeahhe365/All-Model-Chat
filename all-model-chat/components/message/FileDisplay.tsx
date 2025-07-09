@@ -40,7 +40,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       <img 
         src={file.dataUrl} 
         alt={file.name} 
-        className={`max-w-[280px] sm:max-w-[320px] max-h-72 sm:max-h-80 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        className={`max-w-full min-w-0 max-h-72 sm:max-h-80 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
         aria-label={`Uploaded image: ${file.name}`}
         onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
         tabIndex={isClickableImage ? 0 : -1} 

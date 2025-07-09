@@ -16,15 +16,6 @@ interface FileHandlingProps {
     setCurrentChatSettings: Dispatch<SetStateAction<IndividualChatSettings>>;
 }
 
-const readFileAsDataURL = (fileToRead: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(fileToRead);
-    });
-};
-
 export const useFileHandling = ({
     appSettings,
     selectedFiles,
@@ -70,6 +61,8 @@ export const useFileHandling = ({
             let effectiveMimeType = file.type;
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
+            // If the MIME type is missing/generic but it has a known text-based extension,
+            // we'll treat it as text/plain. This is the fix.
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                 effectiveMimeType = 'text/plain';
                 logService.debug(`Assigned mimeType 'text/plain' to file ${file.name} based on extension.`);
@@ -89,12 +82,10 @@ export const useFileHandling = ({
             setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                try {
-                    const dataUrl = await readFileAsDataURL(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
-                } catch (err) {
-                    logService.error('Failed to read file as data URL', err);
-                }
+                // Use URL.createObjectURL for efficient, memory-safe previews.
+                // The blob URL is revoked automatically by cleanup effects in App.tsx/useChat.ts.
+                const dataUrl = URL.createObjectURL(file);
+                setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
             }
 
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
