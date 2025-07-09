@@ -3,6 +3,31 @@ import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualC
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
 import { logService } from '../services/logService';
+import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
+
+const applyImageCachePolicy = (sessions: SavedChatSession[]): SavedChatSession[] => {
+    const sessionsCopy = JSON.parse(JSON.stringify(sessions)); // Deep copy to avoid direct state mutation
+    if (sessionsCopy.length > 5) {
+        logService.debug('Applying image cache policy: Pruning images from sessions older than 5th.');
+        // Prune images from the 6th session onwards
+        for (let i = 5; i < sessionsCopy.length; i++) {
+            const session = sessionsCopy[i];
+            if (session.messages && Array.isArray(session.messages)) {
+                session.messages.forEach((message: ChatMessage) => {
+                    if (message.files && Array.isArray(message.files)) {
+                        message.files.forEach((file: UploadedFile) => {
+                            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
+                                if (file.dataUrl) delete file.dataUrl;
+                                if (file.base64Data) delete file.base64Data;
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    }
+    return sessionsCopy;
+};
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -104,10 +129,11 @@ export const useChatHistory = ({
                 }
                 updatedSessions.sort((a,b) => b.timestamp - a.timestamp);
 
-                // Save all updated sessions to localStorage
-                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updatedSessions));
+                // Apply caching policy before writing to localStorage
+                const sessionsForStorage = applyImageCachePolicy(updatedSessions);
+                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
 
-                return updatedSessions; // Return the full list to state for the current app session
+                return updatedSessions; // Return original state for UI
             });
 
             if ((isNewSessionInHistory || !currentActiveSessionId) && sessionIdToSave) {
@@ -216,15 +242,17 @@ export const useChatHistory = ({
     
     const handleDeleteChatHistorySession = (sessionId: string) => {
         logService.info(`Deleting session: ${sessionId}`);
-        setSavedSessions(prev => {
-            const updated = prev.filter(s => s.id !== sessionId);
-            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updated));
-            return updated;
-        });
+        const currentSessions = [...savedSessions];
+        const updated = currentSessions.filter(s => s.id !== sessionId);
+
+        const sessionsForStorage = applyImageCachePolicy(updated);
+        localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
+        setSavedSessions(updated);
+
         if (activeSessionId === sessionId) {
-            const nextSessionToLoad = savedSessions.find(s => s.id !== sessionId);
+            const nextSessionToLoad = updated[0];
             if (nextSessionToLoad) {
-                 loadChatSession(nextSessionToLoad.id);
+                 loadChatSession(nextSessionToLoad.id, updated);
             } else {
                 startNewChat(false);
             }
