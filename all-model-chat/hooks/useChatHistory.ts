@@ -76,10 +76,7 @@ export const useChatHistory = ({
             };
 
             if (existingSession) {
-                const areMessagesSame = 
-                    existingSession.messages.length === sessionToSave.messages.length &&
-                    existingSession.messages.every((msg, i) => msg.id === sessionToSave.messages[i].id);
-            
+                const areMessagesSame = JSON.stringify(existingSession.messages) === JSON.stringify(sessionToSave.messages);
                 const areSettingsSame = JSON.stringify(existingSession.settings) === JSON.stringify(sessionToSave.settings);
             
                 if (areMessagesSame && areSettingsSame) {
