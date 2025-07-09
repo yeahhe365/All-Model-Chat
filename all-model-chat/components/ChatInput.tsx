@@ -180,7 +180,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && canSend) {
+    const isMobile = window.innerWidth < 640;
+    if (e.key === 'Enter' && !e.shiftKey && !isMobile && canSend) {
       e.preventDefault();
       handleSubmit(e as unknown as React.FormEvent);
     }
