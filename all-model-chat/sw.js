@@ -1,22 +1,73 @@
-const CACHE_NAME = 'all-model-chat-cache-v2';
+const CACHE_NAME = 'all-model-chat-cache-v3'; // Increased version number
 const API_HOSTS = ['generativelanguage.googleapis.com'];
-const GOOGLE_API_HOSTNAME = 'generativelanguage.googleapis.com';
 const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 
-// The app shell includes all the static assets needed to run the app offline.
-const APP_SHELL_URLS = [
+// The static part of the app shell. Dynamic resources will be added to this.
+const STATIC_APP_SHELL_URLS = [
     '/',
     '/index.html',
-    '/index.tsx', // This will be fetched and cached on install
     '/favicon.png',
     '/manifest.json',
-    'https://cdn.tailwindcss.com',
-    'https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css',
-    'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css',
-    'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css',
 ];
 
 let proxyUrl = null;
+
+/**
+ * Fetches and parses the main HTML file to dynamically discover all critical
+ * resources like CSS, JS from importmaps, and other scripts.
+ * @returns {Promise<string[]>} A promise that resolves to an array of URLs to cache.
+ */
+const getDynamicAppShellUrls = async () => {
+    try {
+        // Fetch with a cache-busting query parameter to ensure we get the latest version.
+        const response = await fetch('/index.html?sw-cache-bust=' + Date.now());
+        if (!response.ok) {
+            throw new Error(`Failed to fetch index.html: ${response.statusText}`);
+        }
+        const html = await response.text();
+
+        // 1. Extract from importmap
+        const importmapMatch = html.match(/<script type="importmap"[^>]*>([\s\S]*?)<\/script>/);
+        let importmapUrls = [];
+        if (importmapMatch && importmapMatch[1]) {
+            try {
+                const importmapJson = JSON.parse(importmapMatch[1]);
+                if (importmapJson.imports) {
+                    importmapUrls = Object.values(importmapJson.imports);
+                }
+            } catch (e) {
+                console.error('[SW] Failed to parse importmap:', e);
+            }
+        }
+        
+        // 2. Extract from <link rel="stylesheet"> tags
+        const linkTagMatches = [...html.matchAll(/<link[^>]+>/gi)];
+        const stylesheetUrls = linkTagMatches
+            .map(match => match[0]) // Get the full tag string
+            .filter(tag => tag.includes('rel="stylesheet"'))
+            .map(tag => {
+                const hrefMatch = tag.match(/href="([^"]+)"/);
+                return hrefMatch ? hrefMatch[1] : null;
+            })
+            .filter(Boolean); // Filter out any nulls
+
+        // 3. Extract from <script src="..."> (includes module scripts)
+        const scriptMatches = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)];
+        const scriptUrls = scriptMatches.map(match => match[1]);
+
+        // Combine all discovered URLs, filter out any potential null/undefined values, and remove duplicates.
+        const allUrls = [...STATIC_APP_SHELL_URLS, ...importmapUrls, ...stylesheetUrls, ...scriptUrls];
+        const uniqueUrls = [...new Set(allUrls.filter(Boolean))];
+        
+        console.log('[SW] Dynamic App Shell URLs to cache:', uniqueUrls);
+        return uniqueUrls;
+    } catch (error) {
+        console.error('[SW] Could not build dynamic app shell. Installation will fail.', error);
+        // Re-throw the error to ensure the service worker installation fails if we can't build the shell.
+        // This prevents an incomplete or broken offline experience.
+        throw error;
+    }
+};
 
 // Listen for messages from the client.
 self.addEventListener('message', (event) => {
@@ -31,19 +82,18 @@ self.addEventListener('message', (event) => {
 // Install: Cache the app shell.
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('[Service Worker] Caching App Shell v2');
-                const promises = APP_SHELL_URLS.map(url => {
-                    return cache.add(url).catch(reason => {
-                        console.warn(`[Service Worker] Failed to cache ${url}: ${reason}`);
-                    });
-                });
-                return Promise.all(promises);
-            })
-            .then(() => self.skipWaiting()) // Force the waiting service worker to become the active one.
+        (async () => {
+            console.log('[SW] Installation started.');
+            const urlsToCache = await getDynamicAppShellUrls();
+            const cache = await caches.open(CACHE_NAME);
+            console.log(`[SW] Caching ${urlsToCache.length} dynamic app shell files.`);
+            await cache.addAll(urlsToCache);
+            await self.skipWaiting();
+            console.log('[SW] Installation complete.');
+        })()
     );
 });
+
 
 // Activate: Clean up old caches.
 self.addEventListener('activate', (event) => {
@@ -53,12 +103,15 @@ self.addEventListener('activate', (event) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
                     if (!cacheWhitelist.includes(cacheName)) {
-                        console.log(`[Service Worker] Deleting old cache: ${cacheName}`);
+                        console.log(`[SW] Deleting old cache: ${cacheName}`);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => self.clients.claim()) // Take control of all open clients.
+        }).then(() => {
+            console.log('[SW] Activated and claimed clients.');
+            return self.clients.claim();
+        })
     );
 });
 
@@ -75,7 +128,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // For non-proxied API calls, always go to the network and do not cache.
-    if (API_HOSTS.some(host => request.url.includes(host))) {
+    if (API_HOSTS.some(host => new URL(request.url).hostname === host)) {
         event.respondWith(fetch(request));
         return;
     }
@@ -85,25 +138,19 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
                 return cache.match(request).then((cachedResponse) => {
-                    // Fetch from network in the background to update the cache.
                     const fetchPromise = fetch(request).then((networkResponse) => {
-                        // If we get a valid response, update the cache.
-                        if (networkResponse && networkResponse.status === 200) {
+                        if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
                             cache.put(request, networkResponse.clone());
                         }
                         return networkResponse;
                     }).catch(error => {
-                        console.warn(`[Service Worker] Network request for ${request.url} failed:`, error);
-                        // If it's a navigation request and we're offline, serve the main app page as a fallback.
+                        console.warn(`[SW] Network request for ${request.url} failed:`, error);
                         if (request.mode === 'navigate' && !cachedResponse) {
-                            console.log('[Service Worker] Serving app shell for navigation fallback.');
+                            console.log('[SW] Serving app shell for navigation fallback.');
                             return caches.match('/index.html');
                         }
-                        // For other failed requests, if there was no cache, it will result in an error, which is intended.
                     });
 
-                    // Return the cached response immediately if it's available,
-                    // otherwise wait for the network response.
                     return cachedResponse || fetchPromise;
                 });
             })

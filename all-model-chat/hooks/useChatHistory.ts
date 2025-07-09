@@ -107,10 +107,11 @@ export const useChatHistory = ({
                 }
                 updatedSessions.sort((a,b) => b.timestamp - a.timestamp);
 
-                // Save all sessions to localStorage to prevent data loss on refresh.
-                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updatedSessions));
+                // Prune sessions for localStorage, keeping only the last 3
+                const sessionsForStorage = updatedSessions.slice(0, 3);
+                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
 
-                return updatedSessions;
+                return updatedSessions; // Return the full list to state for the current app session
             });
 
             if ((isNewSessionInHistory || !currentActiveSessionId) && sessionIdToSave) {
@@ -161,10 +162,10 @@ export const useChatHistory = ({
 
             setMessages(sessionToLoad.messages.map(m => ({
                 ...m,
-                isLoading: false, // Ensure no stale loading states
                 timestamp: new Date(m.timestamp),
                 generationStartTime: m.generationStartTime ? new Date(m.generationStartTime) : undefined,
                 generationEndTime: m.generationEndTime ? new Date(m.generationEndTime) : undefined,
+                cumulativeTotalTokens: m.cumulativeTotalTokens,
             })));
             setCurrentChatSettings({
                 ...sessionToLoad.settings,
@@ -221,7 +222,8 @@ export const useChatHistory = ({
         logService.info(`Deleting session: ${sessionId}`);
         setSavedSessions(prev => {
             const updated = prev.filter(s => s.id !== sessionId);
-            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updated));
+            const sessionsForStorage = updated.slice(0, 3);
+            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
             return updated;
         });
         if (activeSessionId === sessionId) {
