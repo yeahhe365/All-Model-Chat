@@ -68,9 +68,7 @@ export const useChatHistory = ({
                 messages: currentMessages.map(msg => ({ 
                     ...msg,
                     files: msg.files?.map(f => {
-                        // To keep localStorage lean, we strip out data-heavy fields
-                        // that are only used for transient UI previews.
-                        const { abortController, dataUrl, base64Data, rawFile, ...rest } = f;
+                        const { abortController, ...rest } = f; 
                         return rest;
                     })
                 })),
@@ -109,8 +107,9 @@ export const useChatHistory = ({
                 }
                 updatedSessions.sort((a,b) => b.timestamp - a.timestamp);
 
-                // Save all sessions to localStorage
-                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updatedSessions));
+                // Prune sessions for localStorage, keeping only the last 3
+                const sessionsForStorage = updatedSessions.slice(0, 3);
+                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
 
                 return updatedSessions; // Return the full list to state for the current app session
             });
@@ -166,7 +165,6 @@ export const useChatHistory = ({
                 timestamp: new Date(m.timestamp),
                 generationStartTime: m.generationStartTime ? new Date(m.generationStartTime) : undefined,
                 generationEndTime: m.generationEndTime ? new Date(m.generationEndTime) : undefined,
-                cumulativeTotalTokens: m.cumulativeTotalTokens,
             })));
             setCurrentChatSettings({
                 ...sessionToLoad.settings,
@@ -223,7 +221,8 @@ export const useChatHistory = ({
         logService.info(`Deleting session: ${sessionId}`);
         setSavedSessions(prev => {
             const updated = prev.filter(s => s.id !== sessionId);
-            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(updated));
+            const sessionsForStorage = updated.slice(0, 3);
+            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
             return updated;
         });
         if (activeSessionId === sessionId) {
