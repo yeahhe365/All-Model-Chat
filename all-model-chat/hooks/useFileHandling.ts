@@ -39,30 +39,37 @@ export const useFileHandling = ({
         setAppFileError(null);
         logService.info(`Processing ${files.length} files.`);
         
-        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
-        if ('error' in keyResult) {
-            setAppFileError(keyResult.error);
-            logService.error('Cannot process files: API key not configured.');
-            return;
-        }
-        const { key: keyToUse, isNewKey } = keyResult;
-
-        if (isNewKey) {
-            logService.info('New API key selected for this session due to file upload.');
-            setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse }));
-        }
-
         const filesArray = Array.isArray(files) ? files : Array.from(files);
+
+        // Determine if we need an API key for non-image uploads
+        const hasNonImageFiles = filesArray.some(file => {
+            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+            let effectiveMimeType = file.type;
+            if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
+                 effectiveMimeType = 'text/plain';
+            }
+            return !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) && ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType);
+        });
+
+        let keyToUse: string | null = null;
+        if (hasNonImageFiles) {
+            const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+            if ('error' in keyResult) {
+                setAppFileError(keyResult.error);
+                logService.error('Cannot process files: API key not configured.');
+                return;
+            }
+            keyToUse = keyResult.key;
+            if (keyResult.isNewKey) {
+                logService.info('New API key selected for this session due to file upload.');
+                setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse! }));
+            }
+        }
 
         const uploadPromises = filesArray.map(async (file) => {
             const fileId = generateUniqueId();
-            const controller = new AbortController();
-
             let effectiveMimeType = file.type;
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-
-            // If the MIME type is missing/generic but it has a known text-based extension,
-            // we'll treat it as text/plain.
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                 effectiveMimeType = 'text/plain';
                 logService.debug(`Assigned mimeType 'text/plain' to file ${file.name} based on extension.`);
@@ -70,46 +77,60 @@ export const useFileHandling = ({
 
             if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
                 logService.warn(`Unsupported file type skipped: ${file.name}`, { type: file.type });
-                setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type || 'unknown'}`, uploadState: 'failed', abortController: controller }]);
-                return; 
+                setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type || 'unknown'}`, uploadState: 'failed' }]);
+                return;
             }
-
-            // Use the corrected MIME type directly for state and upload.
-            // This preserves specific types like 'text/html', 'application/json', etc.
-            const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
-            setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                // Use a blob URL for an efficient preview. This is memory-safe for large images
-                // but is not persistent across browser sessions like a data URL would be.
-                try {
-                    const dataUrl = URL.createObjectURL(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
-                } catch (e) {
-                    logService.error('Error creating object URL for preview', { error: e });
-                }
-            }
-
-            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
-
-            try {
-                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, effectiveMimeType, file.name, controller.signal);
-                logService.info(`File uploaded successfully: ${file.name}`, { fileInfo: uploadedFileInfo });
-                setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
-            } catch (uploadError) {
-                if (uploadError instanceof Error && uploadError.name === 'SilentError') {
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'API key not configured', uploadState: 'failed', abortController: undefined } : f));
+                // Handle image locally with base64, no API key needed here
+                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending' };
+                setSelectedFiles(prev => [...prev, initialFileState]);
+                return new Promise<void>((resolve) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => {
+                        const dataUrl = reader.result as string;
+                        const base64Data = dataUrl.split(',')[1];
+                        if (base64Data) {
+                            setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, base64Data, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                        } else {
+                            logService.error('Base64 conversion failed for image.', { name: file.name });
+                            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to read image file.', uploadState: 'failed' } : f));
+                        }
+                        resolve();
+                    };
+                    reader.onerror = (error) => {
+                        logService.error('Error reading file for base64 conversion', { error });
+                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to read image file.', uploadState: 'failed' } : f));
+                        resolve();
+                    };
+                });
+            } else {
+                // Handle other file types that need uploading
+                if (!keyToUse) {
+                    const errorMsg = 'API key was not available for non-image file upload.';
+                    logService.error(errorMsg);
+                    setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: false, progress: 0, error: errorMsg, uploadState: 'failed' }]);
                     return;
                 }
-                let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
-                let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
-                if (uploadError instanceof Error && uploadError.name === 'AbortError') {
-                    errorMsg = "Upload cancelled by user.";
-                    uploadStateUpdate = 'cancelled';
-                    logService.warn(`File upload cancelled by user: ${file.name}`);
+                const controller = new AbortController();
+                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
+                setSelectedFiles(prev => [...prev, initialFileState]);
+                try {
+                    const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, effectiveMimeType, file.name, controller.signal);
+                    logService.info(`File uploaded successfully: ${file.name}`, { fileInfo: uploadedFileInfo });
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
+                } catch (uploadError) {
+                    let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
+                    let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
+                    if (uploadError instanceof Error && uploadError.name === 'AbortError') {
+                        errorMsg = "Upload cancelled by user.";
+                        uploadStateUpdate = 'cancelled';
+                        logService.warn(`File upload cancelled by user: ${file.name}`);
+                    }
+                    logService.error(`File upload failed for ${file.name}`, { error: uploadError });
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, } : f));
                 }
-                logService.error(`File upload failed for ${file.name}`, { error: uploadError });
-                setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, } : f));
             }
         });
         await Promise.allSettled(uploadPromises);
