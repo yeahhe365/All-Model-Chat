@@ -39,8 +39,8 @@ interface ChatHistoryProps {
     setCurrentChatSettings: Dispatch<SetStateAction<IndividualChatSettings>>;
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
-    isLoading: boolean;
-    abortControllerRef: React.MutableRefObject<AbortController | null>;
+    runningGenerationIds: Set<string>;
+    runningGenerationsRef: React.MutableRefObject<Map<string, AbortController>>;
     sessionSaveTimeoutRef: React.MutableRefObject<number | null>;
     userScrolledUp: React.MutableRefObject<boolean>;
     setCommandedInput: CommandedInputSetter;
@@ -54,8 +54,8 @@ export const useChatHistory = ({
     setCurrentChatSettings,
     setSelectedFiles,
     setEditingMessageId,
-    isLoading,
-    abortControllerRef,
+    runningGenerationIds,
+    runningGenerationsRef,
     sessionSaveTimeoutRef,
     userScrolledUp,
     setCommandedInput,
@@ -150,7 +150,9 @@ export const useChatHistory = ({
         if (saveCurrent && activeSessionId && messages.length > 0) {
             saveCurrentChatSession(messages, activeSessionId, currentChatSettings);
         }
-        if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
+        if (runningGenerationIds.size > 0) {
+            runningGenerationsRef.current.forEach(c => c.abort());
+        }
 
         setMessages([]);
 
@@ -175,14 +177,16 @@ export const useChatHistory = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [activeSessionId, messages, currentChatSettings, appSettings, isLoading, saveCurrentChatSession, abortControllerRef, setMessages, setCurrentChatSettings, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp]);
+    }, [activeSessionId, messages, currentChatSettings, appSettings, runningGenerationIds, saveCurrentChatSession, runningGenerationsRef, setMessages, setCurrentChatSettings, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp]);
     
     const loadChatSession = useCallback((sessionId: string, allSessions?: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
         const sessionsToSearch = allSessions || savedSessions;
         const sessionToLoad = sessionsToSearch.find(s => s.id === sessionId);
         if (sessionToLoad) {
-            if (isLoading && abortControllerRef.current) abortControllerRef.current.abort();
+            if (runningGenerationIds.size > 0) {
+                runningGenerationsRef.current.forEach(c => c.abort());
+            }
 
             setMessages(sessionToLoad.messages.map(m => ({
                 ...m,
@@ -205,7 +209,7 @@ export const useChatHistory = ({
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat(false);
         }
-    }, [savedSessions, isLoading, abortControllerRef, setMessages, setCurrentChatSettings, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp, startNewChat]);
+    }, [savedSessions, runningGenerationIds, runningGenerationsRef, setMessages, setCurrentChatSettings, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp, startNewChat]);
 
     // Initial data loading
     useEffect(() => {

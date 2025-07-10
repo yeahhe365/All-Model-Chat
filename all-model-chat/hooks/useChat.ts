@@ -18,14 +18,17 @@ export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedIn
     const state = useChatState();
     const { 
         messages, setMessages,
-        isLoading,
         currentChatSettings, setCurrentChatSettings,
         isSwitchingModel, setIsSwitchingModel,
         userScrolledUp,
         messagesEndRef,
         scrollContainerRef,
         sessionSaveTimeoutRef,
+        runningGenerationIds,
+        runningGenerationsRef,
     } = state;
+
+    const isAnythingLoading = runningGenerationIds.size > 0;
 
     // 2. Model fetching via custom hook
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
@@ -109,13 +112,15 @@ export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedIn
     
     // UI Action Handlers
     const handleSelectModelInHeader = useCallback((modelId: string) => {
-        if (isLoading && state.abortControllerRef.current) state.abortControllerRef.current.abort();
+        if (isAnythingLoading) {
+            runningGenerationsRef.current.forEach(controller => controller.abort());
+        }
         if (modelId !== currentChatSettings.modelId) {
             setIsSwitchingModel(true);
             setCurrentChatSettings(prev => ({ ...prev, modelId: modelId }));
         }
         userScrolledUp.current = false;
-    }, [isLoading, currentChatSettings.modelId, setIsSwitchingModel, setCurrentChatSettings, userScrolledUp, state.abortControllerRef]);
+    }, [isAnythingLoading, runningGenerationsRef, currentChatSettings.modelId, setIsSwitchingModel, setCurrentChatSettings, userScrolledUp]);
 
     useEffect(() => {
         if (isSwitchingModel) {
@@ -125,8 +130,8 @@ export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedIn
     }, [isSwitchingModel, setIsSwitchingModel]);
     
     const handleClearCurrentChat = useCallback(() => {
-        if (isLoading && state.abortControllerRef.current) {
-            state.abortControllerRef.current.abort();
+        if (isAnythingLoading) {
+            runningGenerationsRef.current.forEach(controller => controller.abort());
         }
         setMessages([]); 
         setCommandedInput({ text: '', id: Date.now() });
@@ -138,7 +143,7 @@ export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedIn
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [isLoading, state.abortControllerRef, setMessages, setCommandedInput, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
+    }, [isAnythingLoading, runningGenerationsRef, setMessages, setCommandedInput, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
 
     const clearCacheAndReload = useCallback(() => {
         // This function from useChatHistory handles clearing pending saves,
@@ -163,6 +168,7 @@ export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedIn
         ...historyHandler,
         ...scenarioHandler,
         ...messageHandler,
+        isAnythingLoading,
         savedSessions,
         activeSessionId,
         apiModels,
