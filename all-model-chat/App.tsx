@@ -27,7 +27,7 @@ const App: React.FC = () => {
 
   const {
       messages,
-      isAnythingLoading,
+      isLoading,
       currentChatSettings,
       selectedFiles,
       setSelectedFiles,
@@ -251,6 +251,7 @@ const App: React.FC = () => {
         themeColors={currentTheme.colors}
         t={t}
         language={language}
+        isLoading={isLoading}
       />
       <div
         className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
@@ -273,7 +274,7 @@ const App: React.FC = () => {
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
           onToggleHistorySidebar={() => setIsHistorySidebarOpen(prev => !prev)}
-          isAnythingLoading={isAnythingLoading}
+          isLoading={isLoading}
           currentModelName={getCurrentModelDisplayName()}
           availableModels={apiModels}
           selectedModelId={currentChatSettings.modelId || appSettings.modelId}
@@ -352,7 +353,7 @@ const App: React.FC = () => {
           selectedFiles={selectedFiles}
           setSelectedFiles={setSelectedFiles}
           onSendMessage={(text) => handleSendMessage({ text })}
-          isAnythingLoading={isAnythingLoading}
+          isLoading={isLoading}
           isEditing={!!editingMessageId}
           onStopGenerating={handleStopGenerating}
           onCancelEdit={handleCancelEdit}

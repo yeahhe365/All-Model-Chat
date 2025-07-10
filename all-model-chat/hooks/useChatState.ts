@@ -6,6 +6,7 @@ import { Chat } from '@google/genai';
 export const useChatState = () => {
     // Core state
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [currentChatSettings, setCurrentChatSettings] = useState<IndividualChatSettings>(DEFAULT_CHAT_SETTINGS);
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [aspectRatio, setAspectRatio] = useState<string>('16:9');
@@ -19,18 +20,16 @@ export const useChatState = () => {
     const [isAppProcessingFile, setIsAppProcessingFile] = useState<boolean>(false);
     const [isSwitchingModel, setIsSwitchingModel] = useState<boolean>(false);
     
-    // Concurrency state
-    const [runningGenerationIds, setRunningGenerationIds] = useState(new Set<string>());
-    const runningGenerationsRef = useRef<Map<string, AbortController>>(new Map());
-
     // Refs for managing UI behavior and async operations
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const userScrolledUp = useRef<boolean>(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
     const sessionSaveTimeoutRef = useRef<number | null>(null);
 
     return {
         messages, setMessages,
+        isLoading, setIsLoading,
         currentChatSettings, setCurrentChatSettings,
         editingMessageId, setEditingMessageId,
         aspectRatio, setAspectRatio,
@@ -39,11 +38,10 @@ export const useChatState = () => {
         appFileError, setAppFileError,
         isAppProcessingFile, setIsAppProcessingFile,
         isSwitchingModel, setIsSwitchingModel,
-        runningGenerationIds, setRunningGenerationIds,
-        runningGenerationsRef,
         messagesEndRef,
         scrollContainerRef,
         userScrolledUp,
+        abortControllerRef,
         sessionSaveTimeoutRef
     };
 };

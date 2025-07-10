@@ -535,6 +535,27 @@
     body.theme-light .suggestion-bubble:hover {
         box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
+    
+    /* Loading dots for sidebar */
+    .loading-dots-container {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      padding-right: 4px; 
+    }
+    .loading-dot {
+      width: 5px;
+      height: 5px;
+      background-color: var(--theme-text-tertiary);
+      border-radius: 50%;
+      animation: loading-dots-pulse 1.4s infinite ease-in-out both;
+    }
+    .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes loading-dots-pulse {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1.0); }
+    }
   </style>
 <script type="importmap">
 {

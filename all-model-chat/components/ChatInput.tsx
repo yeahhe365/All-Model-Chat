@@ -17,7 +17,7 @@ interface ChatInputProps {
   selectedFiles: UploadedFile[]; 
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
   onSendMessage: (text: string) => void;
-  isAnythingLoading: boolean; 
+  isLoading: boolean; 
   isEditing: boolean;
   onStopGenerating: () => void;
   onCancelEdit: () => void;
@@ -53,7 +53,7 @@ const aspectRatios = ['1:1', '9:16', '16:9', '4:3', '3:4'];
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   appSettings, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
-  isAnythingLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
+  isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
   isImagenModel, aspectRatio, setAspectRatio,
   transcriptionModelId, isTranscriptionThinkingEnabled,
@@ -183,7 +183,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-  const canSend = (inputText.trim() !== '' || selectedFiles.length > 0) && !isAddingById && !isModalOpen;
+  const canSend = (inputText.trim() !== '' || selectedFiles.length > 0) && !isLoading && !isAddingById && !isModalOpen;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -214,7 +214,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleAddFileByIdSubmit = async () => {
-    if (!fileIdInput.trim() || isAddingById || isAnythingLoading) return;
+    if (!fileIdInput.trim() || isAddingById || isLoading) return;
     setIsAddingById(true);
     justInitiatedFileOpRef.current = true;
     await onAddFileById(fileIdInput.trim());
@@ -371,7 +371,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       <Suspense fallback={null}>
         {showCamera && ( <CameraCapture onCapture={handlePhotoCapture} onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }} /> )}
         {showRecorder && ( <AudioRecorder onRecord={handleAudioRecord} onCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }} /> )}
-        {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isAnythingLoading} /> )}
+        {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isLoading} /> )}
       </Suspense>
 
       <div
@@ -393,7 +393,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {fileError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
                 {transcriptionError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{transcriptionError}</div>}
                 {selectedFiles.length > 0 && <div className="mb-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar"> <div className="flex gap-3"> {selectedFiles.map(file => ( <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} /> ))} </div> </div>}
-                {showAddByIdInput && <div className="mb-2 flex items-center gap-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)]"> <input type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)} placeholder={t('addById_placeholder')} className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm" aria-label={t('addById_aria')} disabled={isAddingById} /> <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isAnythingLoading} className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm" aria-label={t('addById_button_aria')}> <Plus size={16} /> {t('add_button')} </button> <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm" aria-label={t('cancelAddById_button_aria')}> <XCircle size={16} /> {t('cancel_button')} </button> </div>}
+                {showAddByIdInput && <div className="mb-2 flex items-center gap-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)]"> <input type="text" value={fileIdInput} onChange={(e) => setFileIdInput(e.target.value)} placeholder={t('addById_placeholder')} className="flex-grow p-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm" aria-label={t('addById_aria')} disabled={isAddingById} /> <button type="button" onClick={handleAddFileByIdSubmit} disabled={!fileIdInput.trim() || isAddingById || isLoading} className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm" aria-label={t('addById_button_aria')}> <Plus size={16} /> {t('add_button')} </button> <button type="button" onClick={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }} disabled={isAddingById} className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm" aria-label={t('cancelAddById_button_aria')}> <XCircle size={16} /> {t('cancel_button')} </button> </div>}
             </div>
             
             <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
@@ -457,7 +457,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                     <button
                                         type="button"
                                         onClick={handleStartRecording}
-                                        disabled={isAnythingLoading || isEditing || isAddingById || isModalOpen || isTranscribing || isWaitingForUpload}
+                                        disabled={isLoading || isEditing || isAddingById || isModalOpen || isTranscribing || isWaitingForUpload}
                                         className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
                                         aria-label={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
                                         title={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
@@ -469,7 +469,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                         )}
                                     </button>
 
-                                    {isAnythingLoading ? ( 
+                                    {isLoading ? ( 
                                         <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Ban size={sendIconSize} /></button>
                                     ) : isEditing ? (
                                         <>

@@ -25,6 +25,7 @@ interface HistorySidebarProps {
   };
   t: (key: keyof typeof translations) => string;
   language: 'en' | 'zh';
+  isLoading: boolean;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
@@ -37,7 +38,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onDeleteSession,
   themeColors,
   t,
-  language
+  language,
+  isLoading,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -160,19 +162,27 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     <span className="font-medium truncate block flex-grow pr-2" title={session.title}>
                       {session.title}
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent selecting the session
-                        onDeleteSession(session.id);
-                      }}
-                      className={`p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset
-                        ${session.id === activeSessionId ? 'hover:bg-black/10 dark:hover:bg-white/10 focus:ring-white/50' : 'hover:bg-[var(--theme-bg-input)] focus:ring-[var(--theme-border-focus)]'}
-                      `}
-                      aria-label={t('history_delete_aria').replace('{title}', session.title)}
-                      title={t('history_delete_title')}
-                    >
-                      <Trash2 size={deleteIconSize} />
-                    </button>
+                    {isLoading && session.id === activeSessionId ? (
+                        <div className="loading-dots-container">
+                            <div className="loading-dot"></div>
+                            <div className="loading-dot"></div>
+                            <div className="loading-dot"></div>
+                        </div>
+                    ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent selecting the session
+                            onDeleteSession(session.id);
+                          }}
+                          className={`p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset
+                            ${session.id === activeSessionId ? 'hover:bg-black/10 dark:hover:bg-white/10 focus:ring-white/50' : 'hover:bg-[var(--theme-bg-input)] focus:ring-[var(--theme-border-focus)]'}
+                          `}
+                          aria-label={t('history_delete_aria').replace('{title}', session.title)}
+                          title={t('history_delete_title')}
+                        >
+                          <Trash2 size={deleteIconSize} />
+                        </button>
+                    )}
                   </div>
                 </button>
               </li>

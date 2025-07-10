@@ -8,7 +8,7 @@ interface HeaderProps {
   onOpenSettingsModal: () => void; 
   onOpenScenariosModal: () => void; 
   onToggleHistorySidebar: () => void;
-  isAnythingLoading: boolean;
+  isLoading: boolean;
   currentModelName?: string;
   availableModels: ModelOption[];
   selectedModelId: string;
@@ -29,7 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettingsModal, 
   onOpenScenariosModal,
   onToggleHistorySidebar,
-  isAnythingLoading,
+  isLoading,
   currentModelName,
   availableModels,
   selectedModelId,
@@ -126,7 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="relative mt-0.5" ref={modelSelectorRef}>
             <button
               onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
-              disabled={isModelsLoading || isAnythingLoading || isSwitchingModel}
+              disabled={isModelsLoading || isLoading || isSwitchingModel}
               className={`w-[6.6rem] sm:w-[7.8rem] md:w-[9rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
               title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
               aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
@@ -198,7 +198,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
         <button
           onClick={onLoadCanvasPrompt}
-          disabled={isAnythingLoading}
+          disabled={isLoading}
           className={`${canvasPromptButtonBaseClasses} ${isCanvasPromptActive ? canvasPromptButtonActiveClasses : canvasPromptButtonInactiveClasses}`}
           aria-label={canvasPromptAriaLabel}
           title={canvasPromptTitle}
