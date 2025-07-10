@@ -122,8 +122,13 @@ export const useMessageHandler = ({
         abortControllerRef.current = new AbortController();
         const currentSignal = abortControllerRef.current.signal;
         userScrolledUp.current = false;
-
-        if (!overrideOptions) { setSelectedFiles([]); }
+        
+        // If files are not being passed in overrideOptions, it means this is a new send from the UI.
+        // In that case, we clear the selected files from the input area.
+        // Retries or other programmatic sends will pass files, so this won't trigger.
+        if (overrideOptions?.files === undefined) {
+            setSelectedFiles([]);
+        }
 
         // --- TTS Model Logic ---
         if (isTtsModel) {
