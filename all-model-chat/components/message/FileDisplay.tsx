@@ -3,7 +3,6 @@ import { UploadedFile } from '../../types';
 import { 
     SUPPORTED_IMAGE_MIME_TYPES, 
     SUPPORTED_TEXT_MIME_TYPES, 
-    SUPPORTED_VIDEO_MIME_TYPES, 
     SUPPORTED_AUDIO_MIME_TYPES, 
     SUPPORTED_PDF_MIME_TYPES, 
 } from '../../constants/fileConstants';

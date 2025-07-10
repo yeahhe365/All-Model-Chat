@@ -8,7 +8,7 @@ import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations, generateThemeCssVariables } from '../../utils/appUtils';
 
-const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors, messageId: string): string => {
+const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors, messageId: string, themeId: string): string => {
   let headContent = '';
   // Clone all style and link tags from the current document's head
   const headElements = document.head.querySelectorAll('style, link[rel="stylesheet"]');
@@ -20,7 +20,7 @@ const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors,
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        document.body.classList.add('theme-${themeColors.id === 'pearl' ? 'light' : 'dark'}');
+        document.body.classList.add('theme-${themeId === 'pearl' ? 'light' : 'dark'}');
         document.querySelectorAll('pre code').forEach((el) => {
           hljs.highlightElement(el);
         });
@@ -57,7 +57,7 @@ const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors,
   </html>`;
 };
 
-const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string; themeColors: ThemeColors; className?: string; type: 'png' | 'html', t: (key: keyof typeof translations) => string }> = ({ markdownContent, messageId, themeColors, className, type, t }) => {
+const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string; themeColors: ThemeColors; themeId: string; className?: string; type: 'png' | 'html', t: (key: keyof typeof translations) => string }> = ({ markdownContent, messageId, themeColors, themeId, className, type, t }) => {
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
   const iconSize = window.innerWidth < 640 ? 14 : 16;
 
@@ -102,7 +102,7 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
             
             tempContainer.innerHTML = `
                 ${allStyles}
-                <div class="export-wrapper p-4" style="background-color: ${themeColors.bgPrimary}; background-image: radial-gradient(ellipse at 50% 100%, ${themeColors.id === 'pearl' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.025)'}, transparent 70%);">
+                <div class="export-wrapper p-4" style="background-color: ${themeColors.bgPrimary}; background-image: radial-gradient(ellipse at 50% 100%, ${themeId === 'pearl' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.025)'}, transparent 70%);">
                     <div class="flex items-start gap-2 sm:gap-3 group justify-start">
                         <div class="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
                            <div class="h-6 sm:h-7">
@@ -145,7 +145,7 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
             link.click();
             document.body.removeChild(tempContainer);
         } else { // html
-            const fullHtmlDoc = generateFullHtmlDocument(sanitizedHtml, themeColors, messageId);
+            const fullHtmlDoc = generateFullHtmlDocument(sanitizedHtml, themeColors, messageId, themeId);
             
             const titleMatch = fullHtmlDoc.match(/<title[^>]*>([^<]+)<\/title>/i);
             let filename = `chat-export-${messageId}.html`;
@@ -216,6 +216,7 @@ interface MessageProps {
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
     themeColors: ThemeColors; 
+    themeId: string;
     baseFontSize: number;
     onTextToSpeech: (messageId: string, text: string) => void;
     ttsMessageId: string | null;
@@ -223,7 +224,7 @@ interface MessageProps {
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
-    const { message, prevMessage, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, baseFontSize, t, onTextToSpeech, ttsMessageId } = props;
+    const { message, prevMessage, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, themeId, baseFontSize, t, onTextToSpeech, ttsMessageId } = props;
     
     const isGrouped = prevMessage &&
         prevMessage.role === message.role &&
@@ -270,8 +271,8 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
                         <button onClick={() => onTextToSpeech(message.id, message.content)} disabled={!!ttsMessageId} title="Read aloud" aria-label="Read message aloud" className={`${actionButtonClasses} text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed`}>
                           { isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" /> : <Volume2 size={actionIconSize} /> }
                         </button>
-                        <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />
-                        <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />
+                        <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} themeId={themeId} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />
+                        <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} themeId={themeId} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />
                     </>
                 )}
                 {!message.isLoading && <button onClick={() => onDeleteMessage(message.id)} title={t('delete_button_title')} aria-label={t('delete_button_title')} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-tertiary)]`}><Trash2 size={actionIconSize} /></button>}

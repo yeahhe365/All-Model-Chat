@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings } from './types';
+import { AppSettings, UploadedFile } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
@@ -337,6 +337,7 @@ const App: React.FC = () => {
           onRetryMessage={handleRetryMessage}
           showThoughts={currentChatSettings.showThoughts}
           themeColors={currentTheme.colors}
+          themeId={currentTheme.id}
           baseFontSize={appSettings.baseFontSize}
           onSuggestionClick={handleSuggestionClick}
           onTextToSpeech={handleTextToSpeech}

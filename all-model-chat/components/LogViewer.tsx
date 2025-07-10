@@ -42,6 +42,15 @@ const LogRow: React.FC<{ log: LogEntry }> = React.memo(({ log }) => {
   const [isDataExpanded, setIsDataExpanded] = useState(false);
   const hasData = log.data !== undefined;
 
+  const timeString = log.timestamp.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const milliseconds = log.timestamp.getMilliseconds().toString().padStart(3, '0');
+  const fullTimeString = `${timeString}.${milliseconds}`;
+
   return (
     <div className="border-b border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)] font-mono text-xs">
       <div 
@@ -49,7 +58,7 @@ const LogRow: React.FC<{ log: LogEntry }> = React.memo(({ log }) => {
         onClick={hasData ? () => setIsDataExpanded(!isDataExpanded) : undefined}
       >
         <span className="w-24 text-[var(--theme-text-tertiary)] flex-shrink-0">
-          {log.timestamp.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 })}
+          {fullTimeString}
         </span>
         <span className={`w-16 font-semibold flex-shrink-0 ${LOG_LEVEL_COLORS[log.level]}`}>
           {log.level}

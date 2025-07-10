@@ -1,5 +1,5 @@
 import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai";
-import { ThemeColors } from './constants/themeConstants'; 
+import { Theme, ThemeColors } from './constants/themeConstants'; 
 import { translations } from "./utils/appUtils";
 
 export type { ThemeColors };
@@ -147,6 +147,7 @@ export interface MessageListProps {
   onRetryMessage: (messageId: string) => void; 
   showThoughts: boolean;
   themeColors: ThemeColors; 
+  themeId: string;
   baseFontSize: number; 
   onSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;

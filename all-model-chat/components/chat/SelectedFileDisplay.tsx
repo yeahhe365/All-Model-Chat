@@ -3,7 +3,6 @@ import { UploadedFile } from '../../types';
 import { Ban, XCircle, AlertTriangleIcon, Loader2, CheckCircle, ClipboardCopy, Check, FileVideo, FileAudio, FileText } from 'lucide-react';
 import { 
   SUPPORTED_IMAGE_MIME_TYPES, 
-  SUPPORTED_VIDEO_MIME_TYPES, 
   SUPPORTED_AUDIO_MIME_TYPES, 
   SUPPORTED_TEXT_MIME_TYPES, 
   SUPPORTED_PDF_MIME_TYPES
