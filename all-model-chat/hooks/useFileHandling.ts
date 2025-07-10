@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 
@@ -82,12 +82,13 @@ export const useFileHandling = ({
             setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                // Use a base64 data URL for durable previews that can be saved in localStorage.
+                // Use a blob URL for an efficient preview. This is memory-safe for large images
+                // but is not persistent across browser sessions like a data URL would be.
                 try {
-                    const dataUrl = await fileToDataUrl(file);
+                    const dataUrl = URL.createObjectURL(file);
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl } : f));
                 } catch (e) {
-                    logService.error('Error creating data URL for preview', { error: e });
+                    logService.error('Error creating object URL for preview', { error: e });
                 }
             }
 
