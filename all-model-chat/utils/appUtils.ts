@@ -303,9 +303,9 @@ export const buildContentParts = (text: string, files: UploadedFile[] | undefine
 
   if (files) {
     files.forEach(file => {
-      // Only include successfully uploaded files with a fileUri
-      if (!file.isProcessing && !file.error && file.fileUri && file.uploadState === 'active' && ALL_SUPPORTED_MIME_TYPES.includes(file.type)) {
-        dataParts.push({ fileData: { mimeType: file.type, fileUri: file.fileUri } });
+      // Only include successfully uploaded files with a fileApiName
+      if (!file.isProcessing && !file.error && file.fileApiName && file.uploadState === 'active' && ALL_SUPPORTED_MIME_TYPES.includes(file.type)) {
+        dataParts.push({ fileData: { mimeType: file.type, fileUri: file.fileApiName } });
       }
     });
   }
