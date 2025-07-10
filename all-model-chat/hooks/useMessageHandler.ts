@@ -153,12 +153,11 @@ export const useMessageHandler = ({
             let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
             if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
 
-            const newUserMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: filesToUse, timestamp: new Date() };
-            const newTitle = generateSessionTitle([newUserMessage]);
+            const newTitle = "New Chat"; // Will be updated when message is added
             const newSession: SavedChatSession = {
                 id: newSessionId,
                 title: newTitle,
-                messages: [newUserMessage],
+                messages: [], // Start with empty messages
                 timestamp: Date.now(),
                 settings: newSessionSettings,
             };
