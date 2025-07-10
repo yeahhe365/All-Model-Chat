@@ -8,6 +8,7 @@ interface HistorySidebarProps {
   onToggle: () => void;
   sessions: SavedChatSession[];
   activeSessionId: string | null;
+  loadingSessionIds: Set<string>;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
   onDeleteSession: (sessionId: string) => void;
@@ -25,7 +26,6 @@ interface HistorySidebarProps {
   };
   t: (key: keyof typeof translations) => string;
   language: 'en' | 'zh';
-  isLoading: boolean;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
@@ -33,13 +33,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onToggle,
   sessions,
   activeSessionId,
+  loadingSessionIds,
   onSelectSession,
   onNewChat,
   onDeleteSession,
   themeColors,
   t,
   language,
-  isLoading,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -146,7 +146,9 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_search_no_results')}</p>
         ) : (
           <ul className="py-1 px-2">
-            {filteredSessions.map((session) => (
+            {filteredSessions.map((session) => {
+              const isSessionLoading = loadingSessionIds.has(session.id);
+              return (
               <li key={session.id}>
                 <button
                   onClick={() => onSelectSession(session.id)}
@@ -162,7 +164,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     <span className="font-medium truncate block flex-grow pr-2" title={session.title}>
                       {session.title}
                     </span>
-                    {isLoading && session.id === activeSessionId ? (
+                    {isSessionLoading ? (
                         <div className="loading-dots-container">
                             <div className="loading-dot"></div>
                             <div className="loading-dot"></div>
@@ -186,7 +188,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   </div>
                 </button>
               </li>
-            ))}
+            )})}
           </ul>
         )}
       </div>

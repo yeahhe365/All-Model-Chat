@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { PreloadedMessage, ChatMessage, SavedScenario } from '../types';
 import { PRELOADED_SCENARIO_KEY } from '../constants/appConstants';
-import { generateUniqueId } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
+import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
+
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 interface PreloadedScenariosProps {
-    startNewChat: (saveCurrent: boolean) => void;
-    setMessages: (updater: (prev: ChatMessage[]) => ChatMessage[]) => void;
+    startNewChat: () => void;
+    updateAndPersistSessions: SessionsUpdater;
 }
 
-export const usePreloadedScenarios = ({ startNewChat, setMessages }: PreloadedScenariosProps) => {
+export const usePreloadedScenarios = ({ startNewChat, updateAndPersistSessions }: PreloadedScenariosProps) => {
     const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
 
     useEffect(() => {
@@ -30,8 +33,18 @@ export const usePreloadedScenarios = ({ startNewChat, setMessages }: PreloadedSc
     };
     
     const handleLoadPreloadedScenario = (scenarioToLoad: PreloadedMessage[]) => { 
-        startNewChat(false); // Don't save the current (modal) state, just start fresh
-        setMessages(() => scenarioToLoad.map(pm => ({ ...pm, id: generateUniqueId(), timestamp: new Date() }))); 
+        startNewChat(); 
+        const messages: ChatMessage[] = scenarioToLoad.map(pm => ({ ...pm, id: generateUniqueId(), timestamp: new Date() }));
+        const newSession: SavedChatSession = {
+            id: generateUniqueId(),
+            title: generateSessionTitle(messages),
+            messages,
+            settings: DEFAULT_CHAT_SETTINGS,
+            timestamp: Date.now(),
+        };
+        updateAndPersistSessions(prev => [newSession, ...prev]);
+        // The active session will be set by the calling component, if desired.
+        // For now, it just adds it to the list.
     };
 
     const handleExportPreloadedScenario = (scenarioToExport: SavedScenario) => { 
@@ -52,12 +65,11 @@ export const usePreloadedScenarios = ({ startNewChat, setMessages }: PreloadedSc
             try {
                 const parsedMessages = JSON.parse(e.target?.result as string);
                 
-                // Handle both old format (array of messages) and new format (array of array of messages)
                 let messages: PreloadedMessage[];
                 if (Array.isArray(parsedMessages) && parsedMessages.length > 0 && Array.isArray(parsedMessages[0])) {
-                     messages = parsedMessages[0]; // New format from this tool
+                     messages = parsedMessages[0];
                 } else {
-                     messages = parsedMessages; // Old format or external format
+                     messages = parsedMessages;
                 }
 
                 if (Array.isArray(messages) && messages.every(m => m.id && m.role && typeof m.content === 'string')) {

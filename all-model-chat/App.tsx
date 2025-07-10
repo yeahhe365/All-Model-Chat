@@ -22,16 +22,17 @@ const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = getTranslator(language);
   
-  // State for imperatively controlling the ChatInput component's text
-  const [commandedInput, setCommandedInput] = useState<{ text: string; id: number } | null>(null);
-
   const {
       messages,
       isLoading,
+      loadingSessionIds,
       currentChatSettings,
+      commandedInput,
+      setCommandedInput,
       selectedFiles,
       setSelectedFiles,
       editingMessageId,
+      setEditingMessageId,
       appFileError,
       isAppProcessingFile,
       savedSessions,
@@ -46,6 +47,7 @@ const App: React.FC = () => {
       isAppDraggingOver,
       aspectRatio,
       setAspectRatio,
+      ttsMessageId,
       loadChatSession,
       startNewChat,
       handleClearCurrentChat,
@@ -58,7 +60,6 @@ const App: React.FC = () => {
       handleDeleteMessage,
       handleRetryMessage,
       handleDeleteChatHistorySession,
-      clearAllHistory,
       clearCacheAndReload,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
@@ -72,9 +73,7 @@ const App: React.FC = () => {
       handleCancelFileUpload,
       handleAddFileById,
       handleTextToSpeech,
-      ttsMessageId,
-      setCurrentChatSettings
-  } = useChat(appSettings, setCommandedInput);
+  } = useChat(appSettings);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
@@ -83,17 +82,8 @@ const App: React.FC = () => {
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
-    setCurrentChatSettings(prev => ({ // Preserve locked key when changing other settings
-        ...prev,
-        // Do not change model for current chat from settings. Use header dropdown instead.
-        // modelId: newSettings.modelId,
-        temperature: newSettings.temperature,
-        topP: newSettings.topP,
-        showThoughts: newSettings.showThoughts,
-        systemInstruction: newSettings.systemInstruction,
-        ttsVoice: newSettings.ttsVoice,
-        thinkingBudget: newSettings.thinkingBudget,
-    }));
+    // Settings are now applied to new chats, or by updating the session directly.
+    // This no longer needs to force-update the current chat's settings.
     setIsSettingsModalOpen(false);
   };
 
@@ -106,20 +96,8 @@ const App: React.FC = () => {
   useEffect(() => {
       const prevFiles = prevSelectedFilesRef.current;
       const currentFiles = selectedFiles;
-
-      // Find files that were in the previous list but not in the current one
-      const removedFiles = prevFiles.filter(
-          prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id)
-      );
-
-      // Revoke their object URLs to free up memory
-      removedFiles.forEach(file => {
-          if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
-              URL.revokeObjectURL(file.dataUrl);
-          }
-      });
-
-      // Update the ref for the next render
+      const removedFiles = prevFiles.filter(prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id));
+      removedFiles.forEach(file => { if (file.dataUrl && file.dataUrl.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); });
       prevSelectedFilesRef.current = currentFiles;
   }, [selectedFiles]);
 
@@ -129,26 +107,21 @@ const App: React.FC = () => {
   const handleLoadCanvasHelperPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
     const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_ASSISTANT_SYSTEM_PROMPT;
+    
+    // Apply this as a global default for new chats
+    setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
 
-    const newAppSettings = {
-      ...appSettings,
-      systemInstruction: newSystemInstruction,
-    };
-    setAppSettings(newAppSettings);
-    setCurrentChatSettings(prev => ({
-      ...prev,
-      systemInstruction: newSystemInstruction,
-    }));
+    // Also apply to the current chat if one is active
+    if (activeSessionId) {
+      handleSendMessage({ text: `System prompt updated to: ${isCurrentlyCanvasPrompt ? 'Default' : 'Canvas Helper'}.` });
+    }
   };
   
   const handleSuggestionClick = (text: string) => {
     setCommandedInput({ text, id: Date.now() });
-    // Focus the textarea and move cursor to the end after a tick to ensure state update has rendered
     setTimeout(() => {
         const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-        if (textarea) {
-            textarea.focus();
-        }
+        if (textarea) textarea.focus();
     }, 0);
   };
 
@@ -156,64 +129,44 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
         const activeElement = document.activeElement as HTMLElement;
-        
-        const isGenerallyInputFocused = 
-            activeElement && (
-                activeElement.tagName.toLowerCase() === 'input' ||
-                activeElement.tagName.toLowerCase() === 'textarea' ||
-                activeElement.tagName.toLowerCase() === 'select' ||
-                activeElement.isContentEditable
-            );
-
+        const isGenerallyInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.tagName.toLowerCase() === 'select' || activeElement.isContentEditable);
         if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'n') {
             event.preventDefault();
-            startNewChat(true); 
+            startNewChat(); 
         } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'l') {
             event.preventDefault();
             setIsLogViewerOpen(prev => !prev);
         }
         else if (event.key === 'Delete') {
-            if (isSettingsModalOpen || isPreloadedMessagesModalOpen) {
-                return; 
-            }
+            if (isSettingsModalOpen || isPreloadedMessagesModalOpen) return;
             const chatTextareaAriaLabel = 'Chat message input';
             const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === chatTextareaAriaLabel;
             
-            if (isGenerallyInputFocused) { // Check if any input is focused
+            if (isGenerallyInputFocused) {
                 if (isChatTextareaFocused && (activeElement as HTMLTextAreaElement).value.trim() === '') {
                     event.preventDefault();
                     handleClearCurrentChat(); 
                 }
-            } else { // No input focused, clear chat globally
+            } else {
                 event.preventDefault();
                 handleClearCurrentChat();
             }
         } else if (event.key === 'Tab' && TAB_CYCLE_MODELS.length > 0) {
             const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
-
-            if (isChatTextareaFocused || !isGenerallyInputFocused) { // Cycle if chat textarea focused OR no general input is focused
+            if (isChatTextareaFocused || !isGenerallyInputFocused) {
                 event.preventDefault();
                 const currentModelId = currentChatSettings.modelId;
                 const currentIndex = TAB_CYCLE_MODELS.indexOf(currentModelId);
                 let nextIndex: number;
-
-                if (currentIndex === -1) { // Current model not in cycle list, start from first
-                    nextIndex = 0;
-                } else {
-                    nextIndex = (currentIndex + 1) % TAB_CYCLE_MODELS.length;
-                }
+                if (currentIndex === -1) nextIndex = 0;
+                else nextIndex = (currentIndex + 1) % TAB_CYCLE_MODELS.length;
                 const newModelId = TAB_CYCLE_MODELS[nextIndex];
-                if (newModelId) {
-                    handleSelectModelInHeader(newModelId);
-                }
+                if (newModelId) handleSelectModelInHeader(newModelId);
             }
         }
     };
-
     document.addEventListener('keydown', handleKeyDown);
-    return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader]);
 
   const getCurrentModelDisplayName = () => {
@@ -232,7 +185,6 @@ const App: React.FC = () => {
 
   return (
     <div className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
-      {/* Backdrop for mobile sidebar */}
       {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
@@ -245,13 +197,13 @@ const App: React.FC = () => {
         onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
         sessions={savedSessions}
         activeSessionId={activeSessionId}
-        onSelectSession={(id) => loadChatSession(id)}
-        onNewChat={() => startNewChat(true)}
+        loadingSessionIds={loadingSessionIds}
+        onSelectSession={(id) => loadChatSession(id, savedSessions)}
+        onNewChat={() => startNewChat()}
         onDeleteSession={handleDeleteChatHistorySession}
         themeColors={currentTheme.colors}
         t={t}
         language={language}
-        isLoading={isLoading}
       />
       <div
         className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
@@ -270,7 +222,7 @@ const App: React.FC = () => {
           </div>
         )}
         <Header
-          onNewChat={() => startNewChat(true)}
+          onNewChat={() => startNewChat()}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
           onToggleHistorySidebar={() => setIsHistorySidebarOpen(prev => !prev)}
@@ -309,7 +261,7 @@ const App: React.FC = () => {
               onSave={handleSaveSettings}
               isModelsLoading={isModelsLoading}
               modelsLoadingError={modelsLoadingError}
-              onClearAllHistory={clearAllHistory}
+              onClearAllHistory={clearCacheAndReload}
               onClearCache={clearCacheAndReload}
               onOpenLogViewer={() => setIsLogViewerOpen(true)}
               t={t}

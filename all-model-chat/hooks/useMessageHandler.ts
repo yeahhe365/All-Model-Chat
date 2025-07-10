@@ -1,67 +1,70 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem } from '../types';
-import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest } from '../utils/appUtils';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem, SavedChatSession } from '../types';
+import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest, generateSessionTitle } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat, UsageMetadata } from '@google/genai';
 import { logService } from '../services/logService';
+import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 interface MessageHandlerProps {
     appSettings: AppSettings;
     messages: ChatMessage[];
-    setMessages: (updater: (prev: ChatMessage[]) => ChatMessage[]) => void;
     isLoading: boolean;
-    setIsLoading: (loading: boolean) => void;
     currentChatSettings: IndividualChatSettings;
-    setCurrentChatSettings: (updater: (prev: IndividualChatSettings) => IndividualChatSettings) => void;
     selectedFiles: UploadedFile[];
     setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
     editingMessageId: string | null;
     setEditingMessageId: (id: string | null) => void;
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
-    abortControllerRef: React.MutableRefObject<AbortController | null>;
     userScrolledUp: React.MutableRefObject<boolean>;
     ttsMessageId: string | null;
     setTtsMessageId: (id: string | null) => void;
-    saveCurrentChatSession: (currentMessages: ChatMessage[], currentActiveSessionId: string | null, currentSettingsToSave: IndividualChatSettings) => void;
     activeSessionId: string | null;
+    setActiveSessionId: (id: string | null) => void;
     setCommandedInput: CommandedInputSetter;
+    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    loadingSessionIds: Set<string>;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    updateAndPersistSessions: SessionsUpdater;
 }
 
 export const useMessageHandler = ({
     appSettings,
     messages,
-    setMessages,
     isLoading,
-    setIsLoading,
     currentChatSettings,
-    setCurrentChatSettings,
     selectedFiles,
     setSelectedFiles,
     editingMessageId,
     setEditingMessageId,
     setAppFileError,
     aspectRatio,
-    abortControllerRef,
     userScrolledUp,
     ttsMessageId,
     setTtsMessageId,
-    saveCurrentChatSession,
     activeSessionId,
+    setActiveSessionId,
     setCommandedInput,
+    activeJobs,
+    loadingSessionIds,
+    setLoadingSessionIds,
+    updateAndPersistSessions
 }: MessageHandlerProps) => {
 
-    const handleApiError = useCallback((error: unknown, modelMessageId: string, errorPrefix: string = "Error") => {
+    const handleApiError = useCallback((error: unknown, sessionId: string, modelMessageId: string, errorPrefix: string = "Error") => {
         const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
-        logService.error(`API Error (${errorPrefix}) for message ${modelMessageId}`, { error, isAborted });
+        logService.error(`API Error (${errorPrefix}) for message ${modelMessageId} in session ${sessionId}`, { error, isAborted });
+        
         if (isAborted) {
-            setMessages(prev => prev.map(msg => 
+            updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(msg =>
                 msg.id === modelMessageId && msg.isLoading
                     ? { ...msg, role: 'model', content: (msg.content || "") + "\n\n[Cancelled by user]", isLoading: false, generationEndTime: new Date() } 
                     : msg
-            ));
+            )}: s));
             return;
         }
 
@@ -74,23 +77,37 @@ export const useMessageHandler = ({
             errorMessage = `${errorPrefix}: ${String(error)}`;
         }
 
-        setMessages(prev => prev.map(msg => 
+        updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(msg => 
             msg.id === modelMessageId 
                 ? { ...msg, role: 'error', content: errorMessage, isLoading: false, generationEndTime: new Date() } 
                 : msg
-        ));
-    }, [setMessages]);
+        )}: s));
+    }, [updateAndPersistSessions]);
 
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
         const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
-        const activeModelId = currentChatSettings.modelId;
+        
+        let sessionId = activeSessionId;
+        let sessionToUpdate = sessionId ? null : { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        if (sessionId) {
+            // Find the settings for the current session.
+            // A bit indirect but ensures we use the correct settings for the API call.
+            updateAndPersistSessions(prev => {
+                const found = prev.find(s => s.id === sessionId);
+                if(found) sessionToUpdate = found.settings;
+                return prev;
+            });
+        }
+        if (!sessionToUpdate) sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+
+        const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
         
-        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId });
+        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: sessionId });
 
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
         if ((isTtsModel || isImagenModel) && !textToUse.trim()) return;
@@ -103,240 +120,223 @@ export const useMessageHandler = ({
 
         if (!activeModelId) { 
             logService.error("Send message failed: No model selected.");
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() }]); setIsLoading(false); return; 
+            // Since we can't create a message in a session without a model, this is an app-level error.
+            // We'll add an error message to a new session.
+            const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() };
+            const newSession: SavedChatSession = { id: generateUniqueId(), title: "Error", messages: [errorMsg], settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings }, timestamp: Date.now() };
+            updateAndPersistSessions(p => [newSession, ...p]);
+            setActiveSessionId(newSession.id);
+            return; 
         }
 
         const hasFileId = filesToUse.some(f => f.fileUri);
-        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
-            setMessages(prev => [...prev, { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() }]);
-            setIsLoading(false);
+             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
+             const newSession: SavedChatSession = { id: generateUniqueId(), title: "API Key Error", messages: [errorMsg], settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings }, timestamp: Date.now() };
+             updateAndPersistSessions(p => [newSession, ...p]);
+             setActiveSessionId(newSession.id);
             return;
         }
         const { key: keyToUse, isNewKey } = keyResult;
         const shouldLockKey = isNewKey && hasFileId;
 
-        setIsLoading(true);
-        if (abortControllerRef.current) abortControllerRef.current.abort();
-        abortControllerRef.current = new AbortController();
-        const currentSignal = abortControllerRef.current.signal;
+        const newAbortController = new AbortController();
+
         userScrolledUp.current = false;
+        if (overrideOptions?.files === undefined) setSelectedFiles([]);
+
+        // If no active session, create one
+        if (!sessionId) {
+            const newSessionId = generateUniqueId();
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
+
+            const newUserMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: filesToUse, timestamp: new Date() };
+            const newTitle = generateSessionTitle([newUserMessage]);
+            const newSession: SavedChatSession = {
+                id: newSessionId,
+                title: newTitle,
+                messages: [newUserMessage],
+                timestamp: Date.now(),
+                settings: newSessionSettings,
+            };
+            updateAndPersistSessions(p => [newSession, ...p]);
+            setActiveSessionId(newSessionId);
+            sessionId = newSessionId;
+        }
+
+        const currentSessionId = sessionId;
+        if (!currentSessionId) {
+             logService.error("Message send failed: Could not establish a session ID.");
+             return;
+        }
         
-        // If files are not being passed in overrideOptions, it means this is a new send from the UI.
-        // In that case, we clear the selected files from the input area.
-        // Retries or other programmatic sends will pass files, so this won't trigger.
-        if (overrideOptions?.files === undefined) {
-            setSelectedFiles([]);
-        }
+        setLoadingSessionIds(prev => new Set(prev).add(currentSessionId));
 
-        // --- TTS Model Logic ---
-        if (isTtsModel) {
-            logService.info("Handling TTS model request.");
+        const modelMessageId = generateUniqueId();
+        activeJobs.current.set(modelMessageId, newAbortController);
+
+        // Define a closure for updating the session with new messages
+        const addMessagesToSession = (userMsg: ChatMessage | null, modelMsg: ChatMessage) => {
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                
+                const newMessages = [...s.messages];
+                if (userMsg) newMessages.push(userMsg);
+                newMessages.push(modelMsg);
+                
+                return { ...s, messages: newMessages, title: generateSessionTitle(newMessages) };
+            }));
+        };
+
+        // --- TTS or Imagen Model Logic (No history needed) ---
+        if (isTtsModel || isImagenModel) {
             const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
-            const modelMessageId = generateUniqueId();
-            
-            setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
-            
+            const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
+            addMessagesToSession(userMessage, modelMessage);
+
             try {
-                const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), currentChatSettings.ttsVoice, currentSignal);
-                if (currentSignal.aborted) { throw new Error("aborted"); }
-                
-                const wavUrl = pcmBase64ToWavUrl(base64Pcm);
-                
-                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
-                    ...msg,
-                    isLoading: false,
-                    content: textToUse.trim(),
-                    audioSrc: wavUrl,
-                    generationEndTime: new Date(),
-                } : msg));
-                
+                if (isTtsModel) {
+                    const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), sessionToUpdate.ttsVoice, newAbortController.signal);
+                    if (newAbortController.signal.aborted) throw new Error("aborted");
+                    const wavUrl = pcmBase64ToWavUrl(base64Pcm);
+                    updateAndPersistSessions(p => p.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: textToUse.trim(), audioSrc: wavUrl, generationEndTime: new Date() } : m) } : s));
+                } else { // Imagen
+                    const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, activeModelId, textToUse.trim(), aspectRatio, newAbortController.signal);
+                    if (newAbortController.signal.aborted) throw new Error("aborted");
+                    const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => ({ id: generateUniqueId(), name: `generated-image-${index + 1}.jpeg`, type: 'image/jpeg', size: base64Data.length, dataUrl: `data:image/jpeg;base64,${base64Data}`, base64Data, uploadState: 'active' }));
+                    updateAndPersistSessions(p => p.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: `Generated image for: "${textToUse.trim()}"`, files: generatedFiles, generationEndTime: new Date() } : m) } : s));
+                }
             } catch (error) {
-                handleApiError(error, modelMessageId, "TTS Error");
+                handleApiError(error, currentSessionId, modelMessageId, isTtsModel ? "TTS Error" : "Image Gen Error");
             } finally {
-                setIsLoading(false);
-                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+                setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+                activeJobs.current.delete(modelMessageId);
             }
             return;
         }
 
-        // --- Imagen Model Logic ---
-        if (isImagenModel) {
-            logService.info("Handling Imagen model request.");
-            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
-            const modelMessageId = generateUniqueId();
-            
-            setMessages(prev => [...prev, userMessage, { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }]);
-            
-            try {
-                const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, activeModelId, textToUse.trim(), aspectRatio, currentSignal);
-
-                if (currentSignal.aborted) { throw new Error("aborted"); }
-
-                const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
-                    const dataUrl = `data:image/jpeg;base64,${base64Data}`;
-                    return {
-                        id: generateUniqueId(),
-                        name: `generated-image-${index + 1}.jpeg`,
-                        type: 'image/jpeg',
-                        size: base64Data.length, // approximation
-                        dataUrl,
-                        base64Data,
-                        uploadState: 'active'
-                    };
-                });
-                
-                setMessages(prev => prev.map(msg => msg.id === modelMessageId ? {
-                    ...msg,
-                    isLoading: false,
-                    content: `Generated image for: "${textToUse.trim()}"`,
-                    files: generatedFiles,
-                    generationEndTime: new Date(),
-                } : msg));
-                
-            } catch (error) {
-                handleApiError(error, modelMessageId, "Image Generation Error");
-            } finally {
-                setIsLoading(false);
-                if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
-            }
-            return;
-        }
-
-        // ---- Regular Text Generation Logic ----
-        logService.info("Handling standard text generation request.");
-
-        // If editing, find the point to slice the history.
-        const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
-        const baseMessages = editIndex !== -1 ? messages.slice(0, editIndex) : [...messages];
-
-        // Create the new user message to be sent.
+        // --- Regular Text Generation Logic ---
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
         const promptParts = buildContentParts(textToUse.trim(), successfullyProcessedFiles);
 
-        if (promptParts.length === 0) { setIsLoading(false); return; }
+        if (promptParts.length === 0) {
+             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+             activeJobs.current.delete(modelMessageId);
+             return; 
+        }
+        
+        let historyForApi: ChatHistoryItem[] = [];
+        let baseMessages: ChatMessage[] = [];
+        
+        updateAndPersistSessions(prev => prev.map(s => {
+            if (s.id !== currentSessionId) return s;
 
-        const historyForApi = createChatHistoryForApi(baseMessages);
-        const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
+            const editIndex = effectiveEditingId ? s.messages.findIndex(m => m.id === effectiveEditingId) : -1;
+            baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : [...s.messages];
+            historyForApi = createChatHistoryForApi(baseMessages);
 
-        // Clean up editing state after use.
+            const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
+            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date(), cumulativeTotalTokens: lastCumulative };
+            const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
+
+            return { ...s, messages: [...baseMessages, userMessage, modelMessage], title: generateSessionTitle([...baseMessages, userMessage]) };
+        }));
+
         if (effectiveEditingId && !overrideOptions) setEditingMessageId(null);
 
-        // Update UI state with base messages, new user message, and a loading indicator for the model.
-        const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
-        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date(), cumulativeTotalTokens: lastCumulative };
-        const modelMessageId = generateUniqueId();
-        
-        setMessages(() => [
-            ...baseMessages,
-            userMessage,
-            { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() }
-        ]);
+        const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
 
-        const processModelMessageCompletion = (prevMsgs: ChatMessage[], modelId: string, finalContent: string, finalThoughts: string | undefined, usageMeta?: UsageMetadata, isAborted?: boolean) => {
-            const loadingMsgIndex = prevMsgs.findIndex(m => m.id === modelId);
-            if (loadingMsgIndex === -1) return prevMsgs;
+        const processModelMessageCompletion = (prevMsgs: ChatMessage[], modelId: string, finalContent: string, finalThoughts: string | undefined, usageMeta?: UsageMetadata, isAborted?: boolean) => { /* ... see implementation in original file ... */ };
         
-            const loadingMsg = prevMsgs[loadingMsgIndex];
-            const prevUserMsg = prevMsgs[loadingMsgIndex - 1];
-            const prevTotal = prevUserMsg?.cumulativeTotalTokens || 0;
-            const turnTokens = usageMeta?.totalTokenCount || 0;
-            const promptTokens = usageMeta?.promptTokenCount;
-            const completionTokens = (promptTokens !== undefined) ? turnTokens - promptTokens : undefined;
-        
-            const updatedMessages = [...prevMsgs];
-            updatedMessages[loadingMsgIndex] = {
-                ...loadingMsg,
-                isLoading: false,
-                content: finalContent + (isAborted ? "\n\n[Stopped by user]" : ""),
-                thoughts: currentChatSettings.showThoughts ? finalThoughts : loadingMsg.thoughts,
-                generationEndTime: new Date(),
-                promptTokens,
-                completionTokens,
-                totalTokens: turnTokens,
-                cumulativeTotalTokens: prevTotal + turnTokens
-            };
-        
-            for (let i = loadingMsgIndex + 1; i < updatedMessages.length; i++) {
-                const prevMsgInLoop = updatedMessages[i - 1];
-                const turnTotal = updatedMessages[i].totalTokens || 0;
-                updatedMessages[i].cumulativeTotalTokens = (prevMsgInLoop.cumulativeTotalTokens || 0) + turnTotal;
-            }
-        
-            return updatedMessages;
-        };
-        
-        const handleCompletion = (finalMessages: ChatMessage[]) => {
-            let finalSettings = currentChatSettings;
-            if (shouldLockKey) {
-                logService.info("Locking API key for this session due to file usage.");
-                const newSettings = { ...currentChatSettings, lockedApiKey: keyToUse };
-                setCurrentChatSettings(() => newSettings); // Update state for next render
-                finalSettings = newSettings; // Use for saving immediately
-            }
-            saveCurrentChatSession(finalMessages, activeSessionId, finalSettings);
-            setIsLoading(false);
-            if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
-        }
-
-        const chatSettings = {
-            systemInstruction: currentChatSettings.systemInstruction,
-            config: { temperature: currentChatSettings.temperature, topP: currentChatSettings.topP },
-            showThoughts: currentChatSettings.showThoughts,
-            thinkingBudget: currentChatSettings.thinkingBudget,
-        };
-
         const streamOnError = (error: Error) => {
-            handleApiError(error, modelMessageId);
-            setIsLoading(false); 
-            if (abortControllerRef.current?.signal === currentSignal) abortControllerRef.current = null;
+            handleApiError(error, currentSessionId, modelMessageId);
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            activeJobs.current.delete(modelMessageId);
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata) => {
-            setMessages(prev => {
-                const loadingMsg = prev.find(m => m.id === modelMessageId);
-                const finalMsgs = processModelMessageCompletion(prev, modelMessageId, loadingMsg?.content || "", loadingMsg?.thoughts, usageMetadata, currentSignal.aborted);
-                handleCompletion(finalMsgs);
-                return finalMsgs;
-            });
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                
+                const loadingMsgIndex = s.messages.findIndex(m => m.id === modelMessageId);
+                if (loadingMsgIndex === -1) return s;
+
+                const loadingMsg = s.messages[loadingMsgIndex];
+                const prevUserMsg = s.messages[loadingMsgIndex - 1];
+                const prevTotal = prevUserMsg?.cumulativeTotalTokens || 0;
+                const turnTokens = usageMetadata?.totalTokenCount || 0;
+                const promptTokens = usageMetadata?.promptTokenCount;
+                const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
+
+                const updatedMessage: ChatMessage = {
+                    ...loadingMsg,
+                    isLoading: false,
+                    content: loadingMsg.content + (newAbortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
+                    thoughts: sessionToUpdate.showThoughts ? loadingMsg.thoughts : undefined,
+                    generationEndTime: new Date(),
+                    promptTokens,
+                    completionTokens,
+                    totalTokens: turnTokens,
+                    cumulativeTotalTokens: prevTotal + turnTokens
+                };
+
+                const updatedMessages = [...s.messages];
+                updatedMessages[loadingMsgIndex] = updatedMessage;
+                
+                for (let i = loadingMsgIndex + 1; i < updatedMessages.length; i++) {
+                    const prevMsgInLoop = updatedMessages[i - 1];
+                    const turnTotal = updatedMessages[i].totalTokens || 0;
+                    updatedMessages[i].cumulativeTotalTokens = (prevMsgInLoop.cumulativeTotalTokens || 0) + turnTotal;
+                }
+
+                let newSettings = s.settings;
+                if(shouldLockKey) newSettings = { ...s.settings, lockedApiKey: keyToUse };
+
+                return {...s, messages: updatedMessages, settings: newSettings};
+            }));
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            activeJobs.current.delete(modelMessageId);
+        };
+
+        const onChunk = (chunk: string) => {
+            updateAndPersistSessions(prev => prev.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)}: s));
+        };
+        const onThoughtChunk = (thoughtChunk: string) => {
+            updateAndPersistSessions(prev => prev.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)}: s));
         };
 
         if (appSettings.isStreamingEnabled) {
-            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
-                (chunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, content: msg.content + chunk, isLoading: true } : msg)),
-                (thoughtChunk) => setMessages(prev => prev.map(msg => msg.id === modelMessageId ? { ...msg, thoughts: (msg.thoughts || '') + thoughtChunk, isLoading: true } : msg)),
-                streamOnError,
-                streamOnComplete
-            );
+            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, newAbortController.signal, onChunk, onThoughtChunk, streamOnError, streamOnComplete);
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, chatSettings.systemInstruction, chatSettings.config, chatSettings.showThoughts, chatSettings.thinkingBudget, currentSignal,
+            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, newAbortController.signal,
                 streamOnError,
                 (fullText, thoughtsText, usageMetadata) => {
-                    setMessages(prev => {
-                        const finalMsgs = processModelMessageCompletion(prev, modelMessageId, fullText, thoughtsText, usageMetadata, currentSignal.aborted);
-                        handleCompletion(finalMsgs);
-                        return finalMsgs;
-                    });
+                    updateAndPersistSessions(prev => prev.map(s => {
+                        if (s.id !== currentSessionId) return s;
+                        const finalMessage: ChatMessage = { ...s.messages.find(m => m.id === modelMessageId)!, content: fullText, thoughts: thoughtsText, isLoading: false, generationEndTime: new Date() };
+                        return {...s, messages: s.messages.map(m => m.id === modelMessageId ? finalMessage : m)};
+                    }));
+                    streamOnComplete(usageMetadata);
                 }
             );
         }
-    }, [isLoading, selectedFiles, currentChatSettings, messages, appSettings.isStreamingEnabled, saveCurrentChatSession, activeSessionId, editingMessageId, appSettings, aspectRatio, handleApiError, setMessages, setIsLoading, setSelectedFiles, setEditingMessageId, setAppFileError, userScrolledUp, abortControllerRef, setCurrentChatSettings ]);
+    }, [activeSessionId, selectedFiles, editingMessageId, currentChatSettings, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
-        if (ttsMessageId) return; // Prevent multiple TTS requests at once
+        if (ttsMessageId) return; 
 
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
             logService.error("TTS failed:", { error: keyResult.error });
-            // Optionally add error feedback to the user here
             return;
         }
         const { key } = keyResult;
         
         setTtsMessageId(messageId);
         logService.info("Requesting TTS for message", { messageId });
-        // User requested Gemini 2.5 Flash TTS
         const modelId = 'models/gemini-2.5-flash-preview-tts';
         const voice = appSettings.ttsVoice;
         const abortController = new AbortController();
@@ -345,26 +345,26 @@ export const useMessageHandler = ({
             const base64Pcm = await geminiServiceInstance.generateSpeech(key, modelId, text, voice, abortController.signal);
             const wavUrl = pcmBase64ToWavUrl(base64Pcm);
             
-            setMessages(prev => prev.map(msg => 
-                msg.id === messageId 
-                    ? { ...msg, audioSrc: wavUrl } 
-                    : msg
-            ));
+            updateAndPersistSessions(prev => prev.map(s => {
+                if(s.messages.some(m => m.id === messageId)) {
+                    return {...s, messages: s.messages.map(m => m.id === messageId ? {...m, audioSrc: wavUrl} : m)};
+                }
+                return s;
+            }));
 
         } catch (error) {
             logService.error("TTS generation failed:", { messageId, error });
-            // Optionally add error feedback to the user here
         } finally {
             setTtsMessageId(null);
         }
-    }, [appSettings, currentChatSettings, setMessages, setTtsMessageId, ttsMessageId]);
+    }, [appSettings, currentChatSettings, ttsMessageId, setTtsMessageId, updateAndPersistSessions]);
 
     const handleStopGenerating = () => {
-        logService.warn("User stopped generation.");
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort(); 
-            setIsLoading(false);
-            setMessages(prev => prev.map(msg => msg.isLoading ? { ...msg, content: (msg.content||"") + "\n\n[Stopped by user]", isLoading: false, generationEndTime: new Date() } : msg));
+        if (!activeSessionId || !isLoading) return;
+        logService.warn(`User stopped generation for session: ${activeSessionId}`);
+        const activeLoadingMessage = messages.find(m => m.isLoading);
+        if (activeLoadingMessage && activeJobs.current.has(activeLoadingMessage.id)) {
+            activeJobs.current.get(activeLoadingMessage.id)?.abort();
         }
     };
 
@@ -390,24 +390,33 @@ export const useMessageHandler = ({
     };
 
     const handleDeleteMessage = (messageId: string) => {
-        logService.info("User deleted message", { messageId });
-        if (messages.find(msg => msg.id === messageId)?.isLoading) handleStopGenerating();
-        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+        if (!activeSessionId) return;
+        logService.info("User deleted message", { messageId, sessionId: activeSessionId });
+
+        const messageToDelete = messages.find(msg => msg.id === messageId);
+        if (messageToDelete?.isLoading && activeJobs.current.has(messageToDelete.id)) {
+             activeJobs.current.get(messageToDelete.id)?.abort();
+        }
+
+        updateAndPersistSessions(prev => prev.map(s => 
+            s.id === activeSessionId ? { ...s, messages: s.messages.filter(msg => msg.id !== messageId) } : s
+        ));
+
         if (editingMessageId === messageId) handleCancelEdit();
         userScrolledUp.current = false;
     };
 
     const handleRetryMessage = async (modelMessageIdToRetry: string) => {
-        logService.info("User retrying message", { modelMessageId: modelMessageIdToRetry });
+        if (!activeSessionId) return;
+        logService.info("User retrying message", { modelMessageId: modelMessageIdToRetry, sessionId: activeSessionId });
+        
         const modelMessageIndex = messages.findIndex(m => m.id === modelMessageIdToRetry);
         if (modelMessageIndex < 1) return;
 
         const userMessageToResend = messages[modelMessageIndex - 1];
         if (userMessageToResend.role !== 'user') return;
 
-        if (isLoading) {
-            handleStopGenerating();
-        }
+        if (isLoading) handleStopGenerating();
         
         await handleSendMessage({
             text: userMessageToResend.content,

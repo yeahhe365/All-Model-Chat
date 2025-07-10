@@ -1,7 +1,9 @@
-import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings, ChatSettings } from '../types';
+import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings, ChatSettings, SavedChatSession } from '../types';
 import { ThemeColors } from '../constants/themeConstants';
-import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { logService } from '../services/logService';
+
+export { logService };
 
 export const translations = {
     // App.tsx
@@ -395,4 +397,28 @@ export const formatTimestamp = (timestamp: number, lang: 'en' | 'zh'): string =>
   }
   
   return date.toLocaleDateString(lang, { month: 'short', day: 'numeric' });
+};
+
+export const applyImageCachePolicy = (sessions: SavedChatSession[]): SavedChatSession[] => {
+    const sessionsCopy = JSON.parse(JSON.stringify(sessions)); // Deep copy to avoid direct state mutation
+    if (sessionsCopy.length > 5) {
+        logService.debug('Applying image cache policy: Pruning images from sessions older than 5th.');
+        // Prune images from the 6th session onwards
+        for (let i = 5; i < sessionsCopy.length; i++) {
+            const session = sessionsCopy[i];
+            if (session.messages && Array.isArray(session.messages)) {
+                session.messages.forEach((message: ChatMessage) => {
+                    if (message.files && Array.isArray(message.files)) {
+                        message.files.forEach((file: UploadedFile) => {
+                            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
+                                if (file.dataUrl) delete file.dataUrl;
+                                if (file.base64Data) delete file.base64Data;
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    }
+    return sessionsCopy;
 };

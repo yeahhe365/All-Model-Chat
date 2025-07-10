@@ -1,176 +1,220 @@
-import { useEffect, useCallback, useRef, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatHistoryItem, ChatMessage, ChatSettings as IndividualChatSettings, SavedScenario } from '../types';
-import { geminiServiceInstance } from '../services/geminiService';
-import { createChatHistoryForApi, generateUniqueId } from '../utils/appUtils';
-import { APP_SETTINGS_KEY, PRELOADED_SCENARIO_KEY, CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
-
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
+import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../types';
+import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useModels } from './useModels';
-import { useChatState } from './useChatState';
-import { useFileHandling } from './useFileHandling';
 import { useChatHistory } from './useChatHistory';
+import { useFileHandling } from './useFileHandling';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { useMessageHandler } from './useMessageHandler';
+import { applyImageCachePolicy, generateUniqueId } from '../utils/appUtils';
+import { CHAT_HISTORY_SESSIONS_KEY } from '../constants/appConstants';
 
-type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
+export const useChat = (appSettings: AppSettings) => {
+    // 1. Core application state, now managed centrally in the main hook
+    const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+    const [commandedInput, setCommandedInput] = useState<{ text: string; id: number; } | null>(null);
 
-export const useChat = (appSettings: AppSettings, setCommandedInput: CommandedInputSetter) => {
-    // 1. Central state management
-    const state = useChatState();
-    const { 
-        messages, setMessages,
-        isLoading,
-        currentChatSettings, setCurrentChatSettings,
-        isSwitchingModel, setIsSwitchingModel,
-        userScrolledUp,
-        messagesEndRef,
-        scrollContainerRef,
-        sessionSaveTimeoutRef,
-    } = state;
+    // State for managing concurrent generation jobs
+    const [loadingSessionIds, setLoadingSessionIds] = useState(new Set<string>());
+    const activeJobs = useRef(new Map<string, AbortController>());
+    
+    // File state
+    const [selectedFiles, setSelectedFiles] = useState<UploadedFile[]>([]);
+    const [appFileError, setAppFileError] = useState<string | null>(null);
+    const [isAppProcessingFile, setIsAppProcessingFile] = useState<boolean>(false);
+    
+    // UI state
+    const [aspectRatio, setAspectRatio] = useState<string>('1:1');
+    const [ttsMessageId, setTtsMessageId] = useState<string | null>(null);
+    const [isSwitchingModel, setIsSwitchingModel] = useState<boolean>(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const userScrolledUp = useRef<boolean>(false);
 
-    // 2. Model fetching via custom hook
+    // Wrapper function to persist sessions to localStorage whenever they are updated
+    const updateAndPersistSessions = useCallback((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+        setSavedSessions(prevSessions => {
+            const newSessions = updater(prevSessions);
+            const sessionsForStorage = applyImageCachePolicy(newSessions);
+            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
+            return newSessions;
+        });
+    }, []);
+
+    // 2. Derive active session state from the core state
+    const activeChat = useMemo(() => {
+        return savedSessions.find(s => s.id === activeSessionId);
+    }, [savedSessions, activeSessionId]);
+
+    const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
+    const currentChatSettings = useMemo(() => activeChat?.settings || DEFAULT_CHAT_SETTINGS, [activeChat]);
+    const isLoading = useMemo(() => loadingSessionIds.has(activeSessionId ?? ''), [loadingSessionIds, activeSessionId]);
+    
+    // 3. Child hooks for modular logic
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
-    
-    // 3. History and Session Management
-    const historyHandler = useChatHistory({ ...state, appSettings, setCommandedInput });
-    const { activeSessionId, savedSessions, clearAllHistory } = historyHandler;
-
-    // 4. File and Drag & Drop Management
-    const fileHandler = useFileHandling({ ...state, appSettings });
-
-    // 5. Preloaded Scenario Management
-    const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, setMessages });
-    
-    // 6. Message Sending and Action Management
-    const messageHandler = useMessageHandler({
-        ...state,
-        ...historyHandler,
+    const historyHandler = useChatHistory({
         appSettings,
-        activeSessionId,
-        setCommandedInput
+        setSavedSessions,
+        setActiveSessionId,
+        setEditingMessageId,
+        setCommandedInput,
+        setSelectedFiles,
+        activeJobs,
+        updateAndPersistSessions
     });
+    const fileHandler = useFileHandling({
+        appSettings,
+        selectedFiles,
+        setSelectedFiles,
+        setAppFileError,
+        isAppProcessingFile,
+        setIsAppProcessingFile,
+        currentChatSettings,
+        setCurrentChatSettings: (updater) => {
+            if (!activeSessionId) return;
+            updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? {...s, settings: updater(s.settings)} : s));
+        },
+    });
+    const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
+    const messageHandler = useMessageHandler({
+        appSettings,
+        messages,
+        isLoading,
+        currentChatSettings,
+        selectedFiles,
+        setSelectedFiles,
+        editingMessageId,
+        setEditingMessageId,
+        setAppFileError,
+        aspectRatio,
+        userScrolledUp,
+        ttsMessageId,
+        setTtsMessageId,
+        activeSessionId,
+        setActiveSessionId,
+        setCommandedInput,
+        activeJobs,
+        loadingSessionIds,
+        setLoadingSessionIds,
+        updateAndPersistSessions,
+    });
+    
+    // Initial data loading from history
+    useEffect(() => {
+        historyHandler.loadInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Memory management for file previews in messages (using blob URLs)
     const messagesForCleanupRef = useRef<ChatMessage[]>([]);
     useEffect(() => {
         const prevFiles = messagesForCleanupRef.current.flatMap(m => m.files || []);
-        const currentFiles = messages.flatMap(m => m.files || []);
-
-        const removedFiles = prevFiles.filter(
-            prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id)
-        );
-
-        removedFiles.forEach(file => {
-            if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
-                URL.revokeObjectURL(file.dataUrl);
-            }
-        });
-
-        messagesForCleanupRef.current = messages;
-    }, [messages]);
-
-    // Final cleanup on component unmount
-    useEffect(() => {
-        return () => {
-            messagesForCleanupRef.current.flatMap(m => m.files || []).forEach(file => {
-                if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
-                    URL.revokeObjectURL(file.dataUrl);
-                }
-            });
-        };
-    }, []); // Empty dependency array means this runs only on mount and its cleanup on unmount
-
+        const currentFiles = savedSessions.flatMap(s => s.messages).flatMap(m => m.files || []);
+        const removedFiles = prevFiles.filter(prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id));
+        removedFiles.forEach(file => { if (file.dataUrl && file.dataUrl.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); });
+        messagesForCleanupRef.current = savedSessions.flatMap(s => s.messages);
+    }, [savedSessions]);
+    useEffect(() => () => { messagesForCleanupRef.current.flatMap(m => m.files || []).forEach(file => { if (file.dataUrl?.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); }); }, []);
 
     // Scrolling logic
-    const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messagesEndRef]);
-
-    const handleScroll = useCallback(() => {
-        const container = scrollContainerRef.current;
-        if (container) userScrolledUp.current = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100;
-    }, [scrollContainerRef, userScrolledUp]);
-
-    useEffect(() => {
-        if (!userScrolledUp.current) scrollToBottom();
-    }, [messages, scrollToBottom, userScrolledUp]);
+    const scrollToBottom = useCallback(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messagesEndRef]);
+    const handleScroll = useCallback(() => { const container = scrollContainerRef.current; if (container) userScrolledUp.current = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100; }, [scrollContainerRef, userScrolledUp]);
+    useEffect(() => { if (!userScrolledUp.current) scrollToBottom(); }, [messages, scrollToBottom, userScrolledUp]);
 
     // Effect to validate current model against available models
     useEffect(() => {
-        if (!isModelsLoading && apiModels.length > 0) {
-            const currentModelStillValid = apiModels.some(m => m.id === appSettings.modelId);
-            if (!currentModelStillValid) {
-                const preferredModelId = apiModels.find(m => m.isPinned)?.id || apiModels[0]?.id;
-                if(preferredModelId) {
-                    setCurrentChatSettings(prev => ({ ...prev, modelId: preferredModelId }));
-                }
+        if (!isModelsLoading && apiModels.length > 0 && activeChat && !apiModels.some(m => m.id === activeChat.settings.modelId)) {
+            const preferredModelId = apiModels.find(m => m.isPinned)?.id || apiModels[0]?.id;
+            if(preferredModelId) {
+                updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? {...s, settings: {...s.settings, modelId: preferredModelId }} : s));
             }
         }
-    }, [isModelsLoading, apiModels, appSettings.modelId, setCurrentChatSettings]);
+    }, [isModelsLoading, apiModels, activeChat, activeSessionId, updateAndPersistSessions]);
     
     // UI Action Handlers
     const handleSelectModelInHeader = useCallback((modelId: string) => {
-        if (isLoading && state.abortControllerRef.current) state.abortControllerRef.current.abort();
-        if (modelId !== currentChatSettings.modelId) {
-            setIsSwitchingModel(true);
-            setCurrentChatSettings(prev => ({ ...prev, modelId: modelId }));
+        if (!activeSessionId) {
+            const newSessionId = generateUniqueId();
+            const newSession: SavedChatSession = {
+                id: newSessionId,
+                title: 'New Chat',
+                messages: [],
+                timestamp: Date.now(),
+                settings: { ...DEFAULT_CHAT_SETTINGS, modelId: modelId },
+            };
+            updateAndPersistSessions(prev => [newSession, ...prev]);
+            setActiveSessionId(newSessionId);
+        } else {
+            if (isLoading) messageHandler.handleStopGenerating();
+            if (modelId !== currentChatSettings.modelId) {
+                setIsSwitchingModel(true);
+                updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, settings: { ...s.settings, modelId } } : s));
+            }
         }
         userScrolledUp.current = false;
-    }, [isLoading, currentChatSettings.modelId, setIsSwitchingModel, setCurrentChatSettings, userScrolledUp, state.abortControllerRef]);
+    }, [isLoading, currentChatSettings.modelId, updateAndPersistSessions, activeSessionId, userScrolledUp, messageHandler]);
 
-    useEffect(() => {
-        if (isSwitchingModel) {
-            const timer = setTimeout(() => setIsSwitchingModel(false), 0);
-            return () => clearTimeout(timer);
-        }
-    }, [isSwitchingModel, setIsSwitchingModel]);
+    useEffect(() => { if (isSwitchingModel) { const timer = setTimeout(() => setIsSwitchingModel(false), 0); return () => clearTimeout(timer); } }, [isSwitchingModel]);
     
     const handleClearCurrentChat = useCallback(() => {
-        if (isLoading && state.abortControllerRef.current) {
-            state.abortControllerRef.current.abort();
-        }
-        setMessages([]); 
-        setCommandedInput({ text: '', id: Date.now() });
-        state.setSelectedFiles([]);
-        state.setEditingMessageId(null);
-        state.setAppFileError(null);
-        userScrolledUp.current = false; 
+        if (isLoading) messageHandler.handleStopGenerating();
+        if (activeSessionId) historyHandler.handleDeleteChatHistorySession(activeSessionId);
+        else historyHandler.startNewChat();
         
-        setTimeout(() => {
-            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
-        }, 0);
-    }, [isLoading, state.abortControllerRef, setMessages, setCommandedInput, state.setSelectedFiles, state.setEditingMessageId, state.setAppFileError, userScrolledUp]);
-
-    const clearCacheAndReload = useCallback(() => {
-        // This function from useChatHistory handles clearing pending saves,
-        // history-related localStorage, and resetting chat state.
-        clearAllHistory();
-
-        // Clear the remaining app-level settings.
-        localStorage.removeItem(APP_SETTINGS_KEY);
-        localStorage.removeItem(PRELOADED_SCENARIO_KEY);
-
-        // A minimal delay to allow React to process state updates from `clearAllHistory`
-        // before the page reloads. This helps ensure the save effect doesn't fire
-        // with stale data right before reload.
-        setTimeout(() => window.location.reload(), 50);
-
-    }, [clearAllHistory]);
-
+    }, [isLoading, activeSessionId, historyHandler, messageHandler]);
 
     return {
-        ...state,
-        ...fileHandler,
-        ...historyHandler,
-        ...scenarioHandler,
-        ...messageHandler,
+        messages,
+        isLoading,
+        loadingSessionIds,
+        currentChatSettings,
+        editingMessageId,
+        setEditingMessageId,
+        commandedInput,
+        setCommandedInput,
+        selectedFiles,
+        setSelectedFiles,
+        appFileError,
+        isAppProcessingFile,
         savedSessions,
         activeSessionId,
         apiModels,
         isModelsLoading,
         modelsLoadingError,
-        handleSelectModelInHeader,
+        isSwitchingModel,
+        messagesEndRef,
+        scrollContainerRef,
+        savedScenarios: scenarioHandler.savedScenarios,
+        isAppDraggingOver: fileHandler.isAppDraggingOver,
+        aspectRatio,
+        setAspectRatio,
+        ttsMessageId,
+        loadChatSession: historyHandler.loadChatSession,
+        startNewChat: historyHandler.startNewChat,
         handleClearCurrentChat,
-        clearCacheAndReload,
+        handleSelectModelInHeader,
+        handleProcessAndAddFiles: fileHandler.handleProcessAndAddFiles,
+        handleSendMessage: messageHandler.handleSendMessage,
+        handleStopGenerating: messageHandler.handleStopGenerating,
+        handleEditMessage: messageHandler.handleEditMessage,
+        handleCancelEdit: messageHandler.handleCancelEdit,
+        handleDeleteMessage: messageHandler.handleDeleteMessage,
+        handleRetryMessage: messageHandler.handleRetryMessage,
+        handleDeleteChatHistorySession: historyHandler.handleDeleteChatHistorySession,
+        clearCacheAndReload: historyHandler.clearCacheAndReload,
+        handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
+        handleLoadPreloadedScenario: scenarioHandler.handleLoadPreloadedScenario,
+        handleImportPreloadedScenario: scenarioHandler.handleImportPreloadedScenario,
+        handleExportPreloadedScenario: scenarioHandler.handleExportPreloadedScenario,
         handleScroll,
+        handleAppDragEnter: fileHandler.handleAppDragEnter,
+        handleAppDragOver: fileHandler.handleAppDragOver,
+        handleAppDragLeave: fileHandler.handleAppDragLeave,
+        handleAppDrop: fileHandler.handleAppDrop,
+        handleCancelFileUpload: fileHandler.handleCancelFileUpload,
+        handleAddFileById: fileHandler.handleAddFileById,
+        handleTextToSpeech: messageHandler.handleTextToSpeech,
     };
 };
