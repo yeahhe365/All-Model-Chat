@@ -62,7 +62,7 @@ export const useFileHandling = ({
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
             // If the MIME type is missing/generic but it has a known text-based extension,
-            // we'll treat it as text/plain. This is the fix.
+            // we'll treat it as text/plain.
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                 effectiveMimeType = 'text/plain';
                 logService.debug(`Assigned mimeType 'text/plain' to file ${file.name} based on extension.`);
@@ -74,11 +74,9 @@ export const useFileHandling = ({
                 return; 
             }
 
-            const isConsideredText = effectiveMimeType.startsWith('text/') || SUPPORTED_TEXT_MIME_TYPES.includes(effectiveMimeType);
-            const typeForState = isConsideredText ? 'text/plain' : effectiveMimeType;
-            const mimeTypeForUpload = isConsideredText ? 'text/plain' : effectiveMimeType;
-
-            const initialFileState: UploadedFile = { id: fileId, name: file.name, type: typeForState, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
+            // Use the corrected MIME type directly for state and upload.
+            // This preserves specific types like 'text/html', 'application/json', etc.
+            const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'pending', abortController: controller };
             setSelectedFiles(prev => [...prev, initialFileState]);
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
@@ -95,7 +93,7 @@ export const useFileHandling = ({
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: 10, uploadState: 'uploading' } : f));
 
             try {
-                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, mimeTypeForUpload, file.name, controller.signal);
+                const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, effectiveMimeType, file.name, controller.signal);
                 logService.info(`File uploaded successfully: ${file.name}`, { fileInfo: uploadedFileInfo });
                 setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
             } catch (uploadError) {
