@@ -1,3 +1,4 @@
+
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem, SavedChatSession } from '../types';
 import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest, generateSessionTitle } from '../utils/appUtils';
@@ -91,17 +92,21 @@ export const useMessageHandler = ({
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
         let sessionId = activeSessionId;
-        let sessionToUpdate = sessionId ? null : { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        let sessionToUpdate: IndividualChatSettings | null = null;
         if (sessionId) {
-            // Find the settings for the current session.
-            // A bit indirect but ensures we use the correct settings for the API call.
+            // Find the settings for the current session. This is a bit of a hack to get the settings
+            // without needing to pass the whole sessions array down.
             updateAndPersistSessions(prev => {
                 const found = prev.find(s => s.id === sessionId);
                 if(found) sessionToUpdate = found.settings;
                 return prev;
             });
         }
-        if (!sessionToUpdate) sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        
+        if (!sessionToUpdate) {
+            sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        }
+
 
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
@@ -120,8 +125,6 @@ export const useMessageHandler = ({
 
         if (!activeModelId) { 
             logService.error("Send message failed: No model selected.");
-            // Since we can't create a message in a session without a model, this is an app-level error.
-            // We'll add an error message to a new session.
             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() };
             const newSession: SavedChatSession = { id: generateUniqueId(), title: "Error", messages: [errorMsg], settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings }, timestamp: Date.now() };
             updateAndPersistSessions(p => [newSession, ...p]);
@@ -177,24 +180,15 @@ export const useMessageHandler = ({
         const modelMessageId = generateUniqueId();
         activeJobs.current.set(modelMessageId, newAbortController);
 
-        // Define a closure for updating the session with new messages
-        const addMessagesToSession = (userMsg: ChatMessage | null, modelMsg: ChatMessage) => {
-            updateAndPersistSessions(prev => prev.map(s => {
-                if (s.id !== currentSessionId) return s;
-                
-                const newMessages = [...s.messages];
-                if (userMsg) newMessages.push(userMsg);
-                newMessages.push(modelMsg);
-                
-                return { ...s, messages: newMessages, title: generateSessionTitle(newMessages) };
-            }));
-        };
-
         // --- TTS or Imagen Model Logic (No history needed) ---
         if (isTtsModel || isImagenModel) {
             const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
             const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
-            addMessagesToSession(userMessage, modelMessage);
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                const newMessages = [...s.messages, userMessage, modelMessage];
+                return { ...s, messages: newMessages, title: generateSessionTitle(newMessages) };
+            }));
 
             try {
                 if (isTtsModel) {
@@ -218,38 +212,59 @@ export const useMessageHandler = ({
         }
 
         // --- Regular Text Generation Logic ---
+        
+        // Step 1: Prepare data needed for the state update, without async operations.
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
-        const promptParts = buildContentParts(textToUse.trim(), successfullyProcessedFiles);
+        let baseMessages: ChatMessage[] = [];
+        let sessionForHistory: SavedChatSession | undefined;
 
+        // Step 2: Update the state synchronously.
+        updateAndPersistSessions(prev => {
+            sessionForHistory = prev.find(s => s.id === currentSessionId);
+            if (!sessionForHistory) return prev;
+
+            const editIndex = effectiveEditingId ? sessionForHistory.messages.findIndex(m => m.id === effectiveEditingId) : -1;
+            baseMessages = editIndex !== -1 ? sessionForHistory.messages.slice(0, editIndex) : [...sessionForHistory.messages];
+            
+            const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
+            const userMessage: ChatMessage = {
+                id: generateUniqueId(),
+                role: 'user',
+                content: textToUse.trim(),
+                files: successfullyProcessedFiles.length ? successfullyProcessedFiles.map(f => ({...f, rawFile: undefined})) : undefined,
+                timestamp: new Date(),
+                cumulativeTotalTokens: lastCumulative,
+            };
+            const modelMessage: ChatMessage = {
+                id: modelMessageId,
+                role: 'model',
+                content: '',
+                thoughts: '',
+                timestamp: new Date(),
+                isLoading: true,
+                generationStartTime: new Date()
+            };
+
+            const newMessages = [...baseMessages, userMessage, modelMessage];
+            const updatedSession = { ...sessionForHistory, messages: newMessages, title: generateSessionTitle(newMessages) };
+            
+            return prev.map(s => s.id === currentSessionId ? updatedSession : s);
+        });
+
+        if (effectiveEditingId && !overrideOptions) setEditingMessageId(null);
+        
+        // Step 3: Now that state is updated, perform async operations to build the API payload.
+        const promptParts = await buildContentParts(textToUse.trim(), successfullyProcessedFiles);
         if (promptParts.length === 0) {
              setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
              activeJobs.current.delete(modelMessageId);
              return; 
         }
-        
-        let historyForApi: ChatHistoryItem[] = [];
-        let baseMessages: ChatMessage[] = [];
-        
-        updateAndPersistSessions(prev => prev.map(s => {
-            if (s.id !== currentSessionId) return s;
 
-            const editIndex = effectiveEditingId ? s.messages.findIndex(m => m.id === effectiveEditingId) : -1;
-            baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : [...s.messages];
-            historyForApi = createChatHistoryForApi(baseMessages);
-
-            const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
-            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: successfullyProcessedFiles.length ? successfullyProcessedFiles : undefined, timestamp: new Date(), cumulativeTotalTokens: lastCumulative };
-            const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', thoughts: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
-
-            return { ...s, messages: [...baseMessages, userMessage, modelMessage], title: generateSessionTitle([...baseMessages, userMessage]) };
-        }));
-
-        if (effectiveEditingId && !overrideOptions) setEditingMessageId(null);
-
+        const historyForApi = await createChatHistoryForApi(baseMessages);
         const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
-
-        const processModelMessageCompletion = (prevMsgs: ChatMessage[], modelId: string, finalContent: string, finalThoughts: string | undefined, usageMeta?: UsageMetadata, isAborted?: boolean) => { /* ... see implementation in original file ... */ };
         
+        // Step 4: Make the API call.
         const streamOnError = (error: Error) => {
             handleApiError(error, currentSessionId, modelMessageId);
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
@@ -322,7 +337,7 @@ export const useMessageHandler = ({
                 }
             );
         }
-    }, [activeSessionId, selectedFiles, editingMessageId, currentChatSettings, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError]);
+    }, [activeSessionId, selectedFiles, editingMessageId, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; 
@@ -434,3 +449,4 @@ export const useMessageHandler = ({
         handleTextToSpeech,
     };
 };
+    

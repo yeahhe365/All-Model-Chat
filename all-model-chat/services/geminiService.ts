@@ -2,26 +2,10 @@ import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as Gemi
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 import { logService } from "./logService";
+import { fileToBase64 } from "../utils/appUtils";
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
-
-const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-            const result = reader.result as string;
-            const base64Data = result.split(',')[1];
-            if (base64Data) {
-                resolve(base64Data);
-            } else {
-                reject(new Error("Failed to extract base64 data from file."));
-            }
-        };
-        reader.onerror = error => reject(error);
-    });
-};
 
 class GeminiServiceImpl implements GeminiService {
     constructor() {

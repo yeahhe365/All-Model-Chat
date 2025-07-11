@@ -82,29 +82,17 @@ export const useFileHandling = ({
             }
 
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                // Handle image locally with base64, no API key needed here
-                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending' };
+                // Handle image locally with blob URLs for performance
+                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
                 setSelectedFiles(prev => [...prev, initialFileState]);
-                return new Promise<void>((resolve) => {
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = () => {
-                        const dataUrl = reader.result as string;
-                        const base64Data = dataUrl.split(',')[1];
-                        if (base64Data) {
-                            setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, base64Data, isProcessing: false, progress: 100, uploadState: 'active' } : f));
-                        } else {
-                            logService.error('Base64 conversion failed for image.', { name: file.name });
-                            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to read image file.', uploadState: 'failed' } : f));
-                        }
-                        resolve();
-                    };
-                    reader.onerror = (error) => {
-                        logService.error('Error reading file for base64 conversion', { error });
-                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to read image file.', uploadState: 'failed' } : f));
-                        resolve();
-                    };
-                });
+                
+                try {
+                    const dataUrl = URL.createObjectURL(file);
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                } catch(error) {
+                    logService.error('Error creating object URL for image', { error });
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
+                }
             } else {
                 // Handle other file types that need uploading
                 if (!keyToUse) {

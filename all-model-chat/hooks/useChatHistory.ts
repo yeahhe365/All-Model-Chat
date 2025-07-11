@@ -1,3 +1,4 @@
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -77,7 +78,22 @@ export const useChatHistory = ({
         try {
             logService.info('Attempting to load chat history from localStorage.');
             const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
-            const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
+            let sessions: SavedChatSession[] = [];
+            if (storedSessions) {
+                try {
+                    const parsed = JSON.parse(storedSessions);
+                    if (Array.isArray(parsed)) {
+                        sessions = parsed;
+                    } else {
+                        logService.warn('Stored chat history is corrupted (not an array). Discarding.');
+                        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+                    }
+                } catch (e) {
+                    logService.error('Failed to parse chat history from localStorage. Discarding.', { error: e });
+                    localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+                }
+            }
+
             sessions.sort((a,b) => b.timestamp - a.timestamp);
             setSavedSessions(sessions);
 
@@ -117,10 +133,11 @@ export const useChatHistory = ({
         // If the deleted session was active, load the next available one or start new
         setActiveSessionId(prevActiveId => {
             if (prevActiveId === sessionId) {
-                const sessions = JSON.parse(localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY) || '[]') as SavedChatSession[];
-                const nextSessionToLoad = sessions[0];
+                const sessionsAfterDelete = JSON.parse(localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY) || '[]') as SavedChatSession[];
+                sessionsAfterDelete.sort((a,b) => b.timestamp - a.timestamp);
+                const nextSessionToLoad = sessionsAfterDelete[0];
                 if (nextSessionToLoad) {
-                     loadChatSession(nextSessionToLoad.id, sessions);
+                     loadChatSession(nextSessionToLoad.id, sessionsAfterDelete);
                      return nextSessionToLoad.id;
                 } else {
                     startNewChat();
@@ -158,3 +175,4 @@ export const useChatHistory = ({
         clearCacheAndReload,
     };
 }
+    

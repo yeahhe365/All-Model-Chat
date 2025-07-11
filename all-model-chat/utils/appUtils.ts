@@ -289,6 +289,23 @@ export const generateThemeCssVariables = (colors: ThemeColors): string => {
   return css;
 };
 
+export const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            const result = reader.result as string;
+            const base64Data = result.split(',')[1];
+            if (base64Data) {
+                resolve(base64Data);
+            } else {
+                reject(new Error("Failed to extract base64 data from file."));
+            }
+        };
+        reader.onerror = error => reject(error);
+    });
+};
+
 export const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -298,30 +315,46 @@ export const fileToDataUrl = (file: File): Promise<string> => {
     });
 };
 
-export const buildContentParts = (text: string, files: UploadedFile[] | undefined): ContentPart[] => {
+export const buildContentParts = async (text: string, files: UploadedFile[] | undefined): Promise<ContentPart[]> => {
   const dataParts: ContentPart[] = [];
 
   if (files) {
-    files.forEach(file => {
-      // Skip files that are not ready or have errors
+    for (const file of files) {
       if (file.isProcessing || file.error || file.uploadState !== 'active') {
-          return;
+        continue;
       }
-
-      // Handle images with inlineData
-      if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.base64Data) {
-        dataParts.push({
-            inlineData: {
-                mimeType: file.type,
-                data: file.base64Data
-            }
-        });
-      } 
-      // Handle other files with fileData
-      else if (file.fileUri) {
+      
+      if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.fileUri) {
+        let base64Data = file.base64Data;
+        
+        // This is the new on-demand conversion logic
+        if (!base64Data && file.rawFile) {
+          try {
+            base64Data = await fileToBase64(file.rawFile);
+          } catch (error) {
+            logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
+            continue;
+          }
+        } else if (!base64Data && file.dataUrl?.startsWith('blob:')) {
+          // This handles retries where we only have the blob URL
+          try {
+            const response = await fetch(file.dataUrl);
+            const blob = await response.blob();
+            const tempFile = new File([blob], file.name, { type: file.type });
+            base64Data = await fileToBase64(tempFile);
+          } catch (error) {
+            logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
+            continue;
+          }
+        }
+        
+        if (base64Data) {
+          dataParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
+        }
+      } else if (file.fileUri) {
         dataParts.push({ fileData: { mimeType: file.type, fileUri: file.fileUri } });
       }
-    });
+    }
   }
 
   const userTypedText = text.trim();
@@ -335,18 +368,20 @@ export const buildContentParts = (text: string, files: UploadedFile[] | undefine
   return contentPartsResult;
 };
 
-export const createChatHistoryForApi = (msgs: ChatMessage[]): ChatHistoryItem[] => {
-    return msgs
+export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<ChatHistoryItem[]> => {
+    const historyItemsPromises = msgs
       .filter(msg => msg.role === 'user' || msg.role === 'model')
-      .map(msg => {
+      .map(async (msg) => {
         let apiParts: ContentPart[];
         if (msg.role === 'user') {
-          apiParts = buildContentParts(msg.content, msg.files);
+          apiParts = await buildContentParts(msg.content, msg.files);
         } else {
           apiParts = [{ text: msg.content || "" }];
         }
         return { role: msg.role as 'user' | 'model', parts: apiParts };
       });
+      
+    return Promise.all(historyItemsPromises);
   };
 
 export function pcmBase64ToWavUrl(
