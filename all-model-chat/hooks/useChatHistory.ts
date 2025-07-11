@@ -28,6 +28,36 @@ export const useChatHistory = ({
     updateAndPersistSessions,
 }: ChatHistoryProps) => {
 
+    const startNewChat = useCallback(() => {
+        logService.info('Starting new chat session.');
+        
+        // Create a new session immediately
+        const newSessionId = generateUniqueId();
+        const newSession: SavedChatSession = {
+            id: newSessionId,
+            title: "New Chat",
+            messages: [],
+            timestamp: Date.now(),
+            settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
+        };
+
+        // Add new session and remove any other empty sessions from before.
+        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+
+        // Set it as the active session
+        setActiveSessionId(newSessionId);
+        localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, newSessionId);
+
+        // Reset UI state
+        setCommandedInput({ text: '', id: Date.now() });
+        setSelectedFiles([]);
+        setEditingMessageId(null);
+        
+        setTimeout(() => {
+            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+        }, 0);
+    }, [appSettings, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
+
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
@@ -41,20 +71,7 @@ export const useChatHistory = ({
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat();
         }
-    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
-
-    const startNewChat = useCallback(() => {
-        logService.info('Starting new chat.');
-        setActiveSessionId(null);
-        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-        setCommandedInput({ text: '', id: Date.now() });
-        setSelectedFiles([]);
-        setEditingMessageId(null);
-        
-        setTimeout(() => {
-            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
-        }, 0);
-    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
+    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat]);
 
     const loadInitialData = useCallback(() => {
         try {
