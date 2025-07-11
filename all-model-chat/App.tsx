@@ -72,6 +72,8 @@ const App: React.FC = () => {
       handleAddFileById,
       handleTextToSpeech,
       setCurrentChatSettings,
+      showScrollToBottom,
+      scrollToBottom,
   } = useChat(appSettings);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -299,6 +301,8 @@ const App: React.FC = () => {
           ttsMessageId={ttsMessageId}
           t={t}
           language={language}
+          showScrollToBottom={showScrollToBottom}
+          onScrollToBottom={scrollToBottom}
         />
         <ChatInput
           appSettings={appSettings}

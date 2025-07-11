@@ -32,6 +32,7 @@ export const useChat = (appSettings: AppSettings) => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const userScrolledUp = useRef<boolean>(false);
+    const [showScrollToBottom, setShowScrollToBottom] = useState<boolean>(false);
 
     // Wrapper function to persist sessions to localStorage whenever they are updated
     const updateAndPersistSessions = useCallback((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
@@ -139,8 +140,15 @@ export const useChat = (appSettings: AppSettings) => {
 
     // Scrolling logic
     const scrollToBottom = useCallback(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messagesEndRef]);
-    const handleScroll = useCallback(() => { const container = scrollContainerRef.current; if (container) userScrolledUp.current = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100; }, [scrollContainerRef, userScrolledUp]);
-    useEffect(() => { if (!userScrolledUp.current) scrollToBottom(); }, [messages, scrollToBottom, userScrolledUp]);
+    const handleScroll = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+            const isScrolledUp = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100;
+            setShowScrollToBottom(isScrolledUp);
+            userScrolledUp.current = isScrolledUp;
+        }
+    }, [scrollContainerRef]);
+    useEffect(() => { if (!userScrolledUp.current) scrollToBottom(); }, [messages, scrollToBottom]);
 
     // Effect to validate current model against available models
     useEffect(() => {
@@ -236,5 +244,7 @@ export const useChat = (appSettings: AppSettings) => {
         handleAddFileById: fileHandler.handleAddFileById,
         handleTextToSpeech: messageHandler.handleTextToSpeech,
         setCurrentChatSettings,
+        showScrollToBottom,
+        scrollToBottom,
     };
 };

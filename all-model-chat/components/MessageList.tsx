@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
-import { X, Bot, Zap, ArrowUp } from 'lucide-react';
+import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 
@@ -187,7 +187,8 @@ const SUGGESTIONS_KEYS = [
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
-    onSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId
+    onSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
+    showScrollToBottom, onScrollToBottom
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
@@ -279,6 +280,17 @@ export const MessageList: React.FC<MessageListProps> = ({
           />
         ))
       )}
+       {showScrollToBottom && (
+          <button
+            onClick={onScrollToBottom}
+            className="sticky z-10 bottom-4 right-4 ml-auto block p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+            style={{ animation: 'fadeInUp 0.3s ease-out both' }}
+            aria-label="Scroll to bottom"
+            title="Scroll to bottom"
+          >
+            <ArrowDown size={20} />
+          </button>
+        )}
       <div ref={messagesEndRef} />
     </div>
     {zoomedFile && (
