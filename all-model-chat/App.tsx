@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
@@ -12,11 +12,9 @@ import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { getTranslator } from './utils/appUtils';
 import { logService } from './services/logService';
-
-// Lazy load modals for code splitting and better initial performance
-const SettingsModal = React.lazy(() => import('./components/SettingsModal').then(module => ({ default: module.SettingsModal })));
-const LogViewer = React.lazy(() => import('./components/LogViewer').then(module => ({ default: module.LogViewer })));
-const PreloadedMessagesModal = React.lazy(() => import('./components/PreloadedMessagesModal').then(module => ({ default: module.PreloadedMessagesModal })));
+import { SettingsModal } from './components/SettingsModal';
+import { LogViewer } from './components/LogViewer';
+import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
@@ -246,7 +244,7 @@ const App: React.FC = () => {
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
         )}
-        <Suspense fallback={null}>
+        <>
           {isLogViewerOpen && (
             <LogViewer
                 isOpen={isLogViewerOpen}
@@ -283,7 +281,7 @@ const App: React.FC = () => {
               t={t}
             />
           )}
-        </Suspense>
+        </>
         <MessageList
           messages={messages}
           messagesEndRef={messagesEndRef}

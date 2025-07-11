@@ -1,14 +1,13 @@
-import React, { useRef, useState, useCallback, useEffect, Suspense } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getActiveApiConfig } from '../utils/appUtils';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 import { geminiServiceInstance } from '../services/geminiService';
-
-const CreateTextFileEditor = React.lazy(() => import('./chat/CreateTextFileEditor').then(module => ({ default: module.CreateTextFileEditor })));
-const CameraCapture = React.lazy(() => import('./chat/CameraCapture').then(module => ({ default: module.CameraCapture })));
-const AudioRecorder = React.lazy(() => import('./chat/AudioRecorder').then(module => ({ default: module.AudioRecorder })));
+import { CreateTextFileEditor } from './chat/CreateTextFileEditor';
+import { CameraCapture } from './chat/CameraCapture';
+import { AudioRecorder } from './chat/AudioRecorder';
 
 interface ChatInputProps {
   appSettings: AppSettings;
@@ -368,11 +367,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <>
-      <Suspense fallback={null}>
-        {showCamera && ( <CameraCapture onCapture={handlePhotoCapture} onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }} /> )}
-        {showRecorder && ( <AudioRecorder onRecord={handleAudioRecord} onCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }} /> )}
-        {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isLoading} /> )}
-      </Suspense>
+      {showCamera && ( <CameraCapture onCapture={handlePhotoCapture} onCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }} /> )}
+      {showRecorder && ( <AudioRecorder onRecord={handleAudioRecord} onCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }} /> )}
+      {showCreateTextFileEditor && ( <CreateTextFileEditor onConfirm={handleConfirmCreateTextFile} onCancel={handleCancelCreateTextFile} isProcessing={isProcessingFile} isLoading={isLoading} /> )}
 
       <div
         className={`bg-transparent ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}

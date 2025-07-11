@@ -1,10 +1,9 @@
-import React, { useState, useCallback, useRef, Suspense } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
 import { X, Bot, Zap, ArrowUp } from 'lucide-react';
 import { translations } from '../utils/appUtils';
-
-const HtmlPreviewModal = React.lazy(() => import('./HtmlPreviewModal').then(module => ({ default: module.HtmlPreviewModal })));
+import { HtmlPreviewModal } from './HtmlPreviewModal';
 
 interface ImageZoomModalProps {
   file: UploadedFile | null;
@@ -290,17 +289,15 @@ export const MessageList: React.FC<MessageListProps> = ({
         t={t}
       />
     )}
-    <Suspense fallback={null}>
-      {isHtmlPreviewModalOpen && htmlToPreview !== null && (
-        <HtmlPreviewModal
-          isOpen={isHtmlPreviewModalOpen}
-          onClose={handleCloseHtmlPreview}
-          htmlContent={htmlToPreview}
-          themeColors={themeColors}
-          initialTrueFullscreenRequest={initialTrueFullscreenRequest}
-        />
-      )}
-    </Suspense>
+    {isHtmlPreviewModalOpen && htmlToPreview !== null && (
+      <HtmlPreviewModal
+        isOpen={isHtmlPreviewModalOpen}
+        onClose={handleCloseHtmlPreview}
+        htmlContent={htmlToPreview}
+        themeColors={themeColors}
+        initialTrueFullscreenRequest={initialTrueFullscreenRequest}
+      />
+    )}
     </>
   );
 };
