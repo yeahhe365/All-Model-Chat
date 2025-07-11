@@ -64,6 +64,18 @@ export const useChat = (appSettings: AppSettings) => {
         activeJobs,
         updateAndPersistSessions
     });
+    
+    const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
+        if (!activeSessionId) return;
+        updateAndPersistSessions(prevSessions =>
+            prevSessions.map(s =>
+                s.id === activeSessionId
+                    ? { ...s, settings: updater(s.settings) }
+                    : s
+            )
+        );
+    }, [activeSessionId, updateAndPersistSessions]);
+
     const fileHandler = useFileHandling({
         appSettings,
         selectedFiles,
@@ -72,10 +84,7 @@ export const useChat = (appSettings: AppSettings) => {
         isAppProcessingFile,
         setIsAppProcessingFile,
         currentChatSettings,
-        setCurrentChatSettings: (updater) => {
-            if (!activeSessionId) return;
-            updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? {...s, settings: updater(s.settings)} : s));
-        },
+        setCurrentChatSettings: setCurrentChatSettings,
     });
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
     const messageHandler = useMessageHandler({
@@ -216,5 +225,6 @@ export const useChat = (appSettings: AppSettings) => {
         handleCancelFileUpload: fileHandler.handleCancelFileUpload,
         handleAddFileById: fileHandler.handleAddFileById,
         handleTextToSpeech: messageHandler.handleTextToSpeech,
+        setCurrentChatSettings,
     };
 };

@@ -13,7 +13,7 @@ interface FileHandlingProps {
     isAppProcessingFile: boolean;
     setIsAppProcessingFile: Dispatch<SetStateAction<boolean>>;
     currentChatSettings: IndividualChatSettings;
-    setCurrentChatSettings: Dispatch<SetStateAction<IndividualChatSettings>>;
+    setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
 }
 
 export const useFileHandling = ({

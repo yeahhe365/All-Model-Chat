@@ -73,6 +73,7 @@ const App: React.FC = () => {
       handleCancelFileUpload,
       handleAddFileById,
       handleTextToSpeech,
+      setCurrentChatSettings,
   } = useChat(appSettings);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -111,9 +112,12 @@ const App: React.FC = () => {
     // Apply this as a global default for new chats
     setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
 
-    // Also apply to the current chat if one is active
-    if (activeSessionId) {
-      handleSendMessage({ text: `System prompt updated to: ${isCurrentlyCanvasPrompt ? 'Default' : 'Canvas Helper'}.` });
+    // Also apply to the current chat if one is active, without sending a message.
+    if (activeSessionId && setCurrentChatSettings) {
+      setCurrentChatSettings(prevSettings => ({
+        ...prevSettings,
+        systemInstruction: newSystemInstruction,
+      }));
     }
   };
   
