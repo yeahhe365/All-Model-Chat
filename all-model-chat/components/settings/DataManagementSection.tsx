@@ -27,7 +27,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         <button
           onClick={onClearHistory}
           type="button"
-          className={`${baseButtonClass} border border-transparent text-[var(--theme-bg-error-message-text)] hover:bg-[var(--theme-bg-error-message)] focus:ring-[var(--theme-bg-danger)]`}
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] focus:ring-[var(--theme-bg-danger)]`}
           aria-label={t('settingsClearHistory_aria')}
         >
           <Eraser size={buttonIconSize} />
@@ -36,7 +36,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         <button
           onClick={onClearCache}
           type="button"
-          className={`${baseButtonClass} border border-transparent text-[var(--theme-bg-error-message-text)] hover:bg-[var(--theme-bg-error-message)] focus:ring-[var(--theme-bg-danger)]`}
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] focus:ring-[var(--theme-bg-danger)]`}
           aria-label={t('settingsClearCache_aria')}
         >
           <Trash2 size={buttonIconSize} />
