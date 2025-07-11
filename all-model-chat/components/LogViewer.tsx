@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, LogLevel, logService } from '../services/logService';
 import { AppSettings, ChatSettings } from '../types';
-import { X, Trash2, ChevronDown, CheckCircle } from 'lucide-react';
+import { X, Trash2, ChevronDown, CheckCircle, Download } from 'lucide-react';
 
 const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   INFO: 'text-blue-400',
@@ -155,6 +155,36 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   const toggleLevel = (level: LogLevel) => {
     setVisibleLevels(prev => ({ ...prev, [level]: !prev[level] }));
   };
+  
+  const filteredLogs = logs.filter(log => {
+    if (!visibleLevels[log.level]) return false;
+    if (filterText.trim() === '') return true;
+    const lowerFilter = filterText.toLowerCase();
+    return log.message.toLowerCase().includes(lowerFilter) || 
+           (log.data && JSON.stringify(log.data).toLowerCase().includes(lowerFilter));
+  });
+
+  const handleExport = () => {
+    const logsToExport = filteredLogs.map(log => {
+      const timeString = log.timestamp.toISOString();
+      const dataString = log.data ? `\n${JSON.stringify(log.data, null, 2)}` : '';
+      return `[${timeString}] [${log.level}] ${log.message}${dataString}`;
+    }).join('\n\n');
+
+    const blob = new Blob([logsToExport], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const date = new Date();
+    const dateStamp = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+    link.download = `all-model-chat-logs-${dateStamp}.txt`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const allApiKeys = (appSettings.apiKey || '')
     .split('\n')
@@ -171,15 +201,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
     if (!displayApiKeyUsage.has(key)) {
       displayApiKeyUsage.set(key, count);
     }
-  });
-
-
-  const filteredLogs = logs.filter(log => {
-    if (!visibleLevels[log.level]) return false;
-    if (filterText.trim() === '') return true;
-    const lowerFilter = filterText.toLowerCase();
-    return log.message.toLowerCase().includes(lowerFilter) || 
-           (log.data && JSON.stringify(log.data).toLowerCase().includes(lowerFilter));
   });
 
   if (!isActuallyOpen) return null;
@@ -257,9 +278,17 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
               <input type="checkbox" checked={autoScroll} onChange={() => setAutoScroll(!autoScroll)} className="mr-1.5 h-4 w-4 rounded border-gray-600 focus:ring-blue-500 text-blue-500 bg-gray-700" />
               Auto-scroll
             </label>
+             <button
+              onClick={handleExport}
+              className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] transition-colors p-1 rounded-md"
+              title="Export visible logs"
+            >
+              <Download size={14} /> Export
+            </button>
             <button
               onClick={handleClear}
               className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] transition-colors p-1 rounded-md"
+              title="Clear all logs"
             >
               <Trash2 size={14} /> Clear
             </button>
