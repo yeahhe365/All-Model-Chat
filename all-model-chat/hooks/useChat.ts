@@ -64,6 +64,18 @@ export const useChat = (appSettings: AppSettings) => {
         activeJobs,
         updateAndPersistSessions
     });
+    
+    const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
+        if (!activeSessionId) return;
+        updateAndPersistSessions(prevSessions =>
+            prevSessions.map(s =>
+                s.id === activeSessionId
+                    ? { ...s, settings: updater(s.settings) }
+                    : s
+            )
+        );
+    }, [activeSessionId, updateAndPersistSessions]);
+
     const fileHandler = useFileHandling({
         appSettings,
         selectedFiles,
@@ -72,10 +84,7 @@ export const useChat = (appSettings: AppSettings) => {
         isAppProcessingFile,
         setIsAppProcessingFile,
         currentChatSettings,
-        setCurrentChatSettings: (updater) => {
-            if (!activeSessionId) return;
-            updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? {...s, settings: updater(s.settings)} : s));
-        },
+        setCurrentChatSettings: setCurrentChatSettings,
     });
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
     const messageHandler = useMessageHandler({
@@ -106,6 +115,16 @@ export const useChat = (appSettings: AppSettings) => {
         historyHandler.loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Effect to automatically clear file processing errors if no files are processing.
+    useEffect(() => {
+        const isFileProcessing = selectedFiles.some(file => file.isProcessing);
+        // This specifically targets the bug where an error about a processing file persists
+        // after that file has been removed by the user from the list.
+        if (appFileError === 'Wait for files to finish processing.' && !isFileProcessing) {
+            setAppFileError(null);
+        }
+    }, [selectedFiles, appFileError, setAppFileError]);
 
     // Memory management for file previews in messages (using blob URLs)
     const messagesForCleanupRef = useRef<ChatMessage[]>([]);
@@ -216,5 +235,6 @@ export const useChat = (appSettings: AppSettings) => {
         handleCancelFileUpload: fileHandler.handleCancelFileUpload,
         handleAddFileById: fileHandler.handleAddFileById,
         handleTextToSpeech: messageHandler.handleTextToSpeech,
+        setCurrentChatSettings,
     };
 };

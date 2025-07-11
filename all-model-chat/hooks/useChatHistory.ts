@@ -1,3 +1,4 @@
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -28,6 +29,36 @@ export const useChatHistory = ({
     updateAndPersistSessions,
 }: ChatHistoryProps) => {
 
+    const startNewChat = useCallback(() => {
+        logService.info('Starting new chat session.');
+        
+        // Create a new session immediately
+        const newSessionId = generateUniqueId();
+        const newSession: SavedChatSession = {
+            id: newSessionId,
+            title: "New Chat",
+            messages: [],
+            timestamp: Date.now(),
+            settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
+        };
+
+        // Add new session and remove any other empty sessions from before.
+        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+
+        // Set it as the active session
+        setActiveSessionId(newSessionId);
+        localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, newSessionId);
+
+        // Reset UI state
+        setCommandedInput({ text: '', id: Date.now() });
+        setSelectedFiles([]);
+        setEditingMessageId(null);
+        
+        setTimeout(() => {
+            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+        }, 0);
+    }, [appSettings, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
+
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
@@ -41,26 +72,28 @@ export const useChatHistory = ({
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat();
         }
-    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
-
-    const startNewChat = useCallback(() => {
-        logService.info('Starting new chat.');
-        setActiveSessionId(null);
-        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-        setCommandedInput({ text: '', id: Date.now() });
-        setSelectedFiles([]);
-        setEditingMessageId(null);
-        
-        setTimeout(() => {
-            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
-        }, 0);
-    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
+    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat]);
 
     const loadInitialData = useCallback(() => {
         try {
             logService.info('Attempting to load chat history from localStorage.');
             const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
-            const sessions: SavedChatSession[] = storedSessions ? JSON.parse(storedSessions) : [];
+            let sessions: SavedChatSession[] = [];
+            if (storedSessions) {
+                try {
+                    const parsed = JSON.parse(storedSessions);
+                    if (Array.isArray(parsed)) {
+                        sessions = parsed;
+                    } else {
+                        logService.warn('Stored chat history is corrupted (not an array). Discarding.');
+                        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+                    }
+                } catch (e) {
+                    logService.error('Failed to parse chat history from localStorage. Discarding.', { error: e });
+                    localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+                }
+            }
+
             sessions.sort((a,b) => b.timestamp - a.timestamp);
             setSavedSessions(sessions);
 
@@ -100,10 +133,11 @@ export const useChatHistory = ({
         // If the deleted session was active, load the next available one or start new
         setActiveSessionId(prevActiveId => {
             if (prevActiveId === sessionId) {
-                const sessions = JSON.parse(localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY) || '[]') as SavedChatSession[];
-                const nextSessionToLoad = sessions[0];
+                const sessionsAfterDelete = JSON.parse(localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY) || '[]') as SavedChatSession[];
+                sessionsAfterDelete.sort((a,b) => b.timestamp - a.timestamp);
+                const nextSessionToLoad = sessionsAfterDelete[0];
                 if (nextSessionToLoad) {
-                     loadChatSession(nextSessionToLoad.id, sessions);
+                     loadChatSession(nextSessionToLoad.id, sessionsAfterDelete);
                      return nextSessionToLoad.id;
                 } else {
                     startNewChat();
@@ -141,3 +175,4 @@ export const useChatHistory = ({
         clearCacheAndReload,
     };
 }
+    
