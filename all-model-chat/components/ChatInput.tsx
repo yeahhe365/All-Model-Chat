@@ -1,8 +1,8 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, SlidersHorizontal, Globe, Check } from 'lucide-react';
+import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, SlidersHorizontal, Globe, Check, Terminal } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
-import { translations, getActiveApiConfig } from '../utils/appUtils';
+import { translations, getActiveApiConfig, getResponsiveValue } from '../utils/appUtils';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 import { geminiServiceInstance } from '../services/geminiService';
 import { CreateTextFileEditor } from './chat/CreateTextFileEditor';
@@ -33,6 +33,8 @@ interface ChatInputProps {
   isTranscriptionThinkingEnabled?: boolean;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
+  isCodeExecutionEnabled: boolean;
+  onToggleCodeExecution: () => void;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
@@ -58,7 +60,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
   isImagenModel, aspectRatio, setAspectRatio,
   transcriptionModelId, isTranscriptionThinkingEnabled,
-  isGoogleSearchEnabled, onToggleGoogleSearch
+  isGoogleSearchEnabled, onToggleGoogleSearch,
+  isCodeExecutionEnabled, onToggleCodeExecution,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +112,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
     if (!target) return;
-    const currentInitialHeight = window.innerWidth < 640 ? 24 : INITIAL_TEXTAREA_HEIGHT_PX;
+    const currentInitialHeight = getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX);
     target.style.height = 'auto'; // Reset height to get the actual scroll height
     const scrollHeight = target.scrollHeight;
     const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
@@ -214,7 +217,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    const isMobile = window.innerWidth < 640;
+    const isMobile = getResponsiveValue(true, false);
     if (e.key === 'Enter' && !e.shiftKey && !isMobile && canSend) {
       e.preventDefault();
       handleSubmit(e as unknown as React.FormEvent);
@@ -414,7 +417,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         onKeyPress={handleKeyPress} onPaste={handlePaste}
                         placeholder={t('chatInputPlaceholder')}
                         className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
-                        style={{ height: `${window.innerWidth < 640 ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
+                        style={{ height: `${getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX)}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isModalOpen || isRecording || isTranscribing || isWaitingForUpload}
                         rows={1}
@@ -446,7 +449,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                         onClick={() => setIsToolsMenuOpen(p => !p)}
                                         disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}
                                         className={
-                                            isGoogleSearchEnabled
+                                            (isGoogleSearchEnabled || isCodeExecutionEnabled)
                                             ? `${buttonBaseClass.replace('rounded-full', 'rounded-lg')} text-[var(--theme-icon-attach)] ${isToolsMenuOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
                                             : `h-7 sm:h-8 px-2.5 rounded-full flex items-center justify-center gap-1.5 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] ${isToolsMenuOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
                                         }
@@ -456,7 +459,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                         aria-expanded={isToolsMenuOpen}
                                     >
                                         <SlidersHorizontal size={16} />
-                                        {!isGoogleSearchEnabled && (
+                                        {!(isGoogleSearchEnabled || isCodeExecutionEnabled) && (
                                             <span className="text-sm font-medium">{t('tools_button')}</span>
                                         )}
                                     </button>
@@ -467,6 +470,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                                     <Globe size={16}/> {t('web_search_label')}
                                                 </span>
                                                 {isGoogleSearchEnabled && <Check size={16} className="text-[var(--theme-text-link)]" />}
+                                            </button>
+                                            <button onClick={() => { onToggleCodeExecution(); setIsToolsMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
+                                                <span className="flex items-center gap-3">
+                                                    <Terminal size={16}/> {t('code_execution_label')}
+                                                </span>
+                                                {isCodeExecutionEnabled && <Check size={16} className="text-[var(--theme-text-link)]" />}
                                             </button>
                                         </div>
                                     )}
@@ -486,6 +495,27 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                                 onClick={onToggleGoogleSearch} 
                                                 className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] p-0.5 rounded-full hover:bg-[var(--theme-bg-tertiary)] transition-colors"
                                                 aria-label="Disable Web Search"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                 {isCodeExecutionEnabled && (
+                                    <>
+                                        <div className="h-4 w-px bg-[var(--theme-border-secondary)] mx-1.5"></div>
+                                        <div 
+                                            className="flex items-center gap-1.5 bg-[var(--theme-bg-info)] text-[var(--theme-text-link)] text-sm px-2.5 py-1 rounded-full transition-all"
+                                            style={{ animation: `fadeInUp 0.3s ease-out both` }}
+                                        >
+                                            <Terminal size={14} />
+                                            <span className="font-medium">
+                                                {t('code_execution_label')}
+                                            </span>
+                                            <button 
+                                                onClick={onToggleCodeExecution} 
+                                                className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] p-0.5 rounded-full hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+                                                aria-label="Disable Code Execution"
                                             >
                                                 <X size={14} />
                                             </button>

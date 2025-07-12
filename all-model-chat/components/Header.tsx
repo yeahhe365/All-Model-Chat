@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, FilePlus2, Wand2, Lock } from 'lucide-react'; 
 import { ModelOption } from '../types';
-import { translations } from '../utils/appUtils';
+import { translations, getResponsiveValue } from '../utils/appUtils';
 
 interface HeaderProps {
   onNewChat: () => void; // Changed from onClearChat
@@ -118,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
             title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
         >
-            <Menu size={window.innerWidth < MOBILE_BREAKPOINT ? 18 : 20} />
+            <Menu size={getResponsiveValue(18, 20)} />
         </button>
         <div className="flex flex-col">
           <h1 className="text-base sm:text-lg font-bold text-[var(--theme-text-link)] whitespace-nowrap">{t('headerTitle')}</h1>
@@ -203,7 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label={canvasPromptAriaLabel}
           title={canvasPromptTitle}
         >
-          <Wand2 size={window.innerWidth < MOBILE_BREAKPOINT ? 16 : 18} />
+          <Wand2 size={getResponsiveValue(16, 18)} />
         </button>
         <button
           onClick={onOpenScenariosModal}
@@ -211,7 +211,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label={t('scenariosManage_aria')}
           title={t('scenariosManage_title')}
         >
-          <MessagesSquare size={window.innerWidth < MOBILE_BREAKPOINT ? 16 : 18} />
+          <MessagesSquare size={getResponsiveValue(16, 18)} />
         </button>
         <button
           onClick={onOpenSettingsModal} 
@@ -219,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label={t('settingsOpen_aria')}
           title={t('settingsOpen_title')}
         >
-          <Settings size={window.innerWidth < MOBILE_BREAKPOINT ? 16 : 18} />
+          <Settings size={getResponsiveValue(16, 18)} />
         </button>
         
         <button
@@ -228,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
           aria-label={t('headerNewChat_aria')}
           title={`${t('headerNewChat')} (${newChatShortcut})`}
         >
-          <FilePlus2 size={window.innerWidth < MOBILE_BREAKPOINT ? 14 : 16} />
+          <FilePlus2 size={getResponsiveValue(14, 16)} />
         </button>
       </div>
     </header>

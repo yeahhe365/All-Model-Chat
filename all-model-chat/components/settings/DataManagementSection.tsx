@@ -1,5 +1,6 @@
 import React from 'react';
 import { DatabaseZap, Eraser, Trash2 } from 'lucide-react';
+import { getResponsiveValue } from '../../utils/appUtils';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
@@ -12,8 +13,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onClearCache,
   t,
 }) => {
-  const iconSize = window.innerWidth < 640 ? 14 : 16;
-  const buttonIconSize = window.innerWidth < 640 ? 12 : 14;
+  const iconSize = getResponsiveValue(14, 16);
+  const buttonIconSize = getResponsiveValue(12, 14);
 
   const baseButtonClass = "px-3 sm:px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] flex items-center justify-center gap-2 text-sm font-medium w-full sm:w-auto";
 

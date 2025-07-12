@@ -337,6 +337,36 @@
         scrollbar-width: thin;
         scrollbar-color: var(--theme-scrollbar-thumb) var(--theme-scrollbar-track);
     }
+    .tool-result {
+      background-color: rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--theme-border-secondary);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+    .tool-result.outcome-ok {
+      border-left: 4px solid var(--theme-text-success);
+    }
+    .tool-result.outcome-failed {
+      border-left: 4px solid var(--theme-bg-danger);
+    }
+    .tool-result strong {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--theme-text-secondary);
+      font-size: 0.9em;
+    }
+    .tool-result pre { /* Target code blocks inside the result */
+        margin-top: 0.5rem !important;
+        margin-bottom: 0 !important;
+    }
+    .tool-result img {
+        max-width: 100%;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+    }
   </style>
   <style>
     /* UI/UX Enhancement Styles */

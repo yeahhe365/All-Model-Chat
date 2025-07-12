@@ -6,7 +6,7 @@ import hljs from 'highlight.js';
 import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, ClipboardCopy, Check, Loader2, AlertCircle, ImageIcon, FileCode2, Volume2 } from 'lucide-react';
 import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
 import { MessageContent } from './MessageContent';
-import { translations, generateThemeCssVariables } from '../../utils/appUtils';
+import { translations, getResponsiveValue } from '../../utils/appUtils';
 
 const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors, messageId: string, themeId: string): string => {
   let headContent = '';
@@ -59,7 +59,7 @@ const generateFullHtmlDocument = (contentHtml: string, themeColors: ThemeColors,
 
 const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string; themeColors: ThemeColors; themeId: string; className?: string; type: 'png' | 'html', t: (key: keyof typeof translations) => string }> = ({ markdownContent, messageId, themeColors, themeId, className, type, t }) => {
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
-  const iconSize = window.innerWidth < 640 ? 14 : 16;
+  const iconSize = getResponsiveValue(14, 16);
 
   const handleExport = async () => {
     if (!markdownContent || exportState === 'exporting') return;
@@ -201,9 +201,9 @@ const MessageCopyButton: React.FC<{ textToCopy?: string; className?: string; t: 
   return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={14} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={14} />}</button>;
 };
 
-const UserIcon: React.FC = () => <User size={window.innerWidth < 640 ? 20 : 24} className="text-[var(--theme-icon-user)] flex-shrink-0" />;
-const BotIcon: React.FC = () => <Bot size={window.innerWidth < 640 ? 20 : 24} className="text-[var(--theme-icon-model)] flex-shrink-0" />;
-const ErrorMsgIcon: React.FC = () => <AlertTriangle size={window.innerWidth < 640 ? 20 : 24} className="text-[var(--theme-icon-error)] flex-shrink-0" />;
+const UserIcon: React.FC = () => <User size={getResponsiveValue(20, 24)} className="text-[var(--theme-icon-user)] flex-shrink-0" />;
+const BotIcon: React.FC = () => <Bot size={getResponsiveValue(20, 24)} className="text-[var(--theme-icon-model)] flex-shrink-0" />;
+const ErrorMsgIcon: React.FC = () => <AlertTriangle size={getResponsiveValue(20, 24)} className="text-[var(--theme-icon-error)] flex-shrink-0" />;
 
 interface MessageProps {
     message: ChatMessage;
@@ -232,7 +232,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         !message.isLoading &&
         (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000);
 
-    const actionIconSize = window.innerWidth < 640 ? 14 : 16;
+    const actionIconSize = getResponsiveValue(14, 16);
     const canRetryMessage = (message.role === 'model' || (message.role === 'error' && message.generationStartTime)) && !message.isLoading;
     const isThisMessageLoadingTts = ttsMessageId === message.id;
 

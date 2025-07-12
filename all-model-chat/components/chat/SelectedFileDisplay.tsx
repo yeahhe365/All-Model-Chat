@@ -7,6 +7,7 @@ import {
   SUPPORTED_TEXT_MIME_TYPES, 
   SUPPORTED_PDF_MIME_TYPES
 } from '../../constants/fileConstants';
+import { getResponsiveValue } from '../../utils/appUtils';
 
 interface SelectedFileDisplayProps {
   file: UploadedFile;
@@ -16,7 +17,7 @@ interface SelectedFileDisplayProps {
 
 export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, onRemove, onCancelUpload }) => {
   const [idCopied, setIdCopied] = useState(false);
-  const iconSize = window.innerWidth < 640 ? 28 : 32;
+  const iconSize = getResponsiveValue(28, 32);
   const [isNewlyActive, setIsNewlyActive] = useState(false);
   const prevUploadState = React.useRef(file.uploadState);
 

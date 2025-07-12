@@ -7,6 +7,7 @@ import {
     SUPPORTED_PDF_MIME_TYPES, 
 } from '../../constants/fileConstants';
 import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy } from 'lucide-react'; 
+import { getResponsiveValue } from '../../utils/appUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -20,7 +21,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
   const nameClass = "font-medium truncate block";
   const detailsClass = "text-xs text-[var(--theme-text-tertiary)]";
   const [idCopied, setIdCopied] = useState(false);
-  const iconSize = window.innerWidth < 640 ? 20 : 24;
+  const iconSize = getResponsiveValue(20, 24);
 
   const isClickableImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error && onImageClick;
 

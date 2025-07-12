@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
 import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
-import { translations } from '../utils/appUtils';
+import { translations, getResponsiveValue } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 
 interface ImageZoomModalProps {
@@ -168,7 +168,7 @@ const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, themeCol
           aria-label={t('imageZoom_close_aria')}
           title={t('imageZoom_close_title')}
         >
-          <X size={window.innerWidth < 640 ? 20 : 24} />
+          <X size={getResponsiveValue(20, 24)} />
         </button>
          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg shadow-lg text-xs select-none">
             {file.name} ({(scale * 100).toFixed(0)}%)

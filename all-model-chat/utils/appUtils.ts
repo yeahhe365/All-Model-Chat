@@ -5,6 +5,13 @@ import { logService } from '../services/logService';
 
 export { logService };
 
+export const getResponsiveValue = <T>(mobileValue: T, desktopValue: T, breakpoint: number = 640): T => {
+    if (typeof window !== 'undefined' && window.innerWidth < breakpoint) {
+        return mobileValue;
+    }
+    return desktopValue;
+};
+
 export const translations = {
     // App.tsx
     appLoadingModels: { en: 'Loading models...', zh: '加载模型中...' },
@@ -61,6 +68,7 @@ export const translations = {
     sendMessage_title: { en: 'Send', zh: '发送' },
     tools_button: { en: 'Tools', zh: '工具' },
     web_search_label: { en: 'Web Search', zh: '搜索' },
+    code_execution_label: { en: 'Code Execution', zh: '代码执行' },
 
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },

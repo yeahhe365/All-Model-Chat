@@ -75,6 +75,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   thinkingBudget: DEFAULT_THINKING_BUDGET,
   lockedApiKey: null,
   isGoogleSearchEnabled: false,
+  isCodeExecutionEnabled: false,
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {

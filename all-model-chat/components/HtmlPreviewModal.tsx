@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Download, Maximize, Minimize, Expand, RotateCw } from 'lucide-react'; 
 import { ThemeColors } from '../constants/themeConstants';
+import { getResponsiveValue } from '../../utils/appUtils';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
-  const iconSize = window.innerWidth < 640 ? 18 : 20;
+  const iconSize = getResponsiveValue(18, 20);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
 
   const enterTrueFullscreen = useCallback(async () => {

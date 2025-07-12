@@ -2,6 +2,7 @@ import React from 'react';
 import { ModelOption } from '../../types';
 import { Loader2, Settings2, Info, Mic, Volume2 } from 'lucide-react';
 import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS } from '../../constants/appConstants';
+import { getResponsiveValue } from '../../utils/appUtils';
 
 const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
   <div className="tooltip-container ml-1.5">
@@ -48,7 +49,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
-  const iconSize = window.innerWidth < 640 ? 14 : 16;
+  const iconSize = getResponsiveValue(14, 16);
   
   return (
     <div className="space-y-4 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">

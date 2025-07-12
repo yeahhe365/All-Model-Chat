@@ -38,6 +38,7 @@ class GeminiServiceImpl implements GeminiService {
         showThoughts: boolean,
         thinkingBudget: number,
         isGoogleSearchEnabled?: boolean,
+        isCodeExecutionEnabled?: boolean,
     ): any {
         const generationConfig: any = {
             ...config,
@@ -64,9 +65,13 @@ class GeminiServiceImpl implements GeminiService {
             }
         }
 
+        // Tools are mutually exclusive
         if (isGoogleSearchEnabled) {
             generationConfig.tools = [{ googleSearch: {} }];
-            // Per Gemini docs, these cannot be set when using Google Search tool
+            delete generationConfig.responseMimeType;
+            delete generationConfig.responseSchema;
+        } else if (isCodeExecutionEnabled) {
+            generationConfig.tools = [{ codeExecution: {} }];
             delete generationConfig.responseMimeType;
             delete generationConfig.responseSchema;
         }
@@ -336,15 +341,16 @@ class GeminiServiceImpl implements GeminiService {
         showThoughts: boolean,
         thinkingBudget: number,
         isGoogleSearchEnabled: boolean,
+        isCodeExecutionEnabled: boolean,
         abortSignal: AbortSignal,
         onChunk: (chunk: string) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
     ): Promise<void> {
-        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled });
+        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
-        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled);
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
         let finalGroundingMetadata: any = null;
 
@@ -369,13 +375,31 @@ class GeminiServiceImpl implements GeminiService {
                 }
                 if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
                     for (const part of chunkResponse.candidates[0].content.parts) {
-                        if ('text' in part && typeof part.text === 'string' && part.text.length > 0) {
-                            const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                            if (pAsThoughtSupporting.thought) {
-                                onThoughtChunk(part.text);
-                            } else {
-                                onChunk(part.text);
-                            }
+                        const anyPart = part as any;
+                        const pAsThoughtSupporting = part as ThoughtSupportingPart;
+
+                        if (pAsThoughtSupporting.thought) {
+                            onThoughtChunk(part.text);
+                        } else if ('text' in part && typeof part.text === 'string' && part.text.length > 0) {
+                             onChunk(part.text);
+                        } else if (anyPart.executableCode) {
+                            const codePart = anyPart.executableCode as { language: string, code: string };
+                            const codeMarkdown = `\n\n\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\`\n\n`;
+                            onChunk(codeMarkdown);
+                        } else if (anyPart.toolCodeExecution) {
+                             const resultPart = anyPart.toolCodeExecution as { outcome: string, output?: string, inlineData?: {mimeType: string, data: string} };
+                             let resultMarkdown = `\n\n<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}">\n\n**Execution Result (${resultPart.outcome}):**\n\n`;
+                             if(resultPart.output) {
+                                resultMarkdown += `\`\`\`text\n${resultPart.output}\n\`\`\`\n`;
+                             }
+                             if(resultPart.inlineData) {
+                                const { mimeType, data } = resultPart.inlineData;
+                                if (mimeType.startsWith('image/')) {
+                                    resultMarkdown += `![Generated Image](data:${mimeType};base64,${data})\n`;
+                                }
+                             }
+                             resultMarkdown += '</div>\n\n';
+                             onChunk(resultMarkdown);
                         }
                     }
                 } else if (typeof chunkResponse.text === 'string' && chunkResponse.text.length > 0) {
@@ -400,13 +424,14 @@ class GeminiServiceImpl implements GeminiService {
         showThoughts: boolean,
         thinkingBudget: number,
         isGoogleSearchEnabled: boolean,
+        isCodeExecutionEnabled: boolean,
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
         onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
     ): Promise<void> {
-        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled });
+        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
-        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled);
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled);
         
         try {
             if (abortSignal.aborted) {
@@ -428,13 +453,31 @@ class GeminiServiceImpl implements GeminiService {
             let thoughtsText = "";
             if (response.candidates && response.candidates[0]?.content?.parts) {
                 for (const part of response.candidates[0].content.parts) {
-                    if ('text' in part && typeof part.text === 'string' && part.text.length > 0) {
-                        const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                        if (pAsThoughtSupporting.thought) {
-                            thoughtsText += part.text;
-                        } else {
-                            fullText += part.text;
-                        }
+                    const anyPart = part as any;
+                    const pAsThoughtSupporting = part as ThoughtSupportingPart;
+
+                    if (pAsThoughtSupporting.thought) {
+                        thoughtsText += part.text;
+                    } else if ('text' in part && typeof part.text === 'string' && part.text.length > 0) {
+                        fullText += part.text;
+                    } else if (anyPart.executableCode) {
+                        const codePart = anyPart.executableCode as { language: string, code: string };
+                        const codeMarkdown = `\n\n\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\`\n\n`;
+                        fullText += codeMarkdown;
+                    } else if (anyPart.toolCodeExecution) {
+                         const resultPart = anyPart.toolCodeExecution as { outcome: string, output?: string, inlineData?: {mimeType: string, data: string} };
+                         let resultMarkdown = `\n\n<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}">\n\n**Execution Result (${resultPart.outcome}):**\n\n`;
+                         if(resultPart.output) {
+                            resultMarkdown += `\`\`\`text\n${resultPart.output}\n\`\`\`\n`;
+                         }
+                         if(resultPart.inlineData) {
+                            const { mimeType, data } = resultPart.inlineData;
+                            if (mimeType.startsWith('image/')) {
+                                resultMarkdown += `![Generated Image](data:${mimeType};base64,${data})\n`;
+                            }
+                         }
+                         resultMarkdown += '</div>\n\n';
+                         fullText += resultMarkdown;
                     }
                 }
             }

@@ -10,7 +10,7 @@ import { ChatInput } from './components/ChatInput';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
-import { getTranslator } from './utils/appUtils';
+import { getTranslator, getResponsiveValue } from './utils/appUtils';
 import { logService } from './services/logService';
 import { SettingsModal } from './components/SettingsModal';
 import { LogViewer } from './components/LogViewer';
@@ -77,6 +77,7 @@ const App: React.FC = () => {
       showScrollToBottom,
       scrollToBottom,
       toggleGoogleSearch,
+      toggleCodeExecution,
   } = useChat(appSettings);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -223,7 +224,7 @@ const App: React.FC = () => {
       >
         {isAppDraggingOver && (
           <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
-            <Paperclip size={window.innerWidth < 640 ? 48 : 64} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
+            <Paperclip size={getResponsiveValue(48, 64)} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
             <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
               {t('appDragDropRelease')}
             </p>
@@ -333,6 +334,8 @@ const App: React.FC = () => {
           isTranscriptionThinkingEnabled={appSettings.isTranscriptionThinkingEnabled}
           isGoogleSearchEnabled={!!currentChatSettings.isGoogleSearchEnabled}
           onToggleGoogleSearch={toggleGoogleSearch}
+          isCodeExecutionEnabled={!!currentChatSettings.isCodeExecutionEnabled}
+          onToggleCodeExecution={toggleCodeExecution}
         />
       </div>
     </div>

@@ -76,6 +76,7 @@ export interface ChatSettings {
   thinkingBudget: number;
   lockedApiKey?: string | null;
   isGoogleSearchEnabled?: boolean;
+  isCodeExecutionEnabled?: boolean;
 }
 
 export interface SavedChatSession {
@@ -114,6 +115,7 @@ export interface GeminiService {
     showThoughts: boolean,
     thinkingBudget: number,
     isGoogleSearchEnabled: boolean,
+    isCodeExecutionEnabled: boolean,
     abortSignal: AbortSignal,
     onChunk: (chunk: string) => void,
     onThoughtChunk: (chunk: string) => void,
@@ -129,6 +131,7 @@ export interface GeminiService {
     showThoughts: boolean,
     thinkingBudget: number,
     isGoogleSearchEnabled: boolean,
+    isCodeExecutionEnabled: boolean,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
     onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void

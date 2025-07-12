@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario, PreloadedMessage } from '../types';
 import { X, PlusCircle, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, User, Bot, Zap, Play, FileUp, FileDown, Save } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations, getResponsiveValue } from '../../utils/appUtils';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;
@@ -47,9 +47,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const importFileRef = useRef<HTMLInputElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  const headingIconSize = window.innerWidth < 640 ? 20 : 24;
-  const actionIconSize = window.innerWidth < 640 ? 14 : 16;
-  const listItemIconSize = window.innerWidth < 640 ? 12 : 14;
+  const headingIconSize = getResponsiveValue(20, 24);
+  const actionIconSize = getResponsiveValue(14, 16);
 
   useEffect(() => {
     if (isOpen) {
@@ -273,8 +272,8 @@ const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');
     
-    const actionIconSize = window.innerWidth < 640 ? 14 : 16;
-    const listItemIconSize = window.innerWidth < 640 ? 12 : 14;
+    const actionIconSize = getResponsiveValue(14, 16);
+    const listItemIconSize = getResponsiveValue(12, 14);
 
     const handleMessageChange = (messages: PreloadedMessage[]) => {
         setScenario(prev => ({...prev, messages}));

@@ -1,5 +1,6 @@
 import React from 'react';
 import { RotateCcw, Save, FileText } from 'lucide-react';
+import { getResponsiveValue } from '../../utils/appUtils';
 
 interface SettingsActionsProps {
   onSave: () => void;
@@ -16,7 +17,7 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
   onOpenLogViewer,
   t,
 }) => {
-  const actionButtonIconSize = window.innerWidth < 640 ? 12 : 14;
+  const actionButtonIconSize = getResponsiveValue(12, 14);
 
   const baseButtonClass = "px-3 sm:px-4 py-1.5 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] flex items-center justify-center gap-1.5 text-sm font-medium";
 
