@@ -1,9 +1,10 @@
 
 
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Download, Maximize, Minimize, Expand, RotateCw } from 'lucide-react'; 
 import { ThemeColors } from '../constants/themeConstants';
-import { getResponsiveValue } from '../../utils/appUtils';
+import { getResponsiveValue } from '../utils/appUtils';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
