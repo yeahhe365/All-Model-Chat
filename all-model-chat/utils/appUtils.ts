@@ -59,6 +59,8 @@ export const translations = {
     updateMessage_title: { en: 'Update & Send', zh: '更新并发送' },
     sendMessage_aria: { en: 'Send message', zh: '发送消息' },
     sendMessage_title: { en: 'Send', zh: '发送' },
+    tools_button: { en: 'Tools', zh: '工具' },
+    web_search_label: { en: 'Web Search', zh: '搜索' },
 
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },

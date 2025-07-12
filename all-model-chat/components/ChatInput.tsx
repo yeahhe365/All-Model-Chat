@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, Wand2, Globe, Check } from 'lucide-react';
+import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, SlidersHorizontal, Globe, Check } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getActiveApiConfig } from '../utils/appUtils';
@@ -424,7 +424,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         <div className="flex items-center gap-1">
                              <div className="relative">
                                 <button ref={attachButtonRef} type="button" onClick={() => setIsAttachMenuOpen(!isAttachMenuOpen)} disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload} className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isAttachMenuOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label={t('attachMenu_aria')} title={t('attachMenu_title')} aria-haspopup="true" aria-expanded={isAttachMenuOpen}>
-                                    <Paperclip size={attachIconSize} />
+                                    <Plus size={attachIconSize} />
                                 </button>
                                 {isAttachMenuOpen && (
                                     <div ref={attachMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
@@ -438,19 +438,59 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
                                 <input type="file" ref={imageInputRef} onChange={handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
                             </div>
-                             <div className="relative">
-                                <button ref={toolsButtonRef} type="button" onClick={() => setIsToolsMenuOpen(p => !p)} disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload} className={`${buttonBaseClass} ${isGoogleSearchEnabled ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label="Tools" title="Tools" aria-haspopup="true" aria-expanded={isToolsMenuOpen}>
-                                    <Wand2 size={attachIconSize} />
-                                </button>
-                                {isToolsMenuOpen && (
-                                    <div ref={toolsMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
-                                        <button onClick={() => { onToggleGoogleSearch(); setIsToolsMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
-                                            <span className="flex items-center gap-3">
-                                                <Globe size={16}/> Web Search
+                            <div className="flex items-center">
+                                <div className="relative">
+                                    <button
+                                        ref={toolsButtonRef}
+                                        type="button"
+                                        onClick={() => setIsToolsMenuOpen(p => !p)}
+                                        disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}
+                                        className={
+                                            isGoogleSearchEnabled
+                                            ? `${buttonBaseClass.replace('rounded-full', 'rounded-lg')} text-[var(--theme-icon-attach)] ${isToolsMenuOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
+                                            : `h-7 sm:h-8 px-2.5 rounded-full flex items-center justify-center gap-1.5 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] ${isToolsMenuOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
+                                        }
+                                        aria-label={t('tools_button')}
+                                        title={t('tools_button')}
+                                        aria-haspopup="true"
+                                        aria-expanded={isToolsMenuOpen}
+                                    >
+                                        <SlidersHorizontal size={16} />
+                                        {!isGoogleSearchEnabled && (
+                                            <span className="text-sm font-medium">{t('tools_button')}</span>
+                                        )}
+                                    </button>
+                                    {isToolsMenuOpen && (
+                                        <div ref={toolsMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
+                                            <button onClick={() => { onToggleGoogleSearch(); setIsToolsMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
+                                                <span className="flex items-center gap-3">
+                                                    <Globe size={16}/> {t('web_search_label')}
+                                                </span>
+                                                {isGoogleSearchEnabled && <Check size={16} className="text-[var(--theme-text-link)]" />}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                {isGoogleSearchEnabled && (
+                                    <>
+                                        <div className="h-4 w-px bg-[var(--theme-border-secondary)] mx-1.5"></div>
+                                        <div 
+                                            className="flex items-center gap-1.5 bg-[var(--theme-bg-info)] text-[var(--theme-text-link)] text-sm px-2.5 py-1 rounded-full transition-all"
+                                            style={{ animation: `fadeInUp 0.3s ease-out both` }}
+                                        >
+                                            <Globe size={14} />
+                                            <span className="font-medium">
+                                                {t('web_search_label')}
                                             </span>
-                                            {isGoogleSearchEnabled && <Check size={16} className="text-[var(--theme-text-link)]" />}
-                                        </button>
-                                    </div>
+                                            <button 
+                                                onClick={onToggleGoogleSearch} 
+                                                className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] p-0.5 rounded-full hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+                                                aria-label="Disable Web Search"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>

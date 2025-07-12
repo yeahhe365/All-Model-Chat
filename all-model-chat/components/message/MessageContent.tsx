@@ -104,7 +104,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
 
             {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} />
+              <GroundedResponse text={content} metadata={groundingMetadata} onOpenHtmlPreview={onOpenHtmlPreview} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>
