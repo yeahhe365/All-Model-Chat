@@ -1,7 +1,8 @@
+<img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/7795e52a-f039-4084-ab08-8b038660badf" />
+
 
 <div align="center">
   <a href="https://all-model-chat.pages.dev/" target="_blank">
-    <img src="https://github.com/user-attachments/assets/0e1d421b-7ce2-4bc7-a43f-3bc5b02102dc" alt="All Model Chat 界面截图" width="85%"/>
   </a>
   <h1>All Model Chat - 全能模型聊天</h1>
   <p><strong>一款功能丰富、高度可定制的网页聊天应用，专为 Google Gemini API 打造。</strong></p>
@@ -13,7 +14,6 @@
     <a href="https://linux.do/u/yeahhe/summary" target="_blank"><strong>👨‍💻 作者 LINUXDO 主页</strong></a>
   </p>
 </div>
-
 ---
 
 **All Model Chat** 是一款功能强大、支持多模态输入的聊天机器人界面，旨在提供与 Google Gemini API 家族（包括 `Gemini 2.5 Pro`、`Imagen 3`、`Veo 2` 和 TTS 模型）无缝交互的极致体验。它集成了动态模型选择、多模态文件输入、流式响应、全面的聊天历史管理、高级 AI 配置、丰富的 Markdown 渲染以及广泛的自定义选项，为您带来前所未有的 AI 交互体验。
