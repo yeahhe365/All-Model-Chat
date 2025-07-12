@@ -38,7 +38,7 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 <ul>
 <li><span class="material-icons-outlined">dynamic_feed</span>利用 HTML 的灵活特性并发挥其优势。</li>
 <li><span class="material-icons-outlined">palette</span><strong class="strong-emphasis">必须</strong>使用不同的颜色来突出或强调文本。</li>
-<li><span class="material-icons-outlined">emoji_objects</span><strong>图标使用：</strong>图标应增强理解、引导注意力并改善视觉效果、而非无处不在。</li>
+<li><span class="material-icons-outlined">emoji_objects</span><strong>图标使用：</strong>图标应增强理解、引导注意力并改善视觉效果，而非无处不在。</li>
 </ul>
 </div>
 </div>
@@ -75,7 +75,7 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
  <p style="margin-top: 1.8em; margin-bottom: 0.8em;">下面是一个 JavaScript 代码块示例，右上角会自动显示一个 <strong class="strong-emphasis">“复制”</strong> 按钮：</p>
 <pre><code class="language-javascript">function greet(name) {
   // 返回一个问候字符串
-  return \\\`你好, \${name}! 欢迎使用 Canvas 助手。\\\`;
+  return \\\`你好, \\\${name}! 欢迎使用 Canvas 助手。\\\`;
 }
 
 // 调用函数并打印到控制台
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     function p(){
         if(!o||!s)return;
         const e='TB'===c?'LR':'TB';
-        o.textContent=e,o.title=\\\`切换到 \${e} 布局\\\`,o.disabled=!1;
+        o.textContent=e,o.title=\\\`切换到 \\\${e} 布局\\\`,o.disabled=!1;
      }
 
     async function m(d){
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         const h=u.match(/(\\s*graph\\s*\\[)([^\\)]*?)(\\s*\\])/);
         if(h){
             let e=h[2].trim();
-            e.length>0&&!e.endsWith(',')&&(e+=','),u=u.replace(/(\\s*graph\\s*\\[)[^\\)]*?(\\s*\\])/,\\\`$1 \${e} rankdir="\${d}" $2\\\`)
+            e.length>0&&!e.endsWith(',')&&(e+=','),u=u.replace(/(\\s*graph\\s*\\[)[^\\)]*?(\\s*\\])/,\\\`$1 \\\${e} rankdir="\\\${d}" $2\\\`)
         }
        
         const svgElement = await s.renderSVGElement(u);

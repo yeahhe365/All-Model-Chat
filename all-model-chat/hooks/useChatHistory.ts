@@ -1,5 +1,3 @@
-
-
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -17,6 +15,7 @@ interface ChatHistoryProps {
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     updateAndPersistSessions: SessionsUpdater;
+    activeChat: SavedChatSession | undefined;
 }
 
 export const useChatHistory = ({
@@ -28,11 +27,22 @@ export const useChatHistory = ({
     setSelectedFiles,
     activeJobs,
     updateAndPersistSessions,
+    activeChat,
 }: ChatHistoryProps) => {
 
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
         
+        let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        if (activeChat) {
+            settingsForNewChat = {
+                ...settingsForNewChat,
+                modelId: activeChat.settings.modelId,
+                lockedApiKey: activeChat.settings.lockedApiKey,
+                isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
+            };
+        }
+
         // Create a new session immediately
         const newSessionId = generateUniqueId();
         const newSession: SavedChatSession = {
@@ -40,7 +50,7 @@ export const useChatHistory = ({
             title: "New Chat",
             messages: [],
             timestamp: Date.now(),
-            settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
+            settings: settingsForNewChat,
         };
 
         // Add new session and remove any other empty sessions from before.
@@ -58,7 +68,7 @@ export const useChatHistory = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
 
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);

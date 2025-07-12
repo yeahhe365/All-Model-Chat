@@ -63,7 +63,8 @@ export const useChat = (appSettings: AppSettings) => {
         setCommandedInput,
         setSelectedFiles,
         activeJobs,
-        updateAndPersistSessions
+        updateAndPersistSessions,
+        activeChat,
     });
     
     const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
@@ -169,7 +170,7 @@ export const useChat = (appSettings: AppSettings) => {
                 title: 'New Chat',
                 messages: [],
                 timestamp: Date.now(),
-                settings: { ...DEFAULT_CHAT_SETTINGS, modelId: modelId },
+                settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, modelId: modelId },
             };
             updateAndPersistSessions(prev => [newSession, ...prev]);
             setActiveSessionId(newSessionId);
@@ -181,7 +182,7 @@ export const useChat = (appSettings: AppSettings) => {
             }
         }
         userScrolledUp.current = false;
-    }, [isLoading, currentChatSettings.modelId, updateAndPersistSessions, activeSessionId, userScrolledUp, messageHandler]);
+    }, [isLoading, currentChatSettings.modelId, updateAndPersistSessions, activeSessionId, userScrolledUp, messageHandler, appSettings, setActiveSessionId]);
 
     useEffect(() => { if (isSwitchingModel) { const timer = setTimeout(() => setIsSwitchingModel(false), 0); return () => clearTimeout(timer); } }, [isSwitchingModel]);
     
