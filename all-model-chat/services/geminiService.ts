@@ -386,8 +386,8 @@ class GeminiServiceImpl implements GeminiService {
                             const codePart = anyPart.executableCode as { language: string, code: string };
                             const codeMarkdown = `\n\n\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\`\n\n`;
                             onChunk(codeMarkdown);
-                        } else if (anyPart.code_execution_result) {
-                             const resultPart = anyPart.code_execution_result as { outcome: string, output?: string };
+                        } else if (anyPart.codeExecutionResult) {
+                             const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
                              let resultMarkdown = `\n\n<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}">\n\n**Execution Result (${resultPart.outcome}):**\n\n`;
                              if(resultPart.output) {
                                 resultMarkdown += `\`\`\`text\n${resultPart.output}\n\`\`\`\n`;
@@ -464,8 +464,8 @@ class GeminiServiceImpl implements GeminiService {
                         const codePart = anyPart.executableCode as { language: string, code: string };
                         const codeMarkdown = `\n\n\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\`\n\n`;
                         fullText += codeMarkdown;
-                    } else if (anyPart.code_execution_result) {
-                         const resultPart = anyPart.code_execution_result as { outcome: string, output?: string };
+                    } else if (anyPart.codeExecutionResult) {
+                         const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
                          let resultMarkdown = `\n\n<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}">\n\n**Execution Result (${resultPart.outcome}):**\n\n`;
                          if(resultPart.output) {
                             resultMarkdown += `\`\`\`text\n${resultPart.output}\n\`\`\`\n`;
