@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image } from 'lucide-react';
+import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, Wand2, Globe, Check } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getActiveApiConfig } from '../utils/appUtils';
@@ -31,6 +31,8 @@ interface ChatInputProps {
   setAspectRatio?: (ratio: string) => void;
   transcriptionModelId?: string;
   isTranscriptionThinkingEnabled?: boolean;
+  isGoogleSearchEnabled: boolean;
+  onToggleGoogleSearch: () => void;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
@@ -56,6 +58,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
   isImagenModel, aspectRatio, setAspectRatio,
   transcriptionModelId, isTranscriptionThinkingEnabled,
+  isGoogleSearchEnabled, onToggleGoogleSearch
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -70,9 +73,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [fileIdInput, setFileIdInput] = useState('');
   const [isAddingById, setIsAddingById] = useState(false);
+  
   const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const attachButtonRef = useRef<HTMLButtonElement>(null);
+  
+  const [isToolsMenuOpen, setIsToolsMenuOpen] = useState(false);
+  const toolsMenuRef = useRef<HTMLDivElement>(null);
+  const toolsButtonRef = useRef<HTMLButtonElement>(null);
+
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
@@ -123,10 +132,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           attachButtonRef.current && !attachButtonRef.current.contains(event.target as Node)) {
         setIsAttachMenuOpen(false);
       }
+      if (toolsMenuRef.current && !toolsMenuRef.current.contains(event.target as Node) &&
+          toolsButtonRef.current && !toolsButtonRef.current.contains(event.target as Node)) {
+        setIsToolsMenuOpen(false);
+      }
     };
-    if (isAttachMenuOpen) document.addEventListener('mousedown', handleClickOutside);
+    if (isAttachMenuOpen || isToolsMenuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isAttachMenuOpen]);
+  }, [isAttachMenuOpen, isToolsMenuOpen]);
 
   useEffect(() => {
     if (isWaitingForUpload) {
@@ -246,6 +259,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setShowCreateTextFileEditor(modal === 'text');
     setShowAddByIdInput(modal === 'id');
     setIsAttachMenuOpen(false);
+    setIsToolsMenuOpen(false);
   };
 
     const handleStartRecording = useCallback(async () => {
@@ -375,7 +389,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         className={`bg-transparent ${isModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isModalOpen}
       >
-        <div className="mx-auto w-full max-w-4xl px-2 sm:px-3 mb-2 sm:mb-3">
+        <div className="mx-auto w-full max-w-7xl px-2 sm:px-3 mb-2 sm:mb-3">
             <div>
                 {isImagenModel && setAspectRatio && aspectRatio && (
                     <div className="mb-2">
@@ -423,6 +437,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                                 )}
                                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
                                 <input type="file" ref={imageInputRef} onChange={handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                            </div>
+                             <div className="relative">
+                                <button ref={toolsButtonRef} type="button" onClick={() => setIsToolsMenuOpen(p => !p)} disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload} className={`${buttonBaseClass} ${isGoogleSearchEnabled ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]'}`} aria-label="Tools" title="Tools" aria-haspopup="true" aria-expanded={isToolsMenuOpen}>
+                                    <Wand2 size={attachIconSize} />
+                                </button>
+                                {isToolsMenuOpen && (
+                                    <div ref={toolsMenuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
+                                        <button onClick={() => { onToggleGoogleSearch(); setIsToolsMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
+                                            <span className="flex items-center gap-3">
+                                                <Globe size={16}/> Web Search
+                                            </span>
+                                            {isGoogleSearchEnabled && <Check size={16} className="text-[var(--theme-text-link)]" />}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

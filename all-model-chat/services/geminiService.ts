@@ -36,7 +36,8 @@ class GeminiServiceImpl implements GeminiService {
         systemInstruction: string,
         config: { temperature?: number; topP?: number },
         showThoughts: boolean,
-        thinkingBudget: number
+        thinkingBudget: number,
+        isGoogleSearchEnabled?: boolean,
     ): any {
         const generationConfig: any = {
             ...config,
@@ -46,8 +47,6 @@ class GeminiServiceImpl implements GeminiService {
             delete generationConfig.systemInstruction;
         }
     
-        // TODO: The models supporting `thinkingConfig` should be verified against the latest API documentation.
-        // The current implementation is based on the existing application logic.
         const modelSupportsThinking = [
             'gemini-2.5-flash-lite-preview-06-17',
             'gemini-2.5-pro',
@@ -61,9 +60,15 @@ class GeminiServiceImpl implements GeminiService {
                     includeThoughts: true,
                 };
             } else {
-                // Disabling thoughts is mapped to disabling thinking for performance.
                 generationConfig.thinkingConfig = { thinkingBudget: 0 };
             }
+        }
+
+        if (isGoogleSearchEnabled) {
+            generationConfig.tools = [{ googleSearch: {} }];
+            // Per Gemini docs, these cannot be set when using Google Search tool
+            delete generationConfig.responseMimeType;
+            delete generationConfig.responseSchema;
         }
         
         return generationConfig;
@@ -330,16 +335,18 @@ class GeminiServiceImpl implements GeminiService {
         config: { temperature?: number; topP?: number },
         showThoughts: boolean,
         thinkingBudget: number,
+        isGoogleSearchEnabled: boolean,
         abortSignal: AbortSignal,
         onChunk: (chunk: string) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
-        onComplete: (usageMetadata?: UsageMetadata) => void
+        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
     ): Promise<void> {
-        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget });
+        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
-        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
+        let finalGroundingMetadata: any = null;
 
         try {
             const result = await ai.models.generateContentStream({ 
@@ -355,6 +362,10 @@ class GeminiServiceImpl implements GeminiService {
                 }
                 if (chunkResponse.usageMetadata) {
                     finalUsageMetadata = chunkResponse.usageMetadata;
+                }
+                const metadataFromChunk = chunkResponse.candidates?.[0]?.groundingMetadata;
+                if (metadataFromChunk) {
+                    finalGroundingMetadata = metadataFromChunk;
                 }
                 if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
                     for (const part of chunkResponse.candidates[0].content.parts) {
@@ -375,8 +386,8 @@ class GeminiServiceImpl implements GeminiService {
             logService.error("Error sending message to Gemini (stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
         } finally {
-            logService.info("Streaming complete.", { usage: finalUsageMetadata });
-            onComplete(finalUsageMetadata);
+            logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
+            onComplete(finalUsageMetadata, finalGroundingMetadata);
         }
     }
 
@@ -388,18 +399,19 @@ class GeminiServiceImpl implements GeminiService {
         config: { temperature?: number; topP?: number },
         showThoughts: boolean,
         thinkingBudget: number,
+        isGoogleSearchEnabled: boolean,
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
-        onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
+        onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
     ): Promise<void> {
-        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget });
+        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
-        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget);
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled);
         
         try {
             if (abortSignal.aborted) {
                 logService.warn("Non-streaming call prevented by abort signal before starting.");
-                onComplete("", "", undefined);
+                onComplete("", "", undefined, undefined);
                 return;
             }
             const response: GenerateContentResponse = await ai.models.generateContent({ 
@@ -409,7 +421,7 @@ class GeminiServiceImpl implements GeminiService {
             });
             if (abortSignal.aborted) {
                 logService.warn("Non-streaming call completed, but aborted by signal before processing response.");
-                onComplete("", "", undefined);
+                onComplete("", "", undefined, undefined);
                 return;
             }
             let fullText = "";
@@ -429,8 +441,9 @@ class GeminiServiceImpl implements GeminiService {
             if (!fullText && response.text) {
                 fullText = response.text;
             }
-            logService.info("Non-stream call complete.", { usage: response.usageMetadata });
-            onComplete(fullText, thoughtsText || undefined, response.usageMetadata);
+            const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+            logService.info("Non-stream call complete.", { usage: response.usageMetadata, hasGrounding: !!groundingMetadata });
+            onComplete(fullText, thoughtsText || undefined, response.usageMetadata, groundingMetadata);
         } catch (error) {
             logService.error("Error sending message to Gemini (non-stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));

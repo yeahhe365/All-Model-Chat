@@ -58,6 +58,8 @@ const App: React.FC = () => {
       handleDeleteMessage,
       handleRetryMessage,
       handleDeleteChatHistorySession,
+      handleRenameSession,
+      handleTogglePinSession,
       clearCacheAndReload,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
@@ -74,6 +76,7 @@ const App: React.FC = () => {
       setCurrentChatSettings,
       showScrollToBottom,
       scrollToBottom,
+      toggleGoogleSearch,
   } = useChat(appSettings);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -205,6 +208,8 @@ const App: React.FC = () => {
         onSelectSession={(id) => loadChatSession(id, savedSessions)}
         onNewChat={() => startNewChat()}
         onDeleteSession={handleDeleteChatHistorySession}
+        onRenameSession={handleRenameSession}
+        onTogglePinSession={handleTogglePinSession}
         themeColors={currentTheme.colors}
         t={t}
         language={language}
@@ -326,6 +331,8 @@ const App: React.FC = () => {
           t={t}
           transcriptionModelId={appSettings.transcriptionModelId}
           isTranscriptionThinkingEnabled={appSettings.isTranscriptionThinkingEnabled}
+          isGoogleSearchEnabled={!!currentChatSettings.isGoogleSearchEnabled}
+          onToggleGoogleSearch={toggleGoogleSearch}
         />
       </div>
     </div>

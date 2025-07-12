@@ -39,6 +39,7 @@ export interface ChatMessage {
   totalTokens?: number;
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
+  groundingMetadata?: any;
 }
 
 export interface ModelOption {
@@ -74,6 +75,7 @@ export interface ChatSettings {
   ttsVoice: string;
   thinkingBudget: number;
   lockedApiKey?: string | null;
+  isGoogleSearchEnabled?: boolean;
 }
 
 export interface SavedChatSession {
@@ -82,6 +84,7 @@ export interface SavedChatSession {
   timestamp: number; 
   messages: ChatMessage[];
   settings: ChatSettings;
+  isPinned?: boolean;
 }
 
 
@@ -110,11 +113,12 @@ export interface GeminiService {
     config: { temperature?: number; topP?: number },
     showThoughts: boolean,
     thinkingBudget: number,
+    isGoogleSearchEnabled: boolean,
     abortSignal: AbortSignal,
     onChunk: (chunk: string) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata) => void
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
   ) => Promise<void>;
   sendMessageNonStream: (
     apiKey: string,
@@ -124,9 +128,10 @@ export interface GeminiService {
     config: { temperature?: number; topP?: number },
     showThoughts: boolean,
     thinkingBudget: number,
+    isGoogleSearchEnabled: boolean,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata) => void
+    onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
   ) => Promise<void>;
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;

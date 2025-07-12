@@ -228,7 +228,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       aria-live="polite" 
     >
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl mx-auto px-4 pb-24">
+        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-7xl mx-auto px-4 pb-24">
           <div className="w-full">
             <h1 className="text-4xl sm:text-5xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
               {t('welcome_greeting')}
@@ -259,26 +259,28 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
         </div>
       ) : (
-        messages.map((msg: ChatMessage, index: number) => (
-          <Message
-            key={msg.id}
-            message={msg}
-            prevMessage={index > 0 ? messages[index - 1] : undefined}
-            messageIndex={index}
-            onEditMessage={onEditMessage}
-            onDeleteMessage={onDeleteMessage}
-            onRetryMessage={onRetryMessage}
-            onImageClick={handleImageClick}
-            onOpenHtmlPreview={handleOpenHtmlPreview}
-            showThoughts={showThoughts}
-            themeColors={themeColors}
-            themeId={themeId}
-            baseFontSize={baseFontSize}
-            onTextToSpeech={onTextToSpeech}
-            ttsMessageId={ttsMessageId}
-            t={t}
-          />
-        ))
+        <div className="w-full max-w-7xl mx-auto">
+          {messages.map((msg: ChatMessage, index: number) => (
+            <Message
+              key={msg.id}
+              message={msg}
+              prevMessage={index > 0 ? messages[index - 1] : undefined}
+              messageIndex={index}
+              onEditMessage={onEditMessage}
+              onDeleteMessage={onDeleteMessage}
+              onRetryMessage={onRetryMessage}
+              onImageClick={handleImageClick}
+              onOpenHtmlPreview={handleOpenHtmlPreview}
+              showThoughts={showThoughts}
+              themeColors={themeColors}
+              themeId={themeId}
+              baseFontSize={baseFontSize}
+              onTextToSpeech={onTextToSpeech}
+              ttsMessageId={ttsMessageId}
+              t={t}
+            />
+          ))}
+        </div>
       )}
        {showScrollToBottom && (
           <button

@@ -237,7 +237,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     const isThisMessageLoadingTts = ttsMessageId === message.id;
 
     const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
-    const bubbleClasses = `w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0`;
+    const bubbleClasses = `w-fit max-w-full sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0`;
 
     const actionButtonClasses = "p-1 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
 

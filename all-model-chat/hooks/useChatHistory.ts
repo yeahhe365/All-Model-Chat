@@ -1,4 +1,5 @@
 
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings } from '../types';
 import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -148,6 +149,21 @@ export const useChatHistory = ({
         });
 
     }, [updateAndPersistSessions, activeJobs, setActiveSessionId, loadChatSession, startNewChat]);
+    
+    const handleRenameSession = useCallback((sessionId: string, newTitle: string) => {
+        if (!newTitle.trim()) return;
+        logService.info(`Renaming session ${sessionId} to "${newTitle}"`);
+        updateAndPersistSessions(prev =>
+            prev.map(s => (s.id === sessionId ? { ...s, title: newTitle.trim() } : s))
+        );
+    }, [updateAndPersistSessions]);
+
+    const handleTogglePinSession = useCallback((sessionId: string) => {
+        logService.info(`Toggling pin for session ${sessionId}`);
+        updateAndPersistSessions(prev =>
+            prev.map(s => s.id === sessionId ? { ...s, isPinned: !s.isPinned } : s)
+        );
+    }, [updateAndPersistSessions]);
 
     const clearAllHistory = useCallback(() => {
         logService.warn('User clearing all chat history.');
@@ -171,8 +187,9 @@ export const useChatHistory = ({
         loadChatSession,
         startNewChat,
         handleDeleteChatHistorySession,
+        handleRenameSession,
+        handleTogglePinSession,
         clearAllHistory,
         clearCacheAndReload,
     };
 }
-    

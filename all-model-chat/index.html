@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -555,6 +556,51 @@
     @keyframes loading-dots-pulse {
       0%, 80%, 100% { transform: scale(0); }
       40% { transform: scale(1.0); }
+    }
+    
+    /* Grounded Response Citation Styles */
+    .citation-source-link {
+        display: inline-block;
+        vertical-align: super;
+        font-size: 0.7em;
+        line-height: 1;
+        text-decoration: none;
+        background-color: var(--theme-bg-tertiary);
+        color: var(--theme-text-link);
+        padding: 2px 5px;
+        border-radius: 4px;
+        margin-left: 4px;
+        font-weight: bold;
+        transition: all 0.2s ease;
+        border: 1px solid var(--theme-border-secondary);
+    }
+    .citation-source-link:hover {
+      background-color: var(--theme-bg-accent);
+      color: var(--theme-text-accent);
+      border-color: var(--theme-bg-accent-hover);
+      transform: translateY(-1px);
+    }
+    .grounded-response-sources ol {
+      padding-left: 1.5em;
+      margin-top: 0.75rem;
+      list-style-type: decimal;
+      font-size: 0.9em;
+    }
+    .grounded-response-sources li {
+      margin-bottom: 0.4em;
+    }
+    .grounded-response-sources a {
+        color: var(--markdown-link-text) !important;
+        text-decoration: none !important;
+        background-image: linear-gradient(var(--markdown-link-text), var(--markdown-link-text));
+        background-position: 0% 100%;
+        background-repeat: no-repeat;
+        background-size: 0% 1px;
+        transition: background-size .3s ease;
+        padding-bottom: 1px;
+    }
+    .grounded-response-sources a:hover {
+        background-size: 100% 1px;
     }
   </style>
 <script type="importmap">

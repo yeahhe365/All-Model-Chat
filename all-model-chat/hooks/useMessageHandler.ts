@@ -1,4 +1,5 @@
 
+
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem, SavedChatSession } from '../types';
 import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest, generateSessionTitle } from '../utils/appUtils';
@@ -94,8 +95,6 @@ export const useMessageHandler = ({
         let sessionId = activeSessionId;
         let sessionToUpdate: IndividualChatSettings | null = null;
         if (sessionId) {
-            // Find the settings for the current session. This is a bit of a hack to get the settings
-            // without needing to pass the whole sessions array down.
             updateAndPersistSessions(prev => {
                 const found = prev.find(s => s.id === sessionId);
                 if(found) sessionToUpdate = found.settings;
@@ -271,7 +270,7 @@ export const useMessageHandler = ({
             activeJobs.current.delete(modelMessageId);
         };
 
-        const streamOnComplete = (usageMetadata?: UsageMetadata) => {
+        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any) => {
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
                 
@@ -291,6 +290,7 @@ export const useMessageHandler = ({
                     content: loadingMsg.content + (newAbortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
                     thoughts: sessionToUpdate.showThoughts ? loadingMsg.thoughts : undefined,
                     generationEndTime: new Date(),
+                    groundingMetadata: groundingMetadata,
                     promptTokens,
                     completionTokens,
                     totalTokens: turnTokens,
@@ -323,17 +323,17 @@ export const useMessageHandler = ({
         };
 
         if (appSettings.isStreamingEnabled) {
-            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, newAbortController.signal, onChunk, onThoughtChunk, streamOnError, streamOnComplete);
+            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, newAbortController.signal, onChunk, onThoughtChunk, streamOnError, streamOnComplete);
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, newAbortController.signal,
+            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, newAbortController.signal,
                 streamOnError,
-                (fullText, thoughtsText, usageMetadata) => {
+                (fullText, thoughtsText, usageMetadata, groundingMetadata) => {
                     updateAndPersistSessions(prev => prev.map(s => {
                         if (s.id !== currentSessionId) return s;
-                        const finalMessage: ChatMessage = { ...s.messages.find(m => m.id === modelMessageId)!, content: fullText, thoughts: thoughtsText, isLoading: false, generationEndTime: new Date() };
+                        const finalMessage: ChatMessage = { ...s.messages.find(m => m.id === modelMessageId)!, content: fullText, thoughts: thoughtsText, isLoading: false, generationEndTime: new Date(), groundingMetadata: groundingMetadata };
                         return {...s, messages: s.messages.map(m => m.id === modelMessageId ? finalMessage : m)};
                     }));
-                    streamOnComplete(usageMetadata);
+                    streamOnComplete(usageMetadata, groundingMetadata);
                 }
             );
         }
@@ -449,4 +449,3 @@ export const useMessageHandler = ({
         handleTextToSpeech,
     };
 };
-    

@@ -192,6 +192,15 @@ export const useChat = (appSettings: AppSettings) => {
         
     }, [isLoading, activeSessionId, historyHandler, messageHandler]);
 
+     const toggleGoogleSearch = useCallback(() => {
+        if (!activeSessionId) return;
+        if (isLoading) messageHandler.handleStopGenerating();
+        setCurrentChatSettings(prev => ({
+            ...prev,
+            isGoogleSearchEnabled: !prev.isGoogleSearchEnabled,
+        }));
+    }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
+
     return {
         messages,
         isLoading,
@@ -230,6 +239,8 @@ export const useChat = (appSettings: AppSettings) => {
         handleDeleteMessage: messageHandler.handleDeleteMessage,
         handleRetryMessage: messageHandler.handleRetryMessage,
         handleDeleteChatHistorySession: historyHandler.handleDeleteChatHistorySession,
+        handleRenameSession: historyHandler.handleRenameSession,
+        handleTogglePinSession: historyHandler.handleTogglePinSession,
         clearCacheAndReload: historyHandler.clearCacheAndReload,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
         handleLoadPreloadedScenario: scenarioHandler.handleLoadPreloadedScenario,
@@ -246,5 +257,6 @@ export const useChat = (appSettings: AppSettings) => {
         setCurrentChatSettings,
         showScrollToBottom,
         scrollToBottom,
+        toggleGoogleSearch,
     };
 };

@@ -1,6 +1,6 @@
 import { AppSettings } from '../types';
 
-export const DEFAULT_MODEL_ID = 'gemini-2.5-pro'; 
+export const DEFAULT_MODEL_ID = 'gemini-2.5-flash'; 
 
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-2.5-pro',
@@ -74,6 +74,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   ttsVoice: DEFAULT_TTS_VOICE,
   thinkingBudget: DEFAULT_THINKING_BUDGET,
   lockedApiKey: null,
+  isGoogleSearchEnabled: false,
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {

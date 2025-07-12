@@ -12,6 +12,7 @@ import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { CodeBlock } from './CodeBlock';
 import { translations } from '../../utils/appUtils';
+import { GroundedResponse } from './GroundedResponse';
 
 const renderThoughtsMarkdown = (content: string) => {
   const rawMarkup = marked.parse(content || ''); 
@@ -58,7 +59,7 @@ interface MessageContentProps {
 }
 
 export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, t }) => {
-    const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc } = message;
+    const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     const [isThoughtsExpanded, setThoughtsExpanded] = useState(false);
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -102,7 +103,9 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                 </div>
             )}
 
-            {content && (
+            {content && groundingMetadata ? (
+              <GroundedResponse text={content} metadata={groundingMetadata} />
+            ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>
                         {content}
