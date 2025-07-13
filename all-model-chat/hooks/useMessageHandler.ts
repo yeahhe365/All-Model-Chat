@@ -107,8 +107,10 @@ export const useMessageHandler = ({
         let sessionToUpdate: IndividualChatSettings;
 
         if (sessionId) {
-            // Use the settings from the currently active session.
-            sessionToUpdate = currentChatSettings;
+            // Re-base the current chat settings on top of the latest global app settings
+            // This ensures that any global setting changes (like API keys) are respected,
+            // while preserving session-specific overrides (like a locked key or model).
+            sessionToUpdate = { ...appSettings, ...currentChatSettings };
         } else {
             // This is a new chat, so use the global settings as the base.
             sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
