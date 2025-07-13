@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PreloadedMessage, ChatMessage, SavedScenario } from '../types';
+import { PreloadedMessage, ChatMessage, SavedScenario, SavedChatSession } from '../types';
 import { PRELOADED_SCENARIO_KEY } from '../constants/appConstants';
 import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';

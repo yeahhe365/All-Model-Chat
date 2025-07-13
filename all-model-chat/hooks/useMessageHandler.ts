@@ -292,7 +292,7 @@ export const useMessageHandler = ({
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
                 
-                let cumulativeTotal = s.messages.findLast(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
 
                 const finalMessages = s.messages
                     .map(m => {
@@ -354,7 +354,7 @@ export const useMessageHandler = ({
                         ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime())
                         : null;
                     
-                    const messageToUpdate = messages.findLast(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
+                    const messageToUpdate = [...messages].reverse().find(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
                     if (messageToUpdate && thinkingTime !== null) {
                         messageToUpdate.thinkingTimeMs = thinkingTime;
                         // To trigger a re-render if the message object is mutated

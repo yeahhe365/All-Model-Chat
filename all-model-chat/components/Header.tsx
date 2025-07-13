@@ -137,13 +137,13 @@ export const Header: React.FC<HeaderProps> = ({
                     <div ref={contentWrapperRef} className={`flex w-max items-center ${isModelNameOverflowing ? 'horizontal-scroll-marquee' : ''}`}>
                         <span ref={singleInstanceRef} className="flex items-center gap-1 whitespace-nowrap">
                             {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
-                            {isKeyLocked && <Lock size={10} className="mr-1 text-[var(--theme-text-link)]" title="API Key is locked for this session"/>}
+                            {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
                             <span>{displayModelName}</span>
                         </span>
                         {isModelNameOverflowing && (
                             <span className="flex items-center gap-1 whitespace-nowrap pl-4">
                                 {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
-                                {isKeyLocked && <Lock size={10} className="mr-1 text-[var(--theme-text-link)]" title="API Key is locked for this session"/>}
+                                {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
                                 <span>{displayModelName}</span>
                             </span>
                         )}

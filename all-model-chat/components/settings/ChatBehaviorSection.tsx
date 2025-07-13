@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ModelOption } from '../../types';
 import { Loader2, Settings2, Info, Mic, Volume2 } from 'lucide-react';
 import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS } from '../../constants/appConstants';
@@ -54,6 +54,34 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
   const iconSize = getResponsiveValue(14, 16);
   
+  type ThinkingMode = 'off' | 'auto' | 'manual';
+  
+  const [thinkingMode, setThinkingMode] = useState<ThinkingMode>(() => {
+    if (!showThoughts) return 'off';
+    if (thinkingBudget === -1) return 'auto';
+    return 'manual';
+  });
+
+  const handleThinkingModeChange = (mode: ThinkingMode) => {
+    setThinkingMode(mode);
+    switch (mode) {
+      case 'off':
+        setShowThoughts(false);
+        setThinkingBudget(0);
+        break;
+      case 'auto':
+        setShowThoughts(true);
+        setThinkingBudget(-1);
+        break;
+      case 'manual':
+        setShowThoughts(true);
+        if (thinkingBudget < 1) {
+          setThinkingBudget(100); 
+        }
+        break;
+    }
+  };
+
   return (
     <div className="space-y-4 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
       <h3 className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center mb-1">
@@ -184,26 +212,50 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
             className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]" />
         </div>
         <div>
-          <label htmlFor="show-thoughts-toggle" className="flex items-center justify-between py-1 cursor-pointer">
-            <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
-                {t('settingsShowThoughts')}
-                <Tooltip text={t('chatBehavior_enableThoughts_tooltip')}>
-                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
-                </Tooltip>
+          <label className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
+            <span className='flex items-center'>
+              {t('settingsShowThoughts')}
+              <Tooltip text={t('chatBehavior_enableThoughts_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+              </Tooltip>
             </span>
-            <div className="relative">
-              <input id="show-thoughts-toggle" type="checkbox" className="sr-only peer" checked={showThoughts} onChange={() => setShowThoughts(!showThoughts)} />
-              <div className="w-11 h-6 bg-[var(--theme-bg-input)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)]"></div>
-              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
-            </div>
           </label>
-          {showThoughts && (
-            <div className="pl-5 mt-3 space-y-1" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+          <div className="flex rounded-md shadow-sm">
+            <button
+              type="button"
+              onClick={() => handleThinkingModeChange('off')}
+              className={`relative inline-flex items-center px-4 py-2 rounded-l-md border border-[var(--theme-border-secondary)] text-sm font-medium ${
+                thinkingMode === 'off' ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] z-10' : 'bg-[var(--theme-bg-input)] text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]'
+              } focus:z-10 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-colors`}
+            >
+              Off
+            </button>
+            <button
+              type="button"
+              onClick={() => handleThinkingModeChange('auto')}
+              className={`relative inline-flex items-center px-4 py-2 border-t border-b border-[var(--theme-border-secondary)] text-sm font-medium ${
+                thinkingMode === 'auto' ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] z-10' : 'bg-[var(--theme-bg-input)] text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]'
+              } focus:z-10 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-colors -ml-px`}
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => handleThinkingModeChange('manual')}
+              className={`relative inline-flex items-center px-4 py-2 rounded-r-md border border-[var(--theme-border-secondary)] text-sm font-medium ${
+                thinkingMode === 'manual' ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] z-10' : 'bg-[var(--theme-bg-input)] text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]'
+              } focus:z-10 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-colors -ml-px`}
+            >
+              Manual
+            </button>
+          </div>
+          {thinkingMode === 'manual' && (
+            <div className="pl-0 mt-3 space-y-1" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
               <label htmlFor="thinking-budget-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
                 <span className='flex items-center'>
                   {t('settingsThinkingBudget')}
                   <Tooltip text={t('settingsThinkingBudget_tooltip')}>
-                      <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
                   </Tooltip>
                 </span>
               </label>
@@ -213,7 +265,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
                 value={thinkingBudget}
                 onChange={(e) => {
                     const num = parseInt(e.target.value, 10);
-                    setThinkingBudget(isNaN(num) ? -1 : num);
+                    setThinkingBudget(isNaN(num) ? 0 : num);
                 }}
                 className={`${inputBaseClasses} ${enabledInputClasses}`}
                 placeholder={t('settingsThinkingBudget_placeholder')}

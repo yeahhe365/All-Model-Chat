@@ -226,81 +226,90 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
           </button>
         </header>
         
-        {appSettings.useCustomApiConfig && displayApiKeyUsage.size > 0 && (
-          <div className="p-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] text-xs flex-shrink-0">
-            <h4 className="font-semibold text-sm mb-2 text-[var(--theme-text-primary)]">API Key Usage</h4>
-            <div className="max-h-28 overflow-y-auto custom-scrollbar pr-2 -mr-2">
-              <ul className="space-y-1">
-                {Array.from(displayApiKeyUsage.entries())
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([key, count]) => (
-                  <li key={key} className={`flex justify-between items-center p-1.5 rounded-md ${currentChatSettings.lockedApiKey === key ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : ''}`}>
-                    <code className="text-sm text-[var(--theme-text-secondary)] font-mono flex items-center">
-                        <ObfuscatedApiKey apiKey={key} />
-                        {currentChatSettings.lockedApiKey === key && 
-                          <span className="text-xs font-bold text-[var(--theme-text-success)] ml-2 flex items-center gap-1">
-                            <CheckCircle size={12}/>
-                            (Active)
-                          </span>
-                        }
-                    </code>
-                    <span className="font-semibold text-sm text-[var(--theme-text-primary)]">{count} calls</span>
-                  </li>
+        <div className="flex flex-row flex-grow min-h-0">
+          {/* Left Column: API Key Usage */}
+          {appSettings.useCustomApiConfig && displayApiKeyUsage.size > 0 && (
+            <div className="w-56 md:w-64 flex-shrink-0 border-r border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] flex flex-col">
+              <h4 className="p-3 font-semibold text-sm text-[var(--theme-text-primary)] border-b border-[var(--theme-border-secondary)] flex-shrink-0">
+                API Key Usage
+              </h4>
+              <div className="overflow-y-auto custom-scrollbar p-2">
+                <ul className="space-y-1">
+                  {Array.from(displayApiKeyUsage.entries())
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([key, count]) => (
+                    <li key={key} className={`p-2 rounded-md ${currentChatSettings.lockedApiKey === key ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : 'hover:bg-[var(--theme-bg-input)]'} transition-colors`}>
+                      <div className="flex justify-between items-start text-xs">
+                        <code className="text-xs text-[var(--theme-text-secondary)] font-mono flex items-center break-all mr-2">
+                          <ObfuscatedApiKey apiKey={key} />
+                        </code>
+                        <span className="font-semibold text-sm text-[var(--theme-text-primary)] ml-2 flex-shrink-0">{count}</span>
+                      </div>
+                      {currentChatSettings.lockedApiKey === key && 
+                        <span className="text-xs font-bold text-[var(--theme-text-success)] flex items-center gap-1 mt-1">
+                          <CheckCircle size={12}/>
+                          Active in chat
+                        </span>
+                      }
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Right Column: Filters & Logs */}
+          <div className="flex flex-col flex-grow min-w-0">
+            <div className="p-2 sm:p-3 border-b border-[var(--theme-border-secondary)] flex flex-wrap items-center gap-x-4 gap-y-2 flex-shrink-0">
+              <input
+                type="text"
+                placeholder="Filter logs..."
+                value={filterText}
+                onChange={e => setFilterText(e.target.value)}
+                className="flex-grow p-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]"
+              />
+              <div className="flex items-center gap-x-3 text-xs">
+                {Object.keys(visibleLevels).map(level => (
+                  <label key={level} className="flex items-center cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={visibleLevels[level as LogLevel]}
+                      onChange={() => toggleLevel(level as LogLevel)}
+                      className={`mr-1.5 h-4 w-4 rounded border-gray-600 focus:ring-blue-500 text-blue-500 bg-gray-700`}
+                    />
+                    <span className={LOG_LEVEL_COLORS[level as LogLevel]}>{level}</span>
+                  </label>
                 ))}
-              </ul>
+              </div>
+              <div className="flex items-center gap-x-4">
+                <label className="flex items-center cursor-pointer text-xs text-[var(--theme-text-secondary)] select-none">
+                  <input type="checkbox" checked={autoScroll} onChange={() => setAutoScroll(!autoScroll)} className="mr-1.5 h-4 w-4 rounded border-gray-600 focus:ring-blue-500 text-blue-500 bg-gray-700" />
+                  Auto-scroll
+                </label>
+                <button
+                  onClick={handleExport}
+                  className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] transition-colors p-1 rounded-md"
+                  title="Export visible logs"
+                >
+                  <Download size={14} /> Export
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] transition-colors p-1 rounded-md"
+                  title="Clear all logs"
+                >
+                  <Trash2 size={14} /> Clear
+                </button>
+              </div>
+            </div>
+            <div
+              ref={logContainerRef}
+              onScroll={handleScroll}
+              className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar bg-[var(--theme-bg-secondary)]"
+            >
+              {filteredLogs.map(log => <LogRow key={log.id} log={log} />)}
             </div>
           </div>
-        )}
-        
-        <div className="p-2 sm:p-3 border-b border-[var(--theme-border-secondary)] flex flex-wrap items-center gap-x-4 gap-y-2 flex-shrink-0">
-          <input
-            type="text"
-            placeholder="Filter logs..."
-            value={filterText}
-            onChange={e => setFilterText(e.target.value)}
-            className="flex-grow p-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]"
-          />
-          <div className="flex items-center gap-x-3 text-xs">
-            {Object.keys(visibleLevels).map(level => (
-              <label key={level} className="flex items-center cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={visibleLevels[level as LogLevel]}
-                  onChange={() => toggleLevel(level as LogLevel)}
-                  className={`mr-1.5 h-4 w-4 rounded border-gray-600 focus:ring-blue-500 text-blue-500 bg-gray-700`}
-                />
-                <span className={LOG_LEVEL_COLORS[level as LogLevel]}>{level}</span>
-              </label>
-            ))}
-          </div>
-          <div className="flex items-center gap-x-4">
-            <label className="flex items-center cursor-pointer text-xs text-[var(--theme-text-secondary)] select-none">
-              <input type="checkbox" checked={autoScroll} onChange={() => setAutoScroll(!autoScroll)} className="mr-1.5 h-4 w-4 rounded border-gray-600 focus:ring-blue-500 text-blue-500 bg-gray-700" />
-              Auto-scroll
-            </label>
-             <button
-              onClick={handleExport}
-              className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] transition-colors p-1 rounded-md"
-              title="Export visible logs"
-            >
-              <Download size={14} /> Export
-            </button>
-            <button
-              onClick={handleClear}
-              className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] transition-colors p-1 rounded-md"
-              title="Clear all logs"
-            >
-              <Trash2 size={14} /> Clear
-            </button>
-          </div>
-        </div>
-
-        <div
-          ref={logContainerRef}
-          onScroll={handleScroll}
-          className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar bg-[var(--theme-bg-secondary)]"
-        >
-          {filteredLogs.map(log => <LogRow key={log.id} log={log} />)}
         </div>
       </div>
     </div>
