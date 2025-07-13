@@ -40,6 +40,7 @@ export const useChatHistory = ({
                 modelId: activeChat.settings.modelId,
                 lockedApiKey: activeChat.settings.lockedApiKey,
                 isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
+                isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
             };
         }
 
