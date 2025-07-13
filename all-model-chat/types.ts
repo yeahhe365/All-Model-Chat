@@ -33,7 +33,8 @@ export interface ChatMessage {
   thoughts?: string; 
   isLoading?: boolean; 
   generationStartTime?: Date; 
-  generationEndTime?: Date;   
+  generationEndTime?: Date;
+  thinkingTimeMs?: number;   
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
@@ -99,6 +100,7 @@ export interface AppSettings extends ChatSettings {
  isStreamingEnabled: boolean;
  transcriptionModelId: string;
  isTranscriptionThinkingEnabled: boolean;
+ useFilesApiForImages: boolean;
 }
 
 
@@ -117,7 +119,7 @@ export interface GeminiService {
     isGoogleSearchEnabled: boolean,
     isCodeExecutionEnabled: boolean,
     abortSignal: AbortSignal,
-    onChunk: (chunk: string) => void,
+    onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
     onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
@@ -134,7 +136,7 @@ export interface GeminiService {
     isCodeExecutionEnabled: boolean,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (fullText: string, thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
   ) => Promise<void>;
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;

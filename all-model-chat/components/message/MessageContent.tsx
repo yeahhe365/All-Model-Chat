@@ -7,9 +7,9 @@ import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { Loader2, ChevronDown, ChevronUp, Sigma } from 'lucide-react';
+import { Loader2, ChevronDown, Sigma } from 'lucide-react';
 
-import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
+import { ChatMessage, UploadedFile } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { CodeBlock } from './CodeBlock';
 import { translations } from '../../utils/appUtils';
@@ -61,7 +61,6 @@ interface MessageContentProps {
 
 export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
-    const [isThoughtsExpanded, setThoughtsExpanded] = useState(false);
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
     const areThoughtsVisible = message.role === 'model' && thoughts && showThoughts;
@@ -71,9 +70,44 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
       codeBlockCounter.current = 0; // Reset on each render of message content
     });
 
+    const lastThought = useMemo(() => {
+        if (!thoughts) return null;
+
+        const lines = thoughts.trim().split('\n');
+        let lastHeadingIndex = -1;
+        let lastHeading = '';
+
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const line = lines[i].trim();
+            // Check for ## or ### headings
+            if (line.startsWith('## ') || line.startsWith('### ')) {
+                lastHeadingIndex = i;
+                lastHeading = line.replace(/^[#]+\s*/, '').trim();
+                break;
+            }
+            // Check for lines that are entirely bolded (e.g., **Title**)
+            if ((line.startsWith('**') && line.endsWith('**') && !line.slice(2, -2).includes('**')) || 
+                (line.startsWith('__') && line.endsWith('__') && !line.slice(2, -2).includes('__'))) {
+                lastHeadingIndex = i;
+                // Remove the bold markers from the start and end
+                lastHeading = line.substring(2, line.length - 2).trim();
+                break;
+            }
+        }
+
+        if (lastHeadingIndex === -1) {
+             const content = lines.slice(-5).join('\n').trim();
+             return { title: 'Latest thought', content };
+        }
+        
+        const contentLines = lines.slice(lastHeadingIndex + 1);
+        const content = contentLines.filter(l => l.trim() !== '').join('\n').trim();
+
+        return { title: lastHeading, content };
+    }, [thoughts]);
+
     const components = useMemo(() => ({
       pre: (props: any) => {
-        // rehype-highlight wraps the `pre` with a div sometimes, we need to handle that by passing children
         const { node, ...rest } = props;
         const children = (props.children[0] && props.children[0].type === 'code') ? props.children[0] : props.children;
         return <CodeBlock {...rest} onOpenHtmlPreview={onOpenHtmlPreview}>{children}</CodeBlock>;
@@ -89,13 +123,36 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {areThoughtsVisible && (
-                <div className="mb-1.5 p-1.5 sm:p-2 bg-[rgba(0,0,0,0.1)] dark:bg-[rgba(0,0,0,0.2)] rounded-md border border-[var(--theme-border-secondary)]">
-                    <button onClick={() => setThoughtsExpanded(p => !p)} className="flex items-center justify-between w-full text-xs font-semibold text-[var(--theme-icon-thought)] mb-1 hover:text-[var(--theme-text-link)]" aria-expanded={isThoughtsExpanded}>
-                        <span className="flex items-center">{isLoading && <Loader2 size={12} className="animate-spin mr-1.5" />}{t('thinking_text')}</span>
-                        {isThoughtsExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                    {isThoughtsExpanded && <div className="text-xs text-[var(--theme-text-secondary)] markdown-body" dangerouslySetInnerHTML={renderThoughtsMarkdown(thoughts)} />}
-                </div>
+                <details className="mb-1.5 p-2 rounded-lg bg-[var(--theme-bg-tertiary)] bg-opacity-50 border border-[var(--theme-border-secondary)] group">
+                    <summary className="flex flex-col cursor-pointer text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] list-none">
+                        <div className="flex items-center justify-between w-full">
+                            <span className="flex items-center">
+                                {message.thinkingTimeMs !== undefined ? (
+                                    t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
+                                ) : isLoading ? (
+                                    <>
+                                        <Loader2 size={12} className="animate-spin mr-1.5" />
+                                        {t('thinking_text')}
+                                    </>
+                                ) : (
+                                    'Thinking finished' // Fallback
+                                )}
+                            </span>
+                            <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] group-open:rotate-180 transition-transform"/>
+                        </div>
+                        {isLoading && lastThought && (
+                            <div className="group-open:hidden mt-2 text-left w-full pr-4">
+                               <h4 className="font-semibold text-[var(--theme-bg-model-message-text)] text-sm">
+                                   {lastThought.title}
+                               </h4>
+                               <p className="text-xs text-[var(--theme-text-tertiary)] mt-1 line-clamp-3">
+                                   {lastThought.content}
+                               </p>
+                            </div>
+                        )}
+                    </summary>
+                    <div className="mt-2 pt-2 border-t border-[var(--theme-border-secondary)] text-xs text-[var(--theme-text-secondary)] markdown-body" dangerouslySetInnerHTML={renderThoughtsMarkdown(thoughts)} />
+                </details>
             )}
 
             {showPrimaryThinkingIndicator && (

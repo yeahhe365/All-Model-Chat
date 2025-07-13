@@ -100,6 +100,7 @@ export const translations = {
     export_failed_title: { en: 'Export failed.', zh: '导出失败。' },
     tokens_unit: { en: 'tokens', zh: '个令牌' },
     thinking_text: { en: 'Thinking...', zh: '思考中...' },
+    thinking_took_time: { en: 'Thought for {seconds} seconds', zh: '思考了 {seconds} 秒' },
     cancelled_by_user: { en: '[Cancelled by user]', zh: '[用户已取消]' },
     stopped_by_user: { en: '[Stopped by user]', zh: '[用户已停止]' },
 
@@ -149,6 +150,8 @@ export const translations = {
     chatBehavior_systemPrompt_placeholder: { en: 'e.g., You are a helpful AI assistant.', zh: '例如：你是一个乐于助人的 AI 助手。' },
     chatBehavior_model_loading: { en: 'Loading models...', zh: '加载模型中...' },
     chatBehavior_model_noModels: { en: 'No models available', zh: '无可用模型' },
+    settings_useFilesApiForImages_label: { en: 'Upload Images via File API', zh: '通过 File API 上传图片' },
+    settings_useFilesApiForImages_tooltip: { en: 'When enabled, images are uploaded and referenced via the File API instead of being sent inline. This is required for some models and can help with very large images.', zh: '启用后，图片将通过 File API 上传和引用，而不是内联发送。某些模型需要此功能，并且有助于处理非常大的图片。' },
     
     // PreloadedMessagesModal.tsx
     scenarios_title: { en: 'Manage Preloaded Scenarios', zh: '管理预加载场景' },

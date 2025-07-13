@@ -89,4 +89,5 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
   isTranscriptionThinkingEnabled: DEFAULT_TRANSCRIPTION_THINKING_ENABLED,
+  useFilesApiForImages: false,
 };

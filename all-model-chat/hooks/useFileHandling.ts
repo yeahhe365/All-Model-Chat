@@ -41,18 +41,26 @@ export const useFileHandling = ({
         
         const filesArray = Array.isArray(files) ? files : Array.from(files);
 
-        // Determine if we need an API key for non-image uploads
-        const hasNonImageFiles = filesArray.some(file => {
+        // Determine if any file requires an API key for upload.
+        const needsApiKeyForUpload = filesArray.some(file => {
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             let effectiveMimeType = file.type;
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                  effectiveMimeType = 'text/plain';
             }
-            return !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) && ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType);
+            if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
+                return false; // Unsupported files don't need a key
+            }
+            // An image needs an API key ONLY if the setting is enabled
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
+                return appSettings.useFilesApiForImages;
+            }
+            // All other supported types (PDF, audio, text) always need an API key
+            return true; 
         });
 
         let keyToUse: string | null = null;
-        if (hasNonImageFiles) {
+        if (needsApiKeyForUpload) {
             const keyResult = getKeyForRequest(appSettings, currentChatSettings);
             if ('error' in keyResult) {
                 setAppFileError(keyResult.error);
@@ -81,20 +89,11 @@ export const useFileHandling = ({
                 return;
             }
 
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                // Handle image locally with Data URLs for persistence
-                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
-                setSelectedFiles(prev => [...prev, initialFileState]);
-                
-                try {
-                    const dataUrl = await fileToDataUrl(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
-                } catch(error) {
-                    logService.error('Error creating data URL for image', { error });
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
-                }
-            } else {
-                // Handle other file types that need uploading
+            // This is the core logic change: should this file be uploaded or handled locally?
+            const shouldUploadFile = !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) || appSettings.useFilesApiForImages;
+
+            if (shouldUploadFile) {
+                // Handle all file types that need uploading (PDF, Text, Audio, and Images if setting is on)
                 if (!keyToUse) {
                     const errorMsg = 'API key was not available for non-image file upload.';
                     logService.error(errorMsg);
@@ -118,6 +117,18 @@ export const useFileHandling = ({
                     }
                     logService.error(`File upload failed for ${file.name}`, { error: uploadError });
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, } : f));
+                }
+            } else {
+                // Handle image locally with Data URLs for persistence (if setting is off)
+                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
+                setSelectedFiles(prev => [...prev, initialFileState]);
+                
+                try {
+                    const dataUrl = await fileToDataUrl(file);
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                } catch(error) {
+                    logService.error('Error creating data URL for image', { error });
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
                 }
             }
         });

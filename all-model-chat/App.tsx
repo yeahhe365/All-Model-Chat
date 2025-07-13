@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS } from './constants/appConstants';
-import { CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/promptConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
 import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
@@ -84,6 +83,22 @@ const App: React.FC = () => {
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
   const [isLogViewerOpen, setIsLogViewerOpen] = useState<boolean>(false);
+  const [canvasAssistantPrompt, setCanvasAssistantPrompt] = useState<string>('');
+
+  useEffect(() => {
+    fetch('./constants/promptConstants.txt')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(text => setCanvasAssistantPrompt(text))
+        .catch(e => {
+            logService.error("Could not fetch canvas assistant prompt", e);
+            console.error("Could not fetch canvas assistant prompt:", e);
+        });
+  }, []);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
@@ -110,8 +125,12 @@ const App: React.FC = () => {
   useEffect(() => () => { prevSelectedFilesRef.current.forEach(file => { if (file.dataUrl?.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl) }); }, []);
 
   const handleLoadCanvasHelperPromptAndSave = () => {
-    const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
-    const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_ASSISTANT_SYSTEM_PROMPT;
+    if (!canvasAssistantPrompt) {
+        logService.warn("Canvas assistant prompt not loaded yet, cannot apply.");
+        return;
+    }
+    const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === canvasAssistantPrompt;
+    const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : canvasAssistantPrompt;
     
     // Apply this as a global default for new chats
     setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
@@ -126,7 +145,7 @@ const App: React.FC = () => {
   };
   
   const handleSuggestionClick = (text: string) => {
-    setCommandedInput({ text, id: Date.now() });
+    setCommandedInput({ text: text + '\n', id: Date.now() });
     setTimeout(() => {
         const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
         if (textarea) textarea.focus();
@@ -188,7 +207,7 @@ const App: React.FC = () => {
     return apiModels.length === 0 && !isModelsLoading ? t('appNoModelsAvailable') : t('appNoModelSelected');
   };
 
-  const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
+  const isCanvasPromptActive = currentChatSettings.systemInstruction === canvasAssistantPrompt && !!canvasAssistantPrompt;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
 
   return (

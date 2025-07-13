@@ -232,12 +232,13 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         !message.isLoading &&
         (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000);
 
+    const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && showThoughts));
     const actionIconSize = getResponsiveValue(14, 16);
     const canRetryMessage = (message.role === 'model' || (message.role === 'error' && message.generationStartTime)) && !message.isLoading;
     const isThisMessageLoadingTts = ttsMessageId === message.id;
 
     const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
-    const bubbleClasses = `w-fit max-w-full sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0`;
+    const bubbleClasses = `w-fit max-w-full sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 ${isModelThinkingOrHasThoughts ? 'min-w-[320px]' : ''}`;
 
     const actionButtonClasses = "p-1 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
 

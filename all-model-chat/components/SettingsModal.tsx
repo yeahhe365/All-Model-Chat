@@ -146,6 +146,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             setIsStreamingEnabled={(val) => updateSetting('isStreamingEnabled', val)}
             isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled}
             setIsTranscriptionThinkingEnabled={(val) => updateSetting('isTranscriptionThinkingEnabled', val)}
+            useFilesApiForImages={settings.useFilesApiForImages}
+            setUseFilesApiForImages={(val) => updateSetting('useFilesApiForImages', val)}
             t={t}
           />
           <DataManagementSection
