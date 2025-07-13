@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
@@ -18,7 +19,7 @@ const COLLAPSE_THRESHOLD_PX = 150;
 export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview }) => {
     const preRef = useRef<HTMLPreElement>(null);
     const codeText = useRef<string>('');
-    const [isOverflowing, setIsOverflowing] = useState(false);
+    const [isOverflowing, setIsOverflowing] = useState(true);
     const [isExpanded, setIsExpanded] = useState(false);
     const [copied, setCopied] = useState(false);
     const hasUserInteracted = useRef(false);
@@ -32,11 +33,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
             codeText.current = codeElement.innerText;
         }
 
-        const doesOverflow = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
-        setIsOverflowing(doesOverflow);
-        
+        // All code blocks are collapsible now and start collapsed.
+        setIsOverflowing(true);
         if (!hasUserInteracted.current) {
-            setIsExpanded(!doesOverflow);
+            setIsExpanded(false);
         }
     }, [children]);
 
