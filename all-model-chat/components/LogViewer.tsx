@@ -229,31 +229,44 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         <div className="flex flex-row flex-grow min-h-0">
           {/* Left Column: API Key Usage */}
           {appSettings.useCustomApiConfig && displayApiKeyUsage.size > 0 && (
-            <div className="w-56 md:w-64 flex-shrink-0 border-r border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] flex flex-col">
+            <div className="w-64 flex-shrink-0 border-r border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] flex flex-col">
               <h4 className="p-3 font-semibold text-sm text-[var(--theme-text-primary)] border-b border-[var(--theme-border-secondary)] flex-shrink-0">
                 API Key Usage
               </h4>
-              <div className="overflow-y-auto custom-scrollbar p-2">
-                <ul className="space-y-1">
-                  {Array.from(displayApiKeyUsage.entries())
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([key, count]) => (
-                    <li key={key} className={`p-2 rounded-md ${currentChatSettings.lockedApiKey === key ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : 'hover:bg-[var(--theme-bg-input)]'} transition-colors`}>
-                      <div className="flex justify-between items-start text-xs">
-                        <code className="text-xs text-[var(--theme-text-secondary)] font-mono flex items-center break-all mr-2">
-                          <ObfuscatedApiKey apiKey={key} />
-                        </code>
-                        <span className="font-semibold text-sm text-[var(--theme-text-primary)] ml-2 flex-shrink-0">{count}</span>
-                      </div>
-                      {currentChatSettings.lockedApiKey === key && 
-                        <span className="text-xs font-bold text-[var(--theme-text-success)] flex items-center gap-1 mt-1">
-                          <CheckCircle size={12}/>
-                          Active in chat
-                        </span>
-                      }
-                    </li>
-                  ))}
-                </ul>
+              <div className="overflow-y-auto custom-scrollbar">
+                <table className="w-full text-xs text-left">
+                  <thead className="sticky top-0 bg-[var(--theme-bg-secondary)] z-10">
+                    <tr className="text-[var(--theme-text-tertiary)]">
+                      <th className="font-semibold p-2 w-8">No.</th>
+                      <th className="font-semibold p-2">API Key</th>
+                      <th className="font-semibold p-2 w-12 text-center">Usage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from(displayApiKeyUsage.entries())
+                      .sort(([, a], [, b]) => b - a)
+                      .map(([key, count], index) => (
+                      <tr 
+                        key={key} 
+                        className={`border-t border-[var(--theme-border-primary)] ${currentChatSettings.lockedApiKey === key ? 'bg-[var(--theme-bg-accent)] bg-opacity-15' : 'hover:bg-[var(--theme-bg-input)]'} transition-colors`}
+                      >
+                        <td className="p-2 text-center text-[var(--theme-text-tertiary)]">{index + 1}</td>
+                        <td className="p-2">
+                          <code className="font-mono text-[var(--theme-text-secondary)] break-all">
+                            <ObfuscatedApiKey apiKey={key} />
+                          </code>
+                          {currentChatSettings.lockedApiKey === key && 
+                            <span className="text-xs font-bold text-[var(--theme-text-success)] flex items-center gap-1 mt-1">
+                              <CheckCircle size={12}/>
+                              Active
+                            </span>
+                          }
+                        </td>
+                        <td className="p-2 font-semibold text-sm text-[var(--theme-text-primary)] text-center">{count}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
