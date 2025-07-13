@@ -32,20 +32,43 @@ export const useChatHistory = ({
 
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
-    
-        // Determine the settings for the new chat.
-        // Start with global defaults from AppSettings.
-        let baseSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-    
-        // If there was a previous active chat, use its settings as the base instead.
-        // This provides a more intuitive experience, carrying over model, tools, temp, etc.
+        
+        const {
+            // Destructure only the properties that are part of ChatSettings from AppSettings
+            // to create a clean base for the new session's settings.
+            modelId,
+            temperature,
+            topP,
+            showThoughts,
+            systemInstruction,
+            ttsVoice,
+            thinkingBudget,
+            isGoogleSearchEnabled,
+            isCodeExecutionEnabled,
+        } = appSettings;
+
+        // Start with default chat settings and layer on the global app settings
+        let settingsForNewChat: ChatSettings = {
+            ...DEFAULT_CHAT_SETTINGS,
+            modelId,
+            temperature,
+            topP,
+            showThoughts,
+            systemInstruction,
+            ttsVoice,
+            thinkingBudget,
+            isGoogleSearchEnabled,
+            isCodeExecutionEnabled,
+        };
+
         if (activeChat) {
-            baseSettings = { ...activeChat.settings };
+            // Carry over specific, context-sensitive settings from the previous active chat session
+            settingsForNewChat.modelId = activeChat.settings.modelId;
+            settingsForNewChat.lockedApiKey = activeChat.settings.lockedApiKey;
+            settingsForNewChat.isGoogleSearchEnabled = activeChat.settings.isGoogleSearchEnabled;
+            settingsForNewChat.isCodeExecutionEnabled = activeChat.settings.isCodeExecutionEnabled;
         }
-    
-        // Regardless of where settings came from, a new chat should not start with a locked API key.
-        const settingsForNewChat = { ...baseSettings, lockedApiKey: null };
-    
+
         // Create a new session immediately
         const newSessionId = generateUniqueId();
         const newSession: SavedChatSession = {
@@ -55,14 +78,14 @@ export const useChatHistory = ({
             timestamp: Date.now(),
             settings: settingsForNewChat,
         };
-    
+
         // Add new session and remove any other empty sessions from before.
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-    
+
         // Set it as the active session
         setActiveSessionId(newSessionId);
         localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, newSessionId);
-    
+
         // Reset UI state
         setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]);

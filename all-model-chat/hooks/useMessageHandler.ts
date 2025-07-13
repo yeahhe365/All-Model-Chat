@@ -104,18 +104,19 @@ export const useMessageHandler = ({
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
         let sessionId = activeSessionId;
-        let sessionToUpdate: IndividualChatSettings;
-
+        let sessionToUpdate: IndividualChatSettings | null = null;
         if (sessionId) {
-            // Re-base the current chat settings on top of the latest global app settings
-            // This ensures that any global setting changes (like API keys) are respected,
-            // while preserving session-specific overrides (like a locked key or model).
-            sessionToUpdate = { ...appSettings, ...currentChatSettings };
-        } else {
-            // This is a new chat, so use the global settings as the base.
-            sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            updateAndPersistSessions(prev => {
+                const found = prev.find(s => s.id === sessionId);
+                if(found) sessionToUpdate = found.settings;
+                return prev;
+            });
         }
         
+        if (!sessionToUpdate) {
+            sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        }
+
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
@@ -164,7 +165,7 @@ export const useMessageHandler = ({
         // If no active session, create one
         if (!sessionId) {
             const newSessionId = generateUniqueId();
-            let newSessionSettings = { ...sessionToUpdate };
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
             if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
 
             const newTitle = "New Chat"; // Will be updated when message is added
@@ -453,7 +454,7 @@ export const useMessageHandler = ({
                 }
             );
         }
-    }, [activeSessionId, selectedFiles, editingMessageId, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError, currentChatSettings]);
+    }, [activeSessionId, selectedFiles, editingMessageId, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; 
