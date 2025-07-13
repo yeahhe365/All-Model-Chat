@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, LogLevel, logService } from '../services/logService';
 import { AppSettings, ChatSettings } from '../types';
-import { X, Trash2, ChevronDown, CheckCircle, Download } from 'lucide-react';
+import { X, Trash2, ChevronDown, CheckCircle, Download, Eye, EyeOff } from 'lucide-react';
 
 const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   INFO: 'text-blue-400',
@@ -13,27 +13,22 @@ const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
 
 const ObfuscatedApiKey: React.FC<{ apiKey: string }> = ({ apiKey }) => {
   const [isRevealed, setIsRevealed] = useState(false);
-  
+
   if (!apiKey) return null;
-  
-  const prefix = apiKey.slice(0, -6);
-  const suffix = apiKey.slice(-6);
 
   return (
-    <span 
-      className="inline-flex items-center cursor-pointer group"
-      onMouseDown={() => setIsRevealed(true)}
-      onMouseUp={() => setIsRevealed(false)}
-      onMouseLeave={() => setIsRevealed(false)}
-      onTouchStart={() => setIsRevealed(true)}
-      onTouchEnd={() => setIsRevealed(false)}
-      title="Click and hold to reveal full key"
-    >
-      <span className={`transition-all duration-200 ${isRevealed ? 'blur-none' : 'blur-sm'}`}>
-        {prefix}
-      </span>
-      <span>{suffix}</span>
-    </span>
+    <div className="flex items-center gap-2">
+      <code className={`font-mono text-[var(--theme-text-secondary)] break-all transition-all duration-200 ${isRevealed ? 'blur-none' : 'blur-sm select-none'}`}>
+        {apiKey}
+      </code>
+      <button
+        onClick={() => setIsRevealed(!isRevealed)}
+        className="p-1 flex-shrink-0 rounded-full text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors focus:outline-none"
+        title={isRevealed ? "Hide API Key" : "Show API Key"}
+      >
+        {isRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
+      </button>
+    </div>
   );
 };
 
@@ -252,9 +247,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
                       >
                         <td className="p-2 text-center text-[var(--theme-text-tertiary)]">{index + 1}</td>
                         <td className="p-2">
-                          <code className="font-mono text-[var(--theme-text-secondary)] break-all">
-                            <ObfuscatedApiKey apiKey={key} />
-                          </code>
+                          <ObfuscatedApiKey apiKey={key} />
                           {currentChatSettings.lockedApiKey === key && 
                             <span className="text-xs font-bold text-[var(--theme-text-success)] flex items-center gap-1 mt-1">
                               <CheckCircle size={12}/>
