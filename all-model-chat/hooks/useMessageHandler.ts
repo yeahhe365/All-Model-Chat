@@ -1,4 +1,4 @@
-import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
+import { useCallback, Dispatch, SetStateAction, useRef, useEffect } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem, SavedChatSession } from '../types';
 import { generateUniqueId, buildContentParts, pcmBase64ToWavUrl, createChatHistoryForApi, getKeyForRequest, generateSessionTitle } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
@@ -68,6 +68,15 @@ export const useMessageHandler = ({
     const generationStartTimeRef = useRef<Date | null>(null);
     const firstContentPartTimeRef = useRef<Date | null>(null);
 
+    // Using refs to ensure the latest settings are always available inside callbacks,
+    // preventing issues with stale closures.
+    const appSettingsRef = useRef(appSettings);
+    useEffect(() => { appSettingsRef.current = appSettings; }, [appSettings]);
+
+    const chatSettingsRef = useRef(currentChatSettings);
+    useEffect(() => { chatSettingsRef.current = currentChatSettings; }, [currentChatSettings]);
+
+
     const handleApiError = useCallback((error: unknown, sessionId: string, modelMessageId: string, errorPrefix: string = "Error") => {
         const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
         logService.error(`API Error (${errorPrefix}) for message ${modelMessageId} in session ${sessionId}`, { error, isAborted });
@@ -99,19 +108,15 @@ export const useMessageHandler = ({
 
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
+        const appSettings = appSettingsRef.current;
+        const currentChatSettings = chatSettingsRef.current;
+        
         const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
         let sessionId = activeSessionId;
-        let settingsForThisMessage: IndividualChatSettings;
-
-        if (sessionId) {
-            settingsForThisMessage = currentChatSettings;
-        } else {
-            // This is for the case where a message is sent in an empty app, creating the first session.
-            settingsForThisMessage = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-        }
+        const settingsForThisMessage = sessionId ? currentChatSettings : { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
 
         const activeModelId = settingsForThisMessage.modelId;
         const isTtsModel = activeModelId.includes('-tts');
@@ -347,7 +352,7 @@ export const useMessageHandler = ({
                 // If this is the first content part, apply thinking time.
                 if (isFirstContentPart) {
                     const thinkingTime = generationStartTimeRef.current
-                        ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime())
+                        ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current!.getTime())
                         : null;
                     
                     const messageToUpdate = [...messages].reverse().find(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
@@ -454,8 +459,6 @@ export const useMessageHandler = ({
         activeSessionId, 
         selectedFiles, 
         editingMessageId, 
-        appSettings, 
-        currentChatSettings,
         setAppFileError, 
         setSelectedFiles, 
         setEditingMessageId, 
@@ -465,12 +468,16 @@ export const useMessageHandler = ({
         setLoadingSessionIds, 
         activeJobs, 
         aspectRatio, 
-        handleApiError
+        handleApiError,
+        setCommandedInput,
     ]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; 
 
+        const appSettings = appSettingsRef.current;
+        const currentChatSettings = chatSettingsRef.current;
+        
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
             logService.error("TTS failed:", { error: keyResult.error });
@@ -500,7 +507,7 @@ export const useMessageHandler = ({
         } finally {
             setTtsMessageId(null);
         }
-    }, [appSettings, currentChatSettings, ttsMessageId, setTtsMessageId, updateAndPersistSessions]);
+    }, [ttsMessageId, setTtsMessageId, updateAndPersistSessions]);
 
     const handleStopGenerating = () => {
         if (!activeSessionId || !isLoading) return;
