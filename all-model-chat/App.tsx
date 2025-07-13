@@ -101,9 +101,26 @@ const App: React.FC = () => {
   }, []);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
+    // Save the new settings as the global default for subsequent new chats
     setAppSettings(newSettings);
-    // Settings are now applied to new chats, or by updating the session directly.
-    // This no longer needs to force-update the current chat's settings.
+  
+    // Also, apply the relevant behavioral settings to the current active chat session
+    // This provides immediate feedback for the user on settings changes.
+    if (activeSessionId && setCurrentChatSettings) {
+      setCurrentChatSettings(prevChatSettings => ({
+        ...prevChatSettings,
+        // Apply generation-related settings from the modal.
+        // We explicitly DO NOT update modelId, lockedApiKey, or tool settings,
+        // as those are managed directly within the session context (header, file uploads, tool toggles).
+        temperature: newSettings.temperature,
+        topP: newSettings.topP,
+        systemInstruction: newSettings.systemInstruction,
+        showThoughts: newSettings.showThoughts,
+        ttsVoice: newSettings.ttsVoice,
+        thinkingBudget: newSettings.thinkingBudget,
+      }));
+    }
+    
     setIsSettingsModalOpen(false);
   };
 

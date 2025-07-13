@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
-import { Settings2, X } from 'lucide-react';
-import { DEFAULT_CHAT_SETTINGS, DEFAULT_APP_SETTINGS, APP_SETTINGS_KEY, PRELOADED_SCENARIO_KEY, CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, AVAILABLE_TTS_VOICES } from '../constants/appConstants';
-import { DEFAULT_THEME_ID, Theme } from '../constants/themeConstants';
-import { translations } from '../utils/appUtils';
+import { Settings2, X, SlidersHorizontal, KeyRound, Bot } from 'lucide-react';
+import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
+import { Theme } from '../constants/themeConstants';
+import { translations, getResponsiveValue } from '../utils/appUtils';
 import { ApiConfigSection } from './settings/ApiConfigSection';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
@@ -26,18 +26,25 @@ interface SettingsModalProps {
   t: (key: keyof typeof translations) => string;
 }
 
+type SettingsTab = 'general' | 'api' | 'model';
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
   onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  
+  const headingIconSize = getResponsiveValue(18, 20);
+  const tabIconSize = getResponsiveValue(16, 18);
 
   useEffect(() => {
     if (isOpen) {
       setSettings(currentSettings);
       setIsActuallyOpen(true);
+      setActiveTab('general');
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     } else {
@@ -48,52 +55,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isActuallyOpen) return null;
 
-  const handleClose = () => {
-    if (isOpen) onClose();
-  };
+  const handleClose = () => { if (isOpen) onClose(); };
+  const handleSave = () => { onSave(settings); };
+  const handleResetToDefaults = () => { setSettings(DEFAULT_APP_SETTINGS); };
   
-  const handleSave = () => {
-    onSave(settings);
-  };
-  
-  const handleResetToDefaults = () => {
-    setSettings(DEFAULT_APP_SETTINGS);
-  };
-
-  const handleClearHistory = () => {
-    const confirmed = window.confirm(t('settingsClearHistory_confirm'));
-    if (confirmed) {
-      onClearAllHistory();
-      onClose(); // Close the modal after clearing
-    }
-  };
-
-  const handleClearCache = () => {
-    const confirmed = window.confirm(t('settingsClearCache_confirm'));
-    if (confirmed) {
-      onClearCache();
-    }
-  };
-
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
-  
-  const headingIconSize = window.innerWidth < 640 ? 16 : 18;
+
+  const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
+    { id: 'general', label: 'General', icon: <SlidersHorizontal size={tabIconSize} /> },
+    { id: 'api', label: 'API', icon: <KeyRound size={tabIconSize} /> },
+    { id: 'model', label: 'Model', icon: <Bot size={tabIconSize} /> },
+  ];
 
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" 
-      role="dialog" 
-      aria-modal="true" 
-      aria-labelledby="settings-title"
-      onClick={handleClose}
+      role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={handleClose}
     >
       <div 
-        className={`bg-[var(--theme-bg-primary)] p-3 sm:p-4 md:p-5 rounded-xl shadow-premium w-full max-w-md sm:max-w-lg md:max-w-xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        className={`bg-[var(--theme-bg-primary)] rounded-xl shadow-premium w-full max-w-md sm:max-w-3xl flex flex-col max-h-[90vh] sm:h-[85vh] sm:max-h-[750px] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
+        {/* Header */}
+        <div className="flex-shrink-0 flex justify-between items-center p-3 sm:p-4 border-b border-[var(--theme-border-primary)]">
           <h2 id="settings-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
              <Settings2 size={headingIconSize + 2} className="mr-2.5 opacity-80" /> {t('settingsTitle')}
           </h2>
@@ -102,68 +88,98 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar -mr-2 flex-grow min-h-0"> 
-          <ApiConfigSection
-            useCustomApiConfig={settings.useCustomApiConfig}
-            setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
-            apiKey={settings.apiKey}
-            setApiKey={(val) => updateSetting('apiKey', val)}
-            apiProxyUrl={settings.apiProxyUrl}
-            setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
-            t={t}
-          />
-          <AppearanceSection
-            themeId={settings.themeId}
-            setThemeId={(val) => updateSetting('themeId', val)}
-            availableThemes={availableThemes}
-            baseFontSize={settings.baseFontSize}
-            setBaseFontSize={(val) => updateSetting('baseFontSize', val)}
-            language={settings.language}
-            setLanguage={(val) => updateSetting('language', val)}
-            t={t}
-          />
-          <ChatBehaviorSection
-            modelId={settings.modelId}
-            setModelId={(val) => updateSetting('modelId', val)}
-            isModelsLoading={isModelsLoading}
-            modelsLoadingError={modelsLoadingError}
-            availableModels={availableModels}
-            transcriptionModelId={settings.transcriptionModelId}
-            setTranscriptionModelId={(val) => updateSetting('transcriptionModelId', val)}
-            ttsVoice={settings.ttsVoice}
-            setTtsVoice={(val) => updateSetting('ttsVoice', val)}
-            systemInstruction={settings.systemInstruction}
-            setSystemInstruction={(val) => updateSetting('systemInstruction', val)}
-            temperature={settings.temperature}
-            setTemperature={(val) => updateSetting('temperature', val)}
-            topP={settings.topP}
-            setTopP={(val) => updateSetting('topP', val)}
-            showThoughts={settings.showThoughts}
-            setShowThoughts={(val) => updateSetting('showThoughts', val)}
-            thinkingBudget={settings.thinkingBudget}
-            setThinkingBudget={(val) => updateSetting('thinkingBudget', val)}
-            isStreamingEnabled={settings.isStreamingEnabled}
-            setIsStreamingEnabled={(val) => updateSetting('isStreamingEnabled', val)}
-            isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled}
-            setIsTranscriptionThinkingEnabled={(val) => updateSetting('isTranscriptionThinkingEnabled', val)}
-            useFilesApiForImages={settings.useFilesApiForImages}
-            setUseFilesApiForImages={(val) => updateSetting('useFilesApiForImages', val)}
-            t={t}
-          />
-          <DataManagementSection
-            onClearHistory={handleClearHistory}
-            onClearCache={handleClearCache}
+        <div className="flex flex-col sm:flex-row flex-grow min-h-0">
+          {/* Nav */}
+          <nav className="flex-shrink-0 w-full sm:w-48 bg-[var(--theme-bg-secondary)] sm:border-r border-b sm:border-b-0 border-[var(--theme-border-primary)] flex sm:flex-col p-2 sm:p-3 sm:space-y-1 overflow-x-auto sm:overflow-x-visible">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`settings-nav-button w-full flex-shrink-0 sm:flex-shrink-1 flex items-center justify-start gap-3 px-3 py-2.5 text-sm font-medium rounded-md ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+          
+          {/* Content Panel */}
+          <div className="flex-grow min-h-0 overflow-y-auto custom-scrollbar">
+            <div className="p-3 sm:p-5 tab-content-enter-active">
+              {activeTab === 'general' && (
+                <div className="space-y-4">
+                  <AppearanceSection
+                    themeId={settings.themeId}
+                    setThemeId={(val) => updateSetting('themeId', val)}
+                    availableThemes={availableThemes}
+                    baseFontSize={settings.baseFontSize}
+                    setBaseFontSize={(val) => updateSetting('baseFontSize', val)}
+                    language={settings.language}
+                    setLanguage={(val) => updateSetting('language', val)}
+                    t={t}
+                  />
+                  <DataManagementSection
+                    onClearHistory={() => { onClearAllHistory(); onClose(); }}
+                    onClearCache={onClearCache}
+                    onOpenLogViewer={onOpenLogViewer}
+                    t={t}
+                  />
+                </div>
+              )}
+              {activeTab === 'api' && (
+                <ApiConfigSection
+                  useCustomApiConfig={settings.useCustomApiConfig}
+                  setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
+                  apiKey={settings.apiKey}
+                  setApiKey={(val) => updateSetting('apiKey', val)}
+                  apiProxyUrl={settings.apiProxyUrl}
+                  setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
+                  t={t}
+                />
+              )}
+              {activeTab === 'model' && (
+                <ChatBehaviorSection
+                  modelId={settings.modelId}
+                  setModelId={(val) => updateSetting('modelId', val)}
+                  isModelsLoading={isModelsLoading}
+                  modelsLoadingError={modelsLoadingError}
+                  availableModels={availableModels}
+                  transcriptionModelId={settings.transcriptionModelId}
+                  setTranscriptionModelId={(val) => updateSetting('transcriptionModelId', val)}
+                  ttsVoice={settings.ttsVoice}
+                  setTtsVoice={(val) => updateSetting('ttsVoice', val)}
+                  systemInstruction={settings.systemInstruction}
+                  setSystemInstruction={(val) => updateSetting('systemInstruction', val)}
+                  temperature={settings.temperature}
+                  setTemperature={(val) => updateSetting('temperature', val)}
+                  topP={settings.topP}
+                  setTopP={(val) => updateSetting('topP', val)}
+                  showThoughts={settings.showThoughts}
+                  setShowThoughts={(val) => updateSetting('showThoughts', val)}
+                  thinkingBudget={settings.thinkingBudget}
+                  setThinkingBudget={(val) => updateSetting('thinkingBudget', val)}
+                  isStreamingEnabled={settings.isStreamingEnabled}
+                  setIsStreamingEnabled={(val) => updateSetting('isStreamingEnabled', val)}
+                  isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled}
+                  setIsTranscriptionThinkingEnabled={(val) => updateSetting('isTranscriptionThinkingEnabled', val)}
+                  useFilesApiForImages={settings.useFilesApiForImages}
+                  setUseFilesApiForImages={(val) => updateSetting('useFilesApiForImages', val)}
+                  t={t}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="flex-shrink-0">
+          <SettingsActions
+            onSave={handleSave}
+            onCancel={handleClose}
+            onReset={handleResetToDefaults}
             t={t}
           />
         </div>
-        
-        <SettingsActions
-          onSave={handleSave}
-          onCancel={handleClose}
-          onReset={handleResetToDefaults}
-          onOpenLogViewer={onOpenLogViewer}
-          t={t}
-        />
       </div>
     </div>
   );

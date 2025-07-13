@@ -1,16 +1,18 @@
 import React from 'react';
-import { DatabaseZap, Eraser, Trash2 } from 'lucide-react';
+import { DatabaseZap, Eraser, Trash2, FileText } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
   onClearCache: () => void;
+  onOpenLogViewer: () => void;
   t: (key: string) => string;
 }
 
 export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onClearHistory,
   onClearCache,
+  onOpenLogViewer,
   t,
 }) => {
   const iconSize = getResponsiveValue(14, 16);
@@ -42,6 +44,15 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         >
           <Trash2 size={buttonIconSize} />
           <span>{t('settingsClearCache')}</span>
+        </button>
+         <button
+          onClick={onOpenLogViewer}
+          type="button"
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-secondary)] focus:ring-[var(--theme-border-secondary)]`}
+          aria-label="Open Application Logs (Ctrl+Alt+L)"
+        >
+          <FileText size={buttonIconSize} />
+          <span>View Logs</span>
         </button>
       </div>
     </div>

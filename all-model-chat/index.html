@@ -408,6 +408,11 @@
       from { opacity: 1; transform: scale(1) translateY(0); }
       to { opacity: 0; transform: scale(0.97) translateY(10px); }
     }
+    
+    @keyframes tabContentEnter {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 
     @keyframes appFadeIn {
       from { opacity: 0; }
@@ -485,6 +490,10 @@
     
     .modal-exit-animation {
       animation: modalExit 0.3s cubic-bezier(0.7, 0, 0.84, 0) both;
+    }
+    
+    .tab-content-enter-active {
+        animation: tabContentEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     /* Soft shadows */
@@ -651,6 +660,25 @@
     }
     .grounded-response-sources a:hover {
         background-size: 100% 1px;
+    }
+    
+    /* Settings Modal Redesign */
+    .settings-nav-button {
+      background-color: transparent;
+      color: var(--theme-text-secondary);
+      transition: all 0.2s ease-out;
+    }
+    .settings-nav-button:hover {
+      background-color: var(--theme-bg-tertiary);
+      color: var(--theme-text-primary);
+    }
+    .settings-nav-button.active {
+      background-color: var(--theme-bg-accent);
+      color: var(--theme-text-accent);
+      font-weight: 600;
+    }
+    .settings-nav-button.active:hover {
+        background-color: var(--theme-bg-accent-hover);
     }
   </style>
 <script type="importmap">
