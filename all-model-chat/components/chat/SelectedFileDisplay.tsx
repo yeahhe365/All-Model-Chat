@@ -5,7 +5,8 @@ import {
   SUPPORTED_IMAGE_MIME_TYPES, 
   SUPPORTED_AUDIO_MIME_TYPES, 
   SUPPORTED_TEXT_MIME_TYPES, 
-  SUPPORTED_PDF_MIME_TYPES
+  SUPPORTED_PDF_MIME_TYPES,
+  SUPPORTED_VIDEO_MIME_TYPES
 } from '../../constants/fileConstants';
 import { getResponsiveValue } from '../../utils/appUtils';
 
@@ -79,6 +80,8 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
           />
         ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) ? (
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)]" />
+        ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) ? (
+          <FileVideo size={iconSize} className="text-purple-400" />
         ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (
           <FileText size={iconSize} className="text-[var(--theme-text-tertiary)]" />
         ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (

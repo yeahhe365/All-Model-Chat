@@ -361,9 +361,26 @@
       color: var(--theme-text-secondary);
       font-size: 0.9em;
     }
-    .tool-result pre { /* Target code blocks inside the result */
-        margin-top: 0.5rem !important;
-        margin-bottom: 0 !important;
+    .tool-result pre {
+      margin-top: 0.5rem !important;
+      margin-bottom: 0 !important;
+      padding: 0.75rem !important;
+      padding-top: 2.8rem !important;
+      background-color: rgba(0,0,0,0.05) !important;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+      position: relative !important;
+      border: 1px solid var(--theme-border-secondary) !important;
+    }
+    .tool-result pre code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 0.85rem !important;
+        color: var(--theme-text-secondary) !important;
+        background-color: transparent !important;
+        padding: 0 !important;
+        border: none !important;
     }
     .tool-result img {
         max-width: 100%;

@@ -390,8 +390,19 @@ export const useMessageHandler = ({
                     messages.push(createNewMessage(toolContent));
                 } else if (anyPart.codeExecutionResult) {
                     const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
+                    const escapeHtml = (unsafe: string) => {
+                        if (typeof unsafe !== 'string') return '';
+                        return unsafe
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;")
+                            .replace(/"/g, "&quot;")
+                            .replace(/'/g, "&#039;");
+                    };
                     let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
-                    if (resultPart.output) toolContent += `\`\`\`text\n${resultPart.output}\n\`\`\``;
+                    if (resultPart.output) {
+                        toolContent += `<pre><code>${escapeHtml(resultPart.output)}</code></pre>`;
+                    }
                     toolContent += '</div>';
                     messages.push(createNewMessage(toolContent));
                 } else if (anyPart.inlineData) {

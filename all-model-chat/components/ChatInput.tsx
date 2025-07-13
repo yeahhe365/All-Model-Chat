@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, SlidersHorizontal, Globe, Check, Terminal } from 'lucide-react';
+import { ArrowUp, Ban, Paperclip, XCircle, Plus, X, Edit2, UploadCloud, FileSignature, Link2, Camera, Mic, Loader2, StopCircle, Image, SlidersHorizontal, Globe, Check, Terminal, FileVideo } from 'lucide-react';
 import { UploadedFile, AppSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getActiveApiConfig, getResponsiveValue } from '../utils/appUtils';
@@ -376,6 +376,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const attachMenuItems = [
     { label: t('attachMenu_upload'), icon: <UploadCloud size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
     { label: t('attachMenu_gallery'), icon: <Image size={16}/>, action: () => { imageInputRef.current?.click(); setIsAttachMenuOpen(false); } },
+    { label: 'Upload Video', icon: <FileVideo size={16}/>, action: () => { fileInputRef.current?.click(); setIsAttachMenuOpen(false); } },
     { label: t('attachMenu_takePhoto'), icon: <Camera size={16}/>, action: () => openActionModal('camera') },
     { label: t('attachMenu_recordAudio'), icon: <Mic size={16}/>, action: () => openActionModal('recorder') },
     { label: t('attachMenu_addById'), icon: <Link2 size={16}/>, action: () => openActionModal('id') },

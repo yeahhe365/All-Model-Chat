@@ -4,7 +4,8 @@ import {
     SUPPORTED_IMAGE_MIME_TYPES, 
     SUPPORTED_TEXT_MIME_TYPES, 
     SUPPORTED_AUDIO_MIME_TYPES, 
-    SUPPORTED_PDF_MIME_TYPES, 
+    SUPPORTED_PDF_MIME_TYPES,
+    SUPPORTED_VIDEO_MIME_TYPES, 
 } from '../../constants/fileConstants';
 import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy } from 'lucide-react'; 
 import { getResponsiveValue } from '../../utils/appUtils';
@@ -14,6 +15,18 @@ interface FileDisplayProps {
   onImageClick?: (file: UploadedFile) => void;
   isFromMessageList?: boolean;
 }
+
+const formatFileSize = (sizeInBytes: number): string => {
+  if (sizeInBytes < 1024) {
+      return `${sizeInBytes} B`;
+  }
+  const sizeInKb = sizeInBytes / 1024;
+  if (sizeInKb < 1024) {
+      return `${sizeInKb.toFixed(1)} KB`;
+  }
+  const sizeInMb = sizeInKb / 1024;
+  return `${sizeInMb.toFixed(2)} MB`;
+};
 
 export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList }) => {
   const commonClasses = "flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-md bg-[var(--theme-bg-input)] bg-opacity-50 border border-[var(--theme-border-secondary)]";
@@ -57,7 +70,15 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
+            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
+          </div>
+        </>
+      ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
+        <>
+          <FileVideo size={iconSize} className="text-purple-400 flex-shrink-0" />
+          <div className={textClasses}>
+            <span className={nameClass} title={file.name}>{file.name}</span>
+            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
           </div>
         </>
       ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( 
@@ -65,7 +86,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
           <FileText size={iconSize} className="text-red-500 flex-shrink-0" /> 
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
+            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
           </div>
         </>
       ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !file.error ? (
@@ -73,7 +94,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
           <FileText size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
+            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
           </div>
         </>
       ) : ( 
@@ -81,7 +102,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
           <AlertCircle size={iconSize} className={`${file.error ? 'text-[var(--theme-text-danger)]' : 'text-[var(--theme-text-tertiary)]'} flex-shrink-0`} />
            <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {(file.size / 1024).toFixed(1)} KB</span>
+            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
           </div>
         </>
       )}

@@ -44,6 +44,19 @@ export const SUPPORTED_AUDIO_MIME_TYPES = [
 ];
 export const SUPPORTED_PDF_MIME_TYPES = ['application/pdf'];
 
+export const SUPPORTED_VIDEO_MIME_TYPES = [
+    'video/mp4',
+    'video/mpeg',
+    'video/quicktime',
+    'video/avi',
+    'video/x-flv',
+    'video/mpg',
+    'video/mpegs',
+    'video/webm',
+    'video/wmv',
+    'video/3gpp',
+];
+
 export const TEXT_BASED_EXTENSIONS = [
   '.txt', '.md', '.markdown', '.json', '.xml', '.csv', '.tsv', '.log', '.rtf',
   '.js', '.ts', '.jsx', '.tsx', '.html', '.htm', '.css', '.scss', '.less',
@@ -58,4 +71,5 @@ export const ALL_SUPPORTED_MIME_TYPES = [
     ...SUPPORTED_TEXT_MIME_TYPES,
     ...SUPPORTED_AUDIO_MIME_TYPES,
     ...SUPPORTED_PDF_MIME_TYPES,
+    ...SUPPORTED_VIDEO_MIME_TYPES,
 ];
