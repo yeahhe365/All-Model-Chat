@@ -32,18 +32,20 @@ export const useChatHistory = ({
 
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
-        
-        let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+    
+        // Determine the settings for the new chat.
+        // Start with global defaults from AppSettings.
+        let baseSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+    
+        // If there was a previous active chat, use its settings as the base instead.
+        // This provides a more intuitive experience, carrying over model, tools, temp, etc.
         if (activeChat) {
-            settingsForNewChat = {
-                ...settingsForNewChat,
-                modelId: activeChat.settings.modelId,
-                lockedApiKey: activeChat.settings.lockedApiKey,
-                isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
-                isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
-            };
+            baseSettings = { ...activeChat.settings };
         }
-
+    
+        // Regardless of where settings came from, a new chat should not start with a locked API key.
+        const settingsForNewChat = { ...baseSettings, lockedApiKey: null };
+    
         // Create a new session immediately
         const newSessionId = generateUniqueId();
         const newSession: SavedChatSession = {
@@ -53,14 +55,14 @@ export const useChatHistory = ({
             timestamp: Date.now(),
             settings: settingsForNewChat,
         };
-
+    
         // Add new session and remove any other empty sessions from before.
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-
+    
         // Set it as the active session
         setActiveSessionId(newSessionId);
         localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, newSessionId);
-
+    
         // Reset UI state
         setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]);
