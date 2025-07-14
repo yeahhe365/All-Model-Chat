@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DatabaseZap, Eraser, Trash2, FileText } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
