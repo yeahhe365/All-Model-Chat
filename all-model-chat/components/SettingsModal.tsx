@@ -10,6 +10,7 @@ import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
 import { DataManagementSection } from './settings/DataManagementSection';
 import { SettingsActions } from './settings/SettingsActions';
 import { ModelOption } from '../types';
+import { Modal } from './shared/Modal';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -33,7 +34,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
-  const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   
@@ -43,17 +43,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSettings(currentSettings);
-      setIsActuallyOpen(true);
       setActiveTab('general');
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => setIsActuallyOpen(false), 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen, currentSettings]);
 
-  if (!isActuallyOpen) return null;
+  if (!isOpen) return null;
 
   const handleClose = () => { if (isOpen) onClose(); };
   const handleSave = () => { onSave(settings); };
@@ -70,13 +66,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" 
-      role="dialog" aria-modal="true" aria-labelledby="settings-title" onClick={handleClose}
-    >
+    <Modal isOpen={isOpen} onClose={handleClose}>
       <div 
-        className={`bg-[var(--theme-bg-primary)] rounded-xl shadow-premium w-full max-w-md sm:max-w-3xl flex flex-col max-h-[90vh] sm:h-[85vh] sm:max-h-[750px] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
-        onClick={(e) => e.stopPropagation()}
+        className="bg-[var(--theme-bg-primary)] rounded-xl shadow-premium w-full max-w-md sm:max-w-3xl flex flex-col max-h-[90vh] sm:h-[85vh] sm:max-h-[750px]"
+        role="document"
       >
         {/* Header */}
         <div className="flex-shrink-0 flex justify-between items-center p-3 sm:p-4 border-b border-[var(--theme-border-primary)]">
@@ -164,6 +157,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsTranscriptionThinkingEnabled={(val) => updateSetting('isTranscriptionThinkingEnabled', val)}
                   useFilesApiForImages={settings.useFilesApiForImages}
                   setUseFilesApiForImages={(val) => updateSetting('useFilesApiForImages', val)}
+                  expandCodeBlocksByDefault={settings.expandCodeBlocksByDefault}
+                  setExpandCodeBlocksByDefault={(val) => updateSetting('expandCodeBlocksByDefault', val)}
                   t={t}
                 />
               )}
@@ -181,6 +176,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           />
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };

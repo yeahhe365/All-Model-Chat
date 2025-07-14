@@ -101,6 +101,7 @@ export interface AppSettings extends ChatSettings {
  transcriptionModelId: string;
  isTranscriptionThinkingEnabled: boolean;
  useFilesApiForImages: boolean;
+ expandCodeBlocksByDefault: boolean;
 }
 
 
@@ -158,7 +159,8 @@ export interface MessageListProps {
   showThoughts: boolean;
   themeColors: ThemeColors; 
   themeId: string;
-  baseFontSize: number; 
+  baseFontSize: number;
+  expandCodeBlocksByDefault: boolean;
   onSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;

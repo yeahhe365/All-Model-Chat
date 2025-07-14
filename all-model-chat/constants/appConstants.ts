@@ -90,4 +90,5 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
   isTranscriptionThinkingEnabled: DEFAULT_TRANSCRIPTION_THINKING_ENABLED,
   useFilesApiForImages: false,
+  expandCodeBlocksByDefault: false,
 };

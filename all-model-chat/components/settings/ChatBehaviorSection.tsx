@@ -37,6 +37,8 @@ interface ChatBehaviorSectionProps {
   setIsTranscriptionThinkingEnabled: (value: boolean) => void;
   useFilesApiForImages: boolean;
   setUseFilesApiForImages: (value: boolean) => void;
+  expandCodeBlocksByDefault: boolean;
+  setExpandCodeBlocksByDefault: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -47,7 +49,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
   showThoughts, setShowThoughts, thinkingBudget, setThinkingBudget,
   isStreamingEnabled, setIsStreamingEnabled, 
   isTranscriptionThinkingEnabled, setIsTranscriptionThinkingEnabled, 
-  useFilesApiForImages, setUseFilesApiForImages, t
+  useFilesApiForImages, setUseFilesApiForImages,
+  expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, t
 }) => {
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
@@ -291,6 +294,16 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
             </span>
             <div className="relative">
                 <input id="use-files-api-for-images-toggle" type="checkbox" className="sr-only peer" checked={useFilesApiForImages} onChange={() => setUseFilesApiForImages(!useFilesApiForImages)} />
+                <div className="w-11 h-6 bg-[var(--theme-bg-input)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)]"></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
+            </div>
+        </label>
+        <label htmlFor="expand-code-blocks-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+            <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
+                {t('settings_expandCodeBlocksByDefault_label')}
+            </span>
+            <div className="relative">
+                <input id="expand-code-blocks-toggle" type="checkbox" className="sr-only peer" checked={expandCodeBlocksByDefault} onChange={() => setExpandCodeBlocksByDefault(!expandCodeBlocksByDefault)} />
                 <div className="w-11 h-6 bg-[var(--theme-bg-input)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)]"></div>
                 <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
             </div>

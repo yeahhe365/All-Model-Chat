@@ -33,40 +33,14 @@ export const useChatHistory = ({
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
         
-        const {
-            // Destructure only the properties that are part of ChatSettings from AppSettings
-            // to create a clean base for the new session's settings.
-            modelId,
-            temperature,
-            topP,
-            showThoughts,
-            systemInstruction,
-            ttsVoice,
-            thinkingBudget,
-            isGoogleSearchEnabled,
-            isCodeExecutionEnabled,
-        } = appSettings;
-
-        // Start with default chat settings and layer on the global app settings
-        let settingsForNewChat: ChatSettings = {
-            ...DEFAULT_CHAT_SETTINGS,
-            modelId,
-            temperature,
-            topP,
-            showThoughts,
-            systemInstruction,
-            ttsVoice,
-            thinkingBudget,
-            isGoogleSearchEnabled,
-            isCodeExecutionEnabled,
-        };
-
+        let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
         if (activeChat) {
-            // Carry over specific, context-sensitive settings from the previous active chat session
-            settingsForNewChat.modelId = activeChat.settings.modelId;
-            settingsForNewChat.lockedApiKey = activeChat.settings.lockedApiKey;
-            settingsForNewChat.isGoogleSearchEnabled = activeChat.settings.isGoogleSearchEnabled;
-            settingsForNewChat.isCodeExecutionEnabled = activeChat.settings.isCodeExecutionEnabled;
+            settingsForNewChat = {
+                ...settingsForNewChat,
+                modelId: activeChat.settings.modelId,
+                lockedApiKey: activeChat.settings.lockedApiKey,
+                isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
+            };
         }
 
         // Create a new session immediately

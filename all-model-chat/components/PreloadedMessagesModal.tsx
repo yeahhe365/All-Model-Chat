@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario, PreloadedMessage } from '../types';
 import { X, PlusCircle, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, User, Bot, Zap, Play, FileUp, FileDown, Save } from 'lucide-react';
-import { translations, getResponsiveValue } from '../utils/appUtils';
+import { translations, getResponsiveValue } from '../../utils/appUtils';
+import { Modal } from './shared/Modal';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;
@@ -42,7 +43,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const [isProcessingImport, setIsProcessingImport] = useState(false);
-  const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
 
   const importFileRef = useRef<HTMLInputElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -52,20 +52,16 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setIsActuallyOpen(true);
       setScenarios(savedScenarios);
       setView('list');
       setEditingScenario(null);
       setFeedback(null);
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => setIsActuallyOpen(false), 300);
-      return () => clearTimeout(timer);
     }
   }, [isOpen, savedScenarios]);
 
-  if (!isActuallyOpen) return null;
+  if (!isOpen) return null;
 
   const handleClose = () => { if (isOpen) onClose(); };
 
@@ -217,16 +213,9 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   );
 
   return (
-    <div 
-        className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm" 
-        role="dialog" 
-        aria-modal="true" 
-        aria-labelledby="scenarios-title"
-        onClick={handleClose}
-    >
+    <Modal isOpen={isOpen} onClose={handleClose}>
       <div 
-        className={`bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-xl shadow-premium w-full max-w-md sm:max-w-2xl flex flex-col max-h-[90vh] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
-        onClick={(e) => e.stopPropagation()}
+        className="bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 rounded-xl shadow-premium w-full max-w-md sm:max-w-2xl flex flex-col max-h-[90vh]"
         style={{ transition: 'all 0.3s' }}
       >
         <div className="flex justify-between items-center mb-3 sm:mb-4">
@@ -255,7 +244,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
             {view === 'list' ? renderListView() : renderEditorView()}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

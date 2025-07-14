@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, LogLevel, logService } from '../services/logService';
 import { AppSettings, ChatSettings } from '../types';
 import { X, Trash2, ChevronDown, CheckCircle, Download, Eye, EyeOff } from 'lucide-react';
+import { Modal } from './shared/Modal';
 
 const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
   INFO: 'text-blue-400',
@@ -92,17 +93,12 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
     DEBUG: true,
   });
   const [autoScroll, setAutoScroll] = useState(true);
-  const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setIsActuallyOpen(true);
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => setIsActuallyOpen(false), 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
@@ -198,19 +194,16 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
     }
   });
 
-  if (!isActuallyOpen) return null;
+  if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-2 sm:p-4 backdrop-blur-md"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="log-viewer-title"
-      onClick={handleClose}
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      backdropClassName="bg-black bg-opacity-70 backdrop-blur-md"
     >
       <div
-        className={`bg-[var(--theme-bg-primary)] w-full h-full max-w-4xl shadow-2xl flex flex-col overflow-hidden rounded-xl border border-[var(--theme-border-primary)] ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
-        onClick={(e) => e.stopPropagation()}
+        className="bg-[var(--theme-bg-primary)] w-full h-full max-w-4xl shadow-2xl flex flex-col overflow-hidden rounded-xl border border-[var(--theme-border-primary)]"
       >
         <header className="py-2 px-4 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0 bg-[var(--theme-bg-secondary)]">
           <h2 id="log-viewer-title" className="text-lg font-semibold text-[var(--theme-text-link)]">
@@ -318,6 +311,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };

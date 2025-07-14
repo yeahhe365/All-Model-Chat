@@ -55,11 +55,12 @@ interface MessageContentProps {
     onImageClick: (file: UploadedFile) => void;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
-    baseFontSize: number; 
+    baseFontSize: number;
+    expandCodeBlocksByDefault: boolean;
     t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -110,9 +111,9 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
       pre: (props: any) => {
         const { node, ...rest } = props;
         const children = (props.children[0] && props.children[0].type === 'code') ? props.children[0] : props.children;
-        return <CodeBlock {...rest} onOpenHtmlPreview={onOpenHtmlPreview}>{children}</CodeBlock>;
+        return <CodeBlock {...rest} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>{children}</CodeBlock>;
       }
-    }), [onOpenHtmlPreview]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
 
     return (
         <>
