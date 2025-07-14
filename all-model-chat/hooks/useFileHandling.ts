@@ -119,16 +119,25 @@ export const useFileHandling = ({
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, } : f));
                 }
             } else {
-                // Handle image locally with Data URLs for persistence (if setting is off)
+                // Handle image locally
                 const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
                 setSelectedFiles(prev => [...prev, initialFileState]);
                 
-                try {
-                    const dataUrl = await fileToDataUrl(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
-                } catch(error) {
-                    logService.error('Error creating data URL for image', { error });
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
+                const MAX_PREVIEW_SIZE = 5 * 1024 * 1024; // 5 MB
+
+                if (file.size < MAX_PREVIEW_SIZE) {
+                    try {
+                        const dataUrl = await fileToDataUrl(file);
+                        setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                    } catch(error) {
+                        logService.error('Error creating data URL for image', { error });
+                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
+                    }
+                } else {
+                    // For large files, skip preview generation to avoid crashes.
+                    logService.warn(`Skipping preview for large image: ${file.name}`, { size: file.size });
+                    // Just mark it as active without a dataUrl. The display component will show a placeholder.
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
                 }
             }
         });

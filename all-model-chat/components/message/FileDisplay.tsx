@@ -65,6 +65,14 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
     <div className={`${commonClasses} ${file.error ? 'border-[var(--theme-bg-danger)]' : ''} relative group`}>
       {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error ? (
         imageElement
+      ) : SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.error ? (
+        <>
+          <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+          <div className={textClasses}>
+            <span className={nameClass} title={file.name}>{file.name}</span>
+            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
+          </div>
+        </>
       ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
