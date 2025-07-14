@@ -104,15 +104,10 @@ export const useMessageHandler = ({
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
         let sessionId = activeSessionId;
-        const isNewSession = !sessionId;
+        // CORRECTED: Directly use the prop which is guaranteed to be the current session's settings.
+        const sessionToUpdate = currentChatSettings;
 
-        // Use the prop `currentChatSettings` for existing sessions. It's derived from the latest state.
-        // For new sessions, build settings from the global app settings.
-        const sessionSettings = isNewSession 
-            ? { ...DEFAULT_CHAT_SETTINGS, ...appSettings }
-            : currentChatSettings;
-        
-        const activeModelId = sessionSettings.modelId;
+        const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
         
@@ -137,7 +132,7 @@ export const useMessageHandler = ({
         }
 
         const hasFileId = filesToUse.some(f => f.fileUri);
-        const keyResult = getKeyForRequest(appSettings, sessionSettings);
+        const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
              const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
@@ -158,9 +153,9 @@ export const useMessageHandler = ({
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
         // If no active session, create one
-        if (isNewSession) {
+        if (!sessionId) {
             const newSessionId = generateUniqueId();
-            let newSessionSettings = { ...sessionSettings };
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
             if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
 
             const newTitle = "New Chat"; // Will be updated when message is added
@@ -198,7 +193,7 @@ export const useMessageHandler = ({
 
             try {
                 if (isTtsModel) {
-                    const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), sessionSettings.ttsVoice, newAbortController.signal);
+                    const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), sessionToUpdate.ttsVoice, newAbortController.signal);
                     if (newAbortController.signal.aborted) throw new Error("aborted");
                     const wavUrl = pcmBase64ToWavUrl(base64Pcm);
                     updateAndPersistSessions(p => p.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: textToUse.trim(), audioSrc: wavUrl, generationEndTime: new Date() } : m) } : s));
@@ -307,7 +302,7 @@ export const useMessageHandler = ({
                                 ...m,
                                 isLoading: false,
                                 content: m.content + (newAbortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
-                                thoughts: sessionSettings.showThoughts ? m.thoughts : undefined,
+                                thoughts: sessionToUpdate.showThoughts ? m.thoughts : undefined,
                                 generationEndTime: new Date(),
                                 thinkingTimeMs: thinkingTime,
                                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
@@ -434,9 +429,9 @@ export const useMessageHandler = ({
         };
 
         if (appSettings.isStreamingEnabled) {
-            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionSettings.systemInstruction, { temperature: sessionSettings.temperature, topP: sessionSettings.topP }, sessionSettings.showThoughts, sessionSettings.thinkingBudget, !!sessionSettings.isGoogleSearchEnabled, !!sessionSettings.isCodeExecutionEnabled, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
+            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, sessionSettings.systemInstruction, { temperature: sessionSettings.temperature, topP: sessionSettings.topP }, sessionSettings.showThoughts, sessionSettings.thinkingBudget, !!sessionSettings.isGoogleSearchEnabled, !!sessionSettings.isCodeExecutionEnabled, newAbortController.signal,
+            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, newAbortController.signal,
                 streamOnError,
                 (parts, thoughtsText, usageMetadata, groundingMetadata) => {
                     for(const part of parts) {
@@ -450,22 +445,21 @@ export const useMessageHandler = ({
             );
         }
     }, [
-        activeSessionId,
         currentChatSettings,
-        appSettings,
-        selectedFiles,
-        editingMessageId,
-        aspectRatio,
-        userScrolledUp,
-        handleApiError,
-        updateAndPersistSessions,
-        setActiveSessionId,
-        setAppFileError,
-        setCommandedInput,
-        setEditingMessageId,
-        setSelectedFiles,
-        setLoadingSessionIds,
-        activeJobs
+        activeSessionId, 
+        selectedFiles, 
+        editingMessageId, 
+        appSettings, 
+        setAppFileError, 
+        setSelectedFiles, 
+        setEditingMessageId, 
+        setActiveSessionId, 
+        userScrolledUp, 
+        updateAndPersistSessions, 
+        setLoadingSessionIds, 
+        activeJobs, 
+        aspectRatio, 
+        handleApiError
     ]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
