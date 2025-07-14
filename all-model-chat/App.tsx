@@ -86,7 +86,7 @@ const App: React.FC = () => {
   const [canvasAssistantPrompt, setCanvasAssistantPrompt] = useState<string>('');
 
   useEffect(() => {
-    fetch('./constants/promptConstants.txt')
+    fetch('./constants/promptConstants.ts')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

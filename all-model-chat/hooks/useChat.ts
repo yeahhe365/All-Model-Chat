@@ -199,7 +199,6 @@ export const useChat = (appSettings: AppSettings) => {
         setCurrentChatSettings(prev => ({
             ...prev,
             isGoogleSearchEnabled: !prev.isGoogleSearchEnabled,
-            isCodeExecutionEnabled: false, // Mutually exclusive
         }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
     
@@ -209,7 +208,6 @@ export const useChat = (appSettings: AppSettings) => {
         setCurrentChatSettings(prev => ({
             ...prev,
             isCodeExecutionEnabled: !prev.isCodeExecutionEnabled,
-            isGoogleSearchEnabled: false, // Mutually exclusive
         }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
 
