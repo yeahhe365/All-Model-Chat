@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario, PreloadedMessage } from '../types';
 import { X, PlusCircle, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, User, Bot, Zap, Play, FileUp, FileDown, Save } from 'lucide-react';
-import { translations, getResponsiveValue } from '../utils/appUtils';
+import { translations, getResponsiveValue } from '../../utils/appUtils';
 import { Modal } from './shared/Modal';
 
 interface PreloadedMessagesModalProps {
