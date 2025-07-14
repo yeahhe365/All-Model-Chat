@@ -85,53 +85,6 @@ const App: React.FC = () => {
   const [isLogViewerOpen, setIsLogViewerOpen] = useState<boolean>(false);
   const [canvasAssistantPrompt, setCanvasAssistantPrompt] = useState<string>('');
 
-  // Effect to override fetch for API proxying
-  useEffect(() => {
-    const originalFetch = window.fetch;
-    const targetPrefix = 'https://generativelanguage.googleapis.com/v1beta';
-
-    const proxyUrl = (appSettings.useCustomApiConfig && appSettings.apiProxyUrl) 
-        ? appSettings.apiProxyUrl.replace(/\/$/, '') // Remove trailing slash if present
-        : null;
-
-    if (proxyUrl) {
-      logService.info(`Activating API proxy to: ${proxyUrl}`);
-      window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-        try {
-          if (typeof input === 'string') {
-            if (input.startsWith(targetPrefix)) {
-              const newUrl = input.replace(targetPrefix, proxyUrl);
-              return originalFetch(newUrl, init);
-            }
-          } else if (input instanceof Request) {
-            if (input.url.startsWith(targetPrefix)) {
-              const newUrl = input.url.replace(targetPrefix, proxyUrl);
-              const newRequest = new Request(newUrl, input);
-              return originalFetch(newRequest);
-            }
-          }
-        } catch (error) {
-          logService.error('Error in fetch proxy.', { error });
-          return originalFetch(input, init);
-        }
-        return originalFetch(input, init);
-      };
-    } else {
-      if (window.fetch !== originalFetch) {
-        logService.info('Deactivating API proxy.');
-        window.fetch = originalFetch;
-      }
-    }
-
-    return () => {
-      if (window.fetch !== originalFetch) {
-        logService.info('Restoring original fetch on component unmount.');
-        window.fetch = originalFetch;
-      }
-    };
-  }, [appSettings.useCustomApiConfig, appSettings.apiProxyUrl]);
-
-
   useEffect(() => {
     fetch('./constants/promptConstants.txt')
         .then(response => {
