@@ -143,7 +143,7 @@ export const translations = {
     apiConfig_key_placeholder_disabled: { en: 'Using default', zh: '使用默认值' },
     chatBehavior_voiceModel_label: { en: 'Voice Input Model', zh: '语音输入模型' },
     chatBehavior_voiceModel_tooltip: { en: 'Selects the model used for transcribing voice input to text.', zh: '选择用于将语音输入转录为文本的模型。' },
-    chatBehavior_transcriptionThinking_tooltip: { en: "When enabled, the model dynamically decides how much to 'think' for optimal accuracy (budget: -1). When disabled, thinking is turned off to prioritize speed (budget: 0).", zh: "启用时，模型会动态决定“思考”量以获得最佳准确性（预算：-1）。禁用时，将关闭思考以优先考虑速度（预算：0）。" },
+    chatBehavior_transcriptionThinking_tooltip: { en: "When enabled, the model uses 'thinking' for more accurate transcription, which may take slightly longer. When disabled, it prioritizes speed.", zh: "启用时，模型会使用“思考”以获得更准确的转录，这可能需要稍长时间。禁用时，则优先考虑速度。" },
     chatBehavior_temp_tooltip: { en: "Controls randomness. Lower values (~0.2) make the model more deterministic and focused. Higher values (~1.0) make it more creative and diverse.", zh: "控制随机性。较低的值（~0.2）使模型更具确定性和专注性。较高的值（~1.0）使其更具创造性和多样性。" },
     chatBehavior_topP_tooltip: { en: "Controls diversity by sampling from a probability mass. Lower values (~0.1) keep the model's choices very focused, while higher values (~0.95) allow for more variety.", zh: "通过从概率质量中采样来控制多样性。较低的值（~0.1）使模型的选择非常集中，而较高的值（~0.95）则允许更多变化。" },
     chatBehavior_enableThoughts_tooltip: { en: "Controls the model's thinking process. 'Off' prioritizes speed. 'Auto' lets the model decide for best quality. 'Manual' allows setting a specific token budget for thinking. Affects models like Gemini 2.5 Pro/Flash.", zh: "控制模型的思考过程。“关闭”优先考虑速度。“自动”让模型自行决定以获得最佳质量。“手动”允许为思考设置特定的令牌预算。影响 Gemini 2.5 Pro/Flash 等模型。" },

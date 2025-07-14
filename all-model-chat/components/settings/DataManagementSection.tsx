@@ -49,7 +49,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
           onClick={onOpenLogViewer}
           type="button"
           className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-secondary)] focus:ring-[var(--theme-border-secondary)]`}
-          aria-label="Open Application Logs (Ctrl+Alt+L)"
+          title="Open Application Logs (Ctrl+Alt+L)"
+          aria-label="Open Application Logs"
         >
           <FileText size={buttonIconSize} />
           <span>View Logs</span>
