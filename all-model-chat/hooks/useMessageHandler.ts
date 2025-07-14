@@ -103,11 +103,10 @@ export const useMessageHandler = ({
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
+        const sessionToUpdate = currentChatSettings;
         let sessionId = activeSessionId;
-        // This is a snapshot of settings at the time of the call. We will get a fresher version later.
-        let sessionSettingsSnapshot = sessionId ? currentChatSettings : { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
 
-        const activeModelId = sessionSettingsSnapshot.modelId;
+        const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
         
@@ -132,7 +131,7 @@ export const useMessageHandler = ({
         }
 
         const hasFileId = filesToUse.some(f => f.fileUri);
-        const keyResult = getKeyForRequest(appSettings, sessionSettingsSnapshot);
+        const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
              const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
@@ -180,25 +179,20 @@ export const useMessageHandler = ({
         setLoadingSessionIds(prev => new Set(prev).add(currentSessionId));
         activeJobs.current.set(generationId, newAbortController);
 
-        let freshSessionSettings: IndividualChatSettings;
-
         // --- TTS or Imagen Model Logic (No history needed) ---
         if (isTtsModel || isImagenModel) {
             const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), timestamp: new Date() };
             const modelMessageId = generateUniqueId();
             const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
-            
-            updateAndPersistSessions(prev => {
-                const session = prev.find(s => s.id === currentSessionId)!;
-                freshSessionSettings = session.settings; // Capture fresh settings
-                const newMessages = [...session.messages, userMessage, modelMessage];
-                return prev.map(s => s.id === currentSessionId ? { ...s, messages: newMessages, title: generateSessionTitle(newMessages) } : s);
-            });
-
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                const newMessages = [...s.messages, userMessage, modelMessage];
+                return { ...s, messages: newMessages, title: generateSessionTitle(newMessages) };
+            }));
 
             try {
                 if (isTtsModel) {
-                    const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), freshSessionSettings!.ttsVoice, newAbortController.signal);
+                    const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, activeModelId, textToUse.trim(), sessionToUpdate.ttsVoice, newAbortController.signal);
                     if (newAbortController.signal.aborted) throw new Error("aborted");
                     const wavUrl = pcmBase64ToWavUrl(base64Pcm);
                     updateAndPersistSessions(p => p.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: textToUse.trim(), audioSrc: wavUrl, generationEndTime: new Date() } : m) } : s));
@@ -219,11 +213,14 @@ export const useMessageHandler = ({
 
         // --- Regular Text Generation Logic ---
         
+        let sessionForHistory: SavedChatSession | undefined;
         let baseMessages: ChatMessage[] = [];
         
+        // This is the core fix: create the user message AND the loading model message placeholder
+        // before making the API call.
         updateAndPersistSessions(prev => {
-            const sessionForHistory = prev.find(s => s.id === currentSessionId)!;
-            freshSessionSettings = sessionForHistory.settings; // Capture the guaranteed fresh settings
+            sessionForHistory = prev.find(s => s.id === currentSessionId);
+            if (!sessionForHistory) return prev;
 
             const editIndex = effectiveEditingId ? sessionForHistory.messages.findIndex(m => m.id === effectiveEditingId) : -1;
             baseMessages = editIndex !== -1 ? sessionForHistory.messages.slice(0, editIndex) : [...sessionForHistory.messages];
@@ -240,6 +237,7 @@ export const useMessageHandler = ({
                 cumulativeTotalTokens: lastCumulative,
             };
             
+            // Create the loading model message here
             const modelMessage: ChatMessage = { 
                 id: generationId, // Use generationId as the messageId
                 role: 'model', 
@@ -266,15 +264,16 @@ export const useMessageHandler = ({
 
         const historyForApi = await createChatHistoryForApi(baseMessages);
         const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
-        const newModelMessageIds = new Set<string>([generationId]);
+        const newModelMessageIds = new Set<string>([generationId]); // Pre-add the main loading message ID
         
         const streamOnError = (error: Error) => {
-            handleApiError(error, currentSessionId, generationId);
+            handleApiError(error, currentSessionId, generationId); // Use generationId as the identifier
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any) => {
+            // If no content parts were ever received, thinking ends now.
             if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
                 firstContentPartTimeRef.current = new Date();
             }
@@ -287,6 +286,7 @@ export const useMessageHandler = ({
                 const finalMessages = s.messages
                     .map(m => {
                         if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                            // If thinkingTimeMs hasn't been set yet (e.g., no content parts), calculate it now.
                             let thinkingTime = m.thinkingTimeMs;
                             if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
                                 thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
@@ -301,7 +301,7 @@ export const useMessageHandler = ({
                                 ...m,
                                 isLoading: false,
                                 content: m.content + (newAbortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
-                                thoughts: freshSessionSettings!.showThoughts ? m.thoughts : undefined,
+                                thoughts: sessionToUpdate.showThoughts ? m.thoughts : undefined,
                                 generationEndTime: new Date(),
                                 thinkingTimeMs: thinkingTime,
                                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
@@ -313,7 +313,7 @@ export const useMessageHandler = ({
                         }
                         return m;
                     })
-                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc); // Remove empty model messages
                 
                 let newSettings = s.settings;
                 if(shouldLockKey) newSettings = { ...s.settings, lockedApiKey: keyToUse };
@@ -326,6 +326,7 @@ export const useMessageHandler = ({
 
         const streamOnPart = (part: Part) => {
             let isFirstContentPart = false;
+            // This is the first content part, so thinking is finished.
             if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
                 firstContentPartTimeRef.current = new Date();
                 isFirstContentPart = true;
@@ -336,6 +337,7 @@ export const useMessageHandler = ({
         
                 let messages = [...s.messages];
 
+                // If this is the first content part, apply thinking time.
                 if (isFirstContentPart) {
                     const thinkingTime = generationStartTimeRef.current
                         ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime())
@@ -344,6 +346,7 @@ export const useMessageHandler = ({
                     const messageToUpdate = [...messages].reverse().find(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
                     if (messageToUpdate && thinkingTime !== null) {
                         messageToUpdate.thinkingTimeMs = thinkingTime;
+                        // To trigger a re-render if the message object is mutated
                         messages = [...messages]; 
                     }
                 }
@@ -425,9 +428,9 @@ export const useMessageHandler = ({
         };
 
         if (appSettings.isStreamingEnabled) {
-            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, freshSessionSettings!.systemInstruction, { temperature: freshSessionSettings!.temperature, topP: freshSessionSettings!.topP }, freshSessionSettings!.showThoughts, freshSessionSettings!.thinkingBudget, !!freshSessionSettings!.isGoogleSearchEnabled, !!freshSessionSettings!.isCodeExecutionEnabled, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
+            await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, freshSessionSettings!.systemInstruction, { temperature: freshSessionSettings!.temperature, topP: freshSessionSettings!.topP }, freshSessionSettings!.showThoughts, freshSessionSettings!.thinkingBudget, !!freshSessionSettings!.isGoogleSearchEnabled, !!freshSessionSettings!.isCodeExecutionEnabled, newAbortController.signal,
+            await geminiServiceInstance.sendMessageNonStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, newAbortController.signal,
                 streamOnError,
                 (parts, thoughtsText, usageMetadata, groundingMetadata) => {
                     for(const part of parts) {
