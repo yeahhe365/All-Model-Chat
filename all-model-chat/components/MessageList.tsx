@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
 import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
-import { translations, getResponsiveValue } from '../../utils/appUtils';
+import { translations, getResponsiveValue } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
 
