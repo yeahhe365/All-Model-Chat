@@ -72,6 +72,7 @@ const App: React.FC = () => {
       handleCancelFileUpload,
       handleAddFileById,
       handleTextToSpeech,
+      handleTranscribeAudio,
       setCurrentChatSettings,
       showScrollToBottom,
       scrollToBottom,
@@ -341,14 +342,13 @@ const App: React.FC = () => {
           onProcessFiles={handleProcessAndAddFiles}
           onAddFileById={handleAddFileById}
           onCancelUpload={handleCancelFileUpload}
+          onTranscribeAudio={handleTranscribeAudio}
           isProcessingFile={isAppProcessingFile}
           fileError={appFileError}
           isImagenModel={isImagenModel}
           aspectRatio={aspectRatio}
           setAspectRatio={setAspectRatio}
           t={t}
-          transcriptionModelId={appSettings.transcriptionModelId}
-          isTranscriptionThinkingEnabled={appSettings.isTranscriptionThinkingEnabled}
           isGoogleSearchEnabled={!!currentChatSettings.isGoogleSearchEnabled}
           onToggleGoogleSearch={toggleGoogleSearch}
           isCodeExecutionEnabled={!!currentChatSettings.isCodeExecutionEnabled}

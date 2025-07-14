@@ -2,6 +2,7 @@ import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings, C
 import { ThemeColors } from '../constants/themeConstants';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { logService } from '../services/logService';
+import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 
 export { logService };
 
@@ -110,7 +111,7 @@ export const translations = {
     settingsApiConfig: { en: 'API Configuration', zh: 'API 配置' },
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
     settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },
-    settingsApiKeyHelpText: { en: 'You can enter multiple keys, one per line. A random key will be used for each new chat session.', zh: '您可以输入多个密钥，每行一个。每个新聊天会话将随机使用一个密钥。' },
+    settingsApiKeyHelpText: { en: 'You can enter multiple keys, one per line. A key will be used in rotation for each new chat session.', zh: '您可以输入多个密钥，每行一个。每个新聊天会话将轮流使用一个密钥。' },
     settingsAppearance: { en: 'Appearance', zh: '外观' },
     settingsTheme: { en: 'Theme (Global)', zh: '主题 (全局)' },
     settingsFontSize: { en: 'Base Font Size', zh: '基础字号' },
@@ -258,9 +259,38 @@ export const getKeyForRequest = (
         return { error: "No valid API keys found." };
     }
 
-    const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
-    logUsage(randomKey);
-    return { key: randomKey, isNewKey: true };
+    if (availableKeys.length === 1) {
+        const key = availableKeys[0];
+        logUsage(key);
+        return { key, isNewKey: true };
+    }
+
+    // Round-robin logic
+    let lastUsedIndex = -1;
+    try {
+        const storedIndex = localStorage.getItem(API_KEY_LAST_USED_INDEX_KEY);
+        if (storedIndex) {
+            lastUsedIndex = parseInt(storedIndex, 10);
+        }
+    } catch (e) {
+        logService.error("Could not parse last used API key index", e);
+    }
+
+    if (isNaN(lastUsedIndex) || lastUsedIndex < 0 || lastUsedIndex >= availableKeys.length) {
+        lastUsedIndex = -1;
+    }
+
+    const nextIndex = (lastUsedIndex + 1) % availableKeys.length;
+    const nextKey = availableKeys[nextIndex];
+
+    try {
+        localStorage.setItem(API_KEY_LAST_USED_INDEX_KEY, nextIndex.toString());
+    } catch (e) {
+        logService.error("Could not save last used API key index", e);
+    }
+    
+    logUsage(nextKey);
+    return { key: nextKey, isNewKey: true };
 };
 
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations, fallback?: string): string => {

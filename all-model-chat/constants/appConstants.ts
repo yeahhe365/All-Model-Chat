@@ -296,6 +296,7 @@ export const APP_SETTINGS_KEY = 'chatAppSettings';
 export const PRELOADED_SCENARIO_KEY = 'chatPreloadedScenario';
 export const CHAT_HISTORY_SESSIONS_KEY = 'chatHistorySessions';
 export const ACTIVE_CHAT_SESSION_ID_KEY = 'activeChatSessionId';
+export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
 
 export const DEFAULT_CHAT_SETTINGS = {
   modelId: DEFAULT_MODEL_ID,
