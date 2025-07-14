@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ModelOption } from '../../types';
 import { Loader2, Settings2, Info, Mic, Volume2 } from 'lucide-react';
@@ -167,7 +168,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
               className={`${inputBaseClasses} ${enabledInputClasses} appearance-none pr-8`}
               aria-label="Select TTS Voice for speech generation"
             >
-              {AVAILABLE_TTS_VOICES.map((voice) => ( <option key={voice.id} value={voice.id}>{voice.name}</option> ))}
+              {AVAILABLE_TTS_VOICES.map((voice) => ( <option key={voice.id} value={voice.id}>{voice.name}</option>))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--theme-text-tertiary)]">
               <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.043-.48 1.576 0L10 10.405l2.908-2.857c.533-.48 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615l-3.695 3.63c-.533.48-1.14.446-1.576 0L5.516 9.163c-.408-.418-.436-1.17 0-1.615z"/></svg>

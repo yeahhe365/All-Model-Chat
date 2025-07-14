@@ -1,3 +1,4 @@
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, AppSettings, ChatSettings, SavedChatSession } from '../types';
 import { ThemeColors } from '../constants/themeConstants';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
@@ -126,7 +127,7 @@ export const translations = {
     settingsTopP: { en: 'Top P', zh: 'Top P' },
     settingsShowThoughts: { en: "Assistant's Thinking", zh: '助手思考模式' },
     settingsThinkingBudget: { en: 'Thinking Budget', zh: '思考预算' },
-    settingsThinkingBudget_tooltip: { en: 'Set token budget for thinking. -1 for auto/unlimited, 0 to disable (like toggle off), >0 for specific token limit.', zh: '设置思考的令牌预算。-1 为自动/无限制，0 为禁用（与关闭开关效果相同），大于 0 为指定的令牌限制。' },
+    settingsThinkingBudget_tooltip: { en: 'Set token budget for thinking. Use -1 for auto, 0 to disable.', zh: '设置思考的令牌预算。使用 -1 表示自动，0 表示禁用。' },
     settingsThinkingBudget_placeholder: { en: 'e.g., -1 for auto', zh: '例如：-1 代表自动' },
     settingsTranscriptionThinking: { en: 'Enable Thinking for Voice Input', zh: '启用语音输入思考功能' },
     settingsReset: { en: 'Reset', zh: '重置' },
@@ -143,10 +144,10 @@ export const translations = {
     apiConfig_key_placeholder_disabled: { en: 'Using default', zh: '使用默认值' },
     chatBehavior_voiceModel_label: { en: 'Voice Input Model', zh: '语音输入模型' },
     chatBehavior_voiceModel_tooltip: { en: 'Selects the model used for transcribing voice input to text.', zh: '选择用于将语音输入转录为文本的模型。' },
-    chatBehavior_transcriptionThinking_tooltip: { en: "When enabled, the model uses 'thinking' for more accurate transcription, which may take slightly longer. When disabled, it prioritizes speed.", zh: "启用时，模型会使用“思考”以获得更准确的转录，这可能需要稍长时间。禁用时，则优先考虑速度。" },
+    chatBehavior_transcriptionThinking_tooltip: { en: "Enable 'thinking' for more accurate voice transcription at a slight cost to speed.", zh: "启用“思考”功能，以略微牺牲速度为代价，换取更准确的语音转录。" },
     chatBehavior_temp_tooltip: { en: "Controls randomness. Lower values (~0.2) make the model more deterministic and focused. Higher values (~1.0) make it more creative and diverse.", zh: "控制随机性。较低的值（~0.2）使模型更具确定性和专注性。较高的值（~1.0）使其更具创造性和多样性。" },
     chatBehavior_topP_tooltip: { en: "Controls diversity by sampling from a probability mass. Lower values (~0.1) keep the model's choices very focused, while higher values (~0.95) allow for more variety.", zh: "通过从概率质量中采样来控制多样性。较低的值（~0.1）使模型的选择非常集中，而较高的值（~0.95）则允许更多变化。" },
-    chatBehavior_enableThoughts_tooltip: { en: "Controls the model's thinking process. 'Off' prioritizes speed. 'Auto' lets the model decide for best quality. 'Manual' allows setting a specific token budget for thinking. Affects models like Gemini 2.5 Pro/Flash.", zh: "控制模型的思考过程。“关闭”优先考虑速度。“自动”让模型自行决定以获得最佳质量。“手动”允许为思考设置特定的令牌预算。影响 Gemini 2.5 Pro/Flash 等模型。" },
+    chatBehavior_enableThoughts_tooltip: { en: "Choose how the model 'thinks'. Off: fastest. Auto: best quality. Manual: set a custom token budget.", zh: "选择模型的“思考”方式。关闭：速度最快。自动：质量最高。手动：设置自定义令牌预算。" },
     chatBehavior_systemPrompt_placeholder: { en: 'e.g., You are a helpful AI assistant.', zh: '例如：你是一个乐于助人的 AI 助手。' },
     chatBehavior_model_loading: { en: 'Loading models...', zh: '加载模型中...' },
     chatBehavior_model_noModels: { en: 'No models available', zh: '无可用模型' },

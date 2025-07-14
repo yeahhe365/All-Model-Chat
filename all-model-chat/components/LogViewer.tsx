@@ -1,3 +1,4 @@
+
 // components/LogViewer.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { LogEntry, LogLevel, logService } from '../services/logService';
@@ -19,7 +20,7 @@ const ObfuscatedApiKey: React.FC<{ apiKey: string }> = ({ apiKey }) => {
 
   return (
     <div className="flex items-center gap-2">
-      <code className={`font-mono text-[var(--theme-text-secondary)] break-all transition-all duration-200 ${isRevealed ? 'blur-none' : 'blur-sm select-none'}`}>
+      <code className={`font-mono text-xs text-[var(--theme-text-secondary)] break-all transition-all duration-200 ${isRevealed ? 'blur-none' : 'blur-sm select-none'}`}>
         {apiKey}
       </code>
       <button
@@ -36,7 +37,7 @@ const ObfuscatedApiKey: React.FC<{ apiKey: string }> = ({ apiKey }) => {
 
 const LogRow: React.FC<{ log: LogEntry }> = React.memo(({ log }) => {
   const [isDataExpanded, setIsDataExpanded] = useState(false);
-  const hasData = log.data !== undefined;
+  const hasData = log.data !== undefined && log.data !== null;
 
   const timeString = log.timestamp.toLocaleTimeString('en-US', {
     hour12: false,
@@ -107,21 +108,22 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isOpen) return;
     const unsubscribe = logService.subscribe(setLogs);
     return () => unsubscribe();
-  }, []);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && appSettings.useCustomApiConfig) {
         const unsubscribe = logService.subscribeToApiKeys(setApiKeyUsage);
         return () => unsubscribe();
-    } else if (!isOpen) {
+    } else {
         setApiKeyUsage(new Map());
     }
   }, [isOpen, appSettings.useCustomApiConfig]);
 
   useEffect(() => {
-    if (autoScroll) {
+    if (autoScroll && activeTab === 'console') {
       logContainerRef.current?.scrollTo({ top: logContainerRef.current.scrollHeight });
     }
   }, [logs, autoScroll, activeTab]);
@@ -178,9 +180,13 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   apiKeyUsage.forEach((count, key) => { if (!displayApiKeyUsage.has(key)) displayApiKeyUsage.set(key, count); });
   const totalApiUsage = Array.from(displayApiKeyUsage.values()).reduce((sum, count) => sum + count, 0);
 
-  const showApiTab = appSettings.useCustomApiConfig && displayApiKeyUsage.size > 0;
+  const showApiTab = appSettings.useCustomApiConfig && allApiKeys.length > 0;
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!showApiTab && activeTab === 'api') {
+        setActiveTab('console');
+    }
+  }, [showApiTab, activeTab]);
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} backdropClassName="bg-black/70 backdrop-blur-md">
@@ -200,6 +206,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
                 onClick={() => setActiveTab('console')}
                 role="tab"
                 aria-selected={activeTab === 'console'}
+                aria-controls="log-console-panel"
                 className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'console'
                     ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]'
@@ -214,6 +221,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
                 onClick={() => setActiveTab('api')}
                 role="tab"
                 aria-selected={activeTab === 'api'}
+                aria-controls="log-api-panel"
                 className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'api'
                     ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]'
@@ -229,7 +237,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         
         <div className="flex-grow min-h-0 bg-[var(--theme-bg-secondary)]">
           {activeTab === 'console' && (
-            <div className="flex flex-col h-full">
+            <div role="tabpanel" id="log-console-panel" className="flex flex-col h-full tab-content-enter-active">
               <div className="p-2 sm:p-3 border-b border-[var(--theme-border-secondary)] flex flex-wrap items-center gap-x-4 gap-y-2 flex-shrink-0">
                 <input
                   type="text"
@@ -265,7 +273,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
             </div>
           )}
           {activeTab === 'api' && showApiTab && (
-            <div className="p-4 overflow-y-auto custom-scrollbar h-full">
+            <div role="tabpanel" id="log-api-panel" className="p-4 overflow-y-auto custom-scrollbar h-full tab-content-enter-active">
               <h4 className="font-semibold text-lg text-[var(--theme-text-primary)] mb-4">API Key Usage</h4>
               <div className="space-y-3">
                 {Array.from(displayApiKeyUsage.entries())
