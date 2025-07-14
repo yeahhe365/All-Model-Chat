@@ -6,7 +6,7 @@ import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { useMessageHandler } from './useMessageHandler';
-import { applyImageCachePolicy, generateUniqueId } from '../utils/appUtils';
+import { applyImageCachePolicy, generateUniqueId, logService } from '../utils/appUtils';
 import { CHAT_HISTORY_SESSIONS_KEY } from '../constants/appConstants';
 
 export const useChat = (appSettings: AppSettings) => {
@@ -117,6 +117,21 @@ export const useChat = (appSettings: AppSettings) => {
         historyHandler.loadInitialData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Listen for network restoration to clear network-related errors
+    useEffect(() => {
+        const handleOnline = () => {
+            setAppFileError(currentError => {
+                if (currentError && (currentError.toLowerCase().includes('network') || currentError.toLowerCase().includes('fetch'))) {
+                    logService.info('Network restored, clearing file processing error.');
+                    return null;
+                }
+                return currentError;
+            });
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [setAppFileError]);
 
     // Effect to automatically clear file processing errors if no files are processing.
     useEffect(() => {
