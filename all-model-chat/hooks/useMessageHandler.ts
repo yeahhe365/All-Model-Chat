@@ -104,18 +104,7 @@ export const useMessageHandler = ({
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
         let sessionId = activeSessionId;
-        let sessionToUpdate: IndividualChatSettings | null = null;
-        if (sessionId) {
-            updateAndPersistSessions(prev => {
-                const found = prev.find(s => s.id === sessionId);
-                if(found) sessionToUpdate = found.settings;
-                return prev;
-            });
-        }
-        
-        if (!sessionToUpdate) {
-            sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-        }
+        const sessionToUpdate = sessionId ? currentChatSettings : { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
 
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
@@ -454,7 +443,7 @@ export const useMessageHandler = ({
                 }
             );
         }
-    }, [activeSessionId, selectedFiles, editingMessageId, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError]);
+    }, [activeSessionId, selectedFiles, editingMessageId, appSettings, setAppFileError, setSelectedFiles, setEditingMessageId, setActiveSessionId, userScrolledUp, updateAndPersistSessions, setLoadingSessionIds, activeJobs, aspectRatio, handleApiError, currentChatSettings]);
 
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; 

@@ -122,18 +122,8 @@ self.addEventListener('fetch', (event) => {
     // Proxy logic: If a proxyUrl is set and the request is for the Gemini API, rewrite the URL.
     if (proxyUrl && request.url.startsWith(TARGET_URL_PREFIX)) {
         const newUrl = request.url.replace(TARGET_URL_PREFIX, proxyUrl);
-        
-        // To ensure the request body (containing systemInstruction) is correctly passed to the proxy,
-        // we explicitly construct a new fetch request. This is more robust than creating a
-        // new Request object from the old one, which can sometimes have issues with body streams.
-        const newRequestInit = {
-            method: request.method,
-            headers: request.headers,
-            body: request.body,
-            redirect: 'follow',
-        };
-
-        event.respondWith(fetch(newUrl, newRequestInit));
+        const newRequest = new Request(newUrl, request);
+        event.respondWith(fetch(newRequest));
         return;
     }
 
