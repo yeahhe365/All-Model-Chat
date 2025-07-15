@@ -13,13 +13,77 @@ export interface LogEntry {
 type LogListener = (logs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
 
+const LOG_STORAGE_KEY = 'chatLogEntries';
+const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
+const LOG_RETENTION_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+
 class LogServiceImpl {
   private logs: LogEntry[] = [];
   private listeners: Set<LogListener> = new Set();
   private apiKeyUsage: Map<string, number> = new Map();
   private apiKeyListeners: Set<ApiKeyListener> = new Set();
-  private maxLogs = 500;
   private idCounter = 0;
+
+  constructor() {
+    this.loadLogs();
+    this.loadApiKeyUsage();
+    this.addLog('INFO', 'Log service initialized.');
+  }
+
+  private loadLogs() {
+    try {
+      const storedLogs = localStorage.getItem(LOG_STORAGE_KEY);
+      if (storedLogs) {
+        const parsed = JSON.parse(storedLogs, (key, value) => {
+          if (key === 'timestamp' && typeof value === 'string') {
+            return new Date(value);
+          }
+          return value;
+        });
+        if (Array.isArray(parsed)) {
+          const twoDaysAgo = Date.now() - LOG_RETENTION_MS;
+          this.logs = parsed.filter((log: LogEntry) => log.timestamp && log.timestamp.getTime() >= twoDaysAgo);
+          this.idCounter = this.logs.length > 0 ? Math.max(...this.logs.map(l => l.id)) + 1 : 0;
+          this.saveLogs(); // Save back to prune any old logs from storage
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load logs:", e);
+      this.logs = [];
+    }
+  }
+
+  private saveLogs() {
+    try {
+      localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(this.logs));
+    } catch (e) {
+      console.error("Failed to save logs:", e);
+    }
+  }
+
+  private loadApiKeyUsage() {
+      try {
+          const storedUsage = localStorage.getItem(API_USAGE_STORAGE_KEY);
+          if (storedUsage) {
+              const parsed = JSON.parse(storedUsage);
+              if (Array.isArray(parsed)) {
+                  this.apiKeyUsage = new Map(parsed);
+              }
+          }
+      } catch (e) {
+          console.error("Failed to load API key usage data:", e);
+          this.apiKeyUsage = new Map();
+      }
+  }
+
+  private saveApiKeyUsage() {
+      try {
+          const usageArray = Array.from(this.apiKeyUsage.entries());
+          localStorage.setItem(API_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
+      } catch (e) {
+          console.error("Failed to save API key usage data:", e);
+      }
+  }
 
   private addLog(level: LogLevel, message: string, data?: any) {
     const newLog: LogEntry = {
@@ -29,13 +93,13 @@ class LogServiceImpl {
       message,
       data,
     };
-
     this.logs.push(newLog);
 
-    if (this.logs.length > this.maxLogs) {
-      this.logs.shift();
-    }
-
+    // Prune logs older than retention period.
+    const twoDaysAgo = Date.now() - LOG_RETENTION_MS;
+    this.logs = this.logs.filter(log => log.timestamp.getTime() >= twoDaysAgo);
+    
+    this.saveLogs();
     this.notifyListeners();
   }
 
@@ -74,6 +138,7 @@ class LogServiceImpl {
     if (!apiKey) return;
     const currentCount = this.apiKeyUsage.get(apiKey) || 0;
     this.apiKeyUsage.set(apiKey, currentCount + 1);
+    this.saveApiKeyUsage();
     this.notifyApiKeyListeners();
   }
 
@@ -103,6 +168,8 @@ class LogServiceImpl {
   public clearLogs() {
     this.logs = [];
     this.apiKeyUsage.clear();
+    this.saveLogs();
+    this.saveApiKeyUsage();
     this.notifyListeners();
     this.notifyApiKeyListeners();
     this.info('Logs and stats cleared.');

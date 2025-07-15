@@ -15,37 +15,39 @@ interface GroundedResponseProps {
 
 export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, onOpenHtmlPreview }) => {
   const content = useMemo(() => {
-    if (!metadata || !metadata.groundingChunks || !metadata.groundingSupports) {
+    if (!metadata || !metadata.groundingSupports) {
       return text;
     }
+  
+    // Combine grounding chunks and citations into a single, indexed array
+    const sources = [
+      ...(metadata.groundingChunks?.map((c: any) => c.web) || []),
+      ...(metadata.citations || []),
+    ].filter(Boolean);
 
-    const { groundingChunks, groundingSupports } = metadata;
-
+    if(sources.length === 0) return text;
+  
     const encodedText = new TextEncoder().encode(text);
     const toCharIndex = (byteIndex: number) => {
-        // Create a subarray of the encoded bytes and decode it back to a string.
-        // The length of the resulting string is the correct character index.
-        return new TextDecoder().decode(encodedText.slice(0, byteIndex)).length;
+      return new TextDecoder().decode(encodedText.slice(0, byteIndex)).length;
     };
-
-    // Sort supports by end index in descending order to make insertions from end to start
-    // without invalidating indices of earlier parts of the string.
-    const sortedSupports = [...groundingSupports].sort(
+  
+    const sortedSupports = [...metadata.groundingSupports].sort(
       (a: any, b: any) => (b.segment?.endIndex || 0) - (a.segment?.endIndex || 0)
     );
-
+  
     let contentWithCitations = text;
     for (const support of sortedSupports) {
       const byteEndIndex = support.segment?.endIndex;
       if (typeof byteEndIndex !== 'number') continue;
-
+  
       const charEndIndex = toCharIndex(byteEndIndex);
-
       const chunkIndices = support.groundingChunkIndices || [];
+      
       const citationLinksHtml = chunkIndices
         .map((chunkIndex: number) => {
-          if (chunkIndex >= groundingChunks.length) return '';
-          const source = groundingChunks[chunkIndex]?.web;
+          if (chunkIndex >= sources.length) return '';
+          const source = sources[chunkIndex];
           if (!source || !source.uri) return '';
           
           const titleAttr = `Source: ${source.title || source.uri}`.replace(/"/g, '&quot;');
@@ -62,6 +64,36 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
     }
     return contentWithCitations;
   }, [text, metadata]);
+  
+  const sources = useMemo(() => {
+    if (!metadata) return [];
+    
+    const uniqueSources = new Map<string, { uri: string; title: string }>();
+
+    const addSource = (uri: string, title?: string) => {
+        if (uri && !uniqueSources.has(uri)) {
+            uniqueSources.set(uri, { uri, title: title || new URL(uri).hostname });
+        }
+    };
+
+    if (metadata.groundingChunks && Array.isArray(metadata.groundingChunks)) {
+        metadata.groundingChunks.forEach((chunk: any) => {
+            if (chunk?.web?.uri) {
+                addSource(chunk.web.uri, chunk.web.title);
+            }
+        });
+    }
+
+    if (metadata.citations && Array.isArray(metadata.citations)) {
+        metadata.citations.forEach((citation: any) => {
+            if (citation?.uri) {
+                addSource(citation.uri, citation.title);
+            }
+        });
+    }
+
+    return Array.from(uniqueSources.values());
+  }, [metadata]);
 
   const components = useMemo(() => ({
     pre: (props: any) => {
@@ -82,19 +114,15 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
           {content}
         </ReactMarkdown>
       </div>
-      {metadata?.groundingChunks?.length > 0 && (
+      {sources.length > 0 && (
         <div className="grounded-response-sources border-t border-[var(--theme-border-secondary)] pt-2 mt-3">
           <h4 className="text-xs font-semibold uppercase text-[var(--theme-text-tertiary)] tracking-wider">Sources</h4>
           <ol>
-            {metadata.groundingChunks.map((chunk: any, i: number) => {
-                const source = chunk.web;
-                if (!source || !source.uri) return null;
-                // Fallback to hostname if title is missing
-                const linkText = source.title || new URL(source.uri).hostname;
+            {sources.map((source, i: number) => {
                 return (
                   <li key={`source-${i}`}>
                     <a href={source.uri} target="_blank" rel="noopener noreferrer" title={source.uri}>
-                      {linkText}
+                      {source.title}
                     </a>
                   </li>
                 );

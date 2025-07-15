@@ -309,6 +309,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   lockedApiKey: null,
   isGoogleSearchEnabled: false,
   isCodeExecutionEnabled: false,
+  isUrlContextEnabled: false,
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {

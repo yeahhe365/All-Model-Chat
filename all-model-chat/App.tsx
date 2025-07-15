@@ -78,6 +78,7 @@ const App: React.FC = () => {
       scrollToBottom,
       toggleGoogleSearch,
       toggleCodeExecution,
+      toggleUrlContext,
   } = useChat(appSettings);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
@@ -112,19 +113,6 @@ const App: React.FC = () => {
   useEffect(() => {
     logService.info('App initialized.');
   }, []);
-  
-  // Memory management for file previews
-  const prevSelectedFilesRef = useRef<UploadedFile[]>([]);
-  useEffect(() => {
-      const prevFiles = prevSelectedFilesRef.current;
-      const currentFiles = selectedFiles;
-      const removedFiles = prevFiles.filter(prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id));
-      removedFiles.forEach(file => { if (file.dataUrl && file.dataUrl.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); });
-      prevSelectedFilesRef.current = currentFiles;
-  }, [selectedFiles]);
-
-  // Final cleanup on unmount
-  useEffect(() => () => { prevSelectedFilesRef.current.forEach(file => { if (file.dataUrl?.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl) }); }, []);
 
   const handleLoadCanvasHelperPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
@@ -353,6 +341,8 @@ const App: React.FC = () => {
           onToggleGoogleSearch={toggleGoogleSearch}
           isCodeExecutionEnabled={!!currentChatSettings.isCodeExecutionEnabled}
           onToggleCodeExecution={toggleCodeExecution}
+          isUrlContextEnabled={!!currentChatSettings.isUrlContextEnabled}
+          onToggleUrlContext={toggleUrlContext}
         />
       </div>
     </div>

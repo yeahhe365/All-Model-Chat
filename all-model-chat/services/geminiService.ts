@@ -1,4 +1,4 @@
-import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata } from "@google/genai";
+import { GoogleGenAI, Chat, Part, Content, GenerateContentResponse, File as GeminiFile, UploadFileConfig, FileState, UsageMetadata, ToolCall } from "@google/genai";
 import { GeminiService, ChatHistoryItem, ThoughtSupportingPart, ModelOption, ContentPart } from '../types';
 import { TAB_CYCLE_MODELS } from "../constants/appConstants";
 import { logService } from "./logService";
@@ -39,6 +39,7 @@ class GeminiServiceImpl implements GeminiService {
         thinkingBudget: number,
         isGoogleSearchEnabled?: boolean,
         isCodeExecutionEnabled?: boolean,
+        isUrlContextEnabled?: boolean,
     ): any {
         const generationConfig: any = {
             ...config,
@@ -71,6 +72,9 @@ class GeminiServiceImpl implements GeminiService {
         }
         if (isCodeExecutionEnabled) {
             tools.push({ codeExecution: {} });
+        }
+        if (isUrlContextEnabled) {
+            tools.push({ urlContext: {} });
         }
 
         if (tools.length > 0) {
@@ -346,15 +350,16 @@ class GeminiServiceImpl implements GeminiService {
         thinkingBudget: number,
         isGoogleSearchEnabled: boolean,
         isCodeExecutionEnabled: boolean,
+        isUrlContextEnabled: boolean,
         abortSignal: AbortSignal,
         onPart: (part: Part) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
     ): Promise<void> {
-        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled });
+        logService.info(`Sending message to ${modelId} (stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
-        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled);
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
         let finalUsageMetadata: UsageMetadata | undefined = undefined;
         let finalGroundingMetadata: any = null;
 
@@ -376,6 +381,22 @@ class GeminiServiceImpl implements GeminiService {
                 const metadataFromChunk = chunkResponse.candidates?.[0]?.groundingMetadata;
                 if (metadataFromChunk) {
                     finalGroundingMetadata = metadataFromChunk;
+                }
+                
+                const toolCalls = chunkResponse.candidates?.[0]?.toolCalls;
+                if (toolCalls) {
+                    for (const toolCall of toolCalls) {
+                        if (toolCall.functionCall?.args?.urlContextMetadata) {
+                            if (!finalGroundingMetadata) finalGroundingMetadata = {};
+                            if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
+                            const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
+                            for (const newCitation of newCitations) {
+                                if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
+                                    finalGroundingMetadata.citations.push(newCitation);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
@@ -411,13 +432,14 @@ class GeminiServiceImpl implements GeminiService {
         thinkingBudget: number,
         isGoogleSearchEnabled: boolean,
         isCodeExecutionEnabled: boolean,
+        isUrlContextEnabled: boolean,
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
         onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
     ): Promise<void> {
-        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled });
+        logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled });
         const ai = this._getApiClientOrThrow(apiKey);
-        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled);
+        const generationConfig = this._buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
         
         try {
             if (abortSignal.aborted) {
@@ -455,8 +477,25 @@ class GeminiServiceImpl implements GeminiService {
             }
             
             const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
-            logService.info("Non-stream call complete.", { usage: response.usageMetadata, hasGrounding: !!groundingMetadata });
-            onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, groundingMetadata);
+            let finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
+        
+            const toolCalls = response.candidates?.[0]?.toolCalls;
+            if (toolCalls) {
+                for (const toolCall of toolCalls) {
+                    if (toolCall.functionCall?.args?.urlContextMetadata) {
+                        if (!finalMetadata.citations) finalMetadata.citations = [];
+                        const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
+                        for (const newCitation of newCitations) {
+                            if (!finalMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
+                                finalMetadata.citations.push(newCitation);
+                            }
+                        }
+                    }
+                }
+            }
+
+            logService.info("Non-stream call complete.", { usage: response.usageMetadata, hasGrounding: !!finalMetadata });
+            onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined);
         } catch (error) {
             logService.error("Error sending message to Gemini (non-stream):", error);
             onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));

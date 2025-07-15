@@ -263,6 +263,15 @@ export const useChat = (appSettings: AppSettings) => {
         }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
 
+    const toggleUrlContext = useCallback(() => {
+        if (!activeSessionId) return;
+        if (isLoading) messageHandler.handleStopGenerating();
+        setCurrentChatSettings(prev => ({
+            ...prev,
+            isUrlContextEnabled: !prev.isUrlContextEnabled,
+        }));
+    }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
+
     return {
         messages,
         isLoading,
@@ -322,5 +331,6 @@ export const useChat = (appSettings: AppSettings) => {
         scrollToBottom,
         toggleGoogleSearch,
         toggleCodeExecution,
+        toggleUrlContext,
     };
 };
