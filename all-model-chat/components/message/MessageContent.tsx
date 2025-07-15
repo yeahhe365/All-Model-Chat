@@ -4,9 +4,10 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { Loader2, ChevronDown, Sigma } from 'lucide-react';
+import { Loader2, ChevronDown, Sigma, Zap } from 'lucide-react';
 
 import { ChatMessage, UploadedFile } from '../../types';
 import { FileDisplay } from './FileDisplay';
@@ -47,6 +48,33 @@ const TokenDisplay: React.FC<{ message: ChatMessage; t: (key: keyof typeof trans
   ].filter(Boolean);
   if (parts.length === 0) return null;
   return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Token Usage"><Sigma size={10} className="mr-1.5 opacity-80" />{parts.join(' | ')}<span className="ml-1">{t('tokens_unit')}</span></span>;
+};
+
+const TokenRateDisplay: React.FC<{ message: ChatMessage }> = ({ message }) => {
+  const { completionTokens, generationStartTime, generationEndTime, isLoading } = message;
+
+  if (isLoading || !completionTokens || !generationStartTime || !generationEndTime) {
+    return null;
+  }
+  
+  const generationTimeMs = new Date(generationEndTime).getTime() - new Date(generationStartTime).getTime();
+  if (generationTimeMs <= 0) {
+    return null;
+  }
+
+  const generationTimeSeconds = generationTimeMs / 1000;
+  const tokensPerSecond = completionTokens / generationTimeSeconds;
+
+  if (tokensPerSecond <= 0) {
+      return null;
+  }
+
+  return (
+    <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Tokens per second">
+        <Zap size={10} className="mr-1.5 opacity-80 text-yellow-500" />
+        {tokensPerSecond.toFixed(1)} tokens/s
+    </span>
+  );
 };
 
 interface MessageContentProps {
@@ -165,7 +193,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
               <GroundedResponse text={content} metadata={groundingMetadata} onOpenHtmlPreview={onOpenHtmlPreview} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
-                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]} components={components}>
                         {content}
                     </ReactMarkdown>
                 </div>
@@ -178,8 +206,9 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {(message.role === 'model' || (message.role === 'error' && generationStartTime)) && (
-                <div className="mt-1 sm:mt-1.5 flex justify-end items-center gap-2 sm:gap-3">
+                <div className="mt-1 sm:mt-1.5 flex justify-end items-center gap-2 sm:gap-3 flex-wrap">
                     <TokenDisplay message={message} t={t} />
+                    <TokenRateDisplay message={message} />
                     {(isLoading || (generationStartTime && generationEndTime)) && <MessageTimer startTime={generationStartTime} endTime={generationEndTime} isLoading={isLoading} />}
                 </div>
             )}

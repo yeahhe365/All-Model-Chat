@@ -379,11 +379,17 @@ export const buildContentParts = async (text: string, files: UploadedFile[] | un
             logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
             continue;
           }
-        } else if (!base64Data && file.dataUrl?.startsWith('data:')) {
-            const parts = file.dataUrl.split(',');
-            if (parts.length === 2 && parts[1]) {
-                base64Data = parts[1];
-            }
+        } else if (!base64Data && file.dataUrl?.startsWith('blob:')) {
+          // This handles retries where we only have the blob URL
+          try {
+            const response = await fetch(file.dataUrl);
+            const blob = await response.blob();
+            const tempFile = new File([blob], file.name, { type: file.type });
+            base64Data = await fileToBase64(tempFile);
+          } catch (error) {
+            logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
+            continue;
+          }
         }
         
         if (base64Data) {
