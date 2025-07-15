@@ -170,6 +170,33 @@ export interface MessageListProps {
   onScrollToBottom?: () => void;
 }
 
+export interface ChatInputProps {
+  appSettings: AppSettings;
+  commandedInput: { text: string; id: number } | null;
+  onMessageSent: () => void;
+  selectedFiles: UploadedFile[]; 
+  setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
+  onSendMessage: (text: string) => void;
+  isLoading: boolean; 
+  isEditing: boolean;
+  onStopGenerating: () => void;
+  onCancelEdit: () => void;
+  onProcessFiles: (files: FileList | File[]) => Promise<void>;
+  onAddFileById: (fileId: string) => Promise<void>;
+  onCancelUpload: (fileId: string) => void;
+  isProcessingFile: boolean; 
+  fileError: string | null;
+  t: (key: keyof typeof translations) => string;
+  isImagenModel?: boolean;
+  aspectRatio?: string;
+  setAspectRatio?: (ratio: string) => void;
+  onTranscribeAudio: (file: File) => Promise<string | null>;
+  isGoogleSearchEnabled: boolean;
+  onToggleGoogleSearch: () => void;
+  isCodeExecutionEnabled: boolean;
+  onToggleCodeExecution: () => void;
+}
+
 export interface PreloadedMessage {
   id: string; 
   role: 'user' | 'model';

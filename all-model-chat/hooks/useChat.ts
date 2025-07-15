@@ -6,8 +6,9 @@ import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { useMessageHandler } from './useMessageHandler';
-import { applyImageCachePolicy, generateUniqueId } from '../utils/appUtils';
+import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService } from '../utils/appUtils';
 import { CHAT_HISTORY_SESSIONS_KEY } from '../constants/appConstants';
+import { geminiServiceInstance } from '../services/geminiService';
 
 export const useChat = (appSettings: AppSettings) => {
     // 1. Core application state, now managed centrally in the main hook
@@ -118,6 +119,57 @@ export const useChat = (appSettings: AppSettings) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const handleTranscribeAudio = useCallback(async (audioFile: File): Promise<string | null> => {
+        logService.info('Starting transcription process...');
+        setAppFileError(null);
+        
+        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        if ('error' in keyResult) {
+            setAppFileError(keyResult.error);
+            logService.error('Transcription failed: API key error.', { error: keyResult.error });
+            return null;
+        }
+        
+        if (keyResult.isNewKey) {
+            const fileRequiresApi = selectedFiles.some(f => f.fileUri);
+            if (!fileRequiresApi) {
+                logService.info('New API key selected for this session due to transcription.');
+                setCurrentChatSettings(prev => ({...prev, lockedApiKey: keyResult.key }));
+            }
+        }
+    
+        try {
+            const modelToUse = appSettings.transcriptionModelId || 'gemini-2.5-flash';
+            const transcribedText = await geminiServiceInstance.transcribeAudio(
+                keyResult.key,
+                audioFile,
+                modelToUse,
+                appSettings.isTranscriptionThinkingEnabled,
+            );
+            return transcribedText;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            setAppFileError(`Transcription failed: ${errorMessage}`);
+            logService.error('Transcription failed in useChat handler', { error });
+            return null;
+        }
+    }, [appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError, selectedFiles]);
+
+    // Listen for network restoration to clear network-related errors
+    useEffect(() => {
+        const handleOnline = () => {
+            setAppFileError(currentError => {
+                if (currentError && (currentError.toLowerCase().includes('network') || currentError.toLowerCase().includes('fetch'))) {
+                    logService.info('Network restored, clearing file processing error.');
+                    return null;
+                }
+                return currentError;
+            });
+        };
+        window.addEventListener('online', handleOnline);
+        return () => window.removeEventListener('online', handleOnline);
+    }, [setAppFileError]);
+
     // Effect to automatically clear file processing errors if no files are processing.
     useEffect(() => {
         const isFileProcessing = selectedFiles.some(file => file.isProcessing);
@@ -199,7 +251,6 @@ export const useChat = (appSettings: AppSettings) => {
         setCurrentChatSettings(prev => ({
             ...prev,
             isGoogleSearchEnabled: !prev.isGoogleSearchEnabled,
-            isCodeExecutionEnabled: false, // Mutually exclusive
         }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
     
@@ -209,7 +260,6 @@ export const useChat = (appSettings: AppSettings) => {
         setCurrentChatSettings(prev => ({
             ...prev,
             isCodeExecutionEnabled: !prev.isCodeExecutionEnabled,
-            isGoogleSearchEnabled: false, // Mutually exclusive
         }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
 
@@ -266,6 +316,7 @@ export const useChat = (appSettings: AppSettings) => {
         handleCancelFileUpload: fileHandler.handleCancelFileUpload,
         handleAddFileById: fileHandler.handleAddFileById,
         handleTextToSpeech: messageHandler.handleTextToSpeech,
+        handleTranscribeAudio,
         setCurrentChatSettings,
         showScrollToBottom,
         scrollToBottom,

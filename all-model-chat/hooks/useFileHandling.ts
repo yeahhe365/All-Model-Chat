@@ -5,6 +5,8 @@ import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appU
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 
+const MAX_LOCAL_IMAGE_SIZE = 4 * 1024 * 1024; // Keep it under 4MB as per Gemini API inline data limit.
+
 interface FileHandlingProps {
     appSettings: AppSettings;
     selectedFiles: UploadedFile[];
@@ -43,20 +45,18 @@ export const useFileHandling = ({
 
         // Determine if any file requires an API key for upload.
         const needsApiKeyForUpload = filesArray.some(file => {
-            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             let effectiveMimeType = file.type;
+            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                  effectiveMimeType = 'text/plain';
             }
-            if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
-                return false; // Unsupported files don't need a key
-            }
-            // An image needs an API key ONLY if the setting is enabled
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                return appSettings.useFilesApiForImages;
-            }
-            // All other supported types (PDF, audio, text) always need an API key
-            return true; 
+            if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
+
+            const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType);
+            const isLargeImage = isImage && file.size > MAX_LOCAL_IMAGE_SIZE;
+            const shouldUploadImage = isImage && (appSettings.useFilesApiForImages || isLargeImage);
+
+            return !isImage || shouldUploadImage;
         });
 
         let keyToUse: string | null = null;
@@ -90,7 +90,9 @@ export const useFileHandling = ({
             }
 
             // This is the core logic change: should this file be uploaded or handled locally?
-            const shouldUploadFile = !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) || appSettings.useFilesApiForImages;
+            const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType);
+            const isLargeImage = isImage && file.size > MAX_LOCAL_IMAGE_SIZE;
+            const shouldUploadFile = !isImage || appSettings.useFilesApiForImages || isLargeImage;
 
             if (shouldUploadFile) {
                 // Handle all file types that need uploading (PDF, Text, Audio, and Images if setting is on)
@@ -119,13 +121,17 @@ export const useFileHandling = ({
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, } : f));
                 }
             } else {
-                // Handle image locally with Data URLs for persistence (if setting is off)
+                // Handle image locally
                 const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
                 setSelectedFiles(prev => [...prev, initialFileState]);
-                
+
                 try {
                     const dataUrl = await fileToDataUrl(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                    const base64Data = dataUrl.split(',')[1];
+                    if (!base64Data) {
+                        throw new Error('Could not extract base64 from data URL.');
+                    }
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, base64Data, isProcessing: false, progress: 100, uploadState: 'active', rawFile: undefined } : f));
                 } catch(error) {
                     logService.error('Error creating data URL for image', { error });
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));

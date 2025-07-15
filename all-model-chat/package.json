@@ -22,8 +22,8 @@
     "remark-math": "^6.0.0",
     "rehype-katex": "^7.0.0",
     "rehype-highlight": "^7.0.0",
-    "rehype-raw": "^7.0.0",
-    "katex": "0.16.9"
+    "katex": "0.16.9",
+    "rehype-raw": "^7.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

@@ -65,13 +65,17 @@ class GeminiServiceImpl implements GeminiService {
             }
         }
 
-        // Tools are mutually exclusive
+        const tools = [];
         if (isGoogleSearchEnabled) {
-            generationConfig.tools = [{ googleSearch: {} }];
-            delete generationConfig.responseMimeType;
-            delete generationConfig.responseSchema;
-        } else if (isCodeExecutionEnabled) {
-            generationConfig.tools = [{ codeExecution: {} }];
+            tools.push({ googleSearch: {} });
+        }
+        if (isCodeExecutionEnabled) {
+            tools.push({ codeExecution: {} });
+        }
+
+        if (tools.length > 0) {
+            generationConfig.tools = tools;
+            // When using tools, these should not be set
             delete generationConfig.responseMimeType;
             delete generationConfig.responseSchema;
         }

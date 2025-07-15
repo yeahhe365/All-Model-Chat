@@ -4,7 +4,6 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
 import { CodeBlock } from './CodeBlock';
 
 interface GroundedResponseProps {
@@ -76,7 +75,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
       <div className="markdown-body">
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+          rehypePlugins={[rehypeKatex, rehypeHighlight]}
           components={components}
         >
           {content}
