@@ -6,11 +6,11 @@ import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { useMessageHandler } from './useMessageHandler';
-import { applyImageCachePolicy, generateUniqueId, logService } from '../utils/appUtils';
+import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService } from '../utils/appUtils';
 import { CHAT_HISTORY_SESSIONS_KEY } from '../constants/appConstants';
 import { geminiServiceInstance } from '../services/geminiService';
 
-export const useChat = (appSettings: AppSettings) => {
+export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     // 1. Core application state, now managed centrally in the main hook
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -272,6 +272,58 @@ export const useChat = (appSettings: AppSettings) => {
             isUrlContextEnabled: !prev.isUrlContextEnabled,
         }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
+
+    const generateTitleForSession = useCallback(async (session: SavedChatSession) => {
+        const { id: sessionId, messages } = session;
+        if (messages.length < 2) return;
+        
+        logService.info(`Auto-generating title for session ${sessionId}`);
+
+        const keyResult = getKeyForRequest(appSettings, session.settings);
+        if ('error' in keyResult) {
+            logService.error(`Could not generate title for session ${sessionId}: ${keyResult.error}`);
+            return;
+        }
+
+        try {
+            const userContent = messages[0].content;
+            const modelContent = messages[1].content;
+            
+            if (!userContent.trim() && !modelContent.trim()) {
+                logService.info(`Skipping title generation for session ${sessionId} due to empty content.`);
+                return;
+            }
+            
+            const newTitle = await geminiServiceInstance.generateTitle(keyResult.key, userContent, modelContent, language);
+            
+            if (newTitle && newTitle.trim()) {
+                logService.info(`Generated new title for session ${sessionId}: "${newTitle}"`);
+                updateAndPersistSessions(prev =>
+                    prev.map(s => (s.id === sessionId ? { ...s, title: newTitle.trim() } : s))
+                );
+            } else {
+                logService.warn(`Title generation for session ${sessionId} returned an empty string.`);
+            }
+
+        } catch (error) {
+            logService.error(`Failed to auto-generate title for session ${sessionId}`, { error });
+        }
+    }, [appSettings, updateAndPersistSessions, language]);
+
+    useEffect(() => {
+        if (
+            appSettings.isAutoTitleEnabled &&
+            activeChat &&
+            activeChat.messages.length === 2 &&
+            !isLoading &&
+            activeChat.title === 'New Chat'
+        ) {
+            const [userMessage, modelMessage] = activeChat.messages;
+            if (userMessage.role === 'user' && modelMessage.role === 'model' && !modelMessage.isLoading) {
+                generateTitleForSession(activeChat);
+            }
+        }
+    }, [messages, isLoading, appSettings.isAutoTitleEnabled, activeChat, generateTitleForSession]);
 
     return {
         messages,

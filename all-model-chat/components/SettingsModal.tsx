@@ -169,6 +169,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setUseFilesApiForImages={(val) => updateSetting('useFilesApiForImages', val)}
                   expandCodeBlocksByDefault={settings.expandCodeBlocksByDefault}
                   setExpandCodeBlocksByDefault={(val) => updateSetting('expandCodeBlocksByDefault', val)}
+                  isAutoTitleEnabled={settings.isAutoTitleEnabled}
+                  setIsAutoTitleEnabled={(val) => updateSetting('isAutoTitleEnabled', val)}
                   t={t}
                 />
               )}

@@ -1,3 +1,4 @@
+
 export const translations = {
     // App.tsx
     appLoadingModels: { en: 'Loading models...', zh: '加载模型中...' },
@@ -197,6 +198,10 @@ export const translations = {
     history_search_aria: { en: 'Search chat history', zh: '搜索聊天记录' },
     history_search_clear_aria: { en: 'Clear search', zh: '清除搜索' },
     history_search_no_results: { en: 'No results found.', zh: '未找到结果。' },
+    history_edit_title: { en: 'Edit Title', zh: '编辑标题' },
+    history_pin: { en: 'Pin', zh: '置顶' },
+    history_unpin: { en: 'Unpin', zh: '取消置顶' },
+    history_delete: { en: 'Delete', zh: '删除' },
     
     // ChatInputPlaceholder
     chatInputPlaceholder: { en: 'Ask anything...', zh: '询问任何问题' },

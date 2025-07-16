@@ -39,6 +39,8 @@ interface ChatBehaviorSectionProps {
   setUseFilesApiForImages: (value: boolean) => void;
   expandCodeBlocksByDefault: boolean;
   setExpandCodeBlocksByDefault: (value: boolean) => void;
+  isAutoTitleEnabled: boolean;
+  setIsAutoTitleEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -50,7 +52,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
   isStreamingEnabled, setIsStreamingEnabled, 
   isTranscriptionThinkingEnabled, setIsTranscriptionThinkingEnabled, 
   useFilesApiForImages, setUseFilesApiForImages,
-  expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, t
+  expandCodeBlocksByDefault, setExpandCodeBlocksByDefault,
+  isAutoTitleEnabled, setIsAutoTitleEnabled, t
 }) => {
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
@@ -284,6 +287,19 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
             <div className="w-11 h-6 bg-[var(--theme-bg-input)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)]"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
           </div>
+        </label>
+        <label htmlFor="auto-title-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+            <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
+                Auto-generate Chat Titles
+                <Tooltip text="Automatically generate a title for new chats after the first exchange using a fast model.">
+                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                </Tooltip>
+            </span>
+            <div className="relative">
+                <input id="auto-title-toggle" type="checkbox" className="sr-only peer" checked={isAutoTitleEnabled} onChange={() => setIsAutoTitleEnabled(!isAutoTitleEnabled)} />
+                <div className="w-11 h-6 bg-[var(--theme-bg-input)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)]"></div>
+                <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
+            </div>
         </label>
         <label htmlFor="use-files-api-for-images-toggle" className="flex items-center justify-between py-1 cursor-pointer">
             <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">

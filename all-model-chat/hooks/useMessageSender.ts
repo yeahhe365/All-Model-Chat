@@ -1,3 +1,4 @@
+
 import { useCallback, useRef, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem, SavedChatSession } from '../types';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService } from '../utils/appUtils';
@@ -163,7 +164,18 @@ export const useMessageSender = (props: MessageSenderProps) => {
             };
 
             const newMessages = [...baseMessages, userMessage, modelMessage];
-            let updatedSession = { ...sessionForHistory, messages: newMessages, title: generateSessionTitle(newMessages) };
+            
+            let newTitle = sessionForHistory.title;
+            // Only set a title if the current title is "New Chat"
+            if (sessionForHistory.title === 'New Chat') {
+                // If auto-title is OFF, generate a title from content immediately.
+                // If it's ON, we leave it as "New Chat" so the useEffect trigger works.
+                if (!appSettings.isAutoTitleEnabled) {
+                    newTitle = generateSessionTitle(newMessages);
+                }
+            }
+
+            let updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
             
             if(shouldLockKey) {
                 updatedSession = { ...updatedSession, settings: { ...updatedSession.settings, lockedApiKey: keyToUse }};

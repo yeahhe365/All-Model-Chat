@@ -133,3 +133,37 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         throw error;
     }
 };
+
+export const generateTitleApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string> => {
+    logService.info(`Generating title in ${language}...`);
+    const ai = getApiClient(apiKey);
+    const prompt = language === 'zh'
+        ? `根据以下对话，创建一个非常简短、简洁的标题（最多4-6个词）。不要使用引号或任何其他格式。只返回标题的文本。\n\n用户: "${userContent}"\n助手: "${modelContent}"\n\n标题:`
+        : `Based on this conversation, create a very short, concise title (4-6 words max). Do not use quotes or any other formatting. Just return the text of the title.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"\n\nTITLE:`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite-preview-06-17',
+            contents: prompt,
+            config: {
+                thinkingConfig: { thinkingBudget: -1 },
+                temperature: 0.3,
+                topP: 0.9,
+            }
+        });
+
+        if (response.text) {
+            // Clean up the title: remove quotes, trim whitespace
+            let title = response.text.trim();
+            if ((title.startsWith('"') && title.endsWith('"')) || (title.startsWith("'") && title.endsWith("'"))) {
+                title = title.substring(1, title.length - 1);
+            }
+            return title;
+        } else {
+            throw new Error("Title generation failed. The model returned an empty response.");
+        }
+    } catch (error) {
+        logService.error("Error during title generation:", error);
+        throw error;
+    }
+};

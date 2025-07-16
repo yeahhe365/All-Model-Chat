@@ -55,4 +55,5 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isTranscriptionThinkingEnabled: DEFAULT_TRANSCRIPTION_THINKING_ENABLED,
   useFilesApiForImages: false,
   expandCodeBlocksByDefault: false,
+  isAutoTitleEnabled: true,
 };

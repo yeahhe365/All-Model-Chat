@@ -104,6 +104,7 @@ export interface AppSettings extends ChatSettings {
  isTranscriptionThinkingEnabled: boolean;
  useFilesApiForImages: boolean;
  expandCodeBlocksByDefault: boolean;
+ isAutoTitleEnabled: boolean;
 }
 
 
@@ -146,6 +147,7 @@ export interface GeminiService {
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
+  generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
 }
 
 export interface ThoughtSupportingPart extends Part {

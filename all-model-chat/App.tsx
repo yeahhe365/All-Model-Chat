@@ -79,7 +79,7 @@ const App: React.FC = () => {
       toggleGoogleSearch,
       toggleCodeExecution,
       toggleUrlContext,
-  } = useChat(appSettings);
+  } = useChat(appSettings, language);
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
