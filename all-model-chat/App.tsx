@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings, UploadedFile } from './types';
+import { AppSettings, UploadedFile, ModelOption } from './types';
 import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS, CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/appConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
 import { Header } from './components/Header';
@@ -343,6 +343,12 @@ const App: React.FC = () => {
           onToggleCodeExecution={toggleCodeExecution}
           isUrlContextEnabled={!!currentChatSettings.isUrlContextEnabled}
           onToggleUrlContext={toggleUrlContext}
+          onClearChat={handleClearCurrentChat}
+          onNewChat={startNewChat}
+          onOpenSettings={() => setIsSettingsModalOpen(true)}
+          onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
+          onSelectModel={handleSelectModelInHeader}
+          availableModels={apiModels}
         />
       </div>
     </div>

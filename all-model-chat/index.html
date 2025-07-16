@@ -111,6 +111,14 @@
       border-radius: 4px;
       border: 2px solid var(--theme-scrollbar-track);
     }
+    
+    /* === Custom Selection Highlight === */
+    .markdown-body::selection,
+    .markdown-body *::selection {
+      background-color: #fde047; /* A vibrant, marker-like yellow */
+      color: #1f2937; /* A dark text color for contrast */
+    }
+
     /* === Markdown Aesthetic Overrides === */
     .markdown-body {
       background-color: transparent !important;
@@ -660,25 +668,6 @@
     }
     .grounded-response-sources a:hover {
         background-size: 100% 1px;
-    }
-    
-    /* Settings Modal Redesign */
-    .settings-nav-button {
-      background-color: transparent;
-      color: var(--theme-text-secondary);
-      transition: all 0.2s ease-out;
-    }
-    .settings-nav-button:hover {
-      background-color: var(--theme-bg-tertiary);
-      color: var(--theme-text-primary);
-    }
-    .settings-nav-button.active {
-      background-color: var(--theme-bg-accent);
-      color: var(--theme-text-accent);
-      font-weight: 600;
-    }
-    .settings-nav-button.active:hover {
-        background-color: var(--theme-bg-accent-hover);
     }
   </style>
 <script type="importmap">

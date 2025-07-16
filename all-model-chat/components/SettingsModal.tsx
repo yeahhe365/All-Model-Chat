@@ -66,9 +66,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
+    <Modal isOpen={isOpen} onClose={handleClose} noPadding contentClassName="w-full h-full sm:w-auto sm:h-auto">
       <div 
-        className="bg-[var(--theme-bg-primary)] rounded-xl shadow-premium w-full max-w-md sm:max-w-3xl flex flex-col max-h-[90vh] sm:h-[85vh] sm:max-h-[750px]"
+        className="bg-[var(--theme-bg-primary)] w-full h-full sm:rounded-xl sm:shadow-premium sm:w-[clamp(37.5rem,40vw,48rem)] sm:h-[85vh] sm:max-h-[800px] flex flex-col"
         role="document"
       >
         {/* Header */}
@@ -81,23 +81,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row flex-grow min-h-0">
-          {/* Nav */}
-          <nav className="flex-shrink-0 w-full sm:w-48 bg-[var(--theme-bg-secondary)] sm:border-r border-b sm:border-b-0 border-[var(--theme-border-primary)] flex sm:flex-col p-2 sm:p-3 sm:space-y-1 overflow-x-auto sm:overflow-x-visible">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`settings-nav-button w-full flex-shrink-0 sm:flex-shrink-1 flex items-center justify-start gap-3 px-3 py-2.5 text-sm font-medium rounded-md ${activeTab === tab.id ? 'active' : ''}`}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </nav>
+        <div className="flex-grow flex flex-col min-h-0">
+          {/* Tab Navigation */}
+          <div className="flex-shrink-0 border-b border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)]">
+            <nav className="p-2 flex space-x-1" aria-label="Tabs" role="tablist">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]
+                    ${activeTab === tab.id
+                      ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] shadow'
+                      : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)]'
+                    }
+                  `}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
+                  aria-controls={`tab-panel-${tab.id}`}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
           
           {/* Content Panel */}
-          <div className="flex-grow min-h-0 overflow-y-auto custom-scrollbar">
+          <div id={`tab-panel-${activeTab}`} role="tabpanel" className="flex-grow min-h-0 overflow-y-auto custom-scrollbar bg-[var(--theme-bg-secondary)]">
             <div className="p-3 sm:p-5 tab-content-enter-active">
               {activeTab === 'general' && (
                 <div className="space-y-4">

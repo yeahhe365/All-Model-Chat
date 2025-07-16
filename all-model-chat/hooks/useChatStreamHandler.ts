@@ -1,0 +1,174 @@
+// hooks/useChatStreamHandler.ts
+import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
+import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
+import { Part, UsageMetadata } from '@google/genai';
+import { useApiErrorHandler } from './useApiErrorHandler';
+import { generateUniqueId, logService } from '../utils/appUtils';
+
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+
+interface ChatStreamHandlerProps {
+    appSettings: AppSettings;
+    updateAndPersistSessions: SessionsUpdater;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+}
+
+const isToolMessage = (msg: ChatMessage): boolean => {
+    if (!msg) return false;
+    if (msg.files && msg.files.length > 0) return true;
+    if (!msg.content) return false;
+    const content = msg.content.trim();
+    return (content.startsWith('```') && content.endsWith('```')) ||
+           content.startsWith('<div class="tool-result') ||
+           content.startsWith('![Generated Image]');
+};
+
+export const useChatStreamHandler = ({
+    appSettings,
+    updateAndPersistSessions,
+    setLoadingSessionIds,
+    activeJobs
+}: ChatStreamHandlerProps) => {
+    const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
+    const firstContentPartTimeRef = useRef<Date | null>(null);
+
+    const getStreamHandlers = useCallback((
+        currentSessionId: string,
+        generationId: string,
+        abortController: AbortController,
+        generationStartTimeRef: React.MutableRefObject<Date | null>,
+        currentChatSettings: IndividualChatSettings,
+    ) => {
+        const newModelMessageIds = new Set<string>([generationId]);
+
+        const streamOnError = (error: Error) => {
+            handleApiError(error, currentSessionId, generationId);
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            activeJobs.current.delete(generationId);
+        };
+
+        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any) => {
+            if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
+                firstContentPartTimeRef.current = new Date();
+            }
+
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                const finalMessages = s.messages
+                    .map(m => {
+                        if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                            let thinkingTime = m.thinkingTimeMs;
+                            if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
+                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
+                            }
+                            const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
+                            const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
+                            const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
+                            const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
+                            cumulativeTotal += turnTokens;
+                            return {
+                                ...m,
+                                isLoading: false,
+                                content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
+                                thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
+                                generationEndTime: new Date(),
+                                thinkingTimeMs: thinkingTime,
+                                groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
+                                promptTokens,
+                                completionTokens,
+                                totalTokens: turnTokens,
+                                cumulativeTotalTokens: cumulativeTotal,
+                            };
+                        }
+                        return m;
+                    })
+                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                
+                return {...s, messages: finalMessages, settings: s.settings};
+            }));
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            activeJobs.current.delete(generationId);
+        };
+
+        const streamOnPart = (part: Part) => {
+            let isFirstContentPart = false;
+            if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
+                firstContentPartTimeRef.current = new Date();
+                isFirstContentPart = true;
+            }
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                let messages = [...s.messages];
+                if (isFirstContentPart) {
+                    const thinkingTime = generationStartTimeRef.current ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime()) : null;
+                    const messageToUpdate = [...messages].reverse().find(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
+                    if (messageToUpdate && thinkingTime !== null) {
+                        messageToUpdate.thinkingTimeMs = thinkingTime;
+                        messages = [...messages];
+                    }
+                }
+                let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+                const anyPart = part as any;
+                const createNewMessage = (content: string): ChatMessage => {
+                    const id = generateUniqueId();
+                    newModelMessageIds.add(id);
+                    return { id, role: 'model', content, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
+                };
+                if (anyPart.text) {
+                     if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading && !isToolMessage(lastMessage)) {
+                        lastMessage.content += anyPart.text;
+                    } else {
+                        messages.push(createNewMessage(anyPart.text));
+                    }
+                } else if (anyPart.executableCode) {
+                    const codePart = anyPart.executableCode as { language: string, code: string };
+                    const toolContent = `\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\``;
+                    messages.push(createNewMessage(toolContent));
+                } else if (anyPart.codeExecutionResult) {
+                    const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
+                    const escapeHtml = (unsafe: string) => {
+                        if (typeof unsafe !== 'string') return '';
+                        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+                    };
+                    let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
+                    if (resultPart.output) {
+                        toolContent += `<pre><code>${escapeHtml(resultPart.output)}</code></pre>`;
+                    }
+                    toolContent += '</div>';
+                    messages.push(createNewMessage(toolContent));
+                } else if (anyPart.inlineData) {
+                    const { mimeType, data } = anyPart.inlineData;
+                    if (mimeType.startsWith('image/')) {
+                        const newFile: UploadedFile = {
+                            id: generateUniqueId(), name: 'Generated Image', type: mimeType, size: data.length, dataUrl: `data:${mimeType};base64,${data}`, base64Data: data, uploadState: 'active'
+                        };
+                        const newMessage = createNewMessage('');
+                        newMessage.files = [newFile];
+                        messages.push(newMessage);
+                    }
+                }
+                return { ...s, messages };
+            }));
+        };
+
+        const onThoughtChunk = (thoughtChunk: string) => {
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                let messages = [...s.messages];
+                let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+                if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading) {
+                    lastMessage.thoughts = (lastMessage.thoughts || '') + thoughtChunk;
+                }
+                return { ...s, messages };
+            }));
+        };
+        
+        firstContentPartTimeRef.current = null;
+        return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
+
+    }, [appSettings.isStreamingEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    
+    return { getStreamHandlers };
+};

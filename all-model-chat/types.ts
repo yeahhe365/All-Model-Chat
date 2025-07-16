@@ -1,6 +1,7 @@
 import { Chat, Part, File as GeminiFile, UsageMetadata } from "@google/genai";
 import { Theme, ThemeColors } from './constants/themeConstants'; 
 import { translations } from "./utils/appUtils";
+import { AttachmentAction } from "./components/chat/input/AttachmentMenu";
 
 export type { ThemeColors };
 
@@ -200,7 +201,75 @@ export interface ChatInputProps {
   onToggleCodeExecution: () => void;
   isUrlContextEnabled: boolean;
   onToggleUrlContext: () => void;
+  onClearChat: () => void;
+  onNewChat: () => void;
+  onOpenSettings: () => void;
+  onToggleCanvasPrompt: () => void;
+  onSelectModel: (modelId: string) => void;
+  availableModels: ModelOption[];
 }
+
+export interface ChatInputToolbarProps {
+  isImagenModel: boolean;
+  aspectRatio?: string;
+  setAspectRatio?: (ratio: string) => void;
+  fileError: string | null;
+  selectedFiles: UploadedFile[];
+  onRemoveFile: (fileId: string) => void;
+  onCancelUpload: (fileId: string) => void;
+  showAddByIdInput: boolean;
+  fileIdInput: string;
+  setFileIdInput: (value: string) => void;
+  onAddFileByIdSubmit: () => Promise<void>;
+  onCancelAddById: () => void;
+  isAddingById: boolean;
+  isLoading: boolean;
+  t: (key: keyof typeof translations) => string;
+}
+
+export interface ChatInputActionsProps {
+  onAttachmentAction: (action: AttachmentAction) => void;
+  disabled: boolean;
+  isGoogleSearchEnabled: boolean;
+  onToggleGoogleSearch: () => void;
+  isCodeExecutionEnabled: boolean;
+  onToggleCodeExecution: () => void;
+  isUrlContextEnabled: boolean;
+  onToggleUrlContext: () => void;
+  onRecordButtonClick: () => void;
+  isTranscribing: boolean;
+  isLoading: boolean;
+  onStopGenerating: () => void;
+  isEditing: boolean;
+  onCancelEdit: () => void;
+  canSend: boolean;
+  isWaitingForUpload: boolean;
+  t: (key: keyof typeof translations) => string;
+}
+
+export interface CommandInfo {
+    name: string;
+    description: string;
+}
+
+export interface ChatInputModalsProps {
+  showCamera: boolean;
+  onPhotoCapture: (file: File) => void;
+  onCameraCancel: () => void;
+  showRecorder: boolean;
+  onAudioRecord: (file: File) => Promise<void>;
+  onRecorderCancel: () => void;
+  showCreateTextFileEditor: boolean;
+  onConfirmCreateTextFile: (content: string, filename: string) => Promise<void>;
+  onCreateTextFileCancel: () => void;
+  isHelpModalOpen: boolean;
+  onHelpModalClose: () => void;
+  allCommandsForHelp: CommandInfo[];
+  isProcessingFile: boolean;
+  isLoading: boolean;
+  t: (key: keyof typeof translations) => string;
+}
+
 
 export interface PreloadedMessage {
   id: string; 

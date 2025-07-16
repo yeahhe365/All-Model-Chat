@@ -6,7 +6,7 @@ import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 import { useMessageHandler } from './useMessageHandler';
-import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService } from '../utils/appUtils';
+import { applyImageCachePolicy, generateUniqueId, logService } from '../utils/appUtils';
 import { CHAT_HISTORY_SESSIONS_KEY } from '../constants/appConstants';
 import { geminiServiceInstance } from '../services/geminiService';
 
@@ -54,6 +54,17 @@ export const useChat = (appSettings: AppSettings) => {
     const currentChatSettings = useMemo(() => activeChat?.settings || DEFAULT_CHAT_SETTINGS, [activeChat]);
     const isLoading = useMemo(() => loadingSessionIds.has(activeSessionId ?? ''), [loadingSessionIds, activeSessionId]);
     
+    const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
+        if (!activeSessionId) return;
+        updateAndPersistSessions(prevSessions =>
+            prevSessions.map(s =>
+                s.id === activeSessionId
+                    ? { ...s, settings: updater(s.settings) }
+                    : s
+            )
+        );
+    }, [activeSessionId, updateAndPersistSessions]);
+
     // 3. Child hooks for modular logic
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
     const historyHandler = useChatHistory({
@@ -68,17 +79,6 @@ export const useChat = (appSettings: AppSettings) => {
         activeChat,
     });
     
-    const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
-        if (!activeSessionId) return;
-        updateAndPersistSessions(prevSessions =>
-            prevSessions.map(s =>
-                s.id === activeSessionId
-                    ? { ...s, settings: updater(s.settings) }
-                    : s
-            )
-        );
-    }, [activeSessionId, updateAndPersistSessions]);
-
     const fileHandler = useFileHandling({
         appSettings,
         selectedFiles,
@@ -90,6 +90,7 @@ export const useChat = (appSettings: AppSettings) => {
         setCurrentChatSettings: setCurrentChatSettings,
     });
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
+
     const messageHandler = useMessageHandler({
         appSettings,
         messages,

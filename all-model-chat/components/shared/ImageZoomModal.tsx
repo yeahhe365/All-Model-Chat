@@ -106,8 +106,9 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
     <Modal
       isOpen={!!file}
       onClose={onClose}
+      noPadding
       backdropClassName="bg-black/80 backdrop-blur-sm"
-      contentClassName="w-full h-full p-0"
+      contentClassName="w-full h-full"
     >
       <div 
         className="w-full h-full"

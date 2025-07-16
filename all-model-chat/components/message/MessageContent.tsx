@@ -4,7 +4,6 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { Loader2, ChevronDown, Sigma, Zap } from 'lucide-react';
@@ -193,7 +192,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
               <GroundedResponse text={content} metadata={groundingMetadata} onOpenHtmlPreview={onOpenHtmlPreview} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
-                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]} components={components}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>
                         {content}
                     </ReactMarkdown>
                 </div>

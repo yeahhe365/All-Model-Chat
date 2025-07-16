@@ -6,6 +6,7 @@ interface ModalProps {
   children: React.ReactNode;
   contentClassName?: string;
   backdropClassName?: string;
+  noPadding?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -14,6 +15,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   contentClassName = '',
   backdropClassName = 'bg-black bg-opacity-60 backdrop-blur-sm',
+  noPadding = false,
 }) => {
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const modalContentRef = useRef<HTMLDivElement>(null);
@@ -56,7 +58,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 ${backdropClassName}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center ${noPadding ? '' : 'p-2 sm:p-4'} ${backdropClassName}`}
       role="dialog"
       aria-modal="true"
       onClick={handleBackdropClick}
