@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile, ModelOption } from './types';
@@ -114,6 +112,39 @@ const App: React.FC = () => {
     
     setIsSettingsModalOpen(false);
   };
+
+  const touchStartRef = useRef({ x: 0, y: 0 });
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const firstTouch = e.touches[0];
+    if (firstTouch) {
+        touchStartRef.current = { x: firstTouch.clientX, y: firstTouch.clientY };
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+      const lastTouch = e.changedTouches[0];
+      if (!lastTouch) return;
+
+      const deltaX = lastTouch.clientX - touchStartRef.current.x;
+      const deltaY = lastTouch.clientY - touchStartRef.current.y;
+      const swipeThreshold = 50; // Minimum horizontal distance in pixels
+      const edgeThreshold = 40;  // Width of the left edge area for swipe-to-open gesture
+
+      // Ignore if the swipe is more vertical than horizontal
+      if (Math.abs(deltaX) < Math.abs(deltaY)) {
+          return;
+      }
+
+      // Swipe Right to Open
+      if (deltaX > swipeThreshold && !isHistorySidebarOpen && touchStartRef.current.x < edgeThreshold) {
+          setIsHistorySidebarOpen(true);
+      } 
+      // Swipe Left to Close
+      else if (deltaX < -swipeThreshold && isHistorySidebarOpen) {
+          setIsHistorySidebarOpen(false);
+      }
+  }, [isHistorySidebarOpen]);
 
   useEffect(() => {
     logService.info('App initialized.');
@@ -232,7 +263,11 @@ const App: React.FC = () => {
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
 
   return (
-    <div className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}>
+    <div 
+      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
