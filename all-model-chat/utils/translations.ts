@@ -61,7 +61,7 @@ export const translations = {
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
 
     // Command descriptions for help modal
-    help_cmd_model: { en: 'Quickly switch models. e.g., /model flash', zh: '快速切换模型。例如 /model flash' },
+    help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },
     help_cmd_help: { en: 'Displays this help menu.', zh: '显示此帮助菜单。' },
     help_cmd_pin: { en: 'Toggle pin for current chat', zh: '切换当前聊天的置顶状态' },
     help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
@@ -225,9 +225,10 @@ export const translations = {
     history_pin: { en: 'Pin', zh: '置顶' },
     history_unpin: { en: 'Unpin', zh: '取消置顶' },
     history_delete: { en: 'Delete', zh: '删除' },
+    generatingTitle: { en: 'Generating title...', zh: '生成标题中...' },
     
     // ChatInputPlaceholder
-    chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有可用命令)' },
+    chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
     
     // Header
     headerTitle: { en: 'All Model Chat', zh: 'All Model Chat' },

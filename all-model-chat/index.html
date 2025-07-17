@@ -452,6 +452,14 @@
       background-color: var(--theme-bg-danger);
       color: var(--theme-icon-stop);
     }
+    
+    @keyframes newTitlePulse {
+        0% { background-color: var(--theme-bg-accent-hover); }
+        100% { background-color: inherit; }
+    }
+    .title-update-animate {
+      animation: newTitlePulse 1.5s ease-out;
+    }
 
     #root {
       animation: appFadeIn 0.5s ease-out both;

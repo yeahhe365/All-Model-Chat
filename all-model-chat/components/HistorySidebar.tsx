@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedChatSession } from '../types';
 import { Edit3, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff } from 'lucide-react';
@@ -10,6 +11,7 @@ interface HistorySidebarProps {
   sessions: SavedChatSession[];
   activeSessionId: string | null;
   loadingSessionIds: Set<string>;
+  generatingTitleSessionIds: Set<string>;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
   onDeleteSession: (sessionId: string) => void;
@@ -37,6 +39,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   sessions,
   activeSessionId,
   loadingSessionIds,
+  generatingTitleSessionIds,
   onSelectSession,
   onNewChat,
   onDeleteSession,
@@ -52,6 +55,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+  
+  const [newlyTitledSessionId, setNewlyTitledSessionId] = useState<string | null>(null);
+  const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,6 +79,27 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       editInputRef.current?.focus();
     }
   }, [editingSession]);
+
+  useEffect(() => {
+    const prevIds = prevGeneratingTitleSessionIdsRef.current;
+    
+    // Find IDs that were in the previous set but not in the current one
+    const completedIds = new Set<string>();
+    prevIds.forEach(id => {
+      if (!generatingTitleSessionIds.has(id)) {
+        completedIds.add(id);
+      }
+    });
+
+    completedIds.forEach(completedId => {
+      setNewlyTitledSessionId(completedId);
+      setTimeout(() => {
+        setNewlyTitledSessionId(prev => (prev === completedId ? null : prev));
+      }, 1500); // Animation duration
+    });
+
+    prevGeneratingTitleSessionIdsRef.current = generatingTitleSessionIds;
+  }, [generatingTitleSessionIds]);
 
   const handleStartEdit = (session: SavedChatSession) => {
     setEditingSession({ id: session.id, title: session.title });
@@ -162,38 +190,50 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_search_no_results')}</p>
         ) : (
           <ul className="py-1 px-2">
-            {sortedSessions.map((session) => (
-              <li key={session.id} className={`group relative rounded-lg my-0.5 ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`}>
-                <div className={`w-full flex items-center justify-between text-left px-3 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
-                  {editingSession?.id === session.id ? (
-                    <input ref={editInputRef} type="text" value={editingSession.title} onChange={(e) => setEditingSession({ ...editingSession, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
-                  ) : (
-                    <button onClick={() => onSelectSession(session.id)} className="flex items-center flex-grow min-w-0" aria-current={session.id === activeSessionId ? "page" : undefined}>
-                      {session.isPinned && <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" />}
-                      <span className="font-medium truncate" title={session.title}>
-                        {session.title}
-                      </span>
-                    </button>
-                  )}
-                  {loadingSessionIds.has(session.id) ? (
-                    <div className="loading-dots-container"><div className="loading-dot"></div><div className="loading-dot"></div><div className="loading-dot"></div></div>
-                  ) : (
-                    <button onClick={(e) => toggleMenu(e, session.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)]">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  )}
-                </div>
-                {activeMenu === session.id && (
-                  <div ref={menuRef} className="absolute right-3 top-9 z-10 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1">
-                    <button onClick={() => handleStartEdit(session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><Edit3 size={14} /> <span>{t('history_edit_title')}</span></button>
-                    <button onClick={() => { onTogglePinSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2">
-                      {session.isPinned ? <PinOff size={14} /> : <Pin size={14} />} <span>{session.isPinned ? t('history_unpin') : t('history_pin')}</span>
-                    </button>
-                    <button onClick={() => { onDeleteSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('history_delete')}</span></button>
-                  </div>
-                )}
-              </li>
-            ))}
+            {sortedSessions.map((session) => {
+                const isGeneratingTitle = generatingTitleSessionIds.has(session.id);
+                const isNewlyTitled = newlyTitledSessionId === session.id;
+              
+                return (
+                    <li key={session.id} className={`group relative rounded-lg my-0.5 ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${isNewlyTitled ? 'title-update-animate' : ''}`}>
+                    <div className={`w-full flex items-center justify-between text-left px-3 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
+                      {editingSession?.id === session.id ? (
+                        <input ref={editInputRef} type="text" value={editingSession.title} onChange={(e) => setEditingSession({ ...editingSession, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
+                      ) : (
+                        <button onClick={() => onSelectSession(session.id)} className="flex items-center flex-grow min-w-0" aria-current={session.id === activeSessionId ? "page" : undefined}>
+                          {session.isPinned && <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" />}
+                          <span className="font-medium truncate" title={session.title}>
+                             {isGeneratingTitle ? (
+                                <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]">
+                                    <div className="loading-dots-container"><div className="loading-dot"></div><div className="loading-dot"></div><div className="loading-dot"></div></div>
+                                    <span>{t('generatingTitle')}</span>
+                                </div>
+                                ) : (
+                                session.title
+                             )}
+                          </span>
+                        </button>
+                      )}
+                      {loadingSessionIds.has(session.id) ? (
+                        <div className="loading-dots-container"><div className="loading-dot"></div><div className="loading-dot"></div><div className="loading-dot"></div></div>
+                      ) : !isGeneratingTitle && (
+                        <button onClick={(e) => toggleMenu(e, session.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)]">
+                          <MoreHorizontal size={16} />
+                        </button>
+                      )}
+                    </div>
+                    {activeMenu === session.id && (
+                      <div ref={menuRef} className="absolute right-3 top-9 z-10 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1">
+                        <button onClick={() => handleStartEdit(session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><Edit3 size={14} /> <span>{t('history_edit_title')}</span></button>
+                        <button onClick={() => { onTogglePinSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2">
+                          {session.isPinned ? <PinOff size={14} /> : <Pin size={14} />} <span>{session.isPinned ? t('history_unpin') : t('history_pin')}</span>
+                        </button>
+                        <button onClick={() => { onDeleteSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('history_delete')}</span></button>
+                      </div>
+                    )}
+                  </li>
+                )
+            })}
           </ul>
         )}
       </div>

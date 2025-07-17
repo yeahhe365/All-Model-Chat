@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 export interface Command {
     name: string;
@@ -15,6 +15,18 @@ interface SlashCommandMenuProps {
 }
 
 export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({ isOpen, commands, onSelect, selectedIndex }) => {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const selectedItemRef = useRef<HTMLLIElement>(null);
+
+    useEffect(() => {
+        if (isOpen && selectedItemRef.current && scrollContainerRef.current) {
+            selectedItemRef.current.scrollIntoView({
+                block: 'nearest',
+                inline: 'start'
+            });
+        }
+    }, [selectedIndex, isOpen]);
+
     if (!isOpen || commands.length === 0) {
         return null;
     }
@@ -24,11 +36,11 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({ isOpen, comm
           className="absolute bottom-full left-0 right-0 mb-2 w-full max-w-7xl mx-auto px-2 sm:px-3"
           style={{ animation: 'fadeInUp 0.2s ease-out both' }}
         >
-            <div className="bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium max-h-60 overflow-y-auto custom-scrollbar p-2">
+            <div ref={scrollContainerRef} className="bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium max-h-60 overflow-y-auto custom-scrollbar p-2">
                 <p className="text-xs text-[var(--theme-text-tertiary)] px-2 pb-1 font-semibold tracking-wider">COMMANDS</p>
                 <ul>
                     {commands.map((command, index) => (
-                        <li key={command.name}>
+                        <li key={command.name} ref={selectedIndex === index ? selectedItemRef : null}>
                             <button
                                 onClick={() => onSelect(command)}
                                 className={`w-full text-left px-3 py-2 text-sm flex items-center gap-3 rounded-md transition-colors ${selectedIndex === index ? 'bg-[var(--theme-bg-tertiary)]' : 'hover:bg-[var(--theme-bg-tertiary)]'}`}

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon } from 'lucide-react';
 import { UploadedFile, AppSettings, ModelOption } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -94,6 +94,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   });
 
   const commands = useMemo<Command[]>(() => [
+    { name: 'model', description: t('help_cmd_model'), icon: <Bot size={16} />, action: () => {
+        setInputText('/model ');
+        setTimeout(() => {
+            const textarea = textareaRef.current;
+            if (textarea) {
+                textarea.focus();
+                const textLength = textarea.value.length;
+                textarea.setSelectionRange(textLength, textLength);
+            }
+        }, 0);
+    } },
     { name: 'help', description: t('help_cmd_help'), icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
     { name: 'pin', description: t('help_cmd_pin'), icon: <Pin size={16} />, action: onTogglePinCurrentSession },
     { name: 'retry', description: t('help_cmd_retry'), icon: <RotateCw size={16} />, action: onRetryLastTurn },
@@ -108,7 +119,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn]);
   
   const allCommandsForHelp = useMemo(() => [
-    { name: '/model [keyword]', description: t('help_cmd_model') },
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),
   ], [commands, t]);
 
@@ -210,26 +220,72 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;
     command.action();
-    setInputText('');
     setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
-    textareaRef.current?.focus();
-  }, []);
-
+    
+    // After performing the action, clear the input field.
+    // The 'model' command's purpose is to insert '/model ' into the input,
+    // so we don't clear it in that specific case. Other commands are one-shot actions.
+    if (command.name !== 'model') {
+        setInputText('');
+        onMessageSent();
+    }
+  }, [onMessageSent]);
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInputText(value);
-
-    if (value.startsWith('/') && !value.includes(' ')) {
-      const query = value.substring(1).toLowerCase();
+  
+    if (!value.startsWith('/')) {
+      setSlashCommandState(prev => ({ ...prev, isOpen: false }));
+      return;
+    }
+  
+    const [commandPart, ...args] = value.split(' ');
+    const commandName = commandPart.substring(1).toLowerCase();
+  
+    // Check for immediate execution on space for no-argument commands.
+    if (value.endsWith(' ') && value.trim() === `/${commandName}`) {
+      const matchedCommand = commands.find(cmd => cmd.name === commandName);
+      if (matchedCommand && matchedCommand.name !== 'model') {
+        matchedCommand.action();
+        setInputText('');
+        onMessageSent();
+        setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
+        return; // Action taken, no need to show menu.
+      }
+    }
+  
+    // Handle command suggestions.
+    if (commandName === 'model') {
+      const keyword = args.join(' ').toLowerCase();
+      const filteredModels = availableModels.filter(m => m.name.toLowerCase().includes(keyword));
+      const modelCommands: Command[] = filteredModels.map(model => ({
+        name: model.name,
+        description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
+        icon: model.id.includes('imagen') ? <ImageIcon size={16} /> : (model.isPinned ? <Pin size={16} /> : <Bot size={16} />),
+        action: () => {
+          onSelectModel(model.id);
+          setInputText('');
+          onMessageSent();
+        },
+      }));
+  
+      setSlashCommandState({
+        isOpen: modelCommands.length > 0 || !keyword.trim(),
+        query: 'model',
+        filteredCommands: modelCommands,
+        selectedIndex: 0,
+      });
+    } else {
+      // For other commands, show suggestions only if there's no space yet.
+      const query = commandPart.substring(1).toLowerCase();
       const filtered = commands.filter(cmd => cmd.name.toLowerCase().startsWith(query));
       setSlashCommandState({
-        isOpen: filtered.length > 0,
+        isOpen: filtered.length > 0 && !value.includes(' '),
         query: query,
         filteredCommands: filtered,
         selectedIndex: 0,
       });
-    } else {
-      setSlashCommandState(prev => ({ ...prev, isOpen: false }));
     }
   };
   
@@ -273,7 +329,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       } else if (e.key === 'Enter') {
         e.preventDefault();
         handleCommandSelect(slashCommandState.filteredCommands[slashCommandState.selectedIndex]);
-      } else if (e.key === 'Escape' || e.key === ' ') {
+      } else if (e.key === 'Escape') {
         e.preventDefault();
         setSlashCommandState(prev => ({ ...prev, isOpen: false }));
       }
