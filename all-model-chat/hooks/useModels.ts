@@ -9,11 +9,13 @@ export const useModels = (appSettings: AppSettings) => {
     const [modelsLoadingError, setModelsLoadingError] = useState<string | null>(null);
     const [isModelsLoading, setIsModelsLoading] = useState<boolean>(true);
 
+    const { useCustomApiConfig, apiKey } = appSettings;
+
     const fetchAndSetModels = useCallback(async () => {
         setIsModelsLoading(true);
         setModelsLoadingError(null);
         
-        const { apiKeysString } = getActiveApiConfig(appSettings);
+        const { apiKeysString } = getActiveApiConfig({ ...appSettings, apiKey, useCustomApiConfig });
 
         const pinnedInternalModels: ModelOption[] = TAB_CYCLE_MODELS.map(id => {
             const name = id.includes('/') 
@@ -65,7 +67,7 @@ export const useModels = (appSettings: AppSettings) => {
             setModelsLoadingError('No models available to select.');
         }
         setIsModelsLoading(false);
-    }, [appSettings]);
+    }, [useCustomApiConfig, apiKey]);
 
     useEffect(() => {
         fetchAndSetModels();
