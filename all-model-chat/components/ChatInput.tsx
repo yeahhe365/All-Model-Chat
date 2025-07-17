@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin } from 'lucide-react';
 import { UploadedFile, AppSettings, ModelOption } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -41,6 +41,7 @@ interface ChatInputProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
+  onTogglePinCurrentSession: () => void;
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
 }
@@ -56,7 +57,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isGoogleSearchEnabled, onToggleGoogleSearch,
   isCodeExecutionEnabled, onToggleCodeExecution,
   isUrlContextEnabled, onToggleUrlContext,
-  onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
+  onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
   onSelectModel, availableModels
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,6 +94,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const commands = useMemo<Command[]>(() => [
     { name: 'help', description: 'Displays this help menu.', icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
+    { name: 'pin', description: 'Toggle pin for current chat', icon: <Pin size={16} />, action: onTogglePinCurrentSession },
     { name: 'search', description: 'Toggle web search', icon: <Globe size={16} />, action: onToggleGoogleSearch },
     { name: 'code', description: 'Toggle code execution', icon: <Terminal size={16} />, action: onToggleCodeExecution },
     { name: 'url', description: 'Toggle URL context', icon: <Link size={16} />, action: onToggleUrlContext },
@@ -101,7 +103,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     { name: 'new', description: 'Start a new chat', icon: <FilePlus2 size={16} />, action: onNewChat },
     { name: 'settings', description: 'Open settings', icon: <Settings size={16} />, action: onOpenSettings },
     { name: 'canvas', description: 'Toggle Canvas Helper prompt', icon: <Wand2 size={16} />, action: onToggleCanvasPrompt },
-  ], [onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt]);
+  ], [onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession]);
   
   const allCommandsForHelp = useMemo(() => [
     { name: '/model [keyword]', description: 'Quickly switch models. e.g., /model flash' },
@@ -230,20 +232,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
   
   const handleSlashCommand = (text: string) => {
-    const [command, ...args] = text.split(' ');
-    const keyword = args.join(' ');
+    const [commandWithSlash, ...args] = text.split(' ');
+    const keyword = args.join(' ').toLowerCase();
+    const commandName = commandWithSlash.substring(1);
 
-    if (command === '/model') {
-        if (!keyword) return;
-        const lowerKeyword = keyword.toLowerCase();
-        const model = availableModels.find(m => m.name.toLowerCase().includes(lowerKeyword));
+    if (commandName === 'model' && keyword) {
+        const model = availableModels.find(m => m.name.toLowerCase().includes(keyword));
         if (model) {
             onSelectModel(model.id);
             setInputText('');
             onMessageSent();
         }
-    } else if (command === '/help') {
-        setIsHelpModalOpen(true);
+        return;
+    }
+
+    const command = commands.find(cmd => cmd.name === commandName);
+    if (command && !keyword) {
+        command.action();
         setInputText('');
         onMessageSent();
     }

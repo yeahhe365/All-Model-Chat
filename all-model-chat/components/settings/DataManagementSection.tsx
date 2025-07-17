@@ -1,11 +1,14 @@
+
 import React from 'react';
-import { DatabaseZap, Eraser, Trash2, FileText } from 'lucide-react';
+import { DatabaseZap, Eraser, Trash2, FileText, Smartphone } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: () => void;
+  onInstallPwa: () => void;
+  canInstallPwa: boolean;
   t: (key: string) => string;
 }
 
@@ -13,6 +16,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onClearHistory,
   onClearCache,
   onOpenLogViewer,
+  onInstallPwa,
+  canInstallPwa,
   t,
 }) => {
   const iconSize = getResponsiveValue(14, 16);
@@ -27,6 +32,17 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         {t('settingsDataManagement')}
       </h3>
       <div className="flex flex-col sm:flex-row gap-3">
+        {canInstallPwa && (
+          <button
+            onClick={onInstallPwa}
+            type="button"
+            className={`${baseButtonClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] focus:ring-[var(--theme-border-focus)]`}
+            aria-label={t('settingsInstallApp_aria')}
+          >
+            <Smartphone size={buttonIconSize} />
+            <span>{t('settingsInstallApp')}</span>
+          </button>
+        )}
         <button
           onClick={onClearHistory}
           type="button"

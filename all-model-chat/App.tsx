@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile, ModelOption } from './types';
@@ -59,6 +60,7 @@ const App: React.FC = () => {
       handleDeleteChatHistorySession,
       handleRenameSession,
       handleTogglePinSession,
+      handleTogglePinCurrentSession,
       clearCacheAndReload,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
@@ -85,6 +87,41 @@ const App: React.FC = () => {
   const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
   const [isLogViewerOpen, setIsLogViewerOpen] = useState<boolean>(false);
+  const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPromptEvent(e);
+      logService.info('PWA installation prompt is available.');
+    };
+  
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  
+    const handleAppInstalled = () => {
+        logService.info('PWA has been installed.');
+        setInstallPromptEvent(null);
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallPwa = async () => {
+    if (!installPromptEvent) return;
+    
+    logService.info('User initiated PWA installation.');
+    installPromptEvent.prompt();
+    
+    const { outcome } = await installPromptEvent.userChoice;
+    logService.info(`PWA prompt outcome: ${outcome}`);
+  
+    setInstallPromptEvent(null);
+  };
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     // Save the new settings as the global default for subsequent new chats
@@ -279,6 +316,8 @@ const App: React.FC = () => {
               onClearAllHistory={clearCacheAndReload}
               onClearCache={clearCacheAndReload}
               onOpenLogViewer={() => setIsLogViewerOpen(true)}
+              onInstallPwa={handleInstallPwa}
+              canInstallPwa={!!installPromptEvent}
               t={t}
             />
           )}
@@ -347,6 +386,7 @@ const App: React.FC = () => {
           onNewChat={startNewChat}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
+          onTogglePinCurrentSession={handleTogglePinCurrentSession}
           onSelectModel={handleSelectModelInHeader}
           availableModels={apiModels}
         />

@@ -1,4 +1,5 @@
 
+
 export const translations = {
     // App.tsx
     appLoadingModels: { en: 'Loading models...', zh: '加载模型中...' },
@@ -96,6 +97,8 @@ export const translations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'App Settings', zh: '应用设置' },
     settingsDataManagement: { en: 'Data Management', zh: '数据管理' },
+    settingsInstallApp: { en: 'Install App', zh: '安装应用' },
+    settingsInstallApp_aria: { en: 'Install this application to your device', zh: '将此应用安装到您的设备' },
     settingsApiConfig: { en: 'API Configuration', zh: 'API 配置' },
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
     settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },

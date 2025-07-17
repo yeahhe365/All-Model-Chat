@@ -325,6 +325,12 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         }
     }, [messages, isLoading, appSettings.isAutoTitleEnabled, activeChat, generateTitleForSession]);
 
+    const handleTogglePinCurrentSession = useCallback(() => {
+        if (activeSessionId) {
+            historyHandler.handleTogglePinSession(activeSessionId);
+        }
+    }, [activeSessionId, historyHandler.handleTogglePinSession]);
+
     return {
         messages,
         isLoading,
@@ -365,6 +371,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleDeleteChatHistorySession: historyHandler.handleDeleteChatHistorySession,
         handleRenameSession: historyHandler.handleRenameSession,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
+        handleTogglePinCurrentSession,
         clearCacheAndReload: historyHandler.clearCacheAndReload,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
         handleLoadPreloadedScenario: scenarioHandler.handleLoadPreloadedScenario,
