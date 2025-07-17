@@ -30,7 +30,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         <DatabaseZap size={iconSize} className="mr-2 text-[var(--theme-text-link)] opacity-80" />
         {t('settingsDataManagement')}
       </h3>
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3">
         <button
           onClick={onClearHistory}
           type="button"
@@ -59,17 +59,17 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
           <FileText size={buttonIconSize} />
           <span>View Logs</span>
         </button>
-        {isInstallable && (
-          <button
-            onClick={onInstallPwa}
-            type="button"
-            className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-accent)] hover:text-[var(--theme-text-accent)] focus:ring-[var(--theme-bg-accent)]`}
-            aria-label={t('settingsInstallApp_aria')}
-          >
-            <DownloadCloud size={buttonIconSize} />
-            <span>{t('settingsInstallApp')}</span>
-          </button>
-        )}
+        <button
+          onClick={onInstallPwa}
+          type="button"
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-accent)] hover:text-[var(--theme-text-accent)] focus:ring-[var(--theme-bg-accent)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--theme-bg-tertiary)] disabled:hover:text-[var(--theme-text-secondary)]`}
+          aria-label={t('settingsInstallApp_aria')}
+          disabled={!isInstallable}
+          title={isInstallable ? t('settingsInstallApp_available_title') : t('settingsInstallApp_unavailable_title')}
+        >
+          <DownloadCloud size={buttonIconSize} />
+          <span>{t('settingsInstallApp')}</span>
+        </button>
       </div>
     </div>
   );
