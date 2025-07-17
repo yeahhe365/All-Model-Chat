@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile, ModelOption } from './types';
@@ -115,6 +116,18 @@ const App: React.FC = () => {
 
   useEffect(() => {
     logService.info('App initialized.');
+    
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            logService.info('Service Worker registered.', { scope: registration.scope });
+          })
+          .catch(error => {
+            logService.error('Service Worker registration failed.', { error });
+          });
+      });
+    }
   }, []);
   
   // PWA Installation Handlers
