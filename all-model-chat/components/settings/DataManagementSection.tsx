@@ -1,12 +1,13 @@
 import React from 'react';
 import { DatabaseZap, Eraser, Trash2, FileText, DownloadCloud } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
+import { PwaInstallStatus } from '../SettingsModal';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: () => void;
-  isInstallable: boolean;
+  pwaInstallStatus: PwaInstallStatus;
   onInstallPwa: () => void;
   t: (key: string) => string;
 }
@@ -15,7 +16,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onClearHistory,
   onClearCache,
   onOpenLogViewer,
-  isInstallable,
+  pwaInstallStatus,
   onInstallPwa,
   t,
 }) => {
@@ -23,6 +24,24 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   const buttonIconSize = getResponsiveValue(12, 14);
 
   const baseButtonClass = "px-3 sm:px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] flex items-center justify-center gap-2 text-sm font-medium w-full sm:w-auto";
+  
+  const getInstallButtonProps = () => {
+    switch (pwaInstallStatus) {
+      case 'installable':
+        return { disabled: false, title: t('settingsInstallApp_available_title') };
+      case 'installed':
+        return { disabled: true, title: t('settingsInstallApp_installed_title') };
+      case 'not_ready':
+        return { disabled: true, title: t('settingsInstallApp_not_ready_title') };
+      case 'not_supported':
+        return { disabled: true, title: t('settingsInstallApp_not_supported_title') };
+      case 'loading':
+      default:
+        return { disabled: true, title: t('settingsInstallApp_loading_title') };
+    }
+  };
+
+  const { disabled: isInstallButtonDisabled, title: installButtonTitle } = getInstallButtonProps();
 
   return (
     <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
@@ -64,8 +83,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
           type="button"
           className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-accent)] hover:text-[var(--theme-text-accent)] focus:ring-[var(--theme-bg-accent)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[var(--theme-bg-tertiary)] disabled:hover:text-[var(--theme-text-secondary)]`}
           aria-label={t('settingsInstallApp_aria')}
-          disabled={!isInstallable}
-          title={isInstallable ? t('settingsInstallApp_available_title') : t('settingsInstallApp_unavailable_title')}
+          disabled={isInstallButtonDisabled}
+          title={installButtonTitle}
         >
           <DownloadCloud size={buttonIconSize} />
           <span>{t('settingsInstallApp')}</span>
