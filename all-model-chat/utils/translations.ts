@@ -97,8 +97,6 @@ export const translations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'App Settings', zh: '应用设置' },
     settingsDataManagement: { en: 'Data Management', zh: '数据管理' },
-    settingsInstallApp: { en: 'Install App', zh: '安装应用' },
-    settingsInstallApp_aria: { en: 'Install this application to your device', zh: '将此应用安装到您的设备' },
     settingsApiConfig: { en: 'API Configuration', zh: 'API 配置' },
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
     settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },
@@ -128,6 +126,8 @@ export const translations = {
     settingsClearCache: { en: 'Clear Cache', zh: '清除缓存' },
     settingsClearCache_aria: { en: 'Clear all cached application data', zh: '清除所有缓存的应用数据' },
     settingsClearCache_confirm: { en: "Are you sure you want to clear all cached application data?\n\nThis will remove:\n- Saved settings\n- Chat history\n- Preloaded scenarios\n\nThis action cannot be undone.", zh: '您确定要清除所有缓存的应用程序数据吗？\n\n这将删除：\n- 已保存的设置\n- 聊天记录\n- 预加载的场景\n\n此操作无法撤销。'},
+    settingsInstallApp: { en: 'Install App', zh: '安装应用' },
+    settingsInstallApp_aria: { en: 'Install Progressive Web App', zh: '安装渐进式网络应用' },
     settingsCancel: { en: 'Cancel', zh: '取消' },
     settingsSave: { en: 'Save', zh: '保存' },
     apiConfig_default_info: { en: 'Using default API setup from environment. Enable for custom settings.', zh: '正在使用环境中的默认 API 配置。启用以进行自定义设置。' },

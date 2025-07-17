@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile, ModelOption } from './types';
@@ -88,40 +87,7 @@ const App: React.FC = () => {
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
   const [isLogViewerOpen, setIsLogViewerOpen] = useState<boolean>(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallPromptEvent(e);
-      logService.info('PWA installation prompt is available.');
-    };
-  
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  
-    const handleAppInstalled = () => {
-        logService.info('PWA has been installed.');
-        setInstallPromptEvent(null);
-    };
-
-    window.addEventListener('appinstalled', handleAppInstalled);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', handleAppInstalled);
-    };
-  }, []);
-
-  const handleInstallPwa = async () => {
-    if (!installPromptEvent) return;
-    
-    logService.info('User initiated PWA installation.');
-    installPromptEvent.prompt();
-    
-    const { outcome } = await installPromptEvent.userChoice;
-    logService.info(`PWA prompt outcome: ${outcome}`);
-  
-    setInstallPromptEvent(null);
-  };
+  const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
 
   const handleSaveSettings = (newSettings: AppSettings) => {
     // Save the new settings as the global default for subsequent new chats
@@ -150,6 +116,36 @@ const App: React.FC = () => {
   useEffect(() => {
     logService.info('App initialized.');
   }, []);
+  
+  // PWA Installation Handlers
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        logService.info('PWA install prompt available.');
+        setInstallPromptEvent(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  useEffect(() => {
+      const handleAppInstalled = () => {
+          logService.info('PWA installed successfully.');
+          setInstallPromptEvent(null);
+          setIsStandalone(true);
+      };
+      window.addEventListener('appinstalled', handleAppInstalled);
+      return () => window.removeEventListener('appinstalled', handleAppInstalled);
+  }, []);
+
+  const handleInstallPwa = async () => {
+      if (!installPromptEvent) return;
+      
+      installPromptEvent.prompt();
+      const { outcome } = await installPromptEvent.userChoice;
+      logService.info(`PWA install prompt outcome: ${outcome}`);
+      setInstallPromptEvent(null);
+  };
 
   const handleLoadCanvasHelperPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
@@ -317,7 +313,7 @@ const App: React.FC = () => {
               onClearCache={clearCacheAndReload}
               onOpenLogViewer={() => setIsLogViewerOpen(true)}
               onInstallPwa={handleInstallPwa}
-              canInstallPwa={!!installPromptEvent}
+              isInstallable={!!installPromptEvent && !isStandalone}
               t={t}
             />
           )}

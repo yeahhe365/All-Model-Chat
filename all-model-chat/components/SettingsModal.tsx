@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
 import { Settings2, X, SlidersHorizontal, KeyRound, Bot } from 'lucide-react';
@@ -26,7 +25,7 @@ interface SettingsModalProps {
   onClearCache: () => void;
   onOpenLogViewer: () => void;
   onInstallPwa: () => void;
-  canInstallPwa: boolean;
+  isInstallable: boolean;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -35,7 +34,7 @@ type SettingsTab = 'general' | 'api' | 'model';
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
   onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer,
-  onInstallPwa, canInstallPwa, t
+  onInstallPwa, isInstallable, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
@@ -130,7 +129,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClearCache={onClearCache}
                     onOpenLogViewer={onOpenLogViewer}
                     onInstallPwa={onInstallPwa}
-                    canInstallPwa={canInstallPwa}
+                    isInstallable={isInstallable}
                     t={t}
                   />
                 </div>
