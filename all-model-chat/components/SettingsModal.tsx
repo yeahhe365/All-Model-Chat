@@ -12,8 +12,6 @@ import { SettingsActions } from './settings/SettingsActions';
 import { ModelOption } from '../types';
 import { Modal } from './shared/Modal';
 
-export type PwaInstallStatus = 'loading' | 'installable' | 'installed' | 'not_ready' | 'not_supported';
-
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,7 +25,7 @@ interface SettingsModalProps {
   onClearCache: () => void;
   onOpenLogViewer: () => void;
   onInstallPwa: () => void;
-  pwaInstallStatus: PwaInstallStatus;
+  isInstallable: boolean;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -36,7 +34,7 @@ type SettingsTab = 'general' | 'api' | 'model';
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
   onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer,
-  onInstallPwa, pwaInstallStatus, t
+  onInstallPwa, isInstallable, t
 }) => {
   const [settings, setSettings] = useState(currentSettings);
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
@@ -131,7 +129,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClearCache={onClearCache}
                     onOpenLogViewer={onOpenLogViewer}
                     onInstallPwa={onInstallPwa}
-                    pwaInstallStatus={pwaInstallStatus}
+                    isInstallable={isInstallable}
                     t={t}
                   />
                 </div>
