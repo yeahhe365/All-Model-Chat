@@ -368,6 +368,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleCancelEdit: messageHandler.handleCancelEdit,
         handleDeleteMessage: messageHandler.handleDeleteMessage,
         handleRetryMessage: messageHandler.handleRetryMessage,
+        handleRetryLastTurn: messageHandler.handleRetryLastTurn,
         handleDeleteChatHistorySession: historyHandler.handleDeleteChatHistorySession,
         handleRenameSession: historyHandler.handleRenameSession,
         handleTogglePinSession: historyHandler.handleTogglePinSession,

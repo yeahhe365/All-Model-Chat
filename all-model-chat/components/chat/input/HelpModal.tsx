@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal } from '../../shared/Modal';
 import { X, HelpCircle } from 'lucide-react';
+import { translations } from '../../../utils/appUtils';
 
 interface CommandInfo {
     name: string;
@@ -11,10 +12,10 @@ interface HelpModalProps {
     isOpen: boolean;
     onClose: () => void;
     commands: CommandInfo[];
-    t: (key: string) => string;
+    t: (key: keyof typeof translations) => string;
 }
 
-export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands }) => {
+export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands, t }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <div
@@ -24,9 +25,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands 
                 {/* Header */}
                 <div className="flex-shrink-0 flex justify-between items-center p-3 sm:p-4 border-b border-[var(--theme-border-primary)]">
                     <h2 id="help-modal-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
-                        <HelpCircle size={22} className="mr-2.5 opacity-80" /> Command Help
+                        <HelpCircle size={22} className="mr-2.5 opacity-80" /> {t('helpModal_title')}
                     </h2>
-                    <button onClick={onClose} className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors p-1 rounded-full" aria-label="Close help modal">
+                    <button onClick={onClose} className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors p-1 rounded-full" aria-label={t('helpModal_close_aria')}>
                         <X size={22} />
                     </button>
                 </div>

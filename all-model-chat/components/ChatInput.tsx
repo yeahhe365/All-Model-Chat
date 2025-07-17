@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw } from 'lucide-react';
 import { UploadedFile, AppSettings, ModelOption } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -42,6 +42,7 @@ interface ChatInputProps {
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
   onTogglePinCurrentSession: () => void;
+  onRetryLastTurn: () => void;
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
 }
@@ -58,7 +59,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isCodeExecutionEnabled, onToggleCodeExecution,
   isUrlContextEnabled, onToggleUrlContext,
   onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
-  onSelectModel, availableModels
+  onRetryLastTurn, onSelectModel, availableModels
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -93,22 +94,23 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   });
 
   const commands = useMemo<Command[]>(() => [
-    { name: 'help', description: 'Displays this help menu.', icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
-    { name: 'pin', description: 'Toggle pin for current chat', icon: <Pin size={16} />, action: onTogglePinCurrentSession },
-    { name: 'search', description: 'Toggle web search', icon: <Globe size={16} />, action: onToggleGoogleSearch },
-    { name: 'code', description: 'Toggle code execution', icon: <Terminal size={16} />, action: onToggleCodeExecution },
-    { name: 'url', description: 'Toggle URL context', icon: <Link size={16} />, action: onToggleUrlContext },
-    { name: 'file', description: 'Attach a file', icon: <UploadCloud size={16} />, action: () => handleAttachmentAction('upload') },
-    { name: 'clear', description: 'Clear current chat', icon: <Trash2 size={16} />, action: onClearChat },
-    { name: 'new', description: 'Start a new chat', icon: <FilePlus2 size={16} />, action: onNewChat },
-    { name: 'settings', description: 'Open settings', icon: <Settings size={16} />, action: onOpenSettings },
-    { name: 'canvas', description: 'Toggle Canvas Helper prompt', icon: <Wand2 size={16} />, action: onToggleCanvasPrompt },
-  ], [onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession]);
+    { name: 'help', description: t('help_cmd_help'), icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
+    { name: 'pin', description: t('help_cmd_pin'), icon: <Pin size={16} />, action: onTogglePinCurrentSession },
+    { name: 'retry', description: t('help_cmd_retry'), icon: <RotateCw size={16} />, action: onRetryLastTurn },
+    { name: 'search', description: t('help_cmd_search'), icon: <Globe size={16} />, action: onToggleGoogleSearch },
+    { name: 'code', description: t('help_cmd_code'), icon: <Terminal size={16} />, action: onToggleCodeExecution },
+    { name: 'url', description: t('help_cmd_url'), icon: <Link size={16} />, action: onToggleUrlContext },
+    { name: 'file', description: t('help_cmd_file'), icon: <UploadCloud size={16} />, action: () => handleAttachmentAction('upload') },
+    { name: 'clear', description: t('help_cmd_clear'), icon: <Trash2 size={16} />, action: onClearChat },
+    { name: 'new', description: t('help_cmd_new'), icon: <FilePlus2 size={16} />, action: onNewChat },
+    { name: 'settings', description: t('help_cmd_settings'), icon: <Settings size={16} />, action: onOpenSettings },
+    { name: 'canvas', description: t('help_cmd_canvas'), icon: <Wand2 size={16} />, action: onToggleCanvasPrompt },
+  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn]);
   
   const allCommandsForHelp = useMemo(() => [
-    { name: '/model [keyword]', description: 'Quickly switch models. e.g., /model flash' },
+    { name: '/model [keyword]', description: t('help_cmd_model') },
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),
-  ], [commands]);
+  ], [commands, t]);
 
   useEffect(() => {
     if (commandedInput) {

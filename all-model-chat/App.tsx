@@ -56,6 +56,7 @@ const App: React.FC = () => {
       handleCancelEdit,
       handleDeleteMessage,
       handleRetryMessage,
+      handleRetryLastTurn,
       handleDeleteChatHistorySession,
       handleRenameSession,
       handleTogglePinSession,
@@ -420,6 +421,7 @@ const App: React.FC = () => {
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
           onTogglePinCurrentSession={handleTogglePinCurrentSession}
+          onRetryLastTurn={handleRetryLastTurn}
           onSelectModel={handleSelectModelInHeader}
           availableModels={apiModels}
         />

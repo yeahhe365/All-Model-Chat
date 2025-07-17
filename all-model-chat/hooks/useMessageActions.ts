@@ -102,11 +102,25 @@ export const useMessageActions = ({
         });
     }, [activeSessionId, messages, isLoading, handleStopGenerating, handleSendMessage]);
 
+    const handleRetryLastTurn = useCallback(async () => {
+        if (!activeSessionId) return;
+        
+        const lastModelMessage = [...messages].reverse().find(m => m.role === 'model' || m.role === 'error');
+        
+        if (lastModelMessage) {
+            logService.info("User retrying last turn via command", { modelMessageId: lastModelMessage.id, sessionId: activeSessionId });
+            await handleRetryMessage(lastModelMessage.id);
+        } else {
+            logService.warn("Could not retry last turn: no model message found.");
+        }
+    }, [activeSessionId, messages, handleRetryMessage]);
+
     return {
         handleStopGenerating,
         handleEditMessage,
         handleCancelEdit,
         handleDeleteMessage,
         handleRetryMessage,
+        handleRetryLastTurn,
     };
 };

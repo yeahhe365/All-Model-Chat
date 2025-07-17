@@ -1,4 +1,5 @@
 
+
 export const translations = {
     // App.tsx
     appLoadingModels: { en: 'Loading models...', zh: '加载模型中...' },
@@ -58,6 +59,24 @@ export const translations = {
     web_search_label: { en: 'Web Search', zh: '网络搜索' },
     code_execution_label: { en: 'Code Execution', zh: '代码执行' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
+
+    // Command descriptions for help modal
+    help_cmd_model: { en: 'Quickly switch models. e.g., /model flash', zh: '快速切换模型。例如 /model flash' },
+    help_cmd_help: { en: 'Displays this help menu.', zh: '显示此帮助菜单。' },
+    help_cmd_pin: { en: 'Toggle pin for current chat', zh: '切换当前聊天的置顶状态' },
+    help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
+    help_cmd_search: { en: 'Toggle web search', zh: '切换网络搜索' },
+    help_cmd_code: { en: 'Toggle code execution', zh: '切换代码执行' },
+    help_cmd_url: { en: 'Toggle URL context', zh: '切换 URL 上下文' },
+    help_cmd_file: { en: 'Attach a file', zh: '附加文件' },
+    help_cmd_clear: { en: 'Clear current chat', zh: '清除当前聊天' },
+    help_cmd_new: { en: 'Start a new chat', zh: '开始新聊天' },
+    help_cmd_settings: { en: 'Open settings', zh: '打开设置' },
+    help_cmd_canvas: { en: 'Toggle Canvas Helper prompt', zh: '切换 Canvas 助手提示' },
+    
+    // Help Modal
+    helpModal_title: { en: 'Command Help', zh: '命令帮助' },
+    helpModal_close_aria: { en: 'Close help modal', zh: '关闭帮助模态框' },
 
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
@@ -208,7 +227,7 @@ export const translations = {
     history_delete: { en: 'Delete', zh: '删除' },
     
     // ChatInputPlaceholder
-    chatInputPlaceholder: { en: 'Ask anything...', zh: '询问任何问题' },
+    chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有可用命令)' },
     
     // Header
     headerTitle: { en: 'All Model Chat', zh: 'All Model Chat' },
