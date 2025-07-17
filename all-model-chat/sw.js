@@ -33,7 +33,7 @@ const getDynamicAppShellUrls = async () => {
             try {
                 const importmapJson = JSON.parse(importmapMatch[1]);
                 if (importmapJson.imports) {
-                    importmapUrls = Object.values(importmapJson.imports);
+                    importmapUrls = Object.values(importmapJson.imports).filter(url => typeof url === 'string' && !url.endsWith('/'));
                 }
             } catch (e) {
                 console.error('[SW] Failed to parse importmap:', e);
