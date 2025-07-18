@@ -55,18 +55,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
         
         let sessionId = activeSessionId;
         
-        let sessionToUpdate: IndividualChatSettings | null = null;
-        if (sessionId) {
-            updateAndPersistSessions(prev => {
-                const found = prev.find(s => s.id === sessionId);
-                if(found) sessionToUpdate = found.settings;
-                return prev;
-            });
-        }
-        
-        if (!sessionToUpdate) {
-            sessionToUpdate = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-        }
+        // The 'currentChatSettings' prop already contains the correct, up-to-date settings
+        // for the active session, or the default settings if no session is active yet.
+        const sessionToUpdate = currentChatSettings;
 
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
