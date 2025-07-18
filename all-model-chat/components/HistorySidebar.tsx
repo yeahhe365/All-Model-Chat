@@ -154,25 +154,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       className={`h-full flex flex-col w-64 bg-[var(--theme-bg-secondary)] shadow-lg ease-in-out duration-300 absolute top-0 left-0 z-30 transition-transform transform sm:relative sm:transform-none sm:top-auto sm:left-auto sm:z-auto sm:transition-all ${isOpen ? 'translate-x-0' : '-translate-x-full'} sm:w-64 md:w-72 sm:flex-shrink-0 ${isOpen ? 'sm:ml-0' : 'sm:-ml-64 md:-ml-72'} ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : 'sm:border-r-0'}`}
       role="complementary" aria-label={t('history_title')} aria-hidden={!isOpen}
     >
-      <div className="p-2 sm:p-3 flex items-center flex-shrink-0 h-[60px] border-b border-[var(--theme-border-primary)]">
-        {isSearching ? (
-          <div className="w-full flex items-center gap-2">
-            <Search size={20} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-            <input type="text" placeholder={t('history_search_placeholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-transparent border-0 rounded-md py-1.5 text-sm focus:ring-0 outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)] transition-colors" autoFocus onKeyDown={(e) => { if (e.key === 'Escape') setIsSearching(false); }} />
-            <button onClick={() => { setIsSearching(false); setSearchQuery(''); }} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-md" aria-label={t('history_search_clear_aria')}>
-              <X size={20} />
-            </button>
-          </div>
-        ) : (
-          <div className="w-full flex justify-between items-center">
-            <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
-              <Menu size={20} />
-            </button>
-            <button onClick={() => setIsSearching(true)} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={t('history_search_aria')}>
-              <Search size={20} />
-            </button>
-          </div>
-        )}
+      <div className="p-2 sm:p-3 flex items-center justify-between flex-shrink-0 h-[60px] border-b border-[var(--theme-border-primary)]">
+        <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] pl-2">{t('history_title')}</h3>
+        <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
+          <Menu size={20} />
+        </button>
       </div>
       <div className="px-3 pt-3">
         <button onClick={onNewChat} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-[var(--theme-text-secondary)] font-medium bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] shadow-sm transition-all" aria-label={t('headerNewChat_aria')}>
@@ -180,7 +166,31 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <span>{t('headerNewChat')}</span>
         </button>
       </div>
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-3 pt-2">
+        {isSearching ? (
+          <div className="flex items-center gap-2 w-full text-left px-2 py-1 text-sm bg-[var(--theme-bg-primary)] border border-[var(--theme-border-focus)] rounded-lg shadow-sm transition-all duration-200">
+            <Search size={18} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+            <input
+              type="text"
+              placeholder={t('history_search_placeholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-transparent border-0 rounded-md py-1 text-sm focus:ring-0 outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)]"
+              autoFocus
+              onKeyDown={(e) => { if (e.key === 'Escape') setIsSearching(false); }}
+            />
+            <button onClick={() => { setIsSearching(false); setSearchQuery(''); }} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-md" aria-label={t('history_search_clear_aria')}>
+              <X size={18} />
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => setIsSearching(true)} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-[var(--theme-text-secondary)] font-medium bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] shadow-sm transition-all" aria-label={t('history_search_aria')}>
+            <Search size={18} />
+            <span>{t('history_search_button' as any, 'Search')}</span>
+          </button>
+        )}
+      </div>
+      <div className="px-4 pt-3 pb-2">
         <h3 className="text-xs font-semibold text-[var(--theme-text-tertiary)] tracking-wider uppercase">{t('history_recent_chats')}</h3>
       </div>
       <div className="flex-grow overflow-y-auto custom-scrollbar">

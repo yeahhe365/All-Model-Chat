@@ -225,6 +225,7 @@ export const translations = {
     history_delete_aria: { en: 'Delete chat: {title}', zh: '删除对话：{title}' },
     history_delete_title: { en: 'Delete Chat', zh: '删除对话' },
     history_search_placeholder: { en: 'Search history...', zh: '搜索历史...' },
+    history_search_button: { en: 'Search', zh: '搜索' },
     history_search_aria: { en: 'Search chat history', zh: '搜索聊天记录' },
     history_search_clear_aria: { en: 'Clear search', zh: '清除搜索' },
     history_search_no_results: { en: 'No results found.', zh: '未找到结果。' },

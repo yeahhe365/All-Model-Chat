@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, FilePlus2, Wand2, Lock } from 'lucide-react'; 
+import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, SquarePen, Wand2, Lock } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
@@ -120,79 +120,85 @@ export const Header: React.FC<HeaderProps> = ({
         >
             <Menu size={getResponsiveValue(18, 20)} />
         </button>
-        <div className="flex flex-col">
-          <h1 className="text-base sm:text-lg font-bold text-[var(--theme-text-link)] whitespace-nowrap">{t('headerTitle')}</h1>
-          
-          <div className="relative mt-0.5" ref={modelSelectorRef}>
-            <button
-              onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
-              disabled={isModelsLoading || isLoading || isSwitchingModel}
-              className={`w-[6.6rem] sm:w-[7.8rem] md:w-[9rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
-              title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
-              aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
-              aria-haspopup="listbox"
-              aria-expanded={isModelSelectorOpen}
-            >
-               <div ref={containerRef} className="flex-1 overflow-hidden">
-                    <div ref={contentWrapperRef} className={`flex w-max items-center ${isModelNameOverflowing ? 'horizontal-scroll-marquee' : ''}`}>
-                        <span ref={singleInstanceRef} className="flex items-center gap-1 whitespace-nowrap">
-                            {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
-                            {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
-                            <span>{displayModelName}</span>
-                        </span>
-                        {isModelNameOverflowing && (
-                            <span className="flex items-center gap-1 whitespace-nowrap pl-4">
-                                {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
-                                {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
-                                <span>{displayModelName}</span>
-                            </span>
-                        )}
-                    </div>
-                </div>
-              <ChevronDown size={12} className={`transition-transform duration-200 flex-shrink-0 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isModelSelectorOpen && (
-              <div 
-                className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 max-h-60 overflow-y-auto custom-scrollbar"
-                role="listbox"
-                aria-labelledby="model-selector-button" 
-              >
-                {isModelsLoading ? (
-                  <div>
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="px-3 py-2 flex items-center gap-2 animate-pulse">
-                        <div className="h-4 w-4 bg-[var(--theme-bg-tertiary)] rounded-full"></div>
-                        <div className="h-4 flex-grow bg-[var(--theme-bg-tertiary)] rounded"></div>
-                      </div>
-                    ))}
+        {!isHistorySidebarOpen && (
+          <button
+            onClick={onNewChat}
+            className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
+            aria-label={t('headerNewChat_aria')}
+            title={`${t('headerNewChat')} (${newChatShortcut})`}
+          >
+            <SquarePen size={getResponsiveValue(18, 20)} />
+          </button>
+        )}
+        <div className="relative" ref={modelSelectorRef}>
+          <button
+            onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
+            disabled={isModelsLoading || isLoading || isSwitchingModel}
+            className={`w-[6.6rem] sm:w-[7.8rem] md:w-[9rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
+            aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
+            aria-haspopup="listbox"
+            aria-expanded={isModelSelectorOpen}
+          >
+             <div ref={containerRef} className="flex-1 overflow-hidden">
+                  <div ref={contentWrapperRef} className={`flex w-max items-center ${isModelNameOverflowing ? 'horizontal-scroll-marquee' : ''}`}>
+                      <span ref={singleInstanceRef} className="flex items-center gap-1 whitespace-nowrap">
+                          {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
+                          {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
+                          <span>{displayModelName}</span>
+                      </span>
+                      {isModelNameOverflowing && (
+                          <span className="flex items-center gap-1 whitespace-nowrap pl-4">
+                              {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
+                              {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
+                              <span>{displayModelName}</span>
+                          </span>
+                      )}
                   </div>
-                ) : availableModels.length > 0 ? (
-                  availableModels.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => handleModelSelect(model.id)}
-                      role="option"
-                      aria-selected={model.id === selectedModelId}
-                      className={`w-full text-left px-3 py-2 text-xs sm:text-sm flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
-                        ${model.id === selectedModelId ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`
-                      }
-                    >
-                      <div className="flex items-center gap-2">
-                        {model.isPinned && (
-                          <Pin size={12} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-                        )}
-                        <span className="truncate" title={model.name}>{model.name}</span>
-                      </div>
-                      {model.id === selectedModelId && <Check size={14} className="text-[var(--theme-text-link)] flex-shrink-0" />}
-                    </button>
-                  ))
-                ) : (
-                  <div className="px-3 py-2 text-xs sm:text-sm text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
-                )}
               </div>
-            )}
-          </div>
+            <ChevronDown size={12} className={`transition-transform duration-200 flex-shrink-0 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isModelSelectorOpen && (
+            <div 
+              className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 max-h-60 overflow-y-auto custom-scrollbar"
+              role="listbox"
+              aria-labelledby="model-selector-button" 
+            >
+              {isModelsLoading ? (
+                <div>
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="px-3 py-2 flex items-center gap-2 animate-pulse">
+                      <div className="h-4 w-4 bg-[var(--theme-bg-tertiary)] rounded-full"></div>
+                      <div className="h-4 flex-grow bg-[var(--theme-bg-tertiary)] rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : availableModels.length > 0 ? (
+                availableModels.map(model => (
+                  <button
+                    key={model.id}
+                    onClick={() => handleModelSelect(model.id)}
+                    role="option"
+                    aria-selected={model.id === selectedModelId}
+                    className={`w-full text-left px-3 py-2 text-xs sm:text-sm flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
+                      ${model.id === selectedModelId ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      {model.isPinned && (
+                        <Pin size={12} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                      )}
+                      <span className="truncate" title={model.name}>{model.name}</span>
+                    </div>
+                    {model.id === selectedModelId && <Check size={14} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-2 text-xs sm:text-sm text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
@@ -220,15 +226,6 @@ export const Header: React.FC<HeaderProps> = ({
           title={t('settingsOpen_title')}
         >
           <Settings size={getResponsiveValue(16, 18)} />
-        </button>
-        
-        <button
-          onClick={onNewChat}
-          className="p-2.5 sm:p-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-clear-chat)] rounded-lg shadow-premium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-bg-accent)] flex items-center justify-center hover:scale-105 active:scale-100"
-          aria-label={t('headerNewChat_aria')}
-          title={`${t('headerNewChat')} (${newChatShortcut})`}
-        >
-          <FilePlus2 size={getResponsiveValue(14, 16)} />
         </button>
       </div>
     </header>
