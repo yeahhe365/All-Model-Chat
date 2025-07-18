@@ -1,5 +1,5 @@
-import React from 'react';
-import { DatabaseZap, Eraser, Trash2, FileText, DownloadCloud } from 'lucide-react';
+import React, { useRef } from 'react';
+import { DatabaseZap, Eraser, Trash2, FileText, DownloadCloud, Upload, Download } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 interface DataManagementSectionProps {
@@ -8,6 +8,8 @@ interface DataManagementSectionProps {
   onOpenLogViewer: () => void;
   isInstallable: boolean;
   onInstallPwa: () => void;
+  onImportSettings: (file: File) => void;
+  onExportSettings: (includeHistory: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -17,12 +19,34 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onOpenLogViewer,
   isInstallable,
   onInstallPwa,
+  onImportSettings,
+  onExportSettings,
   t,
 }) => {
   const iconSize = getResponsiveValue(14, 16);
   const buttonIconSize = getResponsiveValue(12, 14);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const baseButtonClass = "px-3 sm:px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] flex items-center justify-center gap-2 text-sm font-medium w-full sm:w-auto";
+
+  const handleExportClick = () => {
+    const includeHistory = window.confirm(t('settingsExportHistory_confirm'));
+    onExportSettings(includeHistory);
+  };
+
+  const handleImportClick = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onImportSettings(file);
+    }
+    if (importInputRef.current) {
+      importInputRef.current.value = "";
+    }
+  };
 
   return (
     <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
@@ -69,6 +93,25 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         >
           <DownloadCloud size={buttonIconSize} />
           <span>{t('settingsInstallApp')}</span>
+        </button>
+        <button
+          onClick={handleImportClick}
+          type="button"
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] focus:ring-[var(--theme-border-secondary)]`}
+          aria-label={t('settingsImportConfig_aria')}
+        >
+          <Upload size={buttonIconSize} />
+          <span>{t('settingsImportConfig')}</span>
+        </button>
+        <input type="file" ref={importInputRef} onChange={handleFileImport} accept=".json" className="hidden" />
+        <button
+          onClick={handleExportClick}
+          type="button"
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] focus:ring-[var(--theme-border-secondary)]`}
+          aria-label={t('settingsExportConfig_aria')}
+        >
+          <Download size={buttonIconSize} />
+          <span>{t('settingsExportConfig')}</span>
         </button>
       </div>
     </div>

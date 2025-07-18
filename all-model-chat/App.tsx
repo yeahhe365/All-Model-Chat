@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings, UploadedFile, ModelOption } from './types';
-import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS, CANVAS_ASSISTANT_SYSTEM_PROMPT } from './constants/appConstants';
+import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS, CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_APP_SETTINGS } from './constants/appConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
 import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
@@ -206,6 +206,85 @@ const App: React.FC = () => {
     }, 0);
   };
 
+  const handleExportSettings = useCallback((includeHistory: boolean) => {
+      logService.info(`Exporting settings. Include history: ${includeHistory}`);
+      try {
+          const dataToExport: any = {
+              settings: appSettings,
+          };
+
+          if (includeHistory) {
+              dataToExport.history = savedSessions;
+          }
+
+          const jsonString = JSON.stringify(dataToExport, null, 2);
+          const blob = new Blob([jsonString], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          const date = new Date().toISOString().slice(0, 10);
+          link.download = `all-model-chat-settings-${date}${includeHistory ? '-with-history' : ''}.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+      } catch (error) {
+          logService.error('Failed to export settings', { error });
+          alert('Failed to export settings.');
+      }
+  }, [appSettings, savedSessions]);
+
+  const handleImportSettings = useCallback((file: File) => {
+      logService.info(`Importing settings from file: ${file.name}`);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          try {
+              const text = e.target?.result;
+              if (typeof text !== 'string') {
+                  throw new Error('File content is not text.');
+              }
+              const data = JSON.parse(text);
+
+              if (data && data.settings && typeof data.settings === 'object') {
+                  const importedSettings = data.settings;
+                  const newSettings = { ...DEFAULT_APP_SETTINGS };
+
+                  for (const key of Object.keys(DEFAULT_APP_SETTINGS) as Array<keyof AppSettings>) {
+                      if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
+                          const importedValue = importedSettings[key];
+                          const defaultValue = DEFAULT_APP_SETTINGS[key];
+                          
+                          if (typeof importedValue === typeof defaultValue) {
+                              (newSettings as any)[key] = importedValue;
+                          } else if ((key === 'apiKey' || key === 'apiProxyUrl' || key === 'lockedApiKey') && (typeof importedValue === 'string' || importedValue === null)) {
+                              (newSettings as any)[key] = importedValue;
+                          } else {
+                              logService.warn(`Type mismatch for setting "${key}" during import. Using default.`, { imported: typeof importedValue, default: typeof defaultValue });
+                          }
+                      }
+                  }
+
+                  if (data.history) {
+                      logService.info('Imported file contains history, which will be ignored as per configuration.');
+                  }
+                  
+                  setAppSettings(newSettings);
+                  alert(t('settingsImport_success'));
+              } else {
+                  throw new Error('Invalid settings file format. Missing "settings" key.');
+              }
+          } catch (error) {
+              logService.error('Failed to import settings', { error });
+              alert(t('settingsImport_error'));
+          }
+      };
+      reader.onerror = (e) => {
+          logService.error('Failed to read settings file', { error: e });
+          alert(t('settingsImport_error'));
+      };
+      reader.readAsText(file);
+  }, [setAppSettings, t]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -354,6 +433,8 @@ const App: React.FC = () => {
               onOpenLogViewer={() => setIsLogViewerOpen(true)}
               onInstallPwa={handleInstallPwa}
               isInstallable={!!installPromptEvent && !isStandalone}
+              onImportSettings={handleImportSettings}
+              onExportSettings={handleExportSettings}
               t={t}
             />
           )}
