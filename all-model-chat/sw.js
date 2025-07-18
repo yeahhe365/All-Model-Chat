@@ -6,7 +6,7 @@ const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 const STATIC_APP_SHELL_URLS = [
     '/',
     '/index.html',
-    '/favicon.png',
+    '/logo.svg',
     '/manifest.json',
 ];
 
