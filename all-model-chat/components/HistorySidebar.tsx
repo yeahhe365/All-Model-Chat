@@ -156,7 +156,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     >
       <div className="p-2 sm:p-3 flex items-center justify-between flex-shrink-0 h-[60px] border-b border-[var(--theme-border-primary)]">
         <div className="flex items-center gap-2 pl-2">
-            <img src="/logo.tsx" alt="All Model Chat Logo" className="w-6 h-6" />
+            <img src="/logo.svg" alt="All Model Chat Logo" className="w-6 h-6" />
             <span className="text-lg font-semibold text-[var(--theme-text-primary)]">All Model Chat</span>
         </div>
         <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
