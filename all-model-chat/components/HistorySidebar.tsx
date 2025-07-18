@@ -1,8 +1,7 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedChatSession } from '../types';
-import { Edit3, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff } from 'lucide-react';
+import { SquarePen, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 
 interface HistorySidebarProps {
@@ -29,7 +28,7 @@ interface HistorySidebarProps {
     borderSecondary: string;
     iconHistory: string;
   };
-  t: (key: keyof typeof translations) => string;
+  t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
 }
 
@@ -58,6 +57,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   
   const [newlyTitledSessionId, setNewlyTitledSessionId] = useState<string | null>(null);
   const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
+  const [logoError, setLogoError] = useState(false);
 
 
   useEffect(() => {
@@ -155,15 +155,25 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       role="complementary" aria-label={t('history_title')} aria-hidden={!isOpen}
     >
       <div className="p-2 sm:p-3 flex items-center justify-between flex-shrink-0 h-[60px] border-b border-[var(--theme-border-primary)]">
-        <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] pl-2">{t('history_title')}</h3>
+        <div className="flex items-center gap-2 pl-2">
+            {!logoError && (
+              <img 
+                src="/favicon.png" 
+                alt="All Model Chat Logo" 
+                className="w-6 h-6" 
+                onError={() => setLogoError(true)}
+              />
+            )}
+            <span className="text-lg font-semibold text-[var(--theme-text-primary)]">All Model Chat</span>
+        </div>
         <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
           <Menu size={20} />
         </button>
       </div>
       <div className="px-3 pt-3">
-        <button onClick={onNewChat} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-[var(--theme-text-secondary)] font-medium bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] shadow-sm transition-all" aria-label={t('headerNewChat_aria')}>
-          <Edit3 size={18} />
-          <span>{t('headerNewChat')}</span>
+        <button onClick={onNewChat} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" aria-label={t('headerNewChat_aria')}>
+          <SquarePen size={18} className="text-[var(--theme-text-secondary)]" />
+          <span className="text-[var(--theme-text-link)]">{t('headerNewChat')}</span>
         </button>
       </div>
       <div className="px-3 pt-2">
@@ -184,9 +194,9 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             </button>
           </div>
         ) : (
-          <button onClick={() => setIsSearching(true)} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm text-[var(--theme-text-secondary)] font-medium bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] shadow-sm transition-all" aria-label={t('history_search_aria')}>
-            <Search size={18} />
-            <span>{t('history_search_button' as any, 'Search')}</span>
+          <button onClick={() => setIsSearching(true)} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" aria-label={t('history_search_aria')}>
+            <Search size={18} className="text-[var(--theme-text-secondary)]" />
+            <span className="text-[var(--theme-text-link)]">{t('history_search_button', 'Search')}</span>
           </button>
         )}
       </div>
@@ -234,7 +244,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     </div>
                     {activeMenu === session.id && (
                       <div ref={menuRef} className="absolute right-3 top-9 z-10 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1">
-                        <button onClick={() => handleStartEdit(session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><Edit3 size={14} /> <span>{t('history_edit_title')}</span></button>
+                        <button onClick={() => handleStartEdit(session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><SquarePen size={14} /> <span>{t('history_edit_title')}</span></button>
                         <button onClick={() => { onTogglePinSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2">
                           {session.isPinned ? <PinOff size={14} /> : <Pin size={14} />} <span>{session.isPinned ? t('history_unpin') : t('history_pin')}</span>
                         </button>
