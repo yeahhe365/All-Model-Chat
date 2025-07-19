@@ -49,7 +49,6 @@ export const Header: React.FC<HeaderProps> = ({
   const [newChatShortcut, setNewChatShortcut] = useState('');
 
   const displayModelName = isModelsLoading && !currentModelName ? t('appLoadingModels') : currentModelName;
-  const isLongModelName = (displayModelName?.length || 0) > 20;
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -126,13 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
             {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
-            <div className="overflow-hidden max-w-[120px] sm:max-w-[250px]">
-              <span
-                className={`font-medium whitespace-nowrap ${isLongModelName ? 'inline-block horizontal-scroll-marquee' : 'truncate'}`}
-              >
-                {isLongModelName ? `${displayModelName}\u00A0\u00A0\u00A0\u00A0${displayModelName}` : displayModelName}
-              </span>
-            </div>
+            <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
             <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
