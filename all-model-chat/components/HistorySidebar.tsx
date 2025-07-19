@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedChatSession } from '../types';
 import { SquarePen, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff } from 'lucide-react';
@@ -156,7 +157,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       className={`h-full flex flex-col w-64 bg-[var(--theme-bg-secondary)] shadow-lg ease-in-out duration-300 absolute top-0 left-0 z-30 transition-transform transform sm:relative sm:transform-none sm:top-auto sm:left-auto sm:z-auto sm:transition-all ${isOpen ? 'translate-x-0' : '-translate-x-full'} sm:w-64 md:w-72 sm:flex-shrink-0 ${isOpen ? 'sm:ml-0' : 'sm:-ml-64 md:-ml-72'} ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : 'sm:border-r-0'}`}
       role="complementary" aria-label={t('history_title')} aria-hidden={!isOpen}
     >
-      <div className="p-2 sm:p-3 flex items-center justify-between flex-shrink-0 h-[60px] border-b border-[var(--theme-border-primary)]">
+      <div className="p-2 sm:p-3 flex items-center justify-between flex-shrink-0 h-[60px]">
         <div className="flex items-center gap-2 pl-2">
             <img src={APP_LOGO_SVG_DATA_URI} alt="All Model Chat Logo" className="w-6 h-6" />
             <span className="text-lg font-semibold text-[var(--theme-text-primary)]">All Model Chat</span>
