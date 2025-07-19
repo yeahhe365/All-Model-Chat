@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
-import { AppSettings, UploadedFile, ModelOption } from './types';
-import { DEFAULT_SYSTEM_INSTRUCTION, TAB_CYCLE_MODELS, CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_APP_SETTINGS } from './constants/appConstants';
+import { AppSettings } from './types';
+import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from './constants/appConstants';
 import { AVAILABLE_THEMES } from './constants/themeConstants';
 import { Header } from './components/Header';
 import { MessageList } from './components/MessageList';
@@ -9,6 +9,8 @@ import { ChatInput } from './components/ChatInput';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
+import { useAppUI } from './hooks/useAppUI';
+import { useAppEvents } from './hooks/useAppEvents';
 import { getTranslator, getResponsiveValue } from './utils/appUtils';
 import { logService } from './services/logService';
 import { SettingsModal } from './components/SettingsModal';
@@ -19,6 +21,7 @@ const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = getTranslator(language);
   
+  const chatState = useChat(appSettings, language);
   const {
       messages,
       isLoading,
@@ -30,7 +33,6 @@ const App: React.FC = () => {
       selectedFiles,
       setSelectedFiles,
       editingMessageId,
-      setEditingMessageId,
       appFileError,
       isAppProcessingFile,
       savedSessions,
@@ -82,27 +84,52 @@ const App: React.FC = () => {
       toggleGoogleSearch,
       toggleCodeExecution,
       toggleUrlContext,
-  } = useChat(appSettings, language);
+  } = chatState;
 
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
-  const [isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen] = useState<boolean>(false);
-  const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(window.innerWidth >= 768);
-  const [isLogViewerOpen, setIsLogViewerOpen] = useState<boolean>(false);
-  const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
-  const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
+  const {
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
+    isPreloadedMessagesModalOpen,
+    setIsPreloadedMessagesModalOpen,
+    isHistorySidebarOpen,
+    setIsHistorySidebarOpen,
+    isLogViewerOpen,
+    setIsLogViewerOpen,
+    handleTouchStart,
+    handleTouchEnd,
+  } = useAppUI();
+  
+  const {
+    installPromptEvent,
+    isStandalone,
+    handleInstallPwa,
+    handleExportSettings,
+    handleImportSettings,
+  } = useAppEvents({
+    appSettings,
+    setAppSettings,
+    savedSessions,
+    language,
+    startNewChat,
+    handleClearCurrentChat,
+    currentChatSettings,
+    handleSelectModelInHeader,
+    isSettingsModalOpen,
+    isPreloadedMessagesModalOpen,
+    setIsLogViewerOpen,
+  });
 
+
+  useEffect(() => {
+    logService.info('App initialized.');
+  }, []);
+  
   const handleSaveSettings = (newSettings: AppSettings) => {
-    // Save the new settings as the global default for subsequent new chats
     setAppSettings(newSettings);
   
-    // Also, apply the relevant behavioral settings to the current active chat session
-    // This provides immediate feedback for the user on settings changes.
     if (activeSessionId && setCurrentChatSettings) {
       setCurrentChatSettings(prevChatSettings => ({
         ...prevChatSettings,
-        // Apply generation-related settings from the modal.
-        // We explicitly DO NOT update modelId, lockedApiKey, or tool settings,
-        // as those are managed directly within the session context (header, file uploads, tool toggles).
         temperature: newSettings.temperature,
         topP: newSettings.topP,
         systemInstruction: newSettings.systemInstruction,
@@ -115,81 +142,12 @@ const App: React.FC = () => {
     setIsSettingsModalOpen(false);
   };
 
-  const touchStartRef = useRef({ x: 0, y: 0 });
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const firstTouch = e.touches[0];
-    if (firstTouch) {
-        touchStartRef.current = { x: firstTouch.clientX, y: firstTouch.clientY };
-    }
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-      const lastTouch = e.changedTouches[0];
-      if (!lastTouch) return;
-
-      const deltaX = lastTouch.clientX - touchStartRef.current.x;
-      const deltaY = lastTouch.clientY - touchStartRef.current.y;
-      const swipeThreshold = 50; // Minimum horizontal distance in pixels
-      const edgeThreshold = 40;  // Width of the left edge area for swipe-to-open gesture
-
-      // Ignore if the swipe is more vertical than horizontal
-      if (Math.abs(deltaX) < Math.abs(deltaY)) {
-          return;
-      }
-
-      // Swipe Right to Open
-      if (deltaX > swipeThreshold && !isHistorySidebarOpen && touchStartRef.current.x < edgeThreshold) {
-          setIsHistorySidebarOpen(true);
-      } 
-      // Swipe Left to Close
-      else if (deltaX < -swipeThreshold && isHistorySidebarOpen) {
-          setIsHistorySidebarOpen(false);
-      }
-  }, [isHistorySidebarOpen]);
-
-  useEffect(() => {
-    logService.info('App initialized.');
-  }, []);
-  
-  // PWA Installation Handlers
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-        e.preventDefault();
-        logService.info('PWA install prompt available.');
-        setInstallPromptEvent(e);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
-
-  useEffect(() => {
-      const handleAppInstalled = () => {
-          logService.info('PWA installed successfully.');
-          setInstallPromptEvent(null);
-          setIsStandalone(true);
-      };
-      window.addEventListener('appinstalled', handleAppInstalled);
-      return () => window.removeEventListener('appinstalled', handleAppInstalled);
-  }, []);
-
-  const handleInstallPwa = async () => {
-      if (!installPromptEvent) return;
-      
-      installPromptEvent.prompt();
-      const { outcome } = await installPromptEvent.userChoice;
-      logService.info(`PWA install prompt outcome: ${outcome}`);
-      setInstallPromptEvent(null);
-  };
-
   const handleLoadCanvasHelperPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
     const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_ASSISTANT_SYSTEM_PROMPT;
     
-    // Apply this as a global default for new chats
     setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
 
-    // Also apply to the current chat if one is active, without sending a message.
     if (activeSessionId && setCurrentChatSettings) {
       setCurrentChatSettings(prevSettings => ({
         ...prevSettings,
@@ -205,129 +163,6 @@ const App: React.FC = () => {
         if (textarea) textarea.focus();
     }, 0);
   };
-
-  const handleExportSettings = useCallback((includeHistory: boolean) => {
-      logService.info(`Exporting settings. Include history: ${includeHistory}`);
-      try {
-          const dataToExport: any = {
-              settings: appSettings,
-          };
-
-          if (includeHistory) {
-              dataToExport.history = savedSessions;
-          }
-
-          const jsonString = JSON.stringify(dataToExport, null, 2);
-          const blob = new Blob([jsonString], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          const date = new Date().toISOString().slice(0, 10);
-          link.download = `all-model-chat-settings-${date}${includeHistory ? '-with-history' : ''}.json`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
-      } catch (error) {
-          logService.error('Failed to export settings', { error });
-          alert('Failed to export settings.');
-      }
-  }, [appSettings, savedSessions]);
-
-  const handleImportSettings = useCallback((file: File) => {
-      logService.info(`Importing settings from file: ${file.name}`);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-          try {
-              const text = e.target?.result;
-              if (typeof text !== 'string') {
-                  throw new Error('File content is not text.');
-              }
-              const data = JSON.parse(text);
-
-              if (data && data.settings && typeof data.settings === 'object') {
-                  const importedSettings = data.settings;
-                  const newSettings = { ...DEFAULT_APP_SETTINGS };
-
-                  for (const key of Object.keys(DEFAULT_APP_SETTINGS) as Array<keyof AppSettings>) {
-                      if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
-                          const importedValue = importedSettings[key];
-                          const defaultValue = DEFAULT_APP_SETTINGS[key];
-                          
-                          if (typeof importedValue === typeof defaultValue) {
-                              (newSettings as any)[key] = importedValue;
-                          } else if ((key === 'apiKey' || key === 'apiProxyUrl' || key === 'lockedApiKey') && (typeof importedValue === 'string' || importedValue === null)) {
-                              (newSettings as any)[key] = importedValue;
-                          } else {
-                              logService.warn(`Type mismatch for setting "${key}" during import. Using default.`, { imported: typeof importedValue, default: typeof defaultValue });
-                          }
-                      }
-                  }
-
-                  if (data.history) {
-                      logService.info('Imported file contains history, which will be ignored as per configuration.');
-                  }
-                  
-                  setAppSettings(newSettings);
-                  alert(t('settingsImport_success'));
-              } else {
-                  throw new Error('Invalid settings file format. Missing "settings" key.');
-              }
-          } catch (error) {
-              logService.error('Failed to import settings', { error });
-              alert(t('settingsImport_error'));
-          }
-      };
-      reader.onerror = (e) => {
-          logService.error('Failed to read settings file', { error: e });
-          alert(t('settingsImport_error'));
-      };
-      reader.readAsText(file);
-  }, [setAppSettings, t]);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-        const activeElement = document.activeElement as HTMLElement;
-        const isGenerallyInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.tagName.toLowerCase() === 'select' || activeElement.isContentEditable);
-        if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'n') {
-            event.preventDefault();
-            startNewChat(); 
-        } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'l') {
-            event.preventDefault();
-            setIsLogViewerOpen(prev => !prev);
-        }
-        else if (event.key === 'Delete') {
-            if (isSettingsModalOpen || isPreloadedMessagesModalOpen) return;
-            const chatTextareaAriaLabel = 'Chat message input';
-            const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === chatTextareaAriaLabel;
-            
-            if (isGenerallyInputFocused) {
-                if (isChatTextareaFocused && (activeElement as HTMLTextAreaElement).value.trim() === '') {
-                    event.preventDefault();
-                    handleClearCurrentChat(); 
-                }
-            } else {
-                event.preventDefault();
-                handleClearCurrentChat();
-            }
-        } else if (event.key === 'Tab' && TAB_CYCLE_MODELS.length > 0) {
-            const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
-            if (isChatTextareaFocused || !isGenerallyInputFocused) {
-                event.preventDefault();
-                const currentModelId = currentChatSettings.modelId;
-                const currentIndex = TAB_CYCLE_MODELS.indexOf(currentModelId);
-                let nextIndex: number;
-                if (currentIndex === -1) nextIndex = 0;
-                else nextIndex = (currentIndex + 1) % TAB_CYCLE_MODELS.length;
-                const newModelId = TAB_CYCLE_MODELS[nextIndex];
-                if (newModelId) handleSelectModelInHeader(newModelId);
-            }
-        }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader]);
 
   const getCurrentModelDisplayName = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
