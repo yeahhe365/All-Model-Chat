@@ -121,16 +121,16 @@ export const Header: React.FC<HeaderProps> = ({
 
           {isModelSelectorOpen && (
             <div 
-              className="absolute top-full left-0 mt-1 w-60 sm:w-72 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 max-h-60 overflow-y-auto custom-scrollbar"
+              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 max-h-96 overflow-y-auto custom-scrollbar"
               role="listbox"
               aria-labelledby="model-selector-button" 
             >
               {isModelsLoading ? (
                 <div>
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="px-3 py-2 flex items-center gap-2 animate-pulse">
-                      <div className="h-4 w-4 bg-[var(--theme-bg-tertiary)] rounded-full"></div>
-                      <div className="h-4 flex-grow bg-[var(--theme-bg-tertiary)] rounded"></div>
+                    <div key={i} className="px-4 py-2.5 flex items-center gap-2 animate-pulse">
+                      <div className="h-5 w-5 bg-[var(--theme-bg-tertiary)] rounded-full"></div>
+                      <div className="h-5 flex-grow bg-[var(--theme-bg-tertiary)] rounded"></div>
                     </div>
                   ))}
                 </div>
@@ -141,21 +141,21 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={() => handleModelSelect(model.id)}
                     role="option"
                     aria-selected={model.id === selectedModelId}
-                    className={`w-full text-left px-3 py-2 text-xs sm:text-sm flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
+                    className={`w-full text-left px-4 py-2.5 text-sm sm:text-base flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
                       ${model.id === selectedModelId ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`
                     }
                   >
                     <div className="flex items-center gap-2">
                       {model.isPinned && (
-                        <Pin size={12} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                        <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
                       )}
                       <span className="truncate" title={model.name}>{model.name}</span>
                     </div>
-                    {model.id === selectedModelId && <Check size={14} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                    {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
                   </button>
                 ))
               ) : (
-                <div className="px-3 py-2 text-xs sm:text-sm text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
+                <div className="px-4 py-2.5 text-sm sm:text-base text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
               )}
             </div>
           )}
