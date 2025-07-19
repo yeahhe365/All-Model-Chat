@@ -1,10 +1,6 @@
-
-
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedChatSession } from '../types';
-import { SquarePen, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff } from 'lucide-react';
+import { SquarePen, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff, Download } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 
@@ -20,6 +16,7 @@ interface HistorySidebarProps {
   onDeleteSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, newTitle: string) => void;
   onTogglePinSession: (sessionId: string) => void;
+  onOpenExportModal: () => void;
   themeColors: {
     bgPrimary: string;
     bgSecondary: string;
@@ -48,6 +45,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onDeleteSession,
   onRenameSession,
   onTogglePinSession,
+  onOpenExportModal,
   themeColors,
   t,
   language,
@@ -243,6 +241,18 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         <button onClick={() => handleStartEdit(session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><SquarePen size={14} /> <span>{t('history_edit_title')}</span></button>
                         <button onClick={() => { onTogglePinSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2">
                           {session.isPinned ? <PinOff size={14} /> : <Pin size={14} />} <span>{session.isPinned ? t('history_unpin') : t('history_pin')}</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                onSelectSession(session.id);
+                                onOpenExportModal();
+                                setActiveMenu(null);
+                            }}
+                            disabled={session.messages.length === 0}
+                            className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title={session.messages.length === 0 ? t('chat_is_empty', 'Chat is empty') : t('export_chat', 'Export Chat')}
+                        >
+                            <Download size={14} /> <span>{t('export_chat', 'Export Chat')}</span>
                         </button>
                         <button onClick={() => { onDeleteSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('history_delete')}</span></button>
                       </div>

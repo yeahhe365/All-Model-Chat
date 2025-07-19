@@ -301,6 +301,7 @@ const App: React.FC = () => {
         onDeleteSession={handleDeleteChatHistorySession}
         onRenameSession={handleRenameSession}
         onTogglePinSession={handleTogglePinSession}
+        onOpenExportModal={() => setIsExportModalOpen(true)}
         themeColors={currentTheme.colors}
         t={t}
         language={language}
