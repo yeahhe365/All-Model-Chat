@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, PanelLeftOpen, PanelLeftClose, SquarePen, Wand2, Lock, Download } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -47,8 +47,31 @@ export const Header: React.FC<HeaderProps> = ({
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
 
   const displayModelName = isModelsLoading && !currentModelName ? t('appLoadingModels') : currentModelName;
+  
+  useLayoutEffect(() => {
+    const checkOverflow = () => {
+        const container = containerRef.current;
+        const textEl = textRef.current;
+        if (container && textEl) {
+            const isCurrentlyOverflowing = textEl.scrollWidth > container.clientWidth;
+            if (isOverflowing !== isCurrentlyOverflowing) {
+                setIsOverflowing(isCurrentlyOverflowing);
+            }
+        }
+    };
+    const timer = setTimeout(checkOverflow, 50);
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+        clearTimeout(timer);
+        window.removeEventListener('resize', checkOverflow);
+    };
+  }, [displayModelName, isOverflowing]);
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -125,7 +148,23 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
             {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
-            <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
+            <div
+                ref={containerRef}
+                className="font-medium overflow-hidden whitespace-nowrap max-w-[120px] sm:max-w-[250px]"
+            >
+                <div
+                    className={isOverflowing ? "horizontal-scroll-marquee whitespace-nowrap" : ""}
+                    style={isOverflowing ? {
+                        '--marquee-scroll-amount': `-${(textRef.current?.offsetWidth ?? 0) + 24}px`,
+                        animationDuration: `${Math.max(5, ((textRef.current?.offsetWidth ?? 0) + 24) / 40)}s`
+                    } as React.CSSProperties : {}}
+                >
+                    <span ref={textRef} className={isOverflowing ? "inline-block pr-6" : "truncate"}>
+                        {displayModelName}
+                    </span>
+                    {isOverflowing && <span className="inline-block pr-6">{displayModelName}</span>}
+                </div>
+            </div>
             <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
