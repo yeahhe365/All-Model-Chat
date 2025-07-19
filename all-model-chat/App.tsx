@@ -1,5 +1,4 @@
-
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings } from './types';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from './constants/appConstants';
@@ -17,6 +16,10 @@ import { logService } from './services/logService';
 import { SettingsModal } from './components/SettingsModal';
 import { LogViewer } from './components/LogViewer';
 import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
+import { ExportChatModal } from './components/ExportChatModal';
+import html2canvas from 'html2canvas';
+import DOMPurify from 'dompurify';
+
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
@@ -120,18 +123,12 @@ const App: React.FC = () => {
     setIsLogViewerOpen,
   });
 
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
+
 
   useEffect(() => {
     logService.info('App initialized.');
-    
-    // Fade out and remove the loader
-    const loader = document.getElementById('loader');
-    if (loader) {
-      loader.classList.add('hidden');
-      loader.addEventListener('transitionend', () => {
-        loader.remove();
-      }, { once: true });
-    }
   }, []);
   
   const handleSaveSettings = (newSettings: AppSettings) => {
@@ -190,6 +187,92 @@ const App: React.FC = () => {
     return apiModels.length === 0 && !isModelsLoading ? t('appNoModelsAvailable') : t('appNoModelSelected');
   };
 
+  const activeChat = savedSessions.find(s => s.id === activeSessionId);
+
+  const handleExportChat = useCallback(async (format: 'png' | 'html') => {
+    if (!activeChat || !scrollContainerRef.current) return;
+    setExportStatus('exporting');
+
+    const triggerDownload = (href: string, filename: string) => {
+        const link = document.createElement('a');
+        link.href = href;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (href.startsWith('blob:')) {
+            URL.revokeObjectURL(href);
+        }
+    };
+    
+    const safeTitle = activeChat.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'chat';
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `chat-${safeTitle}-${date}.${format}`;
+
+    try {
+        if (format === 'png') {
+            document.body.classList.add('is-exporting-png');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
+            const element = scrollContainerRef.current;
+            const canvas = await html2canvas(element, {
+                height: element.scrollHeight,
+                width: element.scrollWidth,
+                useCORS: true,
+                backgroundColor: currentTheme.colors.bgSecondary,
+                scale: 2,
+            });
+            triggerDownload(canvas.toDataURL('image/png'), filename);
+        } else { // HTML
+            const headContent = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"], script[src*="highlight.js"], script[src*="katex"]'))
+                .map(el => el.outerHTML).join('\n');
+            const bodyClasses = document.body.className;
+            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
+            const chatHtml = scrollContainerRef.current.innerHTML;
+
+            const fullHtml = `
+                <!DOCTYPE html>
+                <html lang="${language}">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Chat Export: ${DOMPurify.sanitize(activeChat.title)}</title>
+                    ${headContent}
+                    <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                            if (window.hljs) {
+                                document.querySelectorAll('pre code').forEach((el) => {
+                                    window.hljs.highlightElement(el);
+                                });
+                            }
+                        });
+                    </script>
+                    <style>
+                        body { background-color: ${rootBgColor}; padding: 1rem; box-sizing: border-box; }
+                        .message-actions { opacity: 0.5 !important; transform: none !important; }
+                        .group:hover .message-actions { opacity: 1 !important; }
+                        .sticky[aria-label="Scroll to bottom"] { display: none !important; }
+                    </style>
+                </head>
+                <body class="${bodyClasses}">
+                    <div class="exported-chat-container w-full max-w-7xl mx-auto">
+                        ${chatHtml}
+                    </div>
+                </body>
+                </html>
+            `;
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            triggerDownload(URL.createObjectURL(blob), filename);
+        }
+    } catch (error) {
+        logService.error(`Chat export failed (format: ${format})`, { error });
+        alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+        document.body.classList.remove('is-exporting-png');
+        setExportStatus('idle');
+        setIsExportModalOpen(false);
+    }
+}, [activeChat, currentTheme, language]);
+
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
 
@@ -242,6 +325,7 @@ const App: React.FC = () => {
           onNewChat={() => startNewChat()}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
+          onOpenExportModal={() => setIsExportModalOpen(true)}
           onToggleHistorySidebar={() => setIsHistorySidebarOpen(prev => !prev)}
           isLoading={isLoading}
           currentModelName={getCurrentModelDisplayName()}
@@ -257,6 +341,7 @@ const App: React.FC = () => {
           isKeyLocked={!!currentChatSettings.lockedApiKey}
           defaultModelId={appSettings.modelId}
           onSetDefaultModel={handleSetDefaultModel}
+          isChatEmpty={messages.length === 0}
         />
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
@@ -301,6 +386,15 @@ const App: React.FC = () => {
               onExportScenario={handleExportPreloadedScenario}
               t={t}
             />
+          )}
+          {isExportModalOpen && (
+              <ExportChatModal
+                isOpen={isExportModalOpen}
+                onClose={() => setIsExportModalOpen(false)}
+                onExport={handleExportChat}
+                exportStatus={exportStatus}
+                t={t}
+              />
           )}
         </>
         <MessageList

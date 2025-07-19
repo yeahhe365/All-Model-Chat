@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, SquarePen, Wand2, Lock } from 'lucide-react'; 
+import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, SquarePen, Wand2, Lock, Download } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
@@ -7,6 +7,7 @@ interface HeaderProps {
   onNewChat: () => void; // Changed from onClearChat
   onOpenSettingsModal: () => void; 
   onOpenScenariosModal: () => void; 
+  onOpenExportModal: () => void;
   onToggleHistorySidebar: () => void;
   isLoading: boolean;
   currentModelName?: string;
@@ -22,12 +23,14 @@ interface HeaderProps {
   isKeyLocked: boolean;
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
+  isChatEmpty: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onNewChat,
   onOpenSettingsModal, 
   onOpenScenariosModal,
+  onOpenExportModal,
   onToggleHistorySidebar,
   isLoading,
   currentModelName,
@@ -43,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   isKeyLocked,
   defaultModelId,
   onSetDefaultModel,
+  isChatEmpty,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
@@ -208,6 +212,15 @@ export const Header: React.FC<HeaderProps> = ({
           title={t('scenariosManage_title')}
         >
           <MessagesSquare size={getResponsiveValue(16, 18)} />
+        </button>
+        <button
+          onClick={onOpenExportModal}
+          disabled={isChatEmpty}
+          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          aria-label="Export current chat"
+          title={isChatEmpty ? "Chat is empty" : "Export Chat"}
+        >
+          <Download size={getResponsiveValue(16, 18)} />
         </button>
         <button
           onClick={onOpenSettingsModal} 
