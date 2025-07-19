@@ -98,7 +98,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = ({
       {/* --- Model & Voice Settings --- */}
       <div className="space-y-4">
         <div>
-          <label htmlFor="model-select" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsModel')}</label>
+          <label htmlFor="model-select" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsDefaultModel')}</label>
           {isModelsLoading ? (
             <div className="flex items-center justify-start bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-secondary)] text-sm rounded-lg p-2 w-full">
               <Loader2 size={iconSize} className="animate-spin mr-2.5 text-[var(--theme-text-link)]" />

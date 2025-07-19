@@ -25,6 +25,8 @@ export const translations = {
     settingsOpen_aria: { en: 'Open Chat Settings', zh: '打开聊天设置' },
     settingsOpen_title: { en: 'Chat Settings', zh: '聊天设置' },
     headerNewChat_aria: { en: 'Start a new chat session', zh: '开始新聊天会话' },
+    header_setDefault_action: { en: 'Set as Default', zh: '设为默认' },
+    header_setDefault_isDefault: { en: 'Default Model', zh: '默认模型' },
 
     // ChatInput.tsx
     aspectRatio_title: { en: 'Aspect Ratio', zh: '宽高比' },
@@ -127,7 +129,7 @@ export const translations = {
     settingsLanguageEn: { en: 'English', zh: 'English' },
     settingsLanguageZh: { en: 'Chinese', zh: '中文' },
     settingsChatBehavior: { en: 'Chat Behavior (for New Chats)', zh: '聊天行为 (用于新对话)' },
-    settingsModel: { en: 'AI Model', zh: 'AI 模型' },
+    settingsDefaultModel: { en: 'Default AI Model (for new chats)', zh: '默认 AI 模型 (用于新对话)' },
     settingsTtsVoice: { en: 'TTS Voice', zh: 'TTS 语音' },
     settingsSystemPrompt: { en: 'System Prompt', zh: '系统提示' },
     settingsTemperature: { en: 'Temperature', zh: '温度' },

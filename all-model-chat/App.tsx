@@ -142,6 +142,11 @@ const App: React.FC = () => {
     setIsSettingsModalOpen(false);
   };
 
+  const handleSetDefaultModel = (modelId: string) => {
+    logService.info(`Setting new default model: ${modelId}`);
+    setAppSettings(prev => ({ ...prev, modelId }));
+  };
+
   const handleLoadCanvasHelperPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
     const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_ASSISTANT_SYSTEM_PROMPT;
@@ -240,6 +245,8 @@ const App: React.FC = () => {
           isCanvasPromptActive={isCanvasPromptActive}
           t={t}
           isKeyLocked={!!currentChatSettings.lockedApiKey}
+          defaultModelId={appSettings.modelId}
+          onSetDefaultModel={handleSetDefaultModel}
         />
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>

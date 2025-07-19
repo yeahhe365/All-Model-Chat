@@ -20,6 +20,8 @@ interface HeaderProps {
   isCanvasPromptActive: boolean; // New prop for canvas prompt status
   t: (key: keyof typeof translations) => string;
   isKeyLocked: boolean;
+  defaultModelId: string;
+  onSetDefaultModel: (modelId: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,6 +41,8 @@ export const Header: React.FC<HeaderProps> = ({
   isCanvasPromptActive, // Destructure new prop
   t,
   isKeyLocked,
+  defaultModelId,
+  onSetDefaultModel,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
@@ -107,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
@@ -116,46 +120,75 @@ export const Header: React.FC<HeaderProps> = ({
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
             {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
             <span className="truncate max-w-[200px] sm:max-w-[250px] font-medium">{displayModelName}</span>
-            <ChevronDown size={20} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isModelSelectorOpen && (
             <div 
-              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 max-h-96 overflow-y-auto custom-scrollbar"
+              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 flex flex-col"
               role="listbox"
               aria-labelledby="model-selector-button" 
             >
-              {isModelsLoading ? (
-                <div>
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="px-4 py-2.5 flex items-center gap-2 animate-pulse">
-                      <div className="h-5 w-5 bg-[var(--theme-bg-tertiary)] rounded-full"></div>
-                      <div className="h-5 flex-grow bg-[var(--theme-bg-tertiary)] rounded"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : availableModels.length > 0 ? (
-                availableModels.map(model => (
+              <div className="max-h-96 overflow-y-auto custom-scrollbar">
+                {isModelsLoading ? (
+                  <div>
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="px-4 py-2.5 flex items-center gap-2 animate-pulse">
+                        <div className="h-5 w-5 bg-[var(--theme-bg-tertiary)] rounded-full"></div>
+                        <div className="h-5 flex-grow bg-[var(--theme-bg-tertiary)] rounded"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : availableModels.length > 0 ? (
+                  availableModels.map(model => (
+                    <button
+                      key={model.id}
+                      onClick={() => handleModelSelect(model.id)}
+                      role="option"
+                      aria-selected={model.id === selectedModelId}
+                      className={`w-full text-left px-4 py-2.5 text-sm sm:text-base flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
+                        ${model.id === selectedModelId ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        {model.isPinned && (
+                          <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                        )}
+                        <span className="truncate" title={model.name}>{model.name}</span>
+                      </div>
+                      {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-2.5 text-sm sm:text-base text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
+                )}
+              </div>
+
+              {availableModels.length > 0 && !isModelsLoading && (
+                <div className="p-2 border-t border-[var(--theme-border-primary)] bg-black/10">
                   <button
-                    key={model.id}
-                    onClick={() => handleModelSelect(model.id)}
-                    role="option"
-                    aria-selected={model.id === selectedModelId}
-                    className={`w-full text-left px-4 py-2.5 text-sm sm:text-base flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
-                      ${model.id === selectedModelId ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`
-                    }
+                    onClick={() => {
+                      onSetDefaultModel(selectedModelId);
+                      setIsModelSelectorOpen(false);
+                    }}
+                    disabled={selectedModelId === defaultModelId}
+                    className="w-full text-center px-3 py-1.5 text-sm rounded-md transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)]
+                      disabled:text-[var(--theme-text-tertiary)] disabled:cursor-not-allowed
+                      enabled:bg-[var(--theme-bg-tertiary)] enabled:hover:bg-[var(--theme-bg-input)] enabled:text-[var(--theme-text-primary)]"
                   >
-                    <div className="flex items-center gap-2">
-                      {model.isPinned && (
-                        <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-                      )}
-                      <span className="truncate" title={model.name}>{model.name}</span>
-                    </div>
-                    {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                    {selectedModelId === defaultModelId ? (
+                        <>
+                            <Check size={16} className="text-[var(--theme-text-success)]" />
+                            <span>{t('header_setDefault_isDefault')}</span>
+                        </>
+                    ) : (
+                        <>
+                           <Pin size={16} />
+                           <span>{t('header_setDefault_action')}</span>
+                        </>
+                    )}
                   </button>
-                ))
-              ) : (
-                <div className="px-4 py-2.5 text-sm sm:text-base text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
+                </div>
               )}
             </div>
           )}
