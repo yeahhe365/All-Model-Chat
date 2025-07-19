@@ -93,8 +93,8 @@ export const Header: React.FC<HeaderProps> = ({
 
 
   return (
-    <header className="bg-[var(--theme-bg-primary)] p-2 shadow-premium flex items-center justify-between flex-wrap gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0">
-      <div className="flex items-center gap-2">
+    <header className="bg-[var(--theme-bg-primary)] p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0">
+      <div className="flex items-center gap-2 min-w-0">
         <button
             onClick={onToggleHistorySidebar}
             className={`p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105 ${isHistorySidebarOpen ? 'sm:hidden' : ''}`}
@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
             {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
-            <span className="truncate max-w-[200px] sm:max-w-[250px] font-medium">{displayModelName}</span>
+            <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
             <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
                       }
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
                           {model.isPinned && (
                             <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
                           )}
@@ -191,7 +191,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
+      <div className="flex items-center gap-1.5 sm:gap-2 justify-end flex-shrink-0">
         <button
           onClick={onLoadCanvasPrompt}
           disabled={isLoading}
