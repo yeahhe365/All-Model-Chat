@@ -1,8 +1,5 @@
-
-
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Download, Maximize, Minimize, Expand, RotateCw } from 'lucide-react'; 
+import { X, Download, Maximize, Minimize, Expand, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'; 
 import { ThemeColors } from '../constants/themeConstants';
 import { getResponsiveValue } from '../utils/appUtils';
 
@@ -32,6 +29,10 @@ const sanitizeFilename = (name: string): string => {
   return saneName || "preview";
 };
 
+const ZOOM_STEP = 0.1;
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 5;
+
 export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   isOpen,
   onClose,
@@ -43,6 +44,10 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
   const iconSize = getResponsiveValue(18, 20);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
+  const [scale, setScale] = useState(1);
+
+  const handleZoomIn = () => setScale(s => Math.min(MAX_ZOOM, s + ZOOM_STEP));
+  const handleZoomOut = () => setScale(s => Math.max(MIN_ZOOM, s - ZOOM_STEP));
 
   const enterTrueFullscreen = useCallback(async () => {
     if (iframeRef.current && document.fullscreenEnabled) {
@@ -108,6 +113,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setIsActuallyOpen(true);
+      setScale(1); // Reset scale on open
     } else {
       const timer = setTimeout(() => setIsActuallyOpen(false), 300); // Match animation duration
       return () => clearTimeout(timer);
@@ -183,7 +189,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     }
   }, [htmlContent]);
   
-  const buttonClasses = "p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
+  const buttonClasses = "p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-50 disabled:cursor-not-allowed";
 
   const FullscreenToggleButton: React.FC = () => (
     <button
@@ -218,6 +224,28 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             {previewTitle}
           </h2>
           <div className="flex items-center gap-1 sm:gap-2">
+            <button
+                onClick={handleZoomOut}
+                disabled={scale <= MIN_ZOOM}
+                className={buttonClasses}
+                aria-label="Zoom out"
+                title="Zoom Out"
+            >
+                <ZoomOut size={iconSize} />
+            </button>
+            <span className="text-xs w-12 text-center text-[var(--theme-text-tertiary)] font-mono tabular-nums select-none">
+                {(scale * 100).toFixed(0)}%
+            </span>
+            <button
+                onClick={handleZoomIn}
+                disabled={scale >= MAX_ZOOM}
+                className={buttonClasses}
+                aria-label="Zoom in"
+                title="Zoom In"
+            >
+                <ZoomIn size={iconSize} />
+            </button>
+            <span className="w-px h-4 bg-[var(--theme-border-secondary)] mx-1"></span>
             <FullscreenToggleButton />
             <button
                 onClick={handleDownload}
@@ -247,12 +275,18 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             )}
           </div>
         </header>
-        <div className="flex-grow relative bg-[var(--theme-bg-secondary)]">
+        <div className="flex-grow relative bg-[var(--theme-bg-secondary)] overflow-auto custom-scrollbar">
           <iframe
             ref={iframeRef}
             srcDoc={htmlContent}
             title="HTML Content Preview"
-            className="w-full h-full border-none bg-white" 
+            className="border-none bg-white" 
+            style={{
+                width: `${100 / scale}%`,
+                height: `${100 / scale}%`,
+                transform: `scale(${scale})`,
+                transformOrigin: '0 0',
+            }}
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
             onError={handleIframeError}
           />
