@@ -114,20 +114,38 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         )}
         <div className="relative" ref={modelSelectorRef}>
-          <button
-            onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
-            disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+          <div
+            onClick={() => !(isModelsLoading || isLoading || isSwitchingModel) && setIsModelSelectorOpen(!isModelSelectorOpen)}
+            className={`rounded-lg px-2.5 py-1.5 text-sm transition-colors ${(isModelsLoading || isLoading || isSwitchingModel) ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[var(--theme-bg-tertiary)] cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)]'} ${isSwitchingModel ? 'animate-pulse' : ''} w-full text-left`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
             aria-expanded={isModelSelectorOpen}
+            role="button"
+            tabIndex={isModelsLoading || isLoading || isSwitchingModel ? -1 : 0}
+            onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); !(isModelsLoading || isLoading || isSwitchingModel) && setIsModelSelectorOpen(!isModelSelectorOpen); }}}
           >
-            {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
-            {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
-            <span className="truncate max-w-[200px] sm:max-w-[250px] font-medium">{displayModelName}</span>
-            <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
-          </button>
+            <div className="flex flex-col items-start gap-1">
+                <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                        {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
+                        {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
+                        <span className="truncate max-w-[200px] sm:max-w-[250px] font-medium text-base">{displayModelName}</span>
+                    </div>
+                    <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+                </div>
+
+                {selectedModelId && selectedModelId !== defaultModelId && !isModelsLoading && !isSwitchingModel && availableModels.find(m => m.id === selectedModelId) && (
+                    <button
+                        onClick={handleSetDefault}
+                        disabled={isModelsLoading || isLoading || isSwitchingModel}
+                        className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] px-1 py-0.5 rounded disabled:opacity-50"
+                    >
+                        {t('header_setDefault_action')}
+                    </button>
+                )}
+            </div>
+          </div>
 
           {isModelSelectorOpen && (
             <div 
