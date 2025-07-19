@@ -136,8 +136,25 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
     const components = useMemo(() => ({
       pre: (props: any) => {
         const { node, ...rest } = props;
-        const children = (props.children[0] && props.children[0].type === 'code') ? props.children[0] : props.children;
-        return <CodeBlock {...rest} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>{children}</CodeBlock>;
+        const codeElement = (props.children && Array.isArray(props.children) && props.children[0]?.type === 'code') ? props.children[0] : null;
+
+        if (!codeElement) {
+          // Fallback for plain <pre> tags without a <code> inside.
+          return <pre {...props} />;
+        }
+        
+        const codeClassName = codeElement.props.className || '';
+
+        return (
+          <CodeBlock
+            {...rest} // Props for the <pre> tag
+            className={codeClassName} // Pass the correct className from <code>
+            onOpenHtmlPreview={onOpenHtmlPreview}
+            expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+          >
+            {codeElement}
+          </CodeBlock>
+        );
       }
     }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
 

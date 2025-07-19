@@ -150,7 +150,6 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             );
             return transcribedText;
         } catch (error) {
-            logService.logApiKeyFailure(keyResult.key);
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
             setAppFileError(`Transcription failed: ${errorMessage}`);
             logService.error('Transcription failed in useChat handler', { error });
@@ -314,7 +313,6 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             }
 
         } catch (error) {
-            logService.logApiKeyFailure(keyResult.key);
             logService.error(`Failed to auto-generate title for session ${sessionId}`, { error });
         } finally {
             setGeneratingTitleSessionIds(prev => {

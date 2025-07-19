@@ -1,6 +1,6 @@
 // components/LogViewer.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { LogEntry, LogLevel, logService, ApiKeyUsage } from '../services/logService';
+import { LogEntry, LogLevel, logService } from '../services/logService';
 import { AppSettings, ChatSettings } from '../types';
 import { X, Trash2, ChevronDown, CheckCircle, Download, Eye, EyeOff, Terminal, KeyRound } from 'lucide-react';
 import { Modal } from './shared/Modal';
@@ -84,7 +84,7 @@ interface LogViewerProps {
 
 export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettings, currentChatSettings }) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [apiKeyUsage, setApiKeyUsage] = useState<Map<string, ApiKeyUsage>>(new Map());
+  const [apiKeyUsage, setApiKeyUsage] = useState<Map<string, number>>(new Map());
   const [filterText, setFilterText] = useState('');
   const [visibleLevels, setVisibleLevels] = useState<Record<LogLevel, boolean>>({
     INFO: true,
@@ -173,10 +173,10 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   };
 
   const allApiKeys = (appSettings.apiKey || '').split('\n').map(k => k.trim()).filter(Boolean);
-  const displayApiKeyUsage = new Map<string, ApiKeyUsage>();
-  allApiKeys.forEach(key => displayApiKeyUsage.set(key, apiKeyUsage.get(key) || { total: 0, failures: 0 }));
-  apiKeyUsage.forEach((usage, key) => { if (!displayApiKeyUsage.has(key)) displayApiKeyUsage.set(key, usage); });
-  const totalApiUsage = Array.from(displayApiKeyUsage.values()).reduce((sum, usage) => sum + usage.total, 0);
+  const displayApiKeyUsage = new Map<string, number>();
+  allApiKeys.forEach(key => displayApiKeyUsage.set(key, apiKeyUsage.get(key) || 0));
+  apiKeyUsage.forEach((count, key) => { if (!displayApiKeyUsage.has(key)) displayApiKeyUsage.set(key, count); });
+  const totalApiUsage = Array.from(displayApiKeyUsage.values()).reduce((sum, count) => sum + count, 0);
 
   const showApiTab = appSettings.useCustomApiConfig && displayApiKeyUsage.size > 0;
 
@@ -269,12 +269,10 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
               <h4 className="font-semibold text-lg text-[var(--theme-text-primary)] mb-4">API Key Usage</h4>
               <div className="space-y-3">
                 {Array.from(displayApiKeyUsage.entries())
-                  .sort(([, a], [, b]) => b.total - a.total)
-                  .map(([key, usage]) => {
-                    const { total: count, failures } = usage || { total: 0, failures: 0 };
+                  .sort(([, a], [, b]) => b - a)
+                  .map(([key, count]) => {
                     const percentage = totalApiUsage > 0 ? (count / totalApiUsage) * 100 : 0;
                     const isActive = currentChatSettings.lockedApiKey === key;
-                    const failureRate = count > 0 ? ((failures || 0) / count) * 100 : 0;
                     return (
                       <div key={key} className={`p-3 rounded-lg border transition-all ${isActive ? 'bg-[var(--theme-bg-accent)] bg-opacity-20 border-[var(--theme-border-focus)]' : 'bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)]'}`}>
                         <div className="flex justify-between items-start">
@@ -287,14 +285,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
                         <div className="w-full bg-[var(--theme-bg-secondary)] rounded-full h-1.5 mt-2">
                           <div className="bg-[var(--theme-bg-accent)] h-1.5 rounded-full" style={{ width: `${percentage}%` }}></div>
                         </div>
-                        <div className="flex items-center mt-2 text-xs min-h-[16px]">
-                          {(failures || 0) > 0 && (
-                            <span className="text-[var(--theme-text-danger)] font-medium">
-                              {failures} failure{failures! > 1 ? 's' : ''} ({failureRate.toFixed(1)}%)
-                            </span>
-                          )}
-                          {isActive && <div className="ml-auto font-bold text-[var(--theme-text-success)] flex items-center gap-1"><CheckCircle size={12}/> Active in chat</div>}
-                        </div>
+                        {isActive && <div className="text-xs font-bold text-[var(--theme-text-success)] flex items-center gap-1 mt-2"><CheckCircle size={12}/> Active in current chat</div>}
                       </div>
                     );
                   })}

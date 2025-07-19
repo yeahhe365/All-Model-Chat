@@ -5,14 +5,10 @@ import { SavedChatSession } from '../types';
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) => {
-    const handleApiError = useCallback((error: unknown, sessionId: string, modelMessageId: string, errorPrefix: string = "Error", apiKey?: string) => {
+    const handleApiError = useCallback((error: unknown, sessionId: string, modelMessageId: string, errorPrefix: string = "Error") => {
         const isAborted = error instanceof Error && (error.name === 'AbortError' || error.message === 'aborted');
         logService.error(`API Error (${errorPrefix}) for message ${modelMessageId} in session ${sessionId}`, { error, isAborted });
         
-        if (apiKey && !isAborted) {
-            logService.logApiKeyFailure(apiKey);
-        }
-
         if (isAborted) {
             updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(msg =>
                 msg.isLoading // Find any loading messages from this run
