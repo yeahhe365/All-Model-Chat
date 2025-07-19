@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
@@ -98,7 +99,19 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                             </>
                         )}
                         <button className="code-block-utility-button rounded-md" title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
-                            let filename = `snippet.${finalLanguage}`;
+                            const langToExt: { [key: string]: string } = {
+                                javascript: 'js',
+                                typescript: 'ts',
+                                python: 'py',
+                                markdown: 'md',
+                                bash: 'sh',
+                                shell: 'sh',
+                                csharp: 'cs',
+                                'c++': 'cpp',
+                            };
+                            const extension = langToExt[finalLanguage] || finalLanguage;
+                            let filename = `snippet.${extension}`;
+
                             if (downloadMimeType === 'text/html') {
                                 const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
                                 if (titleMatch && titleMatch[1]) {
