@@ -7,7 +7,7 @@ import {
     SUPPORTED_PDF_MIME_TYPES,
     SUPPORTED_VIDEO_MIME_TYPES, 
 } from '../../constants/fileConstants';
-import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy } from 'lucide-react'; 
+import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy, Download } from 'lucide-react'; 
 import { getResponsiveValue } from '../../utils/appUtils';
 
 interface FileDisplayProps {
@@ -47,6 +47,18 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         setTimeout(() => setIdCopied(false), 2000);
       })
       .catch(err => console.error("Failed to copy file ID:", err));
+  };
+  
+  const handleDownloadImage = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!file.dataUrl) return;
+    
+    const link = document.createElement('a');
+    link.href = file.dataUrl;
+    link.download = file.name || 'generated-image.jpeg';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const imageElement = (
@@ -116,6 +128,16 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       )}
       {file.error && (
         <p className="text-xs text-[var(--theme-text-danger)] ml-auto pl-2 flex-shrink-0" title={file.error}>Error</p>
+      )}
+      {isFromMessageList && file.dataUrl && file.name.startsWith('generated-image-') && !file.error && (
+        <button
+            onClick={handleDownloadImage}
+            title="Download Image"
+            aria-label="Download Image"
+            className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
+        >
+            <Download size={14} />
+        </button>
       )}
       {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
         <button
