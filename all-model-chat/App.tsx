@@ -212,32 +212,16 @@ const App: React.FC = () => {
     try {
         if (format === 'png') {
             document.body.classList.add('is-exporting-png');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
             const element = scrollContainerRef.current;
-            const originalScrollTop = element.scrollTop;
-
-            try {
-                // Scroll to the top to help html2canvas render consistently
-                element.scrollTop = 0;
-
-                // A slightly longer delay to ensure fonts are loaded and layout is settled
-                await new Promise(resolve => setTimeout(resolve, 300)); 
-
-                const canvas = await html2canvas(element, {
-                    height: element.scrollHeight,
-                    width: element.scrollWidth,
-                    windowHeight: element.scrollHeight,
-                    windowWidth: element.scrollWidth,
-                    useCORS: true,
-                    backgroundColor: currentTheme.colors.bgSecondary,
-                    scale: 2,
-                    scrollX: 0,
-                    scrollY: 0,
-                });
-                triggerDownload(canvas.toDataURL('image/png'), filename);
-            } finally {
-                // Restore the original scroll position after capture
-                element.scrollTop = originalScrollTop;
-            }
+            const canvas = await html2canvas(element, {
+                height: element.scrollHeight,
+                width: element.scrollWidth,
+                useCORS: true,
+                backgroundColor: currentTheme.colors.bgSecondary,
+                scale: 2,
+            });
+            triggerDownload(canvas.toDataURL('image/png'), filename);
         } else { // HTML
             const headContent = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"], script[src*="highlight.js"], script[src*="katex"]'))
                 .map(el => el.outerHTML).join('\n');

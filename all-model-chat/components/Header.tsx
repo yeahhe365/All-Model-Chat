@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, SquarePen, Wand2, Lock, Download } from 'lucide-react'; 
+import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, PanelLeftOpen, PanelLeftClose, SquarePen, Wand2, Lock, Download } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
@@ -101,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
             title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
         >
-            <Menu size={getResponsiveValue(18, 20)} />
+            {isHistorySidebarOpen ? <PanelLeftClose size={getResponsiveValue(18, 20)} /> : <PanelLeftOpen size={getResponsiveValue(18, 20)} />}
         </button>
         {!isHistorySidebarOpen && (
           <button

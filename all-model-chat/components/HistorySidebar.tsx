@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedChatSession } from '../types';
-import { SquarePen, Trash2, X, Search, Menu, MoreHorizontal, Pin, PinOff, Download } from 'lucide-react';
+import { SquarePen, Trash2, X, Search, PanelLeftClose, MoreHorizontal, Pin, PinOff, Download } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 
@@ -161,7 +161,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             <span className="text-lg font-semibold text-[var(--theme-text-primary)]">All Model Chat</span>
         </div>
         <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
-          <Menu size={20} />
+          <PanelLeftClose size={20} />
         </button>
       </div>
       <div className="px-3 pt-3">
