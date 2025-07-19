@@ -37,11 +37,11 @@ export const useChatHistory = ({
         if (activeChat) {
             settingsForNewChat = {
                 ...settingsForNewChat,
-                modelId: activeChat.settings.modelId,
                 // The lockedApiKey is INTENTIONALLY not inherited. A new chat should always start
                 // with the ability to rotate keys until a file is uploaded in that specific session.
                 isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
                 isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
+                isUrlContextEnabled: activeChat.settings.isUrlContextEnabled,
             };
         }
 
