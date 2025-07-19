@@ -73,6 +73,12 @@ export const Header: React.FC<HeaderProps> = ({
     onSelectModel(modelId);
     setIsModelSelectorOpen(false);
   };
+  
+  const handleSetDefault = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onSetDefaultModel(selectedModelId);
+      setIsModelSelectorOpen(false);
+  }
 
   const canvasPromptButtonBaseClasses = "p-2 sm:p-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-100";
   const canvasPromptButtonActiveClasses = `bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] shadow-premium`;
@@ -126,10 +132,8 @@ export const Header: React.FC<HeaderProps> = ({
           {isModelSelectorOpen && (
             <div 
               className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 flex flex-col"
-              role="listbox"
-              aria-labelledby="model-selector-button" 
             >
-              <div className="max-h-96 overflow-y-auto custom-scrollbar">
+              <div className="max-h-96 overflow-y-auto custom-scrollbar" role="listbox" aria-labelledby="model-selector-button">
                 {isModelsLoading ? (
                   <div>
                     {[...Array(3)].map((_, i) => (
@@ -141,55 +145,48 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                 ) : availableModels.length > 0 ? (
                   availableModels.map(model => (
-                    <button
+                    <div
                       key={model.id}
                       onClick={() => handleModelSelect(model.id)}
                       role="option"
                       aria-selected={model.id === selectedModelId}
-                      className={`w-full text-left px-4 py-2.5 text-sm sm:text-base flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors
-                        ${model.id === selectedModelId ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`
+                      className={`cursor-pointer w-full text-left px-4 py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
+                        ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`
                       }
                     >
-                      <div className="flex items-center gap-2">
-                        {model.isPinned && (
-                          <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-                        )}
-                        <span className="truncate" title={model.name}>{model.name}</span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {model.isPinned && (
+                            <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                          )}
+                          <span className={`truncate ${model.id === selectedModelId ? 'text-[var(--theme-text-link)] font-semibold' : 'text-[var(--theme-text-primary)]'}`} title={model.name}>{model.name}</span>
+                        </div>
+                        {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
                       </div>
-                      {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
-                    </button>
+
+                      {model.id === selectedModelId && (
+                          <div className="mt-2 pl-1" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
+                              {model.id === defaultModelId ? (
+                                  <div className="text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
+                                      <Check size={14} />
+                                      <span>{t('header_setDefault_isDefault')}</span>
+                                  </div>
+                              ) : (
+                                  <button
+                                      onClick={handleSetDefault}
+                                      className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"
+                                  >
+                                      <span>{t('header_setDefault_action')}</span>
+                                  </button>
+                              )}
+                          </div>
+                      )}
+                    </div>
                   ))
                 ) : (
                   <div className="px-4 py-2.5 text-sm sm:text-base text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
                 )}
               </div>
-
-              {availableModels.length > 0 && !isModelsLoading && (
-                <div className="p-2 border-t border-[var(--theme-border-primary)] bg-black/10">
-                  <button
-                    onClick={() => {
-                      onSetDefaultModel(selectedModelId);
-                      setIsModelSelectorOpen(false);
-                    }}
-                    disabled={selectedModelId === defaultModelId}
-                    className="w-full text-center px-3 py-1.5 text-sm rounded-md transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)]
-                      disabled:text-[var(--theme-text-tertiary)] disabled:cursor-not-allowed
-                      enabled:bg-[var(--theme-bg-tertiary)] enabled:hover:bg-[var(--theme-bg-input)] enabled:text-[var(--theme-text-primary)]"
-                  >
-                    {selectedModelId === defaultModelId ? (
-                        <>
-                            <Check size={16} className="text-[var(--theme-text-success)]" />
-                            <span>{t('header_setDefault_isDefault')}</span>
-                        </>
-                    ) : (
-                        <>
-                           <Pin size={16} />
-                           <span>{t('header_setDefault_action')}</span>
-                        </>
-                    )}
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
