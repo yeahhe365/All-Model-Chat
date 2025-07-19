@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {isModelSelectorOpen && (
             <div 
-              className="absolute top-full left-0 mt-1 w-40 sm:w-48 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 flex flex-col"
+              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 flex flex-col"
             >
               <div className="max-h-96 overflow-y-auto custom-scrollbar" role="listbox" aria-labelledby="model-selector-button">
                 {isModelsLoading ? (

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useCallback } from 'react';
 import { Paperclip } from 'lucide-react';
 import { AppSettings } from './types';
@@ -122,6 +123,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     logService.info('App initialized.');
+    
+    // Fade out and remove the loader
+    const loader = document.getElementById('loader');
+    if (loader) {
+      loader.classList.add('hidden');
+      loader.addEventListener('transitionend', () => {
+        loader.remove();
+      }, { once: true });
+    }
   }, []);
   
   const handleSaveSettings = (newSettings: AppSettings) => {
