@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, Menu, SquarePen, Wand2, Lock } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -22,8 +22,6 @@ interface HeaderProps {
   isKeyLocked: boolean;
 }
 
-const MOBILE_BREAKPOINT = 640; // Tailwind's sm breakpoint
-
 export const Header: React.FC<HeaderProps> = ({
   onNewChat,
   onOpenSettingsModal, 
@@ -45,33 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
-  
-  const [isModelNameOverflowing, setIsModelNameOverflowing] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const contentWrapperRef = useRef<HTMLDivElement>(null);
-  const singleInstanceRef = useRef<HTMLSpanElement>(null);
 
   const displayModelName = isModelsLoading && !currentModelName ? t('appLoadingModels') : currentModelName;
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    const singleInstance = singleInstanceRef.current;
-    const contentWrapper = contentWrapperRef.current;
-
-    if (container && singleInstance && contentWrapper) {
-        const isOverflowing = singleInstance.scrollWidth > container.clientWidth;
-        
-        if (isOverflowing !== isModelNameOverflowing) {
-            setIsModelNameOverflowing(isOverflowing);
-        }
-        
-        if (isOverflowing) {
-            // pl-4 is 1rem = 16px
-            const scrollAmount = singleInstance.scrollWidth + 16;
-            contentWrapper.style.setProperty('--marquee-scroll-amount', `-${scrollAmount}px`);
-        }
-    }
-  }, [displayModelName, isModelNameOverflowing]);
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -134,29 +107,16 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`w-[6.6rem] sm:w-[7.8rem] md:w-[9rem] text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-md self-start flex items-center justify-between gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`flex items-center gap-2 rounded-lg px-2 py-1 text-xl transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
             aria-expanded={isModelSelectorOpen}
           >
-             <div ref={containerRef} className="flex-1 overflow-hidden">
-                  <div ref={contentWrapperRef} className={`flex w-max items-center ${isModelNameOverflowing ? 'horizontal-scroll-marquee' : ''}`}>
-                      <span ref={singleInstanceRef} className="flex items-center gap-1 whitespace-nowrap">
-                          {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
-                          {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
-                          <span>{displayModelName}</span>
-                      </span>
-                      {isModelNameOverflowing && (
-                          <span className="flex items-center gap-1 whitespace-nowrap pl-4">
-                              {isModelsLoading && !currentModelName ? <Loader2 size={12} className="animate-spin mr-1 text-[var(--theme-text-link)] flex-shrink-0" /> : null}
-                              {isKeyLocked && <span title="API Key is locked for this session"><Lock size={10} className="mr-1 text-[var(--theme-text-link)]"/></span>}
-                              <span>{displayModelName}</span>
-                          </span>
-                      )}
-                  </div>
-              </div>
-            <ChevronDown size={12} className={`transition-transform duration-200 flex-shrink-0 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+            {isModelsLoading && !currentModelName && <Loader2 size={18} className="animate-spin text-[var(--theme-text-link)]" />}
+            {isKeyLocked && <Lock size={16} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
+            <span className="truncate max-w-[200px] sm:max-w-[250px]">{displayModelName}</span>
+            <ChevronDown size={22} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isModelSelectorOpen && (
