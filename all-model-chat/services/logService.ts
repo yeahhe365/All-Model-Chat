@@ -10,8 +10,13 @@ export interface LogEntry {
   data?: any;
 }
 
+export type ApiKeyUsage = {
+  total: number;
+  failures: number;
+};
+
 type LogListener = (logs: LogEntry[]) => void;
-type ApiKeyListener = (usage: Map<string, number>) => void;
+type ApiKeyListener = (usage: Map<string, ApiKeyUsage>) => void;
 
 const LOG_STORAGE_KEY = 'chatLogEntries';
 const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
@@ -20,7 +25,7 @@ const LOG_RETENTION_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 class LogServiceImpl {
   private logs: LogEntry[] = [];
   private listeners: Set<LogListener> = new Set();
-  private apiKeyUsage: Map<string, number> = new Map();
+  private apiKeyUsage: Map<string, ApiKeyUsage> = new Map();
   private apiKeyListeners: Set<ApiKeyListener> = new Set();
   private idCounter = 0;
 
@@ -67,7 +72,12 @@ class LogServiceImpl {
           if (storedUsage) {
               const parsed = JSON.parse(storedUsage);
               if (Array.isArray(parsed)) {
-                  this.apiKeyUsage = new Map(parsed);
+                  this.apiKeyUsage = new Map(parsed.map(([key, value]) => {
+                      if (typeof value === 'number') {
+                          return [key, { total: value, failures: 0 }];
+                      }
+                      return [key, value];
+                  }));
               }
           }
       } catch (e) {
@@ -134,10 +144,20 @@ class LogServiceImpl {
     this.addLog('DEBUG', message, data);
   }
 
-  public recordApiKeyUsage(apiKey: string) {
+  public logApiKeyAttempt(apiKey: string) {
     if (!apiKey) return;
-    const currentCount = this.apiKeyUsage.get(apiKey) || 0;
-    this.apiKeyUsage.set(apiKey, currentCount + 1);
+    const usage = this.apiKeyUsage.get(apiKey) || { total: 0, failures: 0 };
+    usage.total += 1;
+    this.apiKeyUsage.set(apiKey, usage);
+    this.saveApiKeyUsage();
+    this.notifyApiKeyListeners();
+  }
+
+  public logApiKeyFailure(apiKey: string) {
+    if (!apiKey) return;
+    const usage = this.apiKeyUsage.get(apiKey) || { total: 0, failures: 0 };
+    usage.failures = (usage.failures || 0) + 1;
+    this.apiKeyUsage.set(apiKey, usage);
     this.saveApiKeyUsage();
     this.notifyApiKeyListeners();
   }

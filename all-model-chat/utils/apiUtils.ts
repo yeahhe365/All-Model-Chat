@@ -19,7 +19,7 @@ export const getKeyForRequest = (
 ): { key: string; isNewKey: boolean } | { error: string } => {
     const logUsage = (key: string) => {
         if (appSettings.useCustomApiConfig) {
-            logService.recordApiKeyUsage(key);
+            logService.logApiKeyAttempt(key);
         }
     };
 

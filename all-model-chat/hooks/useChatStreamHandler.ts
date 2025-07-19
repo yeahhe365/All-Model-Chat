@@ -39,11 +39,12 @@ export const useChatStreamHandler = ({
         abortController: AbortController,
         generationStartTimeRef: React.MutableRefObject<Date | null>,
         currentChatSettings: IndividualChatSettings,
+        keyToUse: string
     ) => {
         const newModelMessageIds = new Set<string>([generationId]);
 
         const streamOnError = (error: Error) => {
-            handleApiError(error, currentSessionId, generationId);
+            handleApiError(error, currentSessionId, generationId, "Error", keyToUse);
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
@@ -61,7 +62,7 @@ export const useChatStreamHandler = ({
                         if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
                             let thinkingTime = m.thinkingTimeMs;
                             if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
-                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
+                                thinkingTime = firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime();
                             }
                             const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
                             const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;

@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, fileToDataUrl, logService } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
-import { logService } from '../services/logService';
 
 interface FileHandlingProps {
     appSettings: AppSettings;
@@ -108,6 +107,7 @@ export const useFileHandling = ({
                     logService.info(`File uploaded successfully: ${file.name}`, { fileInfo: uploadedFileInfo });
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
                 } catch (uploadError) {
+                    if (keyToUse) logService.logApiKeyFailure(keyToUse);
                     let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
                     let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
                     if (uploadError instanceof Error && uploadError.name === 'AbortError') {
@@ -199,11 +199,13 @@ export const useFileHandling = ({
                 const newFile: UploadedFile = { id: tempId, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, fileUri: fileMetadata.uri, fileApiName: fileMetadata.name, isProcessing: false, progress: 100, uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : 'failed', error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined, };
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? newFile : f));
             } else {
+                logService.logApiKeyFailure(keyToUse);
                 logService.error(`File with ID ${fileApiId} not found or inaccessible.`);
                 setAppFileError(`File with ID ${fileApiId} not found or inaccessible.`);
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Not Found: ${fileApiId}`, isProcessing: false, error: 'File not found.', uploadState: 'failed' } : f));
             }
         } catch (error) {
+            logService.logApiKeyFailure(keyToUse);
             if (error instanceof Error && error.name === 'SilentError') {
                 logService.error('Cannot add file by ID: API key not configured.');
                 setAppFileError('API key not configured.');
