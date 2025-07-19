@@ -326,7 +326,6 @@ const App: React.FC = () => {
           onNewChat={() => startNewChat()}
           onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
           onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
-          onOpenExportModal={() => setIsExportModalOpen(true)}
           onToggleHistorySidebar={() => setIsHistorySidebarOpen(prev => !prev)}
           isLoading={isLoading}
           currentModelName={getCurrentModelDisplayName()}
@@ -342,7 +341,6 @@ const App: React.FC = () => {
           isKeyLocked={!!currentChatSettings.lockedApiKey}
           defaultModelId={appSettings.modelId}
           onSetDefaultModel={handleSetDefaultModel}
-          isChatEmpty={messages.length === 0}
         />
         {modelsLoadingError && (
           <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
