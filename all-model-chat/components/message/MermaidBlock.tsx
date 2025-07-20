@@ -85,7 +85,6 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(pngUrl);
         }
         setIsDownloading(false);
     };
