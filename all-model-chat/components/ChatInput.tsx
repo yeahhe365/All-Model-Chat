@@ -538,7 +538,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     <div className="flex items-center justify-between w-full">
                         <ChatInputActions
                             onAttachmentAction={handleAttachmentAction}
-                            disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload || isRecording}
+                            disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}
                             isGoogleSearchEnabled={isGoogleSearchEnabled}
                             onToggleGoogleSearch={() => handleToggleToolAndFocus(onToggleGoogleSearch)}
                             isCodeExecutionEnabled={isCodeExecutionEnabled}
