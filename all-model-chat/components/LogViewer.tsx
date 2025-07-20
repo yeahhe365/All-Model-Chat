@@ -277,9 +277,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
                       <div key={key} className={`p-3 rounded-lg border transition-all ${isActive ? 'bg-[var(--theme-bg-accent)] bg-opacity-20 border-[var(--theme-border-focus)]' : 'bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)]'}`}>
                         <div className="flex justify-between items-start">
                           <ObfuscatedApiKey apiKey={key} />
-                          <div className="text-right flex-shrink-0 pl-4">
-                            <span className="text-lg font-semibold text-[var(--theme-text-primary)]">{count}</span>
-                            <span className="text-xs text-[var(--theme-text-tertiary)] ml-1">uses</span>
+                          <div className="flex flex-shrink-0 items-baseline justify-end pl-4 text-right">
+                            <span className="w-16 text-right text-lg font-semibold tabular-nums text-[var(--theme-text-primary)]">{count}</span>
+                            <span className="ml-1.5 text-xs text-[var(--theme-text-tertiary)]">uses</span>
                           </div>
                         </div>
                         <div className="w-full bg-[var(--theme-bg-secondary)] rounded-full h-1.5 mt-2">
