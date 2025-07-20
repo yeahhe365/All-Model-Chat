@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
-import { Loader2, AlertTriangle, Download } from 'lucide-react';
+import { Loader2, AlertTriangle, Download, Maximize } from 'lucide-react';
 import { UploadedFile } from '../../types';
 
 interface MermaidBlockProps {
@@ -13,16 +13,32 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const renderMermaid = async () => {
       setIsLoading(true);
       setError('');
+      setDiagramFile(null);
       try {
         const id = `mermaid-svg-${Math.random().toString(36).substring(2, 9)}`;
+        // Ensure theme is appropriate for white background rendering
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
         const { svg: renderedSvg } = await mermaid.render(id, code);
         setSvg(renderedSvg);
+        
+        // Create a data URL for the SVG to be used in the image zoom modal
+        const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(renderedSvg)))}`;
+        setDiagramFile({
+            id: id,
+            name: 'mermaid-diagram.svg',
+            type: 'image/svg+xml',
+            size: renderedSvg.length,
+            dataUrl: svgDataUrl,
+            uploadState: 'active'
+        });
+
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Failed to render Mermaid diagram.';
         setError(errorMessage.replace(/.*error:\s*/, '')); // Clean up mermaid's error prefix
@@ -33,84 +49,53 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
     };
 
     if (code) {
+      // Delay slightly to ensure mermaid has initialized
       setTimeout(renderMermaid, 50);
     }
   }, [code]);
 
-  const getSvgElement = (): SVGSVGElement | null => {
-    if (!containerRef.current) return null;
-    return containerRef.current.querySelector('svg');
-  };
-
-  const handleZoom = () => {
-    const svgEl = getSvgElement();
-    if (!svgEl) return;
-    
-    const svgHtml = svgEl.outerHTML;
-    // Handle UTF-8 characters correctly for btoa
-    const base64Svg = btoa(unescape(encodeURIComponent(svgHtml)));
-    const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
-
-    const tempFile: UploadedFile = {
-      id: `mermaid-diagram-${Date.now()}`,
-      name: 'Mermaid Diagram.svg',
-      type: 'image/svg+xml',
-      size: svgHtml.length,
-      dataUrl: dataUrl,
-      uploadState: 'active'
-    };
-    onImageClick(tempFile);
-  };
-
-  const handleDownload = async () => {
-    const svgEl = getSvgElement();
-    if (!svgEl || isDownloading) return;
-
+  const handleDownloadPng = () => {
+    if (!svg || isDownloading) return;
     setIsDownloading(true);
 
-    try {
-      const svgHtml = svgEl.outerHTML;
-      const image = new Image();
-      const svgBlob = new Blob([svgHtml], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
-      
-      image.onload = () => {
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    const img = new Image();
+
+    img.onload = () => {
         const canvas = document.createElement('canvas');
-        const margin = 20;
-        const bbox = svgEl.getBBox();
-        canvas.width = bbox.width + margin * 2;
-        canvas.height = bbox.height + margin * 2;
+        const padding = 20;
+        
+        // Use naturalWidth/Height for accurate dimensions
+        const imgWidth = img.naturalWidth;
+        const imgHeight = img.naturalHeight;
 
+        canvas.width = imgWidth + padding * 2;
+        canvas.height = imgHeight + padding * 2;
         const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = 'white';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(image, margin, margin, bbox.width, bbox.height);
-          
-          const pngUrl = canvas.toDataURL('image/png');
-          const a = document.createElement('a');
-          a.href = pngUrl;
-          a.download = 'mermaid-diagram.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-        }
-        URL.revokeObjectURL(url);
-        setIsDownloading(false);
-      };
-      
-      image.onerror = () => {
-        setError('Failed to load SVG for PNG conversion.');
-        URL.revokeObjectURL(url);
-        setIsDownloading(false);
-      };
 
-      image.src = url;
-    } catch(e) {
-      const errorMessage = e instanceof Error ? e.message : 'An error occurred during download.';
-      setError(errorMessage);
-      setIsDownloading(false);
-    }
+        if (ctx) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, padding, padding, imgWidth, imgHeight);
+
+            const pngUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = pngUrl;
+            link.download = `mermaid-diagram-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(pngUrl);
+        }
+        setIsDownloading(false);
+    };
+    
+    img.onerror = () => {
+        setError("Failed to convert diagram to PNG.");
+        setIsDownloading(false);
+    };
+
+    img.src = svgDataUrl;
   };
 
 
@@ -137,24 +122,29 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
   }
 
   return (
-    <div className="relative group">
-       <div
-        ref={containerRef}
-        className={`${containerClasses} bg-white cursor-pointer`}
-        onClick={handleZoom}
-        title="Click to zoom"
+    <div ref={containerRef} className="relative group">
+      <div
+        className={`${containerClasses} bg-white ${diagramFile ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+        onClick={() => diagramFile && onImageClick(diagramFile)}
         dangerouslySetInnerHTML={{ __html: svg }}
       />
-       {!isLoading && !error && (
-        <div className="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button
-            onClick={(e) => { e.stopPropagation(); handleDownload(); }}
-            disabled={isDownloading}
-            className="p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-white/50"
-            title="Download as PNG"
-          >
-            {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          </button>
+      {diagramFile && (
+         <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
+            <button
+                onClick={(e) => { e.stopPropagation(); onImageClick(diagramFile); }}
+                className="code-block-utility-button rounded-md"
+                title="Zoom Diagram"
+            >
+                <Maximize size={14} />
+            </button>
+            <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadPng(); }}
+                disabled={isDownloading}
+                className="code-block-utility-button rounded-md"
+                title="Download as PNG"
+            >
+                {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+            </button>
         </div>
       )}
     </div>

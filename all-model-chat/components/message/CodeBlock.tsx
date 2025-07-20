@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
@@ -16,6 +15,8 @@ interface CodeBlockProps {
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
 }
+
+const COLLAPSE_THRESHOLD_PX = 150;
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
     const preRef = useRef<HTMLPreElement>(null);
