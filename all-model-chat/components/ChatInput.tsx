@@ -1,5 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Ban } from 'lucide-react';
 import { UploadedFile, AppSettings, ModelOption } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -108,6 +108,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     { name: 'help', description: t('help_cmd_help'), icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
     { name: 'pin', description: t('help_cmd_pin'), icon: <Pin size={16} />, action: onTogglePinCurrentSession },
     { name: 'retry', description: t('help_cmd_retry'), icon: <RotateCw size={16} />, action: onRetryLastTurn },
+    { name: 'stop', description: t('help_cmd_stop'), icon: <Ban size={16} />, action: onStopGenerating },
     { name: 'search', description: t('help_cmd_search'), icon: <Globe size={16} />, action: onToggleGoogleSearch },
     { name: 'code', description: t('help_cmd_code'), icon: <Terminal size={16} />, action: onToggleCodeExecution },
     { name: 'url', description: t('help_cmd_url'), icon: <Link size={16} />, action: onToggleUrlContext },
@@ -116,7 +117,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     { name: 'new', description: t('help_cmd_new'), icon: <FilePlus2 size={16} />, action: onNewChat },
     { name: 'settings', description: t('help_cmd_settings'), icon: <Settings size={16} />, action: onOpenSettings },
     { name: 'canvas', description: t('help_cmd_canvas'), icon: <Wand2 size={16} />, action: onToggleCanvasPrompt },
-  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn]);
+  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating]);
   
   const allCommandsForHelp = useMemo(() => [
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),

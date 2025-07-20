@@ -67,6 +67,7 @@ export const translations = {
     help_cmd_help: { en: 'Displays this help menu.', zh: '显示此帮助菜单。' },
     help_cmd_pin: { en: 'Toggle pin for current chat', zh: '切换当前聊天的置顶状态' },
     help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
+    help_cmd_stop: { en: 'Stop the current generation.', zh: '停止当前生成。' },
     help_cmd_search: { en: 'Toggle web search', zh: '切换网络搜索' },
     help_cmd_code: { en: 'Toggle code execution', zh: '切换代码执行' },
     help_cmd_url: { en: 'Toggle URL context', zh: '切换 URL 上下文' },
