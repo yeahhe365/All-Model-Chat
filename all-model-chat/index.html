@@ -394,42 +394,6 @@
         border-radius: 6px;
         margin-top: 0.5rem;
     }
-    /* Mermaid Diagram Styles */
-    .mermaid-diagram-wrapper {
-      margin-top: 1rem;
-      padding: 1rem;
-      background-color: #ffffff; /* Default light background */
-      border: 1px solid var(--theme-border-secondary);
-      border-radius: 8px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: auto;
-      position: relative;
-      min-height: 100px; /* For loading state */
-    }
-
-    body:not(.theme-pearl) .mermaid-diagram-wrapper {
-      background-color: var(--theme-bg-secondary);
-    }
-
-    .mermaid-diagram-wrapper svg {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
-
-    .mermaid-error-display {
-      padding: 0.75rem 1rem;
-      background-color: rgba(239, 68, 68, 0.1); /* transparent red */
-      color: var(--theme-text-danger);
-      border-radius: 6px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.85rem;
-      white-space: pre-wrap;
-      border-left: 4px solid var(--theme-bg-danger-hover);
-      width: 100%;
-    }
   </style>
   <style>
     /* UI/UX Enhancement Styles */
@@ -741,7 +705,7 @@
     "rehype-highlight": "https://esm.sh/rehype-highlight@^7.0.0",
     "katex": "https://esm.sh/katex@0.16.9/dist/katex.mjs",
     "rehype-raw": "https://esm.sh/rehype-raw@^7.0.0",
-    "mermaid": "https://esm.sh/mermaid@10.9.1"
+    "mermaid": "https://esm.sh/mermaid@^10.9.1"
   }
 }
 </script>

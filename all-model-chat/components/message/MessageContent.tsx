@@ -13,6 +13,7 @@ import { FileDisplay } from './FileDisplay';
 import { CodeBlock } from './CodeBlock';
 import { translations } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
+import { MermaidBlock } from './MermaidBlock';
 
 const renderThoughtsMarkdown = (content: string) => {
   const rawMarkup = marked.parse(content || ''); 
@@ -84,10 +85,9 @@ interface MessageContentProps {
     baseFontSize: number;
     expandCodeBlocksByDefault: boolean;
     t: (key: keyof typeof translations) => string;
-    themeId: string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t, themeId }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -142,6 +142,20 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
         ) as React.ReactElement | undefined;
 
         const codeClassName = codeElement?.props?.className || '';
+        const codeContent = codeElement?.props?.children;
+        const langMatch = codeClassName.match(/language-(\S+)/);
+        const language = langMatch ? langMatch[1] : '';
+
+        if (language === 'mermaid' && typeof codeContent === 'string') {
+          return (
+            <div>
+              <MermaidBlock code={codeContent} />
+              <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
+                {children}
+              </CodeBlock>
+            </div>
+          );
+        }
         
         return (
           <CodeBlock 
@@ -149,13 +163,12 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             className={codeClassName} 
             onOpenHtmlPreview={onOpenHtmlPreview} 
             expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-            themeId={themeId}
           >
             {children}
           </CodeBlock>
         );
       }
-    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, themeId]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
 
     return (
         <>

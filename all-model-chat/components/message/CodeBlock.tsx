@@ -1,9 +1,7 @@
 
 
-
-import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2, Loader2 } from 'lucide-react';
-import mermaid from 'mermaid';
+import React, { useState, useRef, useLayoutEffect } from 'react';
+import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
@@ -16,21 +14,17 @@ interface CodeBlockProps {
   className?: string;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
-  themeId: string;
 }
 
 const COLLAPSE_THRESHOLD_PX = 150;
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault, themeId }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
     const preRef = useRef<HTMLPreElement>(null);
     const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
     const [isExpanded, setIsExpanded] = useState(expandCodeBlocksByDefault);
     const [copied, setCopied] = useState(false);
     const hasUserInteracted = useRef(false);
-    const [renderedMermaid, setRenderedMermaid] = useState<string | null>(null);
-    const [mermaidError, setMermaidError] = useState<string | null>(null);
-    const [isRenderingMermaid, setIsRenderingMermaid] = useState(false);
 
     useLayoutEffect(() => {
         const preElement = preRef.current;
@@ -44,51 +38,12 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         const isCurrentlyOverflowing = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
         setIsOverflowing(isCurrentlyOverflowing);
 
+        // If the user hasn't manually toggled this specific block,
+        // its state should reflect the global setting.
         if (!hasUserInteracted.current) {
             setIsExpanded(expandCodeBlocksByDefault);
         }
     }, [children, expandCodeBlocksByDefault]);
-
-    const langMatch = className?.match(/language-(\S+)/);
-    let language = langMatch ? langMatch[1] : 'txt';
-
-    useEffect(() => {
-        if (language === 'mermaid' && codeText.current) {
-            setIsRenderingMermaid(true);
-            setMermaidError(null);
-            setRenderedMermaid(null);
-
-            const mermaidTheme = themeId === 'pearl' ? 'default' : 'dark';
-            
-            mermaid.initialize({
-                startOnLoad: false,
-                theme: mermaidTheme,
-                securityLevel: 'loose',
-                fontFamily: '"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
-            });
-
-            const renderDiagram = async () => {
-                try {
-                    const id = `mermaid-svg-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-                    const { svg } = await mermaid.render(id, codeText.current);
-                    setRenderedMermaid(svg);
-                } catch (e) {
-                    console.error("Mermaid rendering error:", e);
-                    const errorMessage = e instanceof Error ? e.message : String(e);
-                    const simpleError = errorMessage.split('\n').find(line => line.toLowerCase().startsWith('error:')) || errorMessage;
-                    setMermaidError(simpleError);
-                } finally {
-                    setIsRenderingMermaid(false);
-                }
-            };
-            
-            const timer = setTimeout(() => renderDiagram(), 50);
-            return () => clearTimeout(timer);
-        } else {
-            setRenderedMermaid(null);
-            setMermaidError(null);
-        }
-    }, [language, themeId, children]);
 
     const handleToggleExpand = () => {
         hasUserInteracted.current = true;
@@ -108,6 +63,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
 
     const codeContent = React.Children.only(children) as React.ReactElement;
     
+    const langMatch = className?.match(/language-(\S+)/);
+    let language = langMatch ? langMatch[1] : 'txt';
+
     let mimeType = 'text/plain';
     if (language === 'html' || language === 'xml' || language === 'svg') mimeType = 'text/html';
     else if (language === 'javascript' || language === 'js' || language === 'typescript' || language === 'ts') mimeType = 'application/javascript';
@@ -174,13 +132,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 </div>
                 {codeContent}
             </pre>
-            {language === 'mermaid' && (isRenderingMermaid || renderedMermaid || mermaidError) && (
-                <div className="mermaid-diagram-wrapper">
-                    {isRenderingMermaid && <Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" />}
-                    {mermaidError && <div className="mermaid-error-display">{mermaidError}</div>}
-                    {renderedMermaid && <div className="w-full h-full flex items-center justify-center" dangerouslySetInnerHTML={{ __html: renderedMermaid }} />}
-                </div>
-            )}
             {isOverflowing && !isExpanded && (
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none rounded-b-lg"></div>
             )}

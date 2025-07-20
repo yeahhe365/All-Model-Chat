@@ -19,6 +19,7 @@ import { PreloadedMessagesModal } from './components/PreloadedMessagesModal';
 import { ExportChatModal } from './components/ExportChatModal';
 import html2canvas from 'html2canvas';
 import DOMPurify from 'dompurify';
+import mermaid from 'mermaid';
 
 
 const App: React.FC = () => {
@@ -129,6 +130,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     logService.info('App initialized.');
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default', // Always use a light theme for diagrams for readability, rendered on a white background.
+        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    });
   }, []);
   
   const handleSaveSettings = (newSettings: AppSettings) => {
