@@ -41,7 +41,6 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   initialTrueFullscreenRequest,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const modalRootRef = useRef<HTMLDivElement>(null);
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
   const iconSize = getResponsiveValue(18, 20);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -150,28 +149,6 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     };
   }, [isOpen, handleClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen]);
 
-  useEffect(() => {
-    const handleWheelZoom = (event: WheelEvent) => {
-        if (event.ctrlKey) {
-            event.preventDefault();
-            const delta = event.deltaY > 0 ? -1 : 1; // deltaY > 0 is scroll down (zoom out)
-            setScale(s => {
-                const newScale = s + delta * ZOOM_STEP;
-                return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newScale));
-            });
-        }
-    };
-    const modalElement = modalRootRef.current;
-    if (isOpen && modalElement) {
-        modalElement.addEventListener('wheel', handleWheelZoom, { passive: false });
-    }
-    return () => {
-        if (modalElement) {
-            modalElement.removeEventListener('wheel', handleWheelZoom);
-        }
-    };
-  }, [isOpen]);
-
 
   if (!isActuallyOpen || !htmlContent) {
     return null;
@@ -232,7 +209,6 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 
   return (
     <div
-      ref={modalRootRef}
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
