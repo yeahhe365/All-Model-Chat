@@ -16,6 +16,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onToggleUrlContext,
   onRecordButtonClick,
   isRecording,
+  isMicInitializing,
   isTranscribing,
   isLoading,
   onStopGenerating,
@@ -61,18 +62,20 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             <button
                 type="button"
                 onClick={onRecordButtonClick}
-                disabled={isLoading || isEditing || disabled}
+                disabled={isLoading || isEditing || disabled || isTranscribing || isMicInitializing}
                 className={`${buttonBaseClass} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]'}`}
                 aria-label={
                     isRecording ? t('voiceInput_stop_aria') :
-                    isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')
+                    isTranscribing ? t('voiceInput_transcribing_aria') : 
+                    isMicInitializing ? t('mic_initializing') : t('voiceInput_start_aria')
                 }
                 title={
                     isRecording ? t('voiceInput_stop_aria') :
-                    isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')
+                    isTranscribing ? t('voiceInput_transcribing_aria') : 
+                    isMicInitializing ? t('mic_initializing') : t('voiceInput_start_aria')
                 }
             >
-                {isTranscribing ? (
+                {isTranscribing || isMicInitializing ? (
                     <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
                 ) : (
                     <Mic size={micIconSize} />

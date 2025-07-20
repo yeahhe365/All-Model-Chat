@@ -49,6 +49,7 @@ export const translations = {
     cancelRecording_aria: { en: 'Cancel recording', zh: '取消录音' },
     voiceInput_transcribing_aria: { en: 'Transcribing...', zh: '转录中...' },
     voiceInput_start_aria: { en: 'Start voice input', zh: '开始语音输入' },
+    mic_initializing: { en: 'Initializing microphone...', zh: '正在初始化麦克风...' },
     stopGenerating_aria: { en: 'Stop generating response', zh: '停止生成回应' },
     stopGenerating_title: { en: 'Stop Generating', zh: '停止生成' },
     cancelEdit_aria: { en: 'Cancel editing', zh: '取消编辑' },

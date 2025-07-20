@@ -240,6 +240,7 @@ export interface ChatInputActionsProps {
   onToggleUrlContext: () => void;
   onRecordButtonClick: () => void;
   isRecording?: boolean;
+  isMicInitializing?: boolean;
   isTranscribing: boolean;
   isLoading: boolean;
   onStopGenerating: () => void;

@@ -84,6 +84,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [isMicInitializing, setIsMicInitializing] = useState(false);
 
   const [slashCommandState, setSlashCommandState] = useState<{
     isOpen: boolean;
@@ -478,6 +479,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     } catch (err) {
       console.error("Error accessing microphone:", err);
       alert("Could not access microphone. Please check permissions.");
+    } finally {
+        setIsMicInitializing(false);
     }
   };
 
@@ -485,6 +488,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     if (isRecording) {
       handleStopRecording();
     } else {
+      setIsMicInitializing(true);
       handleStartRecording();
     }
   };
@@ -563,6 +567,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             onRecordButtonClick={handleVoiceInputClick}
                             onCancelRecording={handleCancelRecording}
                             isRecording={isRecording}
+                            isMicInitializing={isMicInitializing}
                             isTranscribing={isTranscribing}
                             isLoading={isLoading}
                             onStopGenerating={onStopGenerating}
