@@ -84,9 +84,10 @@ interface MessageContentProps {
     baseFontSize: number;
     expandCodeBlocksByDefault: boolean;
     t: (key: keyof typeof translations) => string;
+    themeId: string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t, themeId }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -148,12 +149,13 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             className={codeClassName} 
             onOpenHtmlPreview={onOpenHtmlPreview} 
             expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+            themeId={themeId}
           >
             {children}
           </CodeBlock>
         );
       }
-    }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, themeId]);
 
     return (
         <>

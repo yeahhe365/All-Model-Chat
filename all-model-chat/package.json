@@ -23,7 +23,8 @@
     "rehype-katex": "^7.0.0",
     "rehype-highlight": "^7.0.0",
     "katex": "0.16.9",
-    "rehype-raw": "^7.0.0"
+    "rehype-raw": "^7.0.0",
+    "mermaid": "10.9.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
