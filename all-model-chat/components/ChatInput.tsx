@@ -69,6 +69,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const prevIsProcessingFileRef = useRef(isProcessingFile);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingCancelledRef = useRef(false);
 
   const [inputText, setInputText] = useState('');
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
@@ -421,8 +422,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleStopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      recordingCancelledRef.current = false;
       mediaRecorderRef.current.stop();
     }
+    setIsRecording(false);
+  };
+
+  const handleCancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      recordingCancelledRef.current = true;
+      mediaRecorderRef.current.stop();
+    }
+    audioChunksRef.current = [];
     setIsRecording(false);
   };
 
@@ -432,6 +443,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         alert("Your browser does not support audio recording.");
         return;
       }
+      recordingCancelledRef.current = false;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -445,6 +457,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
+        if (recordingCancelledRef.current) {
+          return;
+        }
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         if (audioBlob.size > 0) {
           const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
@@ -546,6 +561,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                             isUrlContextEnabled={isUrlContextEnabled}
                             onToggleUrlContext={() => handleToggleToolAndFocus(onToggleUrlContext)}
                             onRecordButtonClick={handleVoiceInputClick}
+                            onCancelRecording={handleCancelRecording}
                             isRecording={isRecording}
                             isTranscribing={isTranscribing}
                             isLoading={isLoading}

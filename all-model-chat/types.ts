@@ -248,6 +248,7 @@ export interface ChatInputActionsProps {
   canSend: boolean;
   isWaitingForUpload: boolean;
   t: (key: keyof typeof translations) => string;
+  onCancelRecording: () => void;
 }
 
 export interface CommandInfo {

@@ -24,6 +24,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   canSend,
   isWaitingForUpload,
   t,
+  onCancelRecording,
 }) => {
   const micIconSize = 18;
   const sendIconSize = 18;
@@ -46,6 +47,17 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+            {isRecording && (
+                <button
+                    type="button"
+                    onClick={onCancelRecording}
+                    className="px-3 py-1.5 text-xs sm:text-sm bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors"
+                    aria-label={t('cancelRecording_aria')}
+                    title={t('cancelRecording_aria')}
+                >
+                    {t('cancel_button')}
+                </button>
+            )}
             <button
                 type="button"
                 onClick={onRecordButtonClick}
