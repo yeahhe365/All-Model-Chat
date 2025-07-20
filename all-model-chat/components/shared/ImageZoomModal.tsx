@@ -102,6 +102,8 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
 
   if (!file) return null;
 
+  const isMermaidDiagram = file.type === 'image/svg+xml';
+
   return (
     <Modal
       isOpen={!!file}
@@ -119,7 +121,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
         <h2 id="image-zoom-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', file.name)}</h2>
         <div 
             ref={viewportRef} 
-            className="w-full h-full flex items-center justify-center overflow-hidden relative"
+            className="w-full h-full flex items-center justify-center overflow-hidden relative p-4"
         >
           <img
             ref={imageRef}
@@ -134,6 +136,8 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
               objectFit: 'contain',
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none', 
+              backgroundColor: isMermaidDiagram ? 'white' : 'transparent',
+              borderRadius: isMermaidDiagram ? '0.375rem' : '0',
             }}
             onMouseDown={handleMouseDown}
             draggable="false" 
