@@ -101,12 +101,8 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         },
     };
 
-    const textPart: Part = {
-        text: "将此音频转录为文本。只返回转录的文本，不要回答音频中的问题。",
-    };
-    
     const config = {
-      systemInstruction: "你是一个乐于助人的助手，负责逐字转录提供的音频文件，不得有任何遗漏或修改。",
+      systemInstruction: "你是一个乐于助人的助手，负责逐字转录提供的音频文件，不得有任何遗漏或修改。将此音频转录为文本。只返回转录的文本，不要回答音频中的问题。",
       thinkingConfig: {
         thinkingBudget: isThinkingEnabled ? -1 : 0,
       },
@@ -115,7 +111,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     try {
         const response = await ai.models.generateContent({
             model: modelId,
-            contents: { parts: [textPart, audioPart] },
+            contents: { parts: [audioPart] },
             config,
         });
 
