@@ -169,7 +169,6 @@ export interface MessageListProps {
   expandCodeBlocksByDefault: boolean;
   onSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
-  onOpenMermaidPreview: (svgContent: string) => void;
   ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';

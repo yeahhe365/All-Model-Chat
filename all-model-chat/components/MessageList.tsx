@@ -5,7 +5,6 @@ import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
-import { MermaidZoomModal } from './message/MermaidZoomModal';
 
 const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
@@ -18,10 +17,9 @@ export const MessageList: React.FC<MessageListProps> = ({
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, onSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
-    showScrollToBottom, onScrollToBottom, onOpenMermaidPreview
+    showScrollToBottom, onScrollToBottom
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
-  const [zoomedMermaidSvg, setZoomedMermaidSvg] = useState<string | null>(null);
   
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
@@ -33,14 +31,6 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   const closeImageZoomModal = useCallback(() => {
     setZoomedFile(null);
-  }, []);
-
-  const handleOpenMermaidPreview = useCallback((svgContent: string) => {
-    setZoomedMermaidSvg(svgContent);
-  }, []);
-
-  const handleCloseMermaidPreview = useCallback(() => {
-    setZoomedMermaidSvg(null);
   }, []);
 
   const handleOpenHtmlPreview = useCallback((
@@ -110,7 +100,6 @@ export const MessageList: React.FC<MessageListProps> = ({
               onRetryMessage={onRetryMessage}
               onImageClick={handleImageClick}
               onOpenHtmlPreview={handleOpenHtmlPreview}
-              onOpenMermaidPreview={handleOpenMermaidPreview}
               showThoughts={showThoughts}
               themeColors={themeColors}
               themeId={themeId}
@@ -142,14 +131,6 @@ export const MessageList: React.FC<MessageListProps> = ({
         themeColors={themeColors}
         t={t}
     />
-    {zoomedMermaidSvg && (
-        <MermaidZoomModal 
-            svgContent={zoomedMermaidSvg}
-            onClose={handleCloseMermaidPreview}
-            themeColors={themeColors}
-            t={t}
-        />
-    )}
     {isHtmlPreviewModalOpen && htmlToPreview !== null && (
       <HtmlPreviewModal
         isOpen={isHtmlPreviewModalOpen}
