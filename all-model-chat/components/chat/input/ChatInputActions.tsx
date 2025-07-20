@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, Ban, X, Edit2, Loader2, Mic } from 'lucide-react';
+import { ArrowUp, Ban, X, Edit2, Loader2, Mic, StopCircle } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
@@ -15,6 +15,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   isUrlContextEnabled,
   onToggleUrlContext,
   onRecordButtonClick,
+  isRecording,
   isTranscribing,
   isLoading,
   onStopGenerating,
@@ -48,13 +49,21 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             <button
                 type="button"
                 onClick={onRecordButtonClick}
-                disabled={isLoading || isEditing || disabled || isTranscribing}
-                className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
-                aria-label={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
-                title={isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')}
+                disabled={isLoading || isEditing || disabled}
+                className={`${buttonBaseClass} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]'}`}
+                aria-label={
+                    isRecording ? t('voiceInput_stop_aria') :
+                    isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')
+                }
+                title={
+                    isRecording ? t('voiceInput_stop_aria') :
+                    isTranscribing ? t('voiceInput_transcribing_aria') : t('voiceInput_start_aria')
+                }
             >
                 {isTranscribing ? (
                     <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
+                ) : isRecording ? (
+                    <StopCircle size={micIconSize} />
                 ) : (
                     <Mic size={micIconSize} />
                 )}

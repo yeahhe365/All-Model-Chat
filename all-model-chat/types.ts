@@ -239,6 +239,7 @@ export interface ChatInputActionsProps {
   isUrlContextEnabled: boolean;
   onToggleUrlContext: () => void;
   onRecordButtonClick: () => void;
+  isRecording?: boolean;
   isTranscribing: boolean;
   isLoading: boolean;
   onStopGenerating: () => void;

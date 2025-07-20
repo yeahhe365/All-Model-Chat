@@ -67,6 +67,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const [inputText, setInputText] = useState('');
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
@@ -77,6 +79,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -415,6 +418,61 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     toggleFunc();
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+        alert("Your browser does not support audio recording.");
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size > 0) {
+          const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+          setIsTranscribing(true);
+          const transcribedText = await onTranscribeAudio(audioFile);
+          if (transcribedText) {
+            setInputText(prev => (prev ? `${prev.trim()} ${transcribedText.trim()}` : transcribedText.trim()).trim());
+            setTimeout(() => adjustTextareaHeight(), 0);
+          }
+          setIsTranscribing(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone. Please check permissions.");
+    }
+  };
+
+  const handleVoiceInputClick = () => {
+    if (isRecording) {
+      handleStopRecording();
+    } else {
+      handleStartRecording();
+    }
+  };
   
   return (
     <>
@@ -474,20 +532,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                         className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
                         style={{ height: `${getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX)}px` }}
                         aria-label="Chat message input"
-                        onFocus={() => adjustTextareaHeight()} disabled={isAnyModalOpen || isTranscribing || isWaitingForUpload}
+                        onFocus={() => adjustTextareaHeight()} disabled={isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording}
                         rows={1}
                     />
                     <div className="flex items-center justify-between w-full">
                         <ChatInputActions
                             onAttachmentAction={handleAttachmentAction}
-                            disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}
+                            disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload || isRecording}
                             isGoogleSearchEnabled={isGoogleSearchEnabled}
                             onToggleGoogleSearch={() => handleToggleToolAndFocus(onToggleGoogleSearch)}
                             isCodeExecutionEnabled={isCodeExecutionEnabled}
                             onToggleCodeExecution={() => handleToggleToolAndFocus(onToggleCodeExecution)}
                             isUrlContextEnabled={isUrlContextEnabled}
                             onToggleUrlContext={() => handleToggleToolAndFocus(onToggleUrlContext)}
-                            onRecordButtonClick={() => openActionModal('recorder')}
+                            onRecordButtonClick={handleVoiceInputClick}
+                            isRecording={isRecording}
                             isTranscribing={isTranscribing}
                             isLoading={isLoading}
                             onStopGenerating={onStopGenerating}
