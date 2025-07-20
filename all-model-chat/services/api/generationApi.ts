@@ -102,11 +102,11 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     };
 
     const textPart: Part = {
-        text: "Transcribe this audio to text. If the spoken language is Chinese, you must use Simplified Chinese characters. Only return the transcribed text; do not answer any questions present in the audio.",
+        text: "Transcribe this audio to text. Only return the transcribed text, do not answer questions in the audio.",
     };
     
     const config = {
-      systemInstruction: "You are a helpful assistant that transcribes the provided audio file verbatim. If the audio is in Chinese, you must use Simplified Chinese characters.",
+      systemInstruction: "You are a helpful assistant that transcribes the provided audio file verbatim, without any omissions or modifications.",
       thinkingConfig: {
         thinkingBudget: isThinkingEnabled ? -1 : 0,
       },
