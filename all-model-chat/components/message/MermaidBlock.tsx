@@ -22,6 +22,9 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
       setError('');
       setDiagramFile(null);
       try {
+        // First, validate the syntax. This throws a detailed error on failure.
+        await mermaid.parse(code);
+
         const id = `mermaid-svg-${Math.random().toString(36).substring(2, 9)}`;
         // Ensure theme is appropriate for white background rendering
         mermaid.initialize({ startOnLoad: false, theme: 'default' });
@@ -41,7 +44,9 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
 
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Failed to render Mermaid diagram.';
-        setError(errorMessage.replace(/.*error:\s*/, '')); // Clean up mermaid's error prefix
+        // Clean up verbose mermaid error prefixes and get the core message.
+        const cleanError = errorMessage.replace(/.*error:\s*/, '').split('\n\n')[0];
+        setError(cleanError);
         setSvg('');
       } finally {
         setIsLoading(false);
@@ -124,11 +129,15 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
 
   if (error) {
     return (
-      <div className={`${containerClasses} bg-red-900/20`}>
-        <div className="text-center text-red-400">
-            <AlertTriangle className="mx-auto mb-2" />
-            <strong className="font-semibold">Mermaid Error</strong>
-            <pre className="mt-1 text-xs text-left whitespace-pre-wrap">{error}</pre>
+      <div className="p-3 my-2 border border-[var(--theme-bg-danger)] border-opacity-50 bg-[var(--theme-bg-danger)] bg-opacity-10 rounded-lg text-sm">
+        <div className="flex items-start gap-2">
+            <AlertTriangle size={18} className="flex-shrink-0 mt-0.5 text-[var(--theme-bg-danger)]" />
+            <div>
+                <strong className="font-semibold text-[var(--theme-text-primary)]">Mermaid Diagram Error</strong>
+                <pre className="mt-1 text-xs whitespace-pre-wrap font-mono bg-black/20 p-2 rounded-md custom-scrollbar text-[var(--theme-text-secondary)]">
+                    {error}
+                </pre>
+            </div>
         </div>
       </div>
     );
