@@ -14,7 +14,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const diagramContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const renderMermaid = async () => {
@@ -55,8 +55,25 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
   }, [code]);
 
   const handleDownloadPng = () => {
-    if (!svg || isDownloading) return;
+    if (!svg || isDownloading || !diagramContainerRef.current) return;
     setIsDownloading(true);
+    
+    const svgElement = diagramContainerRef.current.querySelector('svg');
+    if (!svgElement) {
+        setError("Could not find the rendered diagram to export.");
+        setIsDownloading(false);
+        return;
+    }
+
+    const rect = svgElement.getBoundingClientRect();
+    const imgWidth = rect.width;
+    const imgHeight = rect.height;
+
+    if (imgWidth === 0 || imgHeight === 0) {
+        setError("Diagram has zero dimensions, cannot export.");
+        setIsDownloading(false);
+        return;
+    }
 
     const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     const img = new Image();
@@ -65,10 +82,6 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
         const canvas = document.createElement('canvas');
         const padding = 20;
         
-        // Use naturalWidth/Height for accurate dimensions
-        const imgWidth = img.naturalWidth;
-        const imgHeight = img.naturalHeight;
-
         canvas.width = imgWidth + padding * 2;
         canvas.height = imgHeight + padding * 2;
         const ctx = canvas.getContext('2d');
@@ -76,6 +89,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
         if (ctx) {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Draw using the measured dimensions, not naturalWidth/Height which can be unreliable for SVG
             ctx.drawImage(img, padding, padding, imgWidth, imgHeight);
 
             const pngUrl = canvas.toDataURL('image/png');
@@ -121,8 +135,9 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
   }
 
   return (
-    <div ref={containerRef} className="relative group">
+    <div className="relative group">
       <div
+        ref={diagramContainerRef}
         className={`${containerClasses} bg-white ${diagramFile ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
         onClick={() => diagramFile && onImageClick(diagramFile)}
         dangerouslySetInnerHTML={{ __html: svg }}
