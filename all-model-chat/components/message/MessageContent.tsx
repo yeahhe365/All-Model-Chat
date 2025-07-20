@@ -135,24 +135,21 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
     const components = useMemo(() => ({
       pre: (props: any) => {
-        const { node, ...rest } = props;
-        const codeElement = (props.children && Array.isArray(props.children) && props.children[0]?.type === 'code') ? props.children[0] : null;
+        const { node, children, ...rest } = props;
+        const codeElement = React.Children.toArray(children).find(
+          (child: any) => child.type === 'code'
+        ) as React.ReactElement | undefined;
 
-        if (!codeElement) {
-          // Fallback for plain <pre> tags without a <code> inside.
-          return <pre {...props} />;
-        }
+        const codeClassName = codeElement?.props?.className || '';
         
-        const codeClassName = codeElement.props.className || '';
-
         return (
-          <CodeBlock
-            {...rest} // Props for the <pre> tag
-            className={codeClassName} // Pass the correct className from <code>
-            onOpenHtmlPreview={onOpenHtmlPreview}
+          <CodeBlock 
+            {...rest} 
+            className={codeClassName} 
+            onOpenHtmlPreview={onOpenHtmlPreview} 
             expandCodeBlocksByDefault={expandCodeBlocksByDefault}
           >
-            {codeElement}
+            {children}
           </CodeBlock>
         );
       }
@@ -206,7 +203,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
 
             {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} onOpenHtmlPreview={onOpenHtmlPreview} />
+              <GroundedResponse text={content} metadata={groundingMetadata} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex, rehypeHighlight]} components={components}>

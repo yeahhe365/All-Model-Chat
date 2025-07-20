@@ -62,7 +62,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     };
 
     const codeContent = React.Children.only(children) as React.ReactElement;
-    let language = className?.replace('language-', '') || 'txt';
+    
+    const langMatch = className?.match(/language-(\S+)/);
+    let language = langMatch ? langMatch[1] : 'txt';
+
     let mimeType = 'text/plain';
     if (language === 'html' || language === 'xml' || language === 'svg') mimeType = 'text/html';
     else if (language === 'javascript' || language === 'js' || language === 'typescript' || language === 'ts') mimeType = 'application/javascript';

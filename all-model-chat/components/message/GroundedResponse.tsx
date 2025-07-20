@@ -11,9 +11,10 @@ interface GroundedResponseProps {
   text: string;
   metadata: any;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+  expandCodeBlocksByDefault: boolean;
 }
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, onOpenHtmlPreview }) => {
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
   const content = useMemo(() => {
     if (!metadata || !metadata.groundingSupports) {
       return text;
@@ -97,11 +98,23 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
 
   const components = useMemo(() => ({
     pre: (props: any) => {
-      const { node, ...rest } = props;
-      const children = (props.children[0] && props.children[0].type === 'code') ? props.children[0] : props.children;
-      return <CodeBlock {...rest} onOpenHtmlPreview={onOpenHtmlPreview}>{children}</CodeBlock>;
+      const { node, children, ...rest } = props;
+      const codeElement = React.Children.toArray(children).find(
+        (child: any) => child.type === 'code'
+      ) as React.ReactElement | undefined;
+      const codeClassName = codeElement?.props?.className || '';
+      return (
+        <CodeBlock 
+          {...rest} 
+          className={codeClassName} 
+          onOpenHtmlPreview={onOpenHtmlPreview} 
+          expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+        >
+          {children}
+        </CodeBlock>
+      );
     }
-  }), [onOpenHtmlPreview]);
+  }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
 
   return (
     <div>
