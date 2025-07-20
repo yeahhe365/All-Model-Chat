@@ -81,13 +81,14 @@ interface MessageContentProps {
     message: ChatMessage;
     onImageClick: (file: UploadedFile) => void;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+    onOpenMermaidPreview: (svgContent: string) => void;
     showThoughts: boolean;
     baseFontSize: number;
     expandCodeBlocksByDefault: boolean;
     t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, onOpenMermaidPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -149,7 +150,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
         if (language === 'mermaid' && typeof codeContent === 'string') {
           return (
             <div>
-              <MermaidBlock code={codeContent} />
+              <MermaidBlock code={codeContent} onZoom={onOpenMermaidPreview} />
               <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
                 {children}
               </CodeBlock>
@@ -168,7 +169,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
           </CodeBlock>
         );
       }
-    }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onOpenMermaidPreview]);
 
     return (
         <>

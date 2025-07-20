@@ -214,6 +214,7 @@ interface MessageProps {
     onRetryMessage: (messageId: string) => void; 
     onImageClick: (file: UploadedFile) => void;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
+    onOpenMermaidPreview: (svgContent: string) => void;
     showThoughts: boolean;
     themeColors: ThemeColors; 
     themeId: string;
@@ -225,7 +226,7 @@ interface MessageProps {
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
-    const { message, prevMessage, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, showThoughts, themeColors, themeId, baseFontSize, expandCodeBlocksByDefault, t, onTextToSpeech, ttsMessageId } = props;
+    const { message, prevMessage, messageIndex, onEditMessage, onDeleteMessage, onRetryMessage, onImageClick, onOpenHtmlPreview, onOpenMermaidPreview, showThoughts, themeColors, themeId, baseFontSize, expandCodeBlocksByDefault, t, onTextToSpeech, ttsMessageId } = props;
     
     const isGrouped = prevMessage &&
         prevMessage.role === message.role &&
@@ -294,6 +295,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
                     message={message}
                     onImageClick={onImageClick}
                     onOpenHtmlPreview={onOpenHtmlPreview}
+                    onOpenMermaidPreview={onOpenMermaidPreview}
                     showThoughts={showThoughts}
                     baseFontSize={baseFontSize}
                     expandCodeBlocksByDefault={expandCodeBlocksByDefault}
