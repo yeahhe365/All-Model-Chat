@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, Ban, X, Edit2, Loader2, Mic, StopCircle } from 'lucide-react';
+import { ArrowUp, Ban, X, Edit2, Loader2, Mic } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
