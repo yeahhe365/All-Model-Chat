@@ -62,8 +62,6 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             >
                 {isTranscribing ? (
                     <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
-                ) : isRecording ? (
-                    <StopCircle size={micIconSize} />
                 ) : (
                     <Mic size={micIconSize} />
                 )}
