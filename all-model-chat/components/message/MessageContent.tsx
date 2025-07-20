@@ -149,7 +149,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
         if (language === 'mermaid' && typeof codeContent === 'string') {
           return (
             <div>
-              <MermaidBlock code={codeContent} />
+              <MermaidBlock code={codeContent} onImageClick={onImageClick} />
               <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
                 {children}
               </CodeBlock>
@@ -168,7 +168,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
           </CodeBlock>
         );
       }
-    }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick]);
 
     return (
         <>
