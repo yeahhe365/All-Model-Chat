@@ -84,10 +84,11 @@ interface MessageContentProps {
     showThoughts: boolean;
     baseFontSize: number;
     expandCodeBlocksByDefault: boolean;
+    isMermaidRenderingEnabled: boolean;
     t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -146,7 +147,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
         const langMatch = codeClassName.match(/language-(\S+)/);
         const language = langMatch ? langMatch[1] : '';
 
-        if (language === 'mermaid' && typeof codeContent === 'string') {
+        if (isMermaidRenderingEnabled && language === 'mermaid' && typeof codeContent === 'string') {
           return (
             <div>
               <MermaidBlock code={codeContent} onImageClick={onImageClick} />
@@ -168,7 +169,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
           </CodeBlock>
         );
       }
-    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled]);
 
     return (
         <>

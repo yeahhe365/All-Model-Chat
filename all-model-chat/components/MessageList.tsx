@@ -16,7 +16,7 @@ const SUGGESTIONS_KEYS = [
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
-    expandCodeBlocksByDefault, onSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
+    expandCodeBlocksByDefault, isMermaidRenderingEnabled, onSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     showScrollToBottom, onScrollToBottom
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
@@ -105,6 +105,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               themeId={themeId}
               baseFontSize={baseFontSize}
               expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+              isMermaidRenderingEnabled={isMermaidRenderingEnabled}
               onTextToSpeech={onTextToSpeech}
               ttsMessageId={ttsMessageId}
               t={t}

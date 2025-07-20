@@ -23,7 +23,8 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
       setDiagramFile(null);
       try {
         const id = `mermaid-svg-${Math.random().toString(36).substring(2, 9)}`;
-        // mermaid is initialized in App.tsx
+        // Ensure theme is appropriate for white background rendering
+        mermaid.initialize({ startOnLoad: false, theme: 'default' });
         const { svg: renderedSvg } = await mermaid.render(id, code);
         setSvg(renderedSvg);
         

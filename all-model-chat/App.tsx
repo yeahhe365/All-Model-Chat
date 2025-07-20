@@ -134,7 +134,6 @@ const App: React.FC = () => {
         startOnLoad: false,
         theme: 'default', // Always use a light theme for diagrams for readability, rendered on a white background.
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        suppressErrorRendering: true,
     });
   }, []);
   
@@ -416,6 +415,7 @@ const App: React.FC = () => {
           themeId={currentTheme.id}
           baseFontSize={appSettings.baseFontSize}
           expandCodeBlocksByDefault={appSettings.expandCodeBlocksByDefault}
+          isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
           onSuggestionClick={handleSuggestionClick}
           onTextToSpeech={handleTextToSpeech}
           ttsMessageId={ttsMessageId}

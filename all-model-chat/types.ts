@@ -105,6 +105,7 @@ export interface AppSettings extends ChatSettings {
  useFilesApiForImages: boolean;
  expandCodeBlocksByDefault: boolean;
  isAutoTitleEnabled: boolean;
+ isMermaidRenderingEnabled: boolean;
 }
 
 
@@ -167,6 +168,7 @@ export interface MessageListProps {
   themeId: string;
   baseFontSize: number;
   expandCodeBlocksByDefault: boolean;
+  isMermaidRenderingEnabled: boolean;
   onSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;

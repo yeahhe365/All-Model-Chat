@@ -180,6 +180,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setExpandCodeBlocksByDefault={(val) => updateSetting('expandCodeBlocksByDefault', val)}
                   isAutoTitleEnabled={settings.isAutoTitleEnabled}
                   setIsAutoTitleEnabled={(val) => updateSetting('isAutoTitleEnabled', val)}
+                  isMermaidRenderingEnabled={settings.isMermaidRenderingEnabled}
+                  setIsMermaidRenderingEnabled={(val) => updateSetting('isMermaidRenderingEnabled', val)}
                   t={t}
                 />
               )}
