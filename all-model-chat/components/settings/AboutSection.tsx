@@ -18,7 +18,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
         All Model Chat
       </h3>
       <p className="text-sm text-[var(--theme-text-tertiary)] mb-4">
-        Version: <span className="font-semibold text-[var(--theme-text-primary)]">{version}</span>
+        版本: <span className="font-semibold text-[var(--theme-text-primary)]">{version}</span>
       </p>
 
       <p className="text-sm text-[var(--theme-text-secondary)] max-w-md mx-auto">
@@ -27,7 +27,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
 
       <div className="pt-4 mt-4 border-t border-[var(--theme-border-secondary)]">
         <a 
-          href="https://github.com/google/prompt-gallery/tree/main/solutions/apps/all-model-chat" 
+          href="https://github.com/yeahhe365/All-Model-Chat" 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-link)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]"
