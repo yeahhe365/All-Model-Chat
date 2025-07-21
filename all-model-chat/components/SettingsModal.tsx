@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
-import { Settings2, X, SlidersHorizontal, KeyRound, Bot } from 'lucide-react';
+import { Settings2, X, SlidersHorizontal, KeyRound, Bot, Info } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { Theme } from '../constants/themeConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -9,6 +9,7 @@ import { AppearanceSection } from './settings/AppearanceSection';
 import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
 import { DataManagementSection } from './settings/DataManagementSection';
 import { SettingsActions } from './settings/SettingsActions';
+import { AboutSection } from './settings/AboutSection';
 import { ModelOption } from '../types';
 import { Modal } from './shared/Modal';
 
@@ -31,7 +32,7 @@ interface SettingsModalProps {
   t: (key: keyof typeof translations) => string;
 }
 
-type SettingsTab = 'general' | 'api' | 'model';
+type SettingsTab = 'general' | 'api' | 'model' | 'about';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
@@ -68,6 +69,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: 'general', label: 'General', icon: <SlidersHorizontal size={tabIconSize} /> },
     { id: 'api', label: 'API', icon: <KeyRound size={tabIconSize} /> },
     { id: 'model', label: 'Model', icon: <Bot size={tabIconSize} /> },
+    { id: 'about', label: 'About', icon: <Info size={tabIconSize} /> },
   ];
 
   return (
@@ -184,6 +186,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsMermaidRenderingEnabled={(val) => updateSetting('isMermaidRenderingEnabled', val)}
                   t={t}
                 />
+              )}
+              {activeTab === 'about' && (
+                <AboutSection t={t} />
               )}
             </div>
           </div>
