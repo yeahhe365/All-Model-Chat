@@ -75,7 +75,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} noPadding contentClassName="w-full h-full sm:w-auto sm:h-auto">
       <div 
-        className="bg-[var(--theme-bg-primary)] w-full h-full sm:rounded-xl sm:shadow-premium sm:w-[clamp(37.5rem,40vw,48rem)] sm:h-[85vh] sm:max-h-[800px] flex flex-col"
+        className="bg-[var(--theme-bg-primary)] w-full h-full sm:rounded-xl sm:shadow-premium sm:w-[clamp(37.5rem,50vw,56rem)] sm:h-[85vh] sm:max-h-[800px] flex flex-col"
         role="document"
       >
         {/* Header */}
@@ -88,15 +88,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
 
-        <div className="flex-grow flex flex-col min-h-0">
+        <div className="flex-grow flex flex-col sm:flex-row min-h-0">
           {/* Tab Navigation */}
-          <div className="flex-shrink-0 border-b border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)]">
-            <nav className="p-2 flex space-x-1" aria-label="Tabs" role="tablist">
+          <div className="flex-shrink-0 sm:w-48 border-b sm:border-b-0 sm:border-r border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)] overflow-y-auto custom-scrollbar">
+            <nav className="p-2 flex sm:flex-col space-x-1 sm:space-x-0 sm:space-y-1" aria-label="Tabs" role="tablist">
               {tabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]
+                  className={`flex-1 sm:w-full flex items-center justify-center sm:justify-start gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]
                     ${activeTab === tab.id
                       ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] shadow'
                       : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)]'
@@ -114,7 +114,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
           
           {/* Content Panel */}
-          <div id={`tab-panel-${activeTab}`} role="tabpanel" className="flex-grow min-h-0 overflow-y-auto custom-scrollbar bg-[var(--theme-bg-secondary)]">
+          <div id={`tab-panel-${activeTab}`} role="tabpanel" className="flex-grow min-h-0 sm:min-w-0 overflow-y-auto custom-scrollbar bg-[var(--theme-bg-secondary)]">
             <div className="p-3 sm:p-5 tab-content-enter-active">
               {activeTab === 'general' && (
                 <div className="space-y-4">
