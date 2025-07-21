@@ -254,6 +254,13 @@ export const translations = {
     headerModelSelectorTooltip_action: { en: `Click to change, or press 'Tab' to cycle`, zh: `点击更改，或按 'Tab' 键循环切换` },
     headerModelAriaLabel_current: { en: 'Current AI Model', zh: '当前 AI 模型' },
     headerModelAriaLabel_action: { en: `Click to change model`, zh: `点击更改模型` },
+
+    // About Section
+    about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
+    about_version: { en: 'Version', zh: '版本' },
+    about_description: { en: 'A versatile chatbot interface designed to interact with the Gemini API, featuring system message configuration, streaming responses, context management, and dynamic model selection.', zh: '一个多功能的聊天机器人界面，旨在与 Gemini API 交互，具有系统消息配置、流式响应、上下文管理和动态模型选择功能。' },
+    about_view_on_github: { en: 'View on GitHub', zh: '在 GitHub 上查看' },
+    about_logo_alt: { en: 'All Model Chat Logo', zh: 'All Model Chat 标志' },
 };
 
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations, fallback?: string): string => {
