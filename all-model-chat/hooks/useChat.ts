@@ -34,10 +34,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const userScrolledUp = useRef<boolean>(false);
-    const [showScrollButtons, setShowScrollButtons] = useState<boolean>(false);
-    const [isAtTopTurn, setIsAtTopTurn] = useState<boolean>(true);
-    const [isAtBottomTurn, setIsAtBottomTurn] = useState<boolean>(true);
-
+    const [scrollNavVisibility, setScrollNavVisibility] = useState({ up: false, down: false });
 
     // Wrapper function to persist sessions to localStorage whenever they are updated
     const updateAndPersistSessions = useCallback((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
@@ -197,74 +194,71 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     useEffect(() => () => { messagesForCleanupRef.current.flatMap(m => m.files || []).forEach(file => { if (file.dataUrl?.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); }); }, []);
 
     // Scrolling logic
-    const scrollToBottom = useCallback(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messagesEndRef]);
-    
-    const turnTargetIds = useMemo(() => {
-        const ids: string[] = [];
-        messages.forEach((msg, i) => {
-            if (msg.role === 'user' && i + 1 < messages.length && messages[i + 1].role !== 'user') {
-                ids.push(messages[i + 1].id);
+    const scrollToNextTurn = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const allMessages = Array.from(container.querySelectorAll<HTMLElement>('[data-message-role]'));
+        
+        const modelResponseElements: HTMLElement[] = [];
+        for (let i = 1; i < allMessages.length; i++) {
+            const currentEl = allMessages[i];
+            const prevEl = allMessages[i-1];
+            if ((currentEl.dataset.messageRole === 'model' || currentEl.dataset.messageRole === 'error') && prevEl.dataset.messageRole === 'user') {
+                modelResponseElements.push(currentEl);
             }
-        });
-        return ids;
-    }, [messages]);
+        }
+        
+        const viewTop = container.scrollTop;
+        const target = modelResponseElements.find(el => el.offsetTop > viewTop + 10);
+        
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messagesEndRef]);
+
+    const scrollToPrevTurn = useCallback(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const allMessages = Array.from(container.querySelectorAll<HTMLElement>('[data-message-role]'));
+        
+        const modelResponseElements: HTMLElement[] = [];
+        for (let i = 1; i < allMessages.length; i++) {
+            const currentEl = allMessages[i];
+            const prevEl = allMessages[i-1];
+            if ((currentEl.dataset.messageRole === 'model' || currentEl.dataset.messageRole === 'error') && prevEl.dataset.messageRole === 'user') {
+                modelResponseElements.push(currentEl);
+            }
+        }
+        
+        const viewTop = container.scrollTop;
+        const target = [...modelResponseElements].reverse().find(el => el.offsetTop < viewTop - 10);
+        
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            container.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, []);
 
     const handleScroll = useCallback(() => {
         const container = scrollContainerRef.current;
         if (container) {
-            const isScrolledUp = (container.scrollHeight - container.scrollTop - container.clientHeight) > 100;
-            setShowScrollButtons(isScrolledUp);
-            setIsAtBottomTurn(!isScrolledUp);
-            setIsAtTopTurn(container.scrollTop < 100);
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+            const isAtTop = scrollTop < 100;
+
+            setScrollNavVisibility({
+                up: !isAtTop && scrollHeight > clientHeight,
+                down: !isAtBottom,
+            });
+            userScrolledUp.current = !isAtBottom;
         }
     }, [scrollContainerRef]);
-
-    useEffect(() => { if (!userScrolledUp.current) scrollToBottom(); }, [messages, scrollToBottom]);
-
-    const handleScrollToTurn = useCallback((direction: 'up' | 'down') => {
-        const container = scrollContainerRef.current;
-        if (!container || turnTargetIds.length === 0) {
-            if (direction === 'down') scrollToBottom();
-            return;
-        }
-
-        const targetElements = turnTargetIds
-            .map(id => container.querySelector(`[data-message-id="${id}"]`) as HTMLElement)
-            .filter(Boolean)
-            .sort((a, b) => a.offsetTop - b.offsetTop);
-
-        if (targetElements.length === 0) {
-            if (direction === 'down') scrollToBottom();
-            return;
-        }
-
-        const currentScrollTop = container.scrollTop;
-        const scrollMargin = 20;
-
-        let targetElement: HTMLElement | null = null;
-
-        if (direction === 'up') {
-            targetElement = [...targetElements]
-                .reverse()
-                .find(el => el.offsetTop < currentScrollTop - scrollMargin) ?? null;
-            if (!targetElement) {
-                container.scrollTo({ top: 0, behavior: 'smooth' });
-                return;
-            }
-        } else { // 'down'
-            targetElement = targetElements.find(el => el.offsetTop > currentScrollTop + scrollMargin) ?? null;
-        }
-
-        if (targetElement) {
-            targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } else if (direction === 'down') {
-            scrollToBottom();
-        }
-    }, [scrollContainerRef, turnTargetIds, scrollToBottom]);
-
-    const handleScrollUp = useCallback(() => handleScrollToTurn('up'), [handleScrollToTurn]);
-    const handleScrollDown = useCallback(() => handleScrollToTurn('down'), [handleScrollToTurn]);
-
+    useEffect(() => { if (!userScrolledUp.current) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
     // Effect to validate current model against available models
     useEffect(() => {
@@ -464,14 +458,11 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleTextToSpeech: messageHandler.handleTextToSpeech,
         handleTranscribeAudio,
         setCurrentChatSettings,
-        showScrollButtons,
-        scrollToBottom,
+        scrollNavVisibility,
+        scrollToPrevTurn,
+        scrollToNextTurn,
         toggleGoogleSearch,
         toggleCodeExecution,
         toggleUrlContext,
-        isAtTopTurn,
-        isAtBottomTurn,
-        onScrollUp: handleScrollUp,
-        onScrollDown: handleScrollDown,
     };
 };

@@ -287,6 +287,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         <div 
             className={`${messageContainerClasses} message-container-animate`} 
             data-message-id={message.id} 
+            data-message-role={message.role}
             style={{ animationDelay: `${Math.min(messageIndex * 80, 800)}ms` }}
         >
             {message.role !== 'user' && iconAndActions}
