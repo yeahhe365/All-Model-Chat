@@ -17,7 +17,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, onSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
-    showScrollToBottom, onScrollToBottom
+    showScrollButtons, onScrollUp, onScrollDown, isAtTopTurn, isAtBottomTurn
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
@@ -113,17 +113,31 @@ export const MessageList: React.FC<MessageListProps> = ({
           ))}
         </div>
       )}
-       {showScrollToBottom && (
-          <button
-            onClick={onScrollToBottom}
-            className="sticky z-10 bottom-4 right-4 ml-auto block p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+       {showScrollButtons && (
+        <div
+            className="sticky z-10 bottom-4 right-4 ml-auto flex flex-col gap-2"
             style={{ animation: 'fadeInUp 0.3s ease-out both' }}
-            aria-label="Scroll to bottom"
-            title="Scroll to bottom"
-          >
-            <ArrowDown size={20} />
-          </button>
-        )}
+        >
+            <button
+                onClick={onScrollUp}
+                disabled={isAtTopTurn}
+                className="p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                aria-label="Scroll to previous turn"
+                title="Scroll to previous turn"
+            >
+                <ArrowUp size={20} />
+            </button>
+            <button
+                onClick={onScrollDown}
+                disabled={isAtBottomTurn}
+                className="p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                aria-label="Scroll to next turn"
+                title="Scroll to next turn"
+            >
+                <ArrowDown size={20} />
+            </button>
+        </div>
+      )}
       <div ref={messagesEndRef} />
     </div>
     <ImageZoomModal 

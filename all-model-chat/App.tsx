@@ -84,8 +84,11 @@ const App: React.FC = () => {
       handleTextToSpeech,
       handleTranscribeAudio,
       setCurrentChatSettings,
-      showScrollToBottom,
-      scrollToBottom,
+      showScrollButtons,
+      isAtTopTurn,
+      isAtBottomTurn,
+      onScrollUp,
+      onScrollDown,
       toggleGoogleSearch,
       toggleCodeExecution,
       toggleUrlContext,
@@ -421,8 +424,11 @@ const App: React.FC = () => {
           ttsMessageId={ttsMessageId}
           t={t}
           language={language}
-          showScrollToBottom={showScrollToBottom}
-          onScrollToBottom={scrollToBottom}
+          showScrollButtons={showScrollButtons}
+          onScrollUp={onScrollUp}
+          onScrollDown={onScrollDown}
+          isAtTopTurn={isAtTopTurn}
+          isAtBottomTurn={isAtBottomTurn}
         />
         <ChatInput
           appSettings={appSettings}

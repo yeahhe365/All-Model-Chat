@@ -174,8 +174,11 @@ export interface MessageListProps {
   ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
-  showScrollToBottom?: boolean;
-  onScrollToBottom?: () => void;
+  showScrollButtons?: boolean;
+  onScrollUp?: () => void;
+  onScrollDown?: () => void;
+  isAtTopTurn?: boolean;
+  isAtBottomTurn?: boolean;
 }
 
 export interface ChatInputProps {
