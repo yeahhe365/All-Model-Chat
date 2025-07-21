@@ -115,13 +115,13 @@ export const MessageList: React.FC<MessageListProps> = ({
       )}
        { (scrollNavVisibility.up || scrollNavVisibility.down) && (
           <div
-            className="sticky z-10 bottom-4 right-4 ml-auto flex flex-col gap-2"
+            className="sticky z-10 bottom-4 left-0 right-4 flex flex-col items-end gap-2 pointer-events-none"
             style={{ animation: 'fadeInUp 0.3s ease-out both' }}
           >
             {scrollNavVisibility.up && (
                 <button
                     onClick={onScrollToPrevTurn}
-                    className="p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                    className="p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] pointer-events-auto"
                     aria-label="Scroll to previous turn"
                     title="Scroll to previous turn"
                 >
@@ -131,7 +131,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             {scrollNavVisibility.down && (
                 <button
                     onClick={onScrollToNextTurn}
-                    className="p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                    className="p-2 bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] rounded-full shadow-lg hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] transition-all duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] pointer-events-auto"
                     aria-label="Scroll to next turn or bottom"
                     title="Scroll to next turn or bottom"
                 >
