@@ -64,18 +64,18 @@ export interface Theme {
 
 export const ONYX_THEME_COLORS: ThemeColors = {
   // Backgrounds
-  bgPrimary: '#202123',
-  bgSecondary: '#343541',
+  bgPrimary: '#1d1d20',
+  bgSecondary: '#2b2b31',
   bgTertiary: '#40414F',
-  bgAccent: '#444654',
-  bgAccentHover: '#505260',
+  bgAccent: '#10a37f',
+  bgAccentHover: '#0e906d',
   bgDanger: '#DA3633',
   bgDangerHover: '#F85149',
   bgInput: '#40414F',
   bgCodeBlock: '#202123',
   bgCodeBlockHeader: 'rgba(64, 65, 79, 0.7)',
   bgUserMessage: '#444654',
-  bgModelMessage: '#343541',
+  bgModelMessage: '#2b2b31',
   bgErrorMessage: 'rgba(218, 54, 51, 0.2)',
   bgSuccess: 'rgba(74, 222, 128, 0.15)',
   textSuccess: '#4ade80',
@@ -103,7 +103,7 @@ export const ONYX_THEME_COLORS: ThemeColors = {
 
   // Scrollbar
   scrollbarThumb: '#565869',
-  scrollbarTrack: '#343541',
+  scrollbarTrack: '#2b2b31',
 
   // Icons
   iconUser: '#E0E0E0',

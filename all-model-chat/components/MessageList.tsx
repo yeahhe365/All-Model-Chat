@@ -53,7 +53,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div 
       ref={scrollContainerRef}
       onScroll={onScrollContainerScroll}
-      className="flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 pb-0 bg-[var(--theme-bg-secondary)] custom-scrollbar"
+      className={`flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 pb-0 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
       aria-live="polite" 
     >
       {messages.length === 0 ? (

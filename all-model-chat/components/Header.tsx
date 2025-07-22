@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
 
 
   return (
-    <header className="bg-[var(--theme-bg-primary)] p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0">
+    <header className="bg-[var(--theme-bg-secondary)] p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0">
       <div className="flex items-center gap-2 min-w-0">
         <button
             onClick={onToggleHistorySidebar}

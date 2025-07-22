@@ -340,6 +340,7 @@ const App: React.FC = () => {
         onToggleGroupExpansion={handleToggleGroupExpansion}
         themeColors={currentTheme.colors}
         t={t}
+        themeId={currentTheme.id}
         language={language}
       />
       <div
