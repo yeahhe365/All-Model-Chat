@@ -81,16 +81,24 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
     img.onload = () => {
         const canvas = document.createElement('canvas');
         const padding = 20;
+        const scale = 3; // Increase resolution
         
-        canvas.width = imgWidth + padding * 2;
-        canvas.height = imgHeight + padding * 2;
+        canvas.width = (imgWidth + padding * 2) * scale;
+        canvas.height = (imgHeight + padding * 2) * scale;
         const ctx = canvas.getContext('2d');
 
         if (ctx) {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // Draw using the measured dimensions, not naturalWidth/Height which can be unreliable for SVG
-            ctx.drawImage(img, padding, padding, imgWidth, imgHeight);
+            
+            // Draw scaled image with padding
+            ctx.drawImage(
+                img, 
+                padding * scale, 
+                padding * scale, 
+                imgWidth * scale, 
+                imgHeight * scale
+            );
 
             const pngUrl = canvas.toDataURL('image/png');
             const link = document.createElement('a');

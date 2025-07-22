@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
-import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings } from '../types';
-import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
-import { generateUniqueId, logService } from '../utils/appUtils';
+import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup } from '../types';
+import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS, CHAT_HISTORY_GROUPS_KEY } from '../constants/appConstants';
+import { generateUniqueId, logService, getTranslator } from '../utils/appUtils';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -9,6 +9,7 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 interface ChatHistoryProps {
     appSettings: AppSettings;
     setSavedSessions: Dispatch<SetStateAction<SavedChatSession[]>>;
+    setSavedGroups: Dispatch<SetStateAction<ChatGroup[]>>;
     setActiveSessionId: Dispatch<SetStateAction<string | null>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
     setCommandedInput: CommandedInputSetter;
@@ -16,11 +17,13 @@ interface ChatHistoryProps {
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     updateAndPersistSessions: SessionsUpdater;
     activeChat: SavedChatSession | undefined;
+    language: 'en' | 'zh';
 }
 
 export const useChatHistory = ({
     appSettings,
     setSavedSessions,
+    setSavedGroups,
     setActiveSessionId,
     setEditingMessageId,
     setCommandedInput,
@@ -28,7 +31,18 @@ export const useChatHistory = ({
     activeJobs,
     updateAndPersistSessions,
     activeChat,
+    language,
 }: ChatHistoryProps) => {
+    const t = getTranslator(language);
+
+    const updateAndPersistGroups = useCallback((updater: (prev: ChatGroup[]) => ChatGroup[]) => {
+        setSavedGroups(prevGroups => {
+            const newGroups = updater(prevGroups);
+            localStorage.setItem(CHAT_HISTORY_GROUPS_KEY, JSON.stringify(newGroups));
+            return newGroups;
+        });
+    }, [setSavedGroups]);
+
 
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
@@ -37,15 +51,12 @@ export const useChatHistory = ({
         if (activeChat) {
             settingsForNewChat = {
                 ...settingsForNewChat,
-                // The lockedApiKey is INTENTIONALLY not inherited. A new chat should always start
-                // with the ability to rotate keys until a file is uploaded in that specific session.
                 isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
                 isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
                 isUrlContextEnabled: activeChat.settings.isUrlContextEnabled,
             };
         }
 
-        // Create a new session immediately
         const newSessionId = generateUniqueId();
         const newSession: SavedChatSession = {
             id: newSessionId,
@@ -53,16 +64,13 @@ export const useChatHistory = ({
             messages: [],
             timestamp: Date.now(),
             settings: settingsForNewChat,
+            groupId: null,
         };
 
-        // Add new session and remove any other empty sessions from before.
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-
-        // Set it as the active session
         setActiveSessionId(newSessionId);
         localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, newSessionId);
 
-        // Reset UI state
         setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]);
         setEditingMessageId(null);
@@ -106,9 +114,20 @@ export const useChatHistory = ({
                     localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
                 }
             }
-
             sessions.sort((a,b) => b.timestamp - a.timestamp);
             setSavedSessions(sessions);
+
+            const storedGroups = localStorage.getItem(CHAT_HISTORY_GROUPS_KEY);
+            if (storedGroups) {
+                try {
+                    const parsedGroups = JSON.parse(storedGroups);
+                    if (Array.isArray(parsedGroups)) {
+                        setSavedGroups(parsedGroups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
+                    }
+                } catch (e) {
+                    logService.error('Failed to parse groups from localStorage.', { error: e });
+                }
+            }
 
             const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
             if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
@@ -124,12 +143,10 @@ export const useChatHistory = ({
             logService.error("Error loading chat history:", error);
             startNewChat();
         }
-    }, [setSavedSessions, loadChatSession, startNewChat]);
+    }, [setSavedSessions, setSavedGroups, loadChatSession, startNewChat]);
     
     const handleDeleteChatHistorySession = useCallback((sessionId: string) => {
         logService.info(`Deleting session: ${sessionId}`);
-
-        // Abort any running job for the session being deleted
         updateAndPersistSessions(prev => {
              const sessionToDelete = prev.find(s => s.id === sessionId);
              if (sessionToDelete) {
@@ -142,8 +159,6 @@ export const useChatHistory = ({
              }
              return prev.filter(s => s.id !== sessionId);
         });
-
-        // If the deleted session was active, load the next available one or start new
         setActiveSessionId(prevActiveId => {
             if (prevActiveId === sessionId) {
                 const sessionsAfterDelete = JSON.parse(localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY) || '[]') as SavedChatSession[];
@@ -159,7 +174,6 @@ export const useChatHistory = ({
             }
             return prevActiveId;
         });
-
     }, [updateAndPersistSessions, activeJobs, setActiveSessionId, loadChatSession, startNewChat]);
     
     const handleRenameSession = useCallback((sessionId: string, newTitle: string) => {
@@ -177,16 +191,48 @@ export const useChatHistory = ({
         );
     }, [updateAndPersistSessions]);
 
+    const handleAddNewGroup = useCallback(() => {
+        logService.info('Adding new group.');
+        const newGroup: ChatGroup = {
+            id: `group-${generateUniqueId()}`,
+            title: t('newGroup_title', 'Untitled'),
+            timestamp: Date.now(),
+            isExpanded: true,
+        };
+        updateAndPersistGroups(prev => [newGroup, ...prev]);
+    }, [updateAndPersistGroups, t]);
+
+    const handleDeleteGroup = useCallback((groupId: string) => {
+        logService.info(`Deleting group: ${groupId}`);
+        updateAndPersistGroups(prev => prev.filter(g => g.id !== groupId));
+        updateAndPersistSessions(prev => prev.map(s => s.groupId === groupId ? { ...s, groupId: null } : s));
+    }, [updateAndPersistGroups, updateAndPersistSessions]);
+
+    const handleRenameGroup = useCallback((groupId: string, newTitle: string) => {
+        if (!newTitle.trim()) return;
+        logService.info(`Renaming group ${groupId} to "${newTitle}"`);
+        updateAndPersistGroups(prev => prev.map(g => g.id === groupId ? { ...g, title: newTitle.trim() } : g));
+    }, [updateAndPersistGroups]);
+    
+    const handleMoveSessionToGroup = useCallback((sessionId: string, groupId: string | null) => {
+        logService.info(`Moving session ${sessionId} to group ${groupId}`);
+        updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, groupId } : s));
+    }, [updateAndPersistSessions]);
+
+    const handleToggleGroupExpansion = useCallback((groupId: string) => {
+        updateAndPersistGroups(prev => prev.map(g => g.id === groupId ? { ...g, isExpanded: !(g.isExpanded ?? true) } : g));
+    }, [updateAndPersistGroups]);
+
     const clearAllHistory = useCallback(() => {
         logService.warn('User clearing all chat history.');
-        
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
-        
         localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
+        localStorage.removeItem(CHAT_HISTORY_GROUPS_KEY);
         setSavedSessions([]);
+        setSavedGroups([]);
         startNewChat();
-    }, [setSavedSessions, startNewChat, activeJobs]);
+    }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs]);
     
     const clearCacheAndReload = useCallback(() => {
         clearAllHistory();
@@ -201,6 +247,11 @@ export const useChatHistory = ({
         handleDeleteChatHistorySession,
         handleRenameSession,
         handleTogglePinSession,
+        handleAddNewGroup,
+        handleDeleteGroup,
+        handleRenameGroup,
+        handleMoveSessionToGroup,
+        handleToggleGroupExpansion,
         clearAllHistory,
         clearCacheAndReload,
     };

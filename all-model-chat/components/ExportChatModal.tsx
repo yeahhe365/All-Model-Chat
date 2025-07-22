@@ -1,12 +1,12 @@
 import React from 'react';
-import { X, ImageIcon, FileCode2, Loader2, Download } from 'lucide-react';
+import { X, ImageIcon, FileCode2, Loader2, Download, FileText } from 'lucide-react';
 import { Modal } from './shared/Modal';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
 interface ExportChatModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onExport: (format: 'png' | 'html') => void;
+  onExport: (format: 'png' | 'html' | 'txt') => void;
   exportStatus: 'idle' | 'exporting';
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
@@ -19,7 +19,7 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
     return (
         <Modal isOpen={isOpen} onClose={isLoading ? () => {} : onClose}>
             <div 
-                className="bg-[var(--theme-bg-primary)] rounded-xl shadow-premium w-full max-w-md sm:max-w-lg flex flex-col"
+                className="bg-[var(--theme-bg-primary)] rounded-xl shadow-premium w-full max-w-md sm:max-w-2xl flex flex-col"
                 role="document"
             >
                 <div className="flex-shrink-0 flex justify-between items-center p-3 sm:p-4 border-b border-[var(--theme-border-primary)]">
@@ -45,7 +45,7 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
                             <p className="text-sm mt-1">This may take a moment for long chats or images.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                             <button 
                                 onClick={() => onExport('png')} 
                                 className="flex flex-col items-center justify-center gap-3 p-6 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg border border-[var(--theme-border-secondary)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transform hover:-translate-y-1 hover:shadow-lg"
@@ -61,6 +61,14 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
                                 <FileCode2 size={buttonIconSize} className="text-green-500" />
                                 <span className="font-semibold text-base text-[var(--theme-text-primary)]">HTML File</span>
                                 <span className="text-xs text-center text-[var(--theme-text-tertiary)]">A self-contained file with text, code, and styles.</span>
+                            </button>
+                            <button 
+                                onClick={() => onExport('txt')}
+                                className="flex flex-col items-center justify-center gap-3 p-6 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg border border-[var(--theme-border-secondary)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transform hover:-translate-y-1 hover:shadow-lg"
+                            >
+                                <FileText size={buttonIconSize} className="text-blue-500" />
+                                <span className="font-semibold text-base text-[var(--theme-text-primary)]">TXT File</span>
+                                <span className="text-xs text-center text-[var(--theme-text-tertiary)]">A simple text file with the conversation content.</span>
                             </button>
                         </div>
                     )}

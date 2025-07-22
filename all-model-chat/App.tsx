@@ -41,6 +41,7 @@ const App: React.FC = () => {
       appFileError,
       isAppProcessingFile,
       savedSessions,
+      savedGroups,
       activeSessionId,
       apiModels,
       isModelsLoading,
@@ -69,6 +70,11 @@ const App: React.FC = () => {
       handleRenameSession,
       handleTogglePinSession,
       handleTogglePinCurrentSession,
+      handleAddNewGroup,
+      handleDeleteGroup,
+      handleRenameGroup,
+      handleMoveSessionToGroup,
+      handleToggleGroupExpansion,
       clearCacheAndReload,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
@@ -196,8 +202,8 @@ const App: React.FC = () => {
 
   const activeChat = savedSessions.find(s => s.id === activeSessionId);
 
-  const handleExportChat = useCallback(async (format: 'png' | 'html') => {
-    if (!activeChat || !scrollContainerRef.current) return;
+  const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt') => {
+    if (!activeChat) return;
     setExportStatus('exporting');
 
     const triggerDownload = (href: string, filename: string) => {
@@ -218,6 +224,7 @@ const App: React.FC = () => {
 
     try {
         if (format === 'png') {
+            if (!scrollContainerRef.current) return;
             document.body.classList.add('is-exporting-png');
             await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
             const element = scrollContainerRef.current;
@@ -229,7 +236,8 @@ const App: React.FC = () => {
                 scale: 2,
             });
             triggerDownload(canvas.toDataURL('image/png'), filename);
-        } else { // HTML
+        } else if (format === 'html') {
+            if (!scrollContainerRef.current) return;
             const headContent = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"], script[src*="highlight.js"], script[src*="katex"]'))
                 .map(el => el.outerHTML).join('\n');
             const bodyClasses = document.body.className;
@@ -269,6 +277,21 @@ const App: React.FC = () => {
             `;
             const blob = new Blob([fullHtml], { type: 'text/html' });
             triggerDownload(URL.createObjectURL(blob), filename);
+        } else { // TXT
+            const textContent = activeChat.messages.map(message => {
+                const role = message.role === 'user' ? 'USER' : 'ASSISTANT';
+                let content = `### ${role}\n`;
+                if (message.files && message.files.length > 0) {
+                    message.files.forEach(file => {
+                        content += `[File attached: ${file.name}]\n`;
+                    });
+                }
+                content += message.content;
+                return content;
+            }).join('\n\n');
+
+            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            triggerDownload(URL.createObjectURL(blob), filename);
         }
     } catch (error) {
         logService.error(`Chat export failed (format: ${format})`, { error });
@@ -300,6 +323,7 @@ const App: React.FC = () => {
         isOpen={isHistorySidebarOpen}
         onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
         sessions={savedSessions}
+        groups={savedGroups}
         activeSessionId={activeSessionId}
         loadingSessionIds={loadingSessionIds}
         generatingTitleSessionIds={generatingTitleSessionIds}
@@ -309,6 +333,11 @@ const App: React.FC = () => {
         onRenameSession={handleRenameSession}
         onTogglePinSession={handleTogglePinSession}
         onOpenExportModal={() => setIsExportModalOpen(true)}
+        onAddNewGroup={handleAddNewGroup}
+        onDeleteGroup={handleDeleteGroup}
+        onRenameGroup={handleRenameGroup}
+        onMoveSessionToGroup={handleMoveSessionToGroup}
+        onToggleGroupExpansion={handleToggleGroupExpansion}
         themeColors={currentTheme.colors}
         t={t}
         language={language}
@@ -457,8 +486,6 @@ const App: React.FC = () => {
           onNewChat={startNewChat}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
-          onTogglePinCurrentSession={handleTogglePinCurrentSession}
-          onRetryLastTurn={handleRetryLastTurn}
           onSelectModel={handleSelectModelInHeader}
           availableModels={apiModels}
         />

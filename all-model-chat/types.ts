@@ -82,6 +82,14 @@ export interface ChatSettings {
   isUrlContextEnabled?: boolean;
 }
 
+export interface ChatGroup {
+  id: string;
+  title: string;
+  timestamp: number;
+  isPinned?: boolean;
+  isExpanded?: boolean;
+}
+
 export interface SavedChatSession {
   id: string;
   title: string;
@@ -89,6 +97,7 @@ export interface SavedChatSession {
   messages: ChatMessage[];
   settings: ChatSettings;
   isPinned?: boolean;
+  groupId?: string | null;
 }
 
 

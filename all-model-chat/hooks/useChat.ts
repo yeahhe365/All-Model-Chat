@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
-import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../types';
+import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, ChatGroup } from '../types';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';
@@ -13,6 +13,7 @@ import { geminiServiceInstance } from '../services/geminiService';
 export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     // 1. Core application state, now managed centrally in the main hook
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
+    const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [commandedInput, setCommandedInput] = useState<{ text: string; id: number; } | null>(null);
@@ -71,6 +72,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const historyHandler = useChatHistory({
         appSettings,
         setSavedSessions,
+        setSavedGroups,
         setActiveSessionId,
         setEditingMessageId,
         setCommandedInput,
@@ -78,6 +80,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         activeJobs,
         updateAndPersistSessions,
         activeChat,
+        language,
     });
     
     const fileHandler = useFileHandling({
@@ -415,6 +418,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         appFileError,
         isAppProcessingFile,
         savedSessions,
+        savedGroups,
         activeSessionId,
         apiModels,
         isModelsLoading,
@@ -443,6 +447,11 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleRenameSession: historyHandler.handleRenameSession,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
         handleTogglePinCurrentSession,
+        handleAddNewGroup: historyHandler.handleAddNewGroup,
+        handleDeleteGroup: historyHandler.handleDeleteGroup,
+        handleRenameGroup: historyHandler.handleRenameGroup,
+        handleMoveSessionToGroup: historyHandler.handleMoveSessionToGroup,
+        handleToggleGroupExpansion: historyHandler.handleToggleGroupExpansion,
         clearCacheAndReload: historyHandler.clearCacheAndReload,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
         handleLoadPreloadedScenario: scenarioHandler.handleLoadPreloadedScenario,

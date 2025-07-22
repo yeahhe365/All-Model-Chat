@@ -240,8 +240,10 @@ export const translations = {
     history_unpin: { en: 'Unpin', zh: '取消置顶' },
     history_delete: { en: 'Delete', zh: '删除' },
     generatingTitle: { en: 'Generating title...', zh: '生成标题中...' },
+    newGroup_title: { en: 'Untitled', zh: '无标题' },
     export_chat: { en: 'Export Chat', zh: '导出对话' },
     chat_is_empty: { en: 'Chat is empty', zh: '对话为空' },
+    history_allConversations: { en: 'All Conversations', zh: '所有对话' },
     
     // ChatInputPlaceholder
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
