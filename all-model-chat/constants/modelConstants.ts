@@ -3,7 +3,7 @@ export const DEFAULT_MODEL_ID = 'gemini-2.5-flash';
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-2.5-pro',
     'gemini-2.5-flash',
-    'gemini-2.5-flash-lite-preview-06-17',
+    'gemini-2.5-flash-lite',
 ];
 
 export const DEFAULT_TEMPERATURE = 1.0; 
@@ -18,7 +18,7 @@ export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
 export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default)' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
-    { id: 'gemini-2.5-flash-lite-preview-06-17', name: 'Gemini 2.5 Flash Lite (Fastest)' },
+    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (Fastest)' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [

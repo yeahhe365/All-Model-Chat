@@ -184,6 +184,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsAutoTitleEnabled={(val) => updateSetting('isAutoTitleEnabled', val)}
                   isMermaidRenderingEnabled={settings.isMermaidRenderingEnabled}
                   setIsMermaidRenderingEnabled={(val) => updateSetting('isMermaidRenderingEnabled', val)}
+                  isGraphvizRenderingEnabled={settings.isGraphvizRenderingEnabled ?? true}
+                  setIsGraphvizRenderingEnabled={(val) => updateSetting('isGraphvizRenderingEnabled', val)}
                   t={t}
                 />
               )}

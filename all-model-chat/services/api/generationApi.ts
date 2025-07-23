@@ -143,7 +143,7 @@ export const generateTitleApi = async (apiKey: string, userContent: string, mode
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite-preview-06-17',
+            model: 'gemini-2.5-flash-lite',
             contents: prompt,
             config: {
                 thinkingConfig: { thinkingBudget: -1 },

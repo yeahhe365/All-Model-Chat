@@ -9,7 +9,7 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = getResponsiveValue(14, 16);
-  const version = "1.0.0"; 
+  const version = "1.1.0"; 
 
   return (
     <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)] text-center">
@@ -27,7 +27,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
 
       <div className="pt-4 mt-4 border-t border-[var(--theme-border-secondary)]">
         <a 
-          href="https://github.com/google/generative-ai-docs/tree/main/app-development/web/All-Model-Chat" 
+          href="https://github.com/yeahhe365/All-Model-Chat" 
           target="_blank" 
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-colors bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-link)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]"

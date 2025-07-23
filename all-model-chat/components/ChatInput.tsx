@@ -1,14 +1,14 @@
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Ban } from 'lucide-react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { UploadedFile, AppSettings, ModelOption } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
-import { AttachmentAction } from './chat/input/AttachmentMenu';
 import { SlashCommandMenu } from './chat/input/SlashCommandMenu';
-import type { Command } from './chat/input/SlashCommandMenu';
 import { ChatInputToolbar } from './chat/input/ChatInputToolbar';
 import { ChatInputActions } from './chat/input/ChatInputActions';
 import { ChatInputModals } from './chat/input/ChatInputModals';
+import { useChatInputModals } from '../hooks/useChatInputModals';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { useSlashCommands } from '../hooks/useSlashCommands';
 
 interface ChatInputProps {
   appSettings: AppSettings;
@@ -50,83 +50,66 @@ interface ChatInputProps {
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
 const MAX_TEXTAREA_HEIGHT_PX = 150; 
 
-export const ChatInput: React.FC<ChatInputProps> = ({
-  appSettings, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
-  isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
-  onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
-  isImagenModel, aspectRatio, setAspectRatio, onTranscribeAudio,
-  isGoogleSearchEnabled, onToggleGoogleSearch,
-  isCodeExecutionEnabled, onToggleCodeExecution,
-  isUrlContextEnabled, onToggleUrlContext,
-  onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
-  onRetryLastTurn, onSelectModel, availableModels
-}) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const justInitiatedFileOpRef = useRef(false);
-  const prevIsProcessingFileRef = useRef(isProcessingFile);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingCancelledRef = useRef(false);
+export const ChatInput: React.FC<ChatInputProps> = (props) => {
+  const {
+    appSettings, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
+    isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
+    onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
+    isImagenModel, aspectRatio, setAspectRatio, onTranscribeAudio,
+    isGoogleSearchEnabled, onToggleGoogleSearch,
+    isCodeExecutionEnabled, onToggleCodeExecution,
+    isUrlContextEnabled, onToggleUrlContext,
+    onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
+    onRetryLastTurn, onSelectModel, availableModels
+  } = props;
 
   const [inputText, setInputText] = useState('');
   const [isAnimatingSend, setIsAnimatingSend] = useState(false);
-  const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [fileIdInput, setFileIdInput] = useState('');
   const [isAddingById, setIsAddingById] = useState(false);
-  
-  const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
-  const [showRecorder, setShowRecorder] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [isMicInitializing, setIsMicInitializing] = useState(false);
 
-  const [slashCommandState, setSlashCommandState] = useState<{
-    isOpen: boolean;
-    query: string;
-    filteredCommands: Command[];
-    selectedIndex: number;
-  }>({
-    isOpen: false,
-    query: '',
-    filteredCommands: [],
-    selectedIndex: 0,
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const justInitiatedFileOpRef = useRef(false);
+  const prevIsProcessingFileRef = useRef(isProcessingFile);
+
+  const adjustTextareaHeight = useCallback(() => {
+    const target = textareaRef.current;
+    if (!target) return;
+    const currentInitialHeight = getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX);
+    target.style.height = 'auto';
+    const scrollHeight = target.scrollHeight;
+    const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
+    target.style.height = `${newHeight}px`;
+  }, []);
+
+  const {
+    showCamera, showRecorder, showCreateTextFileEditor, showAddByIdInput, isHelpModalOpen,
+    fileInputRef, imageInputRef, videoInputRef,
+    handleAttachmentAction, handleConfirmCreateTextFile, handlePhotoCapture, handleAudioRecord,
+    setIsHelpModalOpen, setShowAddByIdInput, setShowCamera, setShowRecorder, setShowCreateTextFileEditor,
+  } = useChatInputModals({
+    onProcessFiles: (files) => onProcessFiles(files),
+    justInitiatedFileOpRef,
+    textareaRef,
+  });
+  
+  const {
+    isRecording, isTranscribing, isMicInitializing, handleVoiceInputClick, handleCancelRecording,
+  } = useVoiceInput({
+    onTranscribeAudio,
+    setInputText,
+    adjustTextareaHeight,
   });
 
-  const commands = useMemo<Command[]>(() => [
-    { name: 'model', description: t('help_cmd_model'), icon: <Bot size={16} />, action: () => {
-        setInputText('/model ');
-        setTimeout(() => {
-            const textarea = textareaRef.current;
-            if (textarea) {
-                textarea.focus();
-                const textLength = textarea.value.length;
-                textarea.setSelectionRange(textLength, textLength);
-            }
-        }, 0);
-    } },
-    { name: 'help', description: t('help_cmd_help'), icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
-    { name: 'pin', description: t('help_cmd_pin'), icon: <Pin size={16} />, action: onTogglePinCurrentSession },
-    { name: 'retry', description: t('help_cmd_retry'), icon: <RotateCw size={16} />, action: onRetryLastTurn },
-    { name: 'stop', description: t('help_cmd_stop'), icon: <Ban size={16} />, action: onStopGenerating },
-    { name: 'search', description: t('help_cmd_search'), icon: <Globe size={16} />, action: onToggleGoogleSearch },
-    { name: 'code', description: t('help_cmd_code'), icon: <Terminal size={16} />, action: onToggleCodeExecution },
-    { name: 'url', description: t('help_cmd_url'), icon: <Link size={16} />, action: onToggleUrlContext },
-    { name: 'file', description: t('help_cmd_file'), icon: <UploadCloud size={16} />, action: () => handleAttachmentAction('upload') },
-    { name: 'clear', description: t('help_cmd_clear'), icon: <Trash2 size={16} />, action: onClearChat },
-    { name: 'new', description: t('help_cmd_new'), icon: <FilePlus2 size={16} />, action: onNewChat },
-    { name: 'settings', description: t('help_cmd_settings'), icon: <Settings size={16} />, action: onOpenSettings },
-    { name: 'canvas', description: t('help_cmd_canvas'), icon: <Wand2 size={16} />, action: onToggleCanvasPrompt },
-  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating]);
-  
-  const allCommandsForHelp = useMemo(() => [
-    ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),
-  ], [commands, t]);
+  const {
+    slashCommandState, setSlashCommandState, allCommandsForHelp,
+    handleCommandSelect, handleInputChange: handleSlashInputChange, handleSlashCommandExecution,
+  } = useSlashCommands({
+    t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
+    onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction: handleAttachmentAction,
+    availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef,
+  });
 
   useEffect(() => {
     if (commandedInput) {
@@ -143,16 +126,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       }
     }
   }, [commandedInput]);
-
-  const adjustTextareaHeight = useCallback(() => {
-    const target = textareaRef.current;
-    if (!target) return;
-    const currentInitialHeight = getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX);
-    target.style.height = 'auto';
-    const scrollHeight = target.scrollHeight;
-    const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
-    target.style.height = `${newHeight}px`;
-  }, []);
 
   useEffect(() => { adjustTextareaHeight(); }, [inputText, adjustTextareaHeight]);
 
@@ -202,6 +175,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       await onProcessFiles(filesToProcess);
     }
   };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleSlashInputChange(e.target.value, setInputText);
+  };
 
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
   const isAnyModalOpen = isModalOpen || isHelpModalOpen;
@@ -223,116 +200,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleCommandSelect = useCallback((command: Command) => {
-    if (!command) return;
-    command.action();
-    setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
-    
-    // After performing the action, clear the input field.
-    // The 'model' command's purpose is to insert '/model ' into the input,
-    // so we don't clear it in that specific case. Other commands are one-shot actions.
-    if (command.name !== 'model') {
-        setInputText('');
-        onMessageSent();
-    }
-  }, [onMessageSent]);
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInputText(value);
-  
-    if (!value.startsWith('/')) {
-      setSlashCommandState(prev => ({ ...prev, isOpen: false }));
-      return;
-    }
-  
-    const [commandPart, ...args] = value.split(' ');
-    const commandName = commandPart.substring(1).toLowerCase();
-  
-    // Check for immediate execution on space for no-argument commands.
-    if (value.endsWith(' ') && value.trim() === `/${commandName}`) {
-      const matchedCommand = commands.find(cmd => cmd.name === commandName);
-      if (matchedCommand && matchedCommand.name !== 'model') {
-        matchedCommand.action();
-        setInputText('');
-        onMessageSent();
-        setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
-        return; // Action taken, no need to show menu.
-      }
-    }
-  
-    // Handle command suggestions.
-    if (commandName === 'model') {
-      const keyword = args.join(' ').toLowerCase();
-      const filteredModels = availableModels.filter(m => m.name.toLowerCase().includes(keyword));
-      const modelCommands: Command[] = filteredModels.map(model => ({
-        name: model.name,
-        description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
-        icon: model.id.includes('imagen') ? <ImageIcon size={16} /> : (model.isPinned ? <Pin size={16} /> : <Bot size={16} />),
-        action: () => {
-          onSelectModel(model.id);
-          setInputText('');
-          onMessageSent();
-        },
-      }));
-  
-      setSlashCommandState({
-        isOpen: modelCommands.length > 0 || !keyword.trim(),
-        query: 'model',
-        filteredCommands: modelCommands,
-        selectedIndex: 0,
-      });
-    } else {
-      // For other commands, show suggestions only if there's no space yet.
-      const query = commandPart.substring(1).toLowerCase();
-      const filtered = commands.filter(cmd => cmd.name.toLowerCase().startsWith(query));
-      setSlashCommandState({
-        isOpen: filtered.length > 0 && !value.includes(' '),
-        query: query,
-        filteredCommands: filtered,
-        selectedIndex: 0,
-      });
-    }
-  };
-  
-  const handleSlashCommand = (text: string) => {
-    const [commandWithSlash, ...args] = text.split(' ');
-    const keyword = args.join(' ').toLowerCase();
-    const commandName = commandWithSlash.substring(1);
-
-    if (commandName === 'model' && keyword) {
-        const model = availableModels.find(m => m.name.toLowerCase().includes(keyword));
-        if (model) {
-            onSelectModel(model.id);
-            setInputText('');
-            onMessageSent();
-        }
-        return;
-    }
-
-    const command = commands.find(cmd => cmd.name === commandName);
-    if (command && !keyword) {
-        command.action();
-        setInputText('');
-        onMessageSent();
-    }
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (slashCommandState.isOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSlashCommandState(prev => ({
-          ...prev,
-          selectedIndex: (prev.selectedIndex + 1) % prev.filteredCommands.length,
-        }));
+        setSlashCommandState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % prev.filteredCommands.length, }));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSlashCommandState(prev => ({
-          ...prev,
-          selectedIndex: (prev.selectedIndex - 1 + prev.filteredCommands.length) % prev.filteredCommands.length,
-        }));
-      } else if (e.key === 'Enter') {
+        setSlashCommandState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + prev.filteredCommands.length) % prev.filteredCommands.length, }));
+      } else if (e.key === 'Enter' || e.key === 'Tab') {
         e.preventDefault();
         handleCommandSelect(slashCommandState.filteredCommands[slashCommandState.selectedIndex]);
       } else if (e.key === 'Escape') {
@@ -347,7 +223,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         const trimmedInput = inputText.trim();
         if (trimmedInput.startsWith('/')) {
             e.preventDefault();
-            handleSlashCommand(trimmedInput);
+            handleSlashCommandExecution(trimmedInput, setInputText);
             return;
         }
         if (canSend) {
@@ -370,127 +246,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setFileIdInput('');
   };
 
-  const openActionModal = (modal: 'camera' | 'recorder' | 'text' | 'id' | null) => {
-    setShowCamera(modal === 'camera');
-    setShowRecorder(modal === 'recorder');
-    setShowCreateTextFileEditor(modal === 'text');
-    setShowAddByIdInput(modal === 'id');
-  };
-
-  const handleAttachmentAction = (action: AttachmentAction) => {
-      switch(action) {
-          case 'upload': fileInputRef.current?.click(); break;
-          case 'gallery': imageInputRef.current?.click(); break;
-          case 'video': videoInputRef.current?.click(); break;
-          case 'camera': openActionModal('camera'); break;
-          case 'recorder': openActionModal('recorder'); break;
-          case 'id': openActionModal('id'); break;
-          case 'text': openActionModal('text'); break;
-      }
-  };
-
-  const handleConfirmCreateTextFile = async (content: string, filename: string) => {
-    justInitiatedFileOpRef.current = true;
-    const sanitizeFilename = (name: string): string => {
-        let saneName = name.trim().replace(/[<>:"/\\|?*]+/g, '_');
-        if (!saneName.toLowerCase().endsWith('.txt')) saneName += '.txt';
-        return saneName;
-    };
-    const finalFilename = filename.trim() ? sanitizeFilename(filename) : `custom-text-${Date.now()}.txt`;
-    const newFile = new File([content], finalFilename, { type: "text/plain" });
-    await onProcessFiles([newFile]);
-    setShowCreateTextFileEditor(false);
-  };
-  
-  const handlePhotoCapture = (file: File) => {
-    justInitiatedFileOpRef.current = true;
-    onProcessFiles([file]);
-    setShowCamera(false);
-    textareaRef.current?.focus();
-  };
-
-  const handleAudioRecord = async (file: File) => {
-    justInitiatedFileOpRef.current = true;
-    await onProcessFiles([file]);
-    setShowRecorder(false);
-    textareaRef.current?.focus();
-  };
-
   const handleToggleToolAndFocus = (toggleFunc: () => void) => {
     toggleFunc();
     setTimeout(() => textareaRef.current?.focus(), 0);
-  };
-
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      recordingCancelledRef.current = false;
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  };
-
-  const handleCancelRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      recordingCancelledRef.current = true;
-      mediaRecorderRef.current.stop();
-    }
-    audioChunksRef.current = [];
-    setIsRecording(false);
-  };
-
-  const handleStartRecording = async () => {
-    try {
-      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-        alert("Your browser does not support audio recording.");
-        return;
-      }
-      recordingCancelledRef.current = false;
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(track => track.stop());
-        if (recordingCancelledRef.current) {
-          return;
-        }
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (audioBlob.size > 0) {
-          const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
-          setIsTranscribing(true);
-          const transcribedText = await onTranscribeAudio(audioFile);
-          if (transcribedText) {
-            setInputText(prev => (prev ? `${prev.trim()} ${transcribedText.trim()}` : transcribedText.trim()).trim());
-            setTimeout(() => adjustTextareaHeight(), 0);
-          }
-          setIsTranscribing(false);
-        }
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Error accessing microphone:", err);
-      alert("Could not access microphone. Please check permissions.");
-    } finally {
-        setIsMicInitializing(false);
-    }
-  };
-
-  const handleVoiceInputClick = () => {
-    if (isRecording) {
-      handleStopRecording();
-    } else {
-      setIsMicInitializing(true);
-      handleStartRecording();
-    }
   };
   
   return (

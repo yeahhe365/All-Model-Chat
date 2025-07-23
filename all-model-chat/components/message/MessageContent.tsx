@@ -14,6 +14,7 @@ import { CodeBlock } from './CodeBlock';
 import { translations } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
 import { MermaidBlock } from './MermaidBlock';
+import { GraphvizBlock } from './GraphvizBlock';
 
 const renderThoughtsMarkdown = (content: string) => {
   const rawMarkup = marked.parse(content || ''); 
@@ -85,10 +86,11 @@ interface MessageContentProps {
     baseFontSize: number;
     expandCodeBlocksByDefault: boolean;
     isMermaidRenderingEnabled: boolean;
+    isGraphvizRenderingEnabled: boolean;
     t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -146,11 +148,23 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
         const codeContent = codeElement?.props?.children;
         const langMatch = codeClassName.match(/language-(\S+)/);
         const language = langMatch ? langMatch[1] : '';
+        const isGraphviz = language === 'graphviz' || language === 'dot';
 
         if (isMermaidRenderingEnabled && language === 'mermaid' && typeof codeContent === 'string') {
           return (
             <div>
               <MermaidBlock code={codeContent} onImageClick={onImageClick} />
+              <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
+                {children}
+              </CodeBlock>
+            </div>
+          );
+        }
+
+        if (isGraphvizRenderingEnabled && isGraphviz && typeof codeContent === 'string') {
+          return (
+            <div>
+              <GraphvizBlock code={codeContent} />
               <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
                 {children}
               </CodeBlock>
@@ -169,7 +183,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
           </CodeBlock>
         );
       }
-    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled]);
+    }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled]);
 
     return (
         <>

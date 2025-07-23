@@ -22,6 +22,7 @@ interface HeaderProps {
   isKeyLocked: boolean;
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
+  themeId: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   isKeyLocked,
   defaultModelId,
   onSetDefaultModel,
+  themeId,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
@@ -93,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
 
 
   return (
-    <header className="bg-[var(--theme-bg-secondary)] p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0">
+    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0`}>
       <div className="flex items-center gap-2 min-w-0">
         <button
             onClick={onToggleHistorySidebar}
