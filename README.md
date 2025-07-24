@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://all-model-chat.pages.dev/" target="_blank">
-    <img width="1920" height="991" alt="All Model Chat 应用界面截图" src="https://github.com/user-attachments/assets/7795e52a-f039-4084-ab08-8b038660badf" />
+    <img width="1920" height="991" alt="All Model Chat 应用界面截图" src="https://github.com/user-attachments/assets/2eca1f8c-ced1-48a8-ab81-dda8f0e2f440" />
   </a>
   <br/>
   <h1>All Model Chat - 全能模型聊天</h1>
