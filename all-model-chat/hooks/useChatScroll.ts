@@ -15,6 +15,28 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
     // This ref stores the scroll state *before* new messages are rendered.
     const scrollStateBeforeUpdate = useRef<{ scrollHeight: number; scrollTop: number; } | null>(null);
 
+    // After DOM updates, adjust scroll position based on the captured state.
+    useLayoutEffect(() => {
+        const container = scrollContainerRef.current;
+        // Only run the logic if we have a captured state from a message update.
+        if (container && scrollStateBeforeUpdate.current) {
+            const { scrollHeight: prevScrollHeight, scrollTop: prevScrollTop } = scrollStateBeforeUpdate.current;
+            const { clientHeight, scrollHeight: newScrollHeight } = container;
+
+            // If user was at the bottom before the update, scroll to the new bottom.
+            // A threshold provides a buffer for being "at the bottom".
+            if (prevScrollHeight - clientHeight - prevScrollTop < 100) {
+                container.scrollTop = newScrollHeight;
+            }
+            
+            // After using the captured state, reset it to null.
+            // This prevents this effect from running with stale data on subsequent re-renders
+            // that are not triggered by a message change, which could interfere with user scrolling.
+            scrollStateBeforeUpdate.current = null;
+        }
+    }); // No dependency array, runs after every render to apply the adjustment once.
+
+
     // Capture scroll state *before* the DOM updates with new messages.
     // This runs after React calculates the DOM changes but before it commits them to the screen.
     useLayoutEffect(() => {
@@ -25,24 +47,7 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
                 scrollTop: container.scrollTop,
             };
         }
-    }, [messages]); // This effect runs when `messages` change, capturing the "before" state.
-
-    // After DOM updates, adjust scroll position based on the captured state.
-    // This runs *after* the DOM has been updated and painted.
-    useLayoutEffect(() => {
-        const container = scrollContainerRef.current;
-        if (container && scrollStateBeforeUpdate.current) {
-            const { scrollHeight: prevScrollHeight, scrollTop: prevScrollTop } = scrollStateBeforeUpdate.current;
-            const { clientHeight, scrollHeight: newScrollHeight } = container;
-
-            // If user was scrolled to the bottom (or very close) before the update,
-            // then auto-scroll to the new bottom. A threshold of 100px provides a good buffer.
-            if (prevScrollHeight - clientHeight - prevScrollTop < 100) {
-                container.scrollTop = newScrollHeight;
-            }
-        }
-    }); // This effect runs after every render to apply the scroll adjustment.
-
+    }, [messages]); // This effect runs only when `messages` change.
 
     const scrollToNextTurn = useCallback(() => {
         const container = scrollContainerRef.current;
