@@ -41,21 +41,37 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
     }
   }, [isModalOpen]);
   
-  const renderGraph = useCallback(async (newLayout: 'LR' | 'TB') => {
+  const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
     if (!vizInstanceRef.current) return;
     setIsRenderingLayout(true);
     setError('');
 
     try {
-      let processedCode = code.replace(/rankdir\s*=\s*"\w+"\s*,?/gi, '');
-      const graphMatch = processedCode.match(/(\s*graph\s*\[)([^\]]*?)(\s*\])/);
-      if (graphMatch) {
-        let attrs = graphMatch[2].trim();
-        if (attrs.length > 0 && !attrs.endsWith(',')) attrs += ',';
-        processedCode = processedCode.replace(
-          /(\s*graph\s*\[)[^\]]*?(\s*\])/,
-          `$1 ${attrs} rankdir="${newLayout}" $2`
-        );
+      let processedCode = code;
+      const rankdirRegex = /rankdir\s*=\s*"(LR|TB)"/i;
+      const graphAttrsRegex = /(\s*(?:di)?graph\s*.*?\[)([^\]]*)(\])/i;
+      
+      // Case 1: rankdir exists, replace it.
+      if (rankdirRegex.test(processedCode)) {
+          processedCode = processedCode.replace(rankdirRegex, `rankdir="${currentLayout}"`);
+      } 
+      // Case 2: graph [...] block exists, but no rankdir. Add it.
+      else if (graphAttrsRegex.test(processedCode)) {
+          processedCode = processedCode.replace(graphAttrsRegex, (match, p1, p2, p3) => {
+              const attrs = p2.trim();
+              const separator = attrs && !attrs.endsWith(',') ? ', ' : ' ';
+              return `${p1}${attrs}${separator}rankdir="${currentLayout}"${p3}`;
+          });
+      }
+      // Case 3: No graph [...] block exists. Add one.
+      else {
+          const digraphMatch = processedCode.match(/(\s*(?:di)?graph\s+[\w\d_"]*\s*\{)/i);
+          if (digraphMatch) {
+              processedCode = processedCode.replace(
+                  digraphMatch[0],
+                  `${digraphMatch[0]}\n  graph [rankdir="${currentLayout}"];`
+              );
+          }
       }
       
       const svgElement = await vizInstanceRef.current.renderSVGElement(processedCode);
