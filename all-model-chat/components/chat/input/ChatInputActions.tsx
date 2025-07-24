@@ -56,7 +56,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                     aria-label={t('cancelRecording_aria')}
                     title={t('cancelRecording_aria')}
                 >
-                    {t('cancel_button')}
+                    {t('cancel')}
                 </button>
             )}
             <button

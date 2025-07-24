@@ -173,7 +173,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                   <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-1">
                       <button onClick={() => handleLoadAndClose(scenario.messages)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-green-500" title="Load Scenario"><Play size={actionIconSize} /></button>
                       <button onClick={() => handleStartEdit(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title={t('scenarios_edit_title')}><Edit3 size={actionIconSize-2} /></button>
-                      <button onClick={() => handleExport(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title={t('scenarios_export_button')}><Download size={actionIconSize} /></button>
+                      <button onClick={() => handleExport(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title={t('export')}><Download size={actionIconSize} /></button>
                       <button onClick={() => handleDeleteScenario(scenario.id)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)]" title={t('scenarios_delete_title')}><Trash2 size={actionIconSize-2} /></button>
                   </div>
                 </li>
@@ -192,7 +192,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
             </div>
              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-[var(--theme-border-secondary)]">
                 <button onClick={handleImportClick} disabled={isProcessingImport} className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed" title={t('scenarios_import_title')}>
-                    {isProcessingImport ? <Loader2 size={actionIconSize} className="animate-spin" /> : <UploadCloud size={actionIconSize} />} {t('scenarios_import_button')}
+                    {isProcessingImport ? <Loader2 size={actionIconSize} className="animate-spin" /> : <UploadCloud size={actionIconSize} />} {t('import')}
                 </button>
                 <input type="file" ref={importFileRef} onChange={handleFileImport} accept=".json" className="hidden" />
 

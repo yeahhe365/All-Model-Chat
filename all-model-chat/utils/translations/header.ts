@@ -17,7 +17,6 @@ export const headerTranslations = {
     header_setDefault_action: { en: 'Set as Default', zh: '设为默认' },
     header_setDefault_isDefault: { en: 'Default Model', zh: '默认模型' },
     headerTitle: { en: 'All Model Chat', zh: 'All Model Chat' },
-    headerNewChat: { en: 'New Chat', zh: '发起新对话' },
     headerStream: { en: 'Stream', zh: '流式' },
     headerModelSelectorTooltip_current: { en: 'Current Model', zh: '当前模型' },
     headerModelSelectorTooltip_action: { en: `Click to change, or press 'Tab' to cycle`, zh: `点击更改，或按 'Tab' 键循环切换` },

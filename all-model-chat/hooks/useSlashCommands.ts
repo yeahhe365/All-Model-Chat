@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { Command } from '../components/chat/input/SlashCommandMenu';
 import { translations } from '../utils/appUtils';
 import { ModelOption } from '../types';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Ban } from 'lucide-react';
 
 interface UseSlashCommandsProps {
   t: (key: keyof typeof translations) => string;
@@ -46,7 +45,7 @@ export const useSlashCommands = ({
   });
 
   const commands = useMemo<Command[]>(() => [
-    { name: 'model', description: t('help_cmd_model'), icon: <Bot size={16} />, action: (setInputText: (text: string) => void) => {
+    { name: 'model', description: t('help_cmd_model'), icon: 'bot', action: (setInputText: (text: string) => void) => {
         setInputText('/model ');
         setTimeout(() => {
             const textarea = textareaRef.current;
@@ -57,18 +56,18 @@ export const useSlashCommands = ({
             }
         }, 0);
     } },
-    { name: 'help', description: t('help_cmd_help'), icon: <HelpCircle size={16} />, action: () => setIsHelpModalOpen(true) },
-    { name: 'pin', description: t('help_cmd_pin'), icon: <Pin size={16} />, action: onTogglePinCurrentSession },
-    { name: 'retry', description: t('help_cmd_retry'), icon: <RotateCw size={16} />, action: onRetryLastTurn },
-    { name: 'stop', description: t('help_cmd_stop'), icon: <Ban size={16} />, action: onStopGenerating },
-    { name: 'search', description: t('help_cmd_search'), icon: <Globe size={16} />, action: onToggleGoogleSearch },
-    { name: 'code', description: t('help_cmd_code'), icon: <Terminal size={16} />, action: onToggleCodeExecution },
-    { name: 'url', description: t('help_cmd_url'), icon: <Link size={16} />, action: onToggleUrlContext },
-    { name: 'file', description: t('help_cmd_file'), icon: <UploadCloud size={16} />, action: () => onAttachmentAction('upload') },
-    { name: 'clear', description: t('help_cmd_clear'), icon: <Trash2 size={16} />, action: onClearChat },
-    { name: 'new', description: t('help_cmd_new'), icon: <FilePlus2 size={16} />, action: onNewChat },
-    { name: 'settings', description: t('help_cmd_settings'), icon: <Settings size={16} />, action: onOpenSettings },
-    { name: 'canvas', description: t('help_cmd_canvas'), icon: <Wand2 size={16} />, action: onToggleCanvasPrompt },
+    { name: 'help', description: t('help_cmd_help'), icon: 'help', action: () => setIsHelpModalOpen(true) },
+    { name: 'pin', description: t('help_cmd_pin'), icon: 'pin', action: onTogglePinCurrentSession },
+    { name: 'retry', description: t('help_cmd_retry'), icon: 'retry', action: onRetryLastTurn },
+    { name: 'stop', description: t('help_cmd_stop'), icon: 'stop', action: onStopGenerating },
+    { name: 'search', description: t('help_cmd_search'), icon: 'search', action: onToggleGoogleSearch },
+    { name: 'code', description: t('help_cmd_code'), icon: 'code', action: onToggleCodeExecution },
+    { name: 'url', description: t('help_cmd_url'), icon: 'url', action: onToggleUrlContext },
+    { name: 'file', description: t('help_cmd_file'), icon: 'file', action: () => onAttachmentAction('upload') },
+    { name: 'clear', description: t('help_cmd_clear'), icon: 'clear', action: onClearChat },
+    { name: 'new', description: t('help_cmd_new'), icon: 'new', action: onNewChat },
+    { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
+    { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
   ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, textareaRef, setIsHelpModalOpen]);
   
   const allCommandsForHelp = useMemo(() => [
@@ -121,7 +120,7 @@ export const useSlashCommands = ({
       const modelCommands: Command[] = filteredModels.map(model => ({
         name: model.name,
         description: model.isPinned ? `Pinned Model` : `ID: ${model.id}`,
-        icon: model.id.includes('imagen') ? <ImageIcon size={16} /> : (model.isPinned ? <Pin size={16} /> : <Bot size={16} />),
+        icon: model.id.includes('imagen') ? 'image' : (model.isPinned ? 'pin' : 'bot'),
         action: () => {
           onSelectModel(model.id);
           setInputText('');

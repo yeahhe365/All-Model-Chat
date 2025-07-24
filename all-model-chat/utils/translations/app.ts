@@ -1,6 +1,5 @@
 export const appTranslations = {
     // App.tsx
-    appLoadingModels: { en: 'Loading models...', zh: '加载模型中...' },
     appVerifyingModel: { en: 'Verifying model...', zh: '验证模型中...' },
     appSwitchingModel: { en: 'Switching model...', zh: '切换模型中...' },
     appNoModelsAvailable: { en: 'No models available', zh: '无可用模型' },

@@ -38,7 +38,7 @@ export const AddFileByIdInput: React.FC<AddFileByIdInputProps> = ({
                 className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-icon-send)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] flex items-center gap-1.5 text-sm"
                 aria-label={t('addById_button_aria')}
             >
-                <Plus size={16} /> {t('add_button')}
+                <Plus size={16} /> {t('add')}
             </button>
             <button
                 type="button"
@@ -47,7 +47,7 @@ export const AddFileByIdInput: React.FC<AddFileByIdInputProps> = ({
                 className="p-2 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] rounded-md flex items-center gap-1.5 text-sm"
                 aria-label={t('cancelAddById_button_aria')}
             >
-                <XCircle size={16} /> {t('cancel_button')}
+                <XCircle size={16} /> {t('cancel')}
             </button>
         </div>
     );

@@ -6,11 +6,12 @@ import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { useAppUI } from './hooks/useAppUI';
 import { useAppEvents } from './hooks/useAppEvents';
-import { getTranslator } from './utils/appUtils';
-import { logService } from './services/logService';
+import { getTranslator, logService } from './utils/appUtils';
 import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
 import { AppModals } from './components/modals/AppModals';
+import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles } from './utils/exportUtils';
+import DOMPurify from 'dompurify';
 
 
 const App: React.FC = () => {
@@ -71,7 +72,7 @@ const App: React.FC = () => {
       handleLoadPreloadedScenario,
       handleImportPreloadedScenario,
       handleExportPreloadedScenario,
-      handleScroll,
+      onScrollContainerScroll: handleScroll,
       handleAppDragEnter,
       handleAppDragOver,
       handleAppDragLeave,
@@ -182,7 +183,7 @@ const App: React.FC = () => {
 
   const getCurrentModelDisplayName = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
-    if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return t('appLoadingModels');
+    if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return t('loading');
     if (isModelsLoading && modelIdToDisplay && !apiModels.find(m => m.id === modelIdToDisplay)) return t('appVerifyingModel');
     if (isSwitchingModel) return t('appSwitchingModel');
     const model = apiModels.find(m => m.id === modelIdToDisplay);
@@ -196,43 +197,25 @@ const App: React.FC = () => {
   const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt') => {
     if (!activeChat) return;
     setExportStatus('exporting');
-
-    const triggerDownload = (href: string, filename: string) => {
-        const link = document.createElement('a');
-        link.href = href;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        if (href.startsWith('blob:')) {
-            URL.revokeObjectURL(href);
-        }
-    };
     
-    const safeTitle = activeChat.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'chat';
+    const safeTitle = sanitizeFilename(activeChat.title);
     const date = new Date().toISOString().slice(0, 10);
     const filename = `chat-${safeTitle}-${date}.${format}`;
 
     try {
         if (format === 'png') {
-            const html2canvas = (await import('html2canvas')).default;
             if (!scrollContainerRef.current) return;
             document.body.classList.add('is-exporting-png');
             await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
-            const element = scrollContainerRef.current;
-            const canvas = await html2canvas(element, {
-                height: element.scrollHeight,
-                width: element.scrollWidth,
-                useCORS: true,
+            
+            await exportElementAsPng(scrollContainerRef.current, filename, {
                 backgroundColor: currentTheme.colors.bgSecondary,
-                scale: 2,
             });
-            triggerDownload(canvas.toDataURL('image/png'), filename);
+
         } else if (format === 'html') {
-            const DOMPurify = (await import('dompurify')).default;
             if (!scrollContainerRef.current) return;
-            const headContent = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"], script[src*="highlight.js"], script[src*="katex"]'))
-                .map(el => el.outerHTML).join('\n');
+
+            const headContent = await gatherPageStyles();
             const bodyClasses = document.body.className;
             const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
             const chatHtml = scrollContainerRef.current.innerHTML;
@@ -268,8 +251,7 @@ const App: React.FC = () => {
                 </body>
                 </html>
             `;
-            const blob = new Blob([fullHtml], { type: 'text/html' });
-            triggerDownload(URL.createObjectURL(blob), filename);
+            exportHtmlStringAsFile(fullHtml, filename);
         } else { // TXT
             const textContent = activeChat.messages.map(message => {
                 const role = message.role === 'user' ? 'USER' : 'ASSISTANT';
@@ -283,8 +265,7 @@ const App: React.FC = () => {
                 return content;
             }).join('\n\n');
 
-            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
-            triggerDownload(URL.createObjectURL(blob), filename);
+            exportTextStringAsFile(textContent, filename);
         }
     } catch (error) {
         logService.error(`Chat export failed (format: ${format})`, { error });

@@ -38,7 +38,7 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
           type="button"
           className={`${baseButtonClass} flex-1 sm:flex-initial bg-transparent text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-secondary)]`}
         >
-          <span>{t('settingsCancel')}</span>
+          <span>{t('cancel')}</span>
         </button>
         <button
           onClick={onSave}
@@ -46,7 +46,7 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
           className={`${baseButtonClass} flex-1 sm:flex-initial bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] focus:ring-[var(--theme-border-focus)] shadow-sm hover:shadow-md`}
         >
           <Save size={actionButtonIconSize} />
-          <span>{t('settingsSave')}</span>
+          <span>{t('save')}</span>
         </button>
       </div>
     </div>

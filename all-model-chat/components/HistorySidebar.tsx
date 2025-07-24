@@ -162,10 +162,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       </div>
       {activeMenu === session.id && (
         <div ref={menuRef} className="absolute right-3 top-9 z-10 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1">
-          <button onClick={() => handleStartEdit('session', session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><SquarePen size={14} /> <span>{t('history_edit_title')}</span></button>
+          <button onClick={() => handleStartEdit('session', session)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><SquarePen size={14} /> <span>{t('edit')}</span></button>
           <button onClick={() => { onTogglePinSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2">{session.isPinned ? <PinOff size={14} /> : <Pin size={14} />} <span>{session.isPinned ? t('history_unpin') : t('history_pin')}</span></button>
           <button onClick={() => { onSelectSession(session.id); onOpenExportModal(); setActiveMenu(null); }} disabled={session.messages.length === 0} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" title={session.messages.length === 0 ? t('chat_is_empty', 'Chat is empty') : t('export_chat', 'Export Chat')}><Download size={14} /> <span>{t('export_chat', 'Export Chat')}</span></button>
-          <button onClick={() => { onDeleteSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('history_delete')}</span></button>
+          <button onClick={() => { onDeleteSession(session.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('delete')}</span></button>
         </div>
       )}
     </li>
@@ -200,8 +200,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         {activeMenu === group.id && (
           <div ref={menuRef} className="relative z-10">
             <div className="absolute right-3 -top-1 w-40 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg py-1">
-              <button onClick={() => handleStartEdit('group', group)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><SquarePen size={14} /> <span>{t('history_edit_title')}</span></button>
-              <button onClick={() => { onDeleteGroup(group.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('history_delete')}</span></button>
+              <button onClick={() => handleStartEdit('group', group)} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2"><SquarePen size={14} /> <span>{t('edit')}</span></button>
+              <button onClick={() => { onDeleteGroup(group.id); setActiveMenu(null); }} className="w-full text-left px-3 py-1.5 text-sm text-[var(--theme-icon-error)] hover:bg-[var(--theme-bg-danger)] hover:text-[var(--theme-text-danger)] flex items-center gap-2"><Trash2 size={14} /> <span>{t('delete')}</span></button>
             </div>
           </div>
         )}
@@ -225,7 +225,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}><PanelLeftClose size={20} /></button>
       </div>
       <div className="px-3 pt-3 flex items-center gap-2">
-        <button onClick={onNewChat} className="flex-grow flex items-center gap-3 w-full text-left px-3 py-2 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" aria-label={t('headerNewChat_aria')}><SquarePen size={18} className="text-[var(--theme-text-secondary)]" /><span className="text-[var(--theme-text-link)]">{t('headerNewChat')}</span></button>
+        <button onClick={onNewChat} className="flex-grow flex items-center gap-3 w-full text-left px-3 py-2 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" aria-label={t('headerNewChat_aria')}><SquarePen size={18} className="text-[var(--theme-text-secondary)]" /><span className="text-[var(--theme-text-link)]">{t('newChat')}</span></button>
         <button onClick={onAddNewGroup} className="flex-shrink-0 p-2 text-[var(--theme-text-secondary)] bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" title="New Group"><FolderPlus size={18} /></button>
       </div>
       <div className="px-3 pt-2">

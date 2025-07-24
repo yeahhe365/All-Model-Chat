@@ -1,5 +1,5 @@
 // hooks/useChatScroll.ts
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useState, useLayoutEffect } from 'react';
 import { ChatMessage } from '../types';
 
 interface ChatScrollProps {
@@ -11,6 +11,38 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [scrollNavVisibility, setScrollNavVisibility] = useState({ up: false, down: false });
+    
+    // This ref stores the scroll state *before* new messages are rendered.
+    const scrollStateBeforeUpdate = useRef<{ scrollHeight: number; scrollTop: number; } | null>(null);
+
+    // Capture scroll state *before* the DOM updates with new messages.
+    // This runs after React calculates the DOM changes but before it commits them to the screen.
+    useLayoutEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+            scrollStateBeforeUpdate.current = {
+                scrollHeight: container.scrollHeight,
+                scrollTop: container.scrollTop,
+            };
+        }
+    }, [messages]); // This effect runs when `messages` change, capturing the "before" state.
+
+    // After DOM updates, adjust scroll position based on the captured state.
+    // This runs *after* the DOM has been updated and painted.
+    useLayoutEffect(() => {
+        const container = scrollContainerRef.current;
+        if (container && scrollStateBeforeUpdate.current) {
+            const { scrollHeight: prevScrollHeight, scrollTop: prevScrollTop } = scrollStateBeforeUpdate.current;
+            const { clientHeight, scrollHeight: newScrollHeight } = container;
+
+            // If user was scrolled to the bottom (or very close) before the update,
+            // then auto-scroll to the new bottom. A threshold of 100px provides a good buffer.
+            if (prevScrollHeight - clientHeight - prevScrollTop < 100) {
+                container.scrollTop = newScrollHeight;
+            }
+        }
+    }); // This effect runs after every render to apply the scroll adjustment.
+
 
     const scrollToNextTurn = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -33,9 +65,12 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
         if (target) {
             target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            container.scrollTo({
+                top: container.scrollHeight,
+                behavior: 'smooth'
+            });
         }
-    }, [messagesEndRef]);
+    }, []);
 
     const scrollToPrevTurn = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -73,16 +108,11 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
                 up: !isAtTop && scrollHeight > clientHeight,
                 down: !isAtBottom,
             });
+            // This ref is still useful for other parts of the app (like nav buttons)
             userScrolledUp.current = !isAtBottom;
         }
-    }, [scrollContainerRef, userScrolledUp]);
+    }, [userScrolledUp]);
     
-    useEffect(() => { 
-        if (!userScrolledUp.current) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }
-    }, [messages, userScrolledUp]);
-
     return {
         messagesEndRef,
         scrollContainerRef,

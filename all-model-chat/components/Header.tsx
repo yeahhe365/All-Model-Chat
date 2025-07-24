@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
 
-  const displayModelName = isModelsLoading && !currentModelName ? t('appLoadingModels') : currentModelName;
+  const displayModelName = isModelsLoading && !currentModelName ? t('loading') : currentModelName;
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onNewChat}
             className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
             aria-label={t('headerNewChat_aria')}
-            title={`${t('headerNewChat')} (${newChatShortcut})`}
+            title={`${t('newChat')} (${newChatShortcut})`}
           >
             <SquarePen size={getResponsiveValue(18, 20)} />
           </button>
