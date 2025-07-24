@@ -23,6 +23,24 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
   const panzoomInstanceRef = useRef<any>(null);
   const wheelListenerRef = useRef<((e: WheelEvent) => void) | null>(null);
 
+  useEffect(() => {
+    // This effect handles the issue where a `transform` on an ancestor element
+    // breaks `position: fixed` for the modal. We find the animated message
+    // container and temporarily disable its animation (and thus its transform)
+    // while the modal is open.
+    const messageContainer = diagramContainerRef.current?.closest('.message-container-animate');
+    if (messageContainer) {
+      if (isModalOpen) {
+        messageContainer.classList.remove('message-container-animate');
+      } else {
+        // Only re-add if it doesn't have it, to avoid re-triggering animation on every render
+        if (!messageContainer.classList.contains('message-container-animate')) {
+          messageContainer.classList.add('message-container-animate');
+        }
+      }
+    }
+  }, [isModalOpen]);
+  
   const renderGraph = useCallback(async (newLayout: 'LR' | 'TB') => {
     if (!vizInstanceRef.current) return;
     setIsRenderingLayout(true);
@@ -236,7 +254,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
             onClick={handleCloseModal}
             role="dialog" aria-modal="true" aria-labelledby="graphviz-modal-title"
         >
-          <div ref={zoomContentRef} className="relative w-[97vw] h-[97vh] bg-white overflow-hidden rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}></div>
+          <div ref={zoomContentRef} className="relative w-[97%] h-[97%] bg-white overflow-hidden rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}></div>
           
           <button onClick={handleCloseModal} className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors flex items-center justify-center" title="Close Fullscreen (Esc)" aria-label="Close Fullscreen"><X size={24} /></button>
           <h2 id="graphviz-modal-title" className="sr-only">Interactive Diagram View</h2>
