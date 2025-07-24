@@ -4,6 +4,7 @@ import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings 
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService } from '../utils/appUtils';
+import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -22,6 +23,30 @@ const isToolMessage = (msg: ChatMessage): boolean => {
     return (content.startsWith('```') && content.endsWith('```')) ||
            content.startsWith('<div class="tool-result') ||
            content.startsWith('![Generated Image]');
+};
+
+const showCompletionNotification = (title: string, body: string) => {
+    if (!('Notification' in window)) {
+        logService.warn('This browser does not support desktop notification');
+        return;
+    }
+
+    const doNotify = () => {
+        new Notification(title, {
+            body: body,
+            icon: APP_LOGO_SVG_DATA_URI
+        });
+    };
+
+    if (Notification.permission === 'granted') {
+        doNotify();
+    } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+                doNotify();
+            }
+        });
+    }
 };
 
 export const useChatStreamHandler = ({
@@ -53,41 +78,64 @@ export const useChatStreamHandler = ({
                 firstContentPartTimeRef.current = new Date();
             }
 
-            updateAndPersistSessions(prev => prev.map(s => {
-                if (s.id !== currentSessionId) return s;
-                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
-                const finalMessages = s.messages
-                    .map(m => {
-                        if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
-                            let thinkingTime = m.thinkingTimeMs;
-                            if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
-                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
+            updateAndPersistSessions(prev => {
+                const newSessions = prev.map(s => {
+                    if (s.id !== currentSessionId) return s;
+
+                    let finalContentForNotification = '';
+                    const isAborted = abortController.signal.aborted;
+                    
+                    let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                    
+                    const finalMessages = s.messages
+                        .map(m => {
+                            if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                                let thinkingTime = m.thinkingTimeMs;
+                                if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
+                                    thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
+                                }
+                                const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
+                                const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
+                                const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
+                                const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
+                                cumulativeTotal += turnTokens;
+                                
+                                const updatedMessage = {
+                                    ...m,
+                                    isLoading: false,
+                                    content: m.content + (isAborted ? "\n\n[Stopped by user]" : ""),
+                                    thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
+                                    generationEndTime: new Date(),
+                                    thinkingTimeMs: thinkingTime,
+                                    groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
+                                    promptTokens,
+                                    completionTokens,
+                                    totalTokens: turnTokens,
+                                    cumulativeTotalTokens: cumulativeTotal,
+                                };
+
+                                if (isLastMessageOfRun) {
+                                    finalContentForNotification = updatedMessage.content;
+                                }
+
+                                return updatedMessage;
                             }
-                            const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
-                            const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
-                            const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
-                            const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
-                            cumulativeTotal += turnTokens;
-                            return {
-                                ...m,
-                                isLoading: false,
-                                content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
-                                thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
-                                generationEndTime: new Date(),
-                                thinkingTimeMs: thinkingTime,
-                                groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
-                                promptTokens,
-                                completionTokens,
-                                totalTokens: turnTokens,
-                                cumulativeTotalTokens: cumulativeTotal,
-                            };
-                        }
-                        return m;
-                    })
-                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
-                
-                return {...s, messages: finalMessages, settings: s.settings};
-            }));
+                            return m;
+                        })
+                        .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+
+                    if (appSettings.isCompletionNotificationEnabled && !isAborted && finalContentForNotification) {
+                        const snippet = finalContentForNotification.length > 100 
+                            ? finalContentForNotification.substring(0, 97) + '...'
+                            : finalContentForNotification;
+                        
+                        showCompletionNotification('Response Complete', snippet || 'The assistant has finished responding.');
+                    }
+                    
+                    return {...s, messages: finalMessages, settings: s.settings};
+                });
+                return newSessions;
+            });
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
@@ -168,7 +216,7 @@ export const useChatStreamHandler = ({
         firstContentPartTimeRef.current = null;
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
     
     return { getStreamHandlers };
 };

@@ -41,6 +41,8 @@ interface ChatBehaviorSectionProps {
   setIsMermaidRenderingEnabled: (value: boolean) => void;
   isGraphvizRenderingEnabled: boolean;
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
+  isCompletionNotificationEnabled: boolean;
+  setIsCompletionNotificationEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -100,6 +102,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
           setIsMermaidRenderingEnabled={props.setIsMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={props.isGraphvizRenderingEnabled}
           setIsGraphvizRenderingEnabled={props.setIsGraphvizRenderingEnabled}
+          isCompletionNotificationEnabled={props.isCompletionNotificationEnabled}
+          setIsCompletionNotificationEnabled={props.setIsCompletionNotificationEnabled}
           t={t}
         />
       </div>

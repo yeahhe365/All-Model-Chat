@@ -19,6 +19,8 @@ interface FeatureFlagsProps {
   setIsMermaidRenderingEnabled: (value: boolean) => void;
   isGraphvizRenderingEnabled: boolean;
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
+  isCompletionNotificationEnabled: boolean;
+  setIsCompletionNotificationEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -52,7 +54,8 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
   showThoughts, setShowThoughts, thinkingBudget, setThinkingBudget,
   isStreamingEnabled, setIsStreamingEnabled, useFilesApiForImages, setUseFilesApiForImages,
   expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, isAutoTitleEnabled, setIsAutoTitleEnabled,
-  isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled, t
+  isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
+  isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, t
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
@@ -157,6 +160,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       <Toggle id="expand-code-blocks-toggle" labelKey="settings_expandCodeBlocksByDefault_label" checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} t={t} />
       <Toggle id="mermaid-rendering-toggle" labelKey="settings_enableMermaidRendering_label" tooltipKey="settings_enableMermaidRendering_tooltip" checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} t={t} />
       <Toggle id="graphviz-rendering-toggle" labelKey="settings_enableGraphvizRendering_label" tooltipKey="settings_enableGraphvizRendering_tooltip" checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} t={t} />
+      <Toggle id="completion-notification-toggle" labelKey="settings_enableCompletionNotification_label" tooltipKey="settings_enableCompletionNotification_tooltip" checked={isCompletionNotificationEnabled} onChange={setIsCompletionNotificationEnabled} t={t} />
     </div>
   );
 };
