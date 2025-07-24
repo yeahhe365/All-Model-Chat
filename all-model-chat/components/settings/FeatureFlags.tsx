@@ -19,6 +19,8 @@ interface FeatureFlagsProps {
   setIsMermaidRenderingEnabled: (value: boolean) => void;
   isGraphvizRenderingEnabled: boolean;
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
+  isDesktopNotificationsEnabled: boolean;
+  setIsDesktopNotificationsEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -52,7 +54,8 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
   showThoughts, setShowThoughts, thinkingBudget, setThinkingBudget,
   isStreamingEnabled, setIsStreamingEnabled, useFilesApiForImages, setUseFilesApiForImages,
   expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, isAutoTitleEnabled, setIsAutoTitleEnabled,
-  isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled, t
+  isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
+  isDesktopNotificationsEnabled, setIsDesktopNotificationsEnabled, t
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
@@ -82,6 +85,17 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
           setThinkingBudget(100); 
         }
         break;
+    }
+  };
+  
+  const handleNotificationToggle = (checked: boolean) => {
+    setIsDesktopNotificationsEnabled(checked);
+    if (checked) {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        } else if (Notification.permission === 'denied') {
+            alert("Desktop notification permissions are blocked in your browser settings. Please enable them to use this feature.");
+        }
     }
   };
 
@@ -153,6 +167,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       
       <Toggle id="streaming-toggle" labelKey="headerStream" checked={isStreamingEnabled} onChange={setIsStreamingEnabled} t={t} />
       <Toggle id="auto-title-toggle" labelKey="isAutoTitleEnabled" tooltipKey="isAutoTitleEnabled_tooltip" checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} t={t} />
+      <Toggle id="desktop-notifications-toggle" labelKey="settings_enableDesktopNotifications_label" tooltipKey="settings_enableDesktopNotifications_tooltip" checked={isDesktopNotificationsEnabled} onChange={handleNotificationToggle} t={t} />
       <Toggle id="use-files-api-for-images-toggle" labelKey="settings_useFilesApiForImages_label" tooltipKey="settings_useFilesApiForImages_tooltip" checked={useFilesApiForImages} onChange={setUseFilesApiForImages} t={t} />
       <Toggle id="expand-code-blocks-toggle" labelKey="settings_expandCodeBlocksByDefault_label" checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} t={t} />
       <Toggle id="mermaid-rendering-toggle" labelKey="settings_enableMermaidRendering_label" tooltipKey="settings_enableMermaidRendering_tooltip" checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} t={t} />

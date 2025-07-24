@@ -4,6 +4,7 @@ import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings 
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService } from '../utils/appUtils';
+import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -55,6 +56,25 @@ export const useChatStreamHandler = ({
 
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
+
+                // --- Notification Logic Start ---
+                const lastMessageIdOfRun = Array.from(newModelMessageIds).pop();
+                const messageToNotify = s.messages.find(m => m.id === lastMessageIdOfRun);
+
+                if (appSettings.isDesktopNotificationsEnabled && document.hidden && Notification.permission === 'granted' && messageToNotify?.content) {
+                    const snippet = messageToNotify.content.length > 100 ? messageToNotify.content.substring(0, 100) + '...' : messageToNotify.content;
+                    const notification = new Notification('All Model Chat', {
+                        body: `${snippet}`,
+                        icon: APP_LOGO_SVG_DATA_URI,
+                        tag: currentSessionId, // This allows new notifications for the same chat to replace old ones.
+                    });
+                    notification.onclick = () => {
+                        window.focus(); // Focus the window when notification is clicked
+                        notification.close();
+                    };
+                }
+                // --- Notification Logic End ---
+
                 let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
                 const finalMessages = s.messages
                     .map(m => {
@@ -168,7 +188,7 @@ export const useChatStreamHandler = ({
         firstContentPartTimeRef.current = null;
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    }, [appSettings.isStreamingEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs, appSettings.isDesktopNotificationsEnabled]);
     
     return { getStreamHandlers };
 };

@@ -41,6 +41,8 @@ interface ChatBehaviorSectionProps {
   setIsMermaidRenderingEnabled: (value: boolean) => void;
   isGraphvizRenderingEnabled: boolean;
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
+  isDesktopNotificationsEnabled: boolean;
+  setIsDesktopNotificationsEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -100,6 +102,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
           setIsMermaidRenderingEnabled={props.setIsMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={props.isGraphvizRenderingEnabled}
           setIsGraphvizRenderingEnabled={props.setIsGraphvizRenderingEnabled}
+          isDesktopNotificationsEnabled={props.isDesktopNotificationsEnabled}
+          setIsDesktopNotificationsEnabled={props.setIsDesktopNotificationsEnabled}
           t={t}
         />
       </div>
