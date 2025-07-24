@@ -45,6 +45,7 @@ interface ChatInputProps {
   onRetryLastTurn: () => void;
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
+  onEditLastUserMessage: () => void;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
@@ -60,7 +61,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
-    onRetryLastTurn, onSelectModel, availableModels
+    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage
   } = props;
 
   const [inputText, setInputText] = useState('');
@@ -108,7 +109,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   } = useSlashCommands({
     t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
     onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction: handleAttachmentAction,
-    availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef,
+    availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
   });
 
   useEffect(() => {
@@ -177,7 +178,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleSlashInputChange(e.target.value, setInputText);
+    handleSlashInputChange(e.target.value);
   };
 
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
@@ -223,7 +224,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         const trimmedInput = inputText.trim();
         if (trimmedInput.startsWith('/')) {
             e.preventDefault();
-            handleSlashCommandExecution(trimmedInput, setInputText);
+            handleSlashCommandExecution(trimmedInput);
             return;
         }
         if (canSend) {

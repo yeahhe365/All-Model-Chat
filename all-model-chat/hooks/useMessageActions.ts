@@ -130,6 +130,20 @@ export const useMessageActions = ({
         }
     }, [activeSessionId, messages, handleRetryMessage]);
 
+    const handleEditLastUserMessage = useCallback(() => {
+        if (isLoading) {
+            handleStopGenerating();
+        }
+        // Find the last message that was sent by the user
+        const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+        if (lastUserMessage) {
+            logService.info("User editing last message via command", { messageId: lastUserMessage.id });
+            handleEditMessage(lastUserMessage.id);
+        } else {
+            logService.warn("Could not edit last message: no user message found.");
+        }
+    }, [messages, isLoading, handleEditMessage, handleStopGenerating]);
+
     return {
         handleStopGenerating,
         handleEditMessage,
@@ -137,5 +151,6 @@ export const useMessageActions = ({
         handleDeleteMessage,
         handleRetryMessage,
         handleRetryLastTurn,
+        handleEditLastUserMessage,
     };
 };

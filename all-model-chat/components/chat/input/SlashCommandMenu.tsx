@@ -1,11 +1,12 @@
 import React, { useRef, useEffect } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Ban } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Ban, Edit3 } from 'lucide-react';
 
 const CommandIcon: React.FC<{ icon: string }> = ({ icon }) => {
     const iconProps = { size: 16 };
     switch (icon) {
         case 'bot': return <Bot {...iconProps} />;
         case 'help': return <HelpCircle {...iconProps} />;
+        case 'edit': return <Edit3 {...iconProps} />;
         case 'pin': return <Pin {...iconProps} />;
         case 'retry': return <RotateCw {...iconProps} />;
         case 'stop': return <Ban {...iconProps} />;
@@ -26,7 +27,7 @@ export interface Command {
     name: string;
     description: string;
     icon: string;
-    action: (...args: any[]) => void;
+    action: () => void;
 }
 
 interface SlashCommandMenuProps {

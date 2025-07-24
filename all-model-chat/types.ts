@@ -224,6 +224,9 @@ export interface ChatInputProps {
   onToggleCanvasPrompt: () => void;
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
+  onTogglePinCurrentSession: () => void;
+  onRetryLastTurn: () => void;
+  onEditLastUserMessage: () => void;
 }
 
 export interface ChatInputToolbarProps {
@@ -421,6 +424,7 @@ export interface ChatAreaProps {
   onToggleCanvasPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
+  onEditLastUserMessage: () => void;
   
   t: (key: keyof typeof translations, fallback?: string) => string;
 }

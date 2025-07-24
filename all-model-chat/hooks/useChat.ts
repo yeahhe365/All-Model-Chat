@@ -250,6 +250,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleRetryMessage: messageHandler.handleRetryMessage,
         handleRetryLastTurn: messageHandler.handleRetryLastTurn,
         handleTextToSpeech: messageHandler.handleTextToSpeech,
+        handleEditLastUserMessage: messageHandler.handleEditLastUserMessage,
         // from scenarioHandler
         savedScenarios: scenarioHandler.savedScenarios,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,

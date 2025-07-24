@@ -58,6 +58,7 @@ const App: React.FC = () => {
       handleDeleteMessage,
       handleRetryMessage,
       handleRetryLastTurn,
+      handleEditLastUserMessage,
       handleDeleteChatHistorySession,
       handleRenameSession,
       handleTogglePinSession,
@@ -391,6 +392,7 @@ const App: React.FC = () => {
         onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
         onTogglePinCurrentSession={handleTogglePinCurrentSession}
         onRetryLastTurn={handleRetryLastTurn}
+        onEditLastUserMessage={handleEditLastUserMessage}
         t={t}
       />
       <AppModals

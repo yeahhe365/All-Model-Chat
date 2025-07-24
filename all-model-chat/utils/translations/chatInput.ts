@@ -36,6 +36,7 @@ export const chatInputTranslations = {
     // Command descriptions for help modal
     help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },
     help_cmd_help: { en: 'Displays this help menu.', zh: '显示此帮助菜单。' },
+    help_cmd_edit: { en: 'Edit your last message.', zh: '编辑您的上一条消息。' },
     help_cmd_pin: { en: 'Toggle pin for current chat', zh: '切换当前聊天的置顶状态' },
     help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
     help_cmd_stop: { en: 'Stop the current generation.', zh: '停止当前生成。' },

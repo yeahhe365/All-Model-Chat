@@ -175,7 +175,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
             return prev.map(s => s.id === currentSessionId ? updatedSession : s);
         });
 
-        if (effectiveEditingId && !overrideOptions) setEditingMessageId(null);
+        if (editingMessageId) {
+            setEditingMessageId(null);
+        }
         
         const promptParts = await buildContentParts(textToUse.trim(), filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing));
         if (promptParts.length === 0) {
@@ -202,11 +204,22 @@ export const useMessageSender = (props: MessageSenderProps) => {
             );
         }
     }, [
-        activeSessionId, selectedFiles, editingMessageId, appSettings, 
-        currentChatSettings, setAppFileError, setSelectedFiles, 
-        setEditingMessageId, setActiveSessionId, userScrolledUp, 
-        updateAndPersistSessions, setLoadingSessionIds, activeJobs, 
-        aspectRatio, getStreamHandlers, handleTtsImagenMessage
+        appSettings,
+        currentChatSettings,
+        selectedFiles,
+        setSelectedFiles,
+        editingMessageId,
+        setEditingMessageId,
+        setAppFileError,
+        aspectRatio,
+        userScrolledUp,
+        activeSessionId,
+        setActiveSessionId,
+        activeJobs,
+        setLoadingSessionIds,
+        updateAndPersistSessions,
+        getStreamHandlers,
+        handleTtsImagenMessage
     ]);
 
     return { handleSendMessage };

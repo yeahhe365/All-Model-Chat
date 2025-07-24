@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Command } from '../components/chat/input/SlashCommandMenu';
 import { translations } from '../utils/appUtils';
 import { ModelOption } from '../types';
@@ -21,6 +21,8 @@ interface UseSlashCommandsProps {
   onMessageSent: () => void;
   setIsHelpModalOpen: (isOpen: boolean) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
+  onEditLastUserMessage: () => void;
+  setInputText: Dispatch<SetStateAction<string>>;
 }
 
 export const useSlashCommands = ({
@@ -29,7 +31,7 @@ export const useSlashCommands = ({
   onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
   onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction,
   availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
-  textareaRef,
+  textareaRef, onEditLastUserMessage, setInputText
 }: UseSlashCommandsProps) => {
   
   const [slashCommandState, setSlashCommandState] = useState<{
@@ -45,7 +47,7 @@ export const useSlashCommands = ({
   });
 
   const commands = useMemo<Command[]>(() => [
-    { name: 'model', description: t('help_cmd_model'), icon: 'bot', action: (setInputText: (text: string) => void) => {
+    { name: 'model', description: t('help_cmd_model'), icon: 'bot', action: () => {
         setInputText('/model ');
         setTimeout(() => {
             const textarea = textareaRef.current;
@@ -57,6 +59,7 @@ export const useSlashCommands = ({
         }, 0);
     } },
     { name: 'help', description: t('help_cmd_help'), icon: 'help', action: () => setIsHelpModalOpen(true) },
+    { name: 'edit', description: t('help_cmd_edit'), icon: 'edit', action: onEditLastUserMessage },
     { name: 'pin', description: t('help_cmd_pin'), icon: 'pin', action: onTogglePinCurrentSession },
     { name: 'retry', description: t('help_cmd_retry'), icon: 'retry', action: onRetryLastTurn },
     { name: 'stop', description: t('help_cmd_stop'), icon: 'stop', action: onStopGenerating },
@@ -68,31 +71,29 @@ export const useSlashCommands = ({
     { name: 'new', description: t('help_cmd_new'), icon: 'new', action: onNewChat },
     { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
     { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
-  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, textareaRef, setIsHelpModalOpen]);
+  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage]);
   
   const allCommandsForHelp = useMemo(() => [
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),
   ], [commands]);
 
-  const handleCommandSelect = useCallback((command: Command, setInputText: (text: string) => void) => {
+  const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;
     
-    // The model command is special as it modifies the input text
-    if (command.name === 'model') {
-        command.action(setInputText);
-    } else {
-        command.action();
-    }
+    command.action();
     
     setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
-    
-    if (command.name !== 'model') {
+
+    const commandsThatPopulateInput = ['model', 'edit'];
+    // This check prevents clearing the input for commands like /edit or /model
+    // and also for the dynamic model selection commands (whose actions handle clearing the input themselves).
+    if (!commandsThatPopulateInput.includes(command.name) && !availableModels.some(m => m.name === command.name)) {
         setInputText('');
         onMessageSent();
     }
-  }, [onMessageSent]);
+  }, [onMessageSent, setInputText, availableModels]);
   
-  const handleInputChange = (value: string, setInputText: (text: string) => void) => {
+  const handleInputChange = (value: string) => {
     setInputText(value);
   
     if (!value.startsWith('/')) {
@@ -146,7 +147,7 @@ export const useSlashCommands = ({
     }
   };
   
-  const handleSlashCommandExecution = (text: string, setInputText: (text: string) => void) => {
+  const handleSlashCommandExecution = (text: string) => {
     const [commandWithSlash, ...args] = text.split(' ');
     const keyword = args.join(' ').toLowerCase();
     const commandName = commandWithSlash.substring(1);
@@ -163,9 +164,12 @@ export const useSlashCommands = ({
 
     const command = commands.find(cmd => cmd.name === commandName);
     if (command && !keyword) {
-        command.action(setInputText);
-        setInputText('');
-        onMessageSent();
+        command.action();
+        const commandsThatPopulateInput = ['model', 'edit'];
+        if (!commandsThatPopulateInput.includes(command.name)) {
+            setInputText('');
+            onMessageSent();
+        }
     }
   };
 
@@ -173,7 +177,7 @@ export const useSlashCommands = ({
     slashCommandState,
     setSlashCommandState,
     allCommandsForHelp,
-    handleCommandSelect: (cmd: Command) => handleCommandSelect(cmd, () => {}), // Partial application for JSX
+    handleCommandSelect,
     handleInputChange,
     handleSlashCommandExecution,
   };
