@@ -160,7 +160,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       <Toggle id="expand-code-blocks-toggle" labelKey="settings_expandCodeBlocksByDefault_label" checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} t={t} />
       <Toggle id="mermaid-rendering-toggle" labelKey="settings_enableMermaidRendering_label" tooltipKey="settings_enableMermaidRendering_tooltip" checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} t={t} />
       <Toggle id="graphviz-rendering-toggle" labelKey="settings_enableGraphvizRendering_label" tooltipKey="settings_enableGraphvizRendering_tooltip" checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} t={t} />
-      <Toggle id="completion-notification-toggle" labelKey="settings_enableCompletionNotification_label" tooltipKey="settings_enableCompletionNotification_tooltip" checked={isCompletionNotificationEnabled} onChange={setIsCompletionNotificationEnabled} t={t} />
+      <Toggle id="completion-notification-toggle" labelKey="settings_enableCompletionNotification_label" tooltipKey="settings_enableCompletionNotification_tooltip" checked={isCompletionNotificationEnabled ?? false} onChange={setIsCompletionNotificationEnabled} t={t} />
     </div>
   );
 };

@@ -88,3 +88,36 @@ export const formatTimestamp = (timestamp: number, lang: 'en' | 'zh'): string =>
   
   return date.toLocaleDateString(lang, { month: 'short', day: 'numeric' });
 };
+
+
+export const showNotification = async (title: string, options?: NotificationOptions) => {
+  if (!('Notification' in window)) {
+    console.warn('This browser does not support desktop notification');
+    return;
+  }
+
+  const show = () => {
+    // Use a tag to prevent multiple notifications from stacking up.
+    // The 'renotify' property ensures that even with the same tag, the user is alerted.
+    const notification = new Notification(title, { ...options, tag: 'all-model-chat-response', renotify: true });
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+
+    // Auto-close notification after a few seconds
+    setTimeout(() => {
+      notification.close();
+    }, 7000);
+  };
+
+  if (Notification.permission === 'granted') {
+    show();
+  } else if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      show();
+    }
+  }
+};

@@ -3,8 +3,8 @@ import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { generateUniqueId, logService } from '../utils/appUtils';
-import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
+import { generateUniqueId, logService, showNotification } from '../utils/appUtils';
+import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -23,30 +23,6 @@ const isToolMessage = (msg: ChatMessage): boolean => {
     return (content.startsWith('```') && content.endsWith('```')) ||
            content.startsWith('<div class="tool-result') ||
            content.startsWith('![Generated Image]');
-};
-
-const showCompletionNotification = (title: string, body: string) => {
-    if (!('Notification' in window)) {
-        logService.warn('This browser does not support desktop notification');
-        return;
-    }
-
-    const doNotify = () => {
-        new Notification(title, {
-            body: body,
-            icon: APP_LOGO_SVG_DATA_URI
-        });
-    };
-
-    if (Notification.permission === 'granted') {
-        doNotify();
-    } else if (Notification.permission !== 'denied') {
-        Notification.requestPermission().then((permission) => {
-            if (permission === 'granted') {
-                doNotify();
-            }
-        });
-    }
 };
 
 export const useChatStreamHandler = ({
@@ -78,64 +54,59 @@ export const useChatStreamHandler = ({
                 firstContentPartTimeRef.current = new Date();
             }
 
-            updateAndPersistSessions(prev => {
-                const newSessions = prev.map(s => {
-                    if (s.id !== currentSessionId) return s;
-
-                    let finalContentForNotification = '';
-                    const isAborted = abortController.signal.aborted;
-                    
-                    let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
-                    
-                    const finalMessages = s.messages
-                        .map(m => {
-                            if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
-                                let thinkingTime = m.thinkingTimeMs;
-                                if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
-                                    thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
-                                }
-                                const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
-                                const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
-                                const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
-                                const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
-                                cumulativeTotal += turnTokens;
-                                
-                                const updatedMessage = {
-                                    ...m,
-                                    isLoading: false,
-                                    content: m.content + (isAborted ? "\n\n[Stopped by user]" : ""),
-                                    thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
-                                    generationEndTime: new Date(),
-                                    thinkingTimeMs: thinkingTime,
-                                    groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
-                                    promptTokens,
-                                    completionTokens,
-                                    totalTokens: turnTokens,
-                                    cumulativeTotalTokens: cumulativeTotal,
-                                };
-
-                                if (isLastMessageOfRun) {
-                                    finalContentForNotification = updatedMessage.content;
-                                }
-
-                                return updatedMessage;
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                
+                let completedMessageForNotification: ChatMessage | null = null;
+                
+                const finalMessages = s.messages
+                    .map(m => {
+                        if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                            let thinkingTime = m.thinkingTimeMs;
+                            if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
+                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
                             }
-                            return m;
-                        })
-                        .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                            const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
+                            const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
+                            const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
+                            const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
+                            cumulativeTotal += turnTokens;
+                            const completedMessage = {
+                                ...m,
+                                isLoading: false,
+                                content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
+                                thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
+                                generationEndTime: new Date(),
+                                thinkingTimeMs: thinkingTime,
+                                groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
+                                promptTokens,
+                                completionTokens,
+                                totalTokens: turnTokens,
+                                cumulativeTotalTokens: cumulativeTotal,
+                            };
+                            if (isLastMessageOfRun) {
+                                completedMessageForNotification = completedMessage;
+                            }
+                            return completedMessage;
+                        }
+                        return m;
+                    })
+                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                
+                if (appSettings.isCompletionNotificationEnabled && completedMessageForNotification && document.hidden) {
+                    const notificationBody = (completedMessageForNotification.content || "Media or tool response received").substring(0, 150) + (completedMessageForNotification.content && completedMessageForNotification.content.length > 150 ? '...' : '');
+                    showNotification(
+                        'Response Ready', 
+                        {
+                            body: notificationBody,
+                            icon: APP_LOGO_SVG_DATA_URI,
+                        }
+                    );
+                }
 
-                    if (appSettings.isCompletionNotificationEnabled && !isAborted && finalContentForNotification) {
-                        const snippet = finalContentForNotification.length > 100 
-                            ? finalContentForNotification.substring(0, 97) + '...'
-                            : finalContentForNotification;
-                        
-                        showCompletionNotification('Response Complete', snippet || 'The assistant has finished responding.');
-                    }
-                    
-                    return {...s, messages: finalMessages, settings: s.settings};
-                });
-                return newSessions;
-            });
+                return {...s, messages: finalMessages, settings: s.settings};
+            }));
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
