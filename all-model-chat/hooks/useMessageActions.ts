@@ -38,9 +38,24 @@ export const useMessageActions = ({
 
     const handleStopGenerating = useCallback(() => {
         if (!activeSessionId || !isLoading) return;
-        logService.warn(`User stopped generation for session: ${activeSessionId}`);
-        activeJobs.current.forEach(controller => controller.abort());
-    }, [activeSessionId, isLoading, activeJobs]);
+
+        // Find the specific generation ID for the loading message in the active session
+        const loadingMessage = messages.find(msg => msg.isLoading);
+        if (loadingMessage) {
+            const generationId = loadingMessage.id;
+            const controller = activeJobs.current.get(generationId);
+            if (controller) {
+                logService.warn(`User stopped generation for session ${activeSessionId}, job ${generationId}`);
+                controller.abort();
+            } else {
+                 logService.error(`Could not find active job to stop for generationId: ${generationId}. Aborting all as a fallback.`);
+                 activeJobs.current.forEach(c => c.abort());
+            }
+        } else {
+            logService.warn(`handleStopGenerating called for session ${activeSessionId}, but no loading message was found. Aborting all as a fallback.`);
+            activeJobs.current.forEach(c => c.abort());
+        }
+    }, [activeSessionId, isLoading, messages, activeJobs]);
 
     const handleCancelEdit = useCallback(() => { 
         logService.info("User cancelled message edit.");

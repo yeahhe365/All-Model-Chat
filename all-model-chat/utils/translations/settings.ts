@@ -62,10 +62,7 @@ export const settingsTranslations = {
     settings_enableGraphvizRendering_tooltip: { en: "Render code blocks marked as 'graphviz' or 'dot' into diagrams.", zh: "将标记为 'graphviz' 或 'dot' 的代码块渲染成图表。" },
     isAutoTitleEnabled: { en: 'Auto-generate Chat Titles', zh: '自动生成对话标题' },
     isAutoTitleEnabled_tooltip: { en: 'Automatically generate a title for new chats after the first exchange using a fast model.', zh: '在首次交流后，使用快速模型为新对话自动生成标题。' },
-    settings_enableCompletionNotification_label: { en: 'Desktop Notifications', zh: '桌面通知' },
-    settings_enableCompletionNotification_tooltip: { en: 'Show a system notification when the model finishes generating a response. You may need to grant permission.', zh: '模型完成响应生成后显示系统通知。您可能需要授予权限。' },
-    settings_notificationPermissionDenied: { en: 'Permission denied. Please enable notifications in your browser settings to use this feature.', zh: '权限被拒绝。请在您的浏览器设置中启用通知以使用此功能。' },
-
+    
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
     about_version: { en: 'Version', zh: '版本' },

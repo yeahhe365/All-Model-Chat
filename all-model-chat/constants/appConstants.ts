@@ -61,5 +61,4 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isAutoTitleEnabled: true,
   isMermaidRenderingEnabled: true,
   isGraphvizRenderingEnabled: true,
-  isCompletionNotificationEnabled: false,
 };

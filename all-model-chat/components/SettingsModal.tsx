@@ -186,8 +186,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsMermaidRenderingEnabled={(val) => updateSetting('isMermaidRenderingEnabled', val)}
                   isGraphvizRenderingEnabled={settings.isGraphvizRenderingEnabled ?? true}
                   setIsGraphvizRenderingEnabled={(val) => updateSetting('isGraphvizRenderingEnabled', val)}
-                  isCompletionNotificationEnabled={settings.isCompletionNotificationEnabled ?? false}
-                  setIsCompletionNotificationEnabled={(val) => updateSetting('isCompletionNotificationEnabled', val)}
                   t={t}
                 />
               )}

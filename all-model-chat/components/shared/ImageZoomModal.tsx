@@ -121,7 +121,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
         <h2 id="image-zoom-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', file.name)}</h2>
         <div 
             ref={viewportRef} 
-            className="w-full h-full flex items-center justify-center overflow-hidden relative p-4"
+            className="w-full h-full flex items-center justify-center overflow-hidden relative"
         >
           <img
             ref={imageRef}

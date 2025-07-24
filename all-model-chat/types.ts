@@ -116,7 +116,6 @@ export interface AppSettings extends ChatSettings {
  isAutoTitleEnabled: boolean;
  isMermaidRenderingEnabled: boolean;
  isGraphvizRenderingEnabled?: boolean;
- isCompletionNotificationEnabled?: boolean;
 }
 
 

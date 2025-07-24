@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, AlertTriangle, Download, Maximize, Repeat, X } from 'lucide-react';
+import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RefreshCcw, FileCode2, Image as ImageIcon } from 'lucide-react';
 
 declare var Viz: any;
 declare var Panzoom: any;
@@ -15,7 +15,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [layout, setLayout] = useState<'LR' | 'TB'>('LR');
   const [isRenderingLayout, setIsRenderingLayout] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState<'none' | 'png' | 'svg'>('none');
 
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const zoomContentRef = useRef<HTMLDivElement>(null);
@@ -74,14 +74,30 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
     setLayout(newLayout);
   };
   
-  const handleDownloadPng = () => {
-    if (!svgContent || isDownloading || !diagramContainerRef.current) return;
-    setIsDownloading(true);
+  const handleDownload = (format: 'png' | 'svg') => {
+    if (!svgContent || isDownloading !== 'none' || !diagramContainerRef.current) return;
     
+    if (format === 'svg') {
+        setIsDownloading('svg');
+        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `graphviz-diagram-${Date.now()}.svg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setIsDownloading('none');
+        return;
+    }
+
+    // PNG Download
+    setIsDownloading('png');
     const svgElement = diagramContainerRef.current.querySelector('svg');
     if (!svgElement) {
         setError("Could not find the rendered diagram to export.");
-        setIsDownloading(false);
+        setIsDownloading('none');
         return;
     }
 
@@ -91,7 +107,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
 
     if (imgWidth === 0 || imgHeight === 0) {
         setError("Diagram has zero dimensions, cannot export.");
-        setIsDownloading(false);
+        setIsDownloading('none');
         return;
     }
     const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
@@ -115,11 +131,11 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
             link.click();
             document.body.removeChild(link);
         }
-        setIsDownloading(false);
+        setIsDownloading('none');
     };
     img.onerror = () => {
         setError("Failed to convert diagram to PNG.");
-        setIsDownloading(false);
+        setIsDownloading('none');
     };
     img.src = svgDataUrl;
   };
@@ -200,23 +216,51 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
       </div>
   );
 
+  const controlButtonClasses = "p-2 bg-black/50 hover:bg-black/70 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm";
+
   return (
     <div className="relative group">
-      <div ref={diagramContainerRef} className={`${containerClasses} bg-white`} dangerouslySetInnerHTML={{ __html: svgContent }} />
+      <div 
+        ref={diagramContainerRef} 
+        className={`${containerClasses} bg-white cursor-pointer hover:shadow-lg transition-shadow`} 
+        dangerouslySetInnerHTML={{ __html: svgContent }} 
+        onClick={handleOpenModal}
+      />
       <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200">
-        <button onClick={handleOpenModal} className="code-block-utility-button rounded-md" title="Fullscreen View"><Maximize size={14} /></button>
-        <button onClick={handleToggleLayout} disabled={isRenderingLayout} className="code-block-utility-button rounded-md" title={`Toggle Layout (Current: ${layout})`}>{isRenderingLayout ? <Loader2 size={14} className="animate-spin"/> : <Repeat size={14} />}</button>
-        <button onClick={handleDownloadPng} disabled={isDownloading} className="code-block-utility-button rounded-md" title="Download as PNG">{isDownloading ? <Loader2 size={14} className="animate-spin"/> : <Download size={14} />}</button>
+        <button onClick={handleOpenModal} className="code-block-utility-button rounded-md" title="Expand View"><Maximize size={14} /></button>
       </div>
+
       {isModalOpen && (
         <div 
-            className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center backdrop-blur"
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm"
             onClick={handleCloseModal}
             role="dialog" aria-modal="true" aria-labelledby="graphviz-modal-title"
         >
-          <div ref={zoomContentRef} className="relative w-[97%] h-[97%] bg-white overflow-hidden rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}></div>
-          <button onClick={handleCloseModal} className="absolute top-3 right-3 w-12 h-12 bg-black/60 text-white rounded-full hover:bg-black/80 transition-colors flex items-center justify-center" title="Close Fullscreen (Esc)" aria-label="Close Fullscreen"><X size={30} /></button>
+          <div ref={zoomContentRef} className="relative w-[97vw] h-[97vh] bg-white overflow-hidden rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}></div>
+          
+          <button onClick={handleCloseModal} className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors flex items-center justify-center" title="Close Fullscreen (Esc)" aria-label="Close Fullscreen"><X size={24} /></button>
           <h2 id="graphviz-modal-title" className="sr-only">Interactive Diagram View</h2>
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 rounded-lg shadow-lg backdrop-blur-sm border border-white/10">
+              <button onClick={() => panzoomInstanceRef.current?.zoomOut()} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} /></button>
+              <button onClick={() => panzoomInstanceRef.current?.reset()} className={controlButtonClasses} title="Reset View"><RefreshCcw size={18} /></button>
+              <button onClick={() => panzoomInstanceRef.current?.zoomIn()} className={controlButtonClasses} title="Zoom In"><ZoomIn size={18} /></button>
+              
+              <div className="w-px h-6 bg-white/20 mx-1"></div>
+
+              <button onClick={handleToggleLayout} disabled={isRenderingLayout} className={controlButtonClasses} title={`Toggle Layout (Current: ${layout})`}>
+                  {isRenderingLayout ? <Loader2 size={18} className="animate-spin"/> : <Repeat size={18} />}
+              </button>
+              
+              <div className="w-px h-6 bg-white/20 mx-1"></div>
+
+              <button onClick={() => handleDownload('png')} disabled={isDownloading !== 'none'} className={controlButtonClasses} title="Download as PNG">
+                  {isDownloading === 'png' ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
+              </button>
+              <button onClick={() => handleDownload('svg')} disabled={isDownloading !== 'none'} className={controlButtonClasses} title="Download as SVG">
+                  {isDownloading === 'svg' ? <Loader2 size={18} className="animate-spin"/> : <FileCode2 size={18} />}
+              </button>
+          </div>
         </div>
       )}
     </div>

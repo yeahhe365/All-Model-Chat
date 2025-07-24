@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip } from './shared/Tooltip';
 
@@ -19,8 +19,6 @@ interface FeatureFlagsProps {
   setIsMermaidRenderingEnabled: (value: boolean) => void;
   isGraphvizRenderingEnabled: boolean;
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
-  isCompletionNotificationEnabled: boolean;
-  setIsCompletionNotificationEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -31,9 +29,8 @@ const Toggle: React.FC<{
   checked: boolean;
   onChange: (checked: boolean) => void;
   t: (key: string) => string;
-  disabled?: boolean;
-}> = ({ id, labelKey, tooltipKey, checked, onChange, t, disabled = false }) => (
-  <label htmlFor={id} className={`flex items-center justify-between py-1 ${disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
+}> = ({ id, labelKey, tooltipKey, checked, onChange, t }) => (
+  <label htmlFor={id} className="flex items-center justify-between py-1 cursor-pointer">
     <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
       {t(labelKey)}
       {tooltipKey && (
@@ -43,7 +40,7 @@ const Toggle: React.FC<{
       )}
     </span>
     <div className="relative">
-      <input id={id} type="checkbox" className="sr-only peer" checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled} />
+      <input id={id} type="checkbox" className="sr-only peer" checked={checked} onChange={(e) => onChange(e.target.checked)} />
       <div className="w-11 h-6 bg-[var(--theme-bg-tertiary)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)] transition-colors duration-200 ease-in-out border border-[var(--theme-border-secondary)] peer-checked:border-transparent"></div>
       <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
     </div>
@@ -55,8 +52,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
   showThoughts, setShowThoughts, thinkingBudget, setThinkingBudget,
   isStreamingEnabled, setIsStreamingEnabled, useFilesApiForImages, setUseFilesApiForImages,
   expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, isAutoTitleEnabled, setIsAutoTitleEnabled,
-  isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
-  isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, t
+  isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled, t
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
@@ -68,34 +64,6 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
     if (thinkingBudget === -1) return 'auto';
     return 'manual';
   });
-
-  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
-
-  useEffect(() => {
-    if (notificationPermission === 'granted' && !isCompletionNotificationEnabled) {
-      // If user enables notifications via browser settings outside the app, reflect that.
-    } else if (notificationPermission !== 'granted' && isCompletionNotificationEnabled) {
-      // If user revokes permission, disable the setting.
-      setIsCompletionNotificationEnabled(false);
-    }
-  }, [notificationPermission, isCompletionNotificationEnabled, setIsCompletionNotificationEnabled]);
-
-  const handleNotificationToggleChange = async (checked: boolean) => {
-    if (!checked) {
-      setIsCompletionNotificationEnabled(false);
-      return;
-    }
-
-    if (notificationPermission === 'granted') {
-      setIsCompletionNotificationEnabled(true);
-    } else if (notificationPermission === 'default') {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-      if (permission === 'granted') {
-        setIsCompletionNotificationEnabled(true);
-      }
-    }
-  };
 
   const handleThinkingModeChange = (mode: ThinkingMode) => {
     setThinkingMode(mode);
@@ -185,15 +153,6 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       
       <Toggle id="streaming-toggle" labelKey="headerStream" checked={isStreamingEnabled} onChange={setIsStreamingEnabled} t={t} />
       <Toggle id="auto-title-toggle" labelKey="isAutoTitleEnabled" tooltipKey="isAutoTitleEnabled_tooltip" checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} t={t} />
-      <Toggle
-        id="completion-notification-toggle"
-        labelKey="settings_enableCompletionNotification_label"
-        tooltipKey={notificationPermission === 'denied' ? 'settings_notificationPermissionDenied' : 'settings_enableCompletionNotification_tooltip'}
-        checked={isCompletionNotificationEnabled && notificationPermission === 'granted'}
-        onChange={handleNotificationToggleChange}
-        disabled={notificationPermission === 'denied'}
-        t={t}
-      />
       <Toggle id="use-files-api-for-images-toggle" labelKey="settings_useFilesApiForImages_label" tooltipKey="settings_useFilesApiForImages_tooltip" checked={useFilesApiForImages} onChange={setUseFilesApiForImages} t={t} />
       <Toggle id="expand-code-blocks-toggle" labelKey="settings_expandCodeBlocksByDefault_label" checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} t={t} />
       <Toggle id="mermaid-rendering-toggle" labelKey="settings_enableMermaidRendering_label" tooltipKey="settings_enableMermaidRendering_tooltip" checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} t={t} />

@@ -4,7 +4,6 @@ import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings 
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService } from '../utils/appUtils';
-import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -54,66 +53,41 @@ export const useChatStreamHandler = ({
                 firstContentPartTimeRef.current = new Date();
             }
 
-            updateAndPersistSessions(prev => {
-                const updatedSessions = prev.map(s => {
-                    if (s.id !== currentSessionId) return s;
-                    let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
-                    const finalMessages = s.messages
-                        .map(m => {
-                            if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
-                                let thinkingTime = m.thinkingTimeMs;
-                                if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
-                                    thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
-                                }
-                                const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
-                                const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
-                                const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
-                                const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
-                                cumulativeTotal += turnTokens;
-                                return {
-                                    ...m,
-                                    isLoading: false,
-                                    content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
-                                    thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
-                                    generationEndTime: new Date(),
-                                    thinkingTimeMs: thinkingTime,
-                                    groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
-                                    promptTokens,
-                                    completionTokens,
-                                    totalTokens: turnTokens,
-                                    cumulativeTotalTokens: cumulativeTotal,
-                                };
+            updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== currentSessionId) return s;
+                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                const finalMessages = s.messages
+                    .map(m => {
+                        if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                            let thinkingTime = m.thinkingTimeMs;
+                            if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
+                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
                             }
-                            return m;
-                        })
-                        .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
-                    
-                    return {...s, messages: finalMessages, settings: s.settings};
-                });
-
-                // Post-update logic (like notifications)
-                const finalSession = updatedSessions.find(s => s.id === currentSessionId);
-                if (finalSession && appSettings.isCompletionNotificationEnabled && Notification.permission === 'granted' && document.hidden) {
-                    const lastMessage = finalSession.messages[finalSession.messages.length - 1];
-                    if (lastMessage && !lastMessage.isLoading && lastMessage.role === 'model' && lastMessage.content) {
-                        const chatTitle = finalSession.title || "New Message";
-                        const notificationBody = lastMessage.content.substring(0, 200) + (lastMessage.content.length > 200 ? '...' : '');
-
-                        const notification = new Notification(chatTitle, {
-                            body: notificationBody,
-                            icon: APP_LOGO_SVG_DATA_URI,
-                            tag: currentSessionId, // Use session ID to prevent multiple notifications for rapid messages
-                        });
-
-                        notification.onclick = () => {
-                            window.parent.focus();
-                            notification.close();
-                        };
-                    }
-                }
-
-                return updatedSessions;
-            });
+                            const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
+                            const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
+                            const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
+                            const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
+                            cumulativeTotal += turnTokens;
+                            return {
+                                ...m,
+                                isLoading: false,
+                                content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
+                                thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
+                                generationEndTime: new Date(),
+                                thinkingTimeMs: thinkingTime,
+                                groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
+                                promptTokens,
+                                completionTokens,
+                                totalTokens: turnTokens,
+                                cumulativeTotalTokens: cumulativeTotal,
+                            };
+                        }
+                        return m;
+                    })
+                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                
+                return {...s, messages: finalMessages, settings: s.settings};
+            }));
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
@@ -194,7 +168,7 @@ export const useChatStreamHandler = ({
         firstContentPartTimeRef.current = null;
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    }, [appSettings.isStreamingEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
     
     return { getStreamHandlers };
 };
