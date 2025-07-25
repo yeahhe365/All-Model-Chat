@@ -149,6 +149,10 @@ const App: React.FC = () => {
         showThoughts: newSettings.showThoughts,
         ttsVoice: newSettings.ttsVoice,
         thinkingBudget: newSettings.thinkingBudget,
+        // When settings are saved, especially API settings, we must clear any
+        // locked API key on the current session. This ensures the next request
+        // uses the new global settings instead of an old, potentially invalid, locked key.
+        lockedApiKey: null,
       }));
     }
     
