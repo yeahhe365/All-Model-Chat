@@ -16,6 +16,7 @@ interface AppEventsProps {
     isSettingsModalOpen: boolean;
     isPreloadedMessagesModalOpen: boolean;
     setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
+    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 }
 
 export const useAppEvents = ({
@@ -30,6 +31,7 @@ export const useAppEvents = ({
     isSettingsModalOpen,
     isPreloadedMessagesModalOpen,
     setIsLogViewerOpen,
+    updateAndPersistSessions,
 }: AppEventsProps) => {
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
@@ -119,11 +121,22 @@ export const useAppEvents = ({
                         }
                     }
 
-                    if (data.history) {
-                        logService.info('Imported file contains history, which will be ignored as per configuration.');
-                    }
-                    
                     setAppSettings(newSettings);
+                    
+                    if (data.history && Array.isArray(data.history)) {
+                        if (window.confirm(t('settingsImportHistory_confirm'))) {
+                            logService.info(`Importing ${data.history.length} chat sessions.`);
+                            updateAndPersistSessions(() => data.history);
+                            alert(t('settingsImportHistory_success'));
+                            window.location.reload();
+                            return; // Return to prevent the other alert
+                        } else {
+                            logService.info('User chose not to import history.');
+                        }
+                    } else if (data.history) {
+                        logService.warn('Imported file contains history, but it is not a valid array.');
+                    }
+
                     alert(t('settingsImport_success'));
                 } else {
                     throw new Error('Invalid settings file format. Missing "settings" key.');
@@ -138,7 +151,7 @@ export const useAppEvents = ({
             alert(t('settingsImport_error'));
         };
         reader.readAsText(file);
-    }, [setAppSettings, t]);
+    }, [setAppSettings, t, updateAndPersistSessions]);
 
     // Keyboard shortcuts
     useEffect(() => {

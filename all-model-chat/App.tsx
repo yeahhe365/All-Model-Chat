@@ -89,6 +89,7 @@ const App: React.FC = () => {
       toggleGoogleSearch,
       toggleCodeExecution,
       toggleUrlContext,
+      updateAndPersistSessions,
   } = chatState;
 
   const {
@@ -122,6 +123,7 @@ const App: React.FC = () => {
     isSettingsModalOpen,
     isPreloadedMessagesModalOpen,
     setIsLogViewerOpen,
+    updateAndPersistSessions,
   });
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);

@@ -29,11 +29,6 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
 
   const baseButtonClass = "px-3 sm:px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] flex items-center justify-center gap-2 text-sm font-medium w-full sm:w-auto";
 
-  const handleExportClick = () => {
-    const includeHistory = window.confirm(t('settingsExportHistory_confirm'));
-    onExportSettings(includeHistory);
-  };
-
   const handleImportClick = () => {
     importInputRef.current?.click();
   };
@@ -105,13 +100,24 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
         </button>
         <input type="file" ref={importInputRef} onChange={handleFileImport} accept=".json" className="hidden" />
         <button
-          onClick={handleExportClick}
+          onClick={() => onExportSettings(false)}
           type="button"
           className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] focus:ring-[var(--theme-border-secondary)]`}
-          aria-label={t('settingsExportConfig_aria')}
+          aria-label={t('settingsExportSettingsOnly_aria')}
+          title={t('settingsExportSettingsOnly_tooltip')}
         >
           <Download size={buttonIconSize} />
-          <span>{t('settingsExportConfig')}</span>
+          <span>{t('settingsExportSettingsOnly')}</span>
+        </button>
+        <button
+          onClick={() => onExportSettings(true)}
+          type="button"
+          className={`${baseButtonClass} bg-[var(--theme-bg-tertiary)] border border-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)] hover:text-[var(--theme-text-primary)] focus:ring-[var(--theme-border-secondary)]`}
+          aria-label={t('settingsExportAllData_aria')}
+          title={t('settingsExportAllData_tooltip')}
+        >
+          <Download size={buttonIconSize} />
+          <span>{t('settingsExportAllData')}</span>
         </button>
       </div>
     </div>

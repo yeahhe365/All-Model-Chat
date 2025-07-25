@@ -213,6 +213,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         aspectRatio,
         setAspectRatio,
         ttsMessageId,
+        updateAndPersistSessions,
         // from scrollHandler
         messagesEndRef: scrollHandler.messagesEndRef,
         scrollContainerRef: scrollHandler.scrollContainerRef,
