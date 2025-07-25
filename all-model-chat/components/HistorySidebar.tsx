@@ -119,7 +119,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       const key = session.groupId && map.has(session.groupId) ? session.groupId : null;
       map.get(key)?.push(session);
     });
-    map.forEach(sessionList => sessionList.sort((a, b) => b.timestamp - a.timestamp));
+    map.forEach(sessionList => sessionList.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return b.timestamp - a.timestamp;
+    }));
     return map;
   }, [filteredSessions, groups]);
 
