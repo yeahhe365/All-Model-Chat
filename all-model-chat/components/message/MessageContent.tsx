@@ -87,11 +87,12 @@ interface MessageContentProps {
     expandCodeBlocksByDefault: boolean;
     isMermaidRenderingEnabled: boolean;
     isGraphvizRenderingEnabled: boolean;
+    onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t }) => {
-    const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata } = message;
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t }) => {
+    const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
     const areThoughtsVisible = message.role === 'model' && thoughts && showThoughts;
@@ -253,6 +254,26 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                     <TokenDisplay message={message} t={t} />
                     <TokenRateDisplay message={message} />
                     {(isLoading || (generationStartTime && generationEndTime)) && <MessageTimer startTime={generationStartTime} endTime={generationEndTime} isLoading={isLoading} />}
+                </div>
+            )}
+
+            {(suggestions && suggestions.length > 0) && (
+                <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)] border-opacity-30 flex flex-wrap gap-2">
+                    {suggestions.map((suggestion, index) => (
+                        <button
+                            key={index}
+                            onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
+                            className="suggestion-bubble"
+                        >
+                            {suggestion}
+                        </button>
+                    ))}
+                </div>
+            )}
+            { isGeneratingSuggestions && (
+                <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)] border-opacity-30 flex items-center gap-2 text-sm text-[var(--theme-text-tertiary)] animate-pulse">
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Generating suggestions...</span>
                 </div>
             )}
         </>

@@ -1,5 +1,5 @@
 import { getApiClient } from './baseApi';
-import { Part } from "@google/genai";
+import { Part, GenerateContentResponse, Type } from "@google/genai";
 import { logService } from "../logService";
 import { fileToBase64 } from "../../utils/appUtils";
 
@@ -131,6 +131,69 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     } catch (error) {
         logService.error("Error during audio transcription:", error);
         throw error;
+    }
+};
+
+export const generateSuggestionsApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> => {
+    logService.info(`Generating suggestions in ${language}...`);
+    const ai = getApiClient(apiKey);
+    const prompt = language === 'zh'
+        ? `基于以下最近的对话交流，生成三个简短、相关且多样化的建议回复或追问。用户可能会点击这些建议继续对话。\n\n用户: "${userContent}"\n助手: "${modelContent}"`
+        : `Based on the last conversation turn below, generate three short, relevant, and diverse suggested replies or follow-up questions that a user might click to continue the conversation.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: prompt,
+            config: {
+                thinkingConfig: { thinkingBudget: -1 }, // auto
+                temperature: 0.8,
+                topP: 0.95,
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        suggestions: {
+                            type: Type.ARRAY,
+                            items: {
+                                type: Type.STRING,
+                                description: "A short, relevant suggested reply or follow-up question."
+                            },
+                            description: "An array of exactly three suggested replies."
+                        }
+                    }
+                }
+            }
+        });
+
+        const jsonStr = response.text.trim();
+        const parsed = JSON.parse(jsonStr);
+        if (parsed.suggestions && Array.isArray(parsed.suggestions) && parsed.suggestions.every((s: any) => typeof s === 'string')) {
+            return parsed.suggestions.slice(0, 3); // Ensure only 3
+        } else {
+            throw new Error("Suggestions generation returned an invalid format.");
+        }
+    } catch (error) {
+        logService.error("Error during suggestions generation:", error);
+        // Fallback to a non-JSON approach in case the model struggles with the schema
+        try {
+            const fallbackPrompt = `${prompt}\n\nReturn the three suggestions as a numbered list, one per line. Do not include any other text or formatting.`;
+             const fallbackResponse = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-lite',
+                contents: fallbackPrompt,
+                config: {
+                    thinkingConfig: { thinkingBudget: -1 },
+                    temperature: 0.8,
+                    topP: 0.95,
+                }
+            });
+            if (fallbackResponse.text) {
+                return fallbackResponse.text.trim().split('\n').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 3);
+            }
+        } catch (fallbackError) {
+             logService.error("Fallback suggestions generation also failed:", fallbackError);
+        }
+        return []; // Return empty array on failure
     }
 };
 

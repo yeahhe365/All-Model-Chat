@@ -43,6 +43,8 @@ interface ChatBehaviorSectionProps {
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
   isCompletionNotificationEnabled: boolean;
   setIsCompletionNotificationEnabled: (value: boolean) => void;
+  isSuggestionsEnabled: boolean;
+  setIsSuggestionsEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -104,6 +106,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
           setIsGraphvizRenderingEnabled={props.setIsGraphvizRenderingEnabled}
           isCompletionNotificationEnabled={props.isCompletionNotificationEnabled}
           setIsCompletionNotificationEnabled={props.setIsCompletionNotificationEnabled}
+          isSuggestionsEnabled={props.isSuggestionsEnabled ?? true}
+          setIsSuggestionsEnabled={props.setIsSuggestionsEnabled}
           t={t}
         />
       </div>

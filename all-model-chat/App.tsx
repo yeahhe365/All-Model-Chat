@@ -180,12 +180,16 @@ const App: React.FC = () => {
     }
   };
   
-  const handleSuggestionClick = (text: string) => {
+  const handleHomepageSuggestionClick = (text: string) => {
     setCommandedInput({ text: text + '\n', id: Date.now() });
     setTimeout(() => {
         const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
         if (textarea) textarea.focus();
     }, 0);
+  };
+
+  const handleFollowUpSuggestionClick = (text: string) => {
+    handleSendMessage({ text });
   };
 
   const getCurrentModelDisplayName = () => {
@@ -362,7 +366,8 @@ const App: React.FC = () => {
         expandCodeBlocksByDefault={appSettings.expandCodeBlocksByDefault}
         isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
         isGraphvizRenderingEnabled={appSettings.isGraphvizRenderingEnabled ?? true}
-        onSuggestionClick={handleSuggestionClick}
+        onSuggestionClick={handleHomepageSuggestionClick}
+        onFollowUpSuggestionClick={handleFollowUpSuggestionClick}
         onTextToSpeech={handleTextToSpeech}
         ttsMessageId={ttsMessageId}
         language={language}

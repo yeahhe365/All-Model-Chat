@@ -16,7 +16,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
-    onSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
+    onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
     onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
@@ -84,6 +84,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         isMermaidRenderingEnabled={isMermaidRenderingEnabled}
         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
         onSuggestionClick={onSuggestionClick}
+        onFollowUpSuggestionClick={onFollowUpSuggestionClick}
         onTextToSpeech={onTextToSpeech}
         ttsMessageId={ttsMessageId}
         t={t}

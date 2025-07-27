@@ -3,7 +3,7 @@ import { GeminiService, ChatHistoryItem, ModelOption } from '../types';
 import { Part, UsageMetadata, File as GeminiFile } from "@google/genai";
 import { getAvailableModelsApi } from './api/modelApi';
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
-import { generateImagesApi, generateSpeechApi, transcribeAudioApi, generateTitleApi } from './api/generationApi';
+import { generateImagesApi, generateSpeechApi, transcribeAudioApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
 import { sendMessageStreamApi, sendMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
 
@@ -38,6 +38,10 @@ class GeminiServiceImpl implements GeminiService {
 
     async generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string> {
         return generateTitleApi(apiKey, userContent, modelContent, language);
+    }
+
+    async generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> {
+        return generateSuggestionsApi(apiKey, userContent, modelContent, language);
     }
 
     async sendMessageStream(

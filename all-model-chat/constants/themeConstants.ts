@@ -177,7 +177,7 @@ export const PEARL_THEME_COLORS: ThemeColors = {
 };
 
 export const AVAILABLE_THEMES: Theme[] = [
-  { id: 'onyx', name: 'Onyx (Default Dark)', colors: ONYX_THEME_COLORS },
+  { id: 'onyx', name: 'Onyx (Dark)', colors: ONYX_THEME_COLORS },
   { id: 'pearl', name: 'Pearl (Light)', colors: PEARL_THEME_COLORS },
 ];
 

@@ -21,6 +21,8 @@ interface FeatureFlagsProps {
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
   isCompletionNotificationEnabled: boolean;
   setIsCompletionNotificationEnabled: (value: boolean) => void;
+  isSuggestionsEnabled: boolean;
+  setIsSuggestionsEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -55,7 +57,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
   isStreamingEnabled, setIsStreamingEnabled, useFilesApiForImages, setUseFilesApiForImages,
   expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, isAutoTitleEnabled, setIsAutoTitleEnabled,
   isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
-  isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, t
+  isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, isSuggestionsEnabled, setIsSuggestionsEnabled, t
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
@@ -161,6 +163,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       <Toggle id="mermaid-rendering-toggle" labelKey="settings_enableMermaidRendering_label" tooltipKey="settings_enableMermaidRendering_tooltip" checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} t={t} />
       <Toggle id="graphviz-rendering-toggle" labelKey="settings_enableGraphvizRendering_label" tooltipKey="settings_enableGraphvizRendering_tooltip" checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} t={t} />
       <Toggle id="completion-notification-toggle" labelKey="settings_enableCompletionNotification_label" tooltipKey="settings_enableCompletionNotification_tooltip" checked={isCompletionNotificationEnabled ?? false} onChange={setIsCompletionNotificationEnabled} t={t} />
+      <Toggle id="suggestions-toggle" labelKey="settings_enableSuggestions_label" tooltipKey="settings_enableSuggestions_tooltip" checked={isSuggestionsEnabled ?? true} onChange={setIsSuggestionsEnabled} t={t} />
     </div>
   );
 };

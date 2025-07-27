@@ -7,7 +7,10 @@ export const settingsTranslations = {
     settingsApiKey: { en: 'Gemini API Key(s)', zh: 'Gemini API 密钥' },
     settingsApiKeyHelpText: { en: 'You can enter multiple keys, one per line. A key will be used in rotation for each new chat session.', zh: '您可以输入多个密钥，每行一个。每个新聊天会话将轮流使用一个密钥。' },
     settingsAppearance: { en: 'Appearance', zh: '外观' },
-    settingsTheme: { en: 'Theme (Global)', zh: '主题 (全局)' },
+    settingsTheme: { en: 'Theme', zh: '主题' },
+    settingsThemeSystem: { en: 'System', zh: '系统' },
+    settingsThemeDark: { en: 'Dark', zh: '暗色' },
+    settingsThemeLight: { en: 'Light', zh: '浅色' },
     settingsFontSize: { en: 'Base Font Size', zh: '基础字号' },
     settingsLanguage: { en: 'Language', zh: '语言' },
     settingsLanguageSystem: { en: 'System Default', zh: '跟随系统' },
@@ -66,8 +69,10 @@ export const settingsTranslations = {
     settings_enableGraphvizRendering_tooltip: { en: "Render code blocks marked as 'graphviz' or 'dot' into diagrams.", zh: "将标记为 'graphviz' 或 'dot' 的代码块渲染成图表。" },
     isAutoTitleEnabled: { en: 'Auto-generate Chat Titles', zh: '自动生成对话标题' },
     isAutoTitleEnabled_tooltip: { en: 'Automatically generate a title for new chats after the first exchange using a fast model.', zh: '在首次交流后，使用快速模型为新对话自动生成标题。' },
-    settings_enableCompletionNotification_label: { en: 'Enable Completion Notifications', zh: '启用完成通知' },
+    settings_enableCompletionNotification_label: { en: 'Enable Completion Notifications', zh: '桌面通知' },
     settings_enableCompletionNotification_tooltip: { en: 'Show a browser notification when a response is finished generating while the tab is in the background.', zh: '当标签页在后台时，在响应生成完毕后显示浏览器通知。' },
+    settings_enableSuggestions_label: { en: 'Enable Suggested Replies', zh: '启用建议回复' },
+    settings_enableSuggestions_tooltip: { en: 'Automatically generate suggested replies after the model responds. Uses a fast, separate model call.', zh: '在模型回应后自动生成建议回复。此功能会使用一个快速、独立的模型调用。' },
     
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },

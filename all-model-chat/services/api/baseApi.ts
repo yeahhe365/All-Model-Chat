@@ -8,7 +8,19 @@ export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
 export const getClient = (apiKey: string): GoogleGenAI => {
   try {
-      return new GoogleGenAI({ apiKey });
+      // Sanitize the API key to replace common non-ASCII characters that might
+      // be introduced by copy-pasting from rich text editors. This prevents
+      // "Failed to execute 'append' on 'Headers': Invalid character" errors.
+      const sanitizedApiKey = apiKey
+          .replace(/[\u2013\u2014]/g, '-') // en-dash, em-dash to hyphen
+          .replace(/[\u2018\u2019]/g, "'") // smart single quotes to apostrophe
+          .replace(/[\u201C\u201D]/g, '"') // smart double quotes to quote
+          .replace(/[\u00A0]/g, ' '); // non-breaking space to regular space
+          
+      if (apiKey !== sanitizedApiKey) {
+          logService.warn("API key was sanitized. Non-ASCII characters were replaced.");
+      }
+      return new GoogleGenAI({ apiKey: sanitizedApiKey });
   } catch (error) {
       logService.error("Failed to initialize GoogleGenAI client:", error);
       // Re-throw to be caught by the calling function

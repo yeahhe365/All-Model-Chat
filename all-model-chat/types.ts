@@ -42,6 +42,8 @@ export interface ChatMessage {
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
   groundingMetadata?: any;
+  suggestions?: string[];
+  isGeneratingSuggestions?: boolean;
 }
 
 export interface ModelOption {
@@ -102,7 +104,7 @@ export interface SavedChatSession {
 
 
 export interface AppSettings extends ChatSettings {
- themeId: string; 
+ themeId: 'system' | 'onyx' | 'pearl'; 
  baseFontSize: number; 
  useCustomApiConfig: boolean;
  apiKey: string | null;
@@ -117,6 +119,7 @@ export interface AppSettings extends ChatSettings {
  isMermaidRenderingEnabled: boolean;
  isGraphvizRenderingEnabled?: boolean;
  isCompletionNotificationEnabled?: boolean;
+ isSuggestionsEnabled?: boolean;
 }
 
 
@@ -160,6 +163,7 @@ export interface GeminiService {
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
+  generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
 }
 
 export interface ThoughtSupportingPart extends Part {
@@ -181,7 +185,8 @@ export interface MessageListProps {
   expandCodeBlocksByDefault: boolean;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
-  onSuggestionClick?: (suggestion: string) => void;
+  onSuggestionClick?: (suggestion: string) => void; // For homepage suggestions that populate the input
+  onFollowUpSuggestionClick?: (suggestion: string) => void; // For under-message suggestions that send immediately
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;
@@ -387,6 +392,7 @@ export interface ChatAreaProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   onSuggestionClick: (suggestion: string) => void;
+  onFollowUpSuggestionClick: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;
   language: 'en' | 'zh';

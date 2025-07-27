@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from 'react';
 import { AppSettings } from '../types';
 import { DEFAULT_APP_SETTINGS, APP_SETTINGS_KEY } from '../constants/appConstants';
@@ -9,12 +10,36 @@ import { generateThemeCssVariables } from '../utils/appUtils';
 export const useAppSettings = () => {
     const [appSettings, setAppSettings] = useState<AppSettings>(() => {
         const stored = localStorage.getItem(APP_SETTINGS_KEY);
-        return stored ? { ...DEFAULT_APP_SETTINGS, ...JSON.parse(stored) } : DEFAULT_APP_SETTINGS;
+        const loadedSettings = stored ? JSON.parse(stored) : {};
+        if (!['system', 'onyx', 'pearl'].includes(loadedSettings.themeId)) {
+            loadedSettings.themeId = DEFAULT_APP_SETTINGS.themeId;
+        }
+        return { ...DEFAULT_APP_SETTINGS, ...loadedSettings };
     });
 
     const [language, setLanguage] = useState<'en' | 'zh'>('en');
 
-    const currentTheme = AVAILABLE_THEMES.find(t => t.id === appSettings.themeId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
+    const [resolvedThemeId, setResolvedThemeId] = useState<'onyx' | 'pearl'>(() => {
+        if (appSettings.themeId === 'system') {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'onyx' : 'pearl';
+        }
+        return appSettings.themeId as 'onyx' | 'pearl';
+    });
+
+    useEffect(() => {
+        if (appSettings.themeId === 'system') {
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            const updateTheme = () => setResolvedThemeId(mediaQuery.matches ? 'onyx' : 'pearl');
+            
+            updateTheme();
+            mediaQuery.addEventListener('change', updateTheme);
+            return () => mediaQuery.removeEventListener('change', updateTheme);
+        } else {
+            setResolvedThemeId(appSettings.themeId as 'onyx' | 'pearl');
+        }
+    }, [appSettings.themeId]);
+
+    const currentTheme = AVAILABLE_THEMES.find(t => t.id === resolvedThemeId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
 
     useEffect(() => {
         localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));
@@ -34,7 +59,7 @@ export const useAppSettings = () => {
         const hljsDarkTheme = document.getElementById('hljs-dark-theme') as HTMLLinkElement;
         const hljsLightTheme = document.getElementById('hljs-light-theme') as HTMLLinkElement;
 
-        const isDark = currentTheme.id !== 'pearl'; // 'pearl' is the light theme
+        const isDark = currentTheme.id === 'onyx';
 
         if (markdownDarkTheme) markdownDarkTheme.disabled = !isDark;
         if (markdownLightTheme) markdownLightTheme.disabled = isDark;

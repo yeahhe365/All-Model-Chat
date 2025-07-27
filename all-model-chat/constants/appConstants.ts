@@ -47,7 +47,7 @@ export const DEFAULT_CHAT_SETTINGS = {
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   ...DEFAULT_CHAT_SETTINGS,
-  themeId: 'pearl', // Corresponds to DEFAULT_THEME_ID from themeConstants
+  themeId: 'pearl', 
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
   apiKey: null,
@@ -62,4 +62,5 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isMermaidRenderingEnabled: true,
   isGraphvizRenderingEnabled: true,
   isCompletionNotificationEnabled: false,
+  isSuggestionsEnabled: true,
 };

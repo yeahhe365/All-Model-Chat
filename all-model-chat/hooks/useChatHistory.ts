@@ -159,22 +159,8 @@ export const useChatHistory = ({
              }
              return prev.filter(s => s.id !== sessionId);
         });
-        setActiveSessionId(prevActiveId => {
-            if (prevActiveId === sessionId) {
-                const sessionsAfterDelete = JSON.parse(localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY) || '[]') as SavedChatSession[];
-                sessionsAfterDelete.sort((a,b) => b.timestamp - a.timestamp);
-                const nextSessionToLoad = sessionsAfterDelete[0];
-                if (nextSessionToLoad) {
-                     loadChatSession(nextSessionToLoad.id, sessionsAfterDelete);
-                     return nextSessionToLoad.id;
-                } else {
-                    startNewChat();
-                    return null;
-                }
-            }
-            return prevActiveId;
-        });
-    }, [updateAndPersistSessions, activeJobs, setActiveSessionId, loadChatSession, startNewChat]);
+        // The logic to switch to a new active session is now handled declaratively in useChat.ts's useEffect.
+    }, [updateAndPersistSessions, activeJobs]);
     
     const handleRenameSession = useCallback((sessionId: string, newTitle: string) => {
         if (!newTitle.trim()) return;
