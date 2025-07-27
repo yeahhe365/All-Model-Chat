@@ -62,7 +62,7 @@ export const useSuggestions = ({
 
     useEffect(() => {
         // Trigger condition: loading just finished for the active chat
-        if (prevIsLoadingRef.current && !isLoading && (appSettings.isSuggestionsEnabled ?? true) && activeChat) {
+        if (prevIsLoadingRef.current && !isLoading && appSettings.isSuggestionsEnabled && activeChat) {
             const { messages, id: sessionId, settings } = activeChat;
             if (messages.length < 2) return;
 

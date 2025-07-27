@@ -67,7 +67,7 @@ export const settingsTranslations = {
     settings_enableMermaidRendering_tooltip: { en: "Render code blocks marked as 'mermaid' into diagrams.", zh: "将标记为 'mermaid' 的代码块渲染成图表。" },
     settings_enableGraphvizRendering_label: { en: 'Enable Graphviz Diagram Rendering', zh: '启用 Graphviz 图表渲染' },
     settings_enableGraphvizRendering_tooltip: { en: "Render code blocks marked as 'graphviz' or 'dot' into diagrams.", zh: "将标记为 'graphviz' 或 'dot' 的代码块渲染成图表。" },
-    isAutoTitleEnabled: { en: 'Auto-generate Chat Titles', zh: '自动生成对话标题' },
+    isAutoTitleEnabled: { en: 'Auto-generate Chat Titles', zh: '自动生成标题' },
     isAutoTitleEnabled_tooltip: { en: 'Automatically generate a title for new chats after the first exchange using a fast model.', zh: '在首次交流后，使用快速模型为新对话自动生成标题。' },
     settings_enableCompletionNotification_label: { en: 'Enable Completion Notifications', zh: '桌面通知' },
     settings_enableCompletionNotification_tooltip: { en: 'Show a browser notification when a response is finished generating while the tab is in the background.', zh: '当标签页在后台时，在响应生成完毕后显示浏览器通知。' },

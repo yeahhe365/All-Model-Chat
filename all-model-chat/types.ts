@@ -118,8 +118,8 @@ export interface AppSettings extends ChatSettings {
  isAutoTitleEnabled: boolean;
  isMermaidRenderingEnabled: boolean;
  isGraphvizRenderingEnabled?: boolean;
- isCompletionNotificationEnabled?: boolean;
- isSuggestionsEnabled?: boolean;
+ isCompletionNotificationEnabled: boolean;
+ isSuggestionsEnabled: boolean;
 }
 
 
@@ -185,8 +185,8 @@ export interface MessageListProps {
   expandCodeBlocksByDefault: boolean;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
-  onSuggestionClick?: (suggestion: string) => void; // For homepage suggestions that populate the input
-  onFollowUpSuggestionClick?: (suggestion: string) => void; // For under-message suggestions that send immediately
+  onSuggestionClick?: (suggestion: string) => void;
+  onFollowUpSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;

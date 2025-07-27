@@ -106,7 +106,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
           setIsGraphvizRenderingEnabled={props.setIsGraphvizRenderingEnabled}
           isCompletionNotificationEnabled={props.isCompletionNotificationEnabled}
           setIsCompletionNotificationEnabled={props.setIsCompletionNotificationEnabled}
-          isSuggestionsEnabled={props.isSuggestionsEnabled ?? true}
+          isSuggestionsEnabled={props.isSuggestionsEnabled}
           setIsSuggestionsEnabled={props.setIsSuggestionsEnabled}
           t={t}
         />
