@@ -5,6 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import DOMPurify from 'dompurify';
 import { CodeBlock } from './CodeBlock';
 
 interface GroundedResponseProps {
@@ -20,15 +21,19 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
       return text;
     }
   
+    // Sanitize the raw text from the model before injecting our own HTML for citations.
+    // This prevents unsafe tags like <iframe> or <script> from being rendered.
+    const sanitizedText = DOMPurify.sanitize(text, { FORBID_TAGS: ['iframe', 'script', 'style', 'video', 'audio'] });
+
     // Combine grounding chunks and citations into a single, indexed array
     const sources = [
       ...(metadata.groundingChunks?.map((c: any) => c.web) || []),
       ...(metadata.citations || []),
     ].filter(Boolean);
 
-    if(sources.length === 0) return text;
+    if(sources.length === 0) return sanitizedText;
   
-    const encodedText = new TextEncoder().encode(text);
+    const encodedText = new TextEncoder().encode(sanitizedText);
     const toCharIndex = (byteIndex: number) => {
       return new TextDecoder().decode(encodedText.slice(0, byteIndex)).length;
     };
@@ -37,7 +42,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
       (a: any, b: any) => (b.segment?.endIndex || 0) - (a.segment?.endIndex || 0)
     );
   
-    let contentWithCitations = text;
+    let contentWithCitations = sanitizedText;
     for (const support of sortedSupports) {
       const byteEndIndex = support.segment?.endIndex;
       if (typeof byteEndIndex !== 'number') continue;

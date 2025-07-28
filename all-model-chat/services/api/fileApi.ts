@@ -15,43 +15,18 @@ export const uploadFileApi = async (apiKey: string, file: File, mimeType: string
     try {
         const uploadConfig: UploadFileConfig = { mimeType, displayName };
         
-        let uploadedFile = await ai.files.upload({
+        const uploadedFile = await ai.files.upload({
             file: file,
             config: uploadConfig,
         });
-
-        const startTime = Date.now();
-        while (uploadedFile.state === 'PROCESSING' && (Date.now() - startTime) < MAX_POLLING_DURATION_MS) {
-            if (signal.aborted) {
-                logService.warn(`Polling for "${displayName}" cancelled by user.`);
-                const abortError = new Error("Upload polling cancelled by user.");
-                abortError.name = "AbortError";
-                throw abortError;
-            }
-            logService.debug(`File "${displayName}" is PROCESSING. Polling again in ${POLLING_INTERVAL_MS / 1000}s...`);
-            await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL_MS));
-            
-            if (signal.aborted) { // Check again after timeout
-                 const abortError = new Error("Upload polling cancelled by user after timeout.");
-                 abortError.name = "AbortError";
-                 throw abortError;
-            }
-
-            try {
-                uploadedFile = await ai.files.get({ name: uploadedFile.name });
-            } catch (pollError) {
-                logService.error(`Error polling for file status "${displayName}":`, pollError);
-                throw new Error(`Polling failed for file ${displayName}. Original error: ${pollError instanceof Error ? pollError.message : String(pollError)}`);
-            }
-        }
-
-        if (uploadedFile.state === 'PROCESSING') {
-            logService.warn(`File "${displayName}" is still PROCESSING after ${MAX_POLLING_DURATION_MS / 1000}s. Returning current state.`);
-        }
         
+        // Polling logic has been removed from this service function
+        // and is now handled at the application/hook level to give
+        // the UI more control over the file state.
         return uploadedFile;
+
     } catch (error) {
-        logService.error(`Failed to upload and process file "${displayName}" to Gemini API:`, error);
+        logService.error(`Failed to upload file "${displayName}" to Gemini API:`, error);
         throw error;
     }
 };

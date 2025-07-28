@@ -4,6 +4,7 @@ import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MI
 import { generateUniqueId, getKeyForRequest, fileToDataUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
+import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../services/api/baseApi';
 
 interface FileHandlingProps {
     appSettings: AppSettings;
@@ -34,6 +35,74 @@ export const useFileHandling = ({
         setIsAppProcessingFile(anyFileProcessing);
     }, [selectedFiles, setIsAppProcessingFile]);
 
+    useEffect(() => {
+        const filesToPoll = selectedFiles.filter(f => f.uploadState === 'processing_api' && !f.error);
+
+        if (filesToPoll.length === 0) {
+            return;
+        }
+
+        const pollFile = (fileToPoll: UploadedFile) => {
+            const { id: fileId, fileApiName } = fileToPoll;
+            if (!fileApiName) {
+                logService.warn(`Attempted to poll file ${fileId} without a fileApiName.`);
+                return;
+            }
+
+            const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+            if ('error' in keyResult) {
+                logService.error(`Polling for ${fileApiName} stopped: ${keyResult.error}`);
+                setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: keyResult.error, uploadState: 'failed' } : f));
+                return;
+            }
+            const keyToUse = keyResult.key;
+
+            const startTime = Date.now();
+            let pollerTimeoutId: number | undefined;
+
+            const poll = async () => {
+                if ((Date.now() - startTime) > MAX_POLLING_DURATION_MS) {
+                    logService.error(`Polling timed out for file ${fileApiName}`);
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'File processing timed out.', uploadState: 'failed' } : f));
+                    return;
+                }
+
+                try {
+                    const metadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiName);
+                    
+                    let fileStillNeedsPolling = false;
+                    setSelectedFiles(currentFiles => {
+                        fileStillNeedsPolling = currentFiles.some(f => f.id === fileId && f.uploadState === 'processing_api');
+                        return currentFiles;
+                    });
+
+                    if (!fileStillNeedsPolling) {
+                         logService.info(`Polling stopped for ${fileApiName} as its state changed or it was removed.`);
+                         return;
+                    }
+                    
+                    if (metadata?.state === 'ACTIVE') {
+                        logService.info(`File ${fileApiName} is now ACTIVE.`);
+                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, uploadState: 'active' } : f));
+                    } else if (metadata?.state === 'FAILED') {
+                        logService.error(`File ${fileApiName} processing FAILED on backend.`);
+                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'Backend processing failed.', uploadState: 'failed' } : f));
+                    } else {
+                        pollerTimeoutId = window.setTimeout(poll, POLLING_INTERVAL_MS);
+                    }
+                } catch (error) {
+                    logService.error(`Error during polling for file ${fileApiName}`, { error });
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'Polling failed.', uploadState: 'failed' } : f));
+                }
+            };
+            
+            pollerTimeoutId = window.setTimeout(poll, POLLING_INTERVAL_MS);
+        };
+
+        filesToPoll.forEach(pollFile);
+        
+    }, [selectedFiles, appSettings, currentChatSettings, setSelectedFiles]);
+
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
         setAppFileError(null);
@@ -41,7 +110,6 @@ export const useFileHandling = ({
         
         const filesArray = Array.isArray(files) ? files : Array.from(files);
 
-        // Determine if any file requires an API key for upload.
         const needsApiKeyForUpload = filesArray.some(file => {
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             let effectiveMimeType = file.type;
@@ -49,13 +117,11 @@ export const useFileHandling = ({
                  effectiveMimeType = 'text/plain';
             }
             if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
-                return false; // Unsupported files don't need a key
+                return false;
             }
-            // An image needs an API key ONLY if the setting is enabled
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
                 return appSettings.useFilesApiForImages;
             }
-            // All other supported types (PDF, audio, text) always need an API key
             return true; 
         });
 
@@ -88,12 +154,10 @@ export const useFileHandling = ({
                 setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type || 'unknown'}`, uploadState: 'failed' }]);
                 return;
             }
-
-            // This is the core logic change: should this file be uploaded or handled locally?
+            
             const shouldUploadFile = !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) || appSettings.useFilesApiForImages;
 
             if (shouldUploadFile) {
-                // Handle all file types that need uploading (PDF, Text, Audio, and Images if setting is on)
                 if (!keyToUse) {
                     const errorMsg = 'API key was not available for non-image file upload.';
                     logService.error(errorMsg);
@@ -105,8 +169,24 @@ export const useFileHandling = ({
                 setSelectedFiles(prev => [...prev, initialFileState]);
                 try {
                     const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, effectiveMimeType, file.name, controller.signal);
-                    logService.info(`File uploaded successfully: ${file.name}`, { fileInfo: uploadedFileInfo });
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, fileUri: uploadedFileInfo.uri, fileApiName: uploadedFileInfo.name, rawFile: undefined, uploadState: uploadedFileInfo.state === 'ACTIVE' ? 'active' : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), abortController: undefined, } : f));
+                    logService.info(`File uploaded, initial state: ${uploadedFileInfo.state}`, { fileInfo: uploadedFileInfo });
+                    
+                    const uploadState = uploadedFileInfo.state === 'ACTIVE' 
+                        ? 'active' 
+                        : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed');
+
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { 
+                        ...f, 
+                        isProcessing: false,
+                        progress: 100, 
+                        fileUri: uploadedFileInfo.uri, 
+                        fileApiName: uploadedFileInfo.name, 
+                        rawFile: undefined, 
+                        uploadState: uploadState, 
+                        error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined), 
+                        abortController: undefined, 
+                    } : f));
+
                 } catch (uploadError) {
                     let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
                     let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
@@ -119,11 +199,10 @@ export const useFileHandling = ({
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, } : f));
                 }
             } else {
-                // Handle image locally
                 const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
                 setSelectedFiles(prev => [...prev, initialFileState]);
                 
-                const MAX_PREVIEW_SIZE = 5 * 1024 * 1024; // 5 MB
+                const MAX_PREVIEW_SIZE = 5 * 1024 * 1024;
 
                 if (file.size < MAX_PREVIEW_SIZE) {
                     try {
@@ -134,9 +213,7 @@ export const useFileHandling = ({
                         setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
                     }
                 } else {
-                    // For large files, skip preview generation to avoid crashes.
                     logService.warn(`Skipping preview for large image: ${file.name}`, { size: file.size });
-                    // Just mark it as active without a dataUrl. The display component will show a placeholder.
                     setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
                 }
             }
@@ -216,7 +293,6 @@ export const useFileHandling = ({
         }
     }, [selectedFiles, setSelectedFiles, setAppFileError, appSettings, currentChatSettings, setCurrentChatSettings]);
 
-    // Drag and Drop handlers
     const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.types.includes('Files')) setIsAppDraggingOver(true); }, []);
     const handleAppDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (isAppProcessingFile) { e.dataTransfer.dropEffect = 'none'; return; } if (e.dataTransfer.types.includes('Files')) { e.dataTransfer.dropEffect = 'copy'; if (!isAppDraggingOver) setIsAppDraggingOver(true); } else e.dataTransfer.dropEffect = 'none'; }, [isAppDraggingOver, isAppProcessingFile]);
     const handleAppDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsAppDraggingOver(false); }, []);
