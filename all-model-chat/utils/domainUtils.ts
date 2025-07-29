@@ -1,3 +1,4 @@
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession } from '../types';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { logService } from '../services/logService';
@@ -46,28 +47,35 @@ export const generateSessionTitle = (messages: ChatMessage[]): string => {
     return 'New Chat';
 };
 
-export const buildContentParts = async (text: string, files: UploadedFile[] | undefined): Promise<ContentPart[]> => {
-  const dataParts: ContentPart[] = [];
+export const buildContentParts = async (
+  text: string, 
+  files: UploadedFile[] | undefined
+): Promise<{
+  contentParts: ContentPart[];
+  enrichedFiles: UploadedFile[];
+}> => {
+  const filesToProcess = files || [];
+  
+  const processedResults = await Promise.all(filesToProcess.map(async (file) => {
+    // Create a shallow copy to avoid direct mutation of state objects
+    const newFile = { ...file };
+    let part: ContentPart | null = null;
 
-  if (files) {
-    for (const file of files) {
-      if (file.isProcessing || file.error || file.uploadState !== 'active') {
-        continue;
-      }
+    if (file.isProcessing || file.error || file.uploadState !== 'active') {
+      return { file: newFile, part };
+    }
+    
+    if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.fileUri) {
+      let base64Data = file.base64Data;
       
-      if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.fileUri) {
-        let base64Data = file.base64Data;
-        
-        // This is the new on-demand conversion logic
-        if (!base64Data && file.rawFile) {
+      if (!base64Data) { // Only convert if not already present
+        if (file.rawFile) {
           try {
             base64Data = await fileToBase64(file.rawFile);
           } catch (error) {
             logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
-            continue;
           }
-        } else if (!base64Data && file.dataUrl?.startsWith('blob:')) {
-          // This handles retries where we only have the blob URL
+        } else if (file.dataUrl?.startsWith('blob:')) {
           try {
             const response = await fetch(file.dataUrl);
             const blob = await response.blob();
@@ -75,28 +83,32 @@ export const buildContentParts = async (text: string, files: UploadedFile[] | un
             base64Data = await fileToBase64(tempFile);
           } catch (error) {
             logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
-            continue;
           }
         }
-        
-        if (base64Data) {
-          dataParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
-        }
-      } else if (file.fileUri) {
-        dataParts.push({ fileData: { mimeType: file.type, fileUri: file.fileUri } });
       }
+      
+      if (base64Data) {
+        newFile.base64Data = base64Data;
+        part = { inlineData: { mimeType: file.type, data: base64Data } };
+      }
+    } else if (file.fileUri) {
+      part = { fileData: { mimeType: file.type, fileUri: file.fileUri } };
     }
-  }
+    
+    return { file: newFile, part };
+  }));
+
+  const enrichedFiles = processedResults.map(r => r.file);
+  const dataParts = processedResults.map(r => r.part).filter((p): p is ContentPart => p !== null);
 
   const userTypedText = text.trim();
   const contentPartsResult: ContentPart[] = [];
-
   if (userTypedText) {
     contentPartsResult.push({ text: userTypedText });
   }
   contentPartsResult.push(...dataParts);
 
-  return contentPartsResult;
+  return { contentParts: contentPartsResult, enrichedFiles };
 };
 
 export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<ChatHistoryItem[]> => {
@@ -105,7 +117,8 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
       .map(async (msg) => {
         let apiParts: ContentPart[];
         if (msg.role === 'user') {
-          apiParts = await buildContentParts(msg.content, msg.files);
+          const { contentParts } = await buildContentParts(msg.content, msg.files);
+          apiParts = contentParts;
         } else {
           apiParts = [{ text: msg.content || "" }];
         }

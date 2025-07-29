@@ -10,11 +10,9 @@ export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) =>
         logService.error(`API Error (${errorPrefix}) for message ${modelMessageId} in session ${sessionId}`, { error, isAborted });
         
         if (isAborted) {
-            updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(msg =>
-                msg.isLoading // Find any loading messages from this run
-                    ? { ...msg, role: 'model', content: (msg.content || "") + "\n\n[Cancelled by user]", isLoading: false, generationEndTime: new Date() } 
-                    : msg
-            )}: s));
+            // Optimistic update in useMessageActions.handleStopGenerating now handles the UI change immediately.
+            // This function's role for AbortError is now just to log it and let the stream cleanup occur naturally.
+            // No UI state change is needed here to prevent race conditions.
             return;
         }
 
@@ -29,7 +27,13 @@ export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) =>
 
         updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, messages: s.messages.map(msg => 
             msg.id === modelMessageId 
-                ? { ...msg, role: 'error', content: errorMessage, isLoading: false, generationEndTime: new Date() } 
+                ? { 
+                    ...msg, 
+                    role: 'error', 
+                    content: (msg.content || '').trim() + `\n\n[${errorMessage}]`, 
+                    isLoading: false, 
+                    generationEndTime: new Date() 
+                  } 
                 : msg
         )}: s));
     }, [updateAndPersistSessions]);

@@ -130,6 +130,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
 
         // --- Regular Chat Logic ---
+        
+        const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
+        const { contentParts: promptParts, enrichedFiles } = await buildContentParts(textToUse.trim(), successfullyProcessedFiles);
+
         let sessionForHistory: SavedChatSession | undefined;
         let baseMessages: ChatMessage[] = [];
         
@@ -141,11 +145,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
             baseMessages = editIndex !== -1 ? sessionForHistory.messages.slice(0, editIndex) : [...sessionForHistory.messages];
             
             const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
-            const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
             
             const userMessage: ChatMessage = {
                 id: generateUniqueId(), role: 'user', content: textToUse.trim(),
-                files: successfullyProcessedFiles.length ? successfullyProcessedFiles.map(f => ({...f, rawFile: undefined})) : undefined,
+                files: enrichedFiles.length ? enrichedFiles.map(f => ({...f, rawFile: undefined})) : undefined,
                 timestamp: new Date(), cumulativeTotalTokens: lastCumulative,
             };
             
@@ -157,13 +160,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
             const newMessages = [...baseMessages, userMessage, modelMessage];
             
             let newTitle = sessionForHistory.title;
-            // Only set a title if the current title is "New Chat"
-            if (sessionForHistory.title === 'New Chat') {
-                // If auto-title is OFF, generate a title from content immediately.
-                // If it's ON, we leave it as "New Chat" so the useEffect trigger works.
-                if (!appSettings.isAutoTitleEnabled) {
-                    newTitle = generateSessionTitle(newMessages);
-                }
+            if (sessionForHistory.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
+                newTitle = generateSessionTitle(newMessages);
             }
 
             let updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
@@ -179,7 +177,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
             setEditingMessageId(null);
         }
         
-        const promptParts = await buildContentParts(textToUse.trim(), filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing));
         if (promptParts.length === 0) {
              setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
              activeJobs.current.delete(generationId);

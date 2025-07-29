@@ -42,7 +42,8 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setEditingMessageId,
         setAppFileError,
         updateAndPersistSessions,
-        userScrolledUp
+        userScrolledUp,
+        setLoadingSessionIds
     } = props;
     
     const { handleSendMessage } = useMessageSender(props);
@@ -60,6 +61,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         updateAndPersistSessions,
         userScrolledUp,
         handleSendMessage,
+        setLoadingSessionIds,
     });
     
     const { handleTextToSpeech } = useTextToSpeechHandler(props);
