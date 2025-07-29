@@ -138,7 +138,7 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
     logService.info(`Generating suggestions in ${language}...`);
     const ai = getApiClient(apiKey);
     const prompt = language === 'zh'
-        ? `基于以下最近的对话交流，生成三个简短、相关且多样化的建议回复或追问。用户可能会点击这些建议继续对话。\n\n用户: "${userContent}"\n助手: "${modelContent}"`
+        ? `基于以下最近的对话交流，为用户生成三条可以发送给语言模型的建议回复。这些回复应该是简短、相关且多样化的，旨在继续对话。\n\n用户: "${userContent}"\n助手: "${modelContent}"`
         : `Based on the last conversation turn below, generate three short, relevant, and diverse suggested replies or follow-up questions that a user might click to continue the conversation.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"`;
 
     try {

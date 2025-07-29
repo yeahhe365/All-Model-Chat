@@ -49,54 +49,68 @@ export const useFileHandling = ({
                 return;
             }
 
-            const keyResult = getKeyForRequest(appSettings, currentChatSettings);
-            if ('error' in keyResult) {
-                logService.error(`Polling for ${fileApiName} stopped: ${keyResult.error}`);
-                setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: keyResult.error, uploadState: 'failed' } : f));
-                return;
-            }
-            const keyToUse = keyResult.key;
-
+            const triedKeys = new Set<string>();
             const startTime = Date.now();
             let pollerTimeoutId: number | undefined;
 
             const poll = async () => {
+                // Stop polling if the component has unmounted or conditions changed
+                let fileStillNeedsPolling = false;
+                setSelectedFiles(currentFiles => {
+                    const currentFile = currentFiles.find(f => f.id === fileId);
+                    fileStillNeedsPolling = !!currentFile && currentFile.uploadState === 'processing_api' && !currentFile.error;
+                    return currentFiles;
+                });
+                if (!fileStillNeedsPolling) {
+                    logService.info(`Polling stopped for ${fileApiName} as its state changed, was removed, or developed an error.`);
+                    return;
+                }
+
                 if ((Date.now() - startTime) > MAX_POLLING_DURATION_MS) {
                     logService.error(`Polling timed out for file ${fileApiName}`);
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'File processing timed out.', uploadState: 'failed' } : f));
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'File processing timed out.', uploadState: 'failed', isProcessing: false } : f));
+                    return;
+                }
+
+                const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+                if ('error' in keyResult) {
+                    logService.error(`Polling for ${fileApiName} stopped: ${keyResult.error}`);
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: keyResult.error, uploadState: 'failed', isProcessing: false } : f));
+                    return;
+                }
+                const keyToUse = keyResult.key;
+                
+                if (triedKeys.has(keyToUse)) {
+                    logService.error(`All API keys have failed for polling ${fileApiName}.`);
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'All API keys failed.', uploadState: 'failed', isProcessing: false } : f));
                     return;
                 }
 
                 try {
                     const metadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiName);
                     
-                    let fileStillNeedsPolling = false;
-                    setSelectedFiles(currentFiles => {
-                        fileStillNeedsPolling = currentFiles.some(f => f.id === fileId && f.uploadState === 'processing_api');
-                        return currentFiles;
-                    });
-
-                    if (!fileStillNeedsPolling) {
-                         logService.info(`Polling stopped for ${fileApiName} as its state changed or it was removed.`);
-                         return;
-                    }
+                    // On a successful API call, reset the tried keys for this polling interval.
+                    triedKeys.clear();
                     
                     if (metadata?.state === 'ACTIVE') {
                         logService.info(`File ${fileApiName} is now ACTIVE.`);
-                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, uploadState: 'active' } : f));
+                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, uploadState: 'active', isProcessing: false } : f));
                     } else if (metadata?.state === 'FAILED') {
                         logService.error(`File ${fileApiName} processing FAILED on backend.`);
-                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'Backend processing failed.', uploadState: 'failed' } : f));
-                    } else {
+                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'Backend processing failed.', uploadState: 'failed', isProcessing: false } : f));
+                    } else { // Still PROCESSING
                         pollerTimeoutId = window.setTimeout(poll, POLLING_INTERVAL_MS);
                     }
                 } catch (error) {
-                    logService.error(`Error during polling for file ${fileApiName}`, { error });
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: 'Polling failed.', uploadState: 'failed' } : f));
+                    logService.warn(`Polling for ${fileApiName} failed with key, trying next...`, { key: keyToUse.substring(0, 5), error });
+                    triedKeys.add(keyToUse);
+                    // Poll again after a short delay with the next key
+                    pollerTimeoutId = window.setTimeout(poll, 500);
                 }
             };
             
-            pollerTimeoutId = window.setTimeout(poll, POLLING_INTERVAL_MS);
+            // Start the first poll immediately
+            poll();
         };
 
         filesToPoll.forEach(pollFile);
@@ -177,7 +191,7 @@ export const useFileHandling = ({
 
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { 
                         ...f, 
-                        isProcessing: false,
+                        isProcessing: uploadState === 'processing_api', // Only false if active or failed
                         progress: 100, 
                         fileUri: uploadedFileInfo.uri, 
                         fileApiName: uploadedFileInfo.name, 
