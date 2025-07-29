@@ -81,7 +81,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
             return; 
         }
 
-        const hasFileId = filesToUse.some(f => f.fileUri);
         const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
@@ -92,7 +91,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
             return;
         }
         const { key: keyToUse, isNewKey } = keyResult;
-        const shouldLockKey = isNewKey && hasFileId;
+        const shouldLockKey = isNewKey;
 
         const newAbortController = new AbortController();
         const generationId = generateUniqueId();
