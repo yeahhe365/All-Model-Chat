@@ -1,4 +1,4 @@
-
+// hooks/useMessageSender.ts
 import { useCallback, useRef, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, ChatHistoryItem, SavedChatSession } from '../types';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService } from '../utils/appUtils';
@@ -11,6 +11,7 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 
 interface MessageSenderProps {
     appSettings: AppSettings;
+    messages: ChatMessage[];
     currentChatSettings: IndividualChatSettings;
     selectedFiles: UploadedFile[];
     setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
@@ -30,6 +31,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
     const {
         appSettings,
         currentChatSettings,
+        messages,
         selectedFiles,
         setSelectedFiles,
         editingMessageId,
@@ -54,11 +56,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
         let sessionId = activeSessionId;
-        
-        // The 'currentChatSettings' prop already contains the correct, up-to-date settings
-        // for the active session, or the default settings if no session is active yet.
         const sessionToUpdate = currentChatSettings;
-
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
@@ -128,23 +126,22 @@ export const useMessageSender = (props: MessageSenderProps) => {
             await handleTtsImagenMessage(keyToUse, currentSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio);
             return;
         }
-
-        // --- Regular Chat Logic ---
         
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
         const { contentParts: promptParts, enrichedFiles } = await buildContentParts(textToUse.trim(), successfullyProcessedFiles);
 
-        let sessionForHistory: SavedChatSession | undefined;
-        let baseMessages: ChatMessage[] = [];
+        const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
+        const baseMessagesForApi = editIndex !== -1 ? messages.slice(0, editIndex) : [...messages];
+        const historyForApi = await createChatHistoryForApi(baseMessagesForApi);
         
         updateAndPersistSessions(prev => {
-            sessionForHistory = prev.find(s => s.id === currentSessionId);
+            const sessionForHistory = prev.find(s => s.id === currentSessionId);
             if (!sessionForHistory) return prev;
 
-            const editIndex = effectiveEditingId ? sessionForHistory.messages.findIndex(m => m.id === effectiveEditingId) : -1;
-            baseMessages = editIndex !== -1 ? sessionForHistory.messages.slice(0, editIndex) : [...sessionForHistory.messages];
+            const uiEditIndex = effectiveEditingId ? sessionForHistory.messages.findIndex(m => m.id === effectiveEditingId) : -1;
+            const baseMessagesForUi = uiEditIndex !== -1 ? sessionForHistory.messages.slice(0, uiEditIndex) : [...sessionForHistory.messages];
             
-            const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
+            const lastCumulative = baseMessagesForUi.length > 0 ? (baseMessagesForUi[baseMessagesForUi.length - 1].cumulativeTotalTokens || 0) : 0;
             
             const userMessage: ChatMessage = {
                 id: generateUniqueId(), role: 'user', content: textToUse.trim(),
@@ -157,7 +154,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 isLoading: true, generationStartTime: generationStartTimeRef.current! 
             };
 
-            const newMessages = [...baseMessages, userMessage, modelMessage];
+            const newMessages = [...baseMessagesForUi, userMessage, modelMessage];
             
             let newTitle = sessionForHistory.title;
             if (sessionForHistory.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
@@ -183,7 +180,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
              return; 
         }
 
-        const historyForApi = await createChatHistoryForApi(baseMessages);
         const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
         
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(currentSessionId, generationId, newAbortController, generationStartTimeRef, sessionToUpdate);
@@ -203,6 +199,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
     }, [
         appSettings,
         currentChatSettings,
+        messages,
         selectedFiles,
         setSelectedFiles,
         editingMessageId,
