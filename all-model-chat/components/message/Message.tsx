@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
@@ -174,7 +174,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && showThoughts));
     const actionIconSize = getResponsiveValue(14, 16);
-    const canRetryMessage = (message.role === 'model' || (message.role === 'error' && message.generationStartTime)) && !message.isLoading;
+    const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     const isThisMessageLoadingTts = ttsMessageId === message.id;
 
     const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
@@ -187,6 +187,45 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-lg',
         model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg',
         error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-lg',
+    };
+
+    const [deltaX, setDeltaX] = useState(0);
+    const [isSwiping, setIsSwiping] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const touchStartRef = useRef(0);
+    const isMobile = useMemo(() => typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0), []);
+
+    const SWIPE_THRESHOLD = 80;
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        if (!isMobile || message.isLoading) return;
+        touchStartRef.current = e.touches[0].clientX;
+        setIsSwiping(true);
+        setCopied(false);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!isMobile || !isSwiping || message.isLoading) return;
+        const currentX = e.touches[0].clientX;
+        const dx = currentX - touchStartRef.current;
+        const limitedDx = Math.max(-150, Math.min(150, dx));
+        setDeltaX(limitedDx);
+    };
+
+    const handleTouchEnd = () => {
+        if (!isMobile || message.isLoading) return;
+        setIsSwiping(false);
+        
+        if (deltaX > SWIPE_THRESHOLD) {
+            onDeleteMessage(message.id);
+        } else if (deltaX < -SWIPE_THRESHOLD) {
+            if (message.content) {
+                navigator.clipboard.writeText(message.content);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        }
+        setDeltaX(0);
     };
 
     const iconAndActions = (
@@ -205,7 +244,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
               style={{ '--actions-translate-x': message.role === 'user' ? '8px' : '-8px' } as React.CSSProperties}
             >
                 {message.role === 'user' && !message.isLoading && <button onClick={() => onEditMessage(message.id)} title={t('edit')} aria-label={t('edit')} className={`${actionButtonClasses} text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><Edit3 size={actionIconSize} /></button>}
-                {canRetryMessage && <button onClick={() => onRetryMessage(message.id)} title={t('retry_button_title')} aria-label={t('retry_button_title')} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><RotateCw size={actionIconSize} /></button>}
+                {showRetryButton && <button onClick={() => onRetryMessage(message.id)} title={message.isLoading ? t('retry_and_stop_button_title') : t('retry_button_title')} aria-label={message.isLoading ? t('retry_and_stop_button_title') : t('retry_button_title')} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><RotateCw size={actionIconSize} /></button>}
                 {(message.content || message.thoughts) && !message.isLoading && <MessageCopyButton textToCopy={message.content} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} />}
                 {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
                     <>
@@ -223,27 +262,59 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     return (
         <div 
-            className={`${messageContainerClasses} message-container-animate`} 
+            className="relative message-container-animate"
+            style={{ animationDelay: `${Math.min(messageIndex * 80, 800)}ms` }}
             data-message-id={message.id} 
             data-message-role={message.role}
-            style={{ animationDelay: `${Math.min(messageIndex * 80, 800)}ms` }}
         >
-            {message.role !== 'user' && iconAndActions}
-            <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
-                <MessageContent
-                    message={message}
-                    onImageClick={onImageClick}
-                    onOpenHtmlPreview={onOpenHtmlPreview}
-                    showThoughts={showThoughts}
-                    baseFontSize={baseFontSize}
-                    expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-                    isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-                    isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                    onSuggestionClick={onSuggestionClick}
-                    t={t}
-                />
+             {isMobile && (
+                <div 
+                    className={`absolute inset-0 rounded-2xl ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'}`}
+                    aria-hidden="true"
+                >
+                    <div className="absolute inset-y-0 left-0 w-full flex items-center justify-start pl-6 bg-red-500 text-white rounded-2xl"
+                        style={{ 
+                            clipPath: `inset(0 ${-deltaX > 0 ? '100%' : `calc(100% - ${deltaX}px)`} 0 0)`,
+                            opacity: Math.min(1, Math.abs(deltaX) / SWIPE_THRESHOLD),
+                        }}>
+                        <Trash2 size={20} />
+                    </div>
+                    <div className="absolute inset-y-0 right-0 w-full flex items-center justify-end pr-6 bg-blue-500 text-white rounded-2xl"
+                        style={{ 
+                            clipPath: `inset(0 0 0 ${deltaX < 0 ? `calc(100% - ${-deltaX}px)` : '100%'})`,
+                            opacity: Math.min(1, Math.abs(deltaX) / SWIPE_THRESHOLD),
+                        }}>
+                        {copied ? <Check size={20} /> : <ClipboardCopy size={20} />}
+                    </div>
+                </div>
+            )}
+            <div
+                className={`${messageContainerClasses}`} 
+                style={{ 
+                    transform: `translateX(${deltaX}px)`,
+                    transition: isSwiping ? 'none' : 'transform 0.3s ease',
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                {message.role !== 'user' && iconAndActions}
+                <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
+                    <MessageContent
+                        message={message}
+                        onImageClick={onImageClick}
+                        onOpenHtmlPreview={onOpenHtmlPreview}
+                        showThoughts={showThoughts}
+                        baseFontSize={baseFontSize}
+                        expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+                        isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+                        isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+                        onSuggestionClick={onSuggestionClick}
+                        t={t}
+                    />
+                </div>
+                {message.role === 'user' && iconAndActions}
             </div>
-            {message.role === 'user' && iconAndActions}
         </div>
     );
 });

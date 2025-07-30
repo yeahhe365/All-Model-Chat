@@ -38,7 +38,8 @@ export const useMessageActions = ({
     setLoadingSessionIds,
 }: MessageActionsProps) => {
 
-    const handleStopGenerating = useCallback(() => {
+    const handleStopGenerating = useCallback((options: { silent?: boolean } = {}) => {
+        const { silent = false } = options;
         if (!activeSessionId || !isLoading) return;
 
         const loadingMessage = messages.find(msg => msg.isLoading);
@@ -47,21 +48,22 @@ export const useMessageActions = ({
             const controller = activeJobs.current.get(generationId);
             
             if (controller) {
-                logService.warn(`User stopped generation for session ${activeSessionId}, job ${generationId}`);
-                controller.abort(); // 1. Signal the backend/stream to stop
+                logService.warn(`User stopped generation for session ${activeSessionId}, job ${generationId}. Silent: ${silent}`);
+                controller.abort();
                 
-                // 2. Optimistically update UI for immediate feedback
-                updateAndPersistSessions(prev => prev.map(s => {
-                    if (s.id !== activeSessionId) return s;
-                    return {
-                        ...s,
-                        messages: s.messages.map(msg =>
-                            msg.id === generationId
-                                ? { ...msg, isLoading: false, content: (msg.content || "") + "\n\n[Stopped by user]", generationEndTime: new Date() }
-                                : msg
-                        )
-                    };
-                }));
+                if (!silent) {
+                    updateAndPersistSessions(prev => prev.map(s => {
+                        if (s.id !== activeSessionId) return s;
+                        return {
+                            ...s,
+                            messages: s.messages.map(msg =>
+                                msg.id === generationId
+                                    ? { ...msg, isLoading: false, content: (msg.content || "") + "\n\n[Stopped by user]", generationEndTime: new Date() }
+                                    : msg
+                            )
+                        };
+                    }));
+                }
                 
                 setLoadingSessionIds(prev => {
                     const next = new Set(prev);
@@ -77,7 +79,6 @@ export const useMessageActions = ({
         } else {
             logService.warn(`handleStopGenerating called for session ${activeSessionId}, but no loading message was found. Aborting all as a fallback.`);
             activeJobs.current.forEach(c => c.abort());
-            // Also clear loading state as a fallback
             setLoadingSessionIds(prev => {
                 const next = new Set(prev);
                 next.delete(activeSessionId);
@@ -135,10 +136,10 @@ export const useMessageActions = ({
         const userMessageToResend = messages[modelMessageIndex - 1];
         if (userMessageToResend.role !== 'user') return;
 
-        if (isLoading) handleStopGenerating();
+        if (isLoading) {
+            handleStopGenerating({ silent: true });
+        }
         
-        // When retrying, we're effectively editing the user message that came before the failed model response.
-        // This will slice the history correctly and resubmit.
         await handleSendMessage({
             text: userMessageToResend.content,
             files: userMessageToResend.files,
