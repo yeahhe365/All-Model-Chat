@@ -73,6 +73,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
+  const isComposingRef = useRef(false);
 
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
@@ -202,6 +203,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isComposingRef.current) return;
+
     if (slashCommandState.isOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -306,6 +309,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                     <textarea
                         ref={textareaRef} value={inputText} onChange={handleInputChange}
                         onKeyDown={handleKeyDown} onPaste={handlePaste}
+                        onCompositionStart={() => isComposingRef.current = true}
+                        onCompositionEnd={() => isComposingRef.current = false}
                         placeholder={t('chatInputPlaceholder')}
                         className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
                         style={{ height: `${getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX)}px` }}
