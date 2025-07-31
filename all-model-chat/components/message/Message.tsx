@@ -192,14 +192,16 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     const [deltaX, setDeltaX] = useState(0);
     const [isSwiping, setIsSwiping] = useState(false);
     const [copied, setCopied] = useState(false);
-    const touchStartRef = useRef(0);
+    const touchStartRef = useRef({ x: 0, y: 0 });
+    const isSwipeGesture = useRef<boolean | null>(null);
     const isMobile = useMemo(() => typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0), []);
 
     const SWIPE_THRESHOLD = 80;
 
     const handleTouchStart = (e: React.TouchEvent) => {
         if (!isMobile || message.isLoading) return;
-        touchStartRef.current = e.touches[0].clientX;
+        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        isSwipeGesture.current = null;
         setIsSwiping(true);
         setCopied(false);
     };
@@ -207,25 +209,45 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     const handleTouchMove = (e: React.TouchEvent) => {
         if (!isMobile || !isSwiping || message.isLoading) return;
         const currentX = e.touches[0].clientX;
-        const dx = currentX - touchStartRef.current;
-        const limitedDx = Math.max(-150, Math.min(150, dx));
-        setDeltaX(limitedDx);
+        const currentY = e.touches[0].clientY;
+        const dx = currentX - touchStartRef.current.x;
+        const dy = currentY - touchStartRef.current.y;
+
+        if (isSwipeGesture.current === null) {
+            if (Math.abs(dx) > Math.abs(dy) + 5) {
+                isSwipeGesture.current = true; // Horizontal
+            } else {
+                isSwipeGesture.current = false; // Vertical
+            }
+        }
+        
+        if (isSwipeGesture.current) {
+            e.preventDefault();
+            const limitedDx = Math.max(-150, Math.min(150, dx));
+            setDeltaX(limitedDx);
+        } else {
+            setIsSwiping(false);
+        }
     };
 
     const handleTouchEnd = () => {
         if (!isMobile || message.isLoading) return;
-        setIsSwiping(false);
         
-        if (deltaX > SWIPE_THRESHOLD) {
-            onDeleteMessage(message.id);
-        } else if (deltaX < -SWIPE_THRESHOLD) {
-            if (message.content) {
-                navigator.clipboard.writeText(message.content);
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
+        if (isSwipeGesture.current) {
+            if (deltaX > SWIPE_THRESHOLD) {
+                onDeleteMessage(message.id);
+            } else if (deltaX < -SWIPE_THRESHOLD) {
+                if (message.content) {
+                    navigator.clipboard.writeText(message.content);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                }
             }
         }
+        
+        setIsSwiping(false);
         setDeltaX(0);
+        isSwipeGesture.current = null;
     };
 
     const iconAndActions = (

@@ -39,7 +39,13 @@ export const useTtsImagenSender = ({
         updateAndPersistSessions(prev => prev.map(s => {
             if (s.id !== currentSessionId) return s;
             const newMessages = [...s.messages, userMessage, modelMessage];
-            return { ...s, messages: newMessages, title: generateSessionTitle(newMessages) };
+            let newTitle = s.title;
+            // Only set a simple title if the chat is new and auto-titling is disabled.
+            // Otherwise, leave it as "New Chat" for the auto-titling hook to handle.
+            if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
+                newTitle = generateSessionTitle(newMessages);
+            }
+            return { ...s, messages: newMessages, title: newTitle };
         }));
 
         try {
