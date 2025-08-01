@@ -25,6 +25,7 @@ interface MessageSenderProps {
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     updateAndPersistSessions: SessionsUpdater;
+    scrollContainerRef: React.RefObject<HTMLDivElement>;
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -44,6 +45,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         activeJobs,
         setLoadingSessionIds,
         updateAndPersistSessions,
+        scrollContainerRef,
     } = props;
 
     const generationStartTimeRef = useRef<Date | null>(null);
@@ -70,6 +72,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
             setAppFileError("Wait for files to finish processing."); 
             return; 
         }
+        
         setAppFileError(null);
 
         if (!activeModelId) { 
@@ -97,7 +100,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const generationId = generateUniqueId();
         generationStartTimeRef.current = new Date();
         
-        userScrolledUp.current = false;
+        if (appSettings.isAutoScrollOnSendEnabled) {
+            userScrolledUp.current = false;
+        }
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
         if (!sessionId) {
@@ -212,7 +217,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setLoadingSessionIds,
         updateAndPersistSessions,
         getStreamHandlers,
-        handleTtsImagenMessage
+        handleTtsImagenMessage,
+        scrollContainerRef
     ]);
 
     return { handleSendMessage };

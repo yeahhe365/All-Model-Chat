@@ -23,6 +23,8 @@ interface FeatureFlagsProps {
   setIsCompletionNotificationEnabled: (value: boolean) => void;
   isSuggestionsEnabled: boolean;
   setIsSuggestionsEnabled: (value: boolean) => void;
+  isAutoScrollOnSendEnabled: boolean;
+  setIsAutoScrollOnSendEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -57,7 +59,8 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
   isStreamingEnabled, setIsStreamingEnabled, useFilesApiForImages, setUseFilesApiForImages,
   expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, isAutoTitleEnabled, setIsAutoTitleEnabled,
   isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
-  isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, isSuggestionsEnabled, setIsSuggestionsEnabled, t
+  isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, isSuggestionsEnabled, setIsSuggestionsEnabled,
+  isAutoScrollOnSendEnabled, setIsAutoScrollOnSendEnabled, t
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
@@ -157,6 +160,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       </div>
       
       <Toggle id="streaming-toggle" labelKey="headerStream" checked={isStreamingEnabled} onChange={setIsStreamingEnabled} t={t} />
+      <Toggle id="auto-scroll-toggle" labelKey="settings_autoScrollOnSend_label" checked={isAutoScrollOnSendEnabled} onChange={setIsAutoScrollOnSendEnabled} t={t} />
       <Toggle id="auto-title-toggle" labelKey="isAutoTitleEnabled" tooltipKey="isAutoTitleEnabled_tooltip" checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} t={t} />
       <Toggle id="use-files-api-for-images-toggle" labelKey="settings_useFilesApiForImages_label" tooltipKey="settings_useFilesApiForImages_tooltip" checked={useFilesApiForImages} onChange={setUseFilesApiForImages} t={t} />
       <Toggle id="expand-code-blocks-toggle" labelKey="settings_expandCodeBlocksByDefault_label" checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} t={t} />

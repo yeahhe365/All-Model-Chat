@@ -45,6 +45,8 @@ interface ChatBehaviorSectionProps {
   setIsCompletionNotificationEnabled: (value: boolean) => void;
   isSuggestionsEnabled: boolean;
   setIsSuggestionsEnabled: (value: boolean) => void;
+  isAutoScrollOnSendEnabled?: boolean;
+  setIsAutoScrollOnSendEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -108,6 +110,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
           setIsCompletionNotificationEnabled={props.setIsCompletionNotificationEnabled}
           isSuggestionsEnabled={props.isSuggestionsEnabled}
           setIsSuggestionsEnabled={props.setIsSuggestionsEnabled}
+          isAutoScrollOnSendEnabled={props.isAutoScrollOnSendEnabled ?? true}
+          setIsAutoScrollOnSendEnabled={props.setIsAutoScrollOnSendEnabled}
           t={t}
         />
       </div>

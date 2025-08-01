@@ -73,6 +73,7 @@ export const settingsTranslations = {
     settings_enableCompletionNotification_tooltip: { en: 'Show a browser notification when a response is finished generating while the tab is in the background.', zh: '当标签页在后台时，在响应生成完毕后显示浏览器通知。' },
     settings_enableSuggestions_label: { en: 'Enable Smart Replies', zh: '回复建议' },
     settings_enableSuggestions_tooltip: { en: 'Automatically generate smart replies after the model responds. Uses a fast, separate model call.', zh: '在模型回应后自动生成回复建议。此功能会使用一个快速、独立的模型调用。' },
+    settings_autoScrollOnSend_label: { en: 'Auto-scroll on Send', zh: '发送时自动滚动' },
     
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },

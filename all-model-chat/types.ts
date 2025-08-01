@@ -120,6 +120,7 @@ export interface AppSettings extends ChatSettings {
  isGraphvizRenderingEnabled?: boolean;
  isCompletionNotificationEnabled: boolean;
  isSuggestionsEnabled: boolean;
+ isAutoScrollOnSendEnabled?: boolean;
 }
 
 

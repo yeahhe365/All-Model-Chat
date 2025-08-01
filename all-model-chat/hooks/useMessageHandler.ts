@@ -28,6 +28,7 @@ interface MessageHandlerProps {
     loadingSessionIds: Set<string>;
     setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     updateAndPersistSessions: SessionsUpdater;
+    scrollContainerRef: React.RefObject<HTMLDivElement>;
 }
 
 export const useMessageHandler = (props: MessageHandlerProps) => {
