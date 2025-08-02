@@ -321,6 +321,7 @@ export interface AppModalsProps {
   isModelsLoading: boolean;
   modelsLoadingError: string | null;
   clearCacheAndReload: () => void;
+  clearAllHistory: () => void;
   handleInstallPwa: () => void;
   installPromptEvent: any;
   isStandalone: boolean;

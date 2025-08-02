@@ -10,6 +10,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
     const {
         isSettingsModalOpen, setIsSettingsModalOpen, appSettings, availableModels,
         handleSaveSettings, isModelsLoading, modelsLoadingError, clearCacheAndReload,
+        clearAllHistory,
         handleInstallPwa, installPromptEvent, isStandalone, handleImportSettings, handleExportSettings,
         isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen, savedScenarios,
         handleSaveAllScenarios, handleLoadPreloadedScenario, handleImportPreloadedScenario,
@@ -39,7 +40,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
               onSave={handleSaveSettings}
               isModelsLoading={isModelsLoading}
               modelsLoadingError={modelsLoadingError}
-              onClearAllHistory={clearCacheAndReload}
+              onClearAllHistory={clearAllHistory}
               onClearCache={clearCacheAndReload}
               onOpenLogViewer={() => setIsLogViewerOpen(true)}
               onInstallPwa={handleInstallPwa}

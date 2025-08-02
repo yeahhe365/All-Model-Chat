@@ -270,6 +270,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleMoveSessionToGroup: historyHandler.handleMoveSessionToGroup,
         handleToggleGroupExpansion: historyHandler.handleToggleGroupExpansion,
         clearCacheAndReload: historyHandler.clearCacheAndReload,
+        clearAllHistory: historyHandler.clearAllHistory,
         // from fileHandler
         isAppDraggingOver: fileHandler.isAppDraggingOver,
         handleProcessAndAddFiles: fileHandler.handleProcessAndAddFiles,

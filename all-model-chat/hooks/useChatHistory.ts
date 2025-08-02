@@ -215,16 +215,19 @@ export const useChatHistory = ({
         activeJobs.current.clear();
         localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
         localStorage.removeItem(CHAT_HISTORY_GROUPS_KEY);
+        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
         setSavedSessions([]);
         setSavedGroups([]);
         startNewChat();
     }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs]);
     
     const clearCacheAndReload = useCallback(() => {
-        clearAllHistory();
+        logService.warn('User clearing all application cache and settings.');
+        activeJobs.current.forEach(controller => controller.abort());
+        activeJobs.current.clear();
         localStorage.clear();
         setTimeout(() => window.location.reload(), 50);
-    }, [clearAllHistory]);
+    }, [activeJobs]);
 
     return {
         loadInitialData,

@@ -69,6 +69,7 @@ const App: React.FC = () => {
       handleMoveSessionToGroup,
       handleToggleGroupExpansion,
       clearCacheAndReload,
+      clearAllHistory,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
       handleImportPreloadedScenario,
@@ -415,6 +416,7 @@ const App: React.FC = () => {
         isModelsLoading={isModelsLoading}
         modelsLoadingError={modelsLoadingError}
         clearCacheAndReload={clearCacheAndReload}
+        clearAllHistory={clearAllHistory}
         handleInstallPwa={handleInstallPwa}
         installPromptEvent={installPromptEvent}
         isStandalone={isStandalone}
