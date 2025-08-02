@@ -74,6 +74,9 @@ export const settingsTranslations = {
     settings_enableSuggestions_label: { en: 'Enable Smart Replies', zh: '回复建议' },
     settings_enableSuggestions_tooltip: { en: 'Automatically generate smart replies after the model responds. Uses a fast, separate model call.', zh: '在模型回应后自动生成回复建议。此功能会使用一个快速、独立的模型调用。' },
     settings_autoScrollOnSend_label: { en: 'Auto-scroll on Send', zh: '发送时自动滚动' },
+    settingsViewLogs: { en: 'View Logs', zh: '查看日志' },
+    settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
+    settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
     
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
