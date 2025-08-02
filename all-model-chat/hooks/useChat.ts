@@ -98,6 +98,14 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             logService.error('Transcription failed: API key error.', { error: keyResult.error });
             return null;
         }
+        
+        if (keyResult.isNewKey) {
+            const fileRequiresApi = selectedFiles.some(f => f.fileUri);
+            if (!fileRequiresApi) {
+                logService.info('New API key selected for this session due to transcription.');
+                setCurrentChatSettings(prev => ({...prev, lockedApiKey: keyResult.key }));
+            }
+        }
     
         try {
             const modelToUse = appSettings.transcriptionModelId || 'gemini-2.5-flash';
@@ -109,7 +117,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             logService.error('Transcription failed in useChat handler', { error });
             return null;
         }
-    }, [appSettings, currentChatSettings, setAppFileError]);
+    }, [appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError, selectedFiles]);
 
     useEffect(() => {
         const handleOnline = () => {
@@ -181,6 +189,8 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
                             ...s,
                             messages: [],
                             title: "New Chat",
+                            // Resetting lockedApiKey is crucial to allow using new global settings
+                            settings: { ...s.settings, lockedApiKey: null }
                           }
                         : s
                 )

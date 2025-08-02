@@ -93,7 +93,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
              setActiveSessionId(newSession.id);
             return;
         }
-        const { key: keyToUse } = keyResult;
+        const { key: keyToUse, isNewKey } = keyResult;
+        // A key should be locked if this is the first time a file requiring the File API is used in this session.
+        // The file handling hooks should have already locked the key when the file was processed.
+        // This check prevents text-only chats from locking a key, allowing for key rotation.
+        const shouldLockKey = isNewKey && filesToUse.some(f => f.fileUri && f.uploadState === 'active');
 
         const newAbortController = new AbortController();
         const generationId = generateUniqueId();
@@ -106,8 +110,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (!sessionId) {
             const newSessionId = generateUniqueId();
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
             const newSession: SavedChatSession = {
-                id: newSessionId, title: "New Chat", messages: [], timestamp: Date.now(), settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
+                id: newSessionId, title: "New Chat", messages: [], timestamp: Date.now(), settings: newSessionSettings,
             };
             updateAndPersistSessions(p => [newSession, ...p]);
             setActiveSessionId(newSessionId);
@@ -162,7 +168,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 newTitle = generateSessionTitle(newMessages);
             }
 
-            const updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
+            let updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
+            
+            if(shouldLockKey) {
+                updatedSession = { ...updatedSession, settings: { ...updatedSession.settings, lockedApiKey: keyToUse }};
+            }
             
             return prev.map(s => s.id === currentSessionId ? updatedSession : s);
         });

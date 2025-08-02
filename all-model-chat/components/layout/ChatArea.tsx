@@ -12,7 +12,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel, isModelsLoading,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
-    defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
+    isKeyLocked, defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
@@ -60,6 +60,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onLoadCanvasPrompt={onLoadCanvasPrompt}
         isCanvasPromptActive={isCanvasPromptActive}
         t={t}
+        isKeyLocked={isKeyLocked}
         defaultModelId={defaultModelId}
         onSetDefaultModel={onSetDefaultModel}
         themeId={themeId}

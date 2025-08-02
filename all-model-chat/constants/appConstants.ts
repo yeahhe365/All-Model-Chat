@@ -39,6 +39,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
   ttsVoice: DEFAULT_TTS_VOICE,
   thinkingBudget: DEFAULT_THINKING_BUDGET,
+  lockedApiKey: null,
   isGoogleSearchEnabled: false,
   isCodeExecutionEnabled: false,
   isUrlContextEnabled: false,

@@ -133,6 +133,10 @@ export const useFileHandling = ({
                 return;
             }
             keyToUse = keyResult.key;
+            if (keyResult.isNewKey) {
+                logService.info('New API key selected for this session due to file upload.');
+                setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse! }));
+            }
         }
 
         const uploadPromises = filesArray.map(async (file) => {
@@ -249,7 +253,12 @@ export const useFileHandling = ({
             setAppFileError(keyResult.error);
             return;
         }
-        const { key: keyToUse } = keyResult;
+        const { key: keyToUse, isNewKey } = keyResult;
+        
+        if (isNewKey) {
+            logService.info('New API key selected for this session due to adding file by ID.');
+            setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse }));
+        }
         
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);

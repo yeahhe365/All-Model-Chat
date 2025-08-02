@@ -19,6 +19,7 @@ interface HeaderProps {
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean; // New prop for canvas prompt status
   t: (key: keyof typeof translations) => string;
+  isKeyLocked: boolean;
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
   themeId: string;
@@ -40,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadCanvasPrompt,
   isCanvasPromptActive, // Destructure new prop
   t,
+  isKeyLocked,
   defaultModelId,
   onSetDefaultModel,
   themeId,
@@ -124,6 +126,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-expanded={isModelSelectorOpen}
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
+            {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
             <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
             <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
