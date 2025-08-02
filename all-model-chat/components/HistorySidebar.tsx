@@ -57,7 +57,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const editInputRef = useRef<HTMLInputElement>(null);
   const [newlyTitledSessionId, setNewlyTitledSessionId] = useState<string | null>(null);
   const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
-  const [isAllConversationsExpanded, setIsAllConversationsExpanded] = useState(true);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -129,6 +128,61 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
   const sortedGroups = useMemo(() => [...groups].sort((a,b) => b.timestamp - a.timestamp), [groups]);
 
+  const categorizedUngroupedSessions = useMemo(() => {
+    const ungroupedSessions = sessionsByGroupId.get(null) || [];
+    const unpinned = ungroupedSessions.filter(s => !s.isPinned);
+
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sevenDaysAgoStart = new Date(todayStart);
+    sevenDaysAgoStart.setDate(todayStart.getDate() - 7);
+    const thirtyDaysAgoStart = new Date(todayStart);
+    thirtyDaysAgoStart.setDate(todayStart.getDate() - 30);
+
+    const categories: { [key: string]: SavedChatSession[] } = {};
+
+    const categoryKeys = {
+      today: t('history_today', 'Today'),
+      sevenDays: t('history_7_days', 'Previous 7 Days'),
+      thirtyDays: t('history_30_days', 'Previous 30 Days'),
+    };
+
+    unpinned.forEach(session => {
+      const sessionDate = new Date(session.timestamp);
+      let categoryName: string;
+
+      if (sessionDate >= todayStart) {
+        categoryName = categoryKeys.today;
+      } else if (sessionDate >= sevenDaysAgoStart) {
+        categoryName = categoryKeys.sevenDays;
+      } else if (sessionDate >= thirtyDaysAgoStart) {
+        categoryName = categoryKeys.thirtyDays;
+      } else {
+        categoryName = new Intl.DateTimeFormat(language === 'zh' ? 'zh-CN-u-nu-hanidec' : 'en-US', {
+          year: 'numeric',
+          month: 'long',
+        }).format(sessionDate);
+      }
+      if (!categories[categoryName]) {
+        categories[categoryName] = [];
+      }
+      categories[categoryName].push(session);
+    });
+
+    const staticOrder = [categoryKeys.today, categoryKeys.sevenDays, categoryKeys.thirtyDays];
+    const monthCategories = Object.keys(categories).filter(name => !staticOrder.includes(name))
+      .sort((a, b) => {
+        const dateA = new Date(categories[a][0].timestamp);
+        const dateB = new Date(categories[b][0].timestamp);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+    const categoryOrder = [...staticOrder, ...monthCategories].filter(name => categories[name] && categories[name].length > 0);
+    
+    return { categories, categoryOrder };
+}, [sessionsByGroupId, t, language]);
+
+
   const handleDragStart = (e: React.DragEvent, sessionId: string) => { e.dataTransfer.setData('sessionId', sessionId); };
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
   const handleDrop = (e: React.DragEvent, groupId: string | null) => {
@@ -182,11 +236,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             className="list-none flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-[var(--theme-bg-tertiary)] group"
             onClick={(e) => {
                 e.preventDefault();
-                if (group.id === 'all-conversations') {
-                    setIsAllConversationsExpanded(prev => !prev);
-                } else {
-                    onToggleGroupExpansion(group.id);
-                }
+                onToggleGroupExpansion(group.id);
             }}
         >
           <div className="flex items-center gap-2 min-w-0">
@@ -197,9 +247,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 <span className="font-semibold text-sm truncate text-[var(--theme-text-secondary)]">{group.title}</span>
              )}
           </div>
-          {group.id !== 'all-conversations' && (
             <button onClick={(e) => toggleMenu(e, group.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} /></button>
-          )}
         </summary>
         {activeMenu === group.id && (
           <div ref={menuRef} className="relative z-10">
@@ -214,7 +262,9 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     </div>
   );
 
-  const ungroupedSessions = sessionsByGroupId.get(null);
+  const ungroupedSessions = sessionsByGroupId.get(null) || [];
+  const pinnedUngrouped = ungroupedSessions.filter(s => s.isPinned);
+  const { categories, categoryOrder } = categorizedUngroupedSessions;
 
   return (
     <aside
@@ -247,13 +297,27 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         {sessions.length === 0 && !searchQuery ? (
           <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
         ) : (
-          <>
+          <div onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'all-conversations')} onDragEnter={() => setDragOverId('all-conversations')} onDragLeave={() => setDragOverId(null)} className={`rounded-lg transition-colors ${dragOverId === 'all-conversations' ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : ''}`}>
             {sortedGroups.map(group => renderGroup(group, sessionsByGroupId.get(group.id)))}
-            {ungroupedSessions && ungroupedSessions.length > 0 && renderGroup(
-              { id: 'all-conversations', title: t('history_allConversations', 'All Conversations'), timestamp: 0, isExpanded: isAllConversationsExpanded },
-              ungroupedSessions
+            
+            {pinnedUngrouped.length > 0 && (
+                <div>
+                    <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{t('history_pinned')}</div>
+                    <ul>
+                        {pinnedUngrouped.map(renderSessionItem)}
+                    </ul>
+                </div>
             )}
-          </>
+            
+            {categoryOrder.map(categoryName => (
+                <div key={categoryName}>
+                    <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{categoryName}</div>
+                    <ul>
+                        {categories[categoryName].map(renderSessionItem)}
+                    </ul>
+                </div>
+            ))}
+          </div>
         )}
       </div>
     </aside>

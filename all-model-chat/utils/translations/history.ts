@@ -17,4 +17,8 @@ export const historyTranslations = {
     export_chat: { en: 'Export Chat', zh: '导出对话' },
     chat_is_empty: { en: 'Chat is empty', zh: '对话为空' },
     history_allConversations: { en: 'All Conversations', zh: '所有对话' },
+    history_pinned: { en: 'Pinned', zh: '已置顶' },
+    history_today: { en: 'Today', zh: '今天' },
+    history_7_days: { en: 'Previous 7 Days', zh: '最近 7 天' },
+    history_30_days: { en: 'Previous 30 Days', zh: '最近 30 天' },
 };

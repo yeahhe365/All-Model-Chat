@@ -74,7 +74,7 @@ export const ONYX_THEME_COLORS: ThemeColors = {
   bgInput: '#40414F',
   bgCodeBlock: '#202123',
   bgCodeBlockHeader: 'rgba(64, 65, 79, 0.7)',
-  bgUserMessage: '#444654',
+  bgUserMessage: '#10a37f',
   bgModelMessage: '#2b2b31',
   bgErrorMessage: 'rgba(218, 54, 51, 0.2)',
   bgSuccess: 'rgba(74, 222, 128, 0.15)',
