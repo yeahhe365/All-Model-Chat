@@ -131,7 +131,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <DataManagementSection
                     onClearHistory={() => { onClearAllHistory(); onClose(); }}
                     onClearCache={onClearCache}
-                    onOpenLogViewer={onOpenLogViewer}
+                    onOpenLogViewer={() => { onOpenLogViewer(); onClose(); }}
                     onInstallPwa={onInstallPwa}
                     isInstallable={isInstallable}
                     onImportSettings={onImportSettings}

@@ -16,17 +16,12 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
 export const getKeyForRequest = (
     appSettings: AppSettings,
     currentChatSettings: ChatSettings
-): { key: string; isNewKey: boolean } | { error: string } => {
+): { key: string } | { error: string } => {
     const logUsage = (key: string) => {
         if (appSettings.useCustomApiConfig) {
             logService.recordApiKeyUsage(key);
         }
     };
-
-    if (currentChatSettings.lockedApiKey) {
-        logUsage(currentChatSettings.lockedApiKey);
-        return { key: currentChatSettings.lockedApiKey, isNewKey: false };
-    }
 
     const { apiKeysString } = getActiveApiConfig(appSettings);
     if (!apiKeysString) {
@@ -40,10 +35,10 @@ export const getKeyForRequest = (
     if (availableKeys.length === 1) {
         const key = availableKeys[0];
         logUsage(key);
-        return { key, isNewKey: true };
+        return { key };
     }
 
-    // Round-robin logic
+    // Round-robin logic for every request
     let lastUsedIndex = -1;
     try {
         const storedIndex = localStorage.getItem(API_KEY_LAST_USED_INDEX_KEY);
@@ -54,7 +49,7 @@ export const getKeyForRequest = (
         logService.error("Could not parse last used API key index", e);
     }
 
-    if (isNaN(lastUsedIndex) || lastUsedIndex < 0 || lastUsedIndex >= availableKeys.length) {
+    if (isNaN(lastUsedIndex) || lastUsedIndex < 0) {
         lastUsedIndex = -1;
     }
 
@@ -68,5 +63,5 @@ export const getKeyForRequest = (
     }
     
     logUsage(nextKey);
-    return { key: nextKey, isNewKey: true };
+    return { key: nextKey };
 };

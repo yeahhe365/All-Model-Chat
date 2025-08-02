@@ -93,8 +93,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
              setActiveSessionId(newSession.id);
             return;
         }
-        const { key: keyToUse, isNewKey } = keyResult;
-        const shouldLockKey = isNewKey;
+        const { key: keyToUse } = keyResult;
 
         const newAbortController = new AbortController();
         const generationId = generateUniqueId();
@@ -107,10 +106,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (!sessionId) {
             const newSessionId = generateUniqueId();
-            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
             const newSession: SavedChatSession = {
-                id: newSessionId, title: "New Chat", messages: [], timestamp: Date.now(), settings: newSessionSettings,
+                id: newSessionId, title: "New Chat", messages: [], timestamp: Date.now(), settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
             };
             updateAndPersistSessions(p => [newSession, ...p]);
             setActiveSessionId(newSessionId);
@@ -165,11 +162,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 newTitle = generateSessionTitle(newMessages);
             }
 
-            let updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
-            
-            if(shouldLockKey) {
-                updatedSession = { ...updatedSession, settings: { ...updatedSession.settings, lockedApiKey: keyToUse }};
-            }
+            const updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
             
             return prev.map(s => s.id === currentSessionId ? updatedSession : s);
         });

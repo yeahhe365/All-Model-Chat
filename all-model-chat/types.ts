@@ -78,7 +78,6 @@ export interface ChatSettings {
   systemInstruction: string;
   ttsVoice: string;
   thinkingBudget: number;
-  lockedApiKey?: string | null;
   isGoogleSearchEnabled?: boolean;
   isCodeExecutionEnabled?: boolean;
   isUrlContextEnabled?: boolean;
@@ -370,7 +369,6 @@ export interface ChatAreaProps {
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  isKeyLocked: boolean;
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
   themeId: string;
