@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useMemo } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { AppSettings } from './types';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from './constants/appConstants';
 import { HistorySidebar } from './components/HistorySidebar';
@@ -6,6 +6,7 @@ import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { useAppUI } from './hooks/useAppUI';
 import { useAppEvents } from './hooks/useAppEvents';
+import { usePictureInPicture } from './hooks/usePictureInPicture';
 import { getTranslator, logService } from './utils/appUtils';
 import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
@@ -112,7 +113,6 @@ const App: React.FC = () => {
     handleInstallPwa,
     handleExportSettings,
     handleImportSettings,
-    handleTogglePip,
   } = useAppEvents({
     appSettings,
     setAppSettings,
@@ -128,9 +128,10 @@ const App: React.FC = () => {
     updateAndPersistSessions,
   });
 
+  const { isPipSupported, isPipActive, togglePip } = usePictureInPicture(scrollContainerRef);
+
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
-  const isPipMode = useMemo(() => new URLSearchParams(window.location.search).get('mode') === 'pip', []);
 
 
   useEffect(() => {
@@ -308,41 +309,38 @@ const App: React.FC = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {!isPipMode && isHistorySidebarOpen && (
+      {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
           className="fixed sm:hidden inset-0 bg-black/60 z-20 transition-opacity duration-300"
           aria-hidden="true"
         />
       )}
-      {!isPipMode && (
-          <HistorySidebar
-            isOpen={isHistorySidebarOpen}
-            onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
-            sessions={savedSessions}
-            groups={savedGroups}
-            activeSessionId={activeSessionId}
-            loadingSessionIds={loadingSessionIds}
-            generatingTitleSessionIds={generatingTitleSessionIds}
-            onSelectSession={(id) => loadChatSession(id, savedSessions)}
-            onNewChat={() => startNewChat()}
-            onDeleteSession={handleDeleteChatHistorySession}
-            onRenameSession={handleRenameSession}
-            onTogglePinSession={handleTogglePinSession}
-            onOpenExportModal={() => setIsExportModalOpen(true)}
-            onAddNewGroup={handleAddNewGroup}
-            onDeleteGroup={handleDeleteGroup}
-            onRenameGroup={handleRenameGroup}
-            onMoveSessionToGroup={handleMoveSessionToGroup}
-            onToggleGroupExpansion={handleToggleGroupExpansion}
-            themeColors={currentTheme.colors}
-            t={t}
-            themeId={currentTheme.id}
-            language={language}
-          />
-      )}
+      <HistorySidebar
+        isOpen={isHistorySidebarOpen}
+        onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
+        sessions={savedSessions}
+        groups={savedGroups}
+        activeSessionId={activeSessionId}
+        loadingSessionIds={loadingSessionIds}
+        generatingTitleSessionIds={generatingTitleSessionIds}
+        onSelectSession={(id) => loadChatSession(id, savedSessions)}
+        onNewChat={() => startNewChat()}
+        onDeleteSession={handleDeleteChatHistorySession}
+        onRenameSession={handleRenameSession}
+        onTogglePinSession={handleTogglePinSession}
+        onOpenExportModal={() => setIsExportModalOpen(true)}
+        onAddNewGroup={handleAddNewGroup}
+        onDeleteGroup={handleDeleteGroup}
+        onRenameGroup={handleRenameGroup}
+        onMoveSessionToGroup={handleMoveSessionToGroup}
+        onToggleGroupExpansion={handleToggleGroupExpansion}
+        themeColors={currentTheme.colors}
+        t={t}
+        themeId={currentTheme.id}
+        language={language}
+      />
       <ChatArea
-        isPipMode={isPipMode}
         isAppDraggingOver={isAppDraggingOver}
         handleAppDragEnter={handleAppDragEnter}
         handleAppDragOver={handleAppDragOver}
@@ -416,47 +414,47 @@ const App: React.FC = () => {
         onClearChat={handleClearCurrentChat}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
-        onTogglePip={handleTogglePip}
         onTogglePinCurrentSession={handleTogglePinCurrentSession}
         onRetryLastTurn={handleRetryLastTurn}
         onEditLastUserMessage={handleEditLastUserMessage}
         onOpenLogViewer={() => setIsLogViewerOpen(true)}
         onClearAllHistory={clearAllHistory}
+        isPipSupported={isPipSupported}
+        isPipActive={isPipActive}
+        onTogglePip={togglePip}
         t={t}
       />
-      {!isPipMode && (
-          <AppModals
-            isSettingsModalOpen={isSettingsModalOpen}
-            setIsSettingsModalOpen={setIsSettingsModalOpen}
-            appSettings={appSettings}
-            availableModels={apiModels}
-            handleSaveSettings={handleSaveSettings}
-            isModelsLoading={isModelsLoading}
-            modelsLoadingError={modelsLoadingError}
-            clearCacheAndReload={clearCacheAndReload}
-            clearAllHistory={clearAllHistory}
-            handleInstallPwa={handleInstallPwa}
-            installPromptEvent={installPromptEvent}
-            isStandalone={isStandalone}
-            handleImportSettings={handleImportSettings}
-            handleExportSettings={handleExportSettings}
-            isPreloadedMessagesModalOpen={isPreloadedMessagesModalOpen}
-            setIsPreloadedMessagesModalOpen={setIsPreloadedMessagesModalOpen}
-            savedScenarios={savedScenarios}
-            handleSaveAllScenarios={handleSaveAllScenarios}
-            handleLoadPreloadedScenario={handleLoadPreloadedScenario}
-            handleImportPreloadedScenario={handleImportPreloadedScenario}
-            handleExportPreloadedScenario={handleExportPreloadedScenario}
-            isExportModalOpen={isExportModalOpen}
-            setIsExportModalOpen={setIsExportModalOpen}
-            handleExportChat={handleExportChat}
-            exportStatus={exportStatus}
-            isLogViewerOpen={isLogViewerOpen}
-            setIsLogViewerOpen={setIsLogViewerOpen}
-            currentChatSettings={currentChatSettings}
-            t={t}
-          />
-      )}
+      <AppModals
+        isSettingsModalOpen={isSettingsModalOpen}
+        setIsSettingsModalOpen={setIsSettingsModalOpen}
+        appSettings={appSettings}
+        availableModels={apiModels}
+        handleSaveSettings={handleSaveSettings}
+        isModelsLoading={isModelsLoading}
+        modelsLoadingError={modelsLoadingError}
+        clearCacheAndReload={clearCacheAndReload}
+        clearAllHistory={clearAllHistory}
+        handleInstallPwa={handleInstallPwa}
+        installPromptEvent={installPromptEvent}
+        isStandalone={isStandalone}
+        handleImportSettings={handleImportSettings}
+        handleExportSettings={handleExportSettings}
+        isPreloadedMessagesModalOpen={isPreloadedMessagesModalOpen}
+        setIsPreloadedMessagesModalOpen={setIsPreloadedMessagesModalOpen}
+        savedScenarios={savedScenarios}
+        handleSaveAllScenarios={handleSaveAllScenarios}
+        handleLoadPreloadedScenario={handleLoadPreloadedScenario}
+        handleImportPreloadedScenario={handleImportPreloadedScenario}
+        handleExportPreloadedScenario={handleExportPreloadedScenario}
+        isExportModalOpen={isExportModalOpen}
+        setIsExportModalOpen={setIsExportModalOpen}
+        handleExportChat={handleExportChat}
+        exportStatus={exportStatus}
+        isLogViewerOpen={isLogViewerOpen}
+        setIsLogViewerOpen={setIsLogViewerOpen}
+        currentChatSettings={currentChatSettings}
+        t={t}
+      />
     </div>
   );
 };

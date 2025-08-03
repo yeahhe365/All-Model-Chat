@@ -41,7 +41,6 @@ interface ChatInputProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
-  onTogglePip: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onSelectModel: (modelId: string) => void;
@@ -61,7 +60,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
-    onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePip, onTogglePinCurrentSession,
+    onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
     onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage
   } = props;
 
@@ -341,7 +340,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                             canSend={canSend}
                             isWaitingForUpload={isWaitingForUpload}
                             t={t}
-                            onTogglePip={onTogglePip}
                         />
                          {/* Hidden inputs for file selection, triggered by AttachmentMenu */}
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />

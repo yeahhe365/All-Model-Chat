@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppSettings, ChatSettings, SavedChatSession } from '../types';
 import { DEFAULT_APP_SETTINGS, TAB_CYCLE_MODELS } from '../constants/appConstants';
-import { logService } from '../utils/appUtils';
+import { logService } from '../services/logService';
 import { getTranslator } from '../utils/appUtils';
 
 interface AppEventsProps {
@@ -18,8 +18,6 @@ interface AppEventsProps {
     setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 }
-
-const isCurrentlyInPip = ('documentPictureInPicture' in window) && window.documentPictureInPicture.window === window;
 
 export const useAppEvents = ({
     appSettings,
@@ -38,7 +36,6 @@ export const useAppEvents = ({
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
     const t = getTranslator(language);
-    const pipWindowRef = useRef<Window | null>(null);
 
     // PWA Installation Handlers
     useEffect(() => {
@@ -199,64 +196,6 @@ export const useAppEvents = ({
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen]);
-    
-    const handleTogglePip = useCallback(async () => {
-        // If we are currently in a PiP window, the button should close it.
-        if (isCurrentlyInPip) {
-            window.close();
-            return;
-        }
-    
-        // From the main window, if a PiP window exists and is open, close it.
-        if (pipWindowRef.current && !pipWindowRef.current.closed) {
-            pipWindowRef.current.close();
-            return;
-        }
-
-        if (!('documentPictureInPicture' in window)) {
-            alert(t('pip_unsupported_error'));
-            logService.warn('Document PiP API not supported.');
-            return;
-        }
-
-        try {
-            const pipWidth = Math.min(window.screen.width, 800);
-            const pipHeight = Math.min(window.screen.height, 600);
-            // @ts-ignore: documentPictureInPicture is a new API and might not be in all TS defs
-            const pipWindow = await window.documentPictureInPicture.requestWindow({
-                width: pipWidth,
-                height: pipHeight,
-            });
-
-            pipWindowRef.current = pipWindow;
-            
-            const url = new URL(window.location.href);
-            url.searchParams.set('mode', 'pip');
-
-            const iframe = pipWindow.document.createElement('iframe');
-            iframe.src = url.toString();
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            pipWindow.document.body.append(iframe);
-            pipWindow.document.body.style.margin = '0';
-            pipWindow.document.body.style.overflow = 'hidden';
-            pipWindow.document.title = 'All Model Chat (PiP)';
-
-            // Listen for the PiP window closing to clear our reference
-            pipWindow.addEventListener('pagehide', () => {
-                logService.info('PiP window closed.');
-                pipWindowRef.current = null;
-            });
-
-            logService.info(`PiP window opened for the app.`);
-        } catch (error) {
-            logService.error('Failed to open PiP window', { error });
-            if (error instanceof Error) {
-                alert(t('pip_generic_error').replace('{error}', error.message));
-            }
-        }
-    }, [t]);
 
     return {
         installPromptEvent,
@@ -264,6 +203,5 @@ export const useAppEvents = ({
         handleInstallPwa,
         handleExportSettings,
         handleImportSettings,
-        handleTogglePip,
     };
 };

@@ -52,9 +52,4 @@ export const chatInputTranslations = {
     // Help Modal
     helpModal_title: { en: 'Command Help', zh: '命令帮助' },
     helpModal_close_aria: { en: 'Close help modal', zh: '关闭帮助模态框' },
-
-    // PiP Feature
-    pip_button_aria: { en: 'Open App in Picture-in-Picture', zh: '在画中画中打开应用' },
-    pip_unsupported_error: { en: 'Document Picture-in-Picture API is not supported in your browser.', zh: '您的浏览器不支持文档画中画 API。' },
-    pip_generic_error: { en: 'An error occurred: {error}', zh: '发生错误：{error}' },
 };

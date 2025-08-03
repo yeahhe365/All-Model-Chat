@@ -23,11 +23,11 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
     isProcessingFile, fileError, isImagenModel, aspectRatio, setAspectRatio,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
-    isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt, onTogglePip,
+    isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
     onOpenLogViewer, onClearAllHistory,
-    t,
-    isPipMode,
+    isPipSupported, isPipActive, onTogglePip,
+    t
   } = props;
 
   const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number; items: ContextMenuItem[] } | null>(null);
@@ -106,7 +106,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       onDragOver={handleAppDragOver}
       onDragLeave={handleAppDragLeave}
       onDrop={handleAppDrop}
-      onContextMenu={isPipMode ? (e) => e.preventDefault() : handleContextMenu}
+      onContextMenu={handleContextMenu}
     >
       {isAppDraggingOver && (
         <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
@@ -118,7 +118,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         </div>
       )}
       <Header
-        isPipMode={isPipMode}
         onNewChat={onNewChat}
         onOpenSettingsModal={onOpenSettingsModal}
         onOpenScenariosModal={onOpenScenariosModal}
@@ -137,6 +136,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         isKeyLocked={isKeyLocked}
         defaultModelId={defaultModelId}
         onSetDefaultModel={onSetDefaultModel}
+        isPipSupported={isPipSupported}
+        isPipActive={isPipActive}
+        onTogglePip={onTogglePip}
         themeId={themeId}
       />
       {modelsLoadingError && (
@@ -198,7 +200,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onNewChat={onNewChat}
         onOpenSettings={onOpenSettings}
         onToggleCanvasPrompt={onToggleCanvasPrompt}
-        onTogglePip={onTogglePip}
         onSelectModel={onSelectModel}
         availableModels={availableModels}
         onTogglePinCurrentSession={onTogglePinCurrentSession}

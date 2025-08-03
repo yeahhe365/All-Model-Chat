@@ -229,7 +229,6 @@ export interface ChatInputProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
-  onTogglePip: () => void;
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
   onTogglePinCurrentSession: () => void;
@@ -276,7 +275,6 @@ export interface ChatInputActionsProps {
   isWaitingForUpload: boolean;
   t: (key: keyof typeof translations) => string;
   onCancelRecording: () => void;
-  onTogglePip: () => void;
 }
 
 export interface CommandInfo {
@@ -378,7 +376,6 @@ export interface ChatAreaProps {
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
   themeId: string;
-  isPipMode?: boolean;
   
   // Models Error
   modelsLoadingError: string | null;
@@ -435,12 +432,16 @@ export interface ChatAreaProps {
   onClearChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
-  onTogglePip: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onEditLastUserMessage: () => void;
   onOpenLogViewer: () => void;
   onClearAllHistory: () => void;
+  
+  // PiP Props
+  isPipSupported: boolean;
+  isPipActive: boolean;
+  onTogglePip: () => void;
   
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
