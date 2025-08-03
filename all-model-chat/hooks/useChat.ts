@@ -201,6 +201,26 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         }
     }, [isLoading, activeSessionId, messageHandler.handleStopGenerating, updateAndPersistSessions, setSelectedFiles, startNewChat]);
 
+    useEffect(() => {
+        const handleStorageChange = (event: StorageEvent) => {
+            if (event.key === CHAT_HISTORY_SESSIONS_KEY && event.newValue && event.oldValue !== event.newValue) {
+                try {
+                    const newSessions = JSON.parse(event.newValue);
+                    if (Array.isArray(newSessions)) {
+                        logService.info('Detected storage change from another window, reloading sessions.');
+                        setSavedSessions(newSessions); 
+                    }
+                } catch (e) {
+                    logService.error('Failed to parse sessions from storage event.', { error: e });
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
 
      const toggleGoogleSearch = useCallback(() => {
         if (!activeSessionId) return;

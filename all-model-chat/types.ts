@@ -378,6 +378,7 @@ export interface ChatAreaProps {
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
   themeId: string;
+  isPipMode?: boolean;
   
   // Models Error
   modelsLoadingError: string | null;

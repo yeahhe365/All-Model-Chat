@@ -23,6 +23,7 @@ interface HeaderProps {
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
   themeId: string;
+  isPipMode?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -45,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
   defaultModelId,
   onSetDefaultModel,
   themeId,
+  isPipMode,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [hoveredModelId, setHoveredModelId] = useState<string | null>(null);
@@ -98,23 +100,27 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0`}>
       <div className="flex items-center gap-2 min-w-0">
-        <button
-            onClick={onToggleHistorySidebar}
-            className={`p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105 ${isHistorySidebarOpen ? 'sm:hidden' : ''}`}
-            aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
-            title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
-        >
-            {isHistorySidebarOpen ? <PanelLeftClose size={getResponsiveValue(18, 20)} /> : <PanelLeftOpen size={getResponsiveValue(18, 20)} />}
-        </button>
-        {!isHistorySidebarOpen && (
-          <button
-            onClick={onNewChat}
-            className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
-            aria-label={t('headerNewChat_aria')}
-            title={`${t('newChat')} (${newChatShortcut})`}
-          >
-            <SquarePen size={getResponsiveValue(18, 20)} />
-          </button>
+        {!isPipMode && (
+          <>
+            <button
+                onClick={onToggleHistorySidebar}
+                className={`p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105 ${isHistorySidebarOpen ? 'sm:hidden' : ''}`}
+                aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
+                title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
+            >
+                {isHistorySidebarOpen ? <PanelLeftClose size={getResponsiveValue(18, 20)} /> : <PanelLeftOpen size={getResponsiveValue(18, 20)} />}
+            </button>
+            {!isHistorySidebarOpen && (
+              <button
+                onClick={onNewChat}
+                className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
+                aria-label={t('headerNewChat_aria')}
+                title={`${t('newChat')} (${newChatShortcut})`}
+              >
+                <SquarePen size={getResponsiveValue(18, 20)} />
+              </button>
+            )}
+          </>
         )}
         <div className="relative" ref={modelSelectorRef}>
           <button
@@ -204,22 +210,26 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Wand2 size={getResponsiveValue(16, 18)} />
         </button>
-        <button
-          onClick={onOpenScenariosModal}
-          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
-          aria-label={t('scenariosManage_aria')}
-          title={t('scenariosManage_title')}
-        >
-          <MessagesSquare size={getResponsiveValue(16, 18)} />
-        </button>
-        <button
-          onClick={onOpenSettingsModal} 
-          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
-          aria-label={t('settingsOpen_aria')}
-          title={t('settingsOpen_title')}
-        >
-          <Settings size={getResponsiveValue(16, 18)} />
-        </button>
+        {!isPipMode && (
+          <>
+            <button
+              onClick={onOpenScenariosModal}
+              className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
+              aria-label={t('scenariosManage_aria')}
+              title={t('scenariosManage_title')}
+            >
+              <MessagesSquare size={getResponsiveValue(16, 18)} />
+            </button>
+            <button
+              onClick={onOpenSettingsModal} 
+              className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
+              aria-label={t('settingsOpen_aria')}
+              title={t('settingsOpen_title')}
+            >
+              <Settings size={getResponsiveValue(16, 18)} />
+            </button>
+          </>
+        )}
       </div>
     </header>
   );

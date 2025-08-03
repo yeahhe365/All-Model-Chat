@@ -26,7 +26,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt, onTogglePip,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
     onOpenLogViewer, onClearAllHistory,
-    t
+    t,
+    isPipMode,
   } = props;
 
   const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number; items: ContextMenuItem[] } | null>(null);
@@ -105,7 +106,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       onDragOver={handleAppDragOver}
       onDragLeave={handleAppDragLeave}
       onDrop={handleAppDrop}
-      onContextMenu={handleContextMenu}
+      onContextMenu={isPipMode ? (e) => e.preventDefault() : handleContextMenu}
     >
       {isAppDraggingOver && (
         <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
@@ -117,6 +118,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         </div>
       )}
       <Header
+        isPipMode={isPipMode}
         onNewChat={onNewChat}
         onOpenSettingsModal={onOpenSettingsModal}
         onOpenScenariosModal={onOpenScenariosModal}

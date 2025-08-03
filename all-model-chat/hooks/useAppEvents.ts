@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppSettings, ChatSettings, SavedChatSession } from '../types';
 import { DEFAULT_APP_SETTINGS, TAB_CYCLE_MODELS } from '../constants/appConstants';
 import { logService } from '../utils/appUtils';
@@ -19,6 +19,8 @@ interface AppEventsProps {
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 }
 
+const isCurrentlyInPip = ('documentPictureInPicture' in window) && window.documentPictureInPicture.window === window;
+
 export const useAppEvents = ({
     appSettings,
     setAppSettings,
@@ -36,6 +38,7 @@ export const useAppEvents = ({
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
     const t = getTranslator(language);
+    const pipWindowRef = useRef<Window | null>(null);
 
     // PWA Installation Handlers
     useEffect(() => {
@@ -198,22 +201,21 @@ export const useAppEvents = ({
     }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen]);
     
     const handleTogglePip = useCallback(async () => {
-        if (!('documentPictureInPicture' in window)) {
-            alert(t('pip_unsupported_error'));
-            logService.warn('Document PiP API not supported.');
+        // If we are currently in a PiP window, the button should close it.
+        if (isCurrentlyInPip) {
+            window.close();
+            return;
+        }
+    
+        // From the main window, if a PiP window exists and is open, close it.
+        if (pipWindowRef.current && !pipWindowRef.current.closed) {
+            pipWindowRef.current.close();
             return;
         }
 
-        const url = prompt(t('pip_prompt_title'), 'https://');
-        if (!url) {
-            return; // User cancelled
-        }
-
-        try {
-            new URL(url); // Validate URL format
-        } catch (e) {
-            alert(t('pip_invalid_url_error'));
-            logService.error('Invalid URL for PiP', { url });
+        if (!('documentPictureInPicture' in window)) {
+            alert(t('pip_unsupported_error'));
+            logService.warn('Document PiP API not supported.');
             return;
         }
 
@@ -226,35 +228,32 @@ export const useAppEvents = ({
                 height: pipHeight,
             });
 
-            // A new window is created. Populate it.
+            pipWindowRef.current = pipWindow;
+            
+            const url = new URL(window.location.href);
+            url.searchParams.set('mode', 'pip');
+
             const iframe = pipWindow.document.createElement('iframe');
-            iframe.src = url;
+            iframe.src = url.toString();
             iframe.style.width = '100%';
             iframe.style.height = '100%';
             iframe.style.border = 'none';
-            iframe.allow = "accelerometer; ambient-light-sensor; autoplay; battery; camera; display-capture; document-domain; encrypted-media; execution-while-not-rendered; execution-while-out-of-viewport; fullscreen; geolocation; gyroscope; hid; identity-credentials-get; idle-detection; local-fonts; magnetometer; microphone; midi; payment; picture-in-picture; publickey-credentials-get; screen-wake-lock; serial; speaker-selection; usb; web-share; xr-spatial-tracking";
-            iframe.setAttribute('allowfullscreen', '');
             pipWindow.document.body.append(iframe);
             pipWindow.document.body.style.margin = '0';
             pipWindow.document.body.style.overflow = 'hidden';
-            pipWindow.document.title = 'PiP Viewer';
+            pipWindow.document.title = 'All Model Chat (PiP)';
 
-            // Listen for the PiP window closing
+            // Listen for the PiP window closing to clear our reference
             pipWindow.addEventListener('pagehide', () => {
                 logService.info('PiP window closed.');
+                pipWindowRef.current = null;
             });
 
-            logService.info(`PiP window opened for URL: ${url}`);
+            logService.info(`PiP window opened for the app.`);
         } catch (error) {
             logService.error('Failed to open PiP window', { error });
             if (error instanceof Error) {
-                if (error.name === 'NotAllowedError') {
-                    alert(t('pip_denied_error'));
-                } else if (error.message.includes('transient activation')) {
-                    alert(t('pip_user_gesture_error'));
-                } else {
-                    alert(t('pip_generic_error').replace('{error}', error.message));
-                }
+                alert(t('pip_generic_error').replace('{error}', error.message));
             }
         }
     }, [t]);
