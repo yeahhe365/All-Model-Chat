@@ -29,38 +29,57 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     t
   } = props;
 
-  const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number; items: ContextMenuItem[] } | null>(null);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
+
+    const selection = window.getSelection();
+    const selectedText = selection ? selection.toString().trim() : '';
+
+    let items: ContextMenuItem[];
+
+    if (selectedText) {
+        items = [
+            {
+                label: t('copy', 'Copy'),
+                icon: 'ClipboardCopy',
+                onClick: () => {
+                    navigator.clipboard.writeText(selectedText);
+                },
+            },
+        ];
+    } else {
+        items = [
+            {
+                label: t('settingsViewLogs', 'View Logs'),
+                icon: 'Terminal',
+                onClick: onOpenLogViewer,
+            },
+            {
+                label: t('settingsClearHistory', 'Clear History'),
+                icon: 'Trash2',
+                onClick: () => {
+                    if (window.confirm(t('settingsClearHistory_confirm'))) {
+                        onClearAllHistory();
+                    }
+                },
+                isDanger: true,
+            },
+        ];
+    }
+
     setContextMenu({
         isOpen: true,
         x: e.pageX,
         y: e.pageY,
+        items: items,
     });
   };
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);
   };
-
-  const contextMenuItems: ContextMenuItem[] = [
-    {
-      label: t('settingsViewLogs', 'View Logs'),
-      icon: 'Terminal',
-      onClick: onOpenLogViewer,
-    },
-    {
-      label: t('settingsClearHistory', 'Clear History'),
-      icon: 'Trash2',
-      onClick: () => {
-        if (window.confirm(t('settingsClearHistory_confirm'))) {
-          onClearAllHistory();
-        }
-      },
-      isDanger: true,
-    },
-  ];
 
   return (
     <div
@@ -171,7 +190,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             isOpen={contextMenu.isOpen}
             position={{ x: contextMenu.x, y: contextMenu.y }}
             onClose={handleCloseContextMenu}
-            items={contextMenuItems}
+            items={contextMenu.items}
         />
       )}
     </div>

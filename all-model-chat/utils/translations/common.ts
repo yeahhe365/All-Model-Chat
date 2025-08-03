@@ -9,4 +9,5 @@ export const commonTranslations = {
     export: { en: 'Export', zh: '导出' },
     loading: { en: 'Loading...', zh: '加载中...' },
     newChat: { en: 'New Chat', zh: '发起新对话' },
+    copy: { en: 'Copy', zh: '复制' },
 };

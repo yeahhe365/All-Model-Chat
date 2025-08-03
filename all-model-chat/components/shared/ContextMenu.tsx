@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { Terminal, Trash2 } from 'lucide-react';
+import { Terminal, Trash2, ClipboardCopy } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
@@ -7,6 +7,7 @@ const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
     switch (iconName) {
         case 'Terminal': return <Terminal {...iconProps} />;
         case 'Trash2': return <Trash2 {...iconProps} />;
+        case 'ClipboardCopy': return <ClipboardCopy {...iconProps} />;
         default: return null;
     }
 };
