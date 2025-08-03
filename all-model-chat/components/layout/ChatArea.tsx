@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Paperclip } from 'lucide-react';
 import { Header } from '../Header';
 import { MessageList } from '../MessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatAreaProps } from '../../types';
 import { getResponsiveValue } from '../../utils/appUtils';
+import { ContextMenu, ContextMenuItem } from '../shared/ContextMenu';
 
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
@@ -24,8 +25,42 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
+    onOpenLogViewer, onClearAllHistory,
     t
   } = props;
+
+  const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({
+        isOpen: true,
+        x: e.pageX,
+        y: e.pageY,
+    });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const contextMenuItems: ContextMenuItem[] = [
+    {
+      label: t('settingsViewLogs', 'View Logs'),
+      icon: 'Terminal',
+      onClick: onOpenLogViewer,
+    },
+    {
+      label: t('settingsClearHistory', 'Clear History'),
+      icon: 'Trash2',
+      onClick: () => {
+        if (window.confirm(t('settingsClearHistory_confirm'))) {
+          onClearAllHistory();
+        }
+      },
+      isDanger: true,
+    },
+  ];
 
   return (
     <div
@@ -34,6 +69,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       onDragOver={handleAppDragOver}
       onDragLeave={handleAppDragLeave}
       onDrop={handleAppDrop}
+      onContextMenu={handleContextMenu}
     >
       {isAppDraggingOver && (
         <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
@@ -130,6 +166,14 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onRetryLastTurn={onRetryLastTurn}
         onEditLastUserMessage={onEditLastUserMessage}
       />
+      {contextMenu && (
+        <ContextMenu 
+            isOpen={contextMenu.isOpen}
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            onClose={handleCloseContextMenu}
+            items={contextMenuItems}
+        />
+      )}
     </div>
   );
 };

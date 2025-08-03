@@ -433,6 +433,8 @@ export interface ChatAreaProps {
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onEditLastUserMessage: () => void;
+  onOpenLogViewer: () => void;
+  onClearAllHistory: () => void;
   
   t: (key: keyof typeof translations, fallback?: string) => string;
 }

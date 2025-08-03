@@ -47,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   themeId,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  const [hoveredModelId, setHoveredModelId] = useState<string | null>(null);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
 
@@ -76,9 +77,9 @@ export const Header: React.FC<HeaderProps> = ({
     setIsModelSelectorOpen(false);
   };
   
-  const handleSetDefault = (e: React.MouseEvent) => {
+  const handleSetDefault = (e: React.MouseEvent, modelId: string) => {
       e.stopPropagation();
-      onSetDefaultModel(selectedModelId);
+      onSetDefaultModel(modelId);
       setIsModelSelectorOpen(false);
   }
 
@@ -119,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
@@ -133,7 +134,8 @@ export const Header: React.FC<HeaderProps> = ({
 
           {isModelSelectorOpen && (
             <div 
-              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-lg shadow-premium z-20 flex flex-col"
+              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-20 flex flex-col modal-enter-animation"
+              onMouseLeave={() => setHoveredModelId(null)}
             >
               <div className="max-h-96 overflow-y-auto custom-scrollbar" role="listbox" aria-labelledby="model-selector-button">
                 {isModelsLoading ? (
@@ -150,6 +152,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <div
                       key={model.id}
                       onClick={() => handleModelSelect(model.id)}
+                      onMouseEnter={() => setHoveredModelId(model.id)}
                       role="option"
                       aria-selected={model.id === selectedModelId}
                       className={`cursor-pointer w-full text-left px-4 py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
@@ -165,24 +168,22 @@ export const Header: React.FC<HeaderProps> = ({
                         </div>
                         {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
                       </div>
-
-                      {model.id === selectedModelId && (
+                      
+                      {model.id === defaultModelId ? (
+                        <div className="mt-2 pl-1 text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
+                            <Check size={14} />
+                            <span>{t('header_setDefault_isDefault')}</span>
+                        </div>
+                      ) : hoveredModelId === model.id ? (
                           <div className="mt-2 pl-1" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
-                              {model.id === defaultModelId ? (
-                                  <div className="text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
-                                      <Check size={14} />
-                                      <span>{t('header_setDefault_isDefault')}</span>
-                                  </div>
-                              ) : (
-                                  <button
-                                      onClick={handleSetDefault}
-                                      className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"
-                                  >
-                                      <span>{t('header_setDefault_action')}</span>
-                                  </button>
-                              )}
+                              <button
+                                  onClick={(e) => handleSetDefault(e, model.id)}
+                                  className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"
+                              >
+                                  <span>{t('header_setDefault_action')}</span>
+                              </button>
                           </div>
-                      )}
+                      ) : null}
                     </div>
                   ))
                 ) : (

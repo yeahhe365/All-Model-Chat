@@ -405,6 +405,8 @@ const App: React.FC = () => {
         onTogglePinCurrentSession={handleTogglePinCurrentSession}
         onRetryLastTurn={handleRetryLastTurn}
         onEditLastUserMessage={handleEditLastUserMessage}
+        onOpenLogViewer={() => setIsLogViewerOpen(true)}
+        onClearAllHistory={clearAllHistory}
         t={t}
       />
       <AppModals
