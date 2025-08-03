@@ -305,40 +305,6 @@ const App: React.FC = () => {
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
 
-  const appModalsComponent = (
-    <AppModals
-      isSettingsModalOpen={isSettingsModalOpen}
-      setIsSettingsModalOpen={setIsSettingsModalOpen}
-      appSettings={appSettings}
-      availableModels={apiModels}
-      handleSaveSettings={handleSaveSettings}
-      isModelsLoading={isModelsLoading}
-      modelsLoadingError={modelsLoadingError}
-      clearCacheAndReload={clearCacheAndReload}
-      clearAllHistory={clearAllHistory}
-      handleInstallPwa={handleInstallPwa}
-      installPromptEvent={installPromptEvent}
-      isStandalone={isStandalone}
-      handleImportSettings={handleImportSettings}
-      handleExportSettings={handleExportSettings}
-      isPreloadedMessagesModalOpen={isPreloadedMessagesModalOpen}
-      setIsPreloadedMessagesModalOpen={setIsPreloadedMessagesModalOpen}
-      savedScenarios={savedScenarios}
-      handleSaveAllScenarios={handleSaveAllScenarios}
-      handleLoadPreloadedScenario={handleLoadPreloadedScenario}
-      handleImportPreloadedScenario={handleImportPreloadedScenario}
-      handleExportPreloadedScenario={handleExportPreloadedScenario}
-      isExportModalOpen={isExportModalOpen}
-      setIsExportModalOpen={setIsExportModalOpen}
-      handleExportChat={handleExportChat}
-      exportStatus={exportStatus}
-      isLogViewerOpen={isLogViewerOpen}
-      setIsLogViewerOpen={setIsLogViewerOpen}
-      currentChatSettings={currentChatSettings}
-      t={t}
-    />
-  );
-
   const chatAreaComponent = (
     <ChatArea
         isAppDraggingOver={isAppDraggingOver}
@@ -468,7 +434,6 @@ const App: React.FC = () => {
               {createPortal(
                   <div className={`theme-${currentTheme.id} h-screen w-screen flex flex-col bg-[var(--theme-bg-primary)]`}>
                       {chatAreaComponent}
-                      {appModalsComponent}
                   </div>,
                   pipContainer
               )}
@@ -485,11 +450,39 @@ const App: React.FC = () => {
               </div>
           </>
       ) : (
-        <>
-          {chatAreaComponent}
-          {appModalsComponent}
-        </>
+          chatAreaComponent
       )}
+      <AppModals
+        isSettingsModalOpen={isSettingsModalOpen}
+        setIsSettingsModalOpen={setIsSettingsModalOpen}
+        appSettings={appSettings}
+        availableModels={apiModels}
+        handleSaveSettings={handleSaveSettings}
+        isModelsLoading={isModelsLoading}
+        modelsLoadingError={modelsLoadingError}
+        clearCacheAndReload={clearCacheAndReload}
+        clearAllHistory={clearAllHistory}
+        handleInstallPwa={handleInstallPwa}
+        installPromptEvent={installPromptEvent}
+        isStandalone={isStandalone}
+        handleImportSettings={handleImportSettings}
+        handleExportSettings={handleExportSettings}
+        isPreloadedMessagesModalOpen={isPreloadedMessagesModalOpen}
+        setIsPreloadedMessagesModalOpen={setIsPreloadedMessagesModalOpen}
+        savedScenarios={savedScenarios}
+        handleSaveAllScenarios={handleSaveAllScenarios}
+        handleLoadPreloadedScenario={handleLoadPreloadedScenario}
+        handleImportPreloadedScenario={handleImportPreloadedScenario}
+        handleExportPreloadedScenario={handleExportPreloadedScenario}
+        isExportModalOpen={isExportModalOpen}
+        setIsExportModalOpen={setIsExportModalOpen}
+        handleExportChat={handleExportChat}
+        exportStatus={exportStatus}
+        isLogViewerOpen={isLogViewerOpen}
+        setIsLogViewerOpen={setIsLogViewerOpen}
+        currentChatSettings={currentChatSettings}
+        t={t}
+      />
     </div>
   );
 };

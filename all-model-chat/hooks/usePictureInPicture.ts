@@ -37,9 +37,10 @@ export const usePictureInPicture = () => {
                 height: 700, // A reasonable default height
             });
 
-            // Copy styles from the main document to the PiP window
-            document.head.querySelectorAll('style, link[rel="stylesheet"]').forEach(el => {
-                pipWin.document.head.appendChild(el.cloneNode(true));
+            // Copy all head elements from the main document to the PiP window.
+            // This ensures styles, scripts (like Tailwind), and other configurations are available.
+            document.head.childNodes.forEach(node => {
+                pipWin.document.head.appendChild(node.cloneNode(true));
             });
             
             pipWin.document.title = "All Model Chat - PiP";
