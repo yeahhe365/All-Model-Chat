@@ -229,6 +229,7 @@ export interface ChatInputProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
+  onTogglePip: () => void;
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
   onTogglePinCurrentSession: () => void;
@@ -275,6 +276,7 @@ export interface ChatInputActionsProps {
   isWaitingForUpload: boolean;
   t: (key: keyof typeof translations) => string;
   onCancelRecording: () => void;
+  onTogglePip: () => void;
 }
 
 export interface CommandInfo {
@@ -432,6 +434,7 @@ export interface ChatAreaProps {
   onClearChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
+  onTogglePip: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
   onEditLastUserMessage: () => void;

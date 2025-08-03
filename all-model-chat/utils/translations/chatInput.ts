@@ -52,4 +52,13 @@ export const chatInputTranslations = {
     // Help Modal
     helpModal_title: { en: 'Command Help', zh: '命令帮助' },
     helpModal_close_aria: { en: 'Close help modal', zh: '关闭帮助模态框' },
+
+    // PiP Feature
+    pip_button_aria: { en: 'Open Website in Picture-in-Picture', zh: '在画中画模式中打开网站' },
+    pip_unsupported_error: { en: 'Document Picture-in-Picture API is not supported in your browser.', zh: '您的浏览器不支持文档画中画 API。' },
+    pip_prompt_title: { en: 'Enter the URL to open in Picture-in-Picture mode:', zh: '请输入要在画中画模式中打开的网址：' },
+    pip_invalid_url_error: { en: 'Invalid URL provided.', zh: '提供了无效的网址。' },
+    pip_denied_error: { en: 'Picture-in-Picture request was denied. Please ensure you have granted necessary permissions.', zh: '画中画请求被拒绝。请确保您已授予必要的权限。' },
+    pip_user_gesture_error: { en: 'Picture-in-Picture must be triggered by a user gesture (like a click).', zh: '画中画必须由用户手势（如点击）触发。' },
+    pip_generic_error: { en: 'An error occurred: {error}', zh: '发生错误：{error}' },
 };

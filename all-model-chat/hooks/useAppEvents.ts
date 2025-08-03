@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppSettings, ChatSettings, SavedChatSession } from '../types';
 import { DEFAULT_APP_SETTINGS, TAB_CYCLE_MODELS } from '../constants/appConstants';
-import { logService } from '../services/logService';
+import { logService } from '../utils/appUtils';
 import { getTranslator } from '../utils/appUtils';
 
 interface AppEventsProps {
@@ -196,6 +196,68 @@ export const useAppEvents = ({
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen]);
+    
+    const handleTogglePip = useCallback(async () => {
+        if (!('documentPictureInPicture' in window)) {
+            alert(t('pip_unsupported_error'));
+            logService.warn('Document PiP API not supported.');
+            return;
+        }
+
+        const url = prompt(t('pip_prompt_title'), 'https://');
+        if (!url) {
+            return; // User cancelled
+        }
+
+        try {
+            new URL(url); // Validate URL format
+        } catch (e) {
+            alert(t('pip_invalid_url_error'));
+            logService.error('Invalid URL for PiP', { url });
+            return;
+        }
+
+        try {
+            const pipWidth = Math.min(window.screen.width, 800);
+            const pipHeight = Math.min(window.screen.height, 600);
+            // @ts-ignore: documentPictureInPicture is a new API and might not be in all TS defs
+            const pipWindow = await window.documentPictureInPicture.requestWindow({
+                width: pipWidth,
+                height: pipHeight,
+            });
+
+            // A new window is created. Populate it.
+            const iframe = pipWindow.document.createElement('iframe');
+            iframe.src = url;
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.allow = "accelerometer; ambient-light-sensor; autoplay; battery; camera; display-capture; document-domain; encrypted-media; execution-while-not-rendered; execution-while-out-of-viewport; fullscreen; geolocation; gyroscope; hid; identity-credentials-get; idle-detection; local-fonts; magnetometer; microphone; midi; payment; picture-in-picture; publickey-credentials-get; screen-wake-lock; serial; speaker-selection; usb; web-share; xr-spatial-tracking";
+            iframe.setAttribute('allowfullscreen', '');
+            pipWindow.document.body.append(iframe);
+            pipWindow.document.body.style.margin = '0';
+            pipWindow.document.body.style.overflow = 'hidden';
+            pipWindow.document.title = 'PiP Viewer';
+
+            // Listen for the PiP window closing
+            pipWindow.addEventListener('pagehide', () => {
+                logService.info('PiP window closed.');
+            });
+
+            logService.info(`PiP window opened for URL: ${url}`);
+        } catch (error) {
+            logService.error('Failed to open PiP window', { error });
+            if (error instanceof Error) {
+                if (error.name === 'NotAllowedError') {
+                    alert(t('pip_denied_error'));
+                } else if (error.message.includes('transient activation')) {
+                    alert(t('pip_user_gesture_error'));
+                } else {
+                    alert(t('pip_generic_error').replace('{error}', error.message));
+                }
+            }
+        }
+    }, [t]);
 
     return {
         installPromptEvent,
@@ -203,5 +265,6 @@ export const useAppEvents = ({
         handleInstallPwa,
         handleExportSettings,
         handleImportSettings,
+        handleTogglePip,
     };
 };

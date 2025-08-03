@@ -23,7 +23,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
     isProcessingFile, fileError, isImagenModel, aspectRatio, setAspectRatio,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
-    isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
+    isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt, onTogglePip,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
     onOpenLogViewer, onClearAllHistory,
     t
@@ -196,6 +196,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onNewChat={onNewChat}
         onOpenSettings={onOpenSettings}
         onToggleCanvasPrompt={onToggleCanvasPrompt}
+        onTogglePip={onTogglePip}
         onSelectModel={onSelectModel}
         availableModels={availableModels}
         onTogglePinCurrentSession={onTogglePinCurrentSession}

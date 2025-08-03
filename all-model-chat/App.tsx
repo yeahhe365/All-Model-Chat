@@ -112,6 +112,7 @@ const App: React.FC = () => {
     handleInstallPwa,
     handleExportSettings,
     handleImportSettings,
+    handleTogglePip,
   } = useAppEvents({
     appSettings,
     setAppSettings,
@@ -411,6 +412,7 @@ const App: React.FC = () => {
         onClearChat={handleClearCurrentChat}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onToggleCanvasPrompt={handleLoadCanvasHelperPromptAndSave}
+        onTogglePip={handleTogglePip}
         onTogglePinCurrentSession={handleTogglePinCurrentSession}
         onRetryLastTurn={handleRetryLastTurn}
         onEditLastUserMessage={handleEditLastUserMessage}

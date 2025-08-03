@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, Ban, X, Edit2, Loader2, Mic } from 'lucide-react';
+import { ArrowUp, Ban, X, Edit2, Loader2, Mic, PictureInPicture } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
@@ -26,6 +26,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   isWaitingForUpload,
   t,
   onCancelRecording,
+  onTogglePip,
 }) => {
   const micIconSize = 18;
   const sendIconSize = 18;
@@ -45,6 +46,16 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 disabled={disabled}
                 t={t}
             />
+             <button
+                type="button"
+                onClick={onTogglePip}
+                disabled={disabled}
+                className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                aria-label={t('pip_button_aria')}
+                title={t('pip_button_aria')}
+            >
+                <PictureInPicture size={micIconSize} />
+            </button>
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
