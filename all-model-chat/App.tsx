@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AppSettings } from './types';
 import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from './constants/appConstants';
 import { HistorySidebar } from './components/HistorySidebar';
@@ -13,6 +14,7 @@ import { ChatArea } from './components/layout/ChatArea';
 import { AppModals } from './components/modals/AppModals';
 import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles } from './utils/exportUtils';
 import DOMPurify from 'dompurify';
+import { PictureInPicture2 } from 'lucide-react';
 
 
 const App: React.FC = () => {
@@ -128,7 +130,7 @@ const App: React.FC = () => {
     updateAndPersistSessions,
   });
 
-  const { isPipSupported, isPipActive, togglePip } = usePictureInPicture(scrollContainerRef);
+  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture();
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
@@ -303,44 +305,8 @@ const App: React.FC = () => {
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
 
-  return (
-    <div 
-      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      {isHistorySidebarOpen && (
-        <div 
-          onClick={() => setIsHistorySidebarOpen(false)} 
-          className="fixed sm:hidden inset-0 bg-black/60 z-20 transition-opacity duration-300"
-          aria-hidden="true"
-        />
-      )}
-      <HistorySidebar
-        isOpen={isHistorySidebarOpen}
-        onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
-        sessions={savedSessions}
-        groups={savedGroups}
-        activeSessionId={activeSessionId}
-        loadingSessionIds={loadingSessionIds}
-        generatingTitleSessionIds={generatingTitleSessionIds}
-        onSelectSession={(id) => loadChatSession(id, savedSessions)}
-        onNewChat={() => startNewChat()}
-        onDeleteSession={handleDeleteChatHistorySession}
-        onRenameSession={handleRenameSession}
-        onTogglePinSession={handleTogglePinSession}
-        onOpenExportModal={() => setIsExportModalOpen(true)}
-        onAddNewGroup={handleAddNewGroup}
-        onDeleteGroup={handleDeleteGroup}
-        onRenameGroup={handleRenameGroup}
-        onMoveSessionToGroup={handleMoveSessionToGroup}
-        onToggleGroupExpansion={handleToggleGroupExpansion}
-        themeColors={currentTheme.colors}
-        t={t}
-        themeId={currentTheme.id}
-        language={language}
-      />
-      <ChatArea
+  const chatAreaComponent = (
+    <ChatArea
         isAppDraggingOver={isAppDraggingOver}
         handleAppDragEnter={handleAppDragEnter}
         handleAppDragOver={handleAppDragOver}
@@ -424,6 +390,68 @@ const App: React.FC = () => {
         onTogglePip={togglePip}
         t={t}
       />
+  );
+
+  return (
+    <div 
+      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {isHistorySidebarOpen && (
+        <div 
+          onClick={() => setIsHistorySidebarOpen(false)} 
+          className="fixed sm:hidden inset-0 bg-black/60 z-20 transition-opacity duration-300"
+          aria-hidden="true"
+        />
+      )}
+      <HistorySidebar
+        isOpen={isHistorySidebarOpen}
+        onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
+        sessions={savedSessions}
+        groups={savedGroups}
+        activeSessionId={activeSessionId}
+        loadingSessionIds={loadingSessionIds}
+        generatingTitleSessionIds={generatingTitleSessionIds}
+        onSelectSession={(id) => loadChatSession(id, savedSessions)}
+        onNewChat={() => startNewChat()}
+        onDeleteSession={handleDeleteChatHistorySession}
+        onRenameSession={handleRenameSession}
+        onTogglePinSession={handleTogglePinSession}
+        onOpenExportModal={() => setIsExportModalOpen(true)}
+        onAddNewGroup={handleAddNewGroup}
+        onDeleteGroup={handleDeleteGroup}
+        onRenameGroup={handleRenameGroup}
+        onMoveSessionToGroup={handleMoveSessionToGroup}
+        onToggleGroupExpansion={handleToggleGroupExpansion}
+        themeColors={currentTheme.colors}
+        t={t}
+        themeId={currentTheme.id}
+        language={language}
+      />
+      {isPipActive && pipContainer ? (
+          <>
+              {createPortal(
+                  <div className={`theme-${currentTheme.id} h-screen w-screen flex flex-col bg-[var(--theme-bg-primary)]`}>
+                      {chatAreaComponent}
+                  </div>,
+                  pipContainer
+              )}
+              <div className="flex-grow flex flex-col items-center justify-center text-center p-4 bg-[var(--theme-bg-secondary)]">
+                  <PictureInPicture2 size={48} className="text-[var(--theme-text-link)] mb-4" />
+                  <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">Chat in Picture-in-Picture</h2>
+                  <p className="text-sm text-[var(--theme-text-secondary)] mt-2 max-w-xs">The chat is running in a separate window. Close it to bring the conversation back here.</p>
+                  <button 
+                      onClick={togglePip} 
+                      className="mt-6 px-4 py-2 bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-lg font-medium hover:bg-[var(--theme-bg-accent-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]"
+                  >
+                      Close PiP Window
+                  </button>
+              </div>
+          </>
+      ) : (
+          chatAreaComponent
+      )}
       <AppModals
         isSettingsModalOpen={isSettingsModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
