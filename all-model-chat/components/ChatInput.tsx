@@ -46,6 +46,7 @@ interface ChatInputProps {
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
   onEditLastUserMessage: () => void;
+  onTogglePip: () => void;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
@@ -60,7 +61,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
-    onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession,
+    onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
     onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage
   } = props;
 
@@ -111,6 +112,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
     onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction: handleAttachmentAction,
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
+    onTogglePip,
   });
 
   useEffect(() => {

@@ -22,6 +22,7 @@ interface UseSlashCommandsProps {
   setIsHelpModalOpen: (isOpen: boolean) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
   onEditLastUserMessage: () => void;
+  onTogglePip: () => void;
   setInputText: Dispatch<SetStateAction<string>>;
 }
 
@@ -31,7 +32,7 @@ export const useSlashCommands = ({
   onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
   onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction,
   availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
-  textareaRef, onEditLastUserMessage, setInputText
+  textareaRef, onEditLastUserMessage, onTogglePip, setInputText
 }: UseSlashCommandsProps) => {
   
   const [slashCommandState, setSlashCommandState] = useState<{
@@ -71,7 +72,8 @@ export const useSlashCommands = ({
     { name: 'new', description: t('help_cmd_new'), icon: 'new', action: onNewChat },
     { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
     { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
-  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage]);
+    { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
+  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip]);
   
   const allCommandsForHelp = useMemo(() => [
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),

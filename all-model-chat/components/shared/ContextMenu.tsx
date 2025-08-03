@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { Terminal, Trash2, ClipboardCopy, Settings, Wand2, Edit3 } from 'lucide-react';
+import { Terminal, Trash2, ClipboardCopy, Settings, Wand2, Edit3, PictureInPicture, PictureInPicture2 } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
@@ -11,6 +11,8 @@ const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
         case 'Settings': return <Settings {...iconProps} />;
         case 'Wand2': return <Wand2 {...iconProps} />;
         case 'Edit3': return <Edit3 {...iconProps} />;
+        case 'PictureInPicture': return <PictureInPicture {...iconProps} />;
+        case 'PictureInPicture2': return <PictureInPicture2 {...iconProps} />;
         default: return null;
     }
 };

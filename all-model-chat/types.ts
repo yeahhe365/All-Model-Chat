@@ -212,13 +212,13 @@ export interface ChatInputProps {
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
   onAddFileById: (fileId: string) => Promise<void>;
   onCancelUpload: (fileId: string) => void;
+  onTranscribeAudio: (file: File) => Promise<string | null>;
   isProcessingFile: boolean; 
   fileError: string | null;
   t: (key: keyof typeof translations) => string;
   isImagenModel?: boolean;
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
-  onTranscribeAudio: (file: File) => Promise<string | null>;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
@@ -229,11 +229,12 @@ export interface ChatInputProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onToggleCanvasPrompt: () => void;
-  onSelectModel: (modelId: string) => void;
-  availableModels: ModelOption[];
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
+  onSelectModel: (modelId: string) => void;
+  availableModels: ModelOption[];
   onEditLastUserMessage: () => void;
+  onTogglePip: () => void;
 }
 
 export interface ChatInputToolbarProps {

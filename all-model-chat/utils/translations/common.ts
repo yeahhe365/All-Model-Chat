@@ -12,4 +12,6 @@ export const commonTranslations = {
     copy: { en: 'Copy', zh: '复制' },
     fill_input: { en: 'Fill Input', zh: '填入输入框' },
     canvasHelperToggle: { en: 'Toggle Canvas Helper', zh: '切换 Canvas 助手' },
+    pipEnter: { en: 'Enter Picture-in-Picture', zh: '进入画中画' },
+    pipExit: { en: 'Exit Picture-in-Picture', zh: '退出画中画' },
 };

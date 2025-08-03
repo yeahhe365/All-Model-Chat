@@ -85,6 +85,14 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
                 isDanger: true,
             },
         ];
+
+        if (isPipSupported) {
+            items.splice(2, 0, { // Insert after "Chat Settings"
+                label: isPipActive ? t('pipExit', 'Exit Picture-in-Picture') : t('pipEnter', 'Enter Picture-in-Picture'),
+                icon: isPipActive ? 'PictureInPicture2' : 'PictureInPicture',
+                onClick: onTogglePip,
+            });
+        }
     }
 
     setContextMenu({
@@ -205,6 +213,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onTogglePinCurrentSession={onTogglePinCurrentSession}
         onRetryLastTurn={onRetryLastTurn}
         onEditLastUserMessage={onEditLastUserMessage}
+        onTogglePip={onTogglePip}
       />
       {contextMenu && (
         <ContextMenu 
