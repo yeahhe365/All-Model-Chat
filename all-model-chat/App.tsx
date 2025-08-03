@@ -190,7 +190,15 @@ const App: React.FC = () => {
   };
 
   const handleFollowUpSuggestionClick = (text: string) => {
-    handleSendMessage({ text });
+    if (appSettings.isAutoSendOnSuggestionClick ?? true) {
+      handleSendMessage({ text });
+    } else {
+      setCommandedInput({ text: text + '\n', id: Date.now() });
+      setTimeout(() => {
+          const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+          if (textarea) textarea.focus();
+      }, 0);
+    }
   };
 
   const getCurrentModelDisplayName = () => {
@@ -377,6 +385,7 @@ const App: React.FC = () => {
         onScrollToNextTurn={scrollToNextTurn}
         appSettings={appSettings}
         commandedInput={commandedInput}
+        setCommandedInput={setCommandedInput}
         onMessageSent={() => setCommandedInput(null)}
         selectedFiles={selectedFiles}
         setSelectedFiles={setSelectedFiles}

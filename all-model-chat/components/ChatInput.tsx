@@ -279,7 +279,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         className={`bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isAnyModalOpen}
       >
-        <div className="mx-auto w-full max-w-7xl px-2 sm:px-3 mb-2 sm:mb-3">
+        <div className="mx-auto w-full max-w-5xl px-2 sm:px-3 mb-2 sm:mb-3">
             <ChatInputToolbar
               isImagenModel={isImagenModel || false}
               aspectRatio={aspectRatio}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { Terminal, Trash2, ClipboardCopy } from 'lucide-react';
+import { Terminal, Trash2, ClipboardCopy, Settings, Wand2, Edit3 } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
@@ -8,6 +8,9 @@ const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
         case 'Terminal': return <Terminal {...iconProps} />;
         case 'Trash2': return <Trash2 {...iconProps} />;
         case 'ClipboardCopy': return <ClipboardCopy {...iconProps} />;
+        case 'Settings': return <Settings {...iconProps} />;
+        case 'Wand2': return <Wand2 {...iconProps} />;
+        case 'Edit3': return <Edit3 {...iconProps} />;
         default: return null;
     }
 };

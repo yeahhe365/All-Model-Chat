@@ -18,7 +18,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
-    onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, onMessageSent,
+    onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
     isProcessingFile, fileError, isImagenModel, aspectRatio, setAspectRatio,
@@ -48,9 +48,26 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
                     navigator.clipboard.writeText(selectedText);
                 },
             },
+            {
+                label: t('fill_input', 'Fill Input'),
+                icon: 'Edit3',
+                onClick: () => {
+                    setCommandedInput({ text: selectedText, id: Date.now() });
+                },
+            },
         ];
     } else {
         items = [
+            {
+                label: t('canvasHelperToggle', 'Toggle Canvas Helper'),
+                icon: 'Wand2',
+                onClick: onToggleCanvasPrompt,
+            },
+            {
+                label: t('settingsOpen_title', 'Chat Settings'),
+                icon: 'Settings',
+                onClick: onOpenSettingsModal,
+            },
             {
                 label: t('settingsViewLogs', 'View Logs'),
                 icon: 'Terminal',

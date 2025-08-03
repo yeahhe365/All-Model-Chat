@@ -23,6 +23,8 @@ interface FeatureFlagsProps {
   setIsCompletionNotificationEnabled: (value: boolean) => void;
   isSuggestionsEnabled: boolean;
   setIsSuggestionsEnabled: (value: boolean) => void;
+  isAutoSendOnSuggestionClick: boolean;
+  setIsAutoSendOnSuggestionClick: (value: boolean) => void;
   isAutoScrollOnSendEnabled: boolean;
   setIsAutoScrollOnSendEnabled: (value: boolean) => void;
   t: (key: string) => string;
@@ -60,6 +62,7 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
   expandCodeBlocksByDefault, setExpandCodeBlocksByDefault, isAutoTitleEnabled, setIsAutoTitleEnabled,
   isMermaidRenderingEnabled, setIsMermaidRenderingEnabled, isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
   isCompletionNotificationEnabled, setIsCompletionNotificationEnabled, isSuggestionsEnabled, setIsSuggestionsEnabled,
+  isAutoSendOnSuggestionClick, setIsAutoSendOnSuggestionClick,
   isAutoScrollOnSendEnabled, setIsAutoScrollOnSendEnabled, t
 }) => {
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
@@ -168,6 +171,11 @@ export const FeatureFlags: React.FC<FeatureFlagsProps> = ({
       <Toggle id="graphviz-rendering-toggle" labelKey="settings_enableGraphvizRendering_label" tooltipKey="settings_enableGraphvizRendering_tooltip" checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} t={t} />
       <Toggle id="completion-notification-toggle" labelKey="settings_enableCompletionNotification_label" tooltipKey="settings_enableCompletionNotification_tooltip" checked={isCompletionNotificationEnabled} onChange={setIsCompletionNotificationEnabled} t={t} />
       <Toggle id="suggestions-toggle" labelKey="settings_enableSuggestions_label" tooltipKey="settings_enableSuggestions_tooltip" checked={isSuggestionsEnabled} onChange={setIsSuggestionsEnabled} t={t} />
+      {isSuggestionsEnabled && (
+        <div style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+          <Toggle id="auto-send-suggestions-toggle" labelKey="settings_autoSendOnSuggestionClick_label" tooltipKey="settings_autoSendOnSuggestionClick_tooltip" checked={isAutoSendOnSuggestionClick} onChange={setIsAutoSendOnSuggestionClick} t={t} />
+        </div>
+      )}
     </div>
   );
 };

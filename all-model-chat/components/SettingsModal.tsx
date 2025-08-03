@@ -190,6 +190,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsCompletionNotificationEnabled={(val) => updateSetting('isCompletionNotificationEnabled', val)}
                   isSuggestionsEnabled={settings.isSuggestionsEnabled}
                   setIsSuggestionsEnabled={(val) => updateSetting('isSuggestionsEnabled', val)}
+                  isAutoSendOnSuggestionClick={settings.isAutoSendOnSuggestionClick ?? true}
+                  setIsAutoSendOnSuggestionClick={(val) => updateSetting('isAutoSendOnSuggestionClick', val)}
                   isAutoScrollOnSendEnabled={settings.isAutoScrollOnSendEnabled}
                   setIsAutoScrollOnSendEnabled={(val) => updateSetting('isAutoScrollOnSendEnabled', val)}
                   t={t}

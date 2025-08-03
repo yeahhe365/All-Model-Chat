@@ -121,6 +121,7 @@ export interface AppSettings extends ChatSettings {
  isCompletionNotificationEnabled: boolean;
  isSuggestionsEnabled: boolean;
  isAutoScrollOnSendEnabled?: boolean;
+ isAutoSendOnSuggestionClick?: boolean;
 }
 
 
@@ -405,6 +406,7 @@ export interface ChatAreaProps {
   // ChatInput Props
   appSettings: AppSettings;
   commandedInput: { text: string; id: number } | null;
+  setCommandedInput: (command: { text: string; id: number } | null) => void;
   onMessageSent: () => void;
   selectedFiles: UploadedFile[];
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
