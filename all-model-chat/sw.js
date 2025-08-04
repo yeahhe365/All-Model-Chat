@@ -1,85 +1,133 @@
-const CACHE_NAME = 'all-model-chat-cache-v3'; // Increased version number
-const API_HOSTS = ['generativelanguage.googleapis.com'];
-const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
+// Use a specific version to ensure stability, matching the one in the app's import map.
+try {
+  self.importScripts('https://esm.sh/@google/genai@1.2.0');
+} catch (e) {
+  console.error('[SW] Failed to import @google/genai SDK:', e);
+}
 
-// The static part of the app shell. Dynamic resources will be added to this.
-const STATIC_APP_SHELL_URLS = [
-    '/',
-    '/index.html',
-    '/favicon.png',
-    '/manifest.json',
-];
+const CACHE_NAME = 'all-model-chat-cache-v3';
+const API_HOSTS = ['generativelaanguage.googleapis.com'];
+const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
+const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 
 let proxyUrl = null;
 
+// Map to track active streaming requests and allow them to be aborted.
+// Key: generationId, Value: { controller: AbortController }
+const activeStreams = new Map();
+
 /**
- * Fetches and parses the main HTML file to dynamically discover all critical
- * resources like CSS, JS from importmaps, and other scripts.
+ * Fetches and parses the main HTML file to dynamically discover all critical resources.
  * @returns {Promise<string[]>} A promise that resolves to an array of URLs to cache.
  */
 const getDynamicAppShellUrls = async () => {
     try {
-        // Fetch with a cache-busting query parameter to ensure we get the latest version.
         const response = await fetch('/index.html?sw-cache-bust=' + Date.now());
-        if (!response.ok) {
-            throw new Error(`Failed to fetch index.html: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Failed to fetch index.html: ${response.statusText}`);
         const html = await response.text();
-
-        // 1. Extract from importmap
         const importmapMatch = html.match(/<script type="importmap"[^>]*>([\s\S]*?)<\/script>/);
         let importmapUrls = [];
         if (importmapMatch && importmapMatch[1]) {
             try {
                 const importmapJson = JSON.parse(importmapMatch[1]);
-                if (importmapJson.imports) {
-                    importmapUrls = Object.values(importmapJson.imports);
-                }
-            } catch (e) {
-                console.error('[SW] Failed to parse importmap:', e);
-            }
+                if (importmapJson.imports) importmapUrls = Object.values(importmapJson.imports);
+            } catch (e) { console.error('[SW] Failed to parse importmap:', e); }
         }
-        
-        // 2. Extract from <link rel="stylesheet"> tags
         const linkTagMatches = [...html.matchAll(/<link[^>]+>/gi)];
-        const stylesheetUrls = linkTagMatches
-            .map(match => match[0]) // Get the full tag string
-            .filter(tag => tag.includes('rel="stylesheet"'))
-            .map(tag => {
-                const hrefMatch = tag.match(/href="([^"]+)"/);
-                return hrefMatch ? hrefMatch[1] : null;
-            })
-            .filter(Boolean); // Filter out any nulls
-
-        // 3. Extract from <script src="..."> (includes module scripts)
+        const stylesheetUrls = linkTagMatches.map(match => match[0]).filter(tag => tag.includes('rel="stylesheet"')).map(tag => tag.match(/href="([^"]+)"/)?.[1]).filter(Boolean);
         const scriptMatches = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)];
         const scriptUrls = scriptMatches.map(match => match[1]);
-
-        // Combine all discovered URLs, filter out any potential null/undefined values, and remove duplicates.
-        const allUrls = [...STATIC_APP_SHELL_URLS, ...importmapUrls, ...stylesheetUrls, ...scriptUrls];
-        const uniqueUrls = [...new Set(allUrls.filter(Boolean))];
-        
+        const uniqueUrls = [...new Set([...STATIC_APP_SHELL_URLS, ...importmapUrls, ...stylesheetUrls, ...scriptUrls].filter(Boolean))];
         console.log('[SW] Dynamic App Shell URLs to cache:', uniqueUrls);
         return uniqueUrls;
     } catch (error) {
-        console.error('[SW] Could not build dynamic app shell. Installation will fail.', error);
-        // Re-throw the error to ensure the service worker installation fails if we can't build the shell.
-        // This prevents an incomplete or broken offline experience.
+        console.error('[SW] Could not build dynamic app shell.', error);
         throw error;
     }
 };
 
-// Listen for messages from the client.
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
+/**
+ * Handles a streaming request from the client by calling the Gemini API.
+ * @param {string} generationId - A unique ID for this specific generation request.
+ * @param {object} payload - Data needed for the API call (apiKey, modelId, etc.).
+ * @param {string} clientId - The ID of the client window that made the request.
+ */
+async function handleStreamRequest(generationId, payload, clientId) {
+    if (!self.GoogleGenAI) {
+        const client = await self.clients.get(clientId);
+        if (client) {
+            client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { message: 'Service Worker could not load the Gemini SDK.' } });
+        }
+        return;
     }
-    if (event.data && event.data.type === 'SET_PROXY_URL') {
-        proxyUrl = event.data.url || null;
+
+    const { apiKey, modelId, contents, config } = payload;
+    const controller = new AbortController();
+    activeStreams.set(generationId, { controller });
+
+    try {
+        const ai = new self.GoogleGenAI({ apiKey });
+        const result = await ai.models.generateContentStream({ model: modelId, contents, config });
+
+        for await (const chunk of result) {
+            if (controller.signal.aborted) {
+                console.log(`[SW] Stream ${generationId} aborted.`);
+                break;
+            }
+            const client = await self.clients.get(clientId);
+            if (client) {
+                client.postMessage({ type: 'GEMINI_STREAM_CHUNK', generationId, payload: chunk });
+            } else {
+                console.warn(`[SW] Client ${clientId} not found for stream ${generationId}. Aborting.`);
+                controller.abort();
+                break;
+            }
+        }
+    } catch (error) {
+        console.error(`[SW] Error during Gemini stream for ${generationId}:`, error);
+        const client = await self.clients.get(clientId);
+        if (client) {
+            client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { name: error.name, message: error.message } });
+        }
+    } finally {
+        const client = await self.clients.get(clientId);
+        if (client) {
+            client.postMessage({ type: 'GEMINI_STREAM_COMPLETE', generationId });
+        }
+        activeStreams.delete(generationId);
+    }
+}
+
+/**
+ * Aborts an ongoing stream request.
+ * @param {string} generationId - The ID of the stream to abort.
+ */
+function handleStreamAbort(generationId) {
+    if (activeStreams.has(generationId)) {
+        activeStreams.get(generationId).controller.abort();
+    }
+}
+
+self.addEventListener('message', (event) => {
+    if (!event.data || !event.data.type) return;
+    const { type, generationId, payload } = event.data;
+
+    switch (type) {
+        case 'GEMINI_STREAM_REQUEST':
+            handleStreamRequest(generationId, payload, event.source.id);
+            break;
+        case 'GEMINI_STREAM_ABORT':
+            handleStreamAbort(generationId);
+            break;
+        case 'SKIP_WAITING':
+            self.skipWaiting();
+            break;
+        case 'SET_PROXY_URL':
+            proxyUrl = event.data.url || null;
+            break;
     }
 });
 
-// Install: Cache the app shell.
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
@@ -94,8 +142,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-
-// Activate: Clean up old caches.
 self.addEventListener('activate', (event) => {
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
@@ -115,11 +161,9 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch: Intercept network requests.
 self.addEventListener('fetch', (event) => {
     const { request } = event;
 
-    // Proxy logic: If a proxyUrl is set and the request is for the Gemini API, rewrite the URL.
     if (proxyUrl && request.url.startsWith(TARGET_URL_PREFIX)) {
         const newUrl = request.url.replace(TARGET_URL_PREFIX, proxyUrl);
         const newRequest = new Request(newUrl, request);
@@ -127,13 +171,11 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // For non-proxied API calls, always go to the network and do not cache.
     if (API_HOSTS.some(host => new URL(request.url).hostname === host)) {
         event.respondWith(fetch(request));
         return;
     }
 
-    // For other GET requests, use a "Stale-While-Revalidate" strategy.
     if (request.method === 'GET') {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
@@ -146,7 +188,6 @@ self.addEventListener('fetch', (event) => {
                     }).catch(error => {
                         console.warn(`[SW] Network request for ${request.url} failed:`, error);
                         if (request.mode === 'navigate' && !cachedResponse) {
-                            console.log('[SW] Serving app shell for navigation fallback.');
                             return caches.match('/index.html');
                         }
                     });

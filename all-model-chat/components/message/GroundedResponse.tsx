@@ -1,21 +1,19 @@
 import React, { useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
 import DOMPurify from 'dompurify';
-import { CodeBlock } from './CodeBlock';
+import { UploadedFile } from '../../types';
+import { MarkdownRenderer } from '../shared/MarkdownRenderer';
 
 interface GroundedResponseProps {
   text: string;
   metadata: any;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
+  onImageClick: (file: UploadedFile) => void;
+  isMermaidRenderingEnabled: boolean;
+  isGraphvizRenderingEnabled: boolean;
 }
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled }) => {
   const content = useMemo(() => {
     if (!metadata || !metadata.groundingSupports) {
       return text;
@@ -101,36 +99,18 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
     return Array.from(uniqueSources.values());
   }, [metadata]);
 
-  const components = useMemo(() => ({
-    pre: (props: any) => {
-      const { node, children, ...rest } = props;
-      const codeElement = React.Children.toArray(children).find(
-        (child: any) => child.type === 'code'
-      ) as React.ReactElement | undefined;
-      const codeClassName = codeElement?.props?.className || '';
-      return (
-        <CodeBlock 
-          {...rest} 
-          className={codeClassName} 
-          onOpenHtmlPreview={onOpenHtmlPreview} 
-          expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-        >
-          {children}
-        </CodeBlock>
-      );
-    }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault]);
-
   return (
     <div>
       <div className="markdown-body">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}
-          rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
-          components={components}
-        >
-          {content}
-        </ReactMarkdown>
+        <MarkdownRenderer
+          content={content}
+          onImageClick={onImageClick}
+          onOpenHtmlPreview={onOpenHtmlPreview}
+          expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+          isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+          isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+          allowHtml={true}
+        />
       </div>
       {sources.length > 0 && (
         <div className="grounded-response-sources border-t border-[var(--theme-border-secondary)] pt-2 mt-3">
