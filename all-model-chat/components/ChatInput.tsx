@@ -47,6 +47,7 @@ interface ChatInputProps {
   availableModels: ModelOption[];
   onEditLastUserMessage: () => void;
   onTogglePip: () => void;
+  isPipActive?: boolean;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
@@ -62,7 +63,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
-    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage
+    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive,
   } = props;
 
   const [inputText, setInputText] = useState('');
@@ -281,7 +282,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         className={`bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isAnyModalOpen}
       >
-        <div className="mx-auto w-full max-w-5xl px-2 sm:px-3 mb-2 sm:mb-3">
+        <div className={`mx-auto w-full ${!isPipActive ? 'max-w-5xl' : ''} px-2 sm:px-3 mb-2 sm:mb-3`}>
             <ChatInputToolbar
               isImagenModel={isImagenModel || false}
               aspectRatio={aspectRatio}

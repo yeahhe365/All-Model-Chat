@@ -235,6 +235,7 @@ export interface ChatInputProps {
   availableModels: ModelOption[];
   onEditLastUserMessage: () => void;
   onTogglePip: () => void;
+  isPipActive?: boolean;
 }
 
 export interface ChatInputToolbarProps {

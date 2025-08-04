@@ -432,7 +432,7 @@ const App: React.FC = () => {
       {isPipActive && pipContainer ? (
           <>
               {createPortal(
-                  <div className={`theme-${currentTheme.id} h-screen w-screen flex flex-col bg-[var(--theme-bg-primary)]`}>
+                  <div className={`theme-${currentTheme.id} h-full w-full flex flex-col bg-[var(--theme-bg-primary)]`}>
                       {chatAreaComponent}
                   </div>,
                   pipContainer

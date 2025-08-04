@@ -48,9 +48,16 @@ export const usePictureInPicture = () => {
             pipWin.document.body.style.margin = '0';
             pipWin.document.body.style.overflow = 'hidden';
 
+            // Ensure full height/width for layout
+            pipWin.document.documentElement.style.height = '100%';
+            pipWin.document.body.style.height = '100%';
+            pipWin.document.body.style.width = '100%';
+
             // Create a root container for the React portal
             const container = pipWin.document.createElement('div');
             container.id = 'pip-root';
+            container.style.height = '100%';
+            container.style.width = '100%';
             pipWin.document.body.appendChild(container);
 
             // Listen for when the user closes the PiP window

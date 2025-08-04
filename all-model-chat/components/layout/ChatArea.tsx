@@ -214,6 +214,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onRetryLastTurn={onRetryLastTurn}
         onEditLastUserMessage={onEditLastUserMessage}
         onTogglePip={onTogglePip}
+        isPipActive={isPipActive}
       />
       {contextMenu && (
         <ContextMenu 
