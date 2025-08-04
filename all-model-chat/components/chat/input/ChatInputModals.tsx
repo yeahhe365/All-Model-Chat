@@ -5,7 +5,6 @@ import { CreateTextFileEditor } from '../CreateTextFileEditor';
 import { HelpModal } from './HelpModal';
 import { translations } from '../../../utils/appUtils';
 import { ChatInputModalsProps } from '../../../types';
-import { ScreenshotEditor } from '../ScreenshotEditor';
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   showCamera,
@@ -23,12 +22,8 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   isProcessingFile,
   isLoading,
   t,
-  showScreenshotEditor,
-  screenshotUrl,
-  onConfirmScreenshot,
-  onCancelScreenshot,
 }) => {
-  if (!showCamera && !showRecorder && !showCreateTextFileEditor && !isHelpModalOpen && !showScreenshotEditor) {
+  if (!showCamera && !showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
     return null;
   }
 
@@ -38,7 +33,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
       {showRecorder && <AudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />}
       {showCreateTextFileEditor && <CreateTextFileEditor onConfirm={onConfirmCreateTextFile} onCancel={onCreateTextFileCancel} isProcessing={isProcessingFile} isLoading={isLoading} />}
       {isHelpModalOpen && <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />}
-      {showScreenshotEditor && <ScreenshotEditor screenshotUrl={screenshotUrl} onConfirm={onConfirmScreenshot} onCancel={onCancelScreenshot} />}
     </>
   );
 };

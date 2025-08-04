@@ -12,7 +12,7 @@ export const chatInputTranslations = {
     attachMenu_gallery: { en: 'Gallery', zh: '图库' },
     attachMenu_uploadVideo: { en: 'Upload Video', zh: '上传视频' },
     attachMenu_takePhoto: { en: 'Take Photo', zh: '拍照' },
-    attachMenu_region_screenshot: { en: 'Region Screenshot', zh: '区域截图' },
+    attachMenu_screenshot: { en: 'Screenshot', zh: '屏幕截图' },
     attachMenu_recordAudio: { en: 'Record Audio', zh: '录音' },
     attachMenu_addById: { en: 'Add by File ID', zh: '通过文件 ID 添加' },
     attachMenu_createText: { en: 'Create Text File', zh: '创建文本文件' },

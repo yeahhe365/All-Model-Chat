@@ -6,6 +6,7 @@ import { MarkdownRenderer } from '../shared/MarkdownRenderer';
 interface GroundedResponseProps {
   text: string;
   metadata: any;
+  isLoading: boolean;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
   onImageClick: (file: UploadedFile) => void;
@@ -13,7 +14,7 @@ interface GroundedResponseProps {
   isGraphvizRenderingEnabled: boolean;
 }
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled }) => {
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled }) => {
   const content = useMemo(() => {
     if (!metadata || !metadata.groundingSupports) {
       return text;
@@ -104,6 +105,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
       <div className="markdown-body">
         <MarkdownRenderer
           content={content}
+          isLoading={isLoading}
           onImageClick={onImageClick}
           onOpenHtmlPreview={onOpenHtmlPreview}
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}

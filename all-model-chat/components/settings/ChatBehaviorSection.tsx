@@ -1,4 +1,3 @@
-// components/settings/ChatBehaviorSection.tsx (Refactored)
 import React from 'react';
 import { ModelOption } from '../../types';
 import { Settings2 } from 'lucide-react';

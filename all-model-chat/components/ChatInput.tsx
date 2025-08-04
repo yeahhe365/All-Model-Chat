@@ -92,7 +92,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     fileInputRef, imageInputRef, videoInputRef,
     handleAttachmentAction, handleConfirmCreateTextFile, handlePhotoCapture, handleAudioRecord,
     setIsHelpModalOpen, setShowAddByIdInput, setShowCamera, setShowRecorder, setShowCreateTextFileEditor,
-    showScreenshotEditor, screenshotUrl, handleConfirmScreenshot, handleCancelScreenshot,
   } = useChatInputModals({
     onProcessFiles: (files) => onProcessFiles(files),
     justInitiatedFileOpRef,
@@ -277,10 +276,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isProcessingFile={isProcessingFile}
         isLoading={isLoading}
         t={t}
-        showScreenshotEditor={showScreenshotEditor}
-        screenshotUrl={screenshotUrl}
-        onConfirmScreenshot={handleConfirmScreenshot}
-        onCancelScreenshot={handleCancelScreenshot}
       />
 
       <div

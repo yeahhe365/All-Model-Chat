@@ -1,4 +1,3 @@
-// hooks/useTtsImagenSender.ts
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
@@ -40,8 +39,6 @@ export const useTtsImagenSender = ({
             if (s.id !== currentSessionId) return s;
             const newMessages = [...s.messages, userMessage, modelMessage];
             let newTitle = s.title;
-            // Only set a simple title if the chat is new and auto-titling is disabled.
-            // Otherwise, leave it as "New Chat" for the auto-titling hook to handle.
             if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
                 newTitle = generateSessionTitle(newMessages);
             }

@@ -20,7 +20,6 @@ export const translations = {
     ...commonTranslations,
 };
 
-// The getTranslator function remains the same.
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations, fallback?: string): string => {
     // The type assertion is safe because we've merged all the objects.
     const translationSet = translations as any;

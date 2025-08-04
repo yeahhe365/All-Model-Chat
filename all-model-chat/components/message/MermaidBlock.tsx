@@ -6,19 +6,20 @@ import { UploadedFile } from '../../types';
 interface MermaidBlockProps {
   code: string;
   onImageClick: (file: UploadedFile) => void;
+  isLoading: boolean;
 }
 
-export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }) => {
+export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading }) => {
   const [svg, setSvg] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isRendering, setIsRendering] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
   const diagramContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const renderMermaid = async () => {
-      setIsLoading(true);
+      setIsRendering(true);
       setError('');
       setDiagramFile(null);
       try {
@@ -44,15 +45,19 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
         setError(errorMessage.replace(/.*error:\s*/, '')); // Clean up mermaid's error prefix
         setSvg('');
       } finally {
-        setIsLoading(false);
+        setIsRendering(false);
       }
     };
 
-    if (code) {
-      // Delay slightly to ensure mermaid has initialized
-      setTimeout(renderMermaid, 50);
+    if (isMessageLoading) {
+        setIsRendering(true);
+        setError('');
+        setSvg('');
+    } else if (code) {
+        // Delay slightly to ensure mermaid has initialized and to prevent race conditions on fast streams
+        setTimeout(renderMermaid, 100);
     }
-  }, [code]);
+  }, [code, isMessageLoading]);
 
   const handleDownloadPng = () => {
     if (!svg || isDownloading || !diagramContainerRef.current) return;
@@ -122,7 +127,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick }
 
   const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-lg shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
 
-  if (isLoading) {
+  if (isRendering) {
     return (
       <div className={`${containerClasses} bg-[var(--theme-bg-tertiary)]`}>
         <Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" />

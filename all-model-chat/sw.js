@@ -64,6 +64,7 @@ async function handleStreamRequest(generationId, payload, clientId) {
     const { apiKey, modelId, contents, config } = payload;
     const controller = new AbortController();
     activeStreams.set(generationId, { controller });
+    let hasError = false;
 
     try {
         const ai = new self.GoogleGenAI({ apiKey });
@@ -84,15 +85,18 @@ async function handleStreamRequest(generationId, payload, clientId) {
             }
         }
     } catch (error) {
+        hasError = true;
         console.error(`[SW] Error during Gemini stream for ${generationId}:`, error);
         const client = await self.clients.get(clientId);
         if (client) {
             client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { name: error.name, message: error.message } });
         }
     } finally {
-        const client = await self.clients.get(clientId);
-        if (client) {
-            client.postMessage({ type: 'GEMINI_STREAM_COMPLETE', generationId });
+        if (!hasError) {
+            const client = await self.clients.get(clientId);
+            if (client) {
+                client.postMessage({ type: 'GEMINI_STREAM_COMPLETE', generationId });
+            }
         }
         activeStreams.delete(generationId);
     }

@@ -300,10 +300,6 @@ export interface ChatInputModalsProps {
   isProcessingFile: boolean;
   isLoading: boolean;
   t: (key: keyof typeof translations) => string;
-  showScreenshotEditor: boolean;
-  screenshotUrl: string | null;
-  onConfirmScreenshot: (file: File) => Promise<void>;
-  onCancelScreenshot: () => void;
 }
 
 

@@ -1,4 +1,3 @@
-// hooks/useAutoTitling.ts
 import { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../types';
 import { getKeyForRequest, logService } from '../utils/appUtils';

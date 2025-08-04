@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, UploadCloud, Image, FileVideo, Camera, Mic, Link2, FileSignature, Crop } from 'lucide-react';
+import { Plus, UploadCloud, Image, FileVideo, Camera, Mic, Link2, FileSignature, ScreenShare } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 
 export type AttachmentAction = 'upload' | 'gallery' | 'video' | 'camera' | 'recorder' | 'id' | 'text' | 'screenshot';
@@ -41,7 +41,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_gallery', icon: <Image size={16}/>, action: 'gallery' },
         { labelKey: 'attachMenu_uploadVideo', icon: <FileVideo size={16}/>, action: 'video' },
         { labelKey: 'attachMenu_takePhoto', icon: <Camera size={16}/>, action: 'camera' },
-        { labelKey: 'attachMenu_region_screenshot', icon: <Crop size={16}/>, action: 'screenshot' },
+        { labelKey: 'attachMenu_screenshot', icon: <ScreenShare size={16}/>, action: 'screenshot' },
         { labelKey: 'attachMenu_recordAudio', icon: <Mic size={16}/>, action: 'recorder' },
         { labelKey: 'attachMenu_addById', icon: <Link2 size={16}/>, action: 'id' },
         { labelKey: 'attachMenu_createText', icon: <FileSignature size={16}/>, action: 'text' }

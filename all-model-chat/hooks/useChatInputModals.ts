@@ -17,8 +17,6 @@ export const useChatInputModals = ({
   const [showRecorder, setShowRecorder] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [showScreenshotEditor, setShowScreenshotEditor] = useState(false);
-  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -53,9 +51,10 @@ export const useChatInputModals = ({
     
     const processBlob = async (blob: Blob | null) => {
         if (blob) {
-            const url = URL.createObjectURL(blob);
-            setScreenshotUrl(url);
-            setShowScreenshotEditor(true);
+            const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+            justInitiatedFileOpRef.current = true;
+            await onProcessFiles([file]);
         }
         stream.getTracks().forEach(t => t.stop());
     };
@@ -92,20 +91,6 @@ export const useChatInputModals = ({
         console.error("Error processing screen capture frame:", err);
         stream.getTracks().forEach(t => t.stop());
     }
-  };
-  
-  const handleConfirmScreenshot = async (file: File) => {
-    justInitiatedFileOpRef.current = true;
-    await onProcessFiles([file]);
-    setShowScreenshotEditor(false);
-    if(screenshotUrl) URL.revokeObjectURL(screenshotUrl);
-    setScreenshotUrl(null);
-  };
-  
-  const handleCancelScreenshot = () => {
-    setShowScreenshotEditor(false);
-    if(screenshotUrl) URL.revokeObjectURL(screenshotUrl);
-    setScreenshotUrl(null);
   };
 
   const handleAttachmentAction = (action: AttachmentAction) => {
@@ -166,9 +151,5 @@ export const useChatInputModals = ({
     handleConfirmCreateTextFile,
     handlePhotoCapture,
     handleAudioRecord,
-    showScreenshotEditor,
-    screenshotUrl,
-    handleConfirmScreenshot,
-    handleCancelScreenshot,
   };
 };

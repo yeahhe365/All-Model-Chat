@@ -4,7 +4,7 @@ import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
 interface HeaderProps {
-  onNewChat: () => void; // Changed from onClearChat
+  onNewChat: () => void;
   onOpenSettingsModal: () => void; 
   onOpenScenariosModal: () => void; 
   onToggleHistorySidebar: () => void;
@@ -17,7 +17,7 @@ interface HeaderProps {
   isSwitchingModel: boolean;
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
-  isCanvasPromptActive: boolean; // New prop for canvas prompt status
+  isCanvasPromptActive: boolean;
   t: (key: keyof typeof translations) => string;
   isKeyLocked: boolean;
   defaultModelId: string;
@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSwitchingModel,
   isHistorySidebarOpen,
   onLoadCanvasPrompt,
-  isCanvasPromptActive, // Destructure new prop
+  isCanvasPromptActive,
   t,
   isKeyLocked,
   defaultModelId,

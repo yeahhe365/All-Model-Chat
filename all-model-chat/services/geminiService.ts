@@ -1,4 +1,3 @@
-// services/geminiService.ts (Refactored)
 import { GeminiService, ChatHistoryItem, ModelOption } from '../types';
 import { Part, UsageMetadata, File as GeminiFile } from "@google/genai";
 import { getAvailableModelsApi } from './api/modelApi';

@@ -1,4 +1,3 @@
-// hooks/useChatStreamHandler.ts
 import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata } from '@google/genai';

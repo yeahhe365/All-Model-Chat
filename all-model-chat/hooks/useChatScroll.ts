@@ -1,4 +1,3 @@
-// hooks/useChatScroll.ts
 import { useRef, useCallback, useState, useLayoutEffect } from 'react';
 import { ChatMessage } from '../types';
 

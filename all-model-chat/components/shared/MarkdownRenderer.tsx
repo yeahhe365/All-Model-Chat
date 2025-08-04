@@ -12,6 +12,7 @@ import { UploadedFile } from '../../types';
 
 interface MarkdownRendererProps {
   content: string;
+  isLoading: boolean;
   onImageClick: (file: UploadedFile) => void;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
@@ -22,6 +23,7 @@ interface MarkdownRendererProps {
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   content,
+  isLoading,
   onImageClick,
   onOpenHtmlPreview,
   expandCodeBlocksByDefault,
@@ -54,7 +56,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       if (isMermaidRenderingEnabled && language === 'mermaid' && typeof codeContent === 'string') {
         return (
           <div>
-            <MermaidBlock code={codeContent} onImageClick={onImageClick} />
+            <MermaidBlock code={codeContent} onImageClick={onImageClick} isLoading={isLoading} />
             <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
               {children}
             </CodeBlock>
@@ -65,7 +67,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       if (isGraphvizRenderingEnabled && isGraphviz && typeof codeContent === 'string') {
         return (
           <div>
-            <GraphvizBlock code={codeContent} />
+            <GraphvizBlock code={codeContent} isLoading={isLoading} />
             <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
               {children}
             </CodeBlock>
@@ -84,7 +86,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         </CodeBlock>
       );
     }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled]);
+  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading]);
 
   return (
     <ReactMarkdown

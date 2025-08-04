@@ -7,15 +7,15 @@ declare var Panzoom: any;
 
 interface GraphvizBlockProps {
   code: string;
+  isLoading: boolean;
 }
 
-export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
+export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: isMessageLoading }) => {
   const [svgContent, setSvgContent] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isRendering, setIsRendering] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [layout, setLayout] = useState<'LR' | 'TB'>('LR');
-  const [isRenderingLayout, setIsRenderingLayout] = useState(false);
   const [isDownloading, setIsDownloading] = useState<'none' | 'png' | 'svg'>('none');
 
   const diagramContainerRef = useRef<HTMLDivElement>(null);
@@ -26,7 +26,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
 
   const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
     if (!vizInstanceRef.current) return;
-    setIsRenderingLayout(true);
+    setIsRendering(true);
     setError('');
 
     try {
@@ -64,27 +64,35 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
       setError(errorMessage.replace(/.*error:\s*/, ''));
       setSvgContent('');
     } finally {
-      setIsRenderingLayout(false);
-      setIsLoading(false);
+      setIsRendering(false);
     }
   }, [code]);
 
   useEffect(() => {
     let intervalId: number;
-    if (typeof Viz === 'undefined') {
-        intervalId = window.setInterval(() => {
-            if (typeof Viz !== 'undefined') {
-                clearInterval(intervalId);
-                vizInstanceRef.current = new Viz({ worker: undefined });
-                renderGraph(layout);
-            }
-        }, 100);
-    } else {
-        vizInstanceRef.current = new Viz({ worker: undefined });
-        renderGraph(layout);
+    
+    if (isMessageLoading) {
+        setIsRendering(true);
+        setError('');
+        setSvgContent('');
+    } else if (code) {
+        const initAndRender = () => {
+            vizInstanceRef.current = new Viz({ worker: undefined });
+            renderGraph(layout);
+        };
+        if (typeof Viz === 'undefined') {
+            intervalId = window.setInterval(() => {
+                if (typeof Viz !== 'undefined') {
+                    clearInterval(intervalId);
+                    initAndRender();
+                }
+            }, 100);
+        } else {
+            initAndRender();
+        }
     }
     return () => clearInterval(intervalId);
-  }, [renderGraph, layout]);
+  }, [renderGraph, layout, code, isMessageLoading]);
 
   const handleToggleLayout = () => {
     const newLayout = layout === 'LR' ? 'TB' : 'LR';
@@ -218,7 +226,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
 
   const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-lg shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
 
-  if (isLoading) return <div className={`${containerClasses} bg-[var(--theme-bg-tertiary)]`}><Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" /></div>;
+  if (isRendering) return <div className={`${containerClasses} bg-[var(--theme-bg-tertiary)]`}><Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" /></div>;
 
   if (error) return (
       <div className={`${containerClasses} bg-red-900/20`}>
@@ -250,8 +258,8 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
 
-          <button onClick={(e) => { e.stopPropagation(); handleToggleLayout(); }} disabled={isRenderingLayout} className={controlButtonClasses} title={`Toggle Layout (Current: ${layout})`}>
-              {isRenderingLayout ? <Loader2 size={18} className="animate-spin"/> : <Repeat size={18} />}
+          <button onClick={(e) => { e.stopPropagation(); handleToggleLayout(); }} disabled={isRendering} className={controlButtonClasses} title={`Toggle Layout (Current: ${layout})`}>
+              {isRendering ? <Loader2 size={18} className="animate-spin"/> : <Repeat size={18} />}
           </button>
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>

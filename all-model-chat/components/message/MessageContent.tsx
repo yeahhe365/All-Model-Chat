@@ -158,6 +158,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                     <div className="mt-2 pt-2 border-t border-[var(--theme-border-secondary)] text-xs text-[var(--theme-text-secondary)] markdown-body">
                       <MarkdownRenderer
                           content={thoughts}
+                          isLoading={isLoading}
                           onImageClick={onImageClick}
                           onOpenHtmlPreview={onOpenHtmlPreview}
                           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
@@ -175,11 +176,12 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
 
             {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} />
+              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer
                         content={content}
+                        isLoading={isLoading}
                         onImageClick={onImageClick}
                         onOpenHtmlPreview={onOpenHtmlPreview}
                         expandCodeBlocksByDefault={expandCodeBlocksByDefault}
