@@ -104,23 +104,27 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0`}>
       <div className="flex items-center gap-2 min-w-0">
-        <button
-            onClick={onToggleHistorySidebar}
-            className={`p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105 ${isHistorySidebarOpen ? 'sm:hidden' : ''}`}
-            aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
-            title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
-        >
-            {isHistorySidebarOpen ? <PanelLeftClose size={getResponsiveValue(18, 20)} /> : <PanelLeftOpen size={getResponsiveValue(18, 20)} />}
-        </button>
-        {!isHistorySidebarOpen && (
-          <button
-            onClick={onNewChat}
-            className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
-            aria-label={t('headerNewChat_aria')}
-            title={`${t('newChat')} (${newChatShortcut})`}
-          >
-            <SquarePen size={getResponsiveValue(18, 20)} />
-          </button>
+        {!isPipActive && (
+          <>
+            <button
+                onClick={onToggleHistorySidebar}
+                className={`p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105 ${isHistorySidebarOpen ? 'sm:hidden' : ''}`}
+                aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
+                title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
+            >
+                {isHistorySidebarOpen ? <PanelLeftClose size={getResponsiveValue(18, 20)} /> : <PanelLeftOpen size={getResponsiveValue(18, 20)} />}
+            </button>
+            {!isHistorySidebarOpen && (
+              <button
+                onClick={onNewChat}
+                className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
+                aria-label={t('headerNewChat_aria')}
+                title={`${t('newChat')} (${newChatShortcut})`}
+              >
+                <SquarePen size={getResponsiveValue(18, 20)} />
+              </button>
+            )}
+          </>
         )}
         <div className="relative" ref={modelSelectorRef}>
           <button
