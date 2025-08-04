@@ -9,7 +9,7 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = getResponsiveValue(14, 16);
-  const version = "1.1.1"; 
+  const version = "1.2.0"; 
 
   return (
     <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)] text-center">
