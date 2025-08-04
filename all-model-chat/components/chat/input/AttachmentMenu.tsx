@@ -8,12 +8,13 @@ interface AttachmentMenuProps {
     onAction: (action: AttachmentAction) => void;
     disabled: boolean;
     t: (key: keyof typeof translations) => string;
+    isPipActive?: boolean;
 }
 
 const attachIconSize = 18;
 const buttonBaseClass = "h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
 
-export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
+export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t, isPipActive }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -45,6 +46,8 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_addById', icon: <Link2 size={16}/>, action: 'id' },
         { labelKey: 'attachMenu_createText', icon: <FileSignature size={16}/>, action: 'text' }
     ];
+    
+    const menuPositionClasses = isPipActive ? 'top-full mt-2' : 'bottom-full mb-2';
 
     return (
         <div className="relative">
@@ -62,7 +65,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                 <Plus size={attachIconSize} />
             </button>
             {isOpen && (
-                <div ref={menuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
+                <div ref={menuRef} className={`absolute ${menuPositionClasses} left-0 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1`} role="menu">
                     {menuItems.map(item => (
                         <button key={item.action} onClick={() => handleAction(item.action)} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem">
                             {item.icon} <span>{t(item.labelKey)}</span>

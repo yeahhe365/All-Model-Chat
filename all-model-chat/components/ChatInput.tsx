@@ -343,6 +343,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                             canSend={canSend}
                             isWaitingForUpload={isWaitingForUpload}
                             t={t}
+                            isPipActive={isPipActive}
                         />
                          {/* Hidden inputs for file selection, triggered by AttachmentMenu */}
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
