@@ -11,6 +11,7 @@ interface ToolsMenuProps {
     onToggleUrlContext: () => void;
     disabled: boolean;
     t: (key: keyof typeof translations) => string;
+    isPipActive?: boolean;
 }
 
 const ActiveToolBadge: React.FC<{
@@ -42,7 +43,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
-    disabled, t
+    disabled, t, isPipActive
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'code_execution_label', icon: <Terminal size={16}/>, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
       { labelKey: 'url_context_label', icon: <Link size={16}/>, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) }
     ];
+
+    const menuPositionClass = isPipActive ? 'bottom-full' : 'bottom-full mb-2';
     
     return (
       <div className="flex items-center">
@@ -96,7 +99,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 {!hasActiveTools && <span className="text-sm font-medium">{t('tools_button')}</span>}
             </button>
             {isOpen && (
-                <div ref={menuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
+                <div ref={menuRef} className={`absolute left-0 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1 ${menuPositionClass}`} role="menu">
                     {menuItems.map(item => (
                       <button key={item.labelKey} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
                         <span className="flex items-center gap-3">{item.icon} {t(item.labelKey as any)}</span>

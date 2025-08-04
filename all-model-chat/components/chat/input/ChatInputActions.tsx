@@ -26,6 +26,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   isWaitingForUpload,
   t,
   onCancelRecording,
+  isPipActive,
 }) => {
   const micIconSize = 18;
   const sendIconSize = 18;
@@ -34,7 +35,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   return (
     <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-1">
-            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t} />
+            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t} isPipActive={isPipActive} />
             <ToolsMenu
                 isGoogleSearchEnabled={isGoogleSearchEnabled}
                 onToggleGoogleSearch={onToggleGoogleSearch}
@@ -44,6 +45,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 onToggleUrlContext={onToggleUrlContext}
                 disabled={disabled}
                 t={t}
+                isPipActive={isPipActive}
             />
         </div>
 
