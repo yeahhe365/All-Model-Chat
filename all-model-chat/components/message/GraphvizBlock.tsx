@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon } from 'lucide-react';
 
 declare var Viz: any;
@@ -23,24 +24,6 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
   const panzoomInstanceRef = useRef<any>(null);
   const wheelListenerRef = useRef<((e: WheelEvent) => void) | null>(null);
 
-  useEffect(() => {
-    // This effect handles the issue where a `transform` on an ancestor element
-    // breaks `position: fixed` for the modal. We find the animated message
-    // container and temporarily disable its animation (and thus its transform)
-    // while the modal is open.
-    const messageContainer = diagramContainerRef.current?.closest('.message-container-animate');
-    if (messageContainer) {
-      if (isModalOpen) {
-        messageContainer.classList.remove('message-container-animate');
-      } else {
-        // Only re-add if it doesn't have it, to avoid re-triggering animation on every render
-        if (!messageContainer.classList.contains('message-container-animate')) {
-          messageContainer.classList.add('message-container-animate');
-        }
-      }
-    }
-  }, [isModalOpen]);
-  
   const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
     if (!vizInstanceRef.current) return;
     setIsRenderingLayout(true);
@@ -168,6 +151,12 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
   const handleOpenModal = useCallback(() => setIsModalOpen(true), []);
   const handleCloseModal = useCallback(() => setIsModalOpen(false), []);
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+        handleCloseModal();
+    }
+  };
+
   useEffect(() => {
     const zoomContainer = zoomContentRef.current;
 
@@ -243,6 +232,40 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
 
   const controlButtonClasses = "p-2 bg-black/50 hover:bg-black/70 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm";
 
+  const modalJsx = (
+    <div 
+        className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm modal-enter-animation"
+        onClick={handleBackdropClick}
+        role="dialog" aria-modal="true" aria-labelledby="graphviz-modal-title"
+    >
+      <div ref={zoomContentRef} className="relative w-[97%] h-[97%] bg-white overflow-hidden rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}></div>
+      
+      <button onClick={handleCloseModal} className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors flex items-center justify-center" title="Close Fullscreen (Esc)" aria-label="Close Fullscreen"><X size={24} /></button>
+      <h2 id="graphviz-modal-title" className="sr-only">Interactive Diagram View</h2>
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 rounded-lg shadow-lg backdrop-blur-sm border border-white/10" onClick={(e) => e.stopPropagation()}>
+          <button onClick={(e) => { e.stopPropagation(); panzoomInstanceRef.current?.zoomOut(); }} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} /></button>
+          <button onClick={(e) => { e.stopPropagation(); panzoomInstanceRef.current?.reset(); }} className={controlButtonClasses} title="Reset View"><RotateCw size={18} /></button>
+          <button onClick={(e) => { e.stopPropagation(); panzoomInstanceRef.current?.zoomIn(); }} className={controlButtonClasses} title="Zoom In"><ZoomIn size={18} /></button>
+          
+          <div className="w-px h-6 bg-white/20 mx-1"></div>
+
+          <button onClick={(e) => { e.stopPropagation(); handleToggleLayout(); }} disabled={isRenderingLayout} className={controlButtonClasses} title={`Toggle Layout (Current: ${layout})`}>
+              {isRenderingLayout ? <Loader2 size={18} className="animate-spin"/> : <Repeat size={18} />}
+          </button>
+          
+          <div className="w-px h-6 bg-white/20 mx-1"></div>
+
+          <button onClick={(e) => { e.stopPropagation(); handleDownload('png'); }} disabled={isDownloading !== 'none'} className={controlButtonClasses} title="Download as PNG">
+              {isDownloading === 'png' ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); handleDownload('svg'); }} disabled={isDownloading !== 'none'} className={controlButtonClasses} title="Download as SVG">
+              {isDownloading === 'svg' ? <Loader2 size={18} className="animate-spin"/> : <FileCode2 size={18} />}
+          </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="relative group">
       <div 
@@ -255,39 +278,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code }) => {
         <button onClick={handleOpenModal} className="code-block-utility-button rounded-md" title="Expand View"><Maximize size={14} /></button>
       </div>
 
-      {isModalOpen && (
-        <div 
-            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm"
-            onClick={handleCloseModal}
-            role="dialog" aria-modal="true" aria-labelledby="graphviz-modal-title"
-        >
-          <div ref={zoomContentRef} className="relative w-[97%] h-[97%] bg-white overflow-hidden rounded-xl shadow-2xl" onClick={(e) => e.stopPropagation()}></div>
-          
-          <button onClick={handleCloseModal} className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors flex items-center justify-center" title="Close Fullscreen (Esc)" aria-label="Close Fullscreen"><X size={24} /></button>
-          <h2 id="graphviz-modal-title" className="sr-only">Interactive Diagram View</h2>
-
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 rounded-lg shadow-lg backdrop-blur-sm border border-white/10">
-              <button onClick={(e) => { e.stopPropagation(); panzoomInstanceRef.current?.zoomOut(); }} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} /></button>
-              <button onClick={(e) => { e.stopPropagation(); panzoomInstanceRef.current?.reset(); }} className={controlButtonClasses} title="Reset View"><RotateCw size={18} /></button>
-              <button onClick={(e) => { e.stopPropagation(); panzoomInstanceRef.current?.zoomIn(); }} className={controlButtonClasses} title="Zoom In"><ZoomIn size={18} /></button>
-              
-              <div className="w-px h-6 bg-white/20 mx-1"></div>
-
-              <button onClick={(e) => { e.stopPropagation(); handleToggleLayout(); }} disabled={isRenderingLayout} className={controlButtonClasses} title={`Toggle Layout (Current: ${layout})`}>
-                  {isRenderingLayout ? <Loader2 size={18} className="animate-spin"/> : <Repeat size={18} />}
-              </button>
-              
-              <div className="w-px h-6 bg-white/20 mx-1"></div>
-
-              <button onClick={(e) => { e.stopPropagation(); handleDownload('png'); }} disabled={isDownloading !== 'none'} className={controlButtonClasses} title="Download as PNG">
-                  {isDownloading === 'png' ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); handleDownload('svg'); }} disabled={isDownloading !== 'none'} className={controlButtonClasses} title="Download as SVG">
-                  {isDownloading === 'svg' ? <Loader2 size={18} className="animate-spin"/> : <FileCode2 size={18} />}
-              </button>
-          </div>
-        </div>
-      )}
+      {isModalOpen && createPortal(modalJsx, document.body)}
     </div>
   );
 };

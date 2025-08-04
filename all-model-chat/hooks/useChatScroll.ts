@@ -25,12 +25,15 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
 
             const wasAtBottom = prevScrollHeight - clientHeight - prevScrollTop < 100;
 
-            // If the user was already at the bottom OR if userScrolledUp is false 
+            const forceScroll = !userScrolledUp.current;
+
+            // If the user was already at the bottom OR if userScrolledUp is false (forceScroll)
             // (meaning a send just happened and auto-scroll is on), scroll down.
-            if (wasAtBottom || !userScrolledUp.current) {
+            if (wasAtBottom || forceScroll) {
                 container.scrollTo({
                     top: newScrollHeight,
-                    behavior: 'smooth',
+                    // Use 'auto' for instant scroll on send, 'smooth' for streaming while at bottom.
+                    behavior: forceScroll ? 'auto' : 'smooth',
                 });
             }
             
