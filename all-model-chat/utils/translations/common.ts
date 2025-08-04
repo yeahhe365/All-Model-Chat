@@ -10,6 +10,8 @@ export const commonTranslations = {
     loading: { en: 'Loading...', zh: '加载中...' },
     newChat: { en: 'New Chat', zh: '发起新对话' },
     copy: { en: 'Copy', zh: '复制' },
+    cut: { en: 'Cut', zh: '剪切' },
+    paste: { en: 'Paste', zh: '粘贴' },
     fill_input: { en: 'Fill Input', zh: '填入输入框' },
     canvasHelperToggle: { en: 'Toggle Canvas Helper', zh: '切换 Canvas 助手' },
     pipEnter: { en: 'Enter Picture-in-Picture', zh: '进入画中画' },

@@ -196,6 +196,7 @@ export interface MessageListProps {
   scrollNavVisibility: { up: boolean, down: boolean };
   onScrollToPrevTurn: () => void;
   onScrollToNextTurn: () => void;
+  chatInputHeight: number;
 }
 
 export interface ChatInputProps {

@@ -89,6 +89,9 @@ export const useChatHistory = ({
             setCommandedInput({ text: '', id: Date.now() });
             setSelectedFiles([]);
             setEditingMessageId(null);
+            setTimeout(() => {
+                document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+            }, 0);
         } else {
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat();

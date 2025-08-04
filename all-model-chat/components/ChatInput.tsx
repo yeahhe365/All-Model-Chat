@@ -9,6 +9,7 @@ import { ChatInputModals } from './chat/input/ChatInputModals';
 import { useChatInputModals } from '../hooks/useChatInputModals';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useSlashCommands } from '../hooks/useSlashCommands';
+import { ContextMenu, ContextMenuItem } from './shared/ContextMenu';
 
 interface ChatInputProps {
   appSettings: AppSettings;
@@ -71,6 +72,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [fileIdInput, setFileIdInput] = useState('');
   const [isAddingById, setIsAddingById] = useState(false);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number; items: ContextMenuItem[] } | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
@@ -185,6 +187,72 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     handleSlashInputChange(e.target.value);
   };
 
+  const handleTextareaContextMenu = useCallback((e: React.MouseEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const selectedText = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
+    let items: ContextMenuItem[] = [];
+
+    if (selectedText) {
+        items.push({
+            label: t('copy'),
+            icon: 'ClipboardCopy',
+            onClick: () => {
+                navigator.clipboard.writeText(selectedText);
+            },
+        });
+        items.push({
+            label: t('cut'),
+            icon: 'Scissors',
+            onClick: () => {
+                navigator.clipboard.writeText(selectedText);
+                const { selectionStart, selectionEnd, value } = textarea;
+                const newValue = value.slice(0, selectionStart) + value.slice(selectionEnd);
+                handleInputChange({ target: { value: newValue } } as any);
+                textarea.focus();
+                requestAnimationFrame(() => {
+                    textarea.selectionStart = textarea.selectionEnd = selectionStart;
+                });
+            },
+        });
+    } else {
+        items.push({
+            label: t('paste'),
+            icon: 'ClipboardPaste',
+            onClick: async () => {
+                try {
+                    const clipboardText = await navigator.clipboard.readText();
+                    if (!clipboardText) return;
+                    const { selectionStart, selectionEnd, value } = textarea;
+                    const newValue = value.slice(0, selectionStart) + clipboardText + value.slice(selectionEnd);
+                    handleInputChange({ target: { value: newValue } } as any);
+                    textarea.focus();
+                    requestAnimationFrame(() => {
+                        textarea.selectionStart = textarea.selectionEnd = selectionStart + clipboardText.length;
+                    });
+                } catch (err) {
+                    console.error('Failed to paste text: ', err);
+                }
+            },
+        });
+    }
+
+    if (items.length > 0) {
+        setContextMenu({
+            isOpen: true,
+            x: e.pageX,
+            y: e.pageY,
+            items,
+        });
+    }
+  }, [t, handleInputChange]);
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
   const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
   const isAnyModalOpen = isModalOpen || isHelpModalOpen;
   const canSend = (inputText.trim() !== '' || selectedFiles.length > 0) && !isLoading && !isAddingById && !isModalOpen;
@@ -282,7 +350,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         className={`bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isAnyModalOpen}
       >
-        <div className={`mx-auto w-full ${!isPipActive ? 'max-w-5xl' : ''} px-2 sm:px-3 mb-2 sm:mb-3`}>
+        <div className={`mx-auto w-full ${!isPipActive ? 'max-w-5xl' : ''} px-2 sm:px-3`}>
             <ChatInputToolbar
               isImagenModel={isImagenModel || false}
               aspectRatio={aspectRatio}
@@ -308,12 +376,13 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                     onSelect={handleCommandSelect}
                     selectedIndex={slashCommandState.selectedIndex}
                 />
-                <div className="flex flex-col gap-1 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-2 py-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
+                <div className="flex flex-col gap-1 rounded-2xl border border-[color:var(--theme-border-secondary)/0.5] bg-[var(--theme-bg-input)] px-2 py-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
                     <textarea
                         ref={textareaRef} value={inputText} onChange={handleInputChange}
                         onKeyDown={handleKeyDown} onPaste={handlePaste}
                         onCompositionStart={() => isComposingRef.current = true}
                         onCompositionEnd={() => isComposingRef.current = false}
+                        onContextMenu={handleTextareaContextMenu}
                         placeholder={t('chatInputPlaceholder')}
                         className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
                         style={{ height: `${getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX)}px` }}
@@ -353,6 +422,14 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             </form>
         </div>
       </div>
+      {contextMenu && (
+        <ContextMenu 
+            isOpen={contextMenu.isOpen}
+            position={{ x: contextMenu.x, y: contextMenu.y }}
+            onClose={handleCloseContextMenu}
+            items={contextMenu.items}
+        />
+      )}
     </>
   );
 };
