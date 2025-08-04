@@ -22,6 +22,77 @@ export const useChatInputModals = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
 
+  const handleScreenshot = async () => {
+    if (!('getDisplayMedia' in navigator.mediaDevices)) {
+        alert("Your browser does not support screen capture.");
+        return;
+    }
+
+    let stream: MediaStream;
+    try {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+            video: { mediaSource: "screen" },
+            audio: false,
+        });
+    } catch (err) {
+        console.error("Error starting screen capture:", err);
+        if ((err as DOMException).name !== 'NotAllowedError') {
+            alert(`Could not start screen capture: ${(err as Error).message}`);
+        }
+        return;
+    }
+    
+    const track = stream.getVideoTracks()[0];
+    if (!track) {
+        console.error("No video track found in the stream.");
+        stream.getTracks().forEach(t => t.stop());
+        return;
+    }
+    
+    const processBlob = async (blob: Blob | null) => {
+        if (blob) {
+            const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
+            const file = new File([blob], fileName, { type: 'image/png' });
+            justInitiatedFileOpRef.current = true;
+            await onProcessFiles([file]);
+        }
+        stream.getTracks().forEach(t => t.stop());
+    };
+
+    try {
+        // @ts-ignore - ImageCapture is not in all TS libs yet
+        if (typeof ImageCapture !== 'undefined') {
+             // @ts-ignore
+            const imageCapture = new ImageCapture(track);
+            const bitmap = await imageCapture.grabFrame();
+            const canvas = document.createElement('canvas');
+            canvas.width = bitmap.width;
+            canvas.height = bitmap.height;
+            const context = canvas.getContext('2d');
+            context?.drawImage(bitmap, 0, 0);
+            canvas.toBlob(processBlob, 'image/png');
+        } else {
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.onloadedmetadata = () => {
+                video.play();
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const context = canvas.getContext('2d');
+                    context?.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(processBlob, 'image/png');
+                    video.remove();
+                }, 150);
+            };
+        }
+    } catch (err) {
+        console.error("Error processing screen capture frame:", err);
+        stream.getTracks().forEach(t => t.stop());
+    }
+  };
+
   const handleAttachmentAction = (action: AttachmentAction) => {
     switch (action) {
       case 'upload': fileInputRef.current?.click(); break;
@@ -31,6 +102,7 @@ export const useChatInputModals = ({
       case 'recorder': setShowRecorder(true); break;
       case 'id': setShowAddByIdInput(true); break;
       case 'text': setShowCreateTextFileEditor(true); break;
+      case 'screenshot': handleScreenshot(); break;
     }
   };
 
