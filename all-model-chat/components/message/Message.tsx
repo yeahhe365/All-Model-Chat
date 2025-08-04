@@ -80,7 +80,7 @@ const ExportMessageButton: React.FC<{ markdownContent: string; messageId: string
               ${headContent}
               <style>
                 body { padding: 20px; }
-                .exported-message-container { max-width: 900px; margin: auto; }
+                .code-block-utility-button { display: none !important; }
               </style>
             </head>
             <body>

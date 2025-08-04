@@ -117,69 +117,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
     onTogglePip,
   });
-    
-  const handlePasteAsMarkdown = useCallback(async (clipboardData?: DataTransfer) => {
-    let html = '';
-    let plainText = '';
-
-    const insertTextAtCursor = (textToInsert: string) => {
-        const textarea = textareaRef.current;
-        if (textarea) {
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const currentVal = textarea.value;
-            const newVal = currentVal.substring(0, start) + textToInsert + currentVal.substring(end);
-            
-            handleSlashInputChange({ target: { value: newVal } } as any);
-
-            requestAnimationFrame(() => {
-                textarea.selectionStart = textarea.selectionEnd = start + textToInsert.length;
-                adjustTextareaHeight();
-                textarea.focus();
-            });
-        }
-    };
-
-    if (clipboardData) { // From onPaste event
-        html = clipboardData.getData('text/html');
-        plainText = clipboardData.getData('text/plain');
-    } else { // From context menu click (navigator.clipboard)
-        try {
-            const clipboardItems = await navigator.clipboard.read();
-            for (const item of clipboardItems) {
-                if (item.types.includes('text/html')) {
-                    const blob = await item.getType('text/html');
-                    html = await blob.text();
-                    break;
-                }
-            }
-            if (!html) {
-                plainText = await navigator.clipboard.readText();
-            }
-        } catch (err) {
-            console.error('Failed to read clipboard:', err);
-            try {
-                plainText = await navigator.clipboard.readText();
-            } catch (e) {
-                console.error('Failed to read plain text from clipboard either:', e);
-            }
-        }
-    }
-
-    if (html) {
-        try {
-            const TurndownService = (await import('turndown')).default;
-            const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
-            const markdown = turndownService.turndown(html);
-            insertTextAtCursor(markdown);
-        } catch (e) {
-            console.error("Failed to convert HTML to Markdown, pasting as plain text.", e);
-            if (plainText) insertTextAtCursor(plainText);
-        }
-    } else if (plainText) {
-        insertTextAtCursor(plainText);
-    }
-}, [handleSlashInputChange, adjustTextareaHeight]);
 
   useEffect(() => {
     if (commandedInput) {
@@ -233,17 +170,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-    if (isModalOpen || isProcessingFile || isAddingById) return;
-
-    // Special paste as markdown (Cmd/Ctrl + Shift + V)
-    if (event.shiftKey) {
-        event.preventDefault();
-        await handlePasteAsMarkdown(event.clipboardData);
-        return;
-    }
-
     const items = event.clipboardData?.items;
-    if (!items) return;
+    if (!items || isProcessingFile || isAddingById || isModalOpen) return;
     const filesToProcess = Array.from(items)
       .filter(item => item.kind === 'file' && ALL_SUPPORTED_MIME_TYPES.includes(item.type))
       .map(item => item.getAsFile()).filter((f): f is File => f !== null);
@@ -309,11 +237,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 }
             },
         });
-        items.push({
-            label: t('paste_as_markdown'),
-            icon: 'FileSignature',
-            onClick: () => handlePasteAsMarkdown(),
-        });
     }
 
     if (items.length > 0) {
@@ -324,7 +247,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             items,
         });
     }
-  }, [t, handleInputChange, handlePasteAsMarkdown]);
+  }, [t, handleInputChange]);
 
   const handleCloseContextMenu = () => {
     setContextMenu(null);

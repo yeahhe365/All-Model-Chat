@@ -227,23 +227,29 @@ const App: React.FC = () => {
     const date = new Date().toISOString().slice(0, 10);
     const filename = `chat-${safeTitle}-${date}.${format}`;
 
+    const scrollContainer = scrollContainerRef.current;
+    let originalPaddingBottom: string | null = null;
+
     try {
         if (format === 'png') {
-            if (!scrollContainerRef.current) return;
+            if (!scrollContainer) return;
             document.body.classList.add('is-exporting-png');
+            originalPaddingBottom = scrollContainer.style.paddingBottom;
+            scrollContainer.style.paddingBottom = '16px'; // Use a small fixed padding for export
             await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
             
-            await exportElementAsPng(scrollContainerRef.current, filename, {
-                backgroundColor: currentTheme.colors.bgSecondary,
+            const exportBgColor = currentTheme.id === 'pearl' ? currentTheme.colors.bgPrimary : currentTheme.colors.bgSecondary;
+            await exportElementAsPng(scrollContainer, filename, {
+                backgroundColor: exportBgColor,
             });
 
         } else if (format === 'html') {
-            if (!scrollContainerRef.current) return;
+            if (!scrollContainer) return;
 
             const headContent = await gatherPageStyles();
             const bodyClasses = document.body.className;
             const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-            const chatHtml = scrollContainerRef.current.innerHTML;
+            const chatHtml = scrollContainer.innerHTML;
 
             const fullHtml = `
                 <!DOCTYPE html>
@@ -264,8 +270,7 @@ const App: React.FC = () => {
                     </script>
                     <style>
                         body { background-color: ${rootBgColor}; padding: 1rem; box-sizing: border-box; }
-                        .message-actions { opacity: 0.5 !important; transform: none !important; }
-                        .group:hover .message-actions { opacity: 1 !important; }
+                        .message-actions, .code-block-utility-button { display: none !important; }
                         .sticky[aria-label="Scroll to bottom"] { display: none !important; }
                     </style>
                 </head>
@@ -297,6 +302,9 @@ const App: React.FC = () => {
         alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
         document.body.classList.remove('is-exporting-png');
+        if (scrollContainer && originalPaddingBottom !== null) {
+            scrollContainer.style.paddingBottom = originalPaddingBottom;
+        }
         setExportStatus('idle');
         setIsExportModalOpen(false);
     }

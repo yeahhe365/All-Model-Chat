@@ -55,7 +55,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       ref={scrollContainerRef}
       onScroll={onScrollContainerScroll}
       className={`relative flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
-      style={{ paddingBottom: `${chatInputHeight}px` }}
+      style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
       aria-live="polite" 
     >
       {messages.length === 0 ? (
@@ -68,7 +68,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               <Zap size={16} className="text-[var(--theme-text-link)]" />
               <span>{t('welcome_suggestion_title')}</span>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {SUGGESTIONS_KEYS.map((s, i) => (
                 <button
                   key={i}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
-import { Terminal, Trash2, ClipboardCopy, Settings, Wand2, Edit3, PictureInPicture, PictureInPicture2, Scissors, ClipboardPaste, FileSignature } from 'lucide-react';
+import { Terminal, Trash2, ClipboardCopy, Settings, Wand2, Edit3, PictureInPicture, PictureInPicture2, Scissors, ClipboardPaste } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
@@ -15,7 +15,6 @@ const CommandIcon: React.FC<{ iconName: string }> = ({ iconName }) => {
         case 'PictureInPicture2': return <PictureInPicture2 {...iconProps} />;
         case 'Scissors': return <Scissors {...iconProps} />;
         case 'ClipboardPaste': return <ClipboardPaste {...iconProps} />;
-        case 'FileSignature': return <FileSignature {...iconProps} />;
         default: return null;
     }
 };
