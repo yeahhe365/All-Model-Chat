@@ -61,7 +61,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       {messages.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-full w-full max-w-7xl mx-auto px-4 pb-24">
           <div className="w-full">
-            <h1 className="text-4xl sm:text-5xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
+            <h1 className="text-3xl sm:text-4xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
               {t('welcome_greeting')}
             </h1>
             <div className="text-left mb-2 sm:mb-3 flex items-center gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
