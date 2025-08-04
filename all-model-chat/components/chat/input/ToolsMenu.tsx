@@ -74,8 +74,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'code_execution_label', icon: <Terminal size={16}/>, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
       { labelKey: 'url_context_label', icon: <Link size={16}/>, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) }
     ];
-
-    const menuPositionClasses = isPipActive ? 'top-full mt-2' : 'bottom-full mb-2';
     
     return (
       <div className="flex items-center">
@@ -99,7 +97,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 {!hasActiveTools && <span className="text-sm font-medium">{t('tools_button')}</span>}
             </button>
             {isOpen && (
-                <div ref={menuRef} className={`absolute ${menuPositionClasses} left-0 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1`} role="menu">
+                <div ref={menuRef} className={`absolute ${isPipActive ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1`} role="menu">
                     {menuItems.map(item => (
                       <button key={item.labelKey} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
                         <span className="flex items-center gap-3">{item.icon} {t(item.labelKey as any)}</span>

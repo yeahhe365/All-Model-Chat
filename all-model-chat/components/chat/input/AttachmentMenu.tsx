@@ -46,8 +46,6 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_addById', icon: <Link2 size={16}/>, action: 'id' },
         { labelKey: 'attachMenu_createText', icon: <FileSignature size={16}/>, action: 'text' }
     ];
-    
-    const menuPositionClasses = isPipActive ? 'top-full mt-2' : 'bottom-full mb-2';
 
     return (
         <div className="relative">
@@ -65,7 +63,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                 <Plus size={attachIconSize} />
             </button>
             {isOpen && (
-                <div ref={menuRef} className={`absolute ${menuPositionClasses} left-0 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1`} role="menu">
+                <div ref={menuRef} className={`absolute ${isPipActive ? 'top-full mt-2' : 'bottom-full mb-2'} left-0 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1`} role="menu">
                     {menuItems.map(item => (
                         <button key={item.action} onClick={() => handleAction(item.action)} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3" role="menuitem">
                             {item.icon} <span>{t(item.labelKey)}</span>
