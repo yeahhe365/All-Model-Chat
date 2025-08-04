@@ -17,7 +17,8 @@ export const MessageList: React.FC<MessageListProps> = ({
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
-    scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn
+    scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
+    chatInputHeight
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
@@ -53,7 +54,8 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div 
       ref={scrollContainerRef}
       onScroll={onScrollContainerScroll}
-      className={`relative flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 pb-40 sm:pb-56 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
+      className={`relative flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
+      style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
       aria-live="polite" 
     >
       {messages.length === 0 ? (
