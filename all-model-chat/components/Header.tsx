@@ -56,12 +56,15 @@ export const Header: React.FC<HeaderProps> = ({
   const [hoveredModelId, setHoveredModelId] = useState<string | null>(null);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
+  const [pipShortcut, setPipShortcut] = useState('');
 
   const displayModelName = isModelsLoading && !currentModelName ? t('loading') : currentModelName;
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    setNewChatShortcut(`${isMac ? 'Cmd' : 'Ctrl'} + Alt + N`);
+    const modifier = isMac ? 'Cmd' : 'Ctrl';
+    setNewChatShortcut(`${modifier} + Alt + N`);
+    setPipShortcut(`${modifier} + Alt + P`);
   }, []);
 
   useEffect(() => {
@@ -227,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onTogglePip}
               className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
               aria-label={isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
-              title={isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
+              title={`${isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'} (${pipShortcut})`}
             >
               {isPipActive ? <PictureInPicture2 size={getResponsiveValue(16, 18)} /> : <PictureInPicture size={getResponsiveValue(16, 18)} />}
             </button>

@@ -17,6 +17,8 @@ interface AppEventsProps {
     isPreloadedMessagesModalOpen: boolean;
     setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+    onTogglePip: () => void;
+    isPipSupported: boolean;
 }
 
 export const useAppEvents = ({
@@ -32,6 +34,8 @@ export const useAppEvents = ({
     isPreloadedMessagesModalOpen,
     setIsLogViewerOpen,
     updateAndPersistSessions,
+    onTogglePip,
+    isPipSupported,
 }: AppEventsProps) => {
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
@@ -165,6 +169,11 @@ export const useAppEvents = ({
             } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'l') {
                 event.preventDefault();
                 setIsLogViewerOpen(prev => !prev);
+            } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'p') {
+                if (isPipSupported) {
+                    event.preventDefault();
+                    onTogglePip();
+                }
             } else if (event.key === 'Delete') {
                 if (isSettingsModalOpen || isPreloadedMessagesModalOpen) return;
                 const chatTextareaAriaLabel = 'Chat message input';
@@ -195,7 +204,7 @@ export const useAppEvents = ({
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen]);
+    }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip]);
 
     return {
         installPromptEvent,

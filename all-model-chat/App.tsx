@@ -109,6 +109,8 @@ const App: React.FC = () => {
     handleTouchEnd,
   } = useAppUI();
   
+  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture();
+
   const {
     installPromptEvent,
     isStandalone,
@@ -128,9 +130,9 @@ const App: React.FC = () => {
     isPreloadedMessagesModalOpen,
     setIsLogViewerOpen,
     updateAndPersistSessions,
+    onTogglePip: togglePip,
+    isPipSupported,
   });
-
-  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture();
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
@@ -399,13 +401,9 @@ const App: React.FC = () => {
         t={t}
       />
   );
-
-  return (
-    <div 
-      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+  
+  const fullAppComponent = (
+    <>
       {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
@@ -437,29 +435,7 @@ const App: React.FC = () => {
         themeId={currentTheme.id}
         language={language}
       />
-      {isPipActive && pipContainer ? (
-          <>
-              {createPortal(
-                  <div className={`theme-${currentTheme.id} h-full w-full flex flex-col bg-[var(--theme-bg-primary)]`}>
-                      {chatAreaComponent}
-                  </div>,
-                  pipContainer
-              )}
-              <div className="flex-grow flex flex-col items-center justify-center text-center p-4 bg-[var(--theme-bg-secondary)]">
-                  <PictureInPicture2 size={48} className="text-[var(--theme-text-link)] mb-4" />
-                  <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">Chat in Picture-in-Picture</h2>
-                  <p className="text-sm text-[var(--theme-text-secondary)] mt-2 max-w-xs">The chat is running in a separate window. Close it to bring the conversation back here.</p>
-                  <button 
-                      onClick={togglePip} 
-                      className="mt-6 px-4 py-2 bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-lg font-medium hover:bg-[var(--theme-bg-accent-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]"
-                  >
-                      Close PiP Window
-                  </button>
-              </div>
-          </>
-      ) : (
-          chatAreaComponent
-      )}
+      {chatAreaComponent}
       <AppModals
         isSettingsModalOpen={isSettingsModalOpen}
         setIsSettingsModalOpen={setIsSettingsModalOpen}
@@ -491,6 +467,42 @@ const App: React.FC = () => {
         currentChatSettings={currentChatSettings}
         t={t}
       />
+    </>
+  );
+
+  return (
+    <div 
+      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {isPipActive && pipContainer ? (
+          <>
+              {createPortal(
+                  <div 
+                    className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                      {fullAppComponent}
+                  </div>,
+                  pipContainer
+              )}
+              <div className="flex-grow flex flex-col items-center justify-center text-center p-4 bg-[var(--theme-bg-secondary)]">
+                  <PictureInPicture2 size={48} className="text-[var(--theme-text-link)] mb-4" />
+                  <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">Chat in Picture-in-Picture</h2>
+                  <p className="text-sm text-[var(--theme-text-secondary)] mt-2 max-w-xs">The chat is running in a separate window. Close it to bring the conversation back here.</p>
+                  <button 
+                      onClick={togglePip} 
+                      className="mt-6 px-4 py-2 bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-lg font-medium hover:bg-[var(--theme-bg-accent-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]"
+                  >
+                      Close PiP Window
+                  </button>
+              </div>
+          </>
+      ) : (
+          fullAppComponent
+      )}
     </div>
   );
 };
