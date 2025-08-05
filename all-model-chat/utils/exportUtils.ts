@@ -1,5 +1,4 @@
 
-
 /**
  * Triggers a file download in the browser.
  * @param href The URL or data URI of the file to download.
@@ -39,11 +38,10 @@ export const sanitizeFilename = (name: string): string => {
 
 /**
  * Gathers all style and link tags from the current document's head to be inlined.
- * @param ownerDoc The document from which to gather styles. Defaults to the main window's document.
  * @returns A promise that resolves to a string of HTML style and link tags.
  */
-export const gatherPageStyles = async (ownerDoc: Document = document): Promise<string> => {
-    const stylePromises = Array.from(ownerDoc.head.querySelectorAll('style, link[rel="stylesheet"]'))
+export const gatherPageStyles = async (): Promise<string> => {
+    const stylePromises = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
         .map(el => {
             if (el.tagName === 'STYLE') {
                 return Promise.resolve(`<style>${el.innerHTML}</style>`);

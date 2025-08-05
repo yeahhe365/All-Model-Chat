@@ -18,7 +18,7 @@ import { PictureInPicture2 } from 'lucide-react';
 
 
 const App: React.FC = () => {
-  const { appSettings, setAppSettings, currentTheme, language, syncThemeToPiP } = useAppSettings();
+  const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = getTranslator(language);
   
   const chatState = useChat(appSettings, language);
@@ -109,7 +109,7 @@ const App: React.FC = () => {
     handleTouchEnd,
   } = useAppUI();
   
-  const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture();
+  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture();
 
   const {
     installPromptEvent,
@@ -146,13 +146,6 @@ const App: React.FC = () => {
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     });
   }, []);
-  
-  // Sync theme to PiP window whenever it's open and the theme changes.
-  useEffect(() => {
-    if (isPipActive && pipWindow) {
-      syncThemeToPiP(pipWindow);
-    }
-  }, [isPipActive, pipWindow, syncThemeToPiP]);
   
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
@@ -196,16 +189,22 @@ const App: React.FC = () => {
   };
   
   const handleHomepageSuggestionClick = (text: string) => {
-    // The ChatInput component's useEffect on `commandedInput` will handle the focus.
     setCommandedInput({ text: text + '\n', id: Date.now() });
+    setTimeout(() => {
+        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+        if (textarea) textarea.focus();
+    }, 0);
   };
 
   const handleFollowUpSuggestionClick = (text: string) => {
     if (appSettings.isAutoSendOnSuggestionClick ?? true) {
       handleSendMessage({ text });
     } else {
-      // The ChatInput component's useEffect on `commandedInput` will handle the focus.
       setCommandedInput({ text: text + '\n', id: Date.now() });
+      setTimeout(() => {
+          const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+          if (textarea) textarea.focus();
+      }, 0);
     }
   };
 
@@ -231,13 +230,12 @@ const App: React.FC = () => {
     const filename = `chat-${safeTitle}-${date}.${format}`;
 
     const scrollContainer = scrollContainerRef.current;
-    const activeDoc = isPipActive && pipWindow ? pipWindow.document : document;
     let originalPaddingBottom: string | null = null;
 
     try {
         if (format === 'png') {
             if (!scrollContainer) return;
-            activeDoc.body.classList.add('is-exporting-png');
+            document.body.classList.add('is-exporting-png');
             originalPaddingBottom = scrollContainer.style.paddingBottom;
             scrollContainer.style.paddingBottom = '16px'; // Use a small fixed padding for export
             await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
@@ -250,9 +248,9 @@ const App: React.FC = () => {
         } else if (format === 'html') {
             if (!scrollContainer) return;
 
-            const headContent = await gatherPageStyles(activeDoc);
-            const bodyClasses = activeDoc.body.className;
-            const rootBgColor = getComputedStyle(activeDoc.documentElement).getPropertyValue('--theme-bg-primary');
+            const headContent = await gatherPageStyles();
+            const bodyClasses = document.body.className;
+            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
             const chatHtml = scrollContainer.innerHTML;
 
             const fullHtml = `
@@ -305,14 +303,14 @@ const App: React.FC = () => {
         logService.error(`Chat export failed (format: ${format})`, { error });
         alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
-        activeDoc.body.classList.remove('is-exporting-png');
+        document.body.classList.remove('is-exporting-png');
         if (scrollContainer && originalPaddingBottom !== null) {
             scrollContainer.style.paddingBottom = originalPaddingBottom;
         }
         setExportStatus('idle');
         setIsExportModalOpen(false);
     }
-}, [activeChat, currentTheme, language, scrollContainerRef, isPipActive, pipWindow]);
+}, [activeChat, currentTheme, language, scrollContainerRef]);
 
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
