@@ -99,7 +99,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ isOpen, position, onCl
                             }}
                             className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-3 transition-colors rounded-sm ${
                                 item.isDanger
-                                    ? 'text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)] hover:text-white'
+                                    ? 'text-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger)] hover:text-white'
                                     : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'
                             }`}
                             role="menuitem"

@@ -5,32 +5,19 @@ import { getResponsiveValue } from '../../utils/appUtils';
 interface SettingsActionsProps {
   onSave: () => void;
   onCancel: () => void;
-  onReset: () => void;
   t: (key: string) => string;
 }
 
 export const SettingsActions: React.FC<SettingsActionsProps> = ({
   onSave,
   onCancel,
-  onReset,
   t,
 }) => {
   const actionButtonIconSize = getResponsiveValue(12, 14);
   const baseButtonClass = "px-3 sm:px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] flex items-center justify-center gap-1.5 text-sm font-medium";
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)] sm:rounded-b-2xl">
-      {/* Left side: Reset Action */}
-      <button
-        onClick={onReset}
-        type="button"
-        className={`${baseButtonClass} w-full sm:w-auto border border-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-secondary)] focus:ring-[var(--theme-border-secondary)]`}
-        aria-label="Reset settings to default"
-      >
-        <RotateCcw size={actionButtonIconSize} />
-        <span>{t('settingsReset')}</span>
-      </button>
-
+    <div className="flex flex-col sm:flex-row items-center justify-end gap-3 p-3 sm:p-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)] sm:rounded-b-2xl">
       {/* Right side: Primary Actions */}
       <div className="flex items-center gap-2 w-full sm:w-auto">
         <button

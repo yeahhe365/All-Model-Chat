@@ -9,6 +9,7 @@ interface DataManagementSectionProps {
   onInstallPwa: () => void;
   onImportSettings: (file: File) => void;
   onExportSettings: (includeHistory: boolean) => void;
+  onReset: () => void;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -28,6 +29,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onInstallPwa,
   onImportSettings,
   onExportSettings,
+  onReset,
   t,
 }) => {
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -105,6 +107,16 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
             >
               {t('settingsInstallApp')}
             </button>
+          </ActionRow>
+
+           <ActionRow label={t('settingsReset')}>
+              <button
+                onClick={onReset}
+                type="button"
+                className={`${baseButtonClass} bg-transparent border-[var(--theme-text-warning)] text-[var(--theme-text-warning)] hover:bg-[var(--theme-text-warning)] hover:text-[var(--theme-bg-primary)] focus:ring-[var(--theme-text-warning)]`}
+              >
+              {t('settingsReset')}
+              </button>
           </ActionRow>
 
           <ActionRow label={t('settingsClearHistory')}>

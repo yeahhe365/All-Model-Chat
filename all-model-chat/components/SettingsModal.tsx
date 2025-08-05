@@ -60,7 +60,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleClose = () => { if (isOpen) onClose(); };
   const handleSave = () => { onSave(settings); };
-  const handleResetToDefaults = () => { setSettings(DEFAULT_APP_SETTINGS); };
+  const handleResetToDefaults = () => { 
+    if (window.confirm(t('settingsReset_confirm'))) {
+      setSettings(DEFAULT_APP_SETTINGS); 
+    }
+  };
   
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -147,6 +151,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 isInstallable={isInstallable}
                 onImportSettings={onImportSettings}
                 onExportSettings={onExportSettings}
+                onReset={handleResetToDefaults}
                 t={t}
               />
           )}
@@ -222,7 +227,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {renderTabContent()}
           </div>
         </div>
-        <SettingsActions onSave={handleSave} onCancel={handleClose} onReset={handleResetToDefaults} t={t} />
+        <SettingsActions onSave={handleSave} onCancel={handleClose} t={t} />
       </div>
     </Modal>
   );

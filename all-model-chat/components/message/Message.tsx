@@ -316,12 +316,14 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
                     transform: `translateX(${deltaX}px)`,
                     transition: isSwiping ? 'none' : 'transform 0.3s ease',
                 }}
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
             >
                 {message.role !== 'user' && iconAndActions}
-                <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
+                <div 
+                    className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <MessageContent
                         message={message}
                         onImageClick={onImageClick}
