@@ -33,12 +33,15 @@ export const usePictureInPicture = () => {
 
         try {
             const pipWin = await window.documentPictureInPicture!.requestWindow({
-                width: 500, // A reasonable default width
-                height: 700, // A reasonable default height
+                width: Math.min(window.screen.availWidth, 500),
+                height: Math.min(window.screen.availHeight, 700),
             });
 
             // Copy all head elements from the main document to the PiP window.
             // This ensures styles, scripts (like Tailwind), and other configurations are available.
+            while (pipWin.document.head.firstChild) {
+                pipWin.document.head.removeChild(pipWin.document.head.firstChild);
+            }
             document.head.childNodes.forEach(node => {
                 pipWin.document.head.appendChild(node.cloneNode(true));
             });
@@ -90,7 +93,7 @@ export const usePictureInPicture = () => {
         isPipSupported,
         isPipActive: !!pipWindow,
         togglePip,
+        pipWindow, // Expose the window object
         pipContainer,
-        pipWindow,
     };
 };
