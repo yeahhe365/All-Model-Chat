@@ -472,7 +472,7 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className={`relative flex h-full overflow-hidden bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
+      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
