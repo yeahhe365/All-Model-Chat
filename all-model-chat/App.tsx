@@ -407,7 +407,7 @@ const App: React.FC = () => {
       {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
-          className="fixed inset-0 bg-black/60 z-20 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 z-20 transition-opacity duration-300 md:hidden"
           aria-hidden="true"
         />
       )}
@@ -472,7 +472,7 @@ const App: React.FC = () => {
 
   return (
     <div 
-      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id}`}
+      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id} overflow-hidden`}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >

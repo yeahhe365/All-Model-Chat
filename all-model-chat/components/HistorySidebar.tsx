@@ -268,8 +268,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
   return (
     <aside
-      className={`h-full flex flex-col w-64 sm:w-64 md:w-72 ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} shadow-lg ease-in-out duration-300 absolute top-0 left-0 z-30 transition-transform transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : ''}`}
-      role="complementary" aria-label={t('history_title')} aria-hidden={!isOpen}
+      className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} shadow-lg flex-shrink-0
+                 transition-all duration-300 ease-in-out
+                 absolute md:static top-0 left-0 z-30
+                 transform md:transform-none
+                 w-64 md:w-72
+                 ${isOpen ? 'translate-x-0 md:ml-0' : '-translate-x-full md:-ml-72'}
+                 ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : ''}`}
+      role="complementary" aria-label={t('history_title')}
     >
       <div className="p-2 sm:p-3 flex items-center justify-between flex-shrink-0 h-[60px]">
         <a href="https://all-model-chat.pages.dev/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 pl-2 no-underline hover:opacity-80 transition-opacity">
