@@ -49,20 +49,19 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
     const generationStartTimeRef = useRef<Date | null>(null);
     const { getStreamHandlers } = useChatStreamHandler(props);
-    const { handleTtsImagenMessage } = useTtsImagenSender(props);
+    const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
         const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         
-        let sessionId = activeSessionId;
         const sessionToUpdate = currentChatSettings;
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
         
-        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: sessionId });
+        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId });
 
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
         if ((isTtsModel || isImagenModel) && !textToUse.trim()) return;
@@ -104,89 +103,73 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
-        if (!sessionId) {
-            const newSessionId = generateUniqueId();
-            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
-            const newSession: SavedChatSession = {
-                id: newSessionId, title: "New Chat", messages: [], timestamp: Date.now(), settings: newSessionSettings,
-            };
-            updateAndPersistSessions(p => [newSession, ...p]);
-            setActiveSessionId(newSessionId);
-            sessionId = newSessionId;
-        }
-
-        const currentSessionId = sessionId;
-        if (!currentSessionId) {
-             logService.error("Message send failed: Could not establish a session ID.");
-             return;
-        }
-        
-        setLoadingSessionIds(prev => new Set(prev).add(currentSessionId));
-        activeJobs.current.set(generationId, newAbortController);
-
         if (isTtsModel || isImagenModel) {
-            await handleTtsImagenMessage(keyToUse, currentSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio);
+            await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, { shouldLockKey });
             return;
         }
         
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
         const { contentParts: promptParts, enrichedFiles } = await buildContentParts(textToUse.trim(), successfullyProcessedFiles);
-
-        const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
-        const baseMessagesForApi = editIndex !== -1 ? messages.slice(0, editIndex) : [...messages];
-        const historyForApi = await createChatHistoryForApi(baseMessagesForApi);
         
-        updateAndPersistSessions(prev => {
-            const sessionForHistory = prev.find(s => s.id === currentSessionId);
-            if (!sessionForHistory) return prev;
+        let finalSessionId = activeSessionId;
 
-            const uiEditIndex = effectiveEditingId ? sessionForHistory.messages.findIndex(m => m.id === effectiveEditingId) : -1;
-            const baseMessagesForUi = uiEditIndex !== -1 ? sessionForHistory.messages.slice(0, uiEditIndex) : [...sessionForHistory.messages];
+        // Perform a single, atomic state update for adding messages and creating a new session if necessary.
+        if (!finalSessionId) { // New Chat
+            const newSessionId = generateUniqueId();
+            finalSessionId = newSessionId;
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
             
-            const lastCumulative = baseMessagesForUi.length > 0 ? (baseMessagesForUi[baseMessagesForUi.length - 1].cumulativeTotalTokens || 0) : 0;
-            
-            const userMessage: ChatMessage = {
-                id: generateUniqueId(), role: 'user', content: textToUse.trim(),
-                files: enrichedFiles.length ? enrichedFiles.map(f => ({...f, rawFile: undefined})) : undefined,
-                timestamp: new Date(), cumulativeTotalTokens: lastCumulative,
-            };
-            
-            const modelMessage: ChatMessage = { 
-                id: generationId, role: 'model', content: '', timestamp: new Date(), 
-                isLoading: true, generationStartTime: generationStartTimeRef.current! 
-            };
+            const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles.map(f => ({...f, rawFile: undefined})) : undefined, timestamp: new Date(), cumulativeTotalTokens: 0 };
+            const modelMessage: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
 
-            const newMessages = [...baseMessagesForUi, userMessage, modelMessage];
-            
-            let newTitle = sessionForHistory.title;
-            if (sessionForHistory.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
-                newTitle = generateSessionTitle(newMessages);
-            }
+            const newSession: SavedChatSession = { id: newSessionId, title: "New Chat", messages: [userMessage, modelMessage], timestamp: Date.now(), settings: newSessionSettings };
+            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            setActiveSessionId(newSessionId);
+        } else { // Existing Chat or Edit
+            updateAndPersistSessions(prev => prev.map(s => {
+                const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
+                if (!isSessionToUpdate) return s;
 
-            let updatedSession = { ...sessionForHistory, messages: newMessages, title: newTitle };
-            
-            if(shouldLockKey) {
-                updatedSession = { ...updatedSession, settings: { ...updatedSession.settings, lockedApiKey: keyToUse }};
-            }
-            
-            return prev.map(s => s.id === currentSessionId ? updatedSession : s);
-        });
+                const editIndex = effectiveEditingId ? s.messages.findIndex(m => m.id === effectiveEditingId) : -1;
+                const baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : [...s.messages];
+                
+                const lastCumulative = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
+                const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles.map(f => ({...f, rawFile: undefined})) : undefined, timestamp: new Date(), cumulativeTotalTokens: lastCumulative };
+                const modelMessage: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
+                const newMessages = [...baseMessages, userMessage, modelMessage];
+
+                let newTitle = s.title;
+                if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
+                    newTitle = generateSessionTitle(newMessages);
+                }
+                let updatedSettings = s.settings;
+                if (shouldLockKey && !s.settings.lockedApiKey) {
+                    updatedSettings = { ...s.settings, lockedApiKey: keyToUse };
+                }
+                return { ...s, messages: newMessages, title: newTitle, settings: updatedSettings };
+            }));
+        }
 
         if (editingMessageId) {
             setEditingMessageId(null);
         }
         
         if (promptParts.length === 0) {
-             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
              activeJobs.current.delete(generationId);
              return; 
         }
 
+        const baseMessagesForApi = editingMessageId ? messages.slice(0, messages.findIndex(m => m.id === editingMessageId)) : [...messages];
+        const historyForApi = await createChatHistoryForApi(baseMessagesForApi);
         const fullHistory: ChatHistoryItem[] = [...historyForApi, { role: 'user', parts: promptParts }];
         
-        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(currentSessionId, generationId, newAbortController, generationStartTimeRef, sessionToUpdate);
+        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(finalSessionId!, generationId, newAbortController, generationStartTimeRef, sessionToUpdate);
         
+        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
+        activeJobs.current.set(generationId, newAbortController);
+
         if (appSettings.isStreamingEnabled) {
             await geminiServiceInstance.sendMessageStream(keyToUse, activeModelId, fullHistory, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP }, sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget, !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, !!sessionToUpdate.isUrlContextEnabled, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
         } else { 

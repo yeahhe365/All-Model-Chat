@@ -19,7 +19,7 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
   const baseButtonClass = "px-3 sm:px-4 py-2 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] flex items-center justify-center gap-1.5 text-sm font-medium";
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)] rounded-b-xl">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)] sm:rounded-b-2xl">
       {/* Left side: Reset Action */}
       <button
         onClick={onReset}

@@ -4,6 +4,7 @@ import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
 import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -11,46 +12,83 @@ interface TtsImagenSenderProps {
     updateAndPersistSessions: SessionsUpdater;
     setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    setActiveSessionId: (id: string | null) => void;
 }
 
 export const useTtsImagenSender = ({
     updateAndPersistSessions,
     setLoadingSessionIds,
-    activeJobs
+    activeJobs,
+    setActiveSessionId,
 }: TtsImagenSenderProps) => {
     const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
     
     const handleTtsImagenMessage = useCallback(async (
         keyToUse: string,
-        currentSessionId: string,
+        activeSessionId: string | null,
         generationId: string,
         newAbortController: AbortController,
         appSettings: AppSettings,
         currentChatSettings: IndividualChatSettings,
         text: string,
-        aspectRatio: string
+        aspectRatio: string,
+        options: { shouldLockKey?: boolean } = {}
     ) => {
         const isTtsModel = currentChatSettings.modelId.includes('-tts');
-        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, timestamp: new Date() };
         const modelMessageId = generationId;
+        
+        let finalSessionId = activeSessionId;
+
+        // Create user and model message placeholders
+        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, timestamp: new Date() };
         const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
         
-        updateAndPersistSessions(prev => prev.map(s => {
-            if (s.id !== currentSessionId) return s;
-            const newMessages = [...s.messages, userMessage, modelMessage];
-            let newTitle = s.title;
-            if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
-                newTitle = generateSessionTitle(newMessages);
-            }
-            return { ...s, messages: newMessages, title: newTitle };
-        }));
+        // Handle session creation or update in a single atomic operation
+        if (!finalSessionId) { // New Chat
+            const newSessionId = generateUniqueId();
+            finalSessionId = newSessionId;
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            if (options.shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
+            
+            const newSession: SavedChatSession = {
+                id: newSessionId,
+                title: "New Chat",
+                messages: [userMessage, modelMessage],
+                timestamp: Date.now(),
+                settings: newSessionSettings
+            };
+            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            setActiveSessionId(newSessionId);
+        } else { // Existing Chat
+            updateAndPersistSessions(p => p.map(s => {
+                if (s.id !== finalSessionId) return s;
+                const newMessages = [...s.messages, userMessage, modelMessage];
+                let newTitle = s.title;
+                if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
+                    newTitle = generateSessionTitle(newMessages);
+                }
+                let updatedSettings = s.settings;
+                if (options.shouldLockKey && !s.settings.lockedApiKey) {
+                    updatedSettings = { ...s.settings, lockedApiKey: keyToUse };
+                }
+                return { ...s, messages: newMessages, title: newTitle, settings: updatedSettings };
+            }));
+        }
+
+        if (!finalSessionId) {
+            console.error("Error: Could not determine session ID for TTS/Imagen message.");
+            return;
+        }
+
+        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
+        activeJobs.current.set(generationId, newAbortController);
 
         try {
             if (isTtsModel) {
                 const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, currentChatSettings.modelId, text, currentChatSettings.ttsVoice, newAbortController.signal);
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const wavUrl = pcmBase64ToWavUrl(base64Pcm);
-                updateAndPersistSessions(p => p.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: text, audioSrc: wavUrl, generationEndTime: new Date() } : m) } : s));
+                updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: text, audioSrc: wavUrl, generationEndTime: new Date() } : m) } : s));
                 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
                     showNotification('Audio Ready', { body: 'Text-to-speech audio has been generated.', icon: APP_LOGO_SVG_DATA_URI });
@@ -60,19 +98,19 @@ export const useTtsImagenSender = ({
                 const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal);
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => ({ id: generateUniqueId(), name: `generated-image-${index + 1}.jpeg`, type: 'image/jpeg', size: base64Data.length, dataUrl: `data:image/jpeg;base64,${base64Data}`, base64Data, uploadState: 'active' }));
-                updateAndPersistSessions(p => p.map(s => s.id === currentSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: `Generated image for: "${text}"`, files: generatedFiles, generationEndTime: new Date() } : m) } : s));
+                updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: `Generated image for: "${text}"`, files: generatedFiles, generationEndTime: new Date() } : m) } : s));
 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
                     showNotification('Image Ready', { body: 'Your image has been generated.', icon: APP_LOGO_SVG_DATA_URI });
                 }
             }
         } catch (error) {
-            handleApiError(error, currentSessionId, modelMessageId, isTtsModel ? "TTS Error" : "Image Gen Error");
+            handleApiError(error, finalSessionId, modelMessageId, isTtsModel ? "TTS Error" : "Image Gen Error");
         } finally {
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
             activeJobs.current.delete(generationId);
         }
-    }, [updateAndPersistSessions, setLoadingSessionIds, activeJobs, handleApiError]);
+    }, [updateAndPersistSessions, setLoadingSessionIds, activeJobs, handleApiError, setActiveSessionId]);
     
     return { handleTtsImagenMessage };
 };
