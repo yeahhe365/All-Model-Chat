@@ -18,7 +18,8 @@ import { PictureInPicture2 } from 'lucide-react';
 
 
 const App: React.FC = () => {
-  const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
+  const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture();
+  const { appSettings, setAppSettings, currentTheme, language } = useAppSettings({ pipWindow });
   const t = getTranslator(language);
   
   const chatState = useChat(appSettings, language);
@@ -108,8 +109,6 @@ const App: React.FC = () => {
     handleTouchStart,
     handleTouchEnd,
   } = useAppUI();
-  
-  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture();
 
   const {
     installPromptEvent,

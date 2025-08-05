@@ -1,13 +1,10 @@
-
-
 import { useState, useEffect } from 'react';
-import { AppSettings } from '../types';
+import { AppSettings, Theme } from '../types';
 import { DEFAULT_APP_SETTINGS, APP_SETTINGS_KEY } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { geminiServiceInstance } from '../services/geminiService';
 import { generateThemeCssVariables } from '../utils/appUtils';
 
-export const useAppSettings = () => {
+export const useAppSettings = ({ pipWindow }: { pipWindow: Window | null } = { pipWindow: null }) => {
     const [appSettings, setAppSettings] = useState<AppSettings>(() => {
         const stored = localStorage.getItem(APP_SETTINGS_KEY);
         const loadedSettings = stored ? JSON.parse(stored) : {};
@@ -44,29 +41,36 @@ export const useAppSettings = () => {
     useEffect(() => {
         localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));
 
-        const themeVariablesStyleTag = document.getElementById('theme-variables');
-        if (themeVariablesStyleTag) {
-            themeVariablesStyleTag.innerHTML = generateThemeCssVariables(currentTheme.colors);
+        const applyStyling = (doc: Document, theme: Theme) => {
+            const themeVariablesStyleTag = doc.getElementById('theme-variables');
+            if (themeVariablesStyleTag) {
+                themeVariablesStyleTag.innerHTML = generateThemeCssVariables(theme.colors);
+            }
+
+            const bodyClassList = doc.body.classList;
+            AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
+            bodyClassList.add(`theme-${theme.id}`, 'antialiased');
+
+            const markdownDarkTheme = doc.getElementById('markdown-dark-theme') as HTMLLinkElement;
+            const markdownLightTheme = doc.getElementById('markdown-light-theme') as HTMLLinkElement;
+            const hljsDarkTheme = doc.getElementById('hljs-dark-theme') as HTMLLinkElement;
+            const hljsLightTheme = doc.getElementById('hljs-light-theme') as HTMLLinkElement;
+
+            const isDark = theme.id === 'onyx';
+
+            if (markdownDarkTheme) markdownDarkTheme.disabled = !isDark;
+            if (markdownLightTheme) markdownLightTheme.disabled = isDark;
+            if (hljsDarkTheme) hljsDarkTheme.disabled = !isDark;
+            if (hljsLightTheme) hljsLightTheme.disabled = isDark;
+
+            doc.body.style.fontSize = `${appSettings.baseFontSize}px`;
+        };
+
+        applyStyling(document, currentTheme);
+
+        if (pipWindow?.document?.body) {
+            applyStyling(pipWindow.document, currentTheme);
         }
-
-        const bodyClassList = document.body.classList;
-        AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
-        bodyClassList.add(`theme-${currentTheme.id}`, 'antialiased');
-
-        // Dynamically switch markdown and highlight.js themes
-        const markdownDarkTheme = document.getElementById('markdown-dark-theme') as HTMLLinkElement;
-        const markdownLightTheme = document.getElementById('markdown-light-theme') as HTMLLinkElement;
-        const hljsDarkTheme = document.getElementById('hljs-dark-theme') as HTMLLinkElement;
-        const hljsLightTheme = document.getElementById('hljs-light-theme') as HTMLLinkElement;
-
-        const isDark = currentTheme.id === 'onyx';
-
-        if (markdownDarkTheme) markdownDarkTheme.disabled = !isDark;
-        if (markdownLightTheme) markdownLightTheme.disabled = isDark;
-        if (hljsDarkTheme) hljsDarkTheme.disabled = !isDark;
-        if (hljsLightTheme) hljsLightTheme.disabled = isDark;
-
-        document.body.style.fontSize = `${appSettings.baseFontSize}px`;
 
         let effectiveLang: 'en' | 'zh' = 'en';
         const settingLang = appSettings.language || 'system';
@@ -80,7 +84,6 @@ export const useAppSettings = () => {
         }
         setLanguage(effectiveLang);
 
-        // Send proxy URL to Service Worker
         if ('serviceWorker' in navigator) {
             const postProxyUrlToSw = (registration?: ServiceWorkerRegistration) => {
                 const controller = registration ? registration.active : navigator.serviceWorker.controller;
@@ -93,7 +96,7 @@ export const useAppSettings = () => {
         }
 
 
-    }, [appSettings, currentTheme]);
+    }, [appSettings, currentTheme, pipWindow]);
 
     return { appSettings, setAppSettings, currentTheme, language };
 };

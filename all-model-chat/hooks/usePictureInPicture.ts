@@ -91,5 +91,6 @@ export const usePictureInPicture = () => {
         isPipActive: !!pipWindow,
         togglePip,
         pipContainer,
+        pipWindow,
     };
 };
