@@ -146,7 +146,7 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   textSecondary: '#565869',
   textTertiary: '#8E8E8E',
   textAccent: '#FFFFFF',
-  textDanger: '#DF3434',
+  textDanger: '#FFFFFF',
   textLink: '#565869',
   textCode: '#40414f',
   bgUserMessageText: '#202123',

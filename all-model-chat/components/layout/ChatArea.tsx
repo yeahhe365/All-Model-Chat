@@ -173,7 +173,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         themeId={themeId}
       />
       {modelsLoadingError && (
-        <div className="p-2 bg-[var(--theme-bg-danger)] text-[var(--theme-text-danger)] text-center text-xs flex-shrink-0">{modelsLoadingError}</div>
+        <div className="mx-2 my-1 p-2 text-sm text-center text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md flex-shrink-0">{modelsLoadingError}</div>
       )}
       <MessageList
         messages={messages}

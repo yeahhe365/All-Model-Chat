@@ -9,10 +9,10 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = getResponsiveValue(14, 16);
-  const version = "1.2.0"; 
+  const version = "1.2.1"; 
 
   return (
-    <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)] text-center">
+    <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-[var(--theme-bg-secondary)] text-center">
       <img src={APP_LOGO_SVG_DATA_URI} alt={t('about_logo_alt')} className="w-16 h-16 mx-auto mb-4" />
       <h3 className="text-xl font-semibold text-[var(--theme-text-primary)] flex items-center justify-center mb-1">
         {t('about_title')}
@@ -25,7 +25,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
         {t('about_description')}
       </p>
 
-      <div className="pt-4 mt-4 border-t border-[var(--theme-border-secondary)]">
+      <div className="pt-4 mt-4">
         <a 
           href="https://github.com/yeahhe365/All-Model-Chat" 
           target="_blank" 

@@ -31,7 +31,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const apiKeyBlurClass = !isApiKeyFocused && useCustomApiConfig && apiKey ? 'text-transparent [text-shadow:0_0_5px_var(--theme-text-primary)]' : '';
 
   return (
-    <div className="space-y-3 p-3 sm:p-4 border border-[var(--theme-border-secondary)] rounded-lg bg-[var(--theme-bg-secondary)]">
+    <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-[var(--theme-bg-secondary)]">
       <h3 className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center mb-2">
         <KeyRound size={iconSize} className="mr-2 text-[var(--theme-text-link)] opacity-80" />
         {t('settingsApiConfig')}
