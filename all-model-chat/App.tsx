@@ -407,7 +407,7 @@ const App: React.FC = () => {
       {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
-          className="fixed sm:hidden inset-0 bg-black/60 z-20 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/60 z-20 transition-opacity duration-300"
           aria-hidden="true"
         />
       )}
