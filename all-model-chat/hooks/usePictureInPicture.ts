@@ -10,7 +10,7 @@ declare global {
     }
 }
 
-export const usePictureInPicture = () => {
+export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void) => {
     const [isPipSupported, setIsPipSupported] = useState(false);
     const [pipWindow, setPipWindow] = useState<Window | null>(null);
     const [pipContainer, setPipContainer] = useState<HTMLElement | null>(null);
@@ -23,13 +23,16 @@ export const usePictureInPicture = () => {
 
     const closePip = useCallback(() => {
         if (pipWindow) {
-            // The 'pagehide' event listener handles the state cleanup
+            // The 'pagehide' event listener handles the state cleanup and sidebar expansion
             pipWindow.close();
         }
     }, [pipWindow]);
 
     const openPip = useCallback(async () => {
         if (!isPipSupported || pipWindow) return;
+
+        // Collapse sidebar when entering PiP mode
+        setIsHistorySidebarOpen(false);
 
         try {
             const pipWin = await window.documentPictureInPicture!.requestWindow({
@@ -64,6 +67,8 @@ export const usePictureInPicture = () => {
             pipWin.addEventListener('pagehide', () => {
                 setPipWindow(null);
                 setPipContainer(null);
+                // Expand sidebar when exiting PiP mode
+                setIsHistorySidebarOpen(true);
                 logService.info('PiP window closed.');
             }, { once: true });
 
@@ -75,8 +80,10 @@ export const usePictureInPicture = () => {
             logService.error('Error opening Picture-in-Picture window:', error);
             setPipWindow(null);
             setPipContainer(null);
+            // If opening fails, revert the sidebar state
+            setIsHistorySidebarOpen(true);
         }
-    }, [isPipSupported, pipWindow]);
+    }, [isPipSupported, pipWindow, setIsHistorySidebarOpen]);
 
     const togglePip = useCallback(() => {
         if (pipWindow) {

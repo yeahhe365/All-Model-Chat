@@ -109,7 +109,7 @@ const App: React.FC = () => {
     handleTouchEnd,
   } = useAppUI();
   
-  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture();
+  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture(setIsHistorySidebarOpen);
 
   const {
     installPromptEvent,
