@@ -12,7 +12,6 @@ import { SettingsActions } from './settings/SettingsActions';
 import { AboutSection } from './settings/AboutSection';
 import { ModelOption } from '../types';
 import { Modal } from './shared/Modal';
-import { FeatureFlags } from './settings/FeatureFlags';
 import { Tooltip } from './settings/shared/Tooltip';
 
 interface SettingsModalProps {
@@ -30,19 +29,26 @@ interface SettingsModalProps {
   onInstallPwa: () => void;
   isInstallable: boolean;
   onImportSettings: (file: File) => void;
-  onExportSettings: (includeHistory: boolean) => void;
+  onExportSettings: () => void;
+  onImportHistory: (file: File) => void;
+  onExportHistory: () => void;
+  onImportScenarios: (file: File) => void;
+  onExportScenarios: () => void;
   t: (key: keyof typeof translations) => string;
 }
 
-type SettingsTab = 'appearance' | 'model' | 'conversation' | 'account' | 'data' | 'about';
+type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'about';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
   onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer,
-  onInstallPwa, isInstallable, t, onImportSettings, onExportSettings
+  onInstallPwa, isInstallable, t, 
+  onImportSettings, onExportSettings,
+  onImportHistory, onExportHistory,
+  onImportScenarios, onExportScenarios,
 }) => {
   const [settings, setSettings] = useState(currentSettings);
-  const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('interface');
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   
   const tabIconSize = getResponsiveValue(18, 20);
@@ -50,7 +56,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSettings(currentSettings);
-      setActiveTab('appearance');
+      setActiveTab('interface');
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
@@ -71,9 +77,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const tabs: { id: SettingsTab; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
-    { id: 'appearance', labelKey: 'settingsTabAppearance', icon: <Monitor size={tabIconSize} /> },
+    { id: 'interface', labelKey: 'settingsTabInterface', icon: <Monitor size={tabIconSize} /> },
     { id: 'model', labelKey: 'settingsTabModel', icon: <Layers size={tabIconSize} /> },
-    { id: 'conversation', labelKey: 'settingsTabConversation', icon: <MessageSquare size={tabIconSize} /> },
     { id: 'account', labelKey: 'settingsTabAccount', icon: <KeyRound size={tabIconSize} /> },
     { id: 'data', labelKey: 'settingsTabData', icon: <DatabaseZap size={tabIconSize} /> },
     { id: 'about', labelKey: 'settingsTabAbout', icon: <Info size={tabIconSize} /> },
@@ -82,7 +87,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const renderTabContent = () => (
     <div id={`tab-panel-${activeTab}`} role="tabpanel" className="flex-grow min-h-0 sm:min-w-0 overflow-y-auto custom-scrollbar bg-[var(--theme-bg-secondary)]">
         <div className="p-4 sm:p-6 tab-content-enter-active">
-          {activeTab === 'appearance' && (
+          {activeTab === 'interface' && (
             <div>
                <AppearanceSection
                   themeId={settings.themeId}
@@ -101,6 +106,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsGraphvizRenderingEnabled={(v) => updateSetting('isGraphvizRenderingEnabled', v)}
                   isAutoScrollOnSendEnabled={settings.isAutoScrollOnSendEnabled ?? true}
                   setIsAutoScrollOnSendEnabled={(v) => updateSetting('isAutoScrollOnSendEnabled', v)}
+                  isStreamingEnabled={settings.isStreamingEnabled}
+                  setIsStreamingEnabled={(v) => updateSetting('isStreamingEnabled', v)}
+                  isAutoTitleEnabled={settings.isAutoTitleEnabled}
+                  setIsAutoTitleEnabled={(v) => updateSetting('isAutoTitleEnabled', v)}
+                  isSuggestionsEnabled={settings.isSuggestionsEnabled}
+                  setIsSuggestionsEnabled={(v) => updateSetting('isSuggestionsEnabled', v)}
+                  isAutoSendOnSuggestionClick={settings.isAutoSendOnSuggestionClick ?? true}
+                  setIsAutoSendOnSuggestionClick={(v) => updateSetting('isAutoSendOnSuggestionClick', v)}
                   t={t}
                 />
             </div>
@@ -120,17 +133,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 t={t}
             />
           )}
-          {activeTab === 'conversation' && (
-             <div>
-                <FeatureFlags
-                  isStreamingEnabled={settings.isStreamingEnabled} setIsStreamingEnabled={(v) => updateSetting('isStreamingEnabled', v)}
-                  isAutoTitleEnabled={settings.isAutoTitleEnabled} setIsAutoTitleEnabled={(v) => updateSetting('isAutoTitleEnabled', v)}
-                  isSuggestionsEnabled={settings.isSuggestionsEnabled} setIsSuggestionsEnabled={(v) => updateSetting('isSuggestionsEnabled', v)}
-                  isAutoSendOnSuggestionClick={settings.isAutoSendOnSuggestionClick ?? true} setIsAutoSendOnSuggestionClick={(v) => updateSetting('isAutoSendOnSuggestionClick', v)}
-                  t={t}
-                 />
-             </div>
-          )}
           {activeTab === 'account' && (
             <ApiConfigSection
               useCustomApiConfig={settings.useCustomApiConfig}
@@ -144,13 +146,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
           {activeTab === 'data' && (
              <DataManagementSection
-                onClearHistory={() => { onClearAllHistory(); onClose(); }}
+                onClearHistory={onClearAllHistory}
                 onClearCache={onClearCache}
                 onOpenLogViewer={() => { onOpenLogViewer(); onClose(); }}
                 onInstallPwa={onInstallPwa}
                 isInstallable={isInstallable}
                 onImportSettings={onImportSettings}
                 onExportSettings={onExportSettings}
+                onImportHistory={onImportHistory}
+                onExportHistory={onExportHistory}
+                onImportScenarios={onImportScenarios}
+                onExportScenarios={onExportScenarios}
                 onReset={handleResetToDefaults}
                 t={t}
               />

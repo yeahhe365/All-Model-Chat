@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AppSettings } from './types';
-import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from './constants/appConstants';
+import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from './types';
+import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS } from './constants/appConstants';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
@@ -12,7 +12,7 @@ import { getTranslator, logService } from './utils/appUtils';
 import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
 import { AppModals } from './components/modals/AppModals';
-import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles } from './utils/exportUtils';
+import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles, triggerDownload } from './utils/exportUtils';
 import DOMPurify from 'dompurify';
 import { PictureInPicture2 } from 'lucide-react';
 
@@ -75,8 +75,6 @@ const App: React.FC = () => {
       clearAllHistory,
       handleSaveAllScenarios,
       handleLoadPreloadedScenario,
-      handleImportPreloadedScenario,
-      handleExportPreloadedScenario,
       onScrollContainerScroll: handleScroll,
       handleAppDragEnter,
       handleAppDragOver,
@@ -94,6 +92,7 @@ const App: React.FC = () => {
       toggleCodeExecution,
       toggleUrlContext,
       updateAndPersistSessions,
+      updateAndPersistGroups,
   } = chatState;
 
   const {
@@ -115,13 +114,8 @@ const App: React.FC = () => {
     installPromptEvent,
     isStandalone,
     handleInstallPwa,
-    handleExportSettings,
-    handleImportSettings,
   } = useAppEvents({
     appSettings,
-    setAppSettings,
-    savedSessions,
-    language,
     startNewChat,
     handleClearCurrentChat,
     currentChatSettings,
@@ -129,7 +123,6 @@ const App: React.FC = () => {
     isSettingsModalOpen,
     isPreloadedMessagesModalOpen,
     setIsLogViewerOpen,
-    updateAndPersistSessions,
     onTogglePip: togglePip,
     isPipSupported,
   });
@@ -137,6 +130,122 @@ const App: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
 
+  // #region Data Import/Export Handlers
+  const handleExportSettings = useCallback(() => {
+    logService.info(`Exporting settings.`);
+    try {
+        const dataToExport = { type: 'AllModelChat-Settings', version: 1, settings: appSettings };
+        const jsonString = JSON.stringify(dataToExport, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const date = new Date().toISOString().slice(0, 10);
+        triggerDownload(URL.createObjectURL(blob), `all-model-chat-settings-${date}.json`);
+    } catch (error) {
+        logService.error('Failed to export settings', { error });
+        alert(t('export_failed_title'));
+    }
+  }, [appSettings, t]);
+
+  const handleExportHistory = useCallback(() => {
+    logService.info(`Exporting chat history.`);
+     try {
+        const dataToExport = { type: 'AllModelChat-History', version: 1, history: savedSessions, groups: savedGroups };
+        const jsonString = JSON.stringify(dataToExport, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const date = new Date().toISOString().slice(0, 10);
+        triggerDownload(URL.createObjectURL(blob), `all-model-chat-history-${date}.json`);
+    } catch (error) {
+        logService.error('Failed to export history', { error });
+        alert(t('export_failed_title'));
+    }
+  }, [savedSessions, savedGroups, t]);
+
+  const handleExportAllScenarios = useCallback(() => {
+    logService.info(`Exporting all scenarios.`);
+     try {
+        const dataToExport = { type: 'AllModelChat-Scenarios', version: 1, scenarios: savedScenarios };
+        const jsonString = JSON.stringify(dataToExport, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const date = new Date().toISOString().slice(0, 10);
+        triggerDownload(URL.createObjectURL(blob), `all-model-chat-scenarios-${date}.json`);
+    } catch (error) {
+        logService.error('Failed to export scenarios', { error });
+        alert(t('export_failed_title'));
+    }
+  }, [savedScenarios, t]);
+
+  const handleImportFile = useCallback((file: File, expectedType: string, onValid: (data: any) => void) => {
+    logService.info(`Importing ${expectedType} from file: ${file.name}`);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const text = e.target?.result as string;
+            const data = JSON.parse(text);
+            if (data && data.type === expectedType) {
+                onValid(data);
+            } else {
+                throw new Error(`Invalid file format. Expected type: ${expectedType}, found: ${data.type || 'none'}`);
+            }
+        } catch (error) {
+            logService.error(`Failed to import ${expectedType}`, { error });
+            alert(`${t('settingsImport_error')} Error: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    };
+    reader.onerror = (e) => {
+        logService.error(`Failed to read ${expectedType} file`, { error: e });
+        alert(t('settingsImport_error'));
+    };
+    reader.readAsText(file);
+  }, [t]);
+  
+  const handleImportSettings = useCallback((file: File) => {
+    handleImportFile(file, 'AllModelChat-Settings', (data) => {
+      const importedSettings = data.settings;
+      const newSettings = { ...DEFAULT_APP_SETTINGS };
+      for (const key of Object.keys(DEFAULT_APP_SETTINGS) as Array<keyof AppSettings>) {
+          if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
+              const importedValue = importedSettings[key];
+              const defaultValue = DEFAULT_APP_SETTINGS[key];
+              if (typeof importedValue === typeof defaultValue || (['apiKey', 'apiProxyUrl', 'lockedApiKey'].includes(key) && (typeof importedValue === 'string' || importedValue === null))) {
+                  (newSettings as any)[key] = importedValue;
+              } else {
+                  logService.warn(`Type mismatch for setting "${key}" during import. Using default.`);
+              }
+          }
+      }
+      setAppSettings(newSettings);
+      alert(t('settingsImport_success'));
+    });
+  }, [handleImportFile, setAppSettings, t]);
+
+  const handleImportHistory = useCallback((file: File) => {
+    if (!window.confirm(t('settingsImportHistory_confirm'))) return;
+    handleImportFile(file, 'AllModelChat-History', (data) => {
+      if (data.history && Array.isArray(data.history)) {
+        updateAndPersistSessions(() => data.history);
+        if (data.groups && Array.isArray(data.groups)) {
+            updateAndPersistGroups(() => data.groups);
+        } else {
+            updateAndPersistGroups(() => []); // Clear groups if not present in import
+        }
+        alert(t('settingsImportHistory_success'));
+        setTimeout(() => window.location.reload(), 300);
+      } else {
+        throw new Error('History data is missing or not an array.');
+      }
+    });
+  }, [handleImportFile, t, updateAndPersistSessions, updateAndPersistGroups]);
+
+  const handleImportAllScenarios = useCallback((file: File) => {
+    handleImportFile(file, 'AllModelChat-Scenarios', (data) => {
+      if (data.scenarios && Array.isArray(data.scenarios)) {
+        handleSaveAllScenarios(data.scenarios);
+        alert(t('scenarios_feedback_imported'));
+      } else {
+        throw new Error('Scenarios data is missing or not an array.');
+      }
+    });
+  }, [handleImportFile, t, handleSaveAllScenarios]);
+  // #endregion
 
   useEffect(() => {
     logService.info('App initialized.');
@@ -451,13 +560,15 @@ const App: React.FC = () => {
         isStandalone={isStandalone}
         handleImportSettings={handleImportSettings}
         handleExportSettings={handleExportSettings}
+        handleImportHistory={handleImportHistory}
+        handleExportHistory={handleExportHistory}
+        handleImportAllScenarios={handleImportAllScenarios}
+        handleExportAllScenarios={handleExportAllScenarios}
         isPreloadedMessagesModalOpen={isPreloadedMessagesModalOpen}
         setIsPreloadedMessagesModalOpen={setIsPreloadedMessagesModalOpen}
         savedScenarios={savedScenarios}
         handleSaveAllScenarios={handleSaveAllScenarios}
         handleLoadPreloadedScenario={handleLoadPreloadedScenario}
-        handleImportPreloadedScenario={handleImportPreloadedScenario}
-        handleExportPreloadedScenario={handleExportPreloadedScenario}
         isExportModalOpen={isExportModalOpen}
         setIsExportModalOpen={setIsExportModalOpen}
         handleExportChat={handleExportChat}

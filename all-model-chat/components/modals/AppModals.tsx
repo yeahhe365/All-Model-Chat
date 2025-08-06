@@ -11,10 +11,12 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         isSettingsModalOpen, setIsSettingsModalOpen, appSettings, availableModels,
         handleSaveSettings, isModelsLoading, modelsLoadingError, clearCacheAndReload,
         clearAllHistory,
-        handleInstallPwa, installPromptEvent, isStandalone, handleImportSettings, handleExportSettings,
+        handleInstallPwa, installPromptEvent, isStandalone, 
+        handleImportSettings, handleExportSettings,
+        handleImportHistory, handleExportHistory,
+        handleImportAllScenarios, handleExportAllScenarios,
         isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen, savedScenarios,
-        handleSaveAllScenarios, handleLoadPreloadedScenario, handleImportPreloadedScenario,
-        handleExportPreloadedScenario,
+        handleSaveAllScenarios, handleLoadPreloadedScenario,
         isExportModalOpen, setIsExportModalOpen, handleExportChat, exportStatus,
         isLogViewerOpen, setIsLogViewerOpen, currentChatSettings,
         t
@@ -47,6 +49,10 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
               isInstallable={!!installPromptEvent && !isStandalone}
               onImportSettings={handleImportSettings}
               onExportSettings={handleExportSettings}
+              onImportHistory={handleImportHistory}
+              onExportHistory={handleExportHistory}
+              onImportScenarios={handleImportAllScenarios}
+              onExportScenarios={handleExportAllScenarios}
               t={t}
             />
           )}
@@ -57,8 +63,6 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
               savedScenarios={savedScenarios}
               onSaveAllScenarios={handleSaveAllScenarios}
               onLoadScenario={handleLoadPreloadedScenario}
-              onImportScenario={handleImportPreloadedScenario}
-              onExportScenario={handleExportPreloadedScenario}
               t={t}
             />
           )}

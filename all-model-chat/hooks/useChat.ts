@@ -10,7 +10,7 @@ import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
 import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService } from '../utils/appUtils';
-import { CHAT_HISTORY_SESSIONS_KEY } from '../constants/appConstants';
+import { CHAT_HISTORY_SESSIONS_KEY, CHAT_HISTORY_GROUPS_KEY } from '../constants/appConstants';
 import { geminiServiceInstance } from '../services/geminiService';
 
 export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
@@ -39,6 +39,14 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             return newSessions;
         });
     }, []);
+    
+    const updateAndPersistGroups = useCallback((updater: (prev: ChatGroup[]) => ChatGroup[]) => {
+        setSavedGroups(prevGroups => {
+            const newGroups = updater(prevGroups);
+            localStorage.setItem(CHAT_HISTORY_GROUPS_KEY, JSON.stringify(newGroups));
+            return newGroups;
+        });
+    }, []);
 
     // 2. Derive active session state
     const activeChat = useMemo(() => savedSessions.find(s => s.id === activeSessionId), [savedSessions, activeSessionId]);
@@ -59,7 +67,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
 
     // 3. Child hooks for modular logic
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
-    const historyHandler = useChatHistory({ appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, updateAndPersistSessions, activeChat, language, });
+    const historyHandler = useChatHistory({ appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, updateAndPersistSessions, activeChat, language, updateAndPersistGroups });
     const fileHandler = useFileHandling({ appSettings, selectedFiles, setSelectedFiles, setAppFileError, isAppProcessingFile, setIsAppProcessingFile, currentChatSettings, setCurrentChatSettings: setCurrentChatSettings, });
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
     const scrollHandler = useChatScroll({ messages, userScrolledUp });
@@ -251,6 +259,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         setAspectRatio,
         ttsMessageId,
         updateAndPersistSessions,
+        updateAndPersistGroups,
         // from scrollHandler
         messagesEndRef: scrollHandler.messagesEndRef,
         scrollContainerRef: scrollHandler.scrollContainerRef,
@@ -294,8 +303,6 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         savedScenarios: scenarioHandler.savedScenarios,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
         handleLoadPreloadedScenario: scenarioHandler.handleLoadPreloadedScenario,
-        handleImportPreloadedScenario: scenarioHandler.handleImportPreloadedScenario,
-        handleExportPreloadedScenario: scenarioHandler.handleExportPreloadedScenario,
         // from this hook
         handleTranscribeAudio,
         setCurrentChatSettings,

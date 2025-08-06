@@ -5,6 +5,7 @@ import { generateUniqueId, logService, getTranslator } from '../utils/appUtils';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -16,6 +17,7 @@ interface ChatHistoryProps {
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     updateAndPersistSessions: SessionsUpdater;
+    updateAndPersistGroups: GroupsUpdater;
     activeChat: SavedChatSession | undefined;
     language: 'en' | 'zh';
 }
@@ -30,19 +32,11 @@ export const useChatHistory = ({
     setSelectedFiles,
     activeJobs,
     updateAndPersistSessions,
+    updateAndPersistGroups,
     activeChat,
     language,
 }: ChatHistoryProps) => {
     const t = getTranslator(language);
-
-    const updateAndPersistGroups = useCallback((updater: (prev: ChatGroup[]) => ChatGroup[]) => {
-        setSavedGroups(prevGroups => {
-            const newGroups = updater(prevGroups);
-            localStorage.setItem(CHAT_HISTORY_GROUPS_KEY, JSON.stringify(newGroups));
-            return newGroups;
-        });
-    }, [setSavedGroups]);
-
 
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
@@ -213,6 +207,7 @@ export const useChatHistory = ({
     }, [updateAndPersistGroups]);
 
     const clearAllHistory = useCallback(() => {
+        if (!window.confirm(t('settingsClearHistory_confirm'))) return;
         logService.warn('User clearing all chat history.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
@@ -222,15 +217,16 @@ export const useChatHistory = ({
         setSavedSessions([]);
         setSavedGroups([]);
         startNewChat();
-    }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs]);
+    }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs, t]);
     
     const clearCacheAndReload = useCallback(() => {
+        if (!window.confirm(t('settingsClearCache_confirm'))) return;
         logService.warn('User clearing all application cache and settings.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
         localStorage.clear();
         setTimeout(() => window.location.reload(), 50);
-    }, [activeJobs]);
+    }, [activeJobs, t]);
 
     return {
         loadInitialData,

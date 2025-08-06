@@ -329,16 +329,19 @@ export interface AppModalsProps {
   handleInstallPwa: () => void;
   installPromptEvent: any;
   isStandalone: boolean;
+  
   handleImportSettings: (file: File) => void;
-  handleExportSettings: (includeHistory: boolean) => void;
+  handleExportSettings: () => void;
+  handleImportHistory: (file: File) => void;
+  handleExportHistory: () => void;
+  handleImportAllScenarios: (file: File) => void;
+  handleExportAllScenarios: () => void;
   
   isPreloadedMessagesModalOpen: boolean;
   setIsPreloadedMessagesModalOpen: (isOpen: boolean) => void;
   savedScenarios: SavedScenario[];
   handleSaveAllScenarios: (scenarios: SavedScenario[]) => void;
   handleLoadPreloadedScenario: (messages: PreloadedMessage[]) => void;
-  handleImportPreloadedScenario: (file: File) => Promise<SavedScenario | null>;
-  handleExportPreloadedScenario: (scenario: SavedScenario) => void;
 
   isExportModalOpen: boolean;
   setIsExportModalOpen: (isOpen: boolean) => void;

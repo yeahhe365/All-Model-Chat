@@ -47,57 +47,9 @@ export const usePreloadedScenarios = ({ startNewChat, updateAndPersistSessions }
         // For now, it just adds it to the list.
     };
 
-    const handleExportPreloadedScenario = (scenarioToExport: SavedScenario) => { 
-        const jsonString = JSON.stringify([scenarioToExport.messages], null, 2); 
-        const blob = new Blob([jsonString], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        const sanitizedTitle = scenarioToExport.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        a.download = `scenario_${sanitizedTitle || 'export'}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-    
-    const handleImportPreloadedScenario = (file: File): Promise<SavedScenario | null> => new Promise((resolve) => { 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const parsedMessages = JSON.parse(e.target?.result as string);
-                
-                let messages: PreloadedMessage[];
-                if (Array.isArray(parsedMessages) && parsedMessages.length > 0 && Array.isArray(parsedMessages[0])) {
-                     messages = parsedMessages[0];
-                } else {
-                     messages = parsedMessages;
-                }
-
-                if (Array.isArray(messages) && messages.every(m => m.id && m.role && typeof m.content === 'string')) {
-                    const scenarioTitle = file.name.replace(/\.json$/i, '');
-                    resolve({
-                        id: generateUniqueId(),
-                        title: scenarioTitle,
-                        messages: messages
-                    });
-                } else {
-                    resolve(null);
-                }
-            } catch (err) {
-                console.error("Import parsing error:", err);
-                resolve(null);
-            }
-        };
-        reader.onerror = () => {
-            resolve(null);
-        };
-        reader.readAsText(file);
-    });
-
     return {
         savedScenarios,
         handleSaveAllScenarios,
         handleLoadPreloadedScenario,
-        handleExportPreloadedScenario,
-        handleImportPreloadedScenario
     };
 };

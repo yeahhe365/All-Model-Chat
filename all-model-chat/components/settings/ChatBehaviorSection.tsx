@@ -33,7 +33,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
   return (
     <div>
       <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center mb-4">
-        {t('settingsChatBehavior')}
+        {t('settingsModelParameters')}
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <div className="space-y-4">

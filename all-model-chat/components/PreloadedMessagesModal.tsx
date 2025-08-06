@@ -11,8 +11,6 @@ interface PreloadedMessagesModalProps {
   savedScenarios: SavedScenario[];
   onSaveAllScenarios: (scenarios: SavedScenario[]) => void;
   onLoadScenario: (messages: PreloadedMessage[]) => void;
-  onImportScenario: (file: File) => Promise<SavedScenario | null>;
-  onExportScenario: (scenario: SavedScenario) => void;
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
@@ -32,8 +30,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   savedScenarios,
   onSaveAllScenarios,
   onLoadScenario,
-  onImportScenario,
-  onExportScenario,
   t
 }) => {
   type ModalView = 'list' | 'editor';
@@ -43,9 +39,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const [editingScenario, setEditingScenario] = useState<SavedScenario | null>(null);
   
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
-  const [isProcessingImport, setIsProcessingImport] = useState(false);
-
-  const importFileRef = useRef<HTMLInputElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const headingIconSize = getResponsiveValue(20, 24);
@@ -128,35 +121,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     setTimeout(handleClose, 700);
   };
   
-  const handleExport = (scenario: SavedScenario) => {
-    onExportScenario(scenario);
-    showFeedback('success', t('scenarios_feedback_exported'));
-  };
-
-  const handleImportClick = () => { importFileRef.current?.click(); };
-
-  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIsProcessingImport(true);
-      setFeedback(null);
-      try {
-        const imported = await onImportScenario(file);
-        if (imported) {
-          setScenarios(prev => [...prev, imported]);
-          showFeedback('success', t('scenarios_feedback_imported'));
-        } else {
-          showFeedback('error', t('scenarios_feedback_importFailed'));
-        }
-      } catch (error) {
-         showFeedback('error', t('scenarios_feedback_importError').replace('{error}', error instanceof Error ? error.message : String(error)));
-      } finally {
-        setIsProcessingImport(false);
-        if(importFileRef.current) importFileRef.current.value = "";
-      }
-    }
-  };
-
   const renderListView = () => (
     <>
       <div className="flex-grow overflow-y-auto custom-scrollbar pr-0.5 -mr-0.5">
@@ -173,7 +137,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                   <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-1">
                       <button onClick={() => handleLoadAndClose(scenario.messages)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-green-500" title="Load Scenario"><Play size={actionIconSize} /></button>
                       <button onClick={() => handleStartEdit(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title={t('scenarios_edit_title')}><Edit3 size={actionIconSize-2} /></button>
-                      <button onClick={() => handleExport(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title={t('export')}><Download size={actionIconSize} /></button>
                       <button onClick={() => handleDeleteScenario(scenario.id)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)]" title={t('scenarios_delete_title')}><Trash2 size={actionIconSize-2} /></button>
                   </div>
                 </li>
@@ -191,11 +154,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                 </button>
             </div>
              <div className="flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-3 pt-2 sm:pt-3 border-t border-[var(--theme-border-secondary)]">
-                <button onClick={handleImportClick} disabled={isProcessingImport} className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-border-primary)] text-[var(--theme-text-primary)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed" title={t('scenarios_import_title')}>
-                    {isProcessingImport ? <Loader2 size={actionIconSize} className="animate-spin" /> : <UploadCloud size={actionIconSize} />} {t('import')}
-                </button>
-                <input type="file" ref={importFileRef} onChange={handleFileImport} accept=".json" className="hidden" />
-
                 <button onClick={handleSaveAllAndClose} type="button" className="w-full sm:w-auto px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors flex items-center justify-center gap-1 sm:gap-1.5" title={t('scenarios_save_title')}>
                     <Save size={actionIconSize} /> Save & Close
                 </button>
