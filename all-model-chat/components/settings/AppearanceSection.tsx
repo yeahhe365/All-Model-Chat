@@ -84,8 +84,8 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
 
   const languageOptions: { id: 'system' | 'en' | 'zh'; label: string; }[] = [
     { id: 'system', label: 'System Default (跟随系统)' },
-    { id: 'en', label: 'English (English)' },
-    { id: 'zh', label: 'Chinese (中文)' },
+    { id: 'en', label: 'English' },
+    { id: 'zh', label: '简体中文' },
   ];
 
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;

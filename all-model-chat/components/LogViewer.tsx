@@ -270,14 +270,17 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
               <div className="space-y-3">
                 {Array.from(displayApiKeyUsage.entries())
                   .sort(([, a], [, b]) => b - a)
-                  .map(([key, count]) => {
+                  .map(([key, count], index) => {
                     const percentage = totalApiUsage > 0 ? (count / totalApiUsage) * 100 : 0;
                     const isActive = currentChatSettings.lockedApiKey === key;
                     return (
                       <div key={key} className={`p-3 rounded-lg border transition-all ${isActive ? 'bg-[var(--theme-bg-accent)] bg-opacity-20 border-[var(--theme-border-focus)]' : 'bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)]'}`}>
-                        <div className="flex justify-between items-start">
-                          <ObfuscatedApiKey apiKey={key} />
-                          <div className="flex flex-shrink-0 items-baseline justify-end pl-4 text-right">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <span className="pt-px font-mono text-sm text-[var(--theme-text-tertiary)] select-none">{index + 1}.</span>
+                              <ObfuscatedApiKey apiKey={key} />
+                          </div>
+                          <div className="flex flex-shrink-0 items-baseline justify-end text-right">
                             <span className="w-16 text-right text-lg font-semibold tabular-nums text-[var(--theme-text-primary)]">{count}</span>
                             <span className="ml-1.5 text-xs text-[var(--theme-text-tertiary)]">uses</span>
                           </div>

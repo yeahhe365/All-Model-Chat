@@ -1,19 +1,18 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from './types';
-import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS } from './constants/appConstants';
+import { CANVAS_ASSISTANT_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from './constants/appConstants';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { useAppUI } from './hooks/useAppUI';
 import { useAppEvents } from './hooks/useAppEvents';
 import { usePictureInPicture } from './hooks/usePictureInPicture';
+import { useDataManagement } from './hooks/useDataManagement';
 import { getTranslator, logService } from './utils/appUtils';
 import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
 import { AppModals } from './components/modals/AppModals';
-import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles, triggerDownload } from './utils/exportUtils';
-import DOMPurify from 'dompurify';
 import { PictureInPicture2 } from 'lucide-react';
 
 
@@ -129,123 +128,46 @@ const App: React.FC = () => {
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
+  const activeChat = savedSessions.find(s => s.id === activeSessionId);
 
-  // #region Data Import/Export Handlers
-  const handleExportSettings = useCallback(() => {
-    logService.info(`Exporting settings.`);
+  const {
+    handleExportSettings,
+    handleExportHistory,
+    handleExportAllScenarios,
+    handleImportSettings,
+    handleImportHistory,
+    handleImportAllScenarios,
+    exportChatLogic,
+  } = useDataManagement({
+    appSettings,
+    setAppSettings,
+    savedSessions,
+    updateAndPersistSessions,
+    savedGroups,
+    updateAndPersistGroups,
+    savedScenarios,
+    handleSaveAllScenarios,
+    t,
+    activeChat,
+    scrollContainerRef,
+    currentTheme,
+    language,
+  });
+
+  const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt') => {
+    if (!activeChat) return;
+    setExportStatus('exporting');
     try {
-        const dataToExport = { type: 'AllModelChat-Settings', version: 1, settings: appSettings };
-        const jsonString = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const date = new Date().toISOString().slice(0, 10);
-        triggerDownload(URL.createObjectURL(blob), `all-model-chat-settings-${date}.json`);
+      await exportChatLogic(format);
     } catch (error) {
-        logService.error('Failed to export settings', { error });
-        alert(t('export_failed_title'));
+        logService.error(`Chat export failed (format: ${format})`, { error });
+        alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+        setExportStatus('idle');
+        setIsExportModalOpen(false);
     }
-  }, [appSettings, t]);
+  }, [activeChat, exportChatLogic]);
 
-  const handleExportHistory = useCallback(() => {
-    logService.info(`Exporting chat history.`);
-     try {
-        const dataToExport = { type: 'AllModelChat-History', version: 1, history: savedSessions, groups: savedGroups };
-        const jsonString = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const date = new Date().toISOString().slice(0, 10);
-        triggerDownload(URL.createObjectURL(blob), `all-model-chat-history-${date}.json`);
-    } catch (error) {
-        logService.error('Failed to export history', { error });
-        alert(t('export_failed_title'));
-    }
-  }, [savedSessions, savedGroups, t]);
-
-  const handleExportAllScenarios = useCallback(() => {
-    logService.info(`Exporting all scenarios.`);
-     try {
-        const dataToExport = { type: 'AllModelChat-Scenarios', version: 1, scenarios: savedScenarios };
-        const jsonString = JSON.stringify(dataToExport, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const date = new Date().toISOString().slice(0, 10);
-        triggerDownload(URL.createObjectURL(blob), `all-model-chat-scenarios-${date}.json`);
-    } catch (error) {
-        logService.error('Failed to export scenarios', { error });
-        alert(t('export_failed_title'));
-    }
-  }, [savedScenarios, t]);
-
-  const handleImportFile = useCallback((file: File, expectedType: string, onValid: (data: any) => void) => {
-    logService.info(`Importing ${expectedType} from file: ${file.name}`);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const text = e.target?.result as string;
-            const data = JSON.parse(text);
-            if (data && data.type === expectedType) {
-                onValid(data);
-            } else {
-                throw new Error(`Invalid file format. Expected type: ${expectedType}, found: ${data.type || 'none'}`);
-            }
-        } catch (error) {
-            logService.error(`Failed to import ${expectedType}`, { error });
-            alert(`${t('settingsImport_error')} Error: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    };
-    reader.onerror = (e) => {
-        logService.error(`Failed to read ${expectedType} file`, { error: e });
-        alert(t('settingsImport_error'));
-    };
-    reader.readAsText(file);
-  }, [t]);
-  
-  const handleImportSettings = useCallback((file: File) => {
-    handleImportFile(file, 'AllModelChat-Settings', (data) => {
-      const importedSettings = data.settings;
-      const newSettings = { ...DEFAULT_APP_SETTINGS };
-      for (const key of Object.keys(DEFAULT_APP_SETTINGS) as Array<keyof AppSettings>) {
-          if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
-              const importedValue = importedSettings[key];
-              const defaultValue = DEFAULT_APP_SETTINGS[key];
-              if (typeof importedValue === typeof defaultValue || (['apiKey', 'apiProxyUrl', 'lockedApiKey'].includes(key) && (typeof importedValue === 'string' || importedValue === null))) {
-                  (newSettings as any)[key] = importedValue;
-              } else {
-                  logService.warn(`Type mismatch for setting "${key}" during import. Using default.`);
-              }
-          }
-      }
-      setAppSettings(newSettings);
-      alert(t('settingsImport_success'));
-    });
-  }, [handleImportFile, setAppSettings, t]);
-
-  const handleImportHistory = useCallback((file: File) => {
-    if (!window.confirm(t('settingsImportHistory_confirm'))) return;
-    handleImportFile(file, 'AllModelChat-History', (data) => {
-      if (data.history && Array.isArray(data.history)) {
-        updateAndPersistSessions(() => data.history);
-        if (data.groups && Array.isArray(data.groups)) {
-            updateAndPersistGroups(() => data.groups);
-        } else {
-            updateAndPersistGroups(() => []); // Clear groups if not present in import
-        }
-        alert(t('settingsImportHistory_success'));
-        setTimeout(() => window.location.reload(), 300);
-      } else {
-        throw new Error('History data is missing or not an array.');
-      }
-    });
-  }, [handleImportFile, t, updateAndPersistSessions, updateAndPersistGroups]);
-
-  const handleImportAllScenarios = useCallback((file: File) => {
-    handleImportFile(file, 'AllModelChat-Scenarios', (data) => {
-      if (data.scenarios && Array.isArray(data.scenarios)) {
-        handleSaveAllScenarios(data.scenarios);
-        alert(t('scenarios_feedback_imported'));
-      } else {
-        throw new Error('Scenarios data is missing or not an array.');
-      }
-    });
-  }, [handleImportFile, t, handleSaveAllScenarios]);
-  // #endregion
 
   useEffect(() => {
     logService.info('App initialized.');
@@ -327,99 +249,6 @@ const App: React.FC = () => {
     if (modelIdToDisplay) { let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');}
     return apiModels.length === 0 && !isModelsLoading ? t('appNoModelsAvailable') : t('appNoModelSelected');
   };
-
-  const activeChat = savedSessions.find(s => s.id === activeSessionId);
-
-  const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt') => {
-    if (!activeChat) return;
-    setExportStatus('exporting');
-    
-    const safeTitle = sanitizeFilename(activeChat.title);
-    const date = new Date().toISOString().slice(0, 10);
-    const filename = `chat-${safeTitle}-${date}.${format}`;
-
-    const scrollContainer = scrollContainerRef.current;
-    let originalPaddingBottom: string | null = null;
-
-    try {
-        if (format === 'png') {
-            if (!scrollContainer) return;
-            document.body.classList.add('is-exporting-png');
-            originalPaddingBottom = scrollContainer.style.paddingBottom;
-            scrollContainer.style.paddingBottom = '16px'; // Use a small fixed padding for export
-            await new Promise(resolve => setTimeout(resolve, 100)); // Allow styles to apply
-            
-            const exportBgColor = currentTheme.id === 'pearl' ? currentTheme.colors.bgPrimary : currentTheme.colors.bgSecondary;
-            await exportElementAsPng(scrollContainer, filename, {
-                backgroundColor: exportBgColor,
-            });
-
-        } else if (format === 'html') {
-            if (!scrollContainer) return;
-
-            const headContent = await gatherPageStyles();
-            const bodyClasses = document.body.className;
-            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-            const chatHtml = scrollContainer.innerHTML;
-
-            const fullHtml = `
-                <!DOCTYPE html>
-                <html lang="${language}">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Chat Export: ${DOMPurify.sanitize(activeChat.title)}</title>
-                    ${headContent}
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-                            if (window.hljs) {
-                                document.querySelectorAll('pre code').forEach((el) => {
-                                    window.hljs.highlightElement(el);
-                                });
-                            }
-                        });
-                    </script>
-                    <style>
-                        body { background-color: ${rootBgColor}; padding: 1rem; box-sizing: border-box; }
-                        .message-actions, .code-block-utility-button { display: none !important; }
-                        .sticky[aria-label="Scroll to bottom"] { display: none !important; }
-                    </style>
-                </head>
-                <body class="${bodyClasses}">
-                    <div class="exported-chat-container w-full max-w-7xl mx-auto">
-                        ${chatHtml}
-                    </div>
-                </body>
-                </html>
-            `;
-            exportHtmlStringAsFile(fullHtml, filename);
-        } else { // TXT
-            const textContent = activeChat.messages.map(message => {
-                const role = message.role === 'user' ? 'USER' : 'ASSISTANT';
-                let content = `### ${role}\n`;
-                if (message.files && message.files.length > 0) {
-                    message.files.forEach(file => {
-                        content += `[File attached: ${file.name}]\n`;
-                    });
-                }
-                content += message.content;
-                return content;
-            }).join('\n\n');
-
-            exportTextStringAsFile(textContent, filename);
-        }
-    } catch (error) {
-        logService.error(`Chat export failed (format: ${format})`, { error });
-        alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-        document.body.classList.remove('is-exporting-png');
-        if (scrollContainer && originalPaddingBottom !== null) {
-            scrollContainer.style.paddingBottom = originalPaddingBottom;
-        }
-        setExportStatus('idle');
-        setIsExportModalOpen(false);
-    }
-}, [activeChat, currentTheme, language, scrollContainerRef]);
 
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
