@@ -127,6 +127,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 systemInstruction={settings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
                 temperature={settings.temperature} setTemperature={(v) => updateSetting('temperature', v)}
                 topP={settings.topP} setTopP={(v) => updateSetting('topP', v)}
+                showThoughts={settings.showThoughts} setShowThoughts={(v) => updateSetting('showThoughts', v)}
+                thinkingBudget={settings.thinkingBudget} setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
                 isModelsLoading={isModelsLoading}
                 modelsLoadingError={modelsLoadingError}
                 availableModels={availableModels}

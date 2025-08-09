@@ -98,7 +98,7 @@ class LogServiceImpl {
     // Prune logs older than retention period.
     const twoDaysAgo = Date.now() - LOG_RETENTION_MS;
     this.logs = this.logs.filter(log => log.timestamp.getTime() >= twoDaysAgo);
-    
+
     this.saveLogs();
     this.notifyListeners();
   }
@@ -117,7 +117,7 @@ class LogServiceImpl {
       listener(new Map(this.apiKeyUsage));
     }
   }
-  
+
   public info(message: string, data?: any) {
     this.addLog('INFO', message, data);
   }
@@ -129,7 +129,7 @@ class LogServiceImpl {
   public error(message: string, data?: any) {
     this.addLog('ERROR', message, data);
   }
-  
+
   public debug(message: string, data?: any) {
     this.addLog('DEBUG', message, data);
   }
@@ -172,7 +172,8 @@ class LogServiceImpl {
     this.saveApiKeyUsage();
     this.notifyListeners();
     this.notifyApiKeyListeners();
-    this.info('Logs and stats cleared.');
+    // Avoid adding a new log entry immediately after clearing
+    console.info('Logs and stats cleared.');
   }
 }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip } from './shared/Tooltip';
 
@@ -9,18 +9,73 @@ interface GenerationSettingsProps {
   setTemperature: (value: number) => void;
   topP: number;
   setTopP: (value: number) => void;
+  thinkingBudget: number;
+  setThinkingBudget: (value: number) => void;
+  showThoughts: boolean;
+  setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
 }
+
+const Toggle: React.FC<{
+  id: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}> = ({ id, checked, onChange, disabled }) => (
+  <label htmlFor={id} className={`flex items-center ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+    <div className="relative">
+      <input id={id} type="checkbox" className="sr-only peer" checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled} />
+      <div className="w-11 h-6 bg-[var(--theme-bg-tertiary)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)] transition-colors duration-200 ease-in-out border border-[var(--theme-border-secondary)] peer-checked:border-transparent"></div>
+      <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
+    </div>
+  </label>
+);
 
 export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
   systemInstruction, setSystemInstruction,
   temperature, setTemperature,
   topP, setTopP,
+  thinkingBudget, setThinkingBudget,
+  showThoughts, setShowThoughts,
   t
 }) => {
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
+
+  const [customBudgetValue, setCustomBudgetValue] = useState(
+    thinkingBudget > 0 ? String(thinkingBudget) : '1000'
+  );
+
+  const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
+  const isThinkingOn = mode !== 'off';
+
+  const handleModeChange = (newMode: 'auto' | 'off' | 'custom') => {
+      if (newMode === 'auto') setThinkingBudget(-1);
+      else if (newMode === 'off') setThinkingBudget(0);
+      else {
+          const budget = parseInt(customBudgetValue, 10);
+          const newBudget = budget > 0 ? budget : 1000;
+          if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
+          setThinkingBudget(newBudget);
+      }
+  };
+
+  const handleCustomBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setCustomBudgetValue(val);
+      const numVal = parseInt(val, 10);
+      if (!isNaN(numVal) && numVal > 0) {
+          setThinkingBudget(numVal);
+      }
+  };
+
+  useEffect(() => {
+    // Sync local custom budget state if global state changes from elsewhere
+    if (thinkingBudget > 0) {
+        setCustomBudgetValue(String(thinkingBudget));
+    }
+  }, [thinkingBudget]);
 
   return (
     <div className="space-y-4">
@@ -59,6 +114,54 @@ export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
         </label>
         <input id="top-p-slider" type="range" min="0" max="1" step="0.05" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))}
           className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]" />
+      </div>
+      <div className="pt-4 mt-4 border-t border-[var(--theme-border-secondary)]">
+        <label className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-2 flex items-center">
+            {t('settingsThinkingMode')}
+            <Tooltip text={t('settingsThinkingMode_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+            </Tooltip>
+        </label>
+        <div role="radiogroup" className="flex bg-[var(--theme-bg-tertiary)] p-0.5 rounded-lg">
+            {(['auto', 'off', 'custom'] as const).map(modeValue => (
+              <button
+                key={modeValue}
+                role="radio"
+                aria-checked={mode === modeValue}
+                onClick={() => handleModeChange(modeValue)}
+                className={`flex-1 text-center px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-tertiary)] focus:ring-[var(--theme-border-focus)] ${
+                    mode === modeValue
+                    ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-link)] shadow-sm'
+                    : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)]/50'
+                }`}
+              >
+                {t(`settingsThinkingMode_${modeValue}`)}
+              </button>
+            ))}
+        </div>
+        {mode === 'custom' && (
+            <div className="mt-2" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+                <input
+                    type="number"
+                    value={customBudgetValue}
+                    onChange={handleCustomBudgetChange}
+                    placeholder={t('settingsThinkingCustom_placeholder')}
+                    className={`${inputBaseClasses} ${enabledInputClasses} w-full`}
+                    aria-label="Custom thinking token budget"
+                    min="1"
+                    step="100"
+                />
+            </div>
+        )}
+      </div>
+      <div className={`flex justify-between items-center py-2 transition-opacity ${isThinkingOn ? 'opacity-100' : 'opacity-50'}`}>
+        <label className={`text-sm flex items-center ${isThinkingOn ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-tertiary)]'}`}>
+            {t('settingsShowThoughts')}
+            <Tooltip text={t('settingsShowThoughts_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+            </Tooltip>
+        </label>
+        <Toggle id="show-thoughts-toggle" checked={showThoughts && isThinkingOn} onChange={setShowThoughts} disabled={!isThinkingOn} />
       </div>
     </div>
   );

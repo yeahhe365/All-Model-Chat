@@ -6,7 +6,6 @@ import { logService } from '../services/logService';
 export const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.readAsDataURL(file);
         reader.onload = () => {
             const result = reader.result as string;
             const base64Data = result.split(',')[1];
@@ -17,8 +16,10 @@ export const fileToBase64 = (file: File): Promise<string> => {
             }
         };
         reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
     });
 };
+
 
 export const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {

@@ -23,6 +23,10 @@ interface ChatBehaviorSectionProps {
   setTopP: (value: number) => void;
   isTranscriptionThinkingEnabled: boolean;
   setIsTranscriptionThinkingEnabled: (value: boolean) => void;
+  thinkingBudget: number;
+  setThinkingBudget: (value: number) => void;
+  showThoughts: boolean;
+  setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -60,6 +64,10 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 setTemperature={props.setTemperature}
                 topP={props.topP}
                 setTopP={props.setTopP}
+                thinkingBudget={props.thinkingBudget}
+                setThinkingBudget={props.setThinkingBudget}
+                showThoughts={props.showThoughts}
+                setShowThoughts={props.setShowThoughts}
                 t={t}
             />
         </div>

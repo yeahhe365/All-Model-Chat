@@ -62,14 +62,13 @@ export const buildGenerationConfig = (
     ].includes(modelId);
 
     if (modelSupportsThinking) {
-        if (showThoughts) {
-            generationConfig.thinkingConfig = {
-                thinkingBudget: thinkingBudget,
-                includeThoughts: true,
-            };
-        } else {
-            generationConfig.thinkingConfig = { thinkingBudget: 0 };
-        }
+        // Decouple thinking budget from showing thoughts.
+        // `thinkingBudget` controls if and how much the model thinks.
+        // `showThoughts` controls if the `thought` field is returned in the stream.
+        generationConfig.thinkingConfig = {
+            thinkingBudget: thinkingBudget,
+            includeThoughts: showThoughts,
+        };
     }
 
     const tools = [];
