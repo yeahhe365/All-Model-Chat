@@ -43,7 +43,7 @@
 
 ### 高级文件处理
 - 📎 **丰富的文件支持**: 轻松上传和处理多种文件类型，包括**图片**、**视频**、**音频**、**PDF文档**以及各类**代码和文本文件**。
-- 🖐️ **多样化的上传方式**: 提供了极致便利的文件上传体验，支持**拖拽**、从剪贴板**粘贴**、使用**文件选择器**，甚至可以直接调用**摄像头拍照**或使用**麦克风录音**。
+- 🖐️ **多样化的上传方式**: 提供了极致便利的文件上传体验，支持**拖拽**、从剪贴板**粘贴**、使用**文件选择器**，甚至可以直接调用**摄头拍照**或使用**麦克风录音**。
 - ✍️ **即时创建文本文件**: 无需离开应用，即可在应用内快速创建和编辑文本文件，并将其作为上下文提交给模型。
 - 🆔 **通过文件ID引用**: 对于高级用户，您可以直接引用已上传到 Gemini API 的文件（使用其 `files/...` ID），无需重复上传，节省时间和带宽。
 - 🖼️ **交互式预览**: 在应用内直接缩放和平移您上传的图片，或在交互式模态框中预览AI生成的HTML代码，甚至可以进入真正的全屏模式。
@@ -70,18 +70,18 @@
 
 ## 🛠️ 技术栈
 
-*   **框架**: React 19 & TypeScript
-*   **AI SDK**: `@google/genai`
-*   **样式**: Tailwind CSS (通过 CDN) & CSS 变量（用于主题化）
-*   **Markdown 与渲染**: `react-markdown`, `remark-gfm`, `remark-math`, `rehype-highlight`, `rehype-katex`, `highlight.js`, `DOMPurify`, `mermaid`, `viz.js`
-*   **图片导出**: `html2canvas`
-*   **模块加载**: 现代 ES 模块 & Import Maps (通过 `esm.sh`)
-*   **图标**: Lucide React
-*   **离线支持**: Service Worker (`sw.js`) 用于缓存应用外壳
+*   **框架**: React 19 & TypeScript  
+*   **AI SDK**: `@google/genai`  
+*   **样式**: Tailwind CSS (通过 CDN) & CSS 变量（用于主题化）  
+*   **Markdown 与渲染**: `react-markdown`, `remark-gfm`, `remark-math`, `rehype-highlight`, `rehype-katex`, `highlight.js`, `DOMPurify`, `mermaid`, `viz.js`  
+*   **图片导出**: `html2canvas`  
+*   **模块加载**: 现代 ES 模块 & Import Maps (通过 `esm.sh`)  
+*   **图标**: Lucide React  
+*   **离线支持**: Service Worker (`sw.js`) 用于缓存应用外壳  
 
 ## 📁 项目结构
 
-```
+```bash
 All-Model-Chat/
 ├── public/                 # 静态资源 (manifest.json, sw.js)
 ├── src/
@@ -107,21 +107,6 @@ All-Model-Chat/
 │   ├── App.tsx             # 应用根组件
 │   ├── index.tsx           # React 应用入口文件
 │   └── types.ts            # 核心 TypeScript 类型定义
-│ 
+│
 ├── index.html              # 主 HTML 文件，包含 import maps 和核心样式
 └── README.md
-```
-
-## 🤝 参与贡献
-
-欢迎各种形式的贡献！如果您有任何改进建议或发现了错误，请随时提交 [Issue](https://github.com/yeahhe365/All-Model-Chat/issues) 或 Pull Request。
-
-1.  Fork 本项目。
-2.  创建您的功能分支 (`git checkout -b feature/AmazingFeature`)。
-3.  提交您的更改 (`git commit -m 'Add some AmazingFeature'`)。
-4.  将分支推送到远程 (`git push origin feature/AmazingFeature`)。
-5.  开启一个 Pull Request。
-
-## 📄 开源协议
-
-本项目基于 MIT 许可证。详情请见 `LICENSE` 文件。
