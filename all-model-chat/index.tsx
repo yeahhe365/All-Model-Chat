@@ -2,6 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { APP_LOGO_SVG_DATA_URI } from './constants/appConstants';
+import { initializeProxyInterceptor } from './utils/proxyInterceptor';
+
+// Initialize the proxy interceptor to apply proxy settings from localStorage
+initializeProxyInterceptor();
 
 // Set dynamic icons before rendering to avoid flickering
 const favicon = document.getElementById('favicon');

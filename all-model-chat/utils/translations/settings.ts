@@ -95,7 +95,16 @@ export const settingsTranslations = {
     settingsViewLogs: { en: 'View Logs', zh: '查看日志' },
     settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
-    
+    settings_toolbarModel_label: { en: 'Toolbar Actions Model', zh: '工具栏操作模型' },
+    settings_toolbarModel_tooltip: { en: 'Selects the model used for floating toolbar actions like Explain, Summarize, and Translate.', zh: '选择用于浮动工具栏操作（如解释、总结和翻译）的模型。' },
+    settingsToolbarActionsThinking_label: { en: 'Enable Thinking for Toolbar Actions', zh: '为工具栏操作启用思考功能' },
+    settingsToolbarActionsThinking_tooltip: { en: "When enabled, the model uses 'thinking' for higher quality responses for actions like Explain and Summarize, which may take slightly longer.", zh: '启用后，模型会使用“思考”功能为解释、总结等操作提供更高质量的回答，但这可能会花费稍长的时间。' },
+
+    settings_section_model_config: { en: 'Model Configuration', zh: '模型配置' },
+    settings_section_speech: { en: 'Speech Settings', zh: '语音设置' },
+    settings_section_generation: { en: 'Core Generation Settings', zh: '核心生成设置' },
+    settings_section_thinking: { en: 'Thinking & Performance', zh: '思考与性能' },
+
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
     about_version: { en: 'Version', zh: '版本' },
