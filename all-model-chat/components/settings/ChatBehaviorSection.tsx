@@ -27,10 +27,6 @@ interface ChatBehaviorSectionProps {
   setThinkingBudget: (value: number) => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
-  toolbarModelId: string;
-  setToolbarModelId: (value: string) => void;
-  isToolbarActionsThinkingEnabled: boolean;
-  setIsToolbarActionsThinkingEnabled: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -51,22 +47,16 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 isModelsLoading={props.isModelsLoading}
                 modelsLoadingError={props.modelsLoadingError}
                 availableModels={props.availableModels}
-                toolbarModelId={props.toolbarModelId}
-                setToolbarModelId={props.setToolbarModelId}
                 transcriptionModelId={props.transcriptionModelId}
                 setTranscriptionModelId={props.setTranscriptionModelId}
-                thinkingBudget={props.thinkingBudget}
-                setThinkingBudget={props.setThinkingBudget}
-                showThoughts={props.showThoughts}
-                setShowThoughts={props.setShowThoughts}
-                isToolbarActionsThinkingEnabled={props.isToolbarActionsThinkingEnabled}
-                setIsToolbarActionsThinkingEnabled={props.setIsToolbarActionsThinkingEnabled}
                 isTranscriptionThinkingEnabled={props.isTranscriptionThinkingEnabled}
                 setIsTranscriptionThinkingEnabled={props.setIsTranscriptionThinkingEnabled}
+                ttsVoice={props.ttsVoice}
+                setTtsVoice={props.setTtsVoice}
                 t={t}
             />
         </div>
-        <div className="space-y-4 md:pl-8 md:border-l md:border-[var(--theme-border-primary)]">
+        <div className="space-y-4 md:pl-8 md:border-l md:border-[var(--theme-border-primary)] md:border-opacity-50 pt-6 md:pt-0 border-t md:border-t-0 border-[var(--theme-border-primary)] border-opacity-50">
             <GenerationSettings
                 systemInstruction={props.systemInstruction}
                 setSystemInstruction={props.setSystemInstruction}
@@ -74,8 +64,10 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 setTemperature={props.setTemperature}
                 topP={props.topP}
                 setTopP={props.setTopP}
-                ttsVoice={props.ttsVoice}
-                setTtsVoice={props.setTtsVoice}
+                thinkingBudget={props.thinkingBudget}
+                setThinkingBudget={props.setThinkingBudget}
+                showThoughts={props.showThoughts}
+                setShowThoughts={props.setShowThoughts}
                 t={t}
             />
         </div>

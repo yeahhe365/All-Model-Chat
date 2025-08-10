@@ -1,3 +1,4 @@
+
 html, body, #root {
   height: 100%;
   background-color: var(--theme-bg-primary);
@@ -581,20 +582,4 @@ body.is-exporting-png .message-actions {
 }
 body.is-exporting-png .sticky[aria-label="Scroll to bottom"] {
     display: none !important;
-}
-
-/* Selection Toolbar */
-.toolbar-button {
-  padding: 8px;
-  border-radius: 9999px;
-  background-color: transparent;
-  color: var(--theme-text-secondary);
-  transition: background-color 0.2s, color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.toolbar-button:hover {
-  background-color: var(--theme-bg-tertiary);
-  color: var(--theme-text-primary);
 }
