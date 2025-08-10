@@ -266,7 +266,7 @@ export const proxyInterceptor = new ProxyInterceptor();
 export const initializeProxyInterceptor = (): void => {
   try {
     // 从localStorage读取设置
-    const settings = localStorage.getItem('app-settings');
+    const settings = localStorage.getItem('chatAppSettings');
     if (settings) {
       const appSettings = JSON.parse(settings);
       
