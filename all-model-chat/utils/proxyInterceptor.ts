@@ -235,6 +235,30 @@ class ProxyInterceptor {
   }
 }
 
+/**
+ * 检测代理类型
+ */
+const detectProxyType = (url: string): string => {
+  const lowerUrl = url.toLowerCase();
+  
+  if (lowerUrl.includes('api-proxy.me')) return 'API-Proxy.me';
+  if (lowerUrl.includes('openai-proxy')) return 'OpenAI Proxy';
+  if (lowerUrl.includes('ai-proxy')) return 'AI Proxy';
+  if (lowerUrl.includes('gemini-proxy')) return 'Gemini Proxy';
+  if (lowerUrl.includes('google-proxy')) return 'Google Proxy';
+  if (lowerUrl.includes('cloudflare')) return 'Cloudflare Workers';
+  if (lowerUrl.includes('workers.dev')) return 'Cloudflare Workers';
+  if (lowerUrl.includes('vercel.app')) return 'Vercel';
+  if (lowerUrl.includes('netlify.app')) return 'Netlify';
+  if (lowerUrl.includes('herokuapp.com')) return 'Heroku';
+  if (lowerUrl.includes('railway.app')) return 'Railway';
+  if (lowerUrl.includes('render.com')) return 'Render';
+  if (lowerUrl.includes('fly.io')) return 'Fly.io';
+  if (lowerUrl.includes('localhost') || lowerUrl.includes('127.0.0.1')) return 'Local Proxy';
+  
+  return 'Custom Proxy';
+};
+
 // 创建全局实例
 export const proxyInterceptor = new ProxyInterceptor();
 
@@ -254,23 +278,52 @@ export const initializeProxyInterceptor = (): void => {
         // 移除尾部斜杠
         proxyUrl = proxyUrl.replace(/\/$/, '');
         
-        // 智能添加路径
+        // 智能路径处理 - 支持各种代理服务格式
         if (!proxyUrl.endsWith('/v1beta')) {
-          if (!proxyUrl.endsWith('/gemini')) {
-            // 支持多种常见格式
-            if (proxyUrl.includes('api-proxy.me') && !proxyUrl.endsWith('/gemini')) {
-              proxyUrl += '/gemini';
-            } else if (proxyUrl.includes('proxy') && !proxyUrl.includes('gemini')) {
-              proxyUrl += '/gemini';
+          // 检查是否已经是完整的API路径
+          if (proxyUrl.includes('/v1beta/') || proxyUrl.includes('/v1/') || proxyUrl.includes('/api/')) {
+            // 如果已包含API路径，直接使用
+            console.log('🔍 [ProxyInterceptor] 检测到完整API路径，直接使用');
+          } else {
+            // 根据不同代理服务的特征进行智能处理
+            if (proxyUrl.includes('api-proxy.me')) {
+              // api-proxy.me 格式
+              if (!proxyUrl.endsWith('/gemini')) {
+                proxyUrl += '/gemini';
+              }
+              proxyUrl += '/v1beta';
+            } else if (proxyUrl.includes('openai-proxy') || proxyUrl.includes('ai-proxy')) {
+              // OpenAI代理格式，通常直接添加v1beta
+              proxyUrl += '/v1beta';
+            } else if (proxyUrl.includes('gemini-proxy') || proxyUrl.includes('google-proxy')) {
+              // Google/Gemini专用代理
+              proxyUrl += '/v1beta';
+            } else if (proxyUrl.includes('cloudflare') || proxyUrl.includes('workers')) {
+              // Cloudflare Workers代理
+              proxyUrl += '/v1beta';
+            } else if (proxyUrl.includes('vercel') || proxyUrl.includes('netlify')) {
+              // Vercel/Netlify代理
+              proxyUrl += '/v1beta';
+            } else {
+              // 通用代理格式 - 尝试智能判断
+              if (proxyUrl.split('/').length <= 3) {
+                // 基础域名，添加标准路径
+                proxyUrl += '/v1beta';
+              } else {
+                // 已有路径，只添加版本号
+                if (!proxyUrl.includes('v1')) {
+                  proxyUrl += '/v1beta';
+                }
+              }
             }
           }
-          proxyUrl += '/v1beta';
         }
         
         proxyInterceptor.enable(proxyUrl);
         console.log('✅ [ProxyInterceptor] 自动启用代理拦截器');
         console.log('📍 [ProxyInterceptor] 原始URL:', appSettings.apiProxyUrl);
         console.log('🎯 [ProxyInterceptor] 处理后URL:', proxyUrl);
+        console.log('🔧 [ProxyInterceptor] 代理类型:', detectProxyType(appSettings.apiProxyUrl));
       }
     }
   } catch (error) {
