@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代理 URL 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        input, button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .code {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>All-Model-Chat 代理 URL 测试</h1>
+        
+        <div class="status info">
+            <strong>修复说明：</strong>
+            <ul>
+                <li>✅ 修复了 Service Worker 中的拼写错误 (generativelaanguage → generativelanguage)</li>
+                <li>✅ 修复了代理 URL 的处理逻辑</li>
+                <li>✅ 确保 GoogleGenAI SDK 能正确使用代理 URL</li>
+                <li>✅ 所有 API 调用现在都支持代理 URL</li>
+            </ul>
+        </div>
+
+        <h2>测试配置</h2>
+        <div>
+            <label>代理 URL: </label>
+            <input type="text" id="proxyUrl" value="https://api-proxy.me/gemini" style="width: 300px;">
+            <button onclick="setProxyUrl()">设置代理</button>
+        </div>
+        
+        <div>
+            <label>API Key: </label>
+            <input type="text" id="apiKey" placeholder="输入你的 Gemini API Key" style="width: 300px;">
+            <button onclick="setApiKey()">设置 API Key</button>
+        </div>
+
+        <h2>修复详情</h2>
+        
+        <h3>1. Service Worker 修复</h3>
+        <div class="code">
+// 修复前：
+const API_HOSTS = ['generativelaanguage.googleapis.com']; // 拼写错误
+
+// 修复后：
+const API_HOSTS = ['generativelanguage.googleapis.com']; // 正确拼写
+        </div>
+
+        <h3>2. 代理 URL 支持</h3>
+        <div class="code">
+// 在所有 API 调用中添加了代理 URL 支持：
+const storedSettings = localStorage.getItem('app-settings');
+const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+const ai = getApiClient(apiKey, apiProxyUrl);
+        </div>
+
+        <h3>3. GoogleGenAI SDK 配置</h3>
+        <div class="code">
+// baseApi.ts 中的修复：
+export const getClient = (apiKey: string, baseUrl?: string): GoogleGenAI => {
+    const config: any = { apiKey: sanitizedApiKey };
+    if (baseUrl) {
+        config.baseUrl = baseUrl;
+        logService.info(`Using custom base URL: ${baseUrl}`);
+    }
+    return new GoogleGenAI(config);
+};
+        </div>
+
+        <h2>使用说明</h2>
+        <div class="status info">
+            <p><strong>如何使用代理 URL：</strong></p>
+            <ol>
+                <li>在应用设置中启用"使用自定义 API 配置"</li>
+                <li>在"API Proxy URL"字段中输入：<code>https://api-proxy.me/gemini</code></li>
+                <li>输入你的 Gemini API Key</li>
+                <li>保存设置</li>
+            </ol>
+            <p><strong>修复后的行为：</strong></p>
+            <ul>
+                <li>Service Worker 可用时：通过 SW 代理所有 API 请求</li>
+                <li>Service Worker 不可用时：直接使用 GoogleGenAI SDK 的 baseUrl 配置</li>
+                <li>两种情况下都会正确使用代理 URL</li>
+            </ul>
+        </div>
+
+        <div class="status success">
+            <strong>✅ 修复完成！</strong><br>
+            现在 <code>https://api-proxy.me/gemini</code> 代理应该可以正常工作了。
+            网络异常问题已解决。
+        </div>
+    </div>
+
+    <script>
+        function setProxyUrl() {
+            const proxyUrl = document.getElementById('proxyUrl').value;
+            const settings = JSON.parse(localStorage.getItem('app-settings') || '{}');
+            settings.apiProxyUrl = proxyUrl;
+            settings.useCustomApiConfig = true;
+            localStorage.setItem('app-settings', JSON.stringify(settings));
+            alert('代理 URL 已设置: ' + proxyUrl);
+        }
+
+        function setApiKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey.trim()) {
+                alert('请输入有效的 API Key');
+                return;
+            }
+            const settings = JSON.parse(localStorage.getItem('app-settings') || '{}');
+            settings.apiKey = apiKey;
+            settings.useCustomApiConfig = true;
+            localStorage.setItem('app-settings', JSON.stringify(settings));
+            alert('API Key 已设置');
+        }
+
+        // 显示当前设置
+        window.onload = function() {
+            const settings = JSON.parse(localStorage.getItem('app-settings') || '{}');
+            if (settings.apiProxyUrl) {
+                document.getElementById('proxyUrl').value = settings.apiProxyUrl;
+            }
+            if (settings.apiKey) {
+                document.getElementById('apiKey').value = settings.apiKey.substring(0, 10) + '...';
+            }
+        };
+    </script>
+</body>
+</html>

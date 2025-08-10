@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { APP_LOGO_SVG_DATA_URI } from './constants/appConstants';
+import { initializeProxyInterceptor } from './utils/proxyInterceptor';
 
 // Set dynamic icons before rendering to avoid flickering
 const favicon = document.getElementById('favicon');
@@ -12,6 +13,9 @@ const appleTouchIcon = document.getElementById('apple-touch-icon');
 if (appleTouchIcon) {
   appleTouchIcon.setAttribute('href', APP_LOGO_SVG_DATA_URI);
 }
+
+// 初始化代理拦截器
+initializeProxyInterceptor();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

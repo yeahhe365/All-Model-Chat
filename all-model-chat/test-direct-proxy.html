@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直接代理测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        input, button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 直接代理测试</h1>
+        
+        <div class="status info">
+            <strong>测试目的：</strong>绕过 GoogleGenAI SDK，直接使用代理服务测试 API 连接
+        </div>
+
+        <div>
+            <label>API Key: </label>
+            <input type="text" id="apiKey" placeholder="输入你的 Gemini API Key" style="width: 300px;">
+        </div>
+        
+        <div>
+            <label>代理 URL: </label>
+            <input type="text" id="proxyUrl" value="https://api-proxy.me/gemini" style="width: 300px;">
+        </div>
+
+        <div>
+            <button onclick="testDirectProxy()">🧪 测试直接代理</button>
+            <button onclick="testOriginalAPI()">🌐 测试原始 API</button>
+            <button onclick="clearLog()">🗑️ 清除日志</button>
+        </div>
+
+        <div id="log" class="log">等待测试...\n</div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        async function testDirectProxy() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const proxyUrl = document.getElementById('proxyUrl').value.trim();
+            
+            if (!apiKey) {
+                log('❌ 请输入 API Key');
+                return;
+            }
+
+            log('🚀 开始测试直接代理...');
+            log(`📡 代理 URL: ${proxyUrl}`);
+            
+            try {
+                // 构建代理请求 URL
+                const originalUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
+                const proxyRequestUrl = proxyUrl + '/models?key=' + encodeURIComponent(apiKey);
+                
+                log(`📤 发送请求到: ${proxyRequestUrl}`);
+                
+                const response = await fetch(proxyRequestUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    mode: 'cors'
+                });
+
+                log(`📥 响应状态: ${response.status} ${response.statusText}`);
+                log(`📥 响应 URL: ${response.url}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ 代理测试成功！`);
+                    log(`📊 返回的模型数量: ${data.models ? data.models.length : 0}`);
+                    
+                    if (data.models && data.models.length > 0) {
+                        log(`📝 前几个模型:`);
+                        data.models.slice(0, 3).forEach(model => {
+                            log(`  - ${model.displayName || model.name}`);
+                        });
+                    }
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ 代理测试失败: ${response.status}`);
+                    log(`📄 错误详情: ${errorText}`);
+                    
+                    if (errorText.includes('User location is not supported')) {
+                        log('🚨 仍然收到地区限制错误 - 代理可能未正确工作');
+                    }
+                }
+            } catch (error) {
+                log(`❌ 请求异常: ${error.message}`);
+                log(`🔍 错误详情: ${error.stack || error}`);
+            }
+        }
+
+        async function testOriginalAPI() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if (!apiKey) {
+                log('❌ 请输入 API Key');
+                return;
+            }
+
+            log('🌐 开始测试原始 API（用于对比）...');
+            
+            try {
+                const originalUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+                
+                log(`📤 发送请求到: ${originalUrl}`);
+                
+                const response = await fetch(originalUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log(`📥 响应状态: ${response.status} ${response.statusText}`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ 原始 API 测试成功！`);
+                    log(`📊 返回的模型数量: ${data.models ? data.models.length : 0}`);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ 原始 API 测试失败: ${response.status}`);
+                    log(`📄 错误详情: ${errorText}`);
+                    
+                    if (errorText.includes('User location is not supported')) {
+                        log('🚨 收到地区限制错误 - 这是预期的，说明需要代理');
+                    }
+                }
+            } catch (error) {
+                log(`❌ 请求异常: ${error.message}`);
+            }
+        }
+
+        // 页面加载时的初始化
+        window.onload = function() {
+            log('🔧 直接代理测试工具已加载');
+            log('📖 使用说明:');
+            log('1. 输入你的 Gemini API Key');
+            log('2. 确认代理 URL 正确');
+            log('3. 点击"测试直接代理"按钮');
+            log('4. 对比"测试原始 API"的结果');
+            log('');
+        };
+    </script>
+</body>
+</html>

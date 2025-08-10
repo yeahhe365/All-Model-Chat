@@ -1,0 +1,12 @@
+请在控制台中复制粘贴以下命令（请替换为您的API Key）：
+
+UltimateProxyFix.ultimateFix("AIzaSyCUduSy8NLnF0hKWjgial1Qtm8YQ6-LKr0");
+
+注意事项：
+1. 请将 AIzaSyCUduSy8NLnF0hKWjgial1Qtm8YQ6-LKr0 替换为您自己的API Key
+2. 确保引号是英文引号 "
+3. 执行后应该看到成功提示信息
+4. 然后按 F5 刷新页面测试
+
+如果您想使用默认的API Key进行测试，可以直接复制粘贴：
+UltimateProxyFix.ultimateFix("AIzaSyCUduSy8NLnF0hKWjgial1Qtm8YQ6-LKr0");

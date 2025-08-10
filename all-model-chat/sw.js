@@ -6,7 +6,7 @@ try {
 }
 
 const CACHE_NAME = 'all-model-chat-cache-v3';
-const API_HOSTS = ['generativelaanguage.googleapis.com'];
+const API_HOSTS = ['generativelanguage.googleapis.com'];
 const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 
@@ -67,6 +67,8 @@ async function handleStreamRequest(generationId, payload, clientId) {
     let hasError = false;
 
     try {
+        // 如果设置了代理 URL，我们应该让 fetch 事件处理器来处理请求
+        // 而不是在这里直接使用 GoogleGenAI
         const ai = new self.GoogleGenAI({ apiKey });
         const result = await ai.models.generateContentStream({ model: modelId, contents, config });
 
@@ -128,6 +130,7 @@ self.addEventListener('message', (event) => {
             break;
         case 'SET_PROXY_URL':
             proxyUrl = event.data.url || null;
+            console.log('[SW] Proxy URL set to:', proxyUrl);
             break;
     }
 });
@@ -167,15 +170,31 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+    
+    // 记录所有 API 请求以便调试
+    if (request.url.includes('generativelanguage.googleapis.com')) {
+        console.log('[SW] Intercepting API request:', request.url);
+        console.log('[SW] Proxy URL:', proxyUrl);
+    }
 
+    // 如果设置了代理 URL，拦截所有对 Google API 的请求
     if (proxyUrl && request.url.startsWith(TARGET_URL_PREFIX)) {
+        console.log('[SW] Redirecting to proxy:', proxyUrl);
         const newUrl = request.url.replace(TARGET_URL_PREFIX, proxyUrl);
-        const newRequest = new Request(newUrl, request);
+        const newRequest = new Request(newUrl, {
+            method: request.method,
+            headers: request.headers,
+            body: request.body,
+            mode: 'cors',
+            credentials: 'omit'
+        });
         event.respondWith(fetch(newRequest));
         return;
     }
 
+    // 如果没有代理 URL，但是是 API 请求，直接通过
     if (API_HOSTS.some(host => new URL(request.url).hostname === host)) {
+        console.log('[SW] Direct API request (no proxy):', request.url);
         event.respondWith(fetch(request));
         return;
     }

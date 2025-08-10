@@ -1,0 +1,53 @@
+由于输入容易出错，请直接使用这个最简单的修复方法：
+
+=== 复制以下完整代码到控制台 ===
+
+// 设置代理配置
+localStorage.setItem('app-settings', JSON.stringify({
+    useCustomApiConfig: true,
+    apiProxyUrl: 'https://api-proxy.me/gemini',
+    apiKey: 'AIzaSyCUduSy8NLnF0hKWjgial1Qtm8YQ6-LKr0',
+    modelId: 'gemini-2.5-flash',
+    temperature: 0.7,
+    topP: 0.9,
+    systemInstruction: '',
+    showThoughts: false,
+    thinkingBudget: 0,
+    language: 'system',
+    baseFontSize: 14,
+    isStreamingEnabled: true,
+    isAutoScrollOnSendEnabled: true,
+    isAutoTitleEnabled: true,
+    expandCodeBlocksByDefault: false,
+    isMermaidRenderingEnabled: true,
+    isGraphvizRenderingEnabled: true,
+    isAutoSendOnSuggestionClick: true,
+    isTranscriptionThinkingEnabled: false,
+    transcriptionModelId: 'gemini-2.5-flash',
+    ttsVoice: 'Puck',
+    themeId: 'system'
+}));
+
+// 拦截fetch函数
+const originalFetch = window.fetch;
+window.fetch = function(input, init = {}) {
+    const url = typeof input === 'string' ? input : input.url;
+    if (url && url.includes('generativelanguage.googleapis.com')) {
+        const proxyUrl = url.replace('https://generativelanguage.googleapis.com/v1beta', 'https://api-proxy.me/gemini/v1beta');
+        console.log('🔄 代理请求:', url, '->', proxyUrl);
+        const newInput = typeof input === 'string' ? proxyUrl : new Request(proxyUrl, input);
+        return originalFetch(newInput, init);
+    }
+    return originalFetch(input, init);
+};
+
+console.log('✅ 代理拦截器已激活，请刷新页面测试');
+
+=== 操作步骤 ===
+1. 全选上面的代码（从 // 设置代理配置 开始到最后）
+2. 复制（Ctrl+C）
+3. 在控制台中粘贴（Ctrl+V）
+4. 按回车执行
+5. 按F5刷新页面
+
+这样就不会有输入错误了！
