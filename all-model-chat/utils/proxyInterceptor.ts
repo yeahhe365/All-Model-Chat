@@ -62,18 +62,33 @@ class ProxyInterceptor {
   }
 
   /**
-   * 转换URL为代理URL
+   * 智能转换URL为代理URL
    */
   private transformUrl(url: string): string {
     if (!this.shouldProxy(url)) return url;
     
-    const proxyUrl = url.replace(
+    // 智能处理不同格式的代理URL
+    let proxyUrl = this.config.proxyUrl;
+    
+    // 确保代理URL以正确的格式结尾
+    if (!proxyUrl.endsWith('/v1beta')) {
+      // 移除可能的尾部斜杠
+      proxyUrl = proxyUrl.replace(/\/$/, '');
+      // 添加正确的API版本路径
+      if (!proxyUrl.endsWith('/gemini')) {
+        proxyUrl += '/gemini';
+      }
+      proxyUrl += '/v1beta';
+    }
+    
+    // 执行URL替换
+    const transformedUrl = url.replace(
       `https://${this.config.originalDomain}/v1beta`,
-      this.config.proxyUrl
+      proxyUrl
     );
     
-    console.log('🔄 [ProxyInterceptor] 代理请求:', url, '->', proxyUrl);
-    return proxyUrl;
+    console.log('🔄 [ProxyInterceptor] 代理请求:', url, '->', transformedUrl);
+    return transformedUrl;
   }
 
   /**
@@ -233,12 +248,29 @@ export const initializeProxyInterceptor = (): void => {
       
       // 如果启用了自定义API配置且有代理URL，则启用拦截器
       if (appSettings.useCustomApiConfig && appSettings.apiProxyUrl) {
-        const proxyUrl = appSettings.apiProxyUrl.endsWith('/v1beta') 
-          ? appSettings.apiProxyUrl 
-          : `${appSettings.apiProxyUrl}/v1beta`;
+        // 智能处理代理URL格式
+        let proxyUrl = appSettings.apiProxyUrl.trim();
+        
+        // 移除尾部斜杠
+        proxyUrl = proxyUrl.replace(/\/$/, '');
+        
+        // 智能添加路径
+        if (!proxyUrl.endsWith('/v1beta')) {
+          if (!proxyUrl.endsWith('/gemini')) {
+            // 支持多种常见格式
+            if (proxyUrl.includes('api-proxy.me') && !proxyUrl.endsWith('/gemini')) {
+              proxyUrl += '/gemini';
+            } else if (proxyUrl.includes('proxy') && !proxyUrl.includes('gemini')) {
+              proxyUrl += '/gemini';
+            }
+          }
+          proxyUrl += '/v1beta';
+        }
         
         proxyInterceptor.enable(proxyUrl);
-        console.log('✅ [ProxyInterceptor] 自动启用代理拦截器:', proxyUrl);
+        console.log('✅ [ProxyInterceptor] 自动启用代理拦截器');
+        console.log('📍 [ProxyInterceptor] 原始URL:', appSettings.apiProxyUrl);
+        console.log('🎯 [ProxyInterceptor] 处理后URL:', proxyUrl);
       }
     }
   } catch (error) {
