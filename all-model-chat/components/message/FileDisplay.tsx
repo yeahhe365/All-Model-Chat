@@ -7,7 +7,7 @@ import {
     SUPPORTED_PDF_MIME_TYPES,
     SUPPORTED_VIDEO_MIME_TYPES, 
 } from '../../constants/fileConstants';
-import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy, Download } from 'lucide-react'; 
+import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy, Download, Youtube } from 'lucide-react'; 
 import { getResponsiveValue } from '../../utils/appUtils';
 
 interface FileDisplayProps {
@@ -93,12 +93,20 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
             <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
           </div>
         </>
+      ) : file.type === 'video/youtube-link' && !file.error ? (
+        <>
+          <Youtube size={iconSize} className="text-red-500 flex-shrink-0" />
+          <div className={textClasses}>
+            <span className={nameClass} title={file.name}>{file.name}</span>
+            <span className={detailsClass}>YouTube Video</span>
+          </div>
+        </>
       ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
           <FileVideo size={iconSize} className="text-purple-400 flex-shrink-0" />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
+            <span className={detailsClass}>{`${file.type} - ${formatFileSize(file.size)}`}</span>
           </div>
         </>
       ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( 

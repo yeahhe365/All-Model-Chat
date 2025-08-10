@@ -1,4 +1,3 @@
-
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession } from '../types';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { logService } from '../services/logService';
@@ -92,6 +91,8 @@ export const buildContentParts = async (
         newFile.base64Data = base64Data;
         part = { inlineData: { mimeType: file.type, data: base64Data } };
       }
+    } else if (file.fileUri && file.type === 'video/youtube-link') {
+        part = { fileData: { mimeType: 'video/youtube', fileUri: file.fileUri } };
     } else if (file.fileUri) {
       part = { fileData: { mimeType: file.type, fileUri: file.fileUri } };
     }
