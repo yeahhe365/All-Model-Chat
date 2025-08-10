@@ -253,6 +253,12 @@ export interface ChatInputToolbarProps {
   onAddFileByIdSubmit: () => Promise<void>;
   onCancelAddById: () => void;
   isAddingById: boolean;
+  showAddByUrlInput: boolean;
+  urlInput: string;
+  setUrlInput: (value: string) => void;
+  onAddUrlSubmit: () => void;
+  onCancelAddUrl: () => void;
+  isAddingByUrl: boolean;
   isLoading: boolean;
   t: (key: keyof typeof translations) => string;
 }

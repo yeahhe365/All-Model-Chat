@@ -16,6 +16,7 @@ export const useChatInputModals = ({
   const [showCamera, setShowCamera] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
+  const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -94,6 +95,10 @@ export const useChatInputModals = ({
   };
 
   const handleAttachmentAction = (action: AttachmentAction) => {
+    // Close other inputs when a new one is opened
+    setShowAddByIdInput(false);
+    setShowAddByUrlInput(false);
+
     switch (action) {
       case 'upload': fileInputRef.current?.click(); break;
       case 'gallery': imageInputRef.current?.click(); break;
@@ -101,6 +106,7 @@ export const useChatInputModals = ({
       case 'camera': setShowCamera(true); break;
       case 'recorder': setShowRecorder(true); break;
       case 'id': setShowAddByIdInput(true); break;
+      case 'url': setShowAddByUrlInput(true); break;
       case 'text': setShowCreateTextFileEditor(true); break;
       case 'screenshot': handleScreenshot(); break;
     }
@@ -142,6 +148,8 @@ export const useChatInputModals = ({
     setShowRecorder,
     showAddByIdInput,
     setShowAddByIdInput,
+    showAddByUrlInput,
+    setShowAddByUrlInput,
     isHelpModalOpen,
     setIsHelpModalOpen,
     fileInputRef,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
-import { Ban, XCircle, AlertTriangleIcon, Loader2, CheckCircle, ClipboardCopy, Check, FileVideo, FileAudio, FileText, ImageIcon } from 'lucide-react';
+import { Ban, XCircle, AlertTriangleIcon, Loader2, CheckCircle, ClipboardCopy, Check, FileVideo, FileAudio, FileText, ImageIcon, Youtube } from 'lucide-react';
 import { 
   SUPPORTED_IMAGE_MIME_TYPES, 
   SUPPORTED_AUDIO_MIME_TYPES, 
@@ -82,6 +82,8 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
           <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)]" />
         ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) ? (
           <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)]" />
+        ) : file.type === 'video/youtube-link' ? (
+          <Youtube size={iconSize} className="text-red-500" />
         ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) ? (
           <FileVideo size={iconSize} className="text-purple-400" />
         ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (

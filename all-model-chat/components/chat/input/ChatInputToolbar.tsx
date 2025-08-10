@@ -4,6 +4,7 @@ import { translations } from '../../../utils/appUtils';
 import { ImagenAspectRatioSelector } from './ImagenAspectRatioSelector';
 import { SelectedFileDisplay } from '../SelectedFileDisplay';
 import { AddFileByIdInput } from './AddFileByIdInput';
+import { AddUrlInput } from './AddUrlInput';
 
 export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   isImagenModel,
@@ -19,6 +20,12 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   onAddFileByIdSubmit,
   onCancelAddById,
   isAddingById,
+  showAddByUrlInput,
+  urlInput,
+  setUrlInput,
+  onAddUrlSubmit,
+  onCancelAddUrl,
+  isAddingByUrl,
   isLoading,
   t,
 }) => {
@@ -44,6 +51,17 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
           onAddFileByIdSubmit={onAddFileByIdSubmit}
           onCancel={onCancelAddById}
           isAddingById={isAddingById}
+          isLoading={isLoading}
+          t={t as (key: string) => string}
+        />
+      )}
+      {showAddByUrlInput && (
+        <AddUrlInput
+          urlInput={urlInput}
+          setUrlInput={setUrlInput}
+          onAddUrlSubmit={onAddUrlSubmit}
+          onCancel={onCancelAddUrl}
+          isAddingByUrl={isAddingByUrl}
           isLoading={isLoading}
           t={t as (key: string) => string}
         />
