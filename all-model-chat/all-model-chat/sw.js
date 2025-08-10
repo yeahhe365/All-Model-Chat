@@ -67,6 +67,8 @@ async function handleStreamRequest(generationId, payload, clientId) {
     let hasError = false;
 
     try {
+        // If a proxy URL is set, the 'fetch' event listener will handle the redirection.
+        // We can still initialize the SDK normally here.
         const ai = new self.GoogleGenAI({ apiKey });
         const result = await ai.models.generateContentStream({ model: modelId, contents, config });
 

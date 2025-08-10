@@ -23,7 +23,10 @@ export const getClient = (apiKey: string, baseUrl?: string): GoogleGenAI => {
       
       const config: any = { apiKey: sanitizedApiKey };
       if (baseUrl) {
-          config.baseURL = baseUrl;
+          // 尝试多种可能的配置参数名
+          config.baseURL = baseUrl;  // 注意大写 URL
+          config.baseUrl = baseUrl;   // 小写版本
+          config.endpoint = baseUrl;  // 可能的替代参数
           logService.info(`Using custom base URL: ${baseUrl}`);
       }
       

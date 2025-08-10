@@ -14,7 +14,7 @@ if (appleTouchIcon) {
   appleTouchIcon.setAttribute('href', APP_LOGO_SVG_DATA_URI);
 }
 
-// Initialize the proxy interceptor
+// 初始化代理拦截器
 initializeProxyInterceptor();
 
 const rootElement = document.getElementById('root');
