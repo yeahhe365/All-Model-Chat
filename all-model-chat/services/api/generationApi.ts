@@ -5,10 +5,7 @@ import { fileToBase64 } from "../../utils/appUtils";
 
 export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> => {
     logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio });
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     if (!prompt.trim()) {
         throw new Error("Image generation prompt cannot be empty.");
     }
@@ -47,10 +44,7 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
 
 export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> => {
     logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     if (!text.trim()) {
         throw new Error("TTS input text cannot be empty.");
     }
@@ -96,10 +90,7 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
 
 export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> => {
     logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size, thinking: isThinkingEnabled });
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
 
     const audioBase64 = await fileToBase64(audioFile);
 
@@ -145,10 +136,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
 
 export const generateSuggestionsApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> => {
     logService.info(`Generating suggestions in ${language}...`);
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     const prompt = language === 'zh'
         ? `基于以下最近的对话交流，为用户生成三条可以发送给语言模型的建议回复。这些回复应该是简短、相关且多样化的，旨在继续对话。\n\n用户: "${userContent}"\n助手: "${modelContent}"`
         : `Based on the last conversation turn below, generate three short, relevant, and diverse suggested replies or follow-up questions that a user might click to continue the conversation.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"`;
@@ -211,10 +199,7 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
 
 export const generateTitleApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string> => {
     logService.info(`Generating title in ${language}...`);
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     const prompt = language === 'zh'
         ? `根据以下对话，创建一个非常简短、简洁的标题（最多4-6个词）。不要使用引号或任何其他格式。只返回标题的文本。\n\n用户: "${userContent}"\n助手: "${modelContent}"\n\n标题:`
         : `Based on this conversation, create a very short, concise title (4-6 words max). Do not use quotes or any other formatting. Just return the text of the title.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"\n\nTITLE:`;

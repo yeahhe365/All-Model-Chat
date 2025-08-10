@@ -122,6 +122,8 @@ export interface AppSettings extends ChatSettings {
  isSuggestionsEnabled: boolean;
  isAutoScrollOnSendEnabled?: boolean;
  isAutoSendOnSuggestionClick?: boolean;
+ toolbarModelId?: string;
+ isToolbarActionsThinkingEnabled?: boolean;
 }
 
 
@@ -166,6 +168,7 @@ export interface GeminiService {
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
+  generateTextForAction(apiKey: string, modelId: string, action: 'explain' | 'summarize' | 'translate', text: string, language: 'en' | 'zh', isThinkingEnabled: boolean): Promise<string>;
 }
 
 export interface ThoughtSupportingPart extends Part {
@@ -197,6 +200,7 @@ export interface MessageListProps {
   onScrollToPrevTurn: () => void;
   onScrollToNextTurn: () => void;
   chatInputHeight: number;
+  appSettings: AppSettings;
 }
 
 export interface ChatInputProps {

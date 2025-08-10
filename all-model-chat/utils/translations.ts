@@ -8,6 +8,7 @@ import { settingsTranslations } from './translations/settings';
 import { scenariosTranslations } from './translations/scenarios';
 import { historyTranslations } from './translations/history';
 import { commonTranslations } from './translations/common';
+import { actionsTranslations } from './translations/actions';
 
 export const translations = {
     ...appTranslations,
@@ -18,6 +19,7 @@ export const translations = {
     ...scenariosTranslations,
     ...historyTranslations,
     ...commonTranslations,
+    ...actionsTranslations,
 };
 
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations, fallback?: string): string => {
