@@ -1,14 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, MessageListProps, UploadedFile } from '../types';
+import React, { useState, useCallback, useRef } from 'react';
+import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
-import { Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
-import { translations } from '../utils/appUtils';
+import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
+import { translations, getResponsiveValue } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
-import { SelectionToolbar } from './shared/SelectionToolbar';
-import { ActionModal } from './shared/ActionModal';
-
-type ActionType = 'explain' | 'summarize' | 'translate';
 
 const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
@@ -21,21 +17,27 @@ export const MessageList: React.FC<MessageListProps> = ({
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
-    scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn, chatInputHeight, appSettings
+    scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
+    chatInputHeight
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
-
-  const [selectionToolbar, setSelectionToolbar] = useState<{ visible: boolean; x: number; y: number; text: string }>({ visible: false, x: 0, y: 0, text: '' });
-  const [actionModal, setActionModal] = useState<{ visible: boolean; action: ActionType | null; text: string }>({ visible: false, action: null, text: '' });
   
-  const handleImageClick = useCallback((file: UploadedFile) => { setZoomedFile(file); }, []);
-  const closeImageZoomModal = useCallback(() => { setZoomedFile(null); }, []);
+  const handleImageClick = useCallback((file: UploadedFile) => {
+    setZoomedFile(file);
+  }, []);
 
-  const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
+  const closeImageZoomModal = useCallback(() => {
+    setZoomedFile(null);
+  }, []);
+
+  const handleOpenHtmlPreview = useCallback((
+      htmlContent: string, 
+      options?: { initialTrueFullscreen?: boolean }
+    ) => {
     setHtmlToPreview(htmlContent);
     setInitialTrueFullscreenRequest(options?.initialTrueFullscreen ?? false);
     setIsHtmlPreviewModalOpen(true);
@@ -47,50 +49,6 @@ export const MessageList: React.FC<MessageListProps> = ({
     setInitialTrueFullscreenRequest(false);
   }, []);
 
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleSelection = () => {
-      const selection = window.getSelection();
-      if (selection && !selection.isCollapsed && selection.toString().trim().length > 1) {
-        const range = selection.getRangeAt(0);
-        const target = range.commonAncestorContainer.parentElement;
-
-        if (target && target.closest('[data-message-role="model"]')) {
-          const rect = range.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          setSelectionToolbar({
-            visible: true,
-            x: rect.left - containerRect.left + rect.width / 2,
-            y: rect.bottom - containerRect.top,
-            text: selection.toString(),
-          });
-          return;
-        }
-      }
-      setSelectionToolbar(prev => ({ ...prev, visible: false }));
-    };
-    
-    const handleMouseUp = () => setTimeout(handleSelection, 10);
-    document.addEventListener('mouseup', handleMouseUp);
-    container.addEventListener('scroll', handleSelection, { passive: true });
-
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-      container.removeEventListener('scroll', handleSelection);
-    };
-  }, [scrollContainerRef]);
-
-  const handleToolbarAction = (action: ActionType) => {
-    setActionModal({
-        visible: true,
-        action: action,
-        text: selectionToolbar.text,
-    });
-    setSelectionToolbar(prev => ({ ...prev, visible: false }));
-  };
-
   return (
     <>
     <div 
@@ -101,16 +59,16 @@ export const MessageList: React.FC<MessageListProps> = ({
       aria-live="polite" 
     >
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-7xl mx-auto px-4 pb-24">
+        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-5xl mx-auto px-4 pb-24">
           <div className="w-full">
-            <h1 className="text-4xl sm:text-5xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
+            <h1 className="text-3xl sm:text-4xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
               {t('welcome_greeting')}
             </h1>
             <div className="text-left mb-2 sm:mb-3 flex items-center gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
               <Zap size={16} className="text-[var(--theme-text-link)]" />
               <span>{t('welcome_suggestion_title')}</span>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {SUGGESTIONS_KEYS.map((s, i) => (
                 <button
                   key={i}
@@ -132,7 +90,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
         </div>
       ) : (
-        <div className="w-full mx-auto">
+        <div className="w-full max-w-5xl mx-auto">
           {messages.map((msg: ChatMessage, index: number) => (
             <Message
               key={msg.id}
@@ -159,7 +117,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           ))}
         </div>
       )}
-      { (scrollNavVisibility.up || scrollNavVisibility.down) && (
+       { (scrollNavVisibility.up || scrollNavVisibility.down) && (
           <div
             className="sticky z-10 bottom-4 left-0 right-4 flex flex-col items-end gap-2 pointer-events-none"
             style={{ animation: 'fadeInUp 0.3s ease-out both' }}
@@ -187,26 +145,21 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
       <div ref={messagesEndRef} />
-      {selectionToolbar.visible && (
-        <SelectionToolbar
-            position={{ x: selectionToolbar.x, y: selectionToolbar.y }}
-            selectedText={selectionToolbar.text}
-            onAction={handleToolbarAction}
-            t={t}
-        />
-      )}
     </div>
-    <ImageZoomModal file={zoomedFile} onClose={closeImageZoomModal} themeColors={themeColors} t={t} />
-    {isHtmlPreviewModalOpen && htmlToPreview !== null && <HtmlPreviewModal isOpen={isHtmlPreviewModalOpen} onClose={handleCloseHtmlPreview} htmlContent={htmlToPreview} themeColors={themeColors} initialTrueFullscreenRequest={initialTrueFullscreenRequest} />}
-    {actionModal.visible && actionModal.action && (
-        <ActionModal
-            isOpen={actionModal.visible}
-            onClose={() => setActionModal({ visible: false, action: null, text: ''})}
-            action={actionModal.action}
-            selectedText={actionModal.text}
-            appSettings={appSettings}
-            t={t}
-        />
+    <ImageZoomModal 
+        file={zoomedFile} 
+        onClose={closeImageZoomModal}
+        themeColors={themeColors}
+        t={t}
+    />
+    {isHtmlPreviewModalOpen && htmlToPreview !== null && (
+      <HtmlPreviewModal
+        isOpen={isHtmlPreviewModalOpen}
+        onClose={handleCloseHtmlPreview}
+        htmlContent={htmlToPreview}
+        themeColors={themeColors}
+        initialTrueFullscreenRequest={initialTrueFullscreenRequest}
+      />
     )}
     </>
   );

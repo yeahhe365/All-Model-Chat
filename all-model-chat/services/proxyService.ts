@@ -26,7 +26,7 @@ class ProxyService {
 
     private getStoredProxyUrl(): string | null {
         try {
-            const settings = localStorage.getItem('chatAppSettings');
+            const settings = localStorage.getItem('app-settings');
             if (settings) {
                 const parsed = JSON.parse(settings);
                 return parsed.apiProxyUrl || null;

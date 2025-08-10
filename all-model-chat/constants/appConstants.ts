@@ -65,6 +65,4 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isSuggestionsEnabled: true,
   isAutoScrollOnSendEnabled: true,
   isAutoSendOnSuggestionClick: true,
-  toolbarModelId: 'gemini-2.5-flash',
-  isToolbarActionsThinkingEnabled: false,
 };
