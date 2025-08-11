@@ -6,7 +6,7 @@ const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
-export const getClient = (apiKey: string): GoogleGenAI => {
+export const getClient = (apiKey: string, baseUrl?: string): GoogleGenAI => {
   try {
       // Sanitize the API key to replace common non-ASCII characters that might
       // be introduced by copy-pasting from rich text editors. This prevents
@@ -21,7 +21,15 @@ export const getClient = (apiKey: string): GoogleGenAI => {
           logService.warn("API key was sanitized. Non-ASCII characters were replaced.");
       }
       
-      return new GoogleGenAI({ apiKey: sanitizedApiKey });
+      const config: any = { apiKey: sanitizedApiKey };
+      if (baseUrl) {
+          // This configuration is not officially supported by the SDK but is a common pattern for proxies.
+          // The proxy interceptor is the primary mechanism. This is a fallback.
+          config.baseURL = baseUrl;
+          logService.info(`Using custom base URL via configuration: ${baseUrl}`);
+      }
+      
+      return new GoogleGenAI(config);
   } catch (error) {
       logService.error("Failed to initialize GoogleGenAI client:", error);
       // Re-throw to be caught by the calling function
@@ -29,13 +37,13 @@ export const getClient = (apiKey: string): GoogleGenAI => {
   }
 };
 
-export const getApiClient = (apiKey?: string | null): GoogleGenAI => {
+export const getApiClient = (apiKey?: string | null, baseUrl?: string): GoogleGenAI => {
     if (!apiKey) {
         const silentError = new Error("API key is not configured in settings or provided.");
         silentError.name = "SilentError";
         throw silentError;
     }
-    return getClient(apiKey);
+    return getClient(apiKey, baseUrl);
 };
 
 export const buildGenerationConfig = (

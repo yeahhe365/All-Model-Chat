@@ -61,7 +61,7 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
         } catch (proxyError) {
             logService.error('❌ Proxy service failed:', proxyError);
             // 如果启用了代理但失败了，不要回退，直接抛出错误
-            throw new Error(`Proxy service failed: ${proxyError.message}`);
+            throw new Error(`Proxy service failed: ${proxyError instanceof Error ? proxyError.message : String(proxyError)}`);
         }
     } else {
         logService.info('Custom API config not enabled or no proxy URL, using direct API');
@@ -69,7 +69,10 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
 
     // 回退到原始的 GoogleGenAI SDK 方法
     try {
-        const ai = getClient(randomKey);
+        // Get proxy URL from localStorage if available
+        const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
+        const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+        const ai = getClient(randomKey, apiProxyUrl);
 
         const modelPager = await ai.models.list();
         const availableModels: ModelOption[] = [];
