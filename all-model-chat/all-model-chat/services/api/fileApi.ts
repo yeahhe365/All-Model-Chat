@@ -5,10 +5,7 @@ import { APP_SETTINGS_KEY } from "../../constants/appConstants";
 
 export const uploadFileApi = async (apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> => {
     logService.info(`Uploading file: ${displayName}`, { mimeType, size: file.size });
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     if (signal.aborted) {
         logService.warn(`Upload for "${displayName}" cancelled before starting.`);
         const abortError = new Error("Upload cancelled by user.");
@@ -36,10 +33,7 @@ export const uploadFileApi = async (apiKey: string, file: File, mimeType: string
 };
 
 export const getFileMetadataApi = async (apiKey: string, fileApiName: string): Promise<GeminiFile | null> => {
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     if (!fileApiName || !fileApiName.startsWith('files/')) {
         logService.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
         throw new Error('Invalid file ID format. Expected "files/your_file_id".');

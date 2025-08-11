@@ -113,10 +113,7 @@ export const sendMessageStreamApi = async (
 
     // Fallback for browsers without Service Worker or when it's not yet active.
     logService.warn(`Sending message to ${modelId} via direct fetch (stream) - SW not available.`);
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     const generationConfig = buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
@@ -196,10 +193,7 @@ export const sendMessageNonStreamApi = async (
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled });
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
+    const ai = getApiClient(apiKey);
     const generationConfig = buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
     
     try {

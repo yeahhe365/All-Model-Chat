@@ -69,10 +69,7 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
 
     // 回退到原始的 GoogleGenAI SDK 方法
     try {
-        // Get proxy URL from localStorage if available
-        const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-        const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-        const ai = getClient(randomKey, apiProxyUrl);
+        const ai = getClient(randomKey);
 
         const modelPager = await ai.models.list();
         const availableModels: ModelOption[] = [];
