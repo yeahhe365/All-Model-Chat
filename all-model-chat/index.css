@@ -1,3 +1,4 @@
+@import 'highlight.js/styles/github-dark.css';
 
 html, body, #root {
   height: 100%;
