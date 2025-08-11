@@ -6,9 +6,7 @@ try {
 }
 
 const CACHE_NAME = 'all-model-chat-cache-v3';
-const API_HOSTS = ['generativelanguage.googleapis.com'];
-const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
-const UPLOAD_URL_PREFIX = 'https://generativelanguage.googleapis.com/upload/v1beta';
+const API_HOSTS = ['generativelanguage.googleapis.com', 'upload.generativelanguage.googleapis.com'];
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 
 let proxyUrl = null;
@@ -171,45 +169,49 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+    const requestUrl = new URL(request.url);
 
-    // 如果设置了代理 URL，拦截所有对 Google API 的请求
-    if (proxyUrl) {
-      let newUrl = null;
-      let originalPrefix = null;
-      let proxyPrefix = null;
-      
-      if (request.url.startsWith(UPLOAD_URL_PREFIX)) {
-        originalPrefix = UPLOAD_URL_PREFIX;
-        // The proxyUrl is configured to end with /v1beta. We adjust it for upload endpoints.
-        proxyPrefix = proxyUrl.replace('/v1beta', '/upload/v1beta');
-        console.log('[SW] Redirecting File API to proxy:', proxyPrefix);
-      } else if (request.url.startsWith(TARGET_URL_PREFIX)) {
-        originalPrefix = TARGET_URL_PREFIX;
-        proxyPrefix = proxyUrl;
-        console.log('[SW] Redirecting Model API to proxy:', proxyPrefix);
-      }
+    const isApiRequest = API_HOSTS.includes(requestUrl.hostname);
 
-      if (originalPrefix && proxyPrefix) {
-        newUrl = request.url.replace(originalPrefix, proxyPrefix);
-        const newRequest = new Request(newUrl, {
-            method: request.method,
-            headers: request.headers,
-            body: request.body,
-            mode: 'cors',
-            credentials: 'omit'
-        });
-        event.respondWith(fetch(newRequest));
-        return;
-      }
-    }
+    if (isApiRequest) {
+        console.log('[SW] Intercepting API request:', request.url);
+        console.log('[SW] Proxy URL:', proxyUrl);
 
-    // 如果没有代理 URL，但是是 API 请求，直接通过
-    if (API_HOSTS.some(host => new URL(request.url).hostname === host)) {
+        if (proxyUrl) {
+            console.log('[SW] Redirecting to proxy:', proxyUrl);
+
+            // Define the prefixes to be replaced
+            const standardPrefix = 'https://generativelanguage.googleapis.com/v1beta';
+            const uploadPrefix = 'https://upload.generativelanguage.googleapis.com/upload/v1beta';
+
+            let newUrlStr;
+
+            if (request.url.startsWith(uploadPrefix)) {
+                newUrlStr = request.url.replace(uploadPrefix, proxyUrl);
+            } else {
+                // Default to replacing the standard API prefix
+                newUrlStr = request.url.replace(standardPrefix, proxyUrl);
+            }
+            
+            const newRequest = new Request(newUrlStr, {
+                method: request.method,
+                headers: request.headers,
+                body: request.body,
+                mode: 'cors',
+                credentials: 'omit'
+            });
+
+            event.respondWith(fetch(newRequest));
+            return;
+        }
+
+        // If no proxy is set, but it's an API request, let it go through directly.
         console.log('[SW] Direct API request (no proxy):', request.url);
         event.respondWith(fetch(request));
         return;
     }
 
+    // Handle non-API requests (app shell, static assets) with cache-first strategy
     if (request.method === 'GET') {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
