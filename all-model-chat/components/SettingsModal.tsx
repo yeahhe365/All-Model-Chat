@@ -123,6 +123,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 modelId={settings.modelId} setModelId={(v) => updateSetting('modelId', v)}
                 transcriptionModelId={settings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
                 isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled} setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
+                useFilesApiForImages={settings.useFilesApiForImages} setUseFilesApiForImages={(v) => updateSetting('useFilesApiForImages', v)}
                 ttsVoice={settings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
                 systemInstruction={settings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
                 temperature={settings.temperature} setTemperature={(v) => updateSetting('temperature', v)}

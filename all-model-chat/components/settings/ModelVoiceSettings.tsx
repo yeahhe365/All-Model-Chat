@@ -16,6 +16,8 @@ interface ModelVoiceSettingsProps {
   setTranscriptionModelId: (value: string) => void;
   isTranscriptionThinkingEnabled: boolean;
   setIsTranscriptionThinkingEnabled: (value: boolean) => void;
+  useFilesApiForImages: boolean;
+  setUseFilesApiForImages: (value: boolean) => void;
   ttsVoice: string;
   setTtsVoice: (value: string) => void;
   t: (key: string) => string;
@@ -24,6 +26,7 @@ interface ModelVoiceSettingsProps {
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
   modelId, setModelId, isModelsLoading, modelsLoadingError, availableModels,
   transcriptionModelId, setTranscriptionModelId, isTranscriptionThinkingEnabled, setIsTranscriptionThinkingEnabled,
+  useFilesApiForImages, setUseFilesApiForImages,
   ttsVoice, setTtsVoice, t
 }) => {
   const iconSize = getResponsiveValue(14, 16);
@@ -97,6 +100,19 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
       >
         {AVAILABLE_TTS_VOICES.map((voice) => ( <option key={voice.id} value={voice.id}>{voice.name}</option> ))}
       </Select>
+      <label htmlFor="use-files-api-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+        <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
+          {t('settings_useFilesApiForImages_label')}
+          <Tooltip text={t('settings_useFilesApiForImages_tooltip')}>
+            <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+          </Tooltip>
+        </span>
+        <div className="relative">
+          <input id="use-files-api-toggle" type="checkbox" className="sr-only peer" checked={useFilesApiForImages} onChange={() => setUseFilesApiForImages(!useFilesApiForImages)} />
+          <div className="w-11 h-6 bg-[var(--theme-bg-tertiary)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)] transition-colors duration-200 ease-in-out border border-[var(--theme-border-secondary)] peer-checked:border-transparent"></div>
+          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
+        </div>
+      </label>
     </div>
   );
 };
