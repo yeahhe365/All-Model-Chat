@@ -20,6 +20,7 @@ export const getClient = (apiKey: string): GoogleGenAI => {
       if (apiKey !== sanitizedApiKey) {
           logService.warn("API key was sanitized. Non-ASCII characters were replaced.");
       }
+      
       return new GoogleGenAI({ apiKey: sanitizedApiKey });
   } catch (error) {
       logService.error("Failed to initialize GoogleGenAI client:", error);
