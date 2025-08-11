@@ -6,7 +6,7 @@
 interface ProxyConfig {
   enabled: boolean;
   proxyUrl: string;
-  originalDomain: string;
+  originalDomains: string[];
 }
 
 class ProxyInterceptor {
@@ -21,7 +21,10 @@ class ProxyInterceptor {
     this.config = {
       enabled: false,
       proxyUrl: 'https://api-proxy.me/gemini/v1beta',
-      originalDomain: 'generativelanguage.googleapis.com'
+      originalDomains: [
+        'generativelanguage.googleapis.com',
+        'files.generativelanguage.googleapis.com'
+      ]
     };
 
     // 保存原始函数引用，并绑定正确的上下文
@@ -58,7 +61,7 @@ class ProxyInterceptor {
    * 检查是否需要代理的URL
    */
   private shouldProxy(url: string): boolean {
-    return this.config.enabled && url.includes(this.config.originalDomain);
+    return this.config.enabled && this.config.originalDomains.some(domain => url.includes(domain));
   }
 
   /**
@@ -66,7 +69,10 @@ class ProxyInterceptor {
    */
   private transformUrl(url: string): string {
     if (!this.shouldProxy(url)) return url;
-    
+
+    const originalDomain = this.config.originalDomains.find(domain => url.includes(domain));
+    if (!originalDomain) return url;
+
     // 智能处理不同格式的代理URL
     let proxyUrl = this.config.proxyUrl;
     
@@ -83,7 +89,7 @@ class ProxyInterceptor {
     
     // 执行URL替换
     const transformedUrl = url.replace(
-      `https://${this.config.originalDomain}/v1beta`,
+      `https://${originalDomain}`,
       proxyUrl
     );
     
@@ -175,8 +181,8 @@ class ProxyInterceptor {
       
       if (self.shouldProxy(urlString)) {
         proxyUrl = urlString
-          .replace(`wss://${self.config.originalDomain}/v1beta`, self.config.proxyUrl.replace('https:', 'wss:'))
-          .replace(`ws://${self.config.originalDomain}/v1beta`, self.config.proxyUrl.replace('https:', 'ws:'));
+          .replace(`wss://${self.config.originalDomains[0]}/v1beta`, self.config.proxyUrl.replace('https:', 'wss:'))
+          .replace(`ws://${self.config.originalDomains[0]}/v1beta`, self.config.proxyUrl.replace('https:s', 'ws:'));
         console.log('🔄 [ProxyInterceptor] WebSocket代理:', urlString, '->', proxyUrl);
       }
       
