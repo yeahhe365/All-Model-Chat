@@ -66,22 +66,27 @@ class ProxyInterceptor {
    */
   private transformUrl(url: string): string {
     if (!this.shouldProxy(url)) return url;
-
-    let transformedUrl = url;
-
-    if (url.includes('/upload/v1beta')) {
-      const proxyUploadUrl = this.config.proxyUrl.replace('/v1beta', '/upload/v1beta');
-      transformedUrl = url.replace(
-        `https://${this.config.originalDomain}/upload/v1beta`,
-        proxyUploadUrl
-      );
-    } else {
-      transformedUrl = url.replace(
-        `https://${this.config.originalDomain}/v1beta`,
-        this.config.proxyUrl
-      );
+    
+    // 智能处理不同格式的代理URL
+    let proxyUrl = this.config.proxyUrl;
+    
+    // 确保代理URL以正确的格式结尾
+    if (!proxyUrl.endsWith('/v1beta')) {
+      // 移除可能的尾部斜杠
+      proxyUrl = proxyUrl.replace(/\/$/, '');
+      // 添加正确的API版本路径
+      if (!proxyUrl.endsWith('/gemini')) {
+        proxyUrl += '/gemini';
+      }
+      proxyUrl += '/v1beta';
     }
-
+    
+    // 执行URL替换
+    const transformedUrl = url.replace(
+      `https://${this.config.originalDomain}/v1beta`,
+      proxyUrl
+    );
+    
     console.log('🔄 [ProxyInterceptor] 代理请求:', url, '->', transformedUrl);
     return transformedUrl;
   }
