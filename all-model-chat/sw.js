@@ -7,7 +7,7 @@ try {
 
 const CACHE_NAME = 'all-model-chat-cache-v3';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
-const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
+const GOOGLE_API_BASE = 'https://generativelanguage.googleapis.com';
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 
 let proxyUrl = null;
@@ -170,42 +170,46 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
-    
-    // 记录所有 API 请求以便调试
-    if (request.url.includes('generativelanguage.googleapis.com')) {
-        console.log('[SW] Intercepting API request:', request.url);
-        console.log('[SW] Proxy URL:', proxyUrl);
-    }
+    const requestUrl = new URL(request.url);
 
-    // 如果设置了代理 URL，拦截所有对 Google API 的请求
-    if (proxyUrl && request.url.startsWith(TARGET_URL_PREFIX)) {
-        console.log('[SW] Redirecting to proxy:', proxyUrl);
-        const newUrl = request.url.replace(TARGET_URL_PREFIX, proxyUrl);
+    // If a proxy is configured and the request is for the Google API domain, proxy it.
+    if (proxyUrl && requestUrl.hostname === new URL(GOOGLE_API_BASE).hostname) {
+        // Remove trailing slash from proxy if it exists to prevent double slashes
+        const normalizedProxyUrl = proxyUrl.replace(/\/$/, '');
+        const newUrl = request.url.replace(GOOGLE_API_BASE, normalizedProxyUrl);
+        
+        console.log(`[SW] Proxying API request: ${request.url} -> ${newUrl}`);
+        
         const newRequest = new Request(newUrl, {
             method: request.method,
             headers: request.headers,
             body: request.body,
             mode: 'cors',
-            credentials: 'omit'
+            credentials: 'omit',
+            redirect: 'follow',
         });
+        
         event.respondWith(fetch(newRequest));
         return;
     }
 
-    // 如果没有代理 URL，但是是 API 请求，直接通过
-    if (API_HOSTS.some(host => new URL(request.url).hostname === host)) {
-        console.log('[SW] Direct API request (no proxy):', request.url);
+    // If it's an API request but no proxy is set, let it go through directly.
+    if (API_HOSTS.some(host => requestUrl.hostname === host)) {
         event.respondWith(fetch(request));
         return;
     }
 
+    // Handle caching for GET requests (app shell and other assets).
     if (request.method === 'GET') {
         event.respondWith(
             caches.open(CACHE_NAME).then((cache) => {
                 return cache.match(request).then((cachedResponse) => {
                     const fetchPromise = fetch(request).then((networkResponse) => {
                         if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-                            cache.put(request, networkResponse.clone());
+                            // Don't cache API responses.
+                            if (!API_HOSTS.some(host => new URL(request.url).hostname === host)) {
+                                cache.put(request, networkResponse.clone());
+                            }
                         }
                         return networkResponse;
                     }).catch(error => {
