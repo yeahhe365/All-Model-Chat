@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Info, Loader2, Volume2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Tooltip } from './shared/Tooltip';
-import { Select } from './shared/Tooltip';
-import { AVAILABLE_TTS_VOICES } from '../../constants/appConstants';
-import { getResponsiveValue } from '../../utils/appUtils';
 
 interface GenerationSettingsProps {
   systemInstruction: string;
@@ -12,85 +9,159 @@ interface GenerationSettingsProps {
   setTemperature: (value: number) => void;
   topP: number;
   setTopP: (value: number) => void;
-  ttsVoice: string;
-  setTtsVoice: (value: string) => void;
+  thinkingBudget: number;
+  setThinkingBudget: (value: number) => void;
+  showThoughts: boolean;
+  setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
 }
+
+const Toggle: React.FC<{
+  id: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}> = ({ id, checked, onChange, disabled }) => (
+  <label htmlFor={id} className={`flex items-center ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+    <div className="relative">
+      <input id={id} type="checkbox" className="sr-only peer" checked={checked} onChange={(e) => onChange(e.target.checked)} disabled={disabled} />
+      <div className="w-11 h-6 bg-[var(--theme-bg-tertiary)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)] transition-colors duration-200 ease-in-out border border-[var(--theme-border-secondary)] peer-checked:border-transparent"></div>
+      <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
+    </div>
+  </label>
+);
 
 export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
   systemInstruction, setSystemInstruction,
   temperature, setTemperature,
   topP, setTopP,
-  ttsVoice, setTtsVoice,
+  thinkingBudget, setThinkingBudget,
+  showThoughts, setShowThoughts,
   t
 }) => {
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
-  const iconSize = getResponsiveValue(14, 16);
+
+  const [customBudgetValue, setCustomBudgetValue] = useState(
+    thinkingBudget > 0 ? String(thinkingBudget) : '1000'
+  );
+
+  const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
+  const isThinkingOn = mode !== 'off';
+
+  const handleModeChange = (newMode: 'auto' | 'off' | 'custom') => {
+      if (newMode === 'auto') setThinkingBudget(-1);
+      else if (newMode === 'off') setThinkingBudget(0);
+      else {
+          const budget = parseInt(customBudgetValue, 10);
+          const newBudget = budget > 0 ? budget : 1000;
+          if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
+          setThinkingBudget(newBudget);
+      }
+  };
+
+  const handleCustomBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      setCustomBudgetValue(val);
+      const numVal = parseInt(val, 10);
+      if (!isNaN(numVal) && numVal > 0) {
+          setThinkingBudget(numVal);
+      }
+  };
+
+  useEffect(() => {
+    // Sync local custom budget state if global state changes from elsewhere
+    if (thinkingBudget > 0) {
+        setCustomBudgetValue(String(thinkingBudget));
+    }
+  }, [thinkingBudget]);
 
   return (
-    <div className="space-y-6">
-       <div>
-        <h4 className="text-base font-semibold text-[var(--theme-text-primary)] mb-3">{t('settings_section_generation')}</h4>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="system-prompt-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5 flex items-center">
-                {t('settingsSystemPrompt')}
-                {isSystemPromptSet && <span className="ml-2 w-2.5 h-2.5 bg-green-400 bg-opacity-70 rounded-full" title="System prompt is active" />}
-            </label>
-            <textarea
-              id="system-prompt-input" value={systemInstruction} onChange={(e) => setSystemInstruction(e.target.value)}
-              rows={3} className={`${inputBaseClasses} ${enabledInputClasses} resize-y min-h-[60px] custom-scrollbar`}
-              placeholder={t('chatBehavior_systemPrompt_placeholder')}
-              aria-label="System prompt text area"
-            />
-          </div>
-          <div>
-            <label htmlFor="temperature-slider" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
-                <span className='flex items-center'>
-                    {t('settingsTemperature')}: <span className="font-mono text-[var(--theme-text-link)] ml-1">{Number(temperature).toFixed(2)}</span>
-                    <Tooltip text={t('chatBehavior_temp_tooltip')}>
-                        <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
-                    </Tooltip>
-                </span>
-            </label>
-            <input id="temperature-slider" type="range" min="0" max="2" step="0.05" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))}
-              className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]" />
-          </div>
-          <div>
-            <label htmlFor="top-p-slider" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
-                <span className='flex items-center'>
-                    {t('settingsTopP')}: <span className="font-mono text-[var(--theme-text-link)] ml-1">{Number(topP).toFixed(2)}</span>
-                    <Tooltip text={t('chatBehavior_topP_tooltip')}>
-                        <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
-                    </Tooltip>
-                </span>
-            </label>
-            <input id="top-p-slider" type="range" min="0" max="1" step="0.05" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))}
-              className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]" />
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <label htmlFor="system-prompt-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5 flex items-center">
+            {t('settingsSystemPrompt')}
+            {isSystemPromptSet && <span className="ml-2 w-2.5 h-2.5 bg-green-400 bg-opacity-70 rounded-full" title="System prompt is active" />}
+        </label>
+        <textarea
+          id="system-prompt-input" value={systemInstruction} onChange={(e) => setSystemInstruction(e.target.value)}
+          rows={3} className={`${inputBaseClasses} ${enabledInputClasses} resize-y min-h-[60px] custom-scrollbar`}
+          placeholder={t('chatBehavior_systemPrompt_placeholder')}
+          aria-label="System prompt text area"
+        />
       </div>
-
-      <div className="pt-6 border-t border-[var(--theme-border-secondary)]">
-        <h4 className="text-base font-semibold text-[var(--theme-text-primary)] mb-3">{t('settings_section_speech')}</h4>
-         <div className="space-y-4">
-            <Select
-              id="tts-voice-select"
-              label=""
-              labelContent={
-                <span className="flex items-center">
-                  <Volume2 size={iconSize-2} className="mr-2" /> {t('settingsTtsVoice')}
-                </span>
-              }
-              value={ttsVoice}
-              onChange={(e) => setTtsVoice(e.target.value)}
-              aria-label="Select TTS Voice for speech generation"
-            >
-              {AVAILABLE_TTS_VOICES.map((voice) => ( <option key={voice.id} value={voice.id}>{voice.name}</option> ))}
-            </Select>
-         </div>
+      <div>
+        <label htmlFor="temperature-slider" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
+            <span className='flex items-center'>
+                {t('settingsTemperature')}: <span className="font-mono text-[var(--theme-text-link)] ml-1">{Number(temperature).toFixed(2)}</span>
+                <Tooltip text={t('chatBehavior_temp_tooltip')}>
+                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                </Tooltip>
+            </span>
+        </label>
+        <input id="temperature-slider" type="range" min="0" max="2" step="0.05" value={temperature} onChange={(e) => setTemperature(parseFloat(e.target.value))}
+          className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]" />
+      </div>
+      <div>
+        <label htmlFor="top-p-slider" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
+            <span className='flex items-center'>
+                {t('settingsTopP')}: <span className="font-mono text-[var(--theme-text-link)] ml-1">{Number(topP).toFixed(2)}</span>
+                <Tooltip text={t('chatBehavior_topP_tooltip')}>
+                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                </Tooltip>
+            </span>
+        </label>
+        <input id="top-p-slider" type="range" min="0" max="1" step="0.05" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))}
+          className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]" />
+      </div>
+      <div className="pt-4 mt-4 border-t border-[var(--theme-border-secondary)]">
+        <label className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-2 flex items-center">
+            {t('settingsThinkingMode')}
+            <Tooltip text={t('settingsThinkingMode_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+            </Tooltip>
+        </label>
+        <div role="radiogroup" className="flex bg-[var(--theme-bg-tertiary)] p-0.5 rounded-lg">
+            {(['auto', 'off', 'custom'] as const).map(modeValue => (
+              <button
+                key={modeValue}
+                role="radio"
+                aria-checked={mode === modeValue}
+                onClick={() => handleModeChange(modeValue)}
+                className={`flex-1 text-center px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-tertiary)] focus:ring-[var(--theme-border-focus)] ${
+                    mode === modeValue
+                    ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-link)] shadow-sm'
+                    : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)]/50'
+                }`}
+              >
+                {t(`settingsThinkingMode_${modeValue}`)}
+              </button>
+            ))}
+        </div>
+        {mode === 'custom' && (
+            <div className="mt-2" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+                <input
+                    type="number"
+                    value={customBudgetValue}
+                    onChange={handleCustomBudgetChange}
+                    placeholder={t('settingsThinkingCustom_placeholder')}
+                    className={`${inputBaseClasses} ${enabledInputClasses} w-full`}
+                    aria-label="Custom thinking token budget"
+                    min="1"
+                    step="100"
+                />
+            </div>
+        )}
+      </div>
+      <div className={`flex justify-between items-center py-2 transition-opacity ${isThinkingOn ? 'opacity-100' : 'opacity-50'}`}>
+        <label className={`text-sm flex items-center ${isThinkingOn ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-tertiary)]'}`}>
+            {t('settingsShowThoughts')}
+            <Tooltip text={t('settingsShowThoughts_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+            </Tooltip>
+        </label>
+        <Toggle id="show-thoughts-toggle" checked={showThoughts && isThinkingOn} onChange={setShowThoughts} disabled={!isThinkingOn} />
       </div>
     </div>
   );

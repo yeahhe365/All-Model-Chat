@@ -1,11 +1,10 @@
 import { GeminiService, ChatHistoryItem, ModelOption } from '../types';
-import { Part, UsageMetadata, File as GeminiFile, Type } from "@google/genai";
+import { Part, UsageMetadata, File as GeminiFile } from "@google/genai";
 import { getAvailableModelsApi } from './api/modelApi';
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi, generateSpeechApi, transcribeAudioApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
 import { sendMessageStreamApi, sendMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
-import { getApiClient } from './api/baseApi';
 
 class GeminiServiceImpl implements GeminiService {
     constructor() {
@@ -42,43 +41,6 @@ class GeminiServiceImpl implements GeminiService {
 
     async generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> {
         return generateSuggestionsApi(apiKey, userContent, modelContent, language);
-    }
-    
-    async generateTextForAction(apiKey: string, modelId: string, action: 'explain' | 'summarize' | 'translate', text: string, language: 'en' | 'zh', isThinkingEnabled: boolean): Promise<string> {
-        const ai = getApiClient(apiKey);
-        let prompt = '';
-        const targetLanguage = language === 'zh' ? 'Chinese' : 'English';
-
-        switch (action) {
-            case 'explain':
-                prompt = `Explain the following text in simple terms. Respond in ${targetLanguage}:\n\n"${text}"`;
-                break;
-            case 'summarize':
-                prompt = `Summarize the key points of the following text. Respond in ${targetLanguage}:\n\n"${text}"`;
-                break;
-            case 'translate':
-                const languageToTranslateTo = language === 'zh' ? 'English' : 'Chinese';
-                prompt = `Translate the following text to ${languageToTranslateTo}:\n\n"${text}"`;
-                break;
-        }
-
-        try {
-            const response = await ai.models.generateContent({
-                model: modelId,
-                contents: prompt,
-                config: {
-                    temperature: 0.5,
-                    topP: 1,
-                    thinkingConfig: {
-                        thinkingBudget: isThinkingEnabled ? -1 : 0, // auto or off
-                    }
-                }
-            });
-            return response.text;
-        } catch (error) {
-            logService.error(`Failed to generate text for action '${action}':`, error);
-            throw error;
-        }
     }
 
     async sendMessageStream(

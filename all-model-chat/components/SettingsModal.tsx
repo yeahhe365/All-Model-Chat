@@ -121,10 +121,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {activeTab === 'model' && (
              <ChatBehaviorSection
                 modelId={settings.modelId} setModelId={(v) => updateSetting('modelId', v)}
-                toolbarModelId={settings.toolbarModelId ?? DEFAULT_APP_SETTINGS.toolbarModelId}
-                setToolbarModelId={(v) => updateSetting('toolbarModelId', v)}
-                isToolbarActionsThinkingEnabled={settings.isToolbarActionsThinkingEnabled ?? false}
-                setIsToolbarActionsThinkingEnabled={(v) => updateSetting('isToolbarActionsThinkingEnabled', v)}
                 transcriptionModelId={settings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
                 isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled} setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
                 ttsVoice={settings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
