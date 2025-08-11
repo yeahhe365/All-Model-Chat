@@ -66,29 +66,29 @@ class ProxyInterceptor {
    */
   private transformUrl(url: string): string {
     if (!this.shouldProxy(url)) return url;
+
+    const originalV1Beta = `https://${this.config.originalDomain}/v1beta`;
+    const originalUploadV1Beta = `https://${this.config.originalDomain}/upload/v1beta`;
     
-    // 智能处理不同格式的代理URL
     let proxyUrl = this.config.proxyUrl;
-    
-    // 确保代理URL以正确的格式结尾
-    if (!proxyUrl.endsWith('/v1beta')) {
-      // 移除可能的尾部斜杠
-      proxyUrl = proxyUrl.replace(/\/$/, '');
-      // 添加正确的API版本路径
-      if (!proxyUrl.endsWith('/gemini')) {
-        proxyUrl += '/gemini';
-      }
-      proxyUrl += '/v1beta';
+
+    if (url.startsWith(originalUploadV1Beta)) {
+      // Assume the user's proxy URL is for the standard API, so we adjust it for upload
+      // This is safe because initializeProxyInterceptor ensures proxyUrl contains /v1beta
+      const uploadProxyUrl = proxyUrl.replace('/v1beta', '/upload/v1beta');
+      const transformedUrl = url.replace(originalUploadV1Beta, uploadProxyUrl);
+      console.log('🔄 [ProxyInterceptor] 代理文件上传请求:', url, '->', transformedUrl);
+      return transformedUrl;
     }
     
-    // 执行URL替换
-    const transformedUrl = url.replace(
-      `https://${this.config.originalDomain}/v1beta`,
-      proxyUrl
-    );
-    
-    console.log('🔄 [ProxyInterceptor] 代理请求:', url, '->', transformedUrl);
-    return transformedUrl;
+    if (url.startsWith(originalV1Beta)) {
+      const transformedUrl = url.replace(originalV1Beta, proxyUrl);
+      console.log('🔄 [ProxyInterceptor] 代理常规API请求:', url, '->', transformedUrl);
+      return transformedUrl;
+    }
+
+    console.warn('⚠️ [ProxyInterceptor] shouldProxy was true, but no path matched for transformation:', url);
+    return url;
   }
 
   /**
