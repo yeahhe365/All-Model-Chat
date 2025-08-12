@@ -72,7 +72,7 @@ export const ONYX_THEME_COLORS: ThemeColors = {
   bgDanger: '#DA3633',
   bgDangerHover: '#F85149',
   bgInput: '#40414F',
-  bgCodeBlock: '#202123',
+  bgCodeBlock: '#2b2b2b', // Matched with a11y-dark theme for better contrast
   bgCodeBlockHeader: 'rgba(64, 65, 79, 0.7)',
   bgUserMessage: '#10a37f',
   bgModelMessage: '#2b2b31',
