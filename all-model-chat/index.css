@@ -1,3 +1,4 @@
+@import 'highlight.js/styles/github-dark.css';
 
 html, body, #root {
   height: 100%;
@@ -80,7 +81,6 @@ body::-webkit-scrollbar-thumb {
   overflow: hidden;
   position: relative !important;
   border: 1px solid var(--theme-border-secondary);
-  background-color: transparent !important; /* Let the inner code block provide the background */
 }
  @media (min-width: 640px) {
     .markdown-body pre {
@@ -89,8 +89,8 @@ body::-webkit-scrollbar-thumb {
     }
  }
 .markdown-body pre code, .markdown-body pre code.hljs {
-  background: none; /* Let highlight.js theme stylesheet handle background */
-  color: inherit; /* Let highlight.js theme stylesheet handle color */
+  background-color: transparent !important;
+  color: inherit !important;
   padding: 0 !important;
   font-size: 0.85rem !important;
   overflow-x: auto;
@@ -208,10 +208,13 @@ body::-webkit-scrollbar-thumb {
     box-shadow: 0 0 0 2px var(--theme-border-focus);
 }
 
-/* Let the imported highlight.js theme handle the background and color for highlighted code. */
+.markdown-body pre {
+  background-color: var(--markdown-pre-bg) !important; /* This is the outer pre background */
+}
+/* Let the imported a11y-dark.min.css handle the background and color for highlighted code. */
+/* Only override padding for consistency with our custom code block header. */
 .markdown-body pre code.hljs {
   padding: 0.8em !important; /* Mobile padding for hljs */
-  border-radius: 6px;
 }
  @media (min-width: 640px) { /* sm breakpoint */
     .markdown-body pre code.hljs {
