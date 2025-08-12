@@ -9,6 +9,8 @@ interface ApiConfigSectionProps {
   setApiKey: (value: string | null) => void;
   apiProxyUrl: string | null;
   setApiProxyUrl: (value: string | null) => void;
+  useApiProxy: boolean;
+  setUseApiProxy: (value: boolean) => void;
   t: (key: string) => string;
 }
 
@@ -19,6 +21,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiKey,
   apiProxyUrl,
   setApiProxyUrl,
+  useApiProxy,
+  setUseApiProxy,
   t,
 }) => {
   const [isApiKeyFocused, setIsApiKeyFocused] = useState(false);
@@ -29,6 +33,12 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const iconSize = getResponsiveValue(14, 16);
 
   const apiKeyBlurClass = !isApiKeyFocused && useCustomApiConfig && apiKey ? 'text-transparent [text-shadow:0_0_5px_var(--theme-text-primary)]' : '';
+
+  const getProxyPlaceholder = () => {
+    if (!useCustomApiConfig) return 'Enable custom config first';
+    if (!useApiProxy) return 'Enable proxy URL to set value';
+    return 'e.g., http://localhost:3000/v1beta';
+  };
 
   return (
     <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-[var(--theme-bg-secondary)]">
@@ -83,16 +93,32 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             )}
         </div>
         <div>
-          <label htmlFor="api-proxy-url-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">API Proxy URL (optional)</label>
+          <label htmlFor="use-api-proxy-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+            <span className="text-sm font-medium text-[var(--theme-text-secondary)]">
+              Use API Proxy URL
+            </span>
+            <div className="relative">
+              <input
+                id="use-api-proxy-toggle"
+                type="checkbox"
+                className="sr-only peer"
+                checked={useApiProxy}
+                onChange={() => setUseApiProxy(!useApiProxy)}
+                disabled={!useCustomApiConfig}
+              />
+              <div className="w-11 h-6 bg-[var(--theme-bg-tertiary)] rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--theme-bg-secondary)] peer-focus:ring-[var(--theme-border-focus)] peer-checked:bg-[var(--theme-bg-accent)] transition-colors duration-200 ease-in-out border border-[var(--theme-border-secondary)] peer-checked:border-transparent"></div>
+              <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow transform transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></div>
+            </div>
+          </label>
           <input
             id="api-proxy-url-input"
             type="text"
             value={apiProxyUrl || ''}
             onChange={(e) => setApiProxyUrl(e.target.value || null)}
-            className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses}`}
-            placeholder={useCustomApiConfig ? 'e.g., http://localhost:3000/v1beta' : 'Enable custom config to set proxy'}
+            className={`${inputBaseClasses} ${useCustomApiConfig && useApiProxy ? enabledInputClasses : disabledInputClasses} mt-2`}
+            placeholder={getProxyPlaceholder()}
             aria-label="API Proxy URL"
-            disabled={!useCustomApiConfig}
+            disabled={!useCustomApiConfig || !useApiProxy}
           />
           {useCustomApiConfig && (
             <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">

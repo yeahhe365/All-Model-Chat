@@ -52,6 +52,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   useCustomApiConfig: false,
   apiKey: null,
   apiProxyUrl: null,
+  useApiProxy: false,
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,

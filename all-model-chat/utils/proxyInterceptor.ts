@@ -270,8 +270,8 @@ export const initializeProxyInterceptor = (): void => {
     if (settings) {
       const appSettings = JSON.parse(settings);
       
-      // 如果启用了自定义API配置且有代理URL，则启用拦截器
-      if (appSettings.useCustomApiConfig && appSettings.apiProxyUrl) {
+      // 如果启用了自定义API配置、代理开关，并且有代理URL，则启用拦截器
+      if (appSettings.useCustomApiConfig && appSettings.useApiProxy && appSettings.apiProxyUrl) {
         // 智能处理代理URL格式
         let proxyUrl = appSettings.apiProxyUrl.trim();
         

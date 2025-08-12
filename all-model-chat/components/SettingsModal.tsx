@@ -144,6 +144,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               setApiKey={(val) => updateSetting('apiKey', val)}
               apiProxyUrl={settings.apiProxyUrl}
               setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
+              useApiProxy={settings.useApiProxy ?? false}
+              setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
               t={t}
             />
           )}

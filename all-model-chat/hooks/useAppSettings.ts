@@ -86,7 +86,7 @@ export const useAppSettings = () => {
                 const controller = registration ? registration.active : navigator.serviceWorker.controller;
                 controller?.postMessage({
                     type: 'SET_PROXY_URL',
-                    url: appSettings.apiProxyUrl,
+                    url: appSettings.useApiProxy ? appSettings.apiProxyUrl : null,
                 });
             };
             navigator.serviceWorker.ready.then(postProxyUrlToSw).catch(e => console.error("SW ready error:", e));
