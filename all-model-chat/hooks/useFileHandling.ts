@@ -143,9 +143,11 @@ export const useFileHandling = ({
             const fileId = generateUniqueId();
             let effectiveMimeType = file.type;
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-            if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
+
+            // Per user request, force all text and code formats to be treated as text/plain for the model.
+            if (SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                 effectiveMimeType = 'text/plain';
-                logService.debug(`Assigned mimeType 'text/plain' to file ${file.name} based on extension.`);
+                logService.debug(`Forcing mimeType to 'text/plain' for text/code file ${file.name}`);
             }
 
             if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
