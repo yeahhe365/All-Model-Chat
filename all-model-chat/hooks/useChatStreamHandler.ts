@@ -2,8 +2,8 @@ import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { generateUniqueId, logService, showNotification } from '../utils/appUtils';
-import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
+import { generateUniqueId, logService, showNotification, getTranslator } from '../utils/appUtils';
+import { APP_LOGO_SVG_DATA_URI, APP_SETTINGS_KEY } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -49,6 +49,21 @@ export const useChatStreamHandler = ({
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any) => {
+            const getLang = () => {
+                try {
+                    const stored = localStorage.getItem(APP_SETTINGS_KEY);
+                    const settings = stored ? JSON.parse(stored) : {};
+                    const langSetting = settings.language || 'system';
+                    if (langSetting === 'system') {
+                        return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+                    }
+                    return langSetting;
+                } catch {
+                    return 'en';
+                }
+            };
+            const t = getTranslator(getLang());
+
             if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
                 firstContentPartTimeRef.current = new Date();
             }
@@ -84,6 +99,13 @@ export const useChatStreamHandler = ({
                                 totalTokens: turnTokens,
                                 cumulativeTotalTokens: cumulativeTotal,
                             };
+                            
+                            const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc;
+                            if (isEmpty) {
+                                completedMessage.role = 'error';
+                                completedMessage.content = t('empty_response_error');
+                            }
+
                             if (isLastMessageOfRun) {
                                 completedMessageForNotification = completedMessage;
                             }

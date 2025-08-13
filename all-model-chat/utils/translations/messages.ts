@@ -31,4 +31,5 @@ export const messagesTranslations = {
     thinking_took_time: { en: 'Thought for {seconds} seconds', zh: '思考了 {seconds} 秒' },
     cancelled_by_user: { en: '[Cancelled by user]', zh: '[用户已取消]' },
     stopped_by_user: { en: '[Stopped by user]', zh: '[用户已停止]' },
+    empty_response_error: { en: 'The model did not provide a response. This might be due to safety filters or other content restrictions.', zh: '模型未提供任何回复。这可能是由于安全过滤器或其他内容限制所致。' },
 };
