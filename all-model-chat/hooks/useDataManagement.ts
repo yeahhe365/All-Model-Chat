@@ -165,59 +165,61 @@ export const useDataManagement = ({
 
         if (format === 'png') {
             if (!scrollContainer) return;
-            
+
             const tempContainer = document.createElement('div');
-            // Style for off-screen rendering
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
             tempContainer.style.top = '0px';
-            tempContainer.style.width = '1024px'; // A good default width for chat exports
+            tempContainer.style.width = '1024px';
             tempContainer.style.padding = '0';
-            tempContainer.style.boxSizing = 'border-box';
 
             try {
-                // Gather all necessary assets for a self-contained render
                 const allStyles = await gatherPageStyles();
+                const chatClone = scrollContainer.cloneNode(true) as HTMLElement;
+                
+                chatClone.querySelectorAll('details').forEach(details => {
+                    details.setAttribute('open', '');
+                });
+
+                chatClone.querySelectorAll('[aria-label*="Scroll to"]').forEach(el => el.remove());
+                chatClone.querySelectorAll('[data-message-id]').forEach(el => {
+                    el.classList.add('message-container-animate');
+                });
+
                 const bodyClasses = document.body.className;
                 const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-                const chatHtml = scrollContainer.innerHTML;
                 const exportBgColor = currentTheme.id === 'pearl' ? currentTheme.colors.bgPrimary : currentTheme.colors.bgSecondary;
-                
-                // Construct the HTML for the temporary container
+
                 tempContainer.innerHTML = `
                     ${allStyles}
                     <div class="theme-${currentTheme.id} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor};">
-                        <div class="p-4" style="background-color: ${exportBgColor};">
+                        <div style="background-color: ${exportBgColor}; padding: 1rem;">
                             <div class="exported-chat-container w-full max-w-7xl mx-auto">
-                                ${chatHtml}
+                                ${chatClone.innerHTML}
                             </div>
                         </div>
                     </div>
                 `;
-                
+
                 document.body.appendChild(tempContainer);
-                
                 const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
                 if (!captureTarget) throw new Error("Could not find capture target for PNG export.");
-
-                // Allow a moment for rendering, especially for images and complex styles
-                await new Promise(resolve => setTimeout(resolve, 250));
                 
+                await new Promise(resolve => setTimeout(resolve, 500)); 
+
                 await exportElementAsPng(captureTarget, filename, {
-                    backgroundColor: null, // Background is part of the element's style
-                    scale: 2.5, // Increase resolution for better quality
+                    backgroundColor: null,
+                    scale: 2,
                 });
 
             } finally {
-                // Ensure the temporary container is always removed
                 if (document.body.contains(tempContainer)) {
                     document.body.removeChild(tempContainer);
                 }
             }
-            return; // End execution for PNG
+            return;
         }
 
-        // HTML and TXT logic remains largely the same
         if (format === 'html') {
             if (!scrollContainer) return;
 
@@ -234,19 +236,20 @@ export const useDataManagement = ({
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Chat Export: ${DOMPurify.sanitize(activeChat.title)}</title>
                     ${headContent}
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
                     <script>
                         document.addEventListener('DOMContentLoaded', () => {
-                            if (window.hljs) {
-                                document.querySelectorAll('pre code').forEach((el) => {
+                            document.querySelectorAll('pre code').forEach((el) => {
+                                if (window.hljs) {
                                     window.hljs.highlightElement(el);
-                                });
-                            }
+                                }
+                            });
                         });
                     </script>
                     <style>
                         body { background-color: ${rootBgColor}; padding: 1rem; box-sizing: border-box; }
                         .message-actions, .code-block-utility-button { display: none !important; }
-                        .sticky[aria-label="Scroll to bottom"] { display: none !important; }
+                        .sticky[aria-label*="Scroll to"] { display: none !important; }
                     </style>
                 </head>
                 <body class="${bodyClasses}">
@@ -272,7 +275,7 @@ export const useDataManagement = ({
 
             exportTextStringAsFile(textContent, filename);
         }
-    }, [activeChat, currentTheme, language, scrollContainerRef]);
+    }, [activeChat, currentTheme, language, scrollContainerRef, t]);
 
     return {
         handleExportSettings,
