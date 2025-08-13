@@ -386,7 +386,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         className={`bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
         aria-hidden={isAnyModalOpen}
       >
-        <div className={`mx-auto w-full ${!isPipActive ? 'max-w-7xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`}>
+        <div className={`mx-auto w-full ${!isPipActive ? 'max-w-6xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`}>
             <ChatInputToolbar
               isImagenModel={isImagenModel || false}
               aspectRatio={aspectRatio}
