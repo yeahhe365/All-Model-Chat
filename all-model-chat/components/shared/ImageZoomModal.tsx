@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
-import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2 } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
 import { translations, getResponsiveValue } from '../../utils/appUtils';
 import { Modal } from './Modal';
 
@@ -17,6 +17,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -29,6 +30,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
       setScale(1);
       setPosition({ x: 0, y: 0 });
       setIsDownloading(false);
+      setIsCopied(false);
     }
   }, [file]);
 
@@ -59,6 +61,27 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
     setScale(1);
     setPosition({ x: 0, y: 0 });
   }, []);
+
+  const handleCopy = useCallback(async () => {
+    if (!file?.dataUrl || isCopied) return;
+    try {
+        const response = await fetch(file.dataUrl);
+        const blob = await response.blob();
+        if (!navigator.clipboard || !navigator.clipboard.write) {
+            throw new Error("Clipboard API not available.");
+        }
+        await navigator.clipboard.write([
+            new ClipboardItem({
+                [blob.type]: blob
+            })
+        ]);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+        console.error('Failed to copy image:', err);
+        alert('Failed to copy image to clipboard. Your browser might not support this feature or require permissions.');
+    }
+  }, [file, isCopied]);
 
   const handleDownload = useCallback(async (format: 'png' | 'svg') => {
     if (!file?.dataUrl || isDownloading) return;
@@ -251,6 +274,10 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
           <div className="w-px h-6 bg-white/20 mx-1"></div>
 
           <button onClick={handleReset} className={controlButtonClasses} title="Reset View"><RotateCw size={18} /></button>
+
+          <button onClick={handleCopy} disabled={isCopied} className={controlButtonClasses} title={isCopied ? "Copied!" : "Copy Image"}>
+              {isCopied ? <Check size={18} className="text-green-400" /> : <ClipboardCopy size={18} />}
+          </button>
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
           
