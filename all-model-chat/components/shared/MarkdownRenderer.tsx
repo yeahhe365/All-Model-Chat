@@ -42,20 +42,33 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
   const processedContent = useMemo(() => {
     if (!content) return '';
-    // This logic is only safe if rehypeRaw is enabled via allowHtml prop
-    if (!allowHtml) return content;
 
     // This regex splits the content by code blocks (```...```), keeping the code blocks in the resulting array.
     const parts = content.split(/(```[\s\S]*?```)/g);
+    
     const newContent = parts.map((part, index) => {
       // If the part is a code block (at an odd index), return it as is.
       if (index % 2 === 1) {
         return part;
       }
-      // Otherwise, it's a regular text part. Replace sequences of two or more newlines
-      // with a paragraph containing a non-breaking space. This creates a visual empty line.
-      return part.replace(/(\r\n|\n){2,}/g, '\n\n&nbsp;\n\n');
+      
+      // Part is not a code block, so we can process it.
+      let processedPart = part;
+
+      // Fix for invalid markdown with quotes inside bold markers.
+      // e.g., **"text"** -> "**text**"
+      processedPart = processedPart.replace(/\*\*(["'“‘])(.*?)(["'”’])\*\*/g, '$1**$2**$3');
+      
+      // The original logic for handling newlines when allowHtml is true.
+      if (allowHtml) {
+        // Replace sequences of two or more newlines with a paragraph containing a non-breaking space.
+        // This creates a visual empty line.
+        processedPart = processedPart.replace(/(\r\n|\n){2,}/g, '\n\n&nbsp;\n\n');
+      }
+
+      return processedPart;
     }).join('');
+    
     return newContent;
   }, [content, allowHtml]);
 
