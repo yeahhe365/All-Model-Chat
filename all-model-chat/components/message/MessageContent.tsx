@@ -164,6 +164,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
                           isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+                          allowHtml={true}
                       />
                     </div>
                 </details>
@@ -187,6 +188,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         expandCodeBlocksByDefault={expandCodeBlocksByDefault}
                         isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+                        allowHtml={true}
                     />
                 </div>
             )}

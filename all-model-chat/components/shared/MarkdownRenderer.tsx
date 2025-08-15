@@ -40,6 +40,25 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     return plugins;
   }, [allowHtml]);
 
+  const processedContent = useMemo(() => {
+    if (!content) return '';
+    // This logic is only safe if rehypeRaw is enabled via allowHtml prop
+    if (!allowHtml) return content;
+
+    // This regex splits the content by code blocks (```...```), keeping the code blocks in the resulting array.
+    const parts = content.split(/(```[\s\S]*?```)/g);
+    const newContent = parts.map((part, index) => {
+      // If the part is a code block (at an odd index), return it as is.
+      if (index % 2 === 1) {
+        return part;
+      }
+      // Otherwise, it's a regular text part. Replace sequences of two or more newlines
+      // with a paragraph containing a non-breaking space. This creates a visual empty line.
+      return part.replace(/(\r\n|\n){2,}/g, '\n\n&nbsp;\n\n');
+    }).join('');
+    return newContent;
+  }, [content, allowHtml]);
+
   const components = useMemo(() => ({
     pre: (props: any) => {
       const { node, children, ...rest } = props;
@@ -94,7 +113,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       rehypePlugins={rehypePlugins as any}
       components={components}
     >
-      {content}
+      {processedContent}
     </ReactMarkdown>
   );
 });
