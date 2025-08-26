@@ -9,6 +9,7 @@ import { ContextMenu, ContextMenuItem } from '../shared/ContextMenu';
 
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
+    activeSessionId,
     isAppDraggingOver, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel, isModelsLoading,
@@ -205,6 +206,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         <div className="pointer-events-auto">
           <ChatInput
             appSettings={appSettings}
+            activeSessionId={activeSessionId}
             commandedInput={commandedInput}
             onMessageSent={onMessageSent}
             selectedFiles={selectedFiles}

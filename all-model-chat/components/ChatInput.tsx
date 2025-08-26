@@ -13,6 +13,7 @@ import { ContextMenu, ContextMenuItem } from './shared/ContextMenu';
 
 interface ChatInputProps {
   appSettings: AppSettings;
+  activeSessionId: string | null;
   commandedInput: { text: string; id: number } | null;
   onMessageSent: () => void;
   selectedFiles: UploadedFile[]; 
@@ -56,7 +57,7 @@ const MAX_TEXTAREA_HEIGHT_PX = 150;
 
 export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const {
-    appSettings, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
+    appSettings, activeSessionId, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
     isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
     onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
     isImagenModel, aspectRatio, setAspectRatio, onTranscribeAudio,
@@ -119,30 +120,14 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
     onTogglePip,
   });
-
-  const handleAddUrl = useCallback(async (url: string) => {
-    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
-    if (!youtubeRegex.test(url)) {
-        props.fileError = "Invalid YouTube URL provided.";
-        return;
+  
+  const clearCurrentDraft = useCallback(() => {
+    if (activeSessionId) {
+        const draftKey = `chatDraft_${activeSessionId}`;
+        localStorage.removeItem(draftKey);
     }
-    justInitiatedFileOpRef.current = true;
-    const newUrlFile: UploadedFile = {
-      id: `url-${Date.now()}`,
-      name: url.length > 30 ? `${url.substring(0, 27)}...` : url,
-      type: 'video/youtube-link',
-      size: 0,
-      fileUri: url,
-      uploadState: 'active',
-      isProcessing: false,
-    };
-    setSelectedFiles(prev => [...prev, newUrlFile]);
-    setUrlInput('');
-    setShowAddByUrlInput(false);
-    textareaRef.current?.focus();
-  }, [setSelectedFiles, setShowAddByUrlInput]);
-
-
+  }, [activeSessionId]);
+  
   useEffect(() => {
     if (commandedInput) {
       setInputText(commandedInput.text);
@@ -173,6 +158,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     if (isWaitingForUpload) {
         const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
         if (!filesAreStillProcessing) {
+            clearCurrentDraft();
             onSendMessage(inputText);
             setInputText('');
             onMessageSent();
@@ -181,7 +167,30 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             setTimeout(() => setIsAnimatingSend(false), 400);
         }
     }
-  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent]);
+  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft]);
+
+  // Load draft from localStorage when session changes
+  useEffect(() => {
+      if (activeSessionId && !isEditing) {
+          const draftKey = `chatDraft_${activeSessionId}`;
+          const savedDraft = localStorage.getItem(draftKey);
+          setInputText(savedDraft || '');
+      }
+  }, [activeSessionId, isEditing]);
+
+  // Save draft to localStorage on input change (debounced)
+  useEffect(() => {
+      if (!activeSessionId) return;
+      const handler = setTimeout(() => {
+          const draftKey = `chatDraft_${activeSessionId}`;
+          if (inputText.trim()) {
+              localStorage.setItem(draftKey, inputText);
+          } else {
+              localStorage.removeItem(draftKey);
+          }
+      }, 500);
+      return () => clearTimeout(handler);
+  }, [inputText, activeSessionId]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
@@ -193,6 +202,28 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     if (videoInputRef.current) videoInputRef.current.value = "";
   };
   
+  const handleAddUrl = useCallback(async (url: string) => {
+    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
+    if (!youtubeRegex.test(url)) {
+        props.fileError = "Invalid YouTube URL provided.";
+        return;
+    }
+    justInitiatedFileOpRef.current = true;
+    const newUrlFile: UploadedFile = {
+      id: `url-${Date.now()}`,
+      name: url.length > 30 ? `${url.substring(0, 27)}...` : url,
+      type: 'video/youtube-link',
+      size: 0,
+      fileUri: url,
+      uploadState: 'active',
+      isProcessing: false,
+    };
+    setSelectedFiles(prev => [...prev, newUrlFile]);
+    setUrlInput('');
+    setShowAddByUrlInput(false);
+    textareaRef.current?.focus();
+  }, [setSelectedFiles, setShowAddByUrlInput]);
+
   const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
     if (isProcessingFile || isAddingById || isModalOpen) return;
@@ -300,6 +331,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         if (filesAreStillProcessing) {
             setIsWaitingForUpload(true);
         } else {
+            clearCurrentDraft();
             onSendMessage(inputText);
             setInputText('');
             onMessageSent();

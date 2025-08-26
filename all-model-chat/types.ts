@@ -202,6 +202,7 @@ export interface MessageListProps {
 
 export interface ChatInputProps {
   appSettings: AppSettings;
+  activeSessionId: string | null;
   commandedInput: { text: string; id: number } | null;
   onMessageSent: () => void;
   selectedFiles: UploadedFile[]; 
@@ -363,6 +364,7 @@ export interface AppModalsProps {
 }
 
 export interface ChatAreaProps {
+  activeSessionId: string | null;
   // Drag & Drop
   isAppDraggingOver: boolean;
   handleAppDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;

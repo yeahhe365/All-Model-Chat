@@ -301,6 +301,7 @@ const App: React.FC = () => {
         onScrollToPrevTurn={scrollToPrevTurn}
         onScrollToNextTurn={scrollToNextTurn}
         appSettings={appSettings}
+        activeSessionId={activeSessionId}
         commandedInput={commandedInput}
         setCommandedInput={setCommandedInput}
         onMessageSent={() => setCommandedInput(null)}
