@@ -377,7 +377,13 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   };
 
   const removeSelectedFile = (fileIdToRemove: string) => {
-    setSelectedFiles(prev => prev.filter(f => f.id !== fileIdToRemove));
+    setSelectedFiles(prev => {
+        const fileToRemove = prev.find(f => f.id === fileIdToRemove);
+        if (fileToRemove && fileToRemove.dataUrl && fileToRemove.dataUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(fileToRemove.dataUrl);
+        }
+        return prev.filter(f => f.id !== fileIdToRemove);
+    });
   };
 
   const handleAddFileByIdSubmit = async () => {

@@ -203,19 +203,12 @@ export const useFileHandling = ({
                 const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
                 setSelectedFiles(prev => [...prev, initialFileState]);
                 
-                const MAX_PREVIEW_SIZE = 5 * 1024 * 1024;
-
-                if (file.size < MAX_PREVIEW_SIZE) {
-                    try {
-                        const dataUrl = fileToBlobUrl(file);
-                        setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
-                    } catch(error) {
-                        logService.error('Error creating data URL for image', { error });
-                        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
-                    }
-                } else {
-                    logService.warn(`Skipping preview for large image: ${file.name}`, { size: file.size });
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                try {
+                    const dataUrl = fileToBlobUrl(file);
+                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
+                } catch(error) {
+                    logService.error('Error creating blob URL for image', { error });
+                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
                 }
             }
         });

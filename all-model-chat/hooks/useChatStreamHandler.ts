@@ -16,12 +16,12 @@ interface ChatStreamHandlerProps {
 
 const isToolMessage = (msg: ChatMessage): boolean => {
     if (!msg) return false;
-    if (msg.files && msg.files.length > 0) return true;
     if (!msg.content) return false;
     const content = msg.content.trim();
+    // A "tool message" is one that contains a code block or execution result.
+    // A message with just files is content, not a tool, so text should be appendable.
     return (content.startsWith('```') && content.endsWith('```')) ||
-           content.startsWith('<div class="tool-result') ||
-           content.startsWith('![Generated Image]');
+           content.startsWith('<div class="tool-result');
 };
 
 export const useChatStreamHandler = ({
@@ -190,9 +190,16 @@ export const useChatStreamHandler = ({
                             dataUrl: dataUrl,
                             uploadState: 'active'
                         };
-                        const newMessage = createNewMessage('');
-                        newMessage.files = [newFile];
-                        messages.push(newMessage);
+                        
+                        // If the last message is a suitable loading placeholder, add the file to it.
+                        if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading) {
+                            lastMessage.files = [...(lastMessage.files || []), newFile];
+                        } else {
+                            // Otherwise, create a new message specifically for this image.
+                            const newMessage = createNewMessage('');
+                            newMessage.files = [newFile];
+                            messages.push(newMessage);
+                        }
                     }
                 }
                 return { ...s, messages };

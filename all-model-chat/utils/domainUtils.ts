@@ -63,39 +63,46 @@ export const buildContentParts = async (
   const filesToProcess = files || [];
   
   const processedResults = await Promise.all(filesToProcess.map(async (file) => {
-    // Create a shallow copy to avoid direct mutation of state objects
+    // Create a shallow copy to avoid direct mutation of state objects.
+    // We will be careful not to add large data to this object.
     const newFile = { ...file };
     let part: ContentPart | null = null;
+    
+    // Explicitly remove potentially large fields from the object that will be stored in state.
+    delete newFile.base64Data;
+    delete newFile.rawFile;
 
     if (file.isProcessing || file.error || file.uploadState !== 'active') {
       return { file: newFile, part };
     }
     
     if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.fileUri) {
-      let base64Data = file.base64Data;
+      // Base64 data is generated on-the-fly for the API call,
+      // but NOT stored back into the `newFile` object that goes into React state.
+      let base64DataForApi: string | undefined;
       
-      if (!base64Data) { // Only convert if not already present
-        if (file.rawFile) {
-          try {
-            base64Data = await fileToBase64(file.rawFile);
-          } catch (error) {
-            logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
-          }
-        } else if (file.dataUrl?.startsWith('blob:')) {
-          try {
-            const response = await fetch(file.dataUrl);
-            const blob = await response.blob();
-            const tempFile = new File([blob], file.name, { type: file.type });
-            base64Data = await fileToBase64(tempFile);
-          } catch (error) {
-            logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
-          }
+      const fileSource = file.rawFile;
+      const urlSource = file.dataUrl?.startsWith('blob:') ? file.dataUrl : undefined;
+
+      if (fileSource) {
+        try {
+          base64DataForApi = await fileToBase64(fileSource);
+        } catch (error) {
+          logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
+        }
+      } else if (urlSource) {
+        try {
+          const response = await fetch(urlSource);
+          const blob = await response.blob();
+          const tempFile = new File([blob], file.name, { type: file.type });
+          base64DataForApi = await fileToBase64(tempFile);
+        } catch (error) {
+          logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
         }
       }
       
-      if (base64Data) {
-        newFile.base64Data = base64Data;
-        part = { inlineData: { mimeType: file.type, data: base64Data } };
+      if (base64DataForApi) {
+        part = { inlineData: { mimeType: file.type, data: base64DataForApi } };
       }
     } else if (file.fileUri && file.type === 'video/youtube-link') {
         part = { fileData: { mimeType: 'video/youtube', fileUri: file.fileUri } };
