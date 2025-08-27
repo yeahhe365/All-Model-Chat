@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlobUrl } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
@@ -97,7 +97,17 @@ export const useTtsImagenSender = ({
             } else { // Imagen
                 const imageBase64Array = await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal);
                 if (newAbortController.signal.aborted) throw new Error("aborted");
-                const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => ({ id: generateUniqueId(), name: `generated-image-${index + 1}.jpeg`, type: 'image/jpeg', size: base64Data.length, dataUrl: `data:image/jpeg;base64,${base64Data}`, base64Data, uploadState: 'active' }));
+                const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
+                    const dataUrl = base64ToBlobUrl(base64Data, 'image/jpeg');
+                    return {
+                        id: generateUniqueId(),
+                        name: `generated-image-${index + 1}.jpeg`,
+                        type: 'image/jpeg',
+                        size: base64Data.length,
+                        dataUrl: dataUrl,
+                        uploadState: 'active'
+                    };
+                });
                 updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: `Generated image for: "${text}"`, files: generatedFiles, generationEndTime: new Date() } : m) } : s));
 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {

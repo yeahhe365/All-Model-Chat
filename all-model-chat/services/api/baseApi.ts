@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -57,6 +57,13 @@ export const buildGenerationConfig = (
     isCodeExecutionEnabled?: boolean,
     isUrlContextEnabled?: boolean,
 ): any => {
+    if (modelId === 'gemini-2.5-flash-image-preview') {
+        // This model has specific requirements and doesn't support other configs.
+        return {
+            responseModalities: [Modality.IMAGE, Modality.TEXT],
+        };
+    }
+    
     const generationConfig: any = {
         ...config,
         systemInstruction: systemInstruction || undefined,

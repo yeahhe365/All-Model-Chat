@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { generateUniqueId, logService, showNotification, getTranslator } from '../utils/appUtils';
+import { generateUniqueId, logService, showNotification, getTranslator, base64ToBlobUrl } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI, APP_SETTINGS_KEY } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -181,8 +181,14 @@ export const useChatStreamHandler = ({
                 } else if (anyPart.inlineData) {
                     const { mimeType, data } = anyPart.inlineData;
                     if (mimeType.startsWith('image/')) {
+                        const dataUrl = base64ToBlobUrl(data, mimeType);
                         const newFile: UploadedFile = {
-                            id: generateUniqueId(), name: 'Generated Image', type: mimeType, size: data.length, dataUrl: `data:${mimeType};base64,${data}`, base64Data: data, uploadState: 'active'
+                            id: generateUniqueId(),
+                            name: 'Generated Image',
+                            type: mimeType,
+                            size: data.length,
+                            dataUrl: dataUrl,
+                            uploadState: 'active'
                         };
                         const newMessage = createNewMessage('');
                         newMessage.files = [newFile];
