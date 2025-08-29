@@ -1,131 +1,23 @@
-import { Content, GenerateContentResponse, Part, UsageMetadata } from "@google/genai";
-import { getApiClient, buildGenerationConfig } from './baseApi';
-import { ChatHistoryItem, ThoughtSupportingPart } from '../../types';
+import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } from "@google/genai";
+import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
+import { getApiClient } from "./baseApi";
 
 export const sendMessageStreamApi = async (
-    apiKey: string,
-    modelId: string,
-    historyWithLastPrompt: ChatHistoryItem[],
-    systemInstruction: string,
-    config: { temperature?: number; topP?: number },
-    showThoughts: boolean,
-    thinkingBudget: number,
-    isGoogleSearchEnabled: boolean,
-    isCodeExecutionEnabled: boolean,
-    isUrlContextEnabled: boolean,
+    chat: Chat,
+    parts: Part[],
     abortSignal: AbortSignal,
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
     onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
 ): Promise<void> => {
-    // If a service worker is available and controlling the page, delegate the stream to it.
-    // This prevents the browser from throttling the connection when the tab is in the background.
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        logService.info(`Sending message to ${modelId} via Service Worker (stream)`);
-
-        return new Promise((resolve, reject) => {
-            const generationId = `gen-${Date.now()}-${Math.random()}`;
-            const generationConfig = buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
-            let finalUsageMetadata: UsageMetadata | undefined = undefined;
-            let finalGroundingMetadata: any = null;
-
-            const cleanup = () => {
-                navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
-            };
-
-            const handleServiceWorkerMessage = (event: MessageEvent) => {
-                if (event.data.generationId !== generationId) return;
-
-                const { type, payload } = event.data;
-
-                switch (type) {
-                    case 'GEMINI_STREAM_CHUNK': {
-                        const chunkResponse = payload as GenerateContentResponse;
-                        if (chunkResponse.usageMetadata) {
-                            finalUsageMetadata = chunkResponse.usageMetadata;
-                        }
-                        const metadataFromChunk = chunkResponse.candidates?.[0]?.groundingMetadata;
-                        if (metadataFromChunk) {
-                             finalGroundingMetadata = metadataFromChunk;
-                        }
-                        const toolCalls = chunkResponse.candidates?.[0]?.toolCalls;
-                        if (toolCalls) {
-                            for (const toolCall of toolCalls) {
-                                if (toolCall.functionCall?.args?.urlContextMetadata) {
-                                    if (!finalGroundingMetadata) finalGroundingMetadata = {};
-                                    if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
-                                    const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
-                                    for (const newCitation of newCitations) {
-                                        if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                                            finalGroundingMetadata.citations.push(newCitation);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
-                            for (const part of chunkResponse.candidates[0].content.parts) {
-                                const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                                if (pAsThoughtSupporting.thought) onThoughtChunk(part.text);
-                                else onPart(part);
-                            }
-                        } else if (typeof chunkResponse.text === 'string' && chunkResponse.text.length > 0) {
-                            onPart({ text: chunkResponse.text });
-                        }
-                        break;
-                    }
-                    case 'GEMINI_STREAM_COMPLETE':
-                        onComplete(finalUsageMetadata, finalGroundingMetadata);
-                        cleanup();
-                        resolve();
-                        break;
-                    case 'GEMINI_STREAM_ERROR': {
-                        const error = new Error(payload.message || 'Unknown Service Worker stream error.');
-                        error.name = payload.name || 'SWStreamError';
-                        onError(error);
-                        cleanup();
-                        reject(error);
-                        break;
-                    }
-                }
-            };
-
-            navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
-            abortSignal.onabort = () => {
-                navigator.serviceWorker.controller?.postMessage({ type: 'GEMINI_STREAM_ABORT', generationId });
-                cleanup();
-                const abortError = new Error("Streaming aborted by signal.");
-                abortError.name = "AbortError";
-                onError(abortError);
-                reject(abortError);
-            };
-            
-            navigator.serviceWorker.controller.postMessage({
-                type: 'GEMINI_STREAM_REQUEST',
-                generationId,
-                payload: { apiKey, modelId, contents: historyWithLastPrompt, config: generationConfig }
-            });
-        });
-    }
-
-    // Fallback for browsers without Service Worker or when it's not yet active.
-    logService.warn(`Sending message to ${modelId} via direct fetch (stream) - SW not available.`);
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
-    const generationConfig = buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
+    logService.info(`Sending message via chat object (stream)`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
 
     try {
-        const result = await ai.models.generateContentStream({ 
-            model: modelId,
-            contents: historyWithLastPrompt as Content[],
-            config: generationConfig
-        });
+        const result = await chat.sendMessageStream({ message: parts });
 
         for await (const chunkResponse of result) {
             if (abortSignal.aborted) {
@@ -156,6 +48,7 @@ export const sendMessageStreamApi = async (
                 }
             }
 
+            // ALWAYS iterate through parts. The .text property is a shortcut and can be misleading for multimodal responses.
             if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
                 for (const part of chunkResponse.candidates[0].content.parts) {
                     const pAsThoughtSupporting = part as ThoughtSupportingPart;
@@ -166,40 +59,25 @@ export const sendMessageStreamApi = async (
                         onPart(part);
                     }
                 }
-            } else if (typeof chunkResponse.text === 'string' && chunkResponse.text.length > 0) {
-               onPart({ text: chunkResponse.text });
             }
         }
     } catch (error) {
-        logService.error("Error sending message to Gemini (stream):", error);
+        logService.error("Error sending message to Gemini chat (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
+        logService.info("Streaming complete via chat object.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
         onComplete(finalUsageMetadata, finalGroundingMetadata);
     }
 };
 
 export const sendMessageNonStreamApi = async (
-    apiKey: string,
-    modelId: string,
-    historyWithLastPrompt: ChatHistoryItem[],
-    systemInstruction: string,
-    config: { temperature?: number; topP?: number },
-    showThoughts: boolean,
-    thinkingBudget: number,
-    isGoogleSearchEnabled: boolean,
-    isCodeExecutionEnabled: boolean,
-    isUrlContextEnabled: boolean,
+    chat: Chat,
+    parts: Part[],
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
 ): Promise<void> => {
-    logService.info(`Sending message to ${modelId} (non-stream)`, { hasSystemInstruction: !!systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled });
-    // Get proxy URL from localStorage if available
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
-    const generationConfig = buildGenerationConfig(modelId, systemInstruction, config, showThoughts, thinkingBudget, isGoogleSearchEnabled, isCodeExecutionEnabled, isUrlContextEnabled);
+    logService.info(`Sending message via chat object (non-stream)`);
     
     try {
         if (abortSignal.aborted) {
@@ -207,11 +85,7 @@ export const sendMessageNonStreamApi = async (
             onComplete([], "", undefined, undefined);
             return;
         }
-        const response: GenerateContentResponse = await ai.models.generateContent({ 
-            model: modelId,
-            contents: historyWithLastPrompt as Content[],
-            config: generationConfig
-        });
+        const response: GenerateContentResponse = await chat.sendMessage({ message: parts });
         if (abortSignal.aborted) {
             logService.warn("Non-streaming call completed, but aborted by signal before processing response.");
             onComplete([], "", undefined, undefined);
@@ -254,10 +128,105 @@ export const sendMessageNonStreamApi = async (
             }
         }
 
-        logService.info("Non-stream call complete.", { usage: response.usageMetadata, hasGrounding: !!finalMetadata });
+        logService.info("Non-stream chat call complete.", { usage: response.usageMetadata, hasGrounding: !!finalMetadata });
         onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined);
     } catch (error) {
-        logService.error("Error sending message to Gemini (non-stream):", error);
+        logService.error("Error sending message to Gemini chat (non-stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));
+    }
+};
+
+// Stateless API calls for models that don't support the Chat object (like image-edit)
+export const sendStatelessMessageStreamApi = async (
+    apiKey: string,
+    modelId: string,
+    history: ChatHistoryItem[],
+    parts: Part[],
+    config: any,
+    abortSignal: AbortSignal,
+    onPart: (part: Part) => void,
+    onThoughtChunk: (chunk: string) => void,
+    onError: (error: Error) => void,
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+): Promise<void> => {
+    logService.info(`Sending message via stateless generateContent (stream) for model ${modelId}`);
+    let finalUsageMetadata: UsageMetadata | undefined = undefined;
+    let finalGroundingMetadata: any = null;
+    const storedSettings = localStorage.getItem('app-settings');
+    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+    const ai = getApiClient(apiKey, apiProxyUrl);
+
+    try {
+        const result = await ai.models.generateContentStream({
+            model: modelId,
+            contents: [...history, { role: 'user', parts }],
+            config: config
+        });
+
+        for await (const chunkResponse of result) {
+            if (abortSignal.aborted) { logService.warn("Streaming aborted by signal."); break; }
+            if (chunkResponse.usageMetadata) finalUsageMetadata = chunkResponse.usageMetadata;
+            if (chunkResponse.candidates?.[0]?.groundingMetadata) finalGroundingMetadata = chunkResponse.candidates[0].groundingMetadata;
+
+            if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
+                for (const part of chunkResponse.candidates[0].content.parts) {
+                    const pAsThoughtSupporting = part as ThoughtSupportingPart;
+                    if (pAsThoughtSupporting.thought) onThoughtChunk(part.text);
+                    else onPart(part);
+                }
+            }
+        }
+    } catch (error) {
+        logService.error(`Error in stateless stream for ${modelId}:`, error);
+        onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during stateless streaming."));
+    } finally {
+        logService.info(`Stateless stream complete for ${modelId}.`, { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
+        onComplete(finalUsageMetadata, finalGroundingMetadata);
+    }
+};
+
+export const sendStatelessMessageNonStreamApi = async (
+    apiKey: string,
+    modelId: string,
+    history: ChatHistoryItem[],
+    parts: Part[],
+    config: any,
+    abortSignal: AbortSignal,
+    onError: (error: Error) => void,
+    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+): Promise<void> => {
+    logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
+    const storedSettings = localStorage.getItem('app-settings');
+    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+    const ai = getApiClient(apiKey, apiProxyUrl);
+
+    try {
+        if (abortSignal.aborted) { onComplete([], "", undefined, undefined); return; }
+
+        const response = await ai.models.generateContent({
+            model: modelId,
+            contents: [...history, { role: 'user', parts }],
+            config: config
+        });
+
+        if (abortSignal.aborted) { onComplete([], "", undefined, undefined); return; }
+
+        let thoughtsText = "";
+        const responseParts: Part[] = [];
+        if (response.candidates && response.candidates[0]?.content?.parts) {
+            for (const part of response.candidates[0].content.parts) {
+                const pAsThoughtSupporting = part as ThoughtSupportingPart;
+                if (pAsThoughtSupporting.thought) thoughtsText += part.text;
+                else responseParts.push(part);
+            }
+        }
+        if (responseParts.length === 0 && response.text) responseParts.push({ text: response.text });
+        
+        const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+        logService.info(`Stateless non-stream complete for ${modelId}.`, { usage: response.usageMetadata, hasGrounding: !!groundingMetadata });
+        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, groundingMetadata);
+    } catch (error) {
+        logService.error(`Error in stateless non-stream for ${modelId}:`, error);
+        onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during stateless non-streaming call."));
     }
 };

@@ -130,14 +130,9 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
     const historyItemsPromises = msgs
       .filter(msg => msg.role === 'user' || msg.role === 'model')
       .map(async (msg) => {
-        let apiParts: ContentPart[];
-        if (msg.role === 'user') {
-          const { contentParts } = await buildContentParts(msg.content, msg.files);
-          apiParts = contentParts;
-        } else {
-          apiParts = [{ text: msg.content || "" }];
-        }
-        return { role: msg.role as 'user' | 'model', parts: apiParts };
+        // Use buildContentParts for both user and model messages to handle text and files consistently.
+        const { contentParts } = await buildContentParts(msg.content, msg.files);
+        return { role: msg.role as 'user' | 'model', parts: contentParts };
       });
       
     return Promise.all(historyItemsPromises);

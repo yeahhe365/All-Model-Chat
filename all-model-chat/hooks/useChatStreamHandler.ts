@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
-import { Part, UsageMetadata } from '@google/genai';
+import { Part, UsageMetadata, Chat } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService, showNotification, getTranslator, base64ToBlobUrl } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI, APP_SETTINGS_KEY } from '../constants/appConstants';
@@ -12,6 +12,7 @@ interface ChatStreamHandlerProps {
     updateAndPersistSessions: SessionsUpdater;
     setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    chat: Chat | null;
 }
 
 const isToolMessage = (msg: ChatMessage): boolean => {

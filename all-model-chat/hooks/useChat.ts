@@ -9,9 +9,12 @@ import { useMessageHandler } from './useMessageHandler';
 import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
-import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService } from '../utils/appUtils';
+import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService, createChatHistoryForApi } from '../utils/appUtils';
 import { CHAT_HISTORY_SESSIONS_KEY, CHAT_HISTORY_GROUPS_KEY } from '../constants/appConstants';
 import { geminiServiceInstance } from '../services/geminiService';
+import { Chat, GoogleGenAI } from '@google/genai';
+import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
+
 
 export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     // 1. Core application state
@@ -30,6 +33,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const [ttsMessageId, setTtsMessageId] = useState<string | null>(null);
     const [isSwitchingModel, setIsSwitchingModel] = useState<boolean>(false);
     const userScrolledUp = useRef<boolean>(false);
+    const [chat, setChat] = useState<Chat | null>(null);
 
     const updateAndPersistSessions = useCallback((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
         setSavedSessions(prevSessions => {
@@ -65,13 +69,57 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         );
     }, [activeSessionId, updateAndPersistSessions]);
 
+    useEffect(() => {
+        const activeSession = savedSessions.find(s => s.id === activeSessionId);
+        if (!activeSession) {
+            setChat(null);
+            return;
+        }
+
+        const initializeChat = async () => {
+            const keyResult = getKeyForRequest(appSettings, activeSession.settings);
+            if ('error' in keyResult) {
+                logService.error("Could not create chat object: API Key not configured.");
+                setChat(null);
+                return;
+            }
+            
+            // Get proxy URL from localStorage if available
+            const storedSettings = localStorage.getItem('app-settings');
+            const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+            const ai = getApiClient(keyResult.key, apiProxyUrl);
+            
+            const historyForChat = await createChatHistoryForApi(activeSession.messages);
+
+            const modelIdToUse = activeSession.settings.modelId || appSettings.modelId;
+            const newChat = ai.chats.create({
+                model: modelIdToUse,
+                history: historyForChat,
+                config: buildGenerationConfig(
+                    modelIdToUse,
+                    activeSession.settings.systemInstruction,
+                    { temperature: activeSession.settings.temperature, topP: activeSession.settings.topP },
+                    activeSession.settings.showThoughts,
+                    activeSession.settings.thinkingBudget,
+                    activeSession.settings.isGoogleSearchEnabled,
+                    activeSession.settings.isCodeExecutionEnabled,
+                    activeSession.settings.isUrlContextEnabled
+                )
+            });
+            setChat(newChat);
+            logService.info(`Chat object initialized for session ${activeSessionId} with model ${modelIdToUse}`);
+        };
+
+        initializeChat();
+    }, [activeSessionId, savedSessions, appSettings]);
+
     // 3. Child hooks for modular logic
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
     const historyHandler = useChatHistory({ appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, updateAndPersistSessions, activeChat, language, updateAndPersistGroups });
     const fileHandler = useFileHandling({ appSettings, selectedFiles, setSelectedFiles, setAppFileError, isAppProcessingFile, setIsAppProcessingFile, currentChatSettings, setCurrentChatSettings: setCurrentChatSettings, });
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
     const scrollHandler = useChatScroll({ messages, userScrolledUp });
-    const messageHandler = useMessageHandler({ appSettings, messages, isLoading, currentChatSettings, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, setLoadingSessionIds, updateAndPersistSessions, language, scrollContainerRef: scrollHandler.scrollContainerRef });
+    const messageHandler = useMessageHandler({ appSettings, messages, isLoading, currentChatSettings, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, setLoadingSessionIds, updateAndPersistSessions, language, scrollContainerRef: scrollHandler.scrollContainerRef, chat });
     useAutoTitling({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds });
     useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language });
     
