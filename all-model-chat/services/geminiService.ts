@@ -1,5 +1,5 @@
 import { GeminiService, ChatHistoryItem, ModelOption } from '../types';
-import { Part, UsageMetadata, File as GeminiFile, Chat } from "@google/genai";
+import { Part, UsageMetadata, File as GeminiFile, Chat, Modality } from "@google/genai";
 import { getAvailableModelsApi } from './api/modelApi';
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi, generateSpeechApi, transcribeAudioApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
@@ -41,6 +41,37 @@ class GeminiServiceImpl implements GeminiService {
 
     async generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> {
         return generateSuggestionsApi(apiKey, userContent, modelContent, language);
+    }
+
+    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal): Promise<Part[]> {
+        return new Promise((resolve, reject) => {
+            if (abortSignal.aborted) {
+                const abortError = new Error("aborted");
+                abortError.name = "AbortError";
+                return reject(abortError);
+            }
+            const handleComplete = (responseParts: Part[]) => {
+                resolve(responseParts);
+            };
+            const handleError = (error: Error) => {
+                reject(error);
+            };
+            
+            const config = {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            };
+
+            sendStatelessMessageNonStreamApi(
+                apiKey,
+                modelId,
+                history,
+                parts,
+                config,
+                abortSignal,
+                handleError,
+                (responseParts, thoughts, usage, grounding) => handleComplete(responseParts)
+            );
+        });
     }
 
     async sendMessageStream(

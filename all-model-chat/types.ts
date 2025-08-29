@@ -124,6 +124,7 @@ export interface AppSettings extends ChatSettings {
  isSuggestionsEnabled: boolean;
  isAutoScrollOnSendEnabled?: boolean;
  isAutoSendOnSuggestionClick?: boolean;
+ generateQuadImages?: boolean;
 }
 
 
@@ -174,6 +175,7 @@ export interface GeminiService {
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
+  editImage: (apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal) => Promise<Part[]>;
 }
 
 export interface ThoughtSupportingPart extends Part {
@@ -227,6 +229,7 @@ export interface ChatInputProps {
   fileError: string | null;
   t: (key: keyof typeof translations) => string;
   isImagenModel?: boolean;
+  isImageEditModel?: boolean;
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
   isGoogleSearchEnabled: boolean;
@@ -443,6 +446,7 @@ export interface ChatAreaProps {
   isProcessingFile: boolean;
   fileError: string | null;
   isImagenModel?: boolean;
+  isImageEditModel?: boolean;
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
   isGoogleSearchEnabled: boolean;

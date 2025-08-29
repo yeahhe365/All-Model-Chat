@@ -22,7 +22,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
-    isProcessingFile, fileError, isImagenModel, aspectRatio, setAspectRatio,
+    isProcessingFile, fileError, isImagenModel, isImageEditModel, aspectRatio, setAspectRatio,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
@@ -223,6 +223,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             isProcessingFile={isProcessingFile}
             fileError={fileError}
             isImagenModel={isImagenModel}
+            isImageEditModel={isImageEditModel}
             aspectRatio={aspectRatio}
             setAspectRatio={setAspectRatio}
             t={t}

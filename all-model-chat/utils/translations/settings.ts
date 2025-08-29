@@ -78,6 +78,8 @@ export const settingsTranslations = {
     chatBehavior_model_noModels: { en: 'No models available', zh: '无可用模型' },
     settings_useFilesApiForImages_label: { en: 'Upload Images via File API', zh: '通过 File API 上传图片' },
     settings_useFilesApiForImages_tooltip: { en: 'When enabled, images are uploaded and referenced via the File API instead of being sent inline. This is required for some models and can help with very large images.', zh: '启用后，图片将通过 File API 上传和引用，而不是内联发送。某些模型需要此功能，并且有助于处理非常大的图片。' },
+    settings_generateQuadImages_label: { en: 'Quad Image Generation', zh: '四图生成模式' },
+    settings_generateQuadImages_tooltip: { en: 'When enabled, prompts sent to an Imagen model will generate four independent image variations at once. This will consume more API credits.', zh: '启用后，使用 Imagen 模型将一次性生成四张独立的图片变体。这将消耗更多 API 用量。' },
     settings_expandCodeBlocksByDefault_label: { en: 'Expand Code Blocks by Default', zh: '默认展开代码块' },
     settings_enableMermaidRendering_label: { en: 'Enable Mermaid Diagram Rendering', zh: '启用 Mermaid 图表渲染' },
     settings_enableMermaidRendering_tooltip: { en: "Render code blocks marked as 'mermaid' into diagrams.", zh: "将标记为 'mermaid' 的代码块渲染成图表。" },

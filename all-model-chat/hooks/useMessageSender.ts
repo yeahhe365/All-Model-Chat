@@ -5,6 +5,7 @@ import { geminiServiceInstance } from '../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './useChatStreamHandler';
 import { useTtsImagenSender } from './useTtsImagenSender';
+import { useImageEditSender } from './useImageEditSender';
 import { Chat, ChatHistoryItem } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 
@@ -54,6 +55,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
     const generationStartTimeRef = useRef<Date | null>(null);
     const { getStreamHandlers } = useChatStreamHandler(props);
     const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
+    const { handleImageEditMessage } = useImageEditSender({
+        updateAndPersistSessions,
+        setLoadingSessionIds,
+        activeJobs,
+        setActiveSessionId,
+    });
 
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
         const textToUse = overrideOptions?.text ?? '';
@@ -64,11 +71,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
+        const isImageEditModel = activeModelId.includes('image-preview');
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId });
 
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
-        if ((isTtsModel || isImagenModel) && !textToUse.trim()) return;
+        if ((isTtsModel || isImagenModel || isImageEditModel) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
             logService.warn("Send message blocked: files are still processing.");
             setAppFileError("Wait for files to finish processing."); 
@@ -109,6 +117,13 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (isTtsModel || isImagenModel) {
             await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, { shouldLockKey });
+            return;
+        }
+        
+        if (isImageEditModel) {
+            const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
+            const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
+            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, { shouldLockKey });
             return;
         }
         
@@ -210,7 +225,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         editingMessageId, setEditingMessageId, setAppFileError, aspectRatio,
         userScrolledUp, activeSessionId, setActiveSessionId, activeJobs,
         setLoadingSessionIds, updateAndPersistSessions, getStreamHandlers,
-        handleTtsImagenMessage, scrollContainerRef, chat
+        handleTtsImagenMessage, scrollContainerRef, chat, handleImageEditMessage
     ]);
 
     return { handleSendMessage };

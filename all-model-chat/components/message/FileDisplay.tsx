@@ -14,6 +14,7 @@ interface FileDisplayProps {
   file: UploadedFile;
   onImageClick?: (file: UploadedFile) => void;
   isFromMessageList?: boolean;
+  isGridView?: boolean;
 }
 
 const formatFileSize = (sizeInBytes: number): string => {
@@ -28,7 +29,7 @@ const formatFileSize = (sizeInBytes: number): string => {
   return `${sizeInMb.toFixed(2)} MB`;
 };
 
-export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList }) => {
+export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList, isGridView }) => {
   const commonClasses = "flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-md bg-[var(--theme-bg-input)] bg-opacity-50 border border-[var(--theme-border-secondary)]";
   const textClasses = "text-xs sm:text-sm";
   const nameClass = "font-medium truncate block";
@@ -65,7 +66,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       <img 
         src={file.dataUrl} 
         alt={file.name} 
-        className={`max-w-full min-w-0 max-h-72 sm:max-h-80 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        className={`max-w-full min-w-0 rounded-lg object-contain border border-[var(--theme-border-secondary)] ${!isGridView && 'max-h-72 sm:max-h-80'} ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
         aria-label={`Uploaded image: ${file.name}`}
         onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
         tabIndex={isClickableImage ? 0 : -1} 

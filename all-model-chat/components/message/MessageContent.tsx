@@ -81,6 +81,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
     const areThoughtsVisible = message.role === 'model' && thoughts && showThoughts;
+    const isQuadImageView = files && files.length === 4 && files.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
 
     const lastThought = useMemo(() => {
         if (!thoughts) return null;
@@ -121,9 +122,15 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
     return (
         <>
             {files && files.length > 0 && (
-                <div className={`space-y-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
-                    {files.map((file) => <FileDisplay key={file.id} file={file} onImageClick={onImageClick} isFromMessageList={true} />)}
-                </div>
+                isQuadImageView ? (
+                    <div className={`grid grid-cols-2 gap-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
+                        {files.map((file) => <FileDisplay key={file.id} file={file} onImageClick={onImageClick} isFromMessageList={true} isGridView={true} />)}
+                    </div>
+                ) : (
+                    <div className={`space-y-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
+                        {files.map((file) => <FileDisplay key={file.id} file={file} onImageClick={onImageClick} isFromMessageList={true} />)}
+                    </div>
+                )
             )}
             
             {areThoughtsVisible && (

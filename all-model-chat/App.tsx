@@ -252,6 +252,7 @@ const App: React.FC = () => {
 
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_ASSISTANT_SYSTEM_PROMPT;
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
+  const isImageEditModel = currentChatSettings.modelId?.includes('image-preview');
 
   const chatAreaComponent = (
     <ChatArea
@@ -318,6 +319,7 @@ const App: React.FC = () => {
         isProcessingFile={isAppProcessingFile}
         fileError={appFileError}
         isImagenModel={isImagenModel}
+        isImageEditModel={isImageEditModel}
         aspectRatio={aspectRatio}
         setAspectRatio={setAspectRatio}
         isGoogleSearchEnabled={!!currentChatSettings.isGoogleSearchEnabled}
