@@ -68,10 +68,10 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors"
+          className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors flex items-center gap-1 sm:gap-1.5"
           aria-label="Cancel creating text file"
         >
-          Cancel
+          <X size={14} /> Cancel
         </button>
         <button
           type="button"

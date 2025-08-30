@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PreloadedMessage, SavedScenario } from '../types';
-import { User, Bot, PlusCircle, Trash2, Edit3, FileUp, FileDown, MessageSquare, Save } from 'lucide-react';
+import { User, Bot, PlusCircle, Trash2, Edit3, FileUp, FileDown, MessageSquare, Save, X } from 'lucide-react';
 import { getResponsiveValue, translations } from '../utils/appUtils';
 
 interface ScenarioEditorProps {
@@ -145,7 +145,9 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
             </div>
         </div>
         <div className="flex-shrink-0 mt-4 pt-4 border-t border-[var(--theme-border-primary)] flex justify-end gap-3">
-             <button onClick={onCancel} className="px-4 py-2 text-sm bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors border border-[var(--theme-border-secondary)]">{t('cancel')}</button>
+             <button onClick={onCancel} className="px-4 py-2 text-sm bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors border border-[var(--theme-border-secondary)] flex items-center gap-1.5">
+                <X size={actionIconSize} /> {t('cancel')}
+             </button>
              <button onClick={() => onSave(scenario)} disabled={!scenario.title.trim()} className="px-4 py-2 text-sm bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors disabled:opacity-50 flex items-center gap-1.5">
                 <Save size={actionIconSize} /> {t('scenarios_save_button')}
              </button>

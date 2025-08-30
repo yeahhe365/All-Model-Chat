@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw, Save } from 'lucide-react';
+import { X, Save } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 
 interface SettingsActionsProps {
@@ -25,6 +25,7 @@ export const SettingsActions: React.FC<SettingsActionsProps> = ({
           type="button"
           className={`${baseButtonClass} flex-1 sm:flex-initial bg-transparent text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-secondary)]`}
         >
+          <X size={actionButtonIconSize} />
           <span>{t('cancel')}</span>
         </button>
         <button
