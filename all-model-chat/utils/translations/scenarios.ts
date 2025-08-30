@@ -1,6 +1,8 @@
 export const scenariosTranslations = {
     // PreloadedMessagesModal.tsx
     scenarios_title: { en: 'Manage Preloaded Scenarios', zh: '管理预加载场景' },
+    scenarios_title_edit: { en: 'Editing Scenario', zh: '编辑场景' },
+    scenarios_title_create: { en: 'Create New Scenario', zh: '创建新场景' },
     scenarios_close_aria: { en: 'Close scenarios manager', zh: '关闭场景管理器' },
     scenarios_feedback_emptyContent: { en: 'Message content cannot be empty.', zh: '消息内容不能为空。' },
     scenarios_feedback_updated: { en: 'Message updated.', zh: '消息已更新。' },
@@ -15,6 +17,8 @@ export const scenariosTranslations = {
     scenarios_feedback_imported: { en: 'Scenario imported successfully!', zh: '场景导入成功！' },
     scenarios_feedback_importFailed: { en: 'Failed to import scenario. Invalid file format or content.', zh: '场景导入失败。文件格式或内容无效。' },
     scenarios_feedback_importError: { en: 'Import error: {error}', zh: '导入错误：{error}' },
+    scenarios_editor_title_label: { en: 'Scenario Title', zh: '场景标题' },
+    scenarios_editor_title_placeholder: { en: 'Enter a descriptive title...', zh: '输入一个描述性标题...' },
     scenarios_editor_edit_title: { en: 'Edit Message', zh: '编辑消息' },
     scenarios_editor_add_title: { en: 'Add New Message', zh: '添加新消息' },
     scenarios_editor_role_aria: { en: 'Select message role', zh: '选择消息角色' },
@@ -34,8 +38,8 @@ export const scenariosTranslations = {
     scenarios_close_title: { en: 'Close editor', zh: '关闭编辑器' },
     scenarios_load_button: { en: 'Load', zh: '加载' },
     scenarios_load_title: { en: 'Load scenario into chat', zh: '将场景加载到聊天中' },
-    scenarios_save_button: { en: 'Save', zh: '保存' },
-    scenarios_save_title: { en: 'Save scenario & close', zh: '保存并关闭' },
+    scenarios_save_button: { en: 'Save Scenario', zh: '保存场景' },
+    scenarios_save_title: { en: 'Save all scenarios & close', zh: '保存所有场景并关闭' },
     scenarios_moveUp_title: { en: 'Move up', zh: '上移' },
     scenarios_moveDown_title: { en: 'Move down', zh: '下移' },
     scenarios_edit_title: { en: 'Edit message', zh: '编辑消息' },
