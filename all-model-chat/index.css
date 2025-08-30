@@ -1,3 +1,4 @@
+
 @import 'highlight.js/styles/github-dark.css';
 
 html, body, #root {
@@ -37,8 +38,7 @@ body::-webkit-scrollbar-thumb {
   color: #1f2937; /* A dark text color for contrast */
 }
 
-/* === Markdown Aesthetic Overrides === */
-/* Rely on github-markdown-dark for base font-size, line-height, and element margins */
+/* === Markdown Aesthetic Overrides (Typora-inspired) === */
 .markdown-body {
   background-color: transparent !important;
   color: var(--theme-text-primary) !important;
@@ -49,38 +49,36 @@ body::-webkit-scrollbar-thumb {
 .markdown-body strong,
 .markdown-body b {
   font-weight: 600;
+  color: var(--theme-text-primary);
 }
 
-/* strong/b, and base element margins are now handled by github-markdown-dark.css */
-
-/* Headings: Override color and borders, let the library handle sizing and margins for responsiveness */
+/* Headings: Clean and simple. Let h1 have its border from the base sheet. */
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   color: var(--theme-text-primary) !important;
+  font-weight: 600;
+}
+/* Remove borders from H2 downwards for a cleaner Typora-like look */
+.markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   border-bottom: none !important;
 }
-/* Specific override for h2 bottom border, a key part of the design */
-.markdown-body h2 {
-  padding-bottom: 0.4em;
-  border-bottom: 1px solid var(--theme-border-primary) !important;
-}
-/* Font sizes and margins for headings are now handled by the imported stylesheet */
 
+/* Inline Code: Subtle background, no border. */
 .markdown-body code:not(pre code) {
-  background-color: var(--theme-bg-input) !important;
+  background-color: var(--theme-bg-tertiary) !important;
   color: var(--theme-text-code) !important;
-  border: 1px solid var(--theme-border-secondary);
-  padding: 0.25em 0.5em;
+  border: none;
+  padding: 0.2em 0.4em;
   margin: 0;
   font-size: 88%;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 .markdown-body pre {
   padding: 10px !important;
   padding-top: 2.5rem !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   overflow: hidden;
   position: relative !important;
-  border: 1px solid var(--theme-border-secondary);
+  border: 1px solid var(--theme-border-primary);
 }
  @media (min-width: 640px) {
     .markdown-body pre {
@@ -101,71 +99,87 @@ body::-webkit-scrollbar-thumb {
         font-size: 0.9rem !important;
     }
  }
+/* Links: Understated color, underline on hover. */
 .markdown-body a {
     color: var(--markdown-link-text) !important;
     text-decoration: none !important;
-    background-image: linear-gradient(var(--markdown-link-text), var(--markdown-link-text));
-    background-position: 0% 100%;
-    background-repeat: no-repeat;
-    background-size: 0% 1px;
-    transition: background-size .3s ease;
-    padding-bottom: 2px;
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s ease;
+    padding-bottom: 1px;
 }
 .markdown-body a:hover {
-    background-size: 100% 1px;
+    border-bottom-color: var(--markdown-link-text);
 }
+/* Blockquotes: Subtle left border, no background color. */
 .markdown-body blockquote {
     margin-left: 0.5em;
-    padding: 0.8em 1.2em;
-    border-left: 4px solid var(--theme-bg-accent) !important;
-    background-color: var(--theme-bg-tertiary) !important;
+    padding: 0.5em 1.2em;
+    border-left: 3px solid var(--theme-border-secondary) !important;
+    background-color: transparent !important;
     color: var(--theme-text-secondary) !important;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0;
 }
 .markdown-body blockquote p {
     margin: 0;
-    font-style: italic;
-    font-size: 0.95em;
+    font-style: normal;
+    font-size: 1em;
     color: var(--theme-text-secondary) !important;
 }
+/* Horizontal Rule: Thin and subtle. */
 .markdown-body hr {
-    height: 2px !important;
+    height: 1px !important;
     border: none !important;
-    background: linear-gradient(to right, transparent, var(--theme-border-secondary), transparent) !important;
-    margin: 3em 0 !important;
+    background-color: var(--theme-border-secondary) !important;
+    margin: 2em 0 !important;
     padding: 0 !important;
 }
+/* Tables: Clean, with subtle borders and striping. */
 .markdown-body table {
     width: 100%;
     border-collapse: collapse;
-    display: block;
+    display: table;
     overflow-x: auto;
-    white-space: nowrap;
+    white-space: normal;
+    border: 1px solid var(--theme-border-primary);
+    border-radius: 8px;
+    border-spacing: 0;
 }
 .markdown-body table th, .markdown-body table td {
-    border: 1px solid var(--markdown-table-border) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--theme-border-primary) !important;
     padding: 0.75em 1em;
+}
+.markdown-body table tr:last-child td {
+    border-bottom: none !important;
 }
 .markdown-body table th {
     background-color: var(--theme-bg-tertiary) !important;
     color: var(--theme-text-primary) !important;
     font-weight: 600;
     text-align: left;
+    border-bottom-width: 2px !important;
+    border-bottom-color: var(--theme-border-secondary) !important;
 }
 .markdown-body table td {
     color: var(--theme-text-secondary) !important;
 }
 .markdown-body table tr:nth-of-type(odd) td {
-    background-color: var(--theme-bg-secondary) !important;
+    background-color: transparent !important;
 }
+.markdown-body table tr:nth-of-type(even) td {
+    background-color: var(--theme-bg-secondary) !important; /* A very subtle striping */
+}
+.markdown-body table th:first-child { border-top-left-radius: 8px; }
+.markdown-body table th:last-child { border-top-right-radius: 8px; }
+/* Lists: Muted markers. */
 .markdown-body ol, .markdown-body ul {
   list-style: revert;
   margin: revert;
   padding-left: 2em;
 }
 .markdown-body ul li::marker, .markdown-body ol li::marker {
-  color: var(--theme-bg-accent);
-  font-weight: bold;
+  color: var(--theme-text-secondary);
+  font-weight: normal;
 }
 .markdown-body li {
   margin-bottom: 0.5em;

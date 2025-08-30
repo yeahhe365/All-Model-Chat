@@ -140,11 +140,11 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
 
 export const applyImageCachePolicy = (sessions: SavedChatSession[]): SavedChatSession[] => {
     const sessionsCopy = JSON.parse(JSON.stringify(sessions)); // Deep copy to avoid direct state mutation
-    if (sessionsCopy.length > 5) {
-        logService.debug('Applying image cache policy: Pruning images from sessions older than 5th.');
-        // Prune images from the 6th session onwards
-        for (let i = 5; i < sessionsCopy.length; i++) {
-            const session = sessionsCopy[i];
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    logService.debug(`Applying 7-day image cache policy. Pruning images from sessions older than ${new Date(sevenDaysAgo).toISOString()}.`);
+
+    sessionsCopy.forEach((session: SavedChatSession) => {
+        if (session.timestamp < sevenDaysAgo) {
             if (session.messages && Array.isArray(session.messages)) {
                 session.messages.forEach((message: ChatMessage) => {
                     if (message.files && Array.isArray(message.files)) {
@@ -158,6 +158,6 @@ export const applyImageCachePolicy = (sessions: SavedChatSession[]): SavedChatSe
                 });
             }
         }
-    }
+    });
     return sessionsCopy;
 };
