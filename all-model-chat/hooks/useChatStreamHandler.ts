@@ -149,113 +149,127 @@ export const useChatStreamHandler = ({
         };
 
         const streamOnPart = (part: Part) => {
-            let isFirstContentPart = false;
             if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
                 firstContentPartTimeRef.current = new Date();
-                isFirstContentPart = true;
             }
+        
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
-                let messages = [...s.messages];
-                
-                let targetMessage: ChatMessage | undefined;
+        
+                let newMessages = [...s.messages];
+                let targetMessageIndex = -1;
+        
                 if (retryOfMessageId) {
-                    targetMessage = messages.find(m => m.id === retryOfMessageId);
+                    targetMessageIndex = newMessages.findIndex(m => m.id === retryOfMessageId);
                 } else {
-                    targetMessage = [...messages].reverse().find(m => m.isLoading && m.generationStartTime === generationStartTimeRef.current);
-                }
-
-                if (isFirstContentPart && targetMessage) {
-                    const thinkingTime = generationStartTimeRef.current ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime()) : null;
-                    if (thinkingTime !== null) {
-                        if (retryOfMessageId && targetMessage.versions && targetMessage.activeVersionIndex !== undefined) {
-                            targetMessage.versions[targetMessage.activeVersionIndex].thinkingTimeMs = thinkingTime;
-                        } else {
-                           targetMessage.thinkingTimeMs = thinkingTime;
+                    for (let i = newMessages.length - 1; i >= 0; i--) {
+                        if (newMessages[i].isLoading && newMessages[i].generationStartTime === generationStartTimeRef.current) {
+                            targetMessageIndex = i;
+                            break;
                         }
                     }
                 }
-
-                let lastContentHolder: ChatMessage | ModelResponseVersion | null | undefined = targetMessage;
-                if (retryOfMessageId && targetMessage?.versions && targetMessage.activeVersionIndex !== undefined) {
-                    lastContentHolder = targetMessage.versions[targetMessage.activeVersionIndex];
-                }
-
-                const createNewMessage = (content: string): ChatMessage => {
+        
+                const anyPart = part as any;
+                const createNewMessage = (content: string, files?: UploadedFile[]): ChatMessage => {
                     const id = generateUniqueId();
                     newModelMessageIds.add(id);
-                    return { id, role: 'model', content, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
+                    return { id, role: 'model', content, files: files || [], timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
                 };
-                
-                const anyPart = part as any;
-                if (anyPart.text) {
-                     if (lastContentHolder && !isToolMessage(lastContentHolder)) {
-                        lastContentHolder.content += anyPart.text;
-                    } else if (!retryOfMessageId) {
-                        messages.push(createNewMessage(anyPart.text));
+        
+                if (targetMessageIndex !== -1) {
+                    const targetMessage = newMessages[targetMessageIndex];
+        
+                    let currentContentHolder: ChatMessage | ModelResponseVersion = targetMessage;
+                    if (retryOfMessageId && targetMessage.versions) {
+                        currentContentHolder = targetMessage.versions[targetMessage.activeVersionIndex ?? 0];
                     }
+        
+                    if (anyPart.text && !isToolMessage(currentContentHolder)) {
+                        const updatedMessage = { ...targetMessage };
+                        const updatedContent = (currentContentHolder.content || '') + anyPart.text;
+        
+                        if (retryOfMessageId && updatedMessage.versions) {
+                            const activeIndex = updatedMessage.activeVersionIndex ?? 0;
+                            const newVersions = [...updatedMessage.versions];
+                            const newVersion = { ...newVersions[activeIndex], content: updatedContent };
+                            newVersions[activeIndex] = newVersion;
+                            updatedMessage.versions = newVersions;
+                            updatedMessage.content = updatedContent;
+                        } else {
+                            updatedMessage.content = updatedContent;
+                        }
+                        newMessages[targetMessageIndex] = updatedMessage;
+                        return { ...s, messages: newMessages };
+                    }
+                }
+        
+                // Fallback or new message logic for tools/text after tools
+                if (anyPart.text) {
+                    newMessages.push(createNewMessage(anyPart.text));
                 } else if (anyPart.executableCode) {
                     const codePart = anyPart.executableCode as { language: string, code: string };
                     const toolContent = `\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\``;
-                    messages.push(createNewMessage(toolContent));
+                    newMessages.push(createNewMessage(toolContent));
                 } else if (anyPart.codeExecutionResult) {
                     const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
-                    const escapeHtml = (unsafe: string) => {
-                        if (typeof unsafe !== 'string') return '';
-                        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-                    };
+                    const escapeHtml = (unsafe: string) => unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
                     let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
-                    if (resultPart.output) {
-                        toolContent += `<pre><code>${escapeHtml(resultPart.output)}</code></pre>`;
-                    }
+                    if (resultPart.output) toolContent += `<pre><code>${escapeHtml(resultPart.output)}</code></pre>`;
                     toolContent += '</div>';
-                    messages.push(createNewMessage(toolContent));
+                    newMessages.push(createNewMessage(toolContent));
                 } else if (anyPart.inlineData) {
                     const { mimeType, data } = anyPart.inlineData;
                     if (mimeType.startsWith('image/')) {
                         const dataUrl = base64ToBlobUrl(data, mimeType);
-                        const newFile: UploadedFile = {
-                            id: generateUniqueId(),
-                            name: 'Generated Image',
-                            type: mimeType,
-                            size: data.length,
-                            dataUrl: dataUrl,
-                            uploadState: 'active'
-                        };
-                        
-                        if (lastContentHolder) {
-                            lastContentHolder.files = [...(lastContentHolder.files || []), newFile];
-                        } else if (!retryOfMessageId) {
-                            const newMessage = createNewMessage('');
-                            newMessage.files = [newFile];
-                            messages.push(newMessage);
+                        const newFile: UploadedFile = { id: generateUniqueId(), name: 'Generated Image', type: mimeType, size: data.length, dataUrl, uploadState: 'active' };
+                        const lastMsg = newMessages.length > 0 ? newMessages[newMessages.length - 1] : null;
+                        if (lastMsg && !isToolMessage(lastMsg) && !retryOfMessageId) {
+                            newMessages[newMessages.length - 1] = { ...lastMsg, files: [...(lastMsg.files || []), newFile] };
+                        } else {
+                            newMessages.push(createNewMessage('', [newFile]));
                         }
                     }
                 }
-                return { ...s, messages };
+        
+                return { ...s, messages: newMessages };
             }));
         };
 
         const onThoughtChunk = (thoughtChunk: string) => {
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
-                let messages = [...s.messages];
                 
-                let targetMessage: ChatMessage | undefined;
-                if (retryOfMessageId) {
-                    targetMessage = messages.find(m => m.id === retryOfMessageId);
-                } else {
-                    targetMessage = [...messages].reverse().find(m => m.isLoading && m.generationStartTime === generationStartTimeRef.current);
-                }
-                
-                if (targetMessage) {
-                    if (retryOfMessageId && targetMessage.versions && targetMessage.activeVersionIndex !== undefined) {
-                        targetMessage.versions[targetMessage.activeVersionIndex].thoughts = (targetMessage.versions[targetMessage.activeVersionIndex].thoughts || '') + thoughtChunk;
+                const newMessages = s.messages.map(m => {
+                    let isTarget = false;
+                    if (retryOfMessageId && m.id === retryOfMessageId) {
+                        isTarget = true;
                     } else {
-                        targetMessage.thoughts = (targetMessage.thoughts || '') + thoughtChunk;
+                        // Find the last loading message for the current generation
+                        const lastMessage = s.messages[s.messages.length - 1];
+                        if (m.id === lastMessage.id && m.isLoading && m.generationStartTime === generationStartTimeRef.current) {
+                            isTarget = true;
+                        }
                     }
-                }
-                return { ...s, messages };
+        
+                    if (isTarget) {
+                        const updatedMessage = { ...m };
+                        if (retryOfMessageId && updatedMessage.versions) {
+                            const activeIndex = updatedMessage.activeVersionIndex ?? 0;
+                            const newVersions = [...updatedMessage.versions];
+                            const currentVersion = newVersions[activeIndex];
+                            newVersions[activeIndex] = { ...currentVersion, thoughts: (currentVersion.thoughts || '') + thoughtChunk };
+                            updatedMessage.versions = newVersions;
+                            updatedMessage.thoughts = newVersions[activeIndex].thoughts; // Sync top-level
+                        } else {
+                            updatedMessage.thoughts = (updatedMessage.thoughts || '') + thoughtChunk;
+                        }
+                        return updatedMessage;
+                    }
+                    return m;
+                });
+                
+                return { ...s, messages: newMessages };
             }));
         };
         

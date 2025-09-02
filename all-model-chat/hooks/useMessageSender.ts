@@ -154,7 +154,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
                         versions.push(newVersion);
                         const newActiveIndex = versions.length - 1;
 
-                        return { ...m, versions, activeVersionIndex: newActiveIndex, isLoading: true, content: '', files: [], thoughts: '', generationStartTime: generationStartTimeRef.current!, generationEndTime: undefined, };
+                        return { ...m, versions, activeVersionIndex: newActiveIndex, isLoading: true, content: '', files: [], thoughts: '', generationStartTime: generationStartTimeRef.current!, generationEndTime: undefined, thinkingTimeMs: undefined };
                     })
                 };
             }));
