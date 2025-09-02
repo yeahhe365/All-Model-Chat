@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
 import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
@@ -114,7 +115,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
     const img = new Image();
     img.onload = () => {
         const canvas = document.createElement('canvas');
-        const padding = 20;
+        const padding = 0;
         const exportScale = 3; // high-res
         
         canvas.width = (img.width + padding * 2) * exportScale;
@@ -122,8 +123,6 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
         const ctx = canvas.getContext('2d');
 
         if (ctx) {
-            ctx.fillStyle = file.type === 'image/svg+xml' ? 'white' : 'transparent';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, padding * exportScale, padding * exportScale, img.width * exportScale, img.height * exportScale);
 
             const pngUrl = canvas.toDataURL('image/png');

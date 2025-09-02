@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon } from 'lucide-react';
@@ -130,14 +131,12 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
             return;
         }
         const canvas = document.createElement('canvas');
-        const padding = 20;
+        const padding = 0;
         const scale = 3;
         canvas.width = (imgWidth + padding * 2) * scale;
         canvas.height = (imgHeight + padding * 2) * scale;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, padding * scale, padding * scale, imgWidth * scale, imgHeight * scale);
             const pngUrl = canvas.toDataURL('image/png');
             const link = document.createElement('a');

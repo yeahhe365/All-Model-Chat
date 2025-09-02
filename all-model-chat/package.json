@@ -9,22 +9,23 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.1.0",
     "@google/genai": "^1.2.0",
-    "react": "^19.1.0",
-    "lucide-react": "^0.417.0",
-    "marked": "^13.0.2",
     "dompurify": "^3.1.6",
     "highlight.js": "^11.9.0",
     "html2canvas": "^1.4.1",
+    "katex": "^0.16.10",
+    "lucide-react": "^0.417.0",
+    "marked": "^13.0.2",
+    "mermaid": "^10.9.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "react-markdown": "^9.0.1",
-    "remark-gfm": "^4.0.0",
-    "remark-math": "^6.0.0",
-    "rehype-katex": "^7.0.0",
     "rehype-highlight": "^7.0.0",
-    "katex": "0.16.9",
+    "rehype-katex": "^7.0.0",
     "rehype-raw": "^7.0.0",
-    "mermaid": "^10.9.1"
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

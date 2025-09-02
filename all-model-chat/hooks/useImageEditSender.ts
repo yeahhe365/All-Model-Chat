@@ -37,7 +37,7 @@ export const useImageEditSender = ({
         options: { shouldLockKey?: boolean } = {}
     ) => {
         const modelMessageId = generationId;
-        const imageFile = files.find(f => f.type.startsWith('image/'));
+        const imageFiles = files.filter(f => f.type.startsWith('image/'));
 
         let finalSessionId = activeSessionId;
         const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, files, timestamp: new Date() };
@@ -89,8 +89,7 @@ export const useImageEditSender = ({
         activeJobs.current.set(generationId, newAbortController);
 
         try {
-            const filesForPrompt = imageFile ? [imageFile] : [];
-            const { contentParts: promptParts } = await buildContentParts(text, filesForPrompt);
+            const { contentParts: promptParts } = await buildContentParts(text, imageFiles);
             const historyForApi = await createChatHistoryForApi(messages);
             
             const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal);

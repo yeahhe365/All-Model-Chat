@@ -1,4 +1,5 @@
 
+
 @import 'highlight.js/styles/github-dark.css';
 
 html, body, #root {
@@ -240,11 +241,6 @@ body::-webkit-scrollbar-thumb {
     color: var(--theme-text-code) !important; /* Use a fallback color */
     padding: 0 !important;
  }
-/* KaTeX font path fix for ESM */
-.katex {
-  font-family: 'KaTeX_Main', 'Times New Roman', serif !important;
-}
-
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;

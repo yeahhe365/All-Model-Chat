@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { CodeBlock } from '../message/CodeBlock';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
@@ -33,10 +34,36 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 }) => {
 
   const rehypePlugins = useMemo(() => {
-    const plugins = [rehypeKatex, rehypeHighlight];
+    // Custom schema to allow classes and attributes needed by KaTeX and highlight.js
+    const sanitizeSchema = {
+      ...defaultSchema,
+      attributes: {
+        ...defaultSchema.attributes,
+        // Allow `className` for elements used by KaTeX and highlight.js.
+        // This is crucial for styling to apply correctly.
+        code: [...(defaultSchema.attributes?.code || []), 'className'],
+        span: [...(defaultSchema.attributes?.span || []), 'className'],
+        div: [...(defaultSchema.attributes?.div || []), 'className'],
+      },
+    };
+
+    // The order of plugins is important for security and functionality.
+    const plugins: any[] = [];
+    
     if (allowHtml) {
-      plugins.unshift(rehypeRaw);
+      // 1. If allowing raw HTML, it must be parsed first.
+      plugins.push(rehypeRaw);
     }
+
+    // 2. Transform special markdown syntax (math, code) into HTML.
+    plugins.push([rehypeKatex, { throwOnError: false, macros: { "\\RR": "\\mathbb{R}" } }]);
+    plugins.push(rehypeHighlight);
+
+    // 3. Sanitize the entire generated HTML tree at the end.
+    // This ensures that both the raw HTML (if allowed) and the output from
+    // other plugins are safe.
+    plugins.push([rehypeSanitize, sanitizeSchema]);
+
     return plugins;
   }, [allowHtml]);
 

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { Loader2, AlertTriangle, Download, Maximize } from 'lucide-react';
@@ -85,7 +86,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
 
     img.onload = () => {
         const canvas = document.createElement('canvas');
-        const padding = 20;
+        const padding = 0;
         const scale = 3; // Increase resolution
         
         canvas.width = (imgWidth + padding * 2) * scale;
@@ -93,9 +94,6 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
         const ctx = canvas.getContext('2d');
 
         if (ctx) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
             // Draw scaled image with padding
             ctx.drawImage(
                 img, 
