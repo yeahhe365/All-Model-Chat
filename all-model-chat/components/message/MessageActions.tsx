@@ -40,7 +40,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     const actionButtonClasses = "p-1 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
 
     return (
-        <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
+        <div className="flex-shrink-0 w-7 sm:w-8 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
             <div className="h-7 sm:h-8">
                 {!isGrouped && (
                     <>
