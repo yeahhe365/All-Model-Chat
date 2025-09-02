@@ -138,7 +138,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       {file.error && (
         <p className="text-xs text-[var(--theme-text-danger)] ml-auto pl-2 flex-shrink-0" title={file.error}>Error</p>
       )}
-      {isFromMessageList && file.dataUrl && file.name.startsWith('generated-image-') && !file.error && (
+      {isFromMessageList && file.dataUrl && (file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && !file.error && (
         <button
             onClick={handleDownloadImage}
             title="Download Image"
