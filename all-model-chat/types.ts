@@ -24,6 +24,24 @@ export interface UploadedFile {
   uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled'; // State of the file on Gemini API
   abortController?: AbortController; // Added for cancelling uploads
 }
+export interface ModelResponseVersion {
+  content: string;
+  files?: UploadedFile[];
+  timestamp: Date;
+  thoughts?: string;
+  generationStartTime?: Date;
+  generationEndTime?: Date;
+  thinkingTimeMs?: number;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  cumulativeTotalTokens?: number;
+  audioSrc?: string;
+  groundingMetadata?: any;
+  suggestions?: string[];
+  isGeneratingSuggestions?: boolean;
+}
+
 
 export interface ChatMessage {
   id: string;
@@ -44,6 +62,9 @@ export interface ChatMessage {
   groundingMetadata?: any;
   suggestions?: string[];
   isGeneratingSuggestions?: boolean;
+  // New fields for handling retries
+  versions?: ModelResponseVersion[];
+  activeVersionIndex?: number;
 }
 
 export interface ModelOption {
@@ -190,6 +211,7 @@ export interface MessageListProps {
   onEditMessage: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void; 
+  onVersionChange: (messageId: string, newIndex: number) => void;
   showThoughts: boolean;
   themeColors: ThemeColors; 
   themeId: string;
@@ -247,6 +269,7 @@ export interface ChatInputProps {
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
   onEditLastUserMessage: () => void;
+  onModalVisibilityChange?: (isVisible: boolean) => void;
   onTogglePip: () => void;
   isPipActive?: boolean;
 }
@@ -413,6 +436,7 @@ export interface ChatAreaProps {
   onEditMessage: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
+  onVersionChange: (messageId: string, newIndex: number) => void;
   showThoughts: boolean;
   themeColors: ThemeColors;
   baseFontSize: number;
@@ -463,6 +487,7 @@ export interface ChatAreaProps {
   onEditLastUserMessage: () => void;
   onOpenLogViewer: () => void;
   onClearAllHistory: () => void;
+  onModalVisibilityChange?: (isVisible: boolean) => void;
   
   // PiP Props
   isPipSupported: boolean;

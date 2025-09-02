@@ -1,5 +1,5 @@
 import { useCallback, useRef, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, ModelResponseVersion } from '../types';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -62,10 +62,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setActiveSessionId,
     });
 
-    const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
+    const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string; retryOfMessageId?: string }) => {
         const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
+        const retryOfMessageId = overrideOptions?.retryOfMessageId;
         
         const sessionToUpdate = currentChatSettings;
         const activeModelId = sessionToUpdate.modelId;
@@ -135,23 +136,34 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const userMessageContent: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles.map(f => ({...f, rawFile: undefined})) : undefined, timestamp: new Date() };
         const modelMessageContent: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
 
-        // Perform a single, atomic state update for adding messages and creating a new session if necessary.
-        if (!finalSessionId) { // New Chat
-            const newSessionId = generateUniqueId();
-            finalSessionId = newSessionId;
-            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
-            
-            userMessageContent.cumulativeTotalTokens = 0;
-            const newSession: SavedChatSession = { id: newSessionId, title: "New Chat", messages: [userMessageContent, modelMessageContent], timestamp: Date.now(), settings: newSessionSettings };
-            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
-            setActiveSessionId(newSessionId);
-        } else { // Existing Chat or Edit
+        if (retryOfMessageId) {
+            if (!finalSessionId) return;
             updateAndPersistSessions(prev => prev.map(s => {
-                const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
+                if (s.id !== finalSessionId) return s;
+                return {
+                    ...s,
+                    messages: s.messages.map(m => {
+                        if (m.id !== retryOfMessageId) return m;
+
+                        const newVersion: ModelResponseVersion = { content: '', timestamp: new Date(), generationStartTime: generationStartTimeRef.current!, };
+                        const versions = [...(m.versions || [])];
+                        if (versions.length === 0) {
+                            const originalVersion: ModelResponseVersion = { content: m.content, files: m.files, timestamp: m.timestamp, thoughts: m.thoughts, generationStartTime: m.generationStartTime, generationEndTime: m.generationEndTime, thinkingTimeMs: m.thinkingTimeMs, promptTokens: m.promptTokens, completionTokens: m.completionTokens, totalTokens: m.totalTokens, cumulativeTotalTokens: m.cumulativeTotalTokens, audioSrc: m.audioSrc, groundingMetadata: m.groundingMetadata, suggestions: m.suggestions, isGeneratingSuggestions: m.isGeneratingSuggestions };
+                            versions.push(originalVersion);
+                        }
+                        versions.push(newVersion);
+                        const newActiveIndex = versions.length - 1;
+
+                        return { ...m, versions, activeVersionIndex: newActiveIndex, isLoading: true, content: '', files: [], thoughts: '', generationStartTime: generationStartTimeRef.current!, generationEndTime: undefined, };
+                    })
+                };
+            }));
+        } else if (effectiveEditingId) {
+             updateAndPersistSessions(prev => prev.map(s => {
+                const isSessionToUpdate = s.messages.some(m => m.id === effectiveEditingId);
                 if (!isSessionToUpdate) return s;
 
-                const editIndex = effectiveEditingId ? s.messages.findIndex(m => m.id === effectiveEditingId) : -1;
+                const editIndex = s.messages.findIndex(m => m.id === effectiveEditingId);
                 const baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : [...s.messages];
                 
                 userMessageContent.cumulativeTotalTokens = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
@@ -167,7 +179,24 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 }
                 return { ...s, messages: newMessages, title: newTitle, settings: updatedSettings };
             }));
+        } else if (!finalSessionId) { // New Chat
+            const newSessionId = generateUniqueId();
+            finalSessionId = newSessionId;
+            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
+            
+            userMessageContent.cumulativeTotalTokens = 0;
+            const newSession: SavedChatSession = { id: newSessionId, title: "New Chat", messages: [userMessageContent, modelMessageContent], timestamp: Date.now(), settings: newSessionSettings };
+            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            setActiveSessionId(newSessionId);
+        } else { // Existing Chat
+             updateAndPersistSessions(prev => prev.map(s => {
+                if (s.id !== finalSessionId) return s;
+                 const newMessages = [...s.messages, userMessageContent, modelMessageContent];
+                 return { ...s, messages: newMessages };
+            }));
         }
+
 
         if (editingMessageId) {
             setEditingMessageId(null);
@@ -179,7 +208,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
              return; 
         }
         
-        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(finalSessionId!, generationId, newAbortController, generationStartTimeRef, sessionToUpdate);
+        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(finalSessionId!, generationId, newAbortController, generationStartTimeRef, sessionToUpdate, retryOfMessageId);
         
         setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
         activeJobs.current.set(generationId, newAbortController);
@@ -187,9 +216,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
         // Standard models that support the Chat object
         let chatToUse = chat;
 
-        if (effectiveEditingId) {
-            logService.info("Handling message edit: creating temporary chat object for this turn.");
-            const baseMessagesForApi = messages.slice(0, messages.findIndex(m => m.id === effectiveEditingId));
+        if (effectiveEditingId || retryOfMessageId) {
+            logService.info("Handling message edit/retry: creating temporary chat object for this turn.");
+            const baseMessagesForApi = retryOfMessageId 
+                ? messages.slice(0, messages.findIndex(m => m.id === retryOfMessageId))
+                : messages.slice(0, messages.findIndex(m => m.id === effectiveEditingId));
+
             const historyForChat = await createChatHistoryForApi(baseMessagesForApi);
             const storedSettings = localStorage.getItem('app-settings');
             const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;

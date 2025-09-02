@@ -1,6 +1,5 @@
 
 
-@import 'highlight.js/styles/github-dark.css';
 
 html, body, #root {
   height: 100%;
@@ -89,7 +88,6 @@ body::-webkit-scrollbar-thumb {
  }
 .markdown-body pre code, .markdown-body pre code.hljs {
   background-color: transparent !important;
-  color: inherit !important;
   padding: 0 !important;
   font-size: 0.85rem !important;
   overflow-x: auto;

@@ -16,7 +16,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
     isKeyLocked, defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, onEditMessage,
-    onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
+    onDeleteMessage, onRetryMessage, onVersionChange, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
     onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, setCommandedInput, onMessageSent,
@@ -27,6 +27,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
     onOpenLogViewer, onClearAllHistory,
+    onModalVisibilityChange,
     isPipSupported, isPipActive, onTogglePip,
     t
   } = props;
@@ -184,6 +185,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onEditMessage={onEditMessage}
         onDeleteMessage={onDeleteMessage}
         onRetryMessage={onRetryMessage}
+        onVersionChange={onVersionChange}
         showThoughts={showThoughts}
         themeColors={themeColors}
         themeId={themeId}
@@ -242,6 +244,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onTogglePinCurrentSession={onTogglePinCurrentSession}
             onRetryLastTurn={onRetryLastTurn}
             onEditLastUserMessage={onEditLastUserMessage}
+            onModalVisibilityChange={onModalVisibilityChange}
             onTogglePip={onTogglePip}
             isPipActive={isPipActive}
           />
