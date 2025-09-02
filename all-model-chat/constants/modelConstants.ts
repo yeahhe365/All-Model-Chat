@@ -1,4 +1,4 @@
-export const DEFAULT_MODEL_ID = 'gemini-2.5-flash'; 
+export const DEFAULT_MODEL_ID = 'gemini-2.5-pro'; 
 
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-2.5-pro',
