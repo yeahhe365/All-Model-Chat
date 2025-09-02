@@ -1,7 +1,8 @@
 
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
-import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCw, Download, Loader2, ClipboardCopy, Check } from 'lucide-react';
 import { translations, getResponsiveValue } from '../../utils/appUtils';
 import { Modal } from './Modal';
 
@@ -9,7 +10,7 @@ interface ImageZoomModalProps {
   file: UploadedFile | null;
   onClose: () => void;
   themeColors: ThemeColors;
-  t: (key: keyof typeof translations) => string;
+  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t }) => {
@@ -84,62 +85,22 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
     }
   }, [file, isCopied]);
 
-  const handleDownload = useCallback(async (format: 'png' | 'svg') => {
+  const handleDownload = useCallback(() => {
     if (!file?.dataUrl || isDownloading) return;
-    
-    if (format === 'svg' && file.type === 'image/svg+xml') {
-        setIsDownloading(true);
-        try {
-            const base64Content = file.dataUrl.split(',')[1];
-            // This is the correct way to decode base64 that might contain UTF-8 characters
-            const svgContent = decodeURIComponent(escape(atob(base64Content)));
-            const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${file.name.split('.')[0] || 'diagram'}.svg`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        } catch (e) {
-            console.error("Failed to download SVG:", e);
-        } finally {
-            setIsDownloading(false);
-        }
-        return;
-    }
-
-    // PNG Download
     setIsDownloading(true);
-    const img = new Image();
-    img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const padding = 0;
-        const exportScale = 3; // high-res
-        
-        canvas.width = (img.width + padding * 2) * exportScale;
-        canvas.height = (img.height + padding * 2) * exportScale;
-        const ctx = canvas.getContext('2d');
-
-        if (ctx) {
-            ctx.drawImage(img, padding * exportScale, padding * exportScale, img.width * exportScale, img.height * exportScale);
-
-            const pngUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = pngUrl;
-            link.download = `${file.name.split('.')[0] || 'image'}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        setIsDownloading(false);
-    };
-    img.onerror = () => {
-        console.error("Failed to load image for PNG conversion.");
-        setIsDownloading(false);
-    };
-    img.src = file.dataUrl;
+    try {
+      const link = document.createElement('a');
+      link.href = file.dataUrl;
+      link.download = file.name || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert('Download failed. See console for details.');
+    } finally {
+      setIsDownloading(false);
+    }
   }, [file, isDownloading]);
 
   const handleWheel = useCallback((event: WheelEvent) => {
@@ -213,7 +174,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
 
   if (!file) return null;
 
-  const isMermaidDiagram = file.type === 'image/svg+xml';
+  const isSvgDiagram = file.type === 'image/svg+xml';
   const controlButtonClasses = "p-2 bg-black/50 hover:bg-black/70 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm";
 
   return (
@@ -248,8 +209,8 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
               objectFit: 'contain',
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none', 
-              backgroundColor: isMermaidDiagram ? 'white' : 'transparent',
-              borderRadius: isMermaidDiagram ? '0.375rem' : '0',
+              backgroundColor: isSvgDiagram ? 'white' : 'transparent',
+              borderRadius: isSvgDiagram ? '0.375rem' : '0',
             }}
             onMouseDown={handleMouseDown}
             draggable="false" 
@@ -280,15 +241,9 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
           
-          <button onClick={() => handleDownload('png')} disabled={isDownloading} className={controlButtonClasses} title="Download as PNG">
-            {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
+          <button onClick={handleDownload} disabled={isDownloading} className={controlButtonClasses} title={t('imageZoom_download_original', 'Download Original File')}>
+            {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <Download size={18} />}
           </button>
-          
-          {isMermaidDiagram && (
-            <button onClick={() => handleDownload('svg')} disabled={isDownloading} className={controlButtonClasses} title="Download as SVG">
-                {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <FileCode2 size={18} />}
-            </button>
-          )}
         </div>
       </div>
     </Modal>
