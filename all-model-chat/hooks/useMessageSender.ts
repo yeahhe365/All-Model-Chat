@@ -1,12 +1,12 @@
 import { useCallback, useRef, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, ModelResponseVersion } from '../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, ModelResponseVersion, ChatHistoryItem } from '../types';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './useChatStreamHandler';
 import { useTtsImagenSender } from './useTtsImagenSender';
 import { useImageEditSender } from './useImageEditSender';
-import { Chat, ChatHistoryItem } from '@google/genai';
+import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 import { conversationStreamThrottler } from '../utils/streamThrottler';
 

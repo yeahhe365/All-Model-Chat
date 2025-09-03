@@ -31,7 +31,7 @@ export class StreamThrottler {
             });
 
             // Execute with retry logic
-            await this.executeWithRetry(executeFn, timeoutPromise);
+            await this.executeWithRetry(executeFn, timeoutPromise as Promise<void>);
         } catch (error) {
             logService.error(`Stream execution failed for ${id}:`, error);
             throw error;

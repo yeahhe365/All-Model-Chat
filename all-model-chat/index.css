@@ -594,3 +594,42 @@ body.is-exporting-png .message-actions {
 body.is-exporting-png .sticky[aria-label="Scroll to bottom"] {
     display: none !important;
 }
+
+/* KaTeX根号显示修复 */
+.katex .sqrt {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.katex .sqrt .sqrt-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-top: 1px solid currentColor;
+  border-left: 1px solid currentColor;
+  border-bottom-left-radius: 2px;
+}
+
+.katex .sqrt .sqrt-content {
+  display: inline-block;
+  padding-left: 0.3em;
+}
+
+.katex .sqrt .root {
+  position: absolute;
+  top: -0.2em;
+  left: -0.1em;
+  font-size: 0.8em;
+}
+
+/* 确保KaTeX字体正确加载 */
+.katex {
+  font-family: KaTeX_Main, Times New Roman, serif;
+}
+
+.katex .sqrt-sign {
+  font-family: KaTeX_Main, Times New Roman, serif;
+}

@@ -32,7 +32,7 @@ export const useChatInputModals = ({
     let stream: MediaStream;
     try {
         stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { mediaSource: "screen" },
+            video: { ...({ mediaSource: "screen" } as any) },
             audio: false,
         });
     } catch (err) {

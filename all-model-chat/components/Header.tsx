@@ -140,7 +140,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-expanded={isModelSelectorOpen}
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
-            {isKeyLocked && <Lock size={modelSelectorItemIconSize} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
+            {isKeyLocked && <Lock size={modelSelectorItemIconSize} className="text-[var(--theme-text-link)]" />}
             <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
             <ChevronDown size={modelSelectorChevronSize} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
