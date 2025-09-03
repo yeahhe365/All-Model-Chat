@@ -595,7 +595,22 @@ body.is-exporting-png .sticky[aria-label="Scroll to bottom"] {
     display: none !important;
 }
 
-/* KaTeX根号显示修复 */
+/* Prevent hover state persistence on touch devices */
+@media (hover: hover) {
+  .hover-only:hover {
+    /* Hover styles only apply on devices that support true hover */
+  }
+}
+
+@media (hover: none) {
+  .hover-only:hover {
+    /* Remove hover styles on touch devices */
+    background-color: inherit !important;
+    color: inherit !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
 .katex .sqrt {
   position: relative;
   display: inline-block;

@@ -54,7 +54,9 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
   const [hoveredModelId, setHoveredModelId] = useState<string | null>(null);
+  const [focusedOptionIndex, setFocusedOptionIndex] = useState(-1);
   const modelSelectorRef = useRef<HTMLDivElement>(null);
+  const modelSelectorButtonRef = useRef<HTMLButtonElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
   const [pipShortcut, setPipShortcut] = useState('');
 
@@ -88,6 +90,52 @@ export const Header: React.FC<HeaderProps> = ({
   const handleModelSelect = (modelId: string) => {
     onSelectModel(modelId);
     setIsModelSelectorOpen(false);
+    setFocusedOptionIndex(-1);
+    // Restore focus to the model selector button
+    setTimeout(() => {
+      modelSelectorButtonRef.current?.focus();
+    }, 0);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (!isModelSelectorOpen) {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        setIsModelSelectorOpen(true);
+        setFocusedOptionIndex(0);
+      }
+      return;
+    }
+
+    const availableOptions = isModelsLoading ? [] : availableModels;
+    
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        setFocusedOptionIndex(prev => 
+          prev < availableOptions.length - 1 ? prev + 1 : 0
+        );
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        setFocusedOptionIndex(prev => 
+          prev > 0 ? prev - 1 : availableOptions.length - 1
+        );
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        if (focusedOptionIndex >= 0 && focusedOptionIndex < availableOptions.length) {
+          handleModelSelect(availableOptions[focusedOptionIndex].id);
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        setIsModelSelectorOpen(false);
+        setFocusedOptionIndex(-1);
+        modelSelectorButtonRef.current?.focus();
+        break;
+    }
   };
   
   const handleSetDefault = (e: React.MouseEvent, modelId: string) => {
@@ -131,13 +179,20 @@ export const Header: React.FC<HeaderProps> = ({
         )}
         <div className="relative" ref={modelSelectorRef}>
           <button
+            ref={modelSelectorButtonRef}
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
+            onKeyDown={handleKeyDown}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
             className={`flex items-center gap-2 md:gap-3 rounded-xl md:rounded-lg px-2.5 md:px-4 py-1.5 md:py-1.5 text-sm md:text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
             aria-expanded={isModelSelectorOpen}
+            aria-activedescendant={
+              isModelSelectorOpen && focusedOptionIndex >= 0 && availableModels.length > 0
+                ? `model-option-${availableModels[focusedOptionIndex]?.id}`
+                : undefined
+            }
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
             {isKeyLocked && <Lock size={modelSelectorItemIconSize} className="text-[var(--theme-text-link)]" />}
@@ -161,15 +216,17 @@ export const Header: React.FC<HeaderProps> = ({
                     ))}
                   </div>
                 ) : availableModels.length > 0 ? (
-                  availableModels.map(model => (
+                  availableModels.map((model, index) => (
                     <div
                       key={model.id}
+                      id={`model-option-${model.id}`}
                       onClick={() => handleModelSelect(model.id)}
                       onMouseEnter={() => setHoveredModelId(model.id)}
                       role="option"
                       aria-selected={model.id === selectedModelId}
                       className={`cursor-pointer w-full text-left px-4 md:px-4 py-2.5 md:py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
-                        ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`
+                        ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}
+                        ${index === focusedOptionIndex ? 'bg-[var(--theme-bg-input)] ring-2 ring-[var(--theme-border-focus)]' : ''}`
                       }
                     >
                       <div className="flex items-center justify-between">
