@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
@@ -14,11 +15,12 @@ interface CodeBlockProps {
   className?: string;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
+  isLoading: boolean;
 }
 
 const COLLAPSE_THRESHOLD_PX = 150;
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault, isLoading }) => {
     const preRef = useRef<HTMLPreElement>(null);
     const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
@@ -76,6 +78,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     const likelyHTML = isLikelyHtml(codeText.current);
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (likelyHTML ? 'text/html' : 'text/plain');
     const finalLanguage = language === 'txt' && likelyHTML ? 'html' : (language === 'xml' && likelyHTML ? 'html' : language);
+    
+    // Determine if the block should be rendered in a collapsed state.
+    // It should be collapsed if:
+    // 1. The message is still loading AND the default is to collapse.
+    // OR
+    // 2. The message is done loading, the content is overflowing, and it's not currently expanded.
+    const shouldCollapse = (isLoading && !expandCodeBlocksByDefault) || (isOverflowing && !isExpanded);
 
 
     return (
@@ -84,7 +93,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 ref={preRef} 
                 className={`${className} group !relative`}
                 style={{
-                    maxHeight: isOverflowing && !isExpanded ? `${COLLAPSE_THRESHOLD_PX}px` : `10000px`,
+                    maxHeight: shouldCollapse ? `${COLLAPSE_THRESHOLD_PX}px` : `10000px`,
                     transition: 'max-height 0.3s ease-in-out',
                 }}
             >
@@ -132,7 +141,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 </div>
                 {codeContent}
             </pre>
-            {isOverflowing && !isExpanded && (
+            {shouldCollapse && (
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none rounded-b-lg"></div>
             )}
         </div>

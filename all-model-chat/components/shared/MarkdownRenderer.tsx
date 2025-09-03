@@ -116,7 +116,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         return (
           <div>
             <MermaidBlock code={codeContent} onImageClick={onImageClick} isLoading={isLoading} />
-            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
+            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} isLoading={isLoading}>
               {children}
             </CodeBlock>
           </div>
@@ -127,7 +127,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         return (
           <div>
             <GraphvizBlock code={codeContent} isLoading={isLoading} />
-            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
+            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} isLoading={isLoading}>
               {children}
             </CodeBlock>
           </div>
@@ -140,6 +140,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
           className={codeClassName} 
           onOpenHtmlPreview={onOpenHtmlPreview} 
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+          isLoading={isLoading}
         >
           {children}
         </CodeBlock>
