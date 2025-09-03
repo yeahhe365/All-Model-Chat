@@ -9,6 +9,9 @@ import { useImageEditSender } from './useImageEditSender';
 import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 import { conversationStreamThrottler } from '../utils/streamThrottler';
+import { messageVersionManager } from '../utils/messageVersionManager';
+import { sessionStateManager } from '../utils/sessionStateManager';
+import { activeJobsManager } from '../utils/activeJobsManager';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -116,14 +119,29 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (retryOfMessageId) {
             if (!finalSessionId) return;
-            updateAndPersistSessions(prev => prev.map(s => {
-                if (s.id !== finalSessionId) return s;
-                return {
-                    ...s,
-                    messages: s.messages.map(m => {
-                        if (m.id !== retryOfMessageId) return m;
+            
+            // Check for version conflicts before proceeding
+            const versionResult = await messageVersionManager.createRetryVersion(
+                retryOfMessageId,
+                finalSessionId,
+                generationStartTimeRef.current!
+            );
+            
+            if (!versionResult.canProceed) {
+                logService.error(`Cannot retry message: ${versionResult.conflict}`);
+                setAppFileError(versionResult.conflict || 'Version conflict detected');
+                activeJobsManager.completeJob(generationId, setLoadingSessionIds, 'error');
+                return;
+            }
 
-                        // Create new version for retry
+            await sessionStateManager.atomicSessionUpdate(
+                finalSessionId,
+                (session) => ({
+                    ...session,
+                    messages: session.messages.map((m) => {
+                        if (m.id !== retryOfMessageId) return m;
+                        
+                        // Create new version for retry synchronously
                         const newVersion: ModelResponseVersion = { 
                             content: '', 
                             timestamp: new Date(), 
@@ -172,29 +190,41 @@ export const useMessageSender = (props: MessageSenderProps) => {
                             thinkingTimeMs: undefined 
                         };
                     })
-                };
-            }));
+                }),
+                updateAndPersistSessions,
+                `retry-${generationId}`,
+                'stream_update'
+            );
+
+            // Complete the version operation
+            messageVersionManager.completeVersionOperation(retryOfMessageId, finalSessionId);
         } else if (effectiveEditingId) {
-             updateAndPersistSessions(prev => prev.map(s => {
-                const isSessionToUpdate = s.messages.some(m => m.id === effectiveEditingId);
-                if (!isSessionToUpdate) return s;
+             await sessionStateManager.atomicSessionUpdate(
+                finalSessionId || 'unknown',
+                (session) => {
+                    const isSessionToUpdate = session.messages.some(m => m.id === effectiveEditingId);
+                    if (!isSessionToUpdate) return session;
 
-                const editIndex = s.messages.findIndex(m => m.id === effectiveEditingId);
-                const baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : [...s.messages];
-                
-                userMessageContent.cumulativeTotalTokens = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
-                const newMessages = [...baseMessages, userMessageContent, modelMessageContent];
+                    const editIndex = session.messages.findIndex(m => m.id === effectiveEditingId);
+                    const baseMessages = editIndex !== -1 ? session.messages.slice(0, editIndex) : [...session.messages];
+                    
+                    userMessageContent.cumulativeTotalTokens = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
+                    const newMessages = [...baseMessages, userMessageContent, modelMessageContent];
 
-                let newTitle = s.title;
-                if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
-                    newTitle = generateSessionTitle(newMessages);
-                }
-                let updatedSettings = s.settings;
-                if (shouldLockKey && !s.settings.lockedApiKey) {
-                    updatedSettings = { ...s.settings, lockedApiKey: keyToUse };
-                }
-                return { ...s, messages: newMessages, title: newTitle, settings: updatedSettings };
-            }));
+                    let newTitle = session.title;
+                    if (session.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
+                        newTitle = generateSessionTitle(newMessages);
+                    }
+                    let updatedSettings = session.settings;
+                    if (shouldLockKey && !session.settings.lockedApiKey) {
+                        updatedSettings = { ...session.settings, lockedApiKey: keyToUse };
+                    }
+                    return { ...session, messages: newMessages, title: newTitle, settings: updatedSettings };
+                },
+                updateAndPersistSessions,
+                `edit-${generationId}`,
+                'stream_update'
+            );
         } else if (!finalSessionId) { // New Chat
             const newSessionId = generateUniqueId();
             finalSessionId = newSessionId;
@@ -206,11 +236,16 @@ export const useMessageSender = (props: MessageSenderProps) => {
             updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSessionId);
         } else { // Existing Chat
-             updateAndPersistSessions(prev => prev.map(s => {
-                if (s.id !== finalSessionId) return s;
-                 const newMessages = [...s.messages, userMessageContent, modelMessageContent];
-                 return { ...s, messages: newMessages };
-            }));
+             await sessionStateManager.atomicSessionUpdate(
+                finalSessionId!,
+                (session) => {
+                    const newMessages = [...session.messages, userMessageContent, modelMessageContent];
+                    return { ...session, messages: newMessages };
+                },
+                updateAndPersistSessions,
+                `existing-${generationId}`,
+                'stream_update'
+            );
         }
 
         if (editingMessageId) {
@@ -218,15 +253,14 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
         
         if (promptParts.length === 0) {
-             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
-             activeJobs.current.delete(generationId);
-             return; 
+            activeJobsManager.completeJob(generationId, setLoadingSessionIds, 'error');
+            return; 
         }
         
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(finalSessionId!, generationId, newAbortController, generationStartTimeRef, sessionToUpdate, retryOfMessageId);
         
-        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
-        activeJobs.current.set(generationId, newAbortController);
+        // Start the job with the manager
+        activeJobsManager.startJob(generationId, finalSessionId!, newAbortController, setLoadingSessionIds);
 
         // Standard models that support the Chat object
         let chatToUse = chat;
@@ -258,16 +292,32 @@ export const useMessageSender = (props: MessageSenderProps) => {
             return;
         }
 
-        // Use stream throttler to prevent concurrent streams
-        await conversationStreamThrottler.executeStream(generationId, async () => {
+        // Use stream throttler to prevent concurrent streams per session
+        await conversationStreamThrottler.executeStream(generationId, finalSessionId!, async () => {
             if (appSettings.isStreamingEnabled) {
-                await geminiServiceInstance.sendMessageStream(chatToUse!, promptParts, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
+                await geminiServiceInstance.sendMessageStream(chatToUse!, promptParts, newAbortController.signal, streamOnPart, onThoughtChunk, 
+                    (error) => {
+                        streamOnError(error);
+                        activeJobsManager.completeJob(generationId, setLoadingSessionIds, 'error');
+                    }, 
+                    (usage, grounding) => {
+                        streamOnComplete(usage, grounding);
+                        activeJobsManager.completeJob(generationId, setLoadingSessionIds, 'completed');
+                    }
+                );
             } else { 
-                await geminiServiceInstance.sendMessageNonStream(chatToUse!, promptParts, newAbortController.signal, streamOnError, (parts, thoughts, usage, grounding) => {
-                    for(const part of parts) streamOnPart(part);
-                    if(thoughts) onThoughtChunk(thoughts);
-                    streamOnComplete(usage, grounding);
-                });
+                await geminiServiceInstance.sendMessageNonStream(chatToUse!, promptParts, newAbortController.signal, 
+                    (error) => {
+                        streamOnError(error);
+                        activeJobsManager.completeJob(generationId, setLoadingSessionIds, 'error');
+                    }, 
+                    (parts, thoughts, usage, grounding) => {
+                        for(const part of parts) streamOnPart(part);
+                        if(thoughts) onThoughtChunk(thoughts);
+                        streamOnComplete(usage, grounding);
+                        activeJobsManager.completeJob(generationId, setLoadingSessionIds, 'completed');
+                    }
+                );
             }
         });
     }, [appSettings, currentChatSettings, messages, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, activeSessionId, setActiveSessionId, activeJobs, setLoadingSessionIds, updateAndPersistSessions, getStreamHandlers, handleTtsImagenMessage, scrollContainerRef, chat, handleImageEditMessage]);
