@@ -20,7 +20,6 @@ export const messagesTranslations = {
     welcome_p2: { en: 'Manage Scenarios', zh: '管理场景' },
     welcome_p3: { en: 'button, or configure settings.', zh: '按钮加载场景，或进行设置。' },
     retry_button_title: { en: 'Retry', zh: '重试' },
-    retry_and_stop_button_title: { en: 'Stop and Retry', zh: '停止并重试' },
     copy_button_title: { en: 'Copy content', zh: '复制内容' },
     copied_button_title: { en: 'Copied!', zh: '已复制！' },
     export_as_title: { en: 'Export as {type}', zh: '导出为 {type}' },
