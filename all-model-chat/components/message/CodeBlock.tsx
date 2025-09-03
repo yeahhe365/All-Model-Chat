@@ -27,6 +27,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     const [isExpanded, setIsExpanded] = useState(expandCodeBlocksByDefault);
     const [copied, setCopied] = useState(false);
     const hasUserInteracted = useRef(false);
+    const [contentHeight, setContentHeight] = useState<number | null>(null);
 
     useLayoutEffect(() => {
         const preElement = preRef.current;
@@ -37,7 +38,14 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
             codeText.current = codeElement.innerText;
         }
 
-        const isCurrentlyOverflowing = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
+        // Temporarily remove height restrictions to measure actual content height
+        const originalMaxHeight = preElement.style.maxHeight;
+        preElement.style.maxHeight = 'none';
+        const actualHeight = preElement.scrollHeight;
+        preElement.style.maxHeight = originalMaxHeight;
+        
+        setContentHeight(actualHeight);
+        const isCurrentlyOverflowing = actualHeight > COLLAPSE_THRESHOLD_PX;
         setIsOverflowing(isCurrentlyOverflowing);
 
         // If the user hasn't manually toggled this specific block,
@@ -91,6 +99,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     // 如果用户已经手动展开过，即使isLoading变化，我们也保持展开状态
     const shouldCollapse = (isLoading && !expandCodeBlocksByDefault && !hasUserInteracted.current) || (isOverflowing && !isExpanded);
 
+    // Use actual content height for smooth transition
+    const targetHeight = shouldCollapse ? COLLAPSE_THRESHOLD_PX : (contentHeight || 10000);
+
 
     return (
         <div className="code-block-container relative">
@@ -98,7 +109,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 ref={preRef} 
                 className={`${className} group !relative`}
                 style={{
-                    maxHeight: shouldCollapse ? `${COLLAPSE_THRESHOLD_PX}px` : `10000px`,
+                    maxHeight: `${targetHeight}px`,
                     transition: 'max-height 0.3s ease-in-out',
                 }}
             >
