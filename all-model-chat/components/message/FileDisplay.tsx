@@ -74,39 +74,11 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       />
   );
   
-  if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error) {
-    return (
-      <div className="relative group w-fit max-w-full">
-        {imageElement}
-        {isFromMessageList && file.dataUrl && (file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && (
-          <button
-              onClick={handleDownloadImage}
-              title="Download Image"
-              aria-label="Download Image"
-              className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
-          >
-              <Download size={14} />
-          </button>
-        )}
-        {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
-            <button
-              onClick={handleCopyId}
-              title={idCopied ? "File ID Copied!" : "Copy File ID (e.g., files/xyz123)"}
-              aria-label={idCopied ? "File ID Copied!" : "Copy File ID"}
-              className={`absolute top-0.5 right-0.5 sm:top-1 sm:right-1 p-0.5 rounded-full bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] transition-all
-                          ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-link)]'}
-                          opacity-0 group-hover:opacity-100 focus:opacity-100`}
-            >
-              {idCopied ? <Check size={12} /> : <ClipboardCopy size={12} />}
-            </button>
-        )}
-      </div>
-    );
-  }
-  
   return (
     <div className={`${commonClasses} ${file.error ? 'border-[var(--theme-bg-danger)]' : ''} relative group`}>
-      {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.error ? (
+      {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error ? (
+        imageElement
+      ) : SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
           <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
           <div className={textClasses}>
@@ -165,6 +137,16 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       )}
       {file.error && (
         <p className="text-xs text-[var(--theme-text-danger)] ml-auto pl-2 flex-shrink-0" title={file.error}>Error</p>
+      )}
+      {isFromMessageList && file.dataUrl && (file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && !file.error && (
+        <button
+            onClick={handleDownloadImage}
+            title="Download Image"
+            aria-label="Download Image"
+            className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
+        >
+            <Download size={14} />
+        </button>
       )}
       {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
         <button

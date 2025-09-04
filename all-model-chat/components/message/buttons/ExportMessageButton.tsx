@@ -19,7 +19,7 @@ interface ExportMessageButtonProps {
 
 export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdownContent, messageId, themeColors, themeId, className, type, t }) => {
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
-  const iconSize = getResponsiveValue(17, 19);
+  const iconSize = getResponsiveValue(14, 16);
 
   const handleExport = async () => {
     if (!markdownContent || exportState === 'exporting') return;

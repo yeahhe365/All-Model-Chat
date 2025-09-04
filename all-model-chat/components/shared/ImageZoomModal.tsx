@@ -1,18 +1,18 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { UploadedFile } from '../../types';
-import { X, ZoomIn, ZoomOut, RotateCw, Download, Loader2, ClipboardCopy, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { UploadedFile, ThemeColors } from '../../types';
+import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
 import { translations, getResponsiveValue } from '../../utils/appUtils';
 import { Modal } from './Modal';
 
 interface ImageZoomModalProps {
-  files: UploadedFile[] | null;
-  initialIndex?: number;
+  file: UploadedFile | null;
   onClose: () => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  themeColors: ThemeColors;
+  t: (key: keyof typeof translations) => string;
 }
 
-export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIndex = 0, onClose, t }) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t }) => {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -26,54 +26,17 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
   const MAX_SCALE = 10;
   const ZOOM_SPEED_FACTOR = 1.1;
 
-  const handleReset = useCallback(() => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
-  }, []);
-
   useEffect(() => {
-    if (files) {
-      setCurrentIndex(initialIndex ?? 0);
-      handleReset();
-    }
-  }, [files, initialIndex, handleReset]);
-
-  const currentFile = files ? files[currentIndex] : null;
-
-  const handleNext = useCallback(() => {
-    if (files && currentIndex < files.length - 1) {
-        setCurrentIndex(prev => prev + 1);
-        handleReset();
-    }
-  }, [currentIndex, files, handleReset]);
-
-  const handlePrevious = useCallback(() => {
-      if (files && currentIndex > 0) {
-          setCurrentIndex(prev => prev - 1);
-          handleReset();
-      }
-  }, [currentIndex, files, handleReset]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowRight') handleNext();
-        if (e.key === 'ArrowLeft') handlePrevious();
-    };
-    if (files) {
-        window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [files, handleNext, handlePrevious]);
-
-  useEffect(() => {
-    if (currentFile) {
+    if (file) {
+      setScale(1);
+      setPosition({ x: 0, y: 0 });
       setIsDownloading(false);
       setIsCopied(false);
     }
-  }, [currentFile]);
+  }, [file]);
 
   const handleZoom = useCallback((direction: 'in' | 'out') => {
-    if (!viewportRef.current || !imageRef.current || !currentFile) return;
+    if (!viewportRef.current || !imageRef.current || !file) return;
 
     const rect = viewportRef.current.getBoundingClientRect();
     const centerX = rect.width / 2;
@@ -93,12 +56,17 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
 
     setPosition({ x: newPositionX, y: newPositionY });
     setScale(newScale);
-  }, [scale, position, currentFile]);
+  }, [scale, position, file]);
+
+  const handleReset = useCallback(() => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  }, []);
 
   const handleCopy = useCallback(async () => {
-    if (!currentFile?.dataUrl || isCopied) return;
+    if (!file?.dataUrl || isCopied) return;
     try {
-        const response = await fetch(currentFile.dataUrl);
+        const response = await fetch(file.dataUrl);
         const blob = await response.blob();
         if (!navigator.clipboard || !navigator.clipboard.write) {
             throw new Error("Clipboard API not available.");
@@ -114,28 +82,68 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
         console.error('Failed to copy image:', err);
         alert('Failed to copy image to clipboard. Your browser might not support this feature or require permissions.');
     }
-  }, [currentFile, isCopied]);
+  }, [file, isCopied]);
 
-  const handleDownload = useCallback(() => {
-    if (!currentFile?.dataUrl || isDownloading) return;
-    setIsDownloading(true);
-    try {
-      const link = document.createElement('a');
-      link.href = currentFile.dataUrl;
-      link.download = currentFile.name || 'download';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (err) {
-      console.error("Download failed:", err);
-      alert('Download failed. See console for details.');
-    } finally {
-      setIsDownloading(false);
+  const handleDownload = useCallback(async (format: 'png' | 'svg') => {
+    if (!file?.dataUrl || isDownloading) return;
+    
+    if (format === 'svg' && file.type === 'image/svg+xml') {
+        setIsDownloading(true);
+        try {
+            const base64Content = file.dataUrl.split(',')[1];
+            // This is the correct way to decode base64 that might contain UTF-8 characters
+            const svgContent = decodeURIComponent(escape(atob(base64Content)));
+            const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${file.name.split('.')[0] || 'diagram'}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Failed to download SVG:", e);
+        } finally {
+            setIsDownloading(false);
+        }
+        return;
     }
-  }, [currentFile, isDownloading]);
+
+    // PNG Download
+    setIsDownloading(true);
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const padding = 0;
+        const exportScale = 3; // high-res
+        
+        canvas.width = (img.width + padding * 2) * exportScale;
+        canvas.height = (img.height + padding * 2) * exportScale;
+        const ctx = canvas.getContext('2d');
+
+        if (ctx) {
+            ctx.drawImage(img, padding * exportScale, padding * exportScale, img.width * exportScale, img.height * exportScale);
+
+            const pngUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = pngUrl;
+            link.download = `${file.name.split('.')[0] || 'image'}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        setIsDownloading(false);
+    };
+    img.onerror = () => {
+        console.error("Failed to load image for PNG conversion.");
+        setIsDownloading(false);
+    };
+    img.src = file.dataUrl;
+  }, [file, isDownloading]);
 
   const handleWheel = useCallback((event: WheelEvent) => {
-    if (!viewportRef.current || !imageRef.current || !currentFile) return;
+    if (!viewportRef.current || !imageRef.current || !file) return;
     event.preventDefault();
 
     const rect = viewportRef.current.getBoundingClientRect();
@@ -156,10 +164,10 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
 
     setPosition({ x: newPositionX, y: newPositionY });
     setScale(newScale);
-  }, [scale, position, currentFile]);
+  }, [scale, position, file]);
 
   const handleMouseDown = (event: React.MouseEvent<HTMLImageElement>) => {
-    if (!currentFile || event.button !== 0) return; 
+    if (!file || event.button !== 0) return; 
     event.preventDefault();
     setIsDragging(true);
     setDragStart({ 
@@ -170,7 +178,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
   };
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !currentFile) return;
+    if (!isDragging || !file) return;
     event.preventDefault();
     setPosition({
       x: event.clientX - dragStart.x,
@@ -179,7 +187,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
   };
 
   const handleMouseUp = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (!currentFile) return;
+    if (!file) return;
     event.preventDefault();
     setIsDragging(false);
     if (imageRef.current) imageRef.current.style.cursor = 'grab';
@@ -193,24 +201,24 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
 
   useEffect(() => {
     const vpRef = viewportRef.current;
-    if (vpRef && currentFile) {
+    if (vpRef && file) {
       vpRef.addEventListener('wheel', handleWheel, { passive: false });
     }
     return () => {
-      if (vpRef && currentFile) {
+      if (vpRef && file) {
         vpRef.removeEventListener('wheel', handleWheel);
       }
     };
-  }, [handleWheel, currentFile]);
+  }, [handleWheel, file]);
 
-  if (!currentFile) return null;
+  if (!file) return null;
 
-  const isSvgDiagram = currentFile.type === 'image/svg+xml';
+  const isMermaidDiagram = file.type === 'image/svg+xml';
   const controlButtonClasses = "p-2 bg-black/50 hover:bg-black/70 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm";
 
   return (
     <Modal
-      isOpen={!!currentFile}
+      isOpen={!!file}
       onClose={onClose}
       noPadding
       backdropClassName="bg-black/80 backdrop-blur-sm"
@@ -222,16 +230,15 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave} 
       >
-        <h2 id="image-zoom-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', currentFile.name)}</h2>
+        <h2 id="image-zoom-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', file.name)}</h2>
         <div 
             ref={viewportRef} 
             className="w-full h-full flex items-center justify-center overflow-hidden relative"
         >
           <img
-            key={currentFile.id}
             ref={imageRef}
-            src={currentFile.dataUrl}
-            alt={`Zoomed view of ${currentFile.name}`}
+            src={file.dataUrl}
+            alt={`Zoomed view of ${file.name}`}
             style={{
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
               transformOrigin: '0 0', 
@@ -241,35 +248,13 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
               objectFit: 'contain',
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none', 
-              backgroundColor: isSvgDiagram ? 'white' : 'transparent',
-              borderRadius: isSvgDiagram ? '0.375rem' : '0',
+              backgroundColor: isMermaidDiagram ? 'white' : 'transparent',
+              borderRadius: isMermaidDiagram ? '0.375rem' : '0',
             }}
             onMouseDown={handleMouseDown}
             draggable="false" 
           />
         </div>
-
-        {files && files.length > 1 && (
-            <>
-                <button
-                    onClick={handlePrevious}
-                    disabled={currentIndex === 0}
-                    className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-                    aria-label="Previous image"
-                >
-                    <ChevronLeft size={getResponsiveValue(24, 32)} />
-                </button>
-                <button
-                    onClick={handleNext}
-                    disabled={currentIndex === files.length - 1}
-                    className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 p-2 bg-black/30 hover:bg-black/50 text-white rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50"
-                    aria-label="Next image"
-                >
-                    <ChevronRight size={getResponsiveValue(24, 32)} />
-                </button>
-            </>
-        )}
-
         <button
           onClick={onClose}
           className="absolute top-2 right-2 p-1.5 sm:p-2 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] rounded-full shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
@@ -295,9 +280,15 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ files, initialIn
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
           
-          <button onClick={handleDownload} disabled={isDownloading} className={controlButtonClasses} title={t('imageZoom_download_original', 'Download Original File')}>
-            {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <Download size={18} />}
+          <button onClick={() => handleDownload('png')} disabled={isDownloading} className={controlButtonClasses} title="Download as PNG">
+            {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
           </button>
+          
+          {isMermaidDiagram && (
+            <button onClick={() => handleDownload('svg')} disabled={isDownloading} className={controlButtonClasses} title="Download as SVG">
+                {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <FileCode2 size={18} />}
+            </button>
+          )}
         </div>
       </div>
     </Modal>

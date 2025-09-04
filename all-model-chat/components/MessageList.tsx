@@ -1,11 +1,10 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { ChatMessage, MessageListProps, UploadedFile } from '../types';
+import React, { useState, useCallback, useRef } from 'react';
+import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
-import { Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
-import { translations } from '../utils/appUtils';
+import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
+import { translations, getResponsiveValue } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 
 const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
@@ -21,30 +20,18 @@ export const MessageList: React.FC<MessageListProps> = ({
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight
 }) => {
-  const [imageZoomState, setImageZoomState] = useState<{ files: UploadedFile[], startIndex: number } | null>(null);
+  const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
   
-  const allPageImages = useMemo(() => {
-    return messages.flatMap(msg => msg.files || [])
-                   .filter(file => file.dataUrl && SUPPORTED_IMAGE_MIME_TYPES.includes(file.type));
-  }, [messages]);
-
-  const handleImageClick = useCallback((clickedFile: UploadedFile) => {
-    const startIndex = allPageImages.findIndex(f => f.id === clickedFile.id);
-    if (startIndex !== -1) {
-        setImageZoomState({ files: allPageImages, startIndex });
-    } else {
-        // Fallback for images not in the main message list (e.g., mermaid diagrams)
-        // that still need to be zoomable.
-        setImageZoomState({ files: [clickedFile], startIndex: 0 });
-    }
-  }, [allPageImages]);
+  const handleImageClick = useCallback((file: UploadedFile) => {
+    setZoomedFile(file);
+  }, []);
 
   const closeImageZoomModal = useCallback(() => {
-    setImageZoomState(null);
+    setZoomedFile(null);
   }, []);
 
   const handleOpenHtmlPreview = useCallback((
@@ -160,9 +147,9 @@ export const MessageList: React.FC<MessageListProps> = ({
       <div ref={messagesEndRef} />
     </div>
     <ImageZoomModal 
-        files={imageZoomState?.files ?? null}
-        initialIndex={imageZoomState?.startIndex ?? 0}
+        file={zoomedFile} 
         onClose={closeImageZoomModal}
+        themeColors={themeColors}
         t={t}
     />
     {isHtmlPreviewModalOpen && htmlToPreview !== null && (

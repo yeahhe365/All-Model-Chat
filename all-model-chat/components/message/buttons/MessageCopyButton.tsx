@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Check, ClipboardCopy } from 'lucide-react';
-import { translations, getResponsiveValue } from '../../../utils/appUtils';
+import { translations } from '../../../utils/appUtils';
 
 interface MessageCopyButtonProps {
     textToCopy?: string;
@@ -10,7 +10,6 @@ interface MessageCopyButtonProps {
 
 export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy, className, t }) => {
   const [copied, setCopied] = useState(false);
-  const iconSize = getResponsiveValue(17, 19);
   const handleCopy = async () => {
     if (!textToCopy || copied) return;
     try {
@@ -19,5 +18,5 @@ export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy
       setTimeout(() => setCopied(false), 2000);
     } catch (err) { console.error('Failed to copy', err); }
   };
-  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={iconSize} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={iconSize} />}</button>;
+  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={14} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={14} />}</button>;
 };

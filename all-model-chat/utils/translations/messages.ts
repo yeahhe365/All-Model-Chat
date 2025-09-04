@@ -3,7 +3,6 @@ export const messagesTranslations = {
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
     imageZoom_close_aria: { en: 'Close image zoom view', zh: '关闭图片缩放视图' },
     imageZoom_close_title: { en: 'Close (Esc)', zh: '关闭 (Esc)' },
-    imageZoom_download_original: { en: 'Download Original File', zh: '下载原始文件' },
     welcome_greeting: { en: 'How can I help you today?', zh: '有什么可以帮忙的？' },
     welcome_suggestion_title: { en: 'Suggested', zh: '建议' },
     suggestion_summarize_title: { en: 'Summarize article', zh: '总结文章' },

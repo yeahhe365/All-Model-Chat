@@ -5,9 +5,9 @@ import { translations, getResponsiveValue } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
 
-const UserIcon: React.FC = () => <User size={getResponsiveValue(24, 28)} className="text-[var(--theme-icon-user)] flex-shrink-0" />;
-const BotIcon: React.FC = () => <Bot size={getResponsiveValue(24, 28)} className="text-[var(--theme-icon-model)] flex-shrink-0" />;
-const ErrorMsgIcon: React.FC = () => <AlertTriangle size={getResponsiveValue(24, 28)} className="text-[var(--theme-icon-error)] flex-shrink-0" />;
+const UserIcon: React.FC = () => <User size={getResponsiveValue(20, 24)} className="text-[var(--theme-icon-user)] flex-shrink-0" />;
+const BotIcon: React.FC = () => <Bot size={getResponsiveValue(20, 24)} className="text-[var(--theme-icon-model)] flex-shrink-0" />;
+const ErrorMsgIcon: React.FC = () => <AlertTriangle size={getResponsiveValue(20, 24)} className="text-[var(--theme-icon-error)] flex-shrink-0" />;
 
 interface MessageActionsProps {
     message: ChatMessage;
@@ -34,14 +34,14 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     themeId,
     t
 }) => {
-    const actionIconSize = getResponsiveValue(17, 19);
+    const actionIconSize = getResponsiveValue(14, 16);
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     const isThisMessageLoadingTts = ttsMessageId === message.id;
     const actionButtonClasses = "p-1 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
 
     return (
-        <div className="flex-shrink-0 w-7 sm:w-8 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
-            <div className="h-7 sm:h-8">
+        <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
+            <div className="h-6 sm:h-7">
                 {!isGrouped && (
                     <>
                         {message.role === 'user' && <UserIcon />}
