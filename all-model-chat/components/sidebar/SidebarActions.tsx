@@ -35,7 +35,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
       ) : (
         <button onClick={() => setIsSearching(true)} className="flex items-center gap-3 w-full text-left px-3 py-2 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" aria-label={t('history_search_aria')}>
           <Search size={18} className="text-[var(--theme-text-secondary)]" />
-          <span className="text-[var(--theme-text-link)]">{t('history_search_button')}</span>
+          <span className="text-[var(--theme-text-link)]">{t('history_search_button', 'Search')}</span>
         </button>
       )}
     </div>

@@ -1,5 +1,5 @@
-import { GenerateContentResponse, Part, UsageMetadata, Chat } from "@google/genai";
-import { ThoughtSupportingPart, ChatHistoryItem } from '../../types';
+import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } from "@google/genai";
+import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getApiClient } from "./baseApi";
 
@@ -22,7 +22,7 @@ export const sendMessageStreamApi = async (
     logService.info(`Sending message via chat object (stream)`);
     
     // Extract session and message IDs from chat object
-    const sessionId = (chat as any).model?.split('-')[0] || 'unknown';
+    const sessionId = chat.model?.split('-')[0] || 'unknown';
     const messageId = Date.now().toString();
     const streamId = getStreamId(sessionId, messageId);
     
@@ -58,7 +58,7 @@ export const sendMessageStreamApi = async (
                 finalGroundingMetadata = metadataFromChunk;
             }
             
-            const toolCalls = (chunkResponse.candidates?.[0] as any)?.toolCalls;
+            const toolCalls = chunkResponse.candidates?.[0]?.toolCalls;
             if (toolCalls) {
                 for (const toolCall of toolCalls) {
                     if (toolCall.functionCall?.args?.urlContextMetadata) {
@@ -141,7 +141,7 @@ export const sendMessageNonStreamApi = async (
         const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
         let finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
     
-        const toolCalls = (response.candidates?.[0] as any)?.toolCalls;
+        const toolCalls = response.candidates?.[0]?.toolCalls;
         if (toolCalls) {
             for (const toolCall of toolCalls) {
                 if (toolCall.functionCall?.args?.urlContextMetadata) {

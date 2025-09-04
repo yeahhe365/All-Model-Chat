@@ -29,7 +29,6 @@ interface ChatInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   isProcessingFile: boolean; 
   fileError: string | null;
-  onSetFileError?: (error: string | null) => void;
   t: (key: keyof typeof translations) => string;
   isImagenModel?: boolean;
   isImageEditModel?: boolean;
@@ -80,7 +79,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [isAddingByUrl, setIsAddingByUrl] = useState(false);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ isOpen: boolean; x: number; y: number; items: ContextMenuItem[] } | null>(null);
-  const [urlValidationError, setUrlValidationError] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
@@ -215,12 +213,9 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   };
   
   const handleAddUrl = useCallback(async (url: string) => {
-    // Clear previous validation error
-    setUrlValidationError(null);
-    
     const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
     if (!youtubeRegex.test(url)) {
-        setUrlValidationError("Invalid YouTube URL provided.");
+        props.fileError = "Invalid YouTube URL provided.";
         return;
     }
     justInitiatedFileOpRef.current = true;
@@ -236,7 +231,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     setSelectedFiles(prev => [...prev, newUrlFile]);
     setUrlInput('');
     setShowAddByUrlInput(false);
-    setUrlValidationError(null); // Clear error on successful submission
     textareaRef.current?.focus();
   }, [setSelectedFiles, setShowAddByUrlInput]);
 
@@ -447,7 +441,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
               isImagenModel={isImagenModel || false}
               aspectRatio={aspectRatio}
               setAspectRatio={setAspectRatio}
-              fileError={urlValidationError || fileError}
+              fileError={fileError}
               selectedFiles={selectedFiles}
               onRemoveFile={removeSelectedFile}
               onCancelUpload={onCancelUpload}
@@ -459,20 +453,9 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
               isAddingById={isAddingById}
               showAddByUrlInput={showAddByUrlInput}
               urlInput={urlInput}
-              setUrlInput={(value) => {
-                setUrlInput(value);
-                // Clear validation error when user starts typing
-                if (urlValidationError) {
-                  setUrlValidationError(null);
-                }
-              }}
+              setUrlInput={setUrlInput}
               onAddUrlSubmit={() => handleAddUrl(urlInput)}
-              onCancelAddUrl={() => { 
-                setShowAddByUrlInput(false); 
-                setUrlInput(''); 
-                setUrlValidationError(null); // Clear error on cancel
-                textareaRef.current?.focus(); 
-              }}
+              onCancelAddUrl={() => { setShowAddByUrlInput(false); setUrlInput(''); textareaRef.current?.focus(); }}
               isAddingByUrl={isAddingByUrl}
               isLoading={isLoading}
               t={t}

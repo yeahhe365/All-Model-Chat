@@ -9,7 +9,6 @@ import { useAppUI } from './hooks/useAppUI';
 import { useAppEvents } from './hooks/useAppEvents';
 import { usePictureInPicture } from './hooks/usePictureInPicture';
 import { useDataManagement } from './hooks/useDataManagement';
-import { useLiveRegion } from './hooks/useLiveRegion';
 import { getTranslator, logService } from './utils/appUtils';
 import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
@@ -20,7 +19,6 @@ import { PictureInPicture2 } from 'lucide-react';
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = getTranslator(language);
-  const { announce } = useLiveRegion();
   
   const chatState = useChat(appSettings, language);
   const {
@@ -180,28 +178,6 @@ const App: React.FC = () => {
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     });
   }, []);
-
-  // Live region announcements for loading states
-  useEffect(() => {
-    if (isLoading) {
-      announce(t('appGeneratingResponse'), { priority: 'polite' });
-    }
-  }, [isLoading, announce, t]);
-
-  // Announce when model switching is complete
-  useEffect(() => {
-    if (!isSwitchingModel && currentChatSettings.modelId) {
-      const modelName = apiModels.find(m => m.id === currentChatSettings.modelId)?.name || currentChatSettings.modelId;
-      announce(t('appModelSwitched').replace('{model}', modelName), { priority: 'polite' });
-    }
-  }, [isSwitchingModel, currentChatSettings.modelId, apiModels, announce, t]);
-
-  // Announce file processing completion
-  useEffect(() => {
-    if (appFileError) {
-      announce(t('appFileError').replace('{error}', appFileError), { priority: 'assertive' });
-    }
-  }, [appFileError, announce, t]);
   
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);

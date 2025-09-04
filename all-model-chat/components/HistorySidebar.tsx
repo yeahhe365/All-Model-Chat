@@ -60,7 +60,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const editInputRef = useRef<HTMLInputElement>(null);
   const [newlyTitledSessionId, setNewlyTitledSessionId] = useState<string | null>(null);
   const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
-  const titleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -75,41 +74,15 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   }, [editingSession, editingGroup]);
   
   useEffect(() => {
-    // Clear any existing timeout to prevent race conditions
-    if (titleTimeoutRef.current) {
-      clearTimeout(titleTimeoutRef.current);
-      titleTimeoutRef.current = null;
-    }
-
     const prevIds = prevGeneratingTitleSessionIdsRef.current;
     const completedIds = new Set<string>();
-    prevIds.forEach(id => { 
-      if (!generatingTitleSessionIds.has(id)) {
-        completedIds.add(id); 
-      }
+    prevIds.forEach(id => { if (!generatingTitleSessionIds.has(id)) completedIds.add(id); });
+    completedIds.forEach(completedId => {
+      setNewlyTitledSessionId(completedId);
+      setTimeout(() => setNewlyTitledSessionId(p => (p === completedId ? null : p)), 1500);
     });
-    
-    if (completedIds.size > 0) {
-      const mostRecentCompletedId = Array.from(completedIds)[completedIds.size - 1];
-      setNewlyTitledSessionId(mostRecentCompletedId);
-      
-      titleTimeoutRef.current = setTimeout(() => {
-        setNewlyTitledSessionId(prevId => (prevId === mostRecentCompletedId ? null : prevId));
-        titleTimeoutRef.current = null;
-      }, 1500);
-    }
-    
-    prevGeneratingTitleSessionIdsRef.current = new Set(generatingTitleSessionIds);
+    prevGeneratingTitleSessionIdsRef.current = generatingTitleSessionIds;
   }, [generatingTitleSessionIds]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (titleTimeoutRef.current) {
-        clearTimeout(titleTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const handleStartEdit = (type: 'session' | 'group', item: SavedChatSession | ChatGroup) => {
     if (type === 'session') setEditingSession({ id: item.id, title: (item as SavedChatSession).title });
@@ -239,14 +212,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     <aside
       className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} shadow-lg flex-shrink-0
                  transition-all duration-300 ease-in-out
-                 fixed md:relative top-0 left-0 z-30
+                 absolute md:static top-0 left-0 z-30
+                 transform md:transform-none
                  w-64 md:w-72
-                 ${isOpen ? 'translate-x-0' : '-translate-x-full md:-translate-x-0'}
-                 ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : 'md:border-r md:border-[var(--theme-border-primary)]'}
-                 ${!isOpen ? 'md:w-0 md:overflow-hidden' : ''}`}
-      role="complementary" 
-      aria-label={t('history_title')}
-      aria-hidden={!isOpen}
+                 ${isOpen ? 'translate-x-0 md:ml-0' : '-translate-x-full md:-ml-72'}
+                 ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : ''}`}
+      role="complementary" aria-label={t('history_title')}
     >
       <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
       <SidebarActions 

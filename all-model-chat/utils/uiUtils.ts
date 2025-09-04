@@ -99,7 +99,7 @@ export const showNotification = async (title: string, options?: NotificationOpti
   const show = () => {
     // Use a tag to prevent multiple notifications from stacking up.
     // The 'renotify' property ensures that even with the same tag, the user is alerted.
-    const notification = new Notification(title, { ...options, tag: 'all-model-chat-response', ...(options as any).renotify ? { renotify: true } : {} });
+    const notification = new Notification(title, { ...options, tag: 'all-model-chat-response', renotify: true });
 
     notification.onclick = () => {
       window.focus();
