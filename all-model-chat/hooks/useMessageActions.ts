@@ -131,32 +131,11 @@ export const useMessageActions = ({
         logService.info("User retrying message", { modelMessageId: modelMessageIdToRetry, sessionId: activeSessionId });
         
         const modelMessageIndex = messages.findIndex(m => m.id === modelMessageIdToRetry);
-        if (modelMessageIndex < 0) return;
+        if (modelMessageIndex < 1) return;
 
-        // Find the corresponding user message for this model/error message
-        let userMessageToResend: ChatMessage | undefined;
-        
-        if (messages[modelMessageIndex].role === 'error') {
-            // For error messages, find the most recent user message before this error
-            for (let i = modelMessageIndex - 1; i >= 0; i--) {
-                if (messages[i].role === 'user') {
-                    userMessageToResend = messages[i];
-                    break;
-                }
-            }
-        } else {
-            // For model messages, get the previous message (should be user message)
-            if (modelMessageIndex > 0) {
-                userMessageToResend = messages[modelMessageIndex - 1];
-            }
-        }
-        
-        if (!userMessageToResend || userMessageToResend.role !== 'user') {
-            logService.error("Could not find user message to retry", { modelMessageId: modelMessageIdToRetry });
-            return;
-        }
+        const userMessageToResend = messages[modelMessageIndex - 1];
+        if (userMessageToResend.role !== 'user') return;
 
-        // Stop current generation if active
         if (isLoading) {
             handleStopGenerating({ silent: true });
         }

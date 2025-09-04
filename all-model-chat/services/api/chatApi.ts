@@ -3,13 +3,6 @@ import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getApiClient } from "./baseApi";
 
-// Global stream tracking to prevent concurrent streams
-const activeStreams = new Set<string>();
-
-function getStreamId(sessionId: string, messageId: string): string {
-    return `${sessionId}-${messageId}`;
-}
-
 export const sendMessageStreamApi = async (
     chat: Chat,
     parts: Part[],
@@ -20,25 +13,6 @@ export const sendMessageStreamApi = async (
     onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via chat object (stream)`);
-    
-    // Extract session and message IDs from chat object
-    const sessionId = chat.model?.split('-')[0] || 'unknown';
-    const messageId = Date.now().toString();
-    const streamId = getStreamId(sessionId, messageId);
-    
-    // Check for concurrent streams
-    if (activeStreams.size > 0) {
-        logService.warn(`Concurrent stream detected. Active streams: ${Array.from(activeStreams).join(', ')}`);
-        // Abort any existing streams for the same session
-        const existingStream = Array.from(activeStreams).find(id => id.startsWith(sessionId));
-        if (existingStream) {
-            logService.warn(`Aborting existing stream for session: ${existingStream}`);
-            activeStreams.delete(existingStream);
-        }
-    }
-    
-    // Add to active streams
-    activeStreams.add(streamId);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
 
@@ -91,8 +65,6 @@ export const sendMessageStreamApi = async (
         logService.error("Error sending message to Gemini chat (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        // Remove from active streams
-        activeStreams.delete(streamId);
         logService.info("Streaming complete via chat object.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
         onComplete(finalUsageMetadata, finalGroundingMetadata);
     }

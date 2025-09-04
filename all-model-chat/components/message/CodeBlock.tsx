@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
@@ -15,12 +14,11 @@ interface CodeBlockProps {
   className?: string;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
-  isLoading: boolean;
 }
 
 const COLLAPSE_THRESHOLD_PX = 150;
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault, isLoading }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
     const preRef = useRef<HTMLPreElement>(null);
     const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
@@ -45,11 +43,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         if (!hasUserInteracted.current) {
             setIsExpanded(expandCodeBlocksByDefault);
         }
-        // 如果isLoading变化且用户已经手动展开过，保持展开状态
-        else if (hasUserInteracted.current && isExpanded) {
-            // 保持已展开状态
-        }
-    }, [children, expandCodeBlocksByDefault, isLoading]);
+    }, [children, expandCodeBlocksByDefault]);
 
     const handleToggleExpand = () => {
         hasUserInteracted.current = true;
@@ -82,14 +76,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     const likelyHTML = isLikelyHtml(codeText.current);
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (likelyHTML ? 'text/html' : 'text/plain');
     const finalLanguage = language === 'txt' && likelyHTML ? 'html' : (language === 'xml' && likelyHTML ? 'html' : language);
-    
-    // Determine if the block should be rendered in a collapsed state.
-    // It should be collapsed if:
-    // 1. The message is still loading AND the default is to collapse AND the user hasn't interacted with it
-    // OR
-    // 2. The message is done loading, the content is overflowing, and it's not currently expanded.
-    // 如果用户已经手动展开过，即使isLoading变化，我们也保持展开状态
-    const shouldCollapse = (isLoading && !expandCodeBlocksByDefault && !hasUserInteracted.current) || (isOverflowing && !isExpanded);
 
 
     return (
@@ -98,7 +84,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 ref={preRef} 
                 className={`${className} group !relative`}
                 style={{
-                    maxHeight: shouldCollapse ? `${COLLAPSE_THRESHOLD_PX}px` : `10000px`,
+                    maxHeight: isOverflowing && !isExpanded ? `${COLLAPSE_THRESHOLD_PX}px` : `10000px`,
                     transition: 'max-height 0.3s ease-in-out',
                 }}
             >
@@ -146,7 +132,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 </div>
                 {codeContent}
             </pre>
-            {shouldCollapse && (
+            {isOverflowing && !isExpanded && (
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none rounded-b-lg"></div>
             )}
         </div>
