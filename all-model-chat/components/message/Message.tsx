@@ -12,7 +12,6 @@ interface MessageProps {
     onEditMessage: (messageId: string) => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void; 
-    onVersionChange: (messageId: string, newIndex: number) => void;
     onImageClick: (file: UploadedFile) => void;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;

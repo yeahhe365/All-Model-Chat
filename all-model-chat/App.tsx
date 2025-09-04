@@ -83,7 +83,6 @@ const App: React.FC = () => {
       handleAddFileById,
       handleTextToSpeech,
       handleTranscribeAudio,
-      handleVersionChange,
       setCurrentChatSettings,
       scrollNavVisibility,
       scrollToPrevTurn,
@@ -240,12 +239,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleChatInputModalVisibilityChange = useCallback((isVisible: boolean) => {
-    if (isVisible && isHistorySidebarOpen) {
-      setIsHistorySidebarOpen(false);
-    }
-  }, [isHistorySidebarOpen, setIsHistorySidebarOpen]);
-
   const getCurrentModelDisplayName = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
     if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return t('loading');
@@ -294,7 +287,6 @@ const App: React.FC = () => {
         onEditMessage={handleEditMessage}
         onDeleteMessage={handleDeleteMessage}
         onRetryMessage={handleRetryMessage}
-        onVersionChange={handleVersionChange}
         showThoughts={currentChatSettings.showThoughts}
         themeColors={currentTheme.colors}
         baseFontSize={appSettings.baseFontSize}
@@ -344,7 +336,6 @@ const App: React.FC = () => {
         onEditLastUserMessage={handleEditLastUserMessage}
         onOpenLogViewer={() => setIsLogViewerOpen(true)}
         onClearAllHistory={clearAllHistory}
-        onModalVisibilityChange={handleChatInputModalVisibilityChange}
         isPipSupported={isPipSupported}
         isPipActive={isPipActive}
         onTogglePip={togglePip}

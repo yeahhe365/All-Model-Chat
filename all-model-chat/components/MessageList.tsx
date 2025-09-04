@@ -16,7 +16,7 @@ const SUGGESTIONS_KEYS = [
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
-    onEditMessage, onDeleteMessage, onRetryMessage, onVersionChange, showThoughts, themeColors, baseFontSize,
+    onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight
@@ -113,7 +113,6 @@ export const MessageList: React.FC<MessageListProps> = ({
               onEditMessage={onEditMessage}
               onDeleteMessage={onDeleteMessage}
               onRetryMessage={onRetryMessage}
-              onVersionChange={onVersionChange}
               onImageClick={handleImageClick}
               onOpenHtmlPreview={handleOpenHtmlPreview}
               showThoughts={showThoughts}

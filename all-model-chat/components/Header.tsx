@@ -58,10 +58,6 @@ export const Header: React.FC<HeaderProps> = ({
   const [newChatShortcut, setNewChatShortcut] = useState('');
   const [pipShortcut, setPipShortcut] = useState('');
 
-  const modelSelectorChevronSize = getResponsiveValue(18, 20);
-  const modelSelectorItemIconSize = getResponsiveValue(14, 16);
-  const modelSelectorCheckSize = getResponsiveValue(16, 18);
-
   const displayModelName = isModelsLoading && !currentModelName ? t('loading') : currentModelName;
 
   useEffect(() => {
@@ -133,21 +129,21 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2 md:gap-3 rounded-xl md:rounded-lg px-2.5 md:px-4 py-1.5 md:py-1.5 text-sm md:text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
             aria-expanded={isModelSelectorOpen}
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
-            {isKeyLocked && <Lock size={modelSelectorItemIconSize} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
+            {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
             <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
-            <ChevronDown size={modelSelectorChevronSize} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isModelSelectorOpen && (
             <div 
-              className="absolute top-full left-0 mt-1 w-80 sm:w-96 md:w-[32rem] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-20 flex flex-col modal-enter-animation"
+              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-20 flex flex-col modal-enter-animation"
               onMouseLeave={() => setHoveredModelId(null)}
             >
               <div className="max-h-96 overflow-y-auto custom-scrollbar" role="listbox" aria-labelledby="model-selector-button">
@@ -168,27 +164,27 @@ export const Header: React.FC<HeaderProps> = ({
                       onMouseEnter={() => setHoveredModelId(model.id)}
                       role="option"
                       aria-selected={model.id === selectedModelId}
-                      className={`cursor-pointer w-full text-left px-4 md:px-4 py-2.5 md:py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
+                      className={`cursor-pointer w-full text-left px-4 py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
                         ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`
                       }
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
                           {model.isPinned && (
-                            <Pin size={modelSelectorItemIconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                            <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
                           )}
                           <span className={`truncate ${model.id === selectedModelId ? 'text-[var(--theme-text-link)] font-semibold' : 'text-[var(--theme-text-primary)]'}`} title={model.name}>{model.name}</span>
                         </div>
-                        {model.id === selectedModelId && <Check size={modelSelectorCheckSize} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                        {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
                       </div>
                       
                       {model.id === defaultModelId ? (
-                        <div className="mt-2 md:mt-2 pl-1 md:pl-2 text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
-                            <Check size={modelSelectorItemIconSize} />
+                        <div className="mt-2 pl-1 text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
+                            <Check size={14} />
                             <span>{t('header_setDefault_isDefault')}</span>
                         </div>
                       ) : hoveredModelId === model.id ? (
-                          <div className="mt-2 md:mt-2 pl-1 md:pl-2" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
+                          <div className="mt-2 pl-1" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
                               <button
                                   onClick={(e) => handleSetDefault(e, model.id)}
                                   className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"

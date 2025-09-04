@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
+import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2 } from 'lucide-react';
 import { ChatMessage, ThemeColors } from '../../types';
 import { translations, getResponsiveValue } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
@@ -9,65 +9,12 @@ const UserIcon: React.FC = () => <User size={getResponsiveValue(24, 28)} classNa
 const BotIcon: React.FC = () => <Bot size={getResponsiveValue(24, 28)} className="text-[var(--theme-icon-model)] flex-shrink-0" />;
 const ErrorMsgIcon: React.FC = () => <AlertTriangle size={getResponsiveValue(24, 28)} className="text-[var(--theme-icon-error)] flex-shrink-0" />;
 
-interface VersionNavigatorProps {
-    message: ChatMessage;
-    onVersionChange: (newIndex: number) => void;
-}
-
-const VersionNavigator: React.FC<VersionNavigatorProps> = ({ message, onVersionChange }) => {
-    if (!message.versions || message.versions.length <= 1) {
-        return null;
-    }
-
-    const currentIndex = message.activeVersionIndex ?? 0;
-    const totalVersions = message.versions.length;
-
-    const handlePrev = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (currentIndex > 0) {
-            onVersionChange(currentIndex - 1);
-        }
-    };
-
-    const handleNext = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (currentIndex < totalVersions - 1) {
-            onVersionChange(currentIndex + 1);
-        }
-    };
-
-    return (
-        <div className="flex flex-col items-center justify-center gap-1 text-xs text-[var(--theme-text-tertiary)] mt-1 sm:mt-1.5 p-1 bg-[var(--theme-bg-secondary)] rounded-full border border-[var(--theme-border-secondary)]">
-            <button
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-                className="p-0.5 rounded-full disabled:opacity-30 hover:bg-[var(--theme-bg-tertiary)]"
-                aria-label="Previous version"
-            >
-                <ChevronUp size={14} />
-            </button>
-            <span className="font-mono tabular-nums h-8 text-center flex items-center justify-center" title={`Version ${currentIndex + 1} of ${totalVersions}`}>
-                {currentIndex + 1}/{totalVersions}
-            </span>
-            <button
-                onClick={handleNext}
-                disabled={currentIndex === totalVersions - 1}
-                className="p-0.5 rounded-full disabled:opacity-30 hover:bg-[var(--theme-bg-tertiary)]"
-                aria-label="Next version"
-            >
-                <ChevronDown size={14} />
-            </button>
-        </div>
-    );
-};
-
 interface MessageActionsProps {
     message: ChatMessage;
     isGrouped: boolean;
     onEditMessage: (messageId: string) => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void;
-    onVersionChange: (messageId: string, newIndex: number) => void;
     onTextToSpeech: (messageId: string, text: string) => void;
     ttsMessageId: string | null;
     themeColors: ThemeColors;
@@ -81,7 +28,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
-    onVersionChange,
     onTextToSpeech,
     ttsMessageId,
     themeColors,
@@ -104,7 +50,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                     </>
                 )}
             </div>
-             <VersionNavigator message={message} onVersionChange={(newIndex) => onVersionChange(message.id, newIndex)} />
             <div
                 className="message-actions flex flex-col items-center gap-0.5 mt-1 sm:mt-1.5"
                 style={{ '--actions-translate-x': message.role === 'user' ? '8px' : '-8px' } as React.CSSProperties}

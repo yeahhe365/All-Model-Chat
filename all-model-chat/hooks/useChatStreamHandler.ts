@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
-import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, ModelResponseVersion } from '../types';
+import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata, Chat } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService, showNotification, getTranslator, base64ToBlobUrl } from '../utils/appUtils';
@@ -15,7 +15,7 @@ interface ChatStreamHandlerProps {
     chat: Chat | null;
 }
 
-const isToolMessage = (msg: ChatMessage | ModelResponseVersion): boolean => {
+const isToolMessage = (msg: ChatMessage): boolean => {
     if (!msg) return false;
     if (!msg.content) return false;
     const content = msg.content.trim();
@@ -40,13 +40,11 @@ export const useChatStreamHandler = ({
         abortController: AbortController,
         generationStartTimeRef: React.MutableRefObject<Date | null>,
         currentChatSettings: IndividualChatSettings,
-        retryOfMessageId?: string,
     ) => {
         const newModelMessageIds = new Set<string>([generationId]);
 
         const streamOnError = (error: Error) => {
-            const targetMessageId = retryOfMessageId || generationId;
-            handleApiError(error, currentSessionId, targetMessageId);
+            handleApiError(error, currentSessionId, generationId);
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
@@ -73,73 +71,60 @@ export const useChatStreamHandler = ({
 
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
-                
                 let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                
                 let completedMessageForNotification: ChatMessage | null = null;
-
-                const finalMessages = s.messages.map(m => {
-                    let targetMessageId: string | undefined;
-                    if (retryOfMessageId && m.id === retryOfMessageId) {
-                        targetMessageId = m.id;
-                    } else if (!retryOfMessageId && m.isLoading && m.generationStartTime === generationStartTimeRef.current) {
-                        targetMessageId = m.id;
-                    }
-
-                    if (targetMessageId) {
-                        let thinkingTime = m.thinkingTimeMs;
-                        if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
-                            thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
-                        }
-                        const isLastMessageOfRun = m.id === (retryOfMessageId || Array.from(newModelMessageIds).pop());
-                        const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
-                        const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
-                        const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
-                        cumulativeTotal += turnTokens;
-                        
-                        const completedMessage = { ...m };
-                        
-                        if (retryOfMessageId) {
-                            const activeIndex = completedMessage.activeVersionIndex ?? 0;
-                            if (completedMessage.versions && completedMessage.versions[activeIndex]) {
-                                const finalVersion = { 
-                                    ...completedMessage.versions[activeIndex],
-                                    content: completedMessage.versions[activeIndex].content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
-                                    generationEndTime: new Date(),
-                                    thinkingTimeMs: thinkingTime,
-                                    groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
-                                    promptTokens, completionTokens, totalTokens: turnTokens, cumulativeTotalTokens: cumulativeTotal,
-                                };
-                                completedMessage.versions[activeIndex] = finalVersion;
-                                // Copy final version to top level
-                                Object.assign(completedMessage, { ...finalVersion, isLoading: false });
+                
+                const finalMessages = s.messages
+                    .map(m => {
+                        if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                            let thinkingTime = m.thinkingTimeMs;
+                            if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
+                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
                             }
-                        } else {
-                           Object.assign(completedMessage, {
+                            const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
+                            const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
+                            const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
+                            const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
+                            cumulativeTotal += turnTokens;
+                            const completedMessage = {
+                                ...m,
                                 isLoading: false,
                                 content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
                                 thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
                                 generationEndTime: new Date(),
                                 thinkingTimeMs: thinkingTime,
                                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
-                                promptTokens, completionTokens, totalTokens: turnTokens, cumulativeTotalTokens: cumulativeTotal,
-                           });
-                        }
-                        
-                        const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc;
-                        if (isEmpty) {
-                            completedMessage.role = 'error';
-                            completedMessage.content = t('empty_response_error');
-                        }
+                                promptTokens,
+                                completionTokens,
+                                totalTokens: turnTokens,
+                                cumulativeTotalTokens: cumulativeTotal,
+                            };
+                            
+                            const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc;
+                            if (isEmpty) {
+                                completedMessage.role = 'error';
+                                completedMessage.content = t('empty_response_error');
+                            }
 
-                        if (isLastMessageOfRun) completedMessageForNotification = completedMessage;
-                        return completedMessage;
-                    }
-                    return m;
-                }).filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                            if (isLastMessageOfRun) {
+                                completedMessageForNotification = completedMessage;
+                            }
+                            return completedMessage;
+                        }
+                        return m;
+                    })
+                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
                 
                 if (appSettings.isCompletionNotificationEnabled && completedMessageForNotification && document.hidden) {
                     const notificationBody = (completedMessageForNotification.content || "Media or tool response received").substring(0, 150) + (completedMessageForNotification.content && completedMessageForNotification.content.length > 150 ? '...' : '');
-                    showNotification('Response Ready', { body: notificationBody, icon: APP_LOGO_SVG_DATA_URI });
+                    showNotification(
+                        'Response Ready', 
+                        {
+                            body: notificationBody,
+                            icon: APP_LOGO_SVG_DATA_URI,
+                        }
+                    );
                 }
 
                 return {...s, messages: finalMessages, settings: s.settings};
@@ -157,41 +142,25 @@ export const useChatStreamHandler = ({
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
                 let messages = [...s.messages];
-                
-                let targetMessage: ChatMessage | undefined;
-                if (retryOfMessageId) {
-                    targetMessage = messages.find(m => m.id === retryOfMessageId);
-                } else {
-                    targetMessage = [...messages].reverse().find(m => m.isLoading && m.generationStartTime === generationStartTimeRef.current);
-                }
-
-                if (isFirstContentPart && targetMessage) {
+                if (isFirstContentPart) {
                     const thinkingTime = generationStartTimeRef.current ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime()) : null;
-                    if (thinkingTime !== null) {
-                        if (retryOfMessageId && targetMessage.versions && targetMessage.activeVersionIndex !== undefined) {
-                            targetMessage.versions[targetMessage.activeVersionIndex].thinkingTimeMs = thinkingTime;
-                        } else {
-                           targetMessage.thinkingTimeMs = thinkingTime;
-                        }
+                    const messageToUpdate = [...messages].reverse().find(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
+                    if (messageToUpdate && thinkingTime !== null) {
+                        messageToUpdate.thinkingTimeMs = thinkingTime;
+                        messages = [...messages];
                     }
                 }
-
-                let lastContentHolder: ChatMessage | ModelResponseVersion | null | undefined = targetMessage;
-                if (retryOfMessageId && targetMessage?.versions && targetMessage.activeVersionIndex !== undefined) {
-                    lastContentHolder = targetMessage.versions[targetMessage.activeVersionIndex];
-                }
-
+                let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+                const anyPart = part as any;
                 const createNewMessage = (content: string): ChatMessage => {
                     const id = generateUniqueId();
                     newModelMessageIds.add(id);
                     return { id, role: 'model', content, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
                 };
-                
-                const anyPart = part as any;
                 if (anyPart.text) {
-                     if (lastContentHolder && !isToolMessage(lastContentHolder)) {
-                        lastContentHolder.content += anyPart.text;
-                    } else if (!retryOfMessageId) {
+                     if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading && !isToolMessage(lastMessage)) {
+                        lastMessage.content += anyPart.text;
+                    } else {
                         messages.push(createNewMessage(anyPart.text));
                     }
                 } else if (anyPart.executableCode) {
@@ -223,9 +192,11 @@ export const useChatStreamHandler = ({
                             uploadState: 'active'
                         };
                         
-                        if (lastContentHolder) {
-                            lastContentHolder.files = [...(lastContentHolder.files || []), newFile];
-                        } else if (!retryOfMessageId) {
+                        // If the last message is a suitable loading placeholder, add the file to it.
+                        if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading) {
+                            lastMessage.files = [...(lastMessage.files || []), newFile];
+                        } else {
+                            // Otherwise, create a new message specifically for this image.
                             const newMessage = createNewMessage('');
                             newMessage.files = [newFile];
                             messages.push(newMessage);
@@ -240,20 +211,9 @@ export const useChatStreamHandler = ({
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
                 let messages = [...s.messages];
-                
-                let targetMessage: ChatMessage | undefined;
-                if (retryOfMessageId) {
-                    targetMessage = messages.find(m => m.id === retryOfMessageId);
-                } else {
-                    targetMessage = [...messages].reverse().find(m => m.isLoading && m.generationStartTime === generationStartTimeRef.current);
-                }
-                
-                if (targetMessage) {
-                    if (retryOfMessageId && targetMessage.versions && targetMessage.activeVersionIndex !== undefined) {
-                        targetMessage.versions[targetMessage.activeVersionIndex].thoughts = (targetMessage.versions[targetMessage.activeVersionIndex].thoughts || '') + thoughtChunk;
-                    } else {
-                        targetMessage.thoughts = (targetMessage.thoughts || '') + thoughtChunk;
-                    }
+                let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+                if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading) {
+                    lastMessage.thoughts = (lastMessage.thoughts || '') + thoughtChunk;
                 }
                 return { ...s, messages };
             }));

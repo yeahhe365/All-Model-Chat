@@ -49,7 +49,6 @@ interface ChatInputProps {
   onSelectModel: (modelId: string) => void;
   availableModels: ModelOption[];
   onEditLastUserMessage: () => void;
-  onModalVisibilityChange?: (isVisible: boolean) => void;
   onTogglePip: () => void;
   isPipActive?: boolean;
 }
@@ -68,7 +67,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isUrlContextEnabled, onToggleUrlContext,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
     onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive,
-    onModalVisibilityChange,
   } = props;
 
   const [inputText, setInputText] = useState('');
@@ -130,13 +128,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         localStorage.removeItem(draftKey);
     }
   }, [activeSessionId]);
-  
-  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-  const isAnyModalOpen = isModalOpen || isHelpModalOpen;
-
-  useEffect(() => {
-    onModalVisibilityChange?.(isModalOpen);
-  }, [isModalOpen, onModalVisibilityChange]);
   
   useEffect(() => {
     if (commandedInput) {
@@ -329,6 +320,9 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const handleCloseContextMenu = () => {
     setContextMenu(null);
   };
+
+  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
+  const isAnyModalOpen = isModalOpen || isHelpModalOpen;
   
   const canSend = (
     (inputText.trim() !== '' || selectedFiles.length > 0)

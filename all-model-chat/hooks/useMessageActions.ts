@@ -4,7 +4,7 @@ import { logService } from '../utils/appUtils';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
-type SendMessageFunc = (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string; retryOfMessageId?: string; }) => Promise<void>;
+type SendMessageFunc = (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => Promise<void>;
 
 interface MessageActionsProps {
     messages: ChatMessage[];
@@ -143,7 +143,7 @@ export const useMessageActions = ({
         await handleSendMessage({
             text: userMessageToResend.content,
             files: userMessageToResend.files,
-            retryOfMessageId: modelMessageIdToRetry,
+            editingId: userMessageToResend.id,
         });
     }, [activeSessionId, messages, isLoading, handleStopGenerating, handleSendMessage]);
 

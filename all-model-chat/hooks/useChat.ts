@@ -282,41 +282,6 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         }
     }, [activeSessionId, historyHandler.handleTogglePinSession]);
 
-    const handleVersionChange = useCallback((messageId: string, newIndex: number) => {
-        if (!activeSessionId) return;
-        updateAndPersistSessions(prev => prev.map(s => {
-            if (s.id !== activeSessionId) return s;
-            return {
-                ...s,
-                messages: s.messages.map(m => {
-                    if (m.id !== messageId || !m.versions || newIndex < 0 || newIndex >= m.versions.length) {
-                        return m;
-                    }
-                    const newVersion = m.versions[newIndex];
-                    return {
-                        ...m,
-                        activeVersionIndex: newIndex,
-                        content: newVersion.content,
-                        files: newVersion.files,
-                        timestamp: newVersion.timestamp,
-                        thoughts: newVersion.thoughts,
-                        generationStartTime: newVersion.generationStartTime,
-                        generationEndTime: newVersion.generationEndTime,
-                        thinkingTimeMs: newVersion.thinkingTimeMs,
-                        promptTokens: newVersion.promptTokens,
-                        completionTokens: newVersion.completionTokens,
-                        totalTokens: newVersion.totalTokens,
-                        cumulativeTotalTokens: newVersion.cumulativeTotalTokens,
-                        audioSrc: newVersion.audioSrc,
-                        groundingMetadata: newVersion.groundingMetadata,
-                        suggestions: newVersion.suggestions,
-                        isGeneratingSuggestions: newVersion.isGeneratingSuggestions,
-                    };
-                })
-            };
-        }));
-    }, [activeSessionId, updateAndPersistSessions]);
-
     return {
         messages,
         isLoading,
@@ -395,6 +360,5 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         toggleCodeExecution,
         toggleUrlContext,
         handleTogglePinCurrentSession,
-        handleVersionChange,
     };
 };
