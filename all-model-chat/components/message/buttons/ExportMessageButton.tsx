@@ -15,11 +15,12 @@ interface ExportMessageButtonProps {
     className?: string;
     type: 'png' | 'html';
     t: (key: keyof typeof translations) => string;
+    iconSize?: number;
 }
 
-export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdownContent, messageId, themeColors, themeId, className, type, t }) => {
+export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdownContent, messageId, themeColors, themeId, className, type, t, iconSize: propIconSize }) => {
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
-  const iconSize = getResponsiveValue(14, 16);
+  const iconSize = propIconSize ?? getResponsiveValue(14, 16);
 
   const handleExport = async () => {
     if (!markdownContent || exportState === 'exporting') return;
