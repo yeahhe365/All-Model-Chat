@@ -129,16 +129,16 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-sm transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
             aria-expanded={isModelSelectorOpen}
           >
-            {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
-            {isKeyLocked && <Lock size={14} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
-            <span className="truncate max-w-[120px] sm:max-w-[250px] font-medium">{displayModelName}</span>
-            <ChevronDown size={18} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
+            {isModelsLoading && !currentModelName && <Loader2 size={18} className="animate-spin text-[var(--theme-text-link)]" />}
+            {isKeyLocked && <Lock size={16} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
+            <span className="truncate max-w-[144px] sm:max-w-[300px] font-medium">{displayModelName}</span>
+            <ChevronDown size={20} className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isModelSelectorOpen ? 'rotate-180' : ''}`} />
           </button>
 
           {isModelSelectorOpen && (

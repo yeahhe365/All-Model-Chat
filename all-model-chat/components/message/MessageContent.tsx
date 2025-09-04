@@ -134,7 +134,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {areThoughtsVisible && (
-                <details className="mb-1.5 p-2 rounded-lg bg-[var(--theme-bg-tertiary)] bg-opacity-50 border border-[var(--theme-border-secondary)] group">
+                <details className="mb-1.5 p-2 rounded-md bg-[var(--theme-bg-tertiary)] bg-opacity-50 border border-[var(--theme-border-secondary)] group">
                     <summary className="flex flex-col cursor-pointer text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] list-none">
                         <div className="flex items-center justify-between w-full">
                             <span className="flex items-center">

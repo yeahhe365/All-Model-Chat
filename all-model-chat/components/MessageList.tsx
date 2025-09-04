@@ -54,7 +54,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div 
       ref={scrollContainerRef}
       onScroll={onScrollContainerScroll}
-      className={`relative flex-grow overflow-y-auto p-3 sm:p-4 md:p-6 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
+      className={`relative flex-grow overflow-y-auto px-1.5 sm:px-2 md:px-3 py-3 sm:py-4 md:py-6 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
       style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
       aria-live="polite" 
     >

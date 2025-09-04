@@ -40,7 +40,7 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
     >
       <details open={group.isExpanded ?? true} className="group/details">
         <summary 
-            className="list-none flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-[var(--theme-bg-tertiary)] group"
+            className="list-none flex items-center justify-between px-1 py-2 rounded-lg cursor-pointer hover:bg-[var(--theme-bg-tertiary)] group"
             onClick={(e) => { e.preventDefault(); onToggleGroupExpansion(group.id); }}
         >
           <div className="flex items-center gap-2 min-w-0">
@@ -61,7 +61,7 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
             t={t}
           />
         )}
-        <ul className="pl-3">{sessions?.map(session => <SessionItem key={session.id} session={session} {...sessionItemProps} />)}</ul>
+        <ul className="pl-1">{sessions?.map(session => <SessionItem key={session.id} session={session} {...sessionItemProps} />)}</ul>
       </details>
     </div>
   );
