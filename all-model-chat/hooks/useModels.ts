@@ -28,7 +28,7 @@ export const useModels = (appSettings: AppSettings) => {
             { id: 'models/gemini-2.5-flash-preview-tts', name: 'Gemini 2.5 Flash (TTS)', isPinned: true },
         ];
         const imagenModels: ModelOption[] = [
-            { id: 'gemini-2.5-flash-image-preview', name: 'Gemini 2.5 Flash Image (Edit)', isPinned: true },
+            { id: 'gemini-2.5-flash-image-preview', name: 'Gemini 2.5 Flash Image', isPinned: true },
             { id: 'imagen-3.0-generate-002', name: 'Imagen 3 (Image Generation)', isPinned: true },
             { id: 'models/imagen-4.0-fast-generate-001', name: 'Imagen 4.0 Fast (Image Generation)', isPinned: true },
             { id: 'models/imagen-4.0-generate-001', name: 'Imagen 4.0 (Image Generation)', isPinned: true },
