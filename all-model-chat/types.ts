@@ -363,7 +363,7 @@ export interface AppModalsProps {
 
   isExportModalOpen: boolean;
   setIsExportModalOpen: (isOpen: boolean) => void;
-  handleExportChat: (format: 'png' | 'html' | 'txt') => Promise<void>;
+  handleExportChat: (format: 'png' | 'html' | 'txt' | 'json') => Promise<void>;
   exportStatus: 'idle' | 'exporting';
   
   isLogViewerOpen: boolean;

@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, ChatGroup } from '../types';
-import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, APP_SETTINGS_KEY } from '../constants/appConstants';
 import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
@@ -12,7 +12,7 @@ import { useSuggestions } from './useSuggestions';
 import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService, createChatHistoryForApi } from '../utils/appUtils';
 import { CHAT_HISTORY_SESSIONS_KEY, CHAT_HISTORY_GROUPS_KEY } from '../constants/appConstants';
 import { geminiServiceInstance } from '../services/geminiService';
-import { Chat, GoogleGenAI } from '@google/genai';
+import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 
 
@@ -76,6 +76,21 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         );
     }, [activeSessionId, updateAndPersistSessions]);
 
+    // Memoize stable dependencies to prevent unnecessary Chat object re-creation
+    const nonLoadingMessageCount = useMemo(() => messages.filter(m => !m.isLoading).length, [messages]);
+    const {
+        modelId,
+        systemInstruction,
+        temperature,
+        topP,
+        showThoughts,
+        thinkingBudget,
+        isGoogleSearchEnabled,
+        isCodeExecutionEnabled,
+        isUrlContextEnabled,
+        lockedApiKey,
+    } = currentChatSettings;
+
     useEffect(() => {
         const activeSession = savedSessions.find(s => s.id === activeSessionId);
         if (!activeSession) {
@@ -91,12 +106,15 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
                 return;
             }
             
-            // Get proxy URL from localStorage if available
-            const storedSettings = localStorage.getItem('app-settings');
+            const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
             const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
             const ai = getApiClient(keyResult.key, apiProxyUrl);
             
-            const historyForChat = await createChatHistoryForApi(activeSession.messages);
+            // Use only non-loading messages for history when creating the object
+            // This makes the history stable during a streaming response.
+            const historyForChat = await createChatHistoryForApi(
+                activeSession.messages.filter(m => !m.isLoading)
+            );
 
             const modelIdToUse = activeSession.settings.modelId || appSettings.modelId;
             const newChat = ai.chats.create({
@@ -114,11 +132,27 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
                 )
             });
             setChat(newChat);
-            logService.info(`Chat object initialized for session ${activeSessionId} with model ${modelIdToUse}`);
+            logService.info(`Chat object initialized/updated for session ${activeSessionId} with model ${modelIdToUse}`);
         };
 
         initializeChat();
-    }, [activeSessionId, savedSessions, appSettings]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        activeSessionId, 
+        appSettings, 
+        nonLoadingMessageCount, // Stable during stream, changes on delete/completion
+        modelId,
+        systemInstruction,
+        temperature,
+        topP,
+        showThoughts,
+        thinkingBudget,
+        isGoogleSearchEnabled,
+        isCodeExecutionEnabled,
+        isUrlContextEnabled,
+        lockedApiKey,
+    ]);
+
 
     // 3. Child hooks for modular logic
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);

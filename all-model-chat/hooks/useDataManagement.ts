@@ -155,7 +155,7 @@ export const useDataManagement = ({
         });
     }, [handleImportFile, t, handleSaveAllScenarios]);
 
-    const exportChatLogic = useCallback(async (format: 'png' | 'html' | 'txt') => {
+    const exportChatLogic = useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
         if (!activeChat) return;
         
         const safeTitle = sanitizeFilename(activeChat.title);
@@ -260,7 +260,7 @@ export const useDataManagement = ({
                 </html>
             `;
             exportHtmlStringAsFile(fullHtml, filename);
-        } else { // TXT
+        } else if (format === 'txt') {
             const textContent = activeChat.messages.map(message => {
                 const role = message.role === 'user' ? 'USER' : 'ASSISTANT';
                 let content = `### ${role}\n`;
@@ -274,6 +274,23 @@ export const useDataManagement = ({
             }).join('\n\n');
 
             exportTextStringAsFile(textContent, filename);
+        } else if (format === 'json') {
+            logService.info(`Exporting chat ${activeChat.id} as JSON.`);
+            try {
+                // We create a structure compatible with the history import feature
+                const dataToExport = {
+                    type: 'AllModelChat-History',
+                    version: 1,
+                    history: [activeChat], // Exporting only the active chat session
+                    groups: [], // No groups are exported with a single chat
+                };
+                const jsonString = JSON.stringify(dataToExport, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                triggerDownload(URL.createObjectURL(blob), filename);
+            } catch (error) {
+                logService.error('Failed to export chat as JSON', { error });
+                alert(t('export_failed_title'));
+            }
         }
     }, [activeChat, currentTheme, language, scrollContainerRef, t]);
 

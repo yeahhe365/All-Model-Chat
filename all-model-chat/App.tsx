@@ -154,7 +154,7 @@ const App: React.FC = () => {
     language,
   });
 
-  const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt') => {
+  const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
     if (!activeChat) return;
     setExportStatus('exporting');
     try {
