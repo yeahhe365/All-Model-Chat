@@ -75,15 +75,16 @@ body::-webkit-scrollbar-thumb {
 }
 .markdown-body pre {
   padding: 10px !important;
-  padding-top: 2.5rem !important;
   border-radius: 8px !important;
-  overflow: hidden;
+  overflow: auto;
   position: relative !important;
   border: 1px solid var(--theme-border-primary);
 }
+.tool-result pre, .markdown-body pre:has(> .code-block-header) {
+  padding-top: 2.5rem !important;
+}
  @media (min-width: 640px) {
-    .markdown-body pre {
-        padding: 12px !important;
+    .tool-result pre, .markdown-body pre:has(> .code-block-header) {
         padding-top: 2.8rem !important;
     }
  }
@@ -282,7 +283,6 @@ body::-webkit-scrollbar-thumb {
   margin-top: 0.5rem !important;
   margin-bottom: 0 !important;
   padding: 0.75rem !important;
-  padding-top: 2.8rem !important;
   background-color: rgba(0,0,0,0.05) !important;
   border-radius: 6px;
   white-space: pre-wrap;
