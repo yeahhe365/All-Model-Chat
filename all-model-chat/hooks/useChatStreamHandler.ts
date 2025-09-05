@@ -139,27 +139,45 @@ export const useChatStreamHandler = ({
                 firstContentPartTimeRef.current = new Date();
                 isFirstContentPart = true;
             }
-            updateAndPersistSessions(prev => prev.map(s => {
-                if (s.id !== currentSessionId) return s;
-                let messages = [...s.messages];
+        
+            updateAndPersistSessions(prev => {
+                // Use findIndex for performance instead of mapping the whole array
+                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                if (sessionIndex === -1) return prev;
+        
+                // Create copies only for the path that is changing
+                const newSessions = [...prev];
+                const sessionToUpdate = { ...newSessions[sessionIndex] };
+                newSessions[sessionIndex] = sessionToUpdate;
+        
+                let messages = [...sessionToUpdate.messages];
+                sessionToUpdate.messages = messages;
+        
+                // Update thinking time on the first content part
                 if (isFirstContentPart) {
                     const thinkingTime = generationStartTimeRef.current ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime()) : null;
-                    const messageToUpdate = [...messages].reverse().find(m => m.isLoading && m.role === 'model' && m.generationStartTime === generationStartTimeRef.current);
-                    if (messageToUpdate && thinkingTime !== null) {
-                        messageToUpdate.thinkingTimeMs = thinkingTime;
-                        messages = [...messages];
+                    for (let i = messages.length - 1; i >= 0; i--) {
+                        const msg = messages[i];
+                        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime === generationStartTimeRef.current) {
+                            messages[i] = { ...msg, thinkingTimeMs: thinkingTime ?? msg.thinkingTimeMs };
+                            break;
+                        }
                     }
                 }
+        
                 let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+                const lastMessageIndex = messages.length - 1;
                 const anyPart = part as any;
+        
                 const createNewMessage = (content: string): ChatMessage => {
                     const id = generateUniqueId();
                     newModelMessageIds.add(id);
                     return { id, role: 'model', content, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
                 };
+        
                 if (anyPart.text) {
-                     if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading && !isToolMessage(lastMessage)) {
-                        lastMessage.content += anyPart.text;
+                    if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading && !isToolMessage(lastMessage)) {
+                        messages[lastMessageIndex] = { ...lastMessage, content: lastMessage.content + anyPart.text };
                     } else {
                         messages.push(createNewMessage(anyPart.text));
                     }
@@ -192,31 +210,48 @@ export const useChatStreamHandler = ({
                             uploadState: 'active'
                         };
                         
-                        // If the last message is a suitable loading placeholder, add the file to it.
                         if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading) {
-                            lastMessage.files = [...(lastMessage.files || []), newFile];
+                            messages[lastMessageIndex] = { ...lastMessage, files: [...(lastMessage.files || []), newFile] };
                         } else {
-                            // Otherwise, create a new message specifically for this image.
                             const newMessage = createNewMessage('');
                             newMessage.files = [newFile];
                             messages.push(newMessage);
                         }
                     }
                 }
-                return { ...s, messages };
-            }), { persist: false }); // Do not persist on every chunk.
+                
+                return newSessions;
+            }, { persist: false });
         };
+        
 
         const onThoughtChunk = (thoughtChunk: string) => {
-            updateAndPersistSessions(prev => prev.map(s => {
-                if (s.id !== currentSessionId) return s;
-                let messages = [...s.messages];
-                let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-                if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading) {
-                    lastMessage.thoughts = (lastMessage.thoughts || '') + thoughtChunk;
+            updateAndPersistSessions(prev => {
+                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                if (sessionIndex === -1) return prev;
+        
+                // Create copies only for the updated path
+                const newSessions = [...prev];
+                const sessionToUpdate = { ...newSessions[sessionIndex] };
+                newSessions[sessionIndex] = sessionToUpdate;
+        
+                const messages = [...sessionToUpdate.messages];
+                sessionToUpdate.messages = messages;
+                
+                const lastMessageIndex = messages.length - 1;
+                if (lastMessageIndex >= 0) {
+                    const lastMessage = messages[lastMessageIndex];
+                    if (lastMessage.role === 'model' && lastMessage.isLoading) {
+                        const updatedMessage = {
+                            ...lastMessage,
+                            thoughts: (lastMessage.thoughts || '') + thoughtChunk,
+                        };
+                        messages[lastMessageIndex] = updatedMessage;
+                    }
                 }
-                return { ...s, messages };
-            }), { persist: false }); // Do not persist on every thought chunk.
+                
+                return newSessions;
+            }, { persist: false });
         };
         
         firstContentPartTimeRef.current = null;
