@@ -117,6 +117,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (isTtsModel || isImagenModel) {
             await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, { shouldLockKey });
+            if (editingMessageId) {
+                setEditingMessageId(null);
+            }
             return;
         }
         
@@ -124,6 +127,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
             const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
             const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
             await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, { shouldLockKey });
+            if (editingMessageId) {
+                setEditingMessageId(null);
+            }
             return;
         }
         
