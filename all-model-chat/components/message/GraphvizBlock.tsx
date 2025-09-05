@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon } from 'lucide-react';
@@ -223,7 +224,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
   }, [isModalOpen, handleCloseModal]);
 
 
-  const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-lg shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
+  const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
 
   if (isRendering) return <div className={`${containerClasses} bg-[var(--theme-bg-tertiary)]`}><Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" /></div>;
 

@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { Loader2, AlertTriangle, Download, Maximize } from 'lucide-react';
@@ -123,7 +124,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
   };
 
 
-  const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-lg shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
+  const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
 
   if (isRendering) {
     return (

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
 import { Message } from './message/Message';
-import { X, Bot, Zap, ArrowUp, ArrowDown } from 'lucide-react';
+import { X, Bot, Lightbulb, ArrowUp, ArrowDown } from 'lucide-react';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
@@ -65,7 +65,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               {t('welcome_greeting')}
             </h1>
             <div className="text-left mb-2 sm:mb-3 flex items-center gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
-              <Zap size={16} className="text-[var(--theme-text-link)]" />
+              <Lightbulb size={16} className="text-[var(--theme-text-link)]" />
               <span>{t('welcome_suggestion_title')}</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

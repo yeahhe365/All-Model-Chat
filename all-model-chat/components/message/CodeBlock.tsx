@@ -7,6 +7,41 @@ const isLikelyHtml = (textContent: string): boolean => {
   return s.startsWith('<!doctype html>') || (s.includes('<html') && s.includes('</html>')) || (s.startsWith('<svg') && s.includes('</svg>'));
 };
 
+const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
+    const lang = language.toLowerCase();
+
+    const styleMap: { [key: string]: React.CSSProperties } = {
+        'html': { color: '#E34F26', backgroundColor: 'rgba(227, 79, 38, 0.1)', borderColor: 'rgba(227, 79, 38, 0.2)' },
+        'css': { color: '#1572B6', backgroundColor: 'rgba(21, 114, 182, 0.1)', borderColor: 'rgba(21, 114, 182, 0.2)' },
+        'js': { color: '#323330', backgroundColor: '#F0DB4F', borderColor: '#C8B438' },
+        'javascript': { color: '#323330', backgroundColor: '#F0DB4F', borderColor: '#C8B438' },
+        'ts': { color: '#FFFFFF', backgroundColor: '#3178C6', borderColor: '#265E9D' },
+        'typescript': { color: '#FFFFFF', backgroundColor: '#3178C6', borderColor: '#265E9D' },
+        'python': { color: '#3776AB', backgroundColor: 'rgba(55, 118, 171, 0.1)', borderColor: 'rgba(55, 118, 171, 0.2)' },
+        'py': { color: '#3776AB', backgroundColor: 'rgba(55, 118, 171, 0.1)', borderColor: 'rgba(55, 118, 171, 0.2)' },
+        'bash': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
+        'shell': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
+        'sh': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
+    };
+
+    const style = styleMap[lang];
+
+    if (style) {
+        return (
+            <span style={style} className="language-icon-badge">
+                {lang}
+            </span>
+        );
+    }
+
+    return (
+        <span className="text-xs text-[var(--theme-text-tertiary)] select-none font-mono uppercase">
+            {lang}
+        </span>
+    );
+};
+
+
 interface CodeBlockProps {
   children: React.ReactNode;
   className?: string;
@@ -85,11 +120,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
 
 
     return (
-        <div className="code-block-container group relative border border-[var(--theme-border-primary)] rounded-lg overflow-hidden bg-[var(--markdown-pre-bg)] my-2">
+        <div className="code-block-container group relative border border-[var(--theme-border-primary)] rounded-md overflow-hidden bg-[var(--markdown-pre-bg)] my-2">
             <div className='code-block-header flex items-center justify-between'>
-                <span className="text-xs text-[var(--theme-text-tertiary)] select-none font-mono uppercase">
-                    {finalLanguage}
-                </span>
+                <LanguageIcon language={finalLanguage} />
                 
                 <div className='flex items-center gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200'>
                     {likelyHTML && (

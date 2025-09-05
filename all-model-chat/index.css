@@ -75,7 +75,7 @@ body::-webkit-scrollbar-thumb {
 }
 .markdown-body pre {
   padding: 10px !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
   overflow: auto;
   position: relative !important;
   border: 1px solid var(--theme-border-primary);
@@ -143,7 +143,7 @@ body::-webkit-scrollbar-thumb {
     overflow-x: auto;
     white-space: normal;
     border: 1px solid var(--theme-border-primary);
-    border-radius: 8px;
+    border-radius: 6px;
     border-spacing: 0;
 }
 .markdown-body table th, .markdown-body table td {
@@ -171,8 +171,8 @@ body::-webkit-scrollbar-thumb {
 .markdown-body table tr:nth-of-type(even) td {
     background-color: var(--theme-bg-secondary) !important; /* A very subtle striping */
 }
-.markdown-body table th:first-child { border-top-left-radius: 8px; }
-.markdown-body table th:last-child { border-top-right-radius: 8px; }
+.markdown-body table th:first-child { border-top-left-radius: 6px; }
+.markdown-body table th:last-child { border-top-right-radius: 6px; }
 /* Lists: Muted markers. */
 .markdown-body ol, .markdown-body ul {
   list-style: revert;
@@ -224,6 +224,21 @@ body::-webkit-scrollbar-thumb {
     box-shadow: 0 0 0 2px var(--theme-border-focus);
 }
 
+.language-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: uppercase;
+  border-width: 1px;
+  border-style: solid;
+}
+
 .markdown-body pre {
   background-color: var(--markdown-pre-bg) !important; /* This is the outer pre background */
 }
@@ -261,7 +276,7 @@ body::-webkit-scrollbar-thumb {
 .tool-result {
   background-color: rgba(0, 0, 0, 0.1);
   border: 1px solid var(--theme-border-secondary);
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 0.75rem 1rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
