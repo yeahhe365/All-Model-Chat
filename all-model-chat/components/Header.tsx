@@ -129,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`flex items-center gap-2.5 rounded-xl px-1.5 py-1 text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
