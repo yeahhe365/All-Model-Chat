@@ -78,13 +78,23 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         }
 
         const isCurrentlyOverflowing = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
-        setIsOverflowing(isCurrentlyOverflowing);
+        
+        if (isCurrentlyOverflowing !== isOverflowing) {
+            setIsOverflowing(isCurrentlyOverflowing);
+        }
 
-        // Scroll to bottom if collapsed, to show the latest streamed content
-        if (isCurrentlyOverflowing && !isExpanded) {
+        // Apply style directly to prevent flicker.
+        const shouldBeCollapsed = isCurrentlyOverflowing && !isExpanded;
+        const newMaxHeight = shouldBeCollapsed ? `${COLLAPSE_THRESHOLD_PX}px` : '';
+
+        if (preElement.style.maxHeight !== newMaxHeight) {
+            preElement.style.maxHeight = newMaxHeight;
+        }
+
+        if (shouldBeCollapsed) {
             preElement.scrollTop = preElement.scrollHeight;
         }
-    }, [children, isExpanded]); // Reruns when children update or expansion state changes
+    }, [children, isExpanded, isOverflowing]);
 
     const handleToggleExpand = () => {
         hasUserInteracted.current = true;
@@ -165,7 +175,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 ref={preRef} 
                 className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar`}
                 style={{
-                    maxHeight: isOverflowing && !isExpanded ? `${COLLAPSE_THRESHOLD_PX}px` : `10000px`,
                     transition: 'max-height 0.3s ease-in-out',
                     overflowY: 'auto',
                 }}

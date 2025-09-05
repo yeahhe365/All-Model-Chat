@@ -155,7 +155,7 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
                 thinkingConfig: { thinkingBudget: -1 }, // auto
@@ -191,7 +191,7 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
         try {
             const fallbackPrompt = `${prompt}\n\nReturn the three suggestions as a numbered list, one per line. Do not include any other text or formatting.`;
              const fallbackResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-lite',
+                model: 'gemini-2.5-flash',
                 contents: fallbackPrompt,
                 config: {
                     thinkingConfig: { thinkingBudget: -1 },

@@ -1,8 +1,8 @@
-import React, { useState, useCallback, useRef } from 'react';
-import { ChatMessage, MessageListProps, UploadedFile, ThemeColors } from '../types';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { ChatMessage, MessageListProps, UploadedFile } from '../types';
 import { Message } from './message/Message';
 import { X, Bot, Lightbulb, ArrowUp, ArrowDown } from 'lucide-react';
-import { translations, getResponsiveValue } from '../utils/appUtils';
+import { translations } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
 
@@ -12,6 +12,40 @@ const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_translate_title', descKey: 'suggestion_translate_desc' },
   { titleKey: 'suggestion_ocr_title', descKey: 'suggestion_ocr_desc' },
 ];
+
+const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ height, onVisible }) => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // When the placeholder comes into view (or close to it), trigger the onVisible callback.
+                if (entry.isIntersecting) {
+                    onVisible();
+                }
+            },
+            {
+                root: null, // observe against the viewport
+                rootMargin: '500px 0px', // Start loading messages 500px before they become visible
+                threshold: 0.01
+            }
+        );
+
+        const currentRef = ref.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
+    }, [onVisible]);
+
+    return <div ref={ref} style={{ height: `${height}px` }} aria-hidden="true" />;
+};
+
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
@@ -26,6 +60,42 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
   
+  const [visibleMessages, setVisibleMessages] = useState<Set<string>>(() => {
+    // Initially, make the last 15 messages visible to prevent a blank screen on load
+    // and ensure the user sees the latest part of the conversation.
+    const initialVisible = new Set<string>();
+    const lastN = 15;
+    for (let i = Math.max(0, messages.length - lastN); i < messages.length; i++) {
+        initialVisible.add(messages[i].id);
+    }
+    return initialVisible;
+  });
+
+  const estimateMessageHeight = useCallback((message: ChatMessage) => {
+    if (!message) return 150; // A fallback estimate
+    let height = 80; // Base height for padding, avatar space, actions
+    if (message.content) {
+        const lines = message.content.length / 80;
+        height += lines * 24; // ~24px per line estimate
+    }
+    if (message.files && message.files.length > 0) {
+        height += message.files.length * 120; // Estimate for files
+    }
+    if (message.thoughts && showThoughts) {
+        height += 100; // Estimate for thoughts block
+    }
+    return Math.min(height, 1200); // Cap estimate
+  }, [showThoughts]);
+
+  const handleBecameVisible = useCallback((messageId: string) => {
+    setVisibleMessages(prev => {
+        if (prev.has(messageId)) return prev;
+        const newSet = new Set(prev);
+        newSet.add(messageId);
+        return newSet;
+    });
+  }, []);
+
   const handleImageClick = useCallback((file: UploadedFile) => {
     setZoomedFile(file);
   }, []);
@@ -91,30 +161,42 @@ export const MessageList: React.FC<MessageListProps> = ({
         </div>
       ) : (
         <div className="w-full max-w-7xl mx-auto">
-          {messages.map((msg: ChatMessage, index: number) => (
-            <Message
-              key={msg.id}
-              message={msg}
-              prevMessage={index > 0 ? messages[index - 1] : undefined}
-              messageIndex={index}
-              onEditMessage={onEditMessage}
-              onDeleteMessage={onDeleteMessage}
-              onRetryMessage={onRetryMessage}
-              onImageClick={handleImageClick}
-              onOpenHtmlPreview={handleOpenHtmlPreview}
-              showThoughts={showThoughts}
-              themeColors={themeColors}
-              themeId={themeId}
-              baseFontSize={baseFontSize}
-              expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-              isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-              isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-              onTextToSpeech={onTextToSpeech}
-              ttsMessageId={ttsMessageId}
-              onSuggestionClick={onFollowUpSuggestionClick}
-              t={t}
-            />
-          ))}
+          {messages.map((msg: ChatMessage, index: number) => {
+            if (visibleMessages.has(msg.id)) {
+                return (
+                    <Message
+                        key={msg.id}
+                        message={msg}
+                        prevMessage={index > 0 ? messages[index - 1] : undefined}
+                        messageIndex={index}
+                        onEditMessage={onEditMessage}
+                        onDeleteMessage={onDeleteMessage}
+                        onRetryMessage={onRetryMessage}
+                        onImageClick={handleImageClick}
+                        onOpenHtmlPreview={handleOpenHtmlPreview}
+                        showThoughts={showThoughts}
+                        themeColors={themeColors}
+                        themeId={themeId}
+                        baseFontSize={baseFontSize}
+                        expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+                        isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+                        isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+                        onTextToSpeech={onTextToSpeech}
+                        ttsMessageId={ttsMessageId}
+                        onSuggestionClick={onFollowUpSuggestionClick}
+                        t={t}
+                    />
+                );
+            } else {
+                return (
+                    <Placeholder
+                        key={`${msg.id}-placeholder`}
+                        height={estimateMessageHeight(msg)}
+                        onVisible={() => handleBecameVisible(msg.id)}
+                    />
+                );
+            }
+          })}
         </div>
       )}
        { (scrollNavVisibility.up || scrollNavVisibility.down) && (

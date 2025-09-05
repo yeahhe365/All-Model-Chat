@@ -81,11 +81,11 @@ body::-webkit-scrollbar-thumb {
   border: 1px solid var(--theme-border-primary);
 }
 .tool-result pre, .markdown-body pre:has(> .code-block-header) {
-  padding-top: 2.5rem !important;
+  padding-top: 2rem !important;
 }
  @media (min-width: 640px) {
     .tool-result pre, .markdown-body pre:has(> .code-block-header) {
-        padding-top: 2.8rem !important;
+        padding-top: 2.2rem !important;
     }
  }
 .markdown-body pre code, .markdown-body pre code.hljs {
@@ -191,13 +191,13 @@ body::-webkit-scrollbar-thumb {
 .code-block-header {
     background-color: var(--theme-bg-code-block-header) !important;
     border-bottom: 1px solid var(--theme-border-secondary) !important;
-    height: 2.5rem; /* Mobile header height */
+    height: 2rem; /* Mobile header height */
     padding-left: 0.5rem; /* Mobile padding */
     padding-right: 0.5rem; /* Mobile padding */
 }
 @media (min-width: 640px) { /* sm breakpoint */
   .code-block-header {
-    height: 2.8rem;
+    height: 2.2rem;
     padding-left: 0.75rem;
     padding-right: 0.75rem;
   }
