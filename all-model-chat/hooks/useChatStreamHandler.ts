@@ -5,7 +5,7 @@ import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService, showNotification, getTranslator, base64ToBlobUrl } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI, APP_SETTINGS_KEY } from '../constants/appConstants';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
 interface ChatStreamHandlerProps {
     appSettings: AppSettings;
@@ -128,7 +128,7 @@ export const useChatStreamHandler = ({
                 }
 
                 return {...s, messages: finalMessages, settings: s.settings};
-            }));
+            }), { persist: true }); // Explicitly persist on complete.
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
@@ -204,7 +204,7 @@ export const useChatStreamHandler = ({
                     }
                 }
                 return { ...s, messages };
-            }));
+            }), { persist: false }); // Do not persist on every chunk.
         };
 
         const onThoughtChunk = (thoughtChunk: string) => {
@@ -216,7 +216,7 @@ export const useChatStreamHandler = ({
                     lastMessage.thoughts = (lastMessage.thoughts || '') + thoughtChunk;
                 }
                 return { ...s, messages };
-            }));
+            }), { persist: false }); // Do not persist on every thought chunk.
         };
         
         firstContentPartTimeRef.current = null;

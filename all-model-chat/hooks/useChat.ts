@@ -35,11 +35,18 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const userScrolledUp = useRef<boolean>(false);
     const [chat, setChat] = useState<Chat | null>(null);
 
-    const updateAndPersistSessions = useCallback((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+    const updateAndPersistSessions = useCallback((
+        updater: (prev: SavedChatSession[]) => SavedChatSession[],
+        options: { persist?: boolean } = {}
+    ) => {
+        const { persist = true } = options;
         setSavedSessions(prevSessions => {
             const newSessions = updater(prevSessions);
-            const sessionsForStorage = applyImageCachePolicy(newSessions);
-            localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
+            if (persist) {
+                const sessionsForStorage = applyImageCachePolicy(newSessions);
+                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
+                logService.debug('Persisted sessions to localStorage.');
+            }
             return newSessions;
         });
     }, []);
