@@ -52,7 +52,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
-    chatInputHeight
+    chatInputHeight, appSettings
 }) => {
   const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
   
@@ -185,6 +185,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
                         t={t}
+                        appSettings={appSettings}
                     />
                 );
             } else {

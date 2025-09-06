@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { ClipboardCopy, Check, Trash2 } from 'lucide-react';
-import { ChatMessage, UploadedFile, ThemeColors } from '../../types';
+import { ChatMessage, UploadedFile, ThemeColors, AppSettings } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
 import { MessageActions } from './MessageActions';
@@ -25,6 +25,7 @@ interface MessageProps {
     ttsMessageId: string | null;
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;
+    appSettings: AppSettings;
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {

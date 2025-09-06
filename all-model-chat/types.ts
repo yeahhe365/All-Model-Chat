@@ -125,6 +125,7 @@ export interface AppSettings extends ChatSettings {
  isAutoScrollOnSendEnabled?: boolean;
  isAutoSendOnSuggestionClick?: boolean;
  generateQuadImages?: boolean;
+ autoFullscreenHtml?: boolean;
 }
 
 
@@ -207,6 +208,7 @@ export interface MessageListProps {
   onScrollToPrevTurn: () => void;
   onScrollToNextTurn: () => void;
   chatInputHeight: number;
+  appSettings: AppSettings;
 }
 
 export interface ChatInputProps {

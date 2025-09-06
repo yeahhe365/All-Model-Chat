@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Loader2, ChevronDown, Sigma, Zap } from 'lucide-react';
 
-import { ChatMessage, UploadedFile } from '../../types';
+import { ChatMessage, UploadedFile, AppSettings } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { translations } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
@@ -74,9 +74,10 @@ interface MessageContentProps {
     isGraphvizRenderingEnabled: boolean;
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;
+    appSettings: AppSettings;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings }) => {
     const { content, files, isLoading, thoughts, generationStartTime, generationEndTime, audioSrc, groundingMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -118,6 +119,28 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
         return { title: lastHeading, content };
     }, [thoughts]);
+    
+    const prevIsLoadingRef = useRef(isLoading);
+
+    useEffect(() => {
+        // Trigger condition: message just finished loading
+        if (prevIsLoadingRef.current && !isLoading) {
+            if (appSettings.autoFullscreenHtml && message.role === 'model' && message.content) {
+                const regex = /```html\s*([\s\S]*?)\s*```/m;
+                const match = message.content.match(regex);
+                if (match && match[1]) {
+                    const htmlContent = match[1].trim();
+                    // Small delay to ensure the modal doesn't fight with other UI updates
+                    setTimeout(() => {
+                        onOpenHtmlPreview(htmlContent, { initialTrueFullscreen: true });
+                    }, 100);
+                }
+            }
+        }
+        // Update the ref for the next render
+        prevIsLoadingRef.current = isLoading;
+    }, [isLoading, appSettings.autoFullscreenHtml, message.content, message.role, onOpenHtmlPreview]);
+
 
     return (
         <>

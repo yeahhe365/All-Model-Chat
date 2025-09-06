@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Info } from 'lucide-react';
 import { AppSettings, translations } from '../../types';
-import { Toggle } from './shared/Tooltip';
+import { Toggle, Tooltip } from './shared/Tooltip';
 
 interface AppearanceSectionProps {
   themeId: 'system' | 'onyx' | 'pearl';
@@ -28,6 +28,8 @@ interface AppearanceSectionProps {
   setIsSuggestionsEnabled: (value: boolean) => void;
   isAutoSendOnSuggestionClick: boolean;
   setIsAutoSendOnSuggestionClick: (value: boolean) => void;
+  autoFullscreenHtml: boolean;
+  setAutoFullscreenHtml: (value: boolean) => void;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -44,6 +46,7 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   isAutoTitleEnabled, setIsAutoTitleEnabled,
   isSuggestionsEnabled, setIsSuggestionsEnabled,
   isAutoSendOnSuggestionClick, setIsAutoSendOnSuggestionClick,
+  autoFullscreenHtml, setAutoFullscreenHtml,
   t,
 }) => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -207,6 +210,16 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
         <div className="flex justify-between items-center py-4">
             <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_enableGraphvizRendering_label')}</span>
             <Toggle id="graphviz-rendering" checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} />
+        </div>
+        
+        <div className="flex justify-between items-center py-4">
+            <span className="text-sm text-[var(--theme-text-primary)] flex items-center">
+                {t('settings_autoFullscreenHtml_label')}
+                <Tooltip text={t('settings_autoFullscreenHtml_tooltip')}>
+                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                </Tooltip>
+            </span>
+            <Toggle id="auto-preview-html" checked={autoFullscreenHtml} onChange={setAutoFullscreenHtml} />
         </div>
         
       </div>

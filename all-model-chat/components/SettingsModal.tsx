@@ -114,6 +114,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   setIsSuggestionsEnabled={(v) => updateSetting('isSuggestionsEnabled', v)}
                   isAutoSendOnSuggestionClick={settings.isAutoSendOnSuggestionClick ?? true}
                   setIsAutoSendOnSuggestionClick={(v) => updateSetting('isAutoSendOnSuggestionClick', v)}
+                  autoFullscreenHtml={settings.autoFullscreenHtml ?? true}
+                  setAutoFullscreenHtml={(v) => updateSetting('autoFullscreenHtml', v)}
                   t={t}
                 />
             </div>
