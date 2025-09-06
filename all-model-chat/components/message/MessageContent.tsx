@@ -174,7 +174,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                             </span>
                             <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] group-open:rotate-180 transition-transform"/>
                         </div>
-                        {isLoading && lastThought && (
+                        {isLoading && lastThought && message.thinkingTimeMs === undefined && (
                             <div className="group-open:hidden mt-2 text-left w-full pr-4">
                                <h4 className="font-semibold text-[var(--theme-bg-model-message-text)] text-sm">
                                    {lastThought.title}
