@@ -57,39 +57,6 @@ export function pcmBase64ToWavUrl(
   return URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
 }
 
-export const formatTimestamp = (timestamp: number, lang: 'en' | 'zh'): string => {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diffSeconds = Math.round((now.getTime() - date.getTime()) / 1000);
-
-  // Intl.RelativeTimeFormat expects a non-zero value.
-  if (Math.abs(diffSeconds) < 1) {
-    return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(0, 'second');
-  }
-
-  if (Math.abs(diffSeconds) < 60) {
-    return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(-diffSeconds, 'second');
-  }
-  
-  const diffMinutes = Math.round(diffSeconds / 60);
-  if (Math.abs(diffMinutes) < 60) {
-    return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(-diffMinutes, 'minute');
-  }
-
-  const diffHours = Math.round(diffMinutes / 60);
-  if (Math.abs(diffHours) < 24) {
-    return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(-diffHours, 'hour');
-  }
-
-  const diffDays = Math.round(diffHours / 24);
-  if (Math.abs(diffDays) < 7) {
-     return new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }).format(-diffDays, 'day');
-  }
-  
-  return date.toLocaleDateString(lang, { month: 'short', day: 'numeric' });
-};
-
-
 export const showNotification = async (title: string, options?: NotificationOptions) => {
   if (!('Notification' in window)) {
     console.warn('This browser does not support desktop notification');

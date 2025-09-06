@@ -33,6 +33,7 @@ const App: React.FC = () => {
       setSelectedFiles,
       editingMessageId,
       appFileError,
+      setAppFileError,
       isAppProcessingFile,
       savedSessions,
       savedGroups,
@@ -41,7 +42,6 @@ const App: React.FC = () => {
       isModelsLoading,
       modelsLoadingError,
       isSwitchingModel,
-      messagesEndRef,
       scrollContainerRef,
       savedScenarios,
       isAppDraggingOver,
@@ -281,7 +281,6 @@ const App: React.FC = () => {
         themeId={currentTheme.id}
         modelsLoadingError={modelsLoadingError}
         messages={messages}
-        messagesEndRef={messagesEndRef}
         scrollContainerRef={scrollContainerRef}
         onScrollContainerScroll={handleScroll}
         onEditMessage={handleEditMessage}
@@ -302,6 +301,8 @@ const App: React.FC = () => {
         onScrollToPrevTurn={scrollToPrevTurn}
         onScrollToNextTurn={scrollToNextTurn}
         appSettings={appSettings}
+        currentChatSettings={currentChatSettings}
+        setAppFileError={setAppFileError}
         activeSessionId={activeSessionId}
         commandedInput={commandedInput}
         setCommandedInput={setCommandedInput}

@@ -48,7 +48,7 @@ const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ heig
 
 
 export const MessageList: React.FC<MessageListProps> = ({ 
-    messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, 
+    messages, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
@@ -227,7 +227,6 @@ export const MessageList: React.FC<MessageListProps> = ({
             )}
           </div>
         )}
-      <div ref={messagesEndRef} />
     </div>
     <ImageZoomModal 
         file={zoomedFile} 
@@ -240,7 +239,6 @@ export const MessageList: React.FC<MessageListProps> = ({
         isOpen={isHtmlPreviewModalOpen}
         onClose={handleCloseHtmlPreview}
         htmlContent={htmlToPreview}
-        themeColors={themeColors}
         initialTrueFullscreenRequest={initialTrueFullscreenRequest}
       />
     )}

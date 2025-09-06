@@ -143,6 +143,36 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     }
 };
 
+export const translateTextApi = async (apiKey: string, text: string): Promise<string> => {
+    logService.info(`Translating text...`);
+    // Get proxy URL from localStorage if available
+    const storedSettings = localStorage.getItem('app-settings');
+    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+    const ai = getApiClient(apiKey, apiProxyUrl);
+    const prompt = `Translate the following text to English. Only return the translated text, without any additional explanation or formatting.\n\nText to translate:\n"""\n${text}\n"""`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-lite',
+            contents: prompt,
+            config: {
+                temperature: 0.1,
+                topP: 0.95,
+                thinkingConfig: { thinkingBudget: -1 },
+            }
+        });
+
+        if (response.text) {
+            return response.text.trim();
+        } else {
+            throw new Error("Translation failed. The model returned an empty response.");
+        }
+    } catch (error) {
+        logService.error("Error during text translation:", error);
+        throw error;
+    }
+};
+
 export const generateSuggestionsApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> => {
     logService.info(`Generating suggestions in ${language}...`);
     // Get proxy URL from localStorage if available

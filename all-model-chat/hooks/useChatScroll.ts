@@ -7,7 +7,6 @@ interface ChatScrollProps {
 }
 
 export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => {
-    const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [scrollNavVisibility, setScrollNavVisibility] = useState({ up: false, down: false });
     
@@ -126,7 +125,6 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
     }, [userScrolledUp]);
     
     return {
-        messagesEndRef,
         scrollContainerRef,
         scrollNavVisibility,
         handleScroll,

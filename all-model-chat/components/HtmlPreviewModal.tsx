@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X, Download, Maximize, Minimize, Expand, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'; 
-import { ThemeColors } from '../constants/themeConstants';
 import { getResponsiveValue } from '../utils/appUtils';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   htmlContent: string | null;
-  themeColors: ThemeColors;
   initialTrueFullscreenRequest?: boolean;
 }
 
@@ -37,7 +35,6 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   isOpen,
   onClose,
   htmlContent,
-  themeColors,
   initialTrueFullscreenRequest,
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);

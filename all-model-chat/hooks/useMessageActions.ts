@@ -54,12 +54,13 @@ export const useMessageActions = ({
                 if (!silent) {
                     updateAndPersistSessions(prev => prev.map(s => {
                         if (s.id !== activeSessionId) return s;
+                        
+                        // Just mark the message as complete without appending any text.
+                        // The streamOnComplete handler will decide the final state of the message.
                         return {
                             ...s,
                             messages: s.messages.map(msg =>
-                                msg.id === generationId
-                                    ? { ...msg, isLoading: false, content: (msg.content || "") + "\n\n[Stopped by user]", generationEndTime: new Date() }
-                                    : msg
+                                msg.id === generationId ? { ...msg, isLoading: false, generationEndTime: new Date() } : msg
                             )
                         };
                     }));

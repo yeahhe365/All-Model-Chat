@@ -43,7 +43,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     const bubbleClasses = `w-fit max-w-[calc(100%-2.75rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-6xl p-1.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
 
     const roleSpecificBubbleClasses = {
-        user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-lg',
+        user: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg',
         model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg',
         error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-lg',
     };

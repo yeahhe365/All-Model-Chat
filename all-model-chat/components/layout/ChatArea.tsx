@@ -9,13 +9,13 @@ import { ContextMenu, ContextMenuItem } from '../shared/ContextMenu';
 
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
-    activeSessionId,
+    activeSessionId, currentChatSettings, setAppFileError,
     isAppDraggingOver, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel, isModelsLoading,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
     isKeyLocked, defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
-    messages, messagesEndRef, scrollContainerRef, onScrollContainerScroll, onEditMessage,
+    messages, scrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
@@ -178,7 +178,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       )}
       <MessageList
         messages={messages}
-        messagesEndRef={messagesEndRef}
         scrollContainerRef={scrollContainerRef}
         onScrollContainerScroll={onScrollContainerScroll}
         onEditMessage={onEditMessage}
@@ -207,6 +206,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         <div className="pointer-events-auto">
           <ChatInput
             appSettings={appSettings}
+            currentChatSettings={currentChatSettings}
+            setAppFileError={setAppFileError}
             activeSessionId={activeSessionId}
             commandedInput={commandedInput}
             onMessageSent={onMessageSent}

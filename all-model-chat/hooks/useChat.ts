@@ -336,6 +336,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         selectedFiles,
         setSelectedFiles,
         appFileError,
+        setAppFileError,
         isAppProcessingFile,
         savedSessions,
         savedGroups,
@@ -350,7 +351,6 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         updateAndPersistSessions,
         updateAndPersistGroups,
         // from scrollHandler
-        messagesEndRef: scrollHandler.messagesEndRef,
         scrollContainerRef: scrollHandler.scrollContainerRef,
         scrollNavVisibility: scrollHandler.scrollNavVisibility,
         onScrollContainerScroll: scrollHandler.handleScroll,

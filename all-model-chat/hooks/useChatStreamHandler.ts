@@ -75,7 +75,7 @@ export const useChatStreamHandler = ({
                 
                 let completedMessageForNotification: ChatMessage | null = null;
                 
-                const finalMessages = s.messages
+                let finalMessages = s.messages
                     .map(m => {
                         if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
                             let thinkingTime = m.thinkingTimeMs;
@@ -87,10 +87,11 @@ export const useChatStreamHandler = ({
                             const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
                             const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
                             cumulativeTotal += turnTokens;
+                            
                             const completedMessage = {
                                 ...m,
                                 isLoading: false,
-                                content: m.content + (abortController.signal.aborted ? "\n\n[Stopped by user]" : ""),
+                                content: m.content, // Do not append "[Stopped by user]"
                                 thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
                                 generationEndTime: new Date(),
                                 thinkingTimeMs: thinkingTime,
@@ -101,8 +102,9 @@ export const useChatStreamHandler = ({
                                 cumulativeTotalTokens: cumulativeTotal,
                             };
                             
-                            const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc;
-                            if (isEmpty) {
+                            const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc && !completedMessage.thoughts?.trim();
+                            
+                            if (isEmpty && !abortController.signal.aborted) {
                                 completedMessage.role = 'error';
                                 completedMessage.content = t('empty_response_error');
                             }
@@ -113,8 +115,13 @@ export const useChatStreamHandler = ({
                             return completedMessage;
                         }
                         return m;
-                    })
-                    .filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc);
+                    });
+                
+                // If the generation was stopped by the user, we keep the message bubble even if it's empty.
+                // Otherwise, we filter out any empty model messages that might have been created (e.g., for tool calls).
+                if (!abortController.signal.aborted) {
+                    finalMessages = finalMessages.filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc || (m.thoughts && m.thoughts.trim() !== ''));
+                }
                 
                 if (appSettings.isCompletionNotificationEnabled && completedMessageForNotification && document.hidden) {
                     const notificationBody = (completedMessageForNotification.content || "Media or tool response received").substring(0, 150) + (completedMessageForNotification.content && completedMessageForNotification.content.length > 150 ? '...' : '');

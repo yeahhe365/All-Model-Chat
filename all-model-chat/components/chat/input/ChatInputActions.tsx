@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUp, Square, X, Edit2, Loader2, Mic } from 'lucide-react';
+import { ArrowUp, Square, X, Edit2, Loader2, Mic, Languages } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
@@ -26,6 +26,9 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   isWaitingForUpload,
   t,
   onCancelRecording,
+  onTranslate,
+  isTranslating,
+  inputText,
 }) => {
   const micIconSize = 18;
   const sendIconSize = 18;
@@ -59,6 +62,20 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                     {t('cancel')}
                 </button>
             )}
+            <button
+                type="button"
+                onClick={onTranslate}
+                disabled={!inputText.trim() || isLoading || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
+                className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+                title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+            >
+                {isTranslating ? (
+                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" />
+                ) : (
+                    <Languages size={micIconSize} />
+                )}
+            </button>
             <button
                 type="button"
                 onClick={onRecordButtonClick}

@@ -136,7 +136,6 @@ export const Header: React.FC<HeaderProps> = ({
             aria-expanded={isModelSelectorOpen}
           >
             {isModelsLoading && !currentModelName && <Loader2 size={18} className="animate-spin text-[var(--theme-text-link)]" />}
-            {isKeyLocked && <Lock size={16} className="text-[var(--theme-text-link)]" title="API Key is locked for this session" />}
             <span className="truncate max-w-[144px] sm:max-w-[300px] font-medium">{displayModelName}</span>
           </button>
 

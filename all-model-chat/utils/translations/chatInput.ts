@@ -38,6 +38,8 @@ export const chatInputTranslations = {
     web_search_label: { en: 'Web Search', zh: '网络搜索' },
     code_execution_label: { en: 'Code Execution', zh: '代码执行' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
+    translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
+    translating_button_title: { en: 'Translating...', zh: '翻译中...' },
 
     // Command descriptions for help modal
     help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },
