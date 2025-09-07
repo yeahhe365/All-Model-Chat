@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://all-model-chat.pages.dev/" target="_blank">
-    <img width="1920" height="991" alt="All Model Chat 应用界面截图" src="https://github.com/user-attachments/assets/2eca1f8c-ced1-48a8-ab81-dda8f0e2f440" />
+    <img width="1920" height="991" alt="All Model Chat 应用界面截图" src="https://github.com/user-attachments/assets/5386755d-031f-4a64-a230-70ab2d59a226" />
   </a>
   <br/>
   <h1>All Model Chat - 全能模型聊天</h1>
@@ -22,6 +22,7 @@
     <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="欢迎提交PR">
   </p>
 </div>
+
 
 ---
 
