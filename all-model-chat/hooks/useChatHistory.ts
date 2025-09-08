@@ -3,6 +3,7 @@ import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings,
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { generateUniqueId, logService, getTranslator } from '../utils/appUtils';
 import { dbService } from '../utils/db';
+import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
@@ -22,6 +23,32 @@ interface ChatHistoryProps {
     activeChat: SavedChatSession | undefined;
     language: 'en' | 'zh';
 }
+
+const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSession => {
+    const newMessages = session.messages.map(message => {
+        if (!message.files?.length) return message;
+
+        const newFiles = message.files.map(file => {
+            // Check if it's an image that was stored locally (has rawFile)
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.rawFile) {
+                try {
+                    // Create a new blob URL. The browser will handle the old invalid one on page unload.
+                    const dataUrl = URL.createObjectURL(file.rawFile);
+                    return { ...file, dataUrl: dataUrl };
+                } catch (error) {
+                    logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
+                    // Keep the file but mark that preview failed
+                    return { ...file, dataUrl: undefined, error: "Preview failed to load" };
+                }
+            }
+            return file;
+        });
+
+        return { ...message, files: newFiles };
+    });
+
+    return { ...session, messages: newMessages };
+};
 
 export const useChatHistory = ({
     appSettings,
@@ -101,15 +128,18 @@ export const useChatHistory = ({
                 dbService.getAllGroups(),
                 dbService.getActiveSessionId()
             ]);
-            sessions.sort((a,b) => b.timestamp - a.timestamp);
-            setSavedSessions(sessions);
+
+            const rehydratedSessions = sessions.map(rehydrateSessionFiles);
+            rehydratedSessions.sort((a,b) => b.timestamp - a.timestamp);
+            
+            setSavedSessions(rehydratedSessions);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
-            if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
-                loadChatSession(storedActiveId, sessions);
-            } else if (sessions.length > 0) {
+            if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
+                loadChatSession(storedActiveId, rehydratedSessions);
+            } else if (rehydratedSessions.length > 0) {
                 logService.info('No active session ID, loading most recent session.');
-                loadChatSession(sessions[0].id, sessions);
+                loadChatSession(rehydratedSessions[0].id, rehydratedSessions);
             } else {
                 logService.info('No history found, starting fresh chat.');
                 startNewChat();

@@ -18,7 +18,7 @@ export interface UploadedFile {
   error?: string; 
   
   // Fields for API uploaded files like PDFs
-  rawFile?: File; // Temporary storage for the browser File object before API upload
+  rawFile?: File | Blob; // Persisted File/Blob for offline access, used to generate dataUrl on load.
   fileUri?: string; // URI returned by Gemini API (e.g., "files/xxxxxxxx")
   fileApiName?: string; // Full resource name from API (e.g., "files/xxxxxxxx")
   uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled'; // State of the file on Gemini API

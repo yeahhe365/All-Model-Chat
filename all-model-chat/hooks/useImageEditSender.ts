@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, buildContentParts, base64ToBlobUrl, createChatHistoryForApi, logService } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -118,13 +118,17 @@ export const useImageEditSender = ({
                             hasImagePart = true;
                             successfulImageCount++;
                             const { mimeType, data } = part.inlineData;
-                            const dataUrl = base64ToBlobUrl(data, mimeType);
+                            const name = `edited-image-${index + 1}.png`;
+                            const blob = base64ToBlob(data, mimeType);
+                            const file = new File([blob], name, { type: mimeType });
+                            const dataUrl = URL.createObjectURL(file);
                             combinedFiles.push({
                                 id: generateUniqueId(),
-                                name: `edited-image-${index + 1}.png`,
+                                name,
                                 type: mimeType,
-                                size: data.length,
-                                dataUrl: dataUrl,
+                                size: file.size,
+                                dataUrl,
+                                rawFile: file,
                                 uploadState: 'active',
                             });
                         }

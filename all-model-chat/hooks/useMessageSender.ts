@@ -138,7 +138,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         
         let finalSessionId = activeSessionId;
         
-        const userMessageContent: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles.map(f => ({...f, rawFile: undefined})) : undefined, timestamp: new Date() };
+        const userMessageContent: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles : undefined, timestamp: new Date() };
         const modelMessageContent: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
 
         // Perform a single, atomic state update for adding messages and creating a new session if necessary.

@@ -24,14 +24,18 @@ export const fileToBlobUrl = (file: File): string => {
     return URL.createObjectURL(file);
 };
 
-export const base64ToBlobUrl = (base64: string, mimeType: string): string => {
+export const base64ToBlob = (base64: string, mimeType: string): Blob => {
     const byteCharacters = atob(base64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
         byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: mimeType });
+    return new Blob([byteArray], { type: mimeType });
+};
+
+export const base64ToBlobUrl = (base64: string, mimeType: string): string => {
+    const blob = base64ToBlob(base64, mimeType);
     return URL.createObjectURL(blob);
 };
 
@@ -70,8 +74,7 @@ export const buildContentParts = async (
     
     // Explicitly remove potentially large fields from the object that will be stored in state.
     delete newFile.base64Data;
-    delete newFile.rawFile;
-
+    
     if (file.isProcessing || file.error || file.uploadState !== 'active') {
       return { file: newFile, part };
     }
@@ -84,7 +87,7 @@ export const buildContentParts = async (
       const fileSource = file.rawFile;
       const urlSource = file.dataUrl?.startsWith('blob:') ? file.dataUrl : undefined;
 
-      if (fileSource) {
+      if (fileSource && fileSource instanceof File) {
         try {
           base64DataForApi = await fileToBase64(fileSource);
         } catch (error) {

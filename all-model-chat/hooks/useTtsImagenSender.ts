@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlobUrl } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlob } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
@@ -106,13 +106,18 @@ export const useTtsImagenSender = ({
 
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
-                    const dataUrl = base64ToBlobUrl(base64Data, 'image/jpeg');
+                    const name = `generated-image-${index + 1}.jpeg`;
+                    const type = 'image/jpeg';
+                    const blob = base64ToBlob(base64Data, type);
+                    const file = new File([blob], name, { type });
+                    const dataUrl = URL.createObjectURL(file);
                     return {
                         id: generateUniqueId(),
-                        name: `generated-image-${index + 1}.jpeg`,
-                        type: 'image/jpeg',
-                        size: base64Data.length,
-                        dataUrl: dataUrl,
+                        name,
+                        type,
+                        size: file.size,
+                        dataUrl,
+                        rawFile: file,
                         uploadState: 'active'
                     };
                 });
