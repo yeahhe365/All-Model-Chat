@@ -199,6 +199,7 @@ export interface MessageListProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   onSuggestionClick?: (suggestion: string) => void;
+  onOrganizeInfoClick?: (suggestion: string) => void;
   onFollowUpSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;
@@ -428,6 +429,7 @@ export interface ChatAreaProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   onSuggestionClick: (suggestion: string) => void;
+  onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   ttsMessageId: string | null;

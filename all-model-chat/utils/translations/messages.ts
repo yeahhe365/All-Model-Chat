@@ -1,3 +1,5 @@
+
+
 export const messagesTranslations = {
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
@@ -5,14 +7,17 @@ export const messagesTranslations = {
     imageZoom_close_title: { en: 'Close (Esc)', zh: '关闭 (Esc)' },
     welcome_greeting: { en: 'How can I help you today?', zh: '有什么可以帮忙的？' },
     welcome_suggestion_title: { en: 'Suggested', zh: '建议' },
-    suggestion_summarize_title: { en: 'Summarize article', zh: '总结文章' },
-    suggestion_summarize_desc: { en: 'Summarize the following article', zh: '总结下面文章' },
-    suggestion_explain_title: { en: 'Explain concept', zh: '解释概念' },
-    suggestion_explain_desc: { en: 'Explain this concept to a beginner', zh: '向初学者解释这个概念' },
-    suggestion_translate_title: { en: 'Translate', zh: '翻译' },
-    suggestion_translate_desc: { en: 'Translate the following to Chinese', zh: '将以下内容翻译成中文' },
-    suggestion_ocr_title: { en: 'Extract from image', zh: '从图片提取' },
-    suggestion_ocr_desc: { en: 'Extract text from the attached image', zh: '从附加的图片中提取文字' },
+    suggestion_summarize_title: { en: 'Summarize article', zh: '一句话概括' },
+    suggestion_summarize_desc: { en: 'Summarize the following article', zh: '用一句话总结以下信息：' },
+    suggestion_organize_title: { en: 'Organize Information', zh: '信息整理' },
+    suggestion_organize_desc: { en: 'Organize and summarize the following information', zh: '整理归纳下面信息：' },
+    suggestion_translate_title: { en: 'Bilingual Translation', zh: '中英互译' },
+    suggestion_translate_desc: { 
+        en: `You are a Chinese-English translation assistant. Do not add any prefixes or explanations in the output. Below is the text you need to translate:`, 
+        zh: `你是中英互译助手，输出的内容中不要添加任何前缀或解释。下面是你要翻译的文本：` 
+    },
+    suggestion_ocr_title: { en: 'OCR', zh: 'OCR' },
+    suggestion_ocr_desc: { en: 'Extract text from the attached image. Do not add any prefixes or explanations.', zh: '从附加的图片中提取文字，不要添加任何前缀或解释。' },
     suggestion_prompt_label: { en: 'Prompt', zh: '提示' },
     welcome_title: { en: 'Welcome to All Model Chat', zh: '欢迎使用 All Model Chat' },
     welcome_p1: { en: 'Start a conversation by typing below. You can also attach files, load scenarios via the', zh: '在下方输入文字开始对话。您也可以附加文件，或通过' },

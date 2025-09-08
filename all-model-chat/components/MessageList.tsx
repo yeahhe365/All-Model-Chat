@@ -8,7 +8,7 @@ import { ImageZoomModal } from './shared/ImageZoomModal';
 
 const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
-  { titleKey: 'suggestion_explain_title', descKey: 'suggestion_explain_desc' },
+  { titleKey: 'suggestion_organize_title', descKey: 'suggestion_organize_desc', specialAction: 'organize' },
   { titleKey: 'suggestion_translate_title', descKey: 'suggestion_translate_desc' },
   { titleKey: 'suggestion_ocr_title', descKey: 'suggestion_ocr_desc' },
 ];
@@ -50,7 +50,7 @@ const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ heig
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, scrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
-    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
+    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight, appSettings
 }) => {
@@ -142,7 +142,14 @@ export const MessageList: React.FC<MessageListProps> = ({
               {SUGGESTIONS_KEYS.map((s, i) => (
                 <button
                   key={i}
-                  onClick={() => onSuggestionClick && onSuggestionClick(t(s.descKey as any))}
+                  onClick={() => {
+                      const text = t(s.descKey as any);
+                      if ((s as any).specialAction === 'organize' && onOrganizeInfoClick) {
+                          onOrganizeInfoClick(text);
+                      } else if (onSuggestionClick) {
+                          onSuggestionClick(text);
+                      }
+                  }}
                   className="bg-[var(--theme-bg-tertiary)] border border-transparent hover:border-[var(--theme-border-secondary)] rounded-2xl p-3 sm:p-4 text-left h-40 sm:h-44 flex flex-col group justify-between hover:bg-[var(--theme-bg-input)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
                   style={{ animation: `fadeInUp 0.5s ${0.2 + i * 0.1}s ease-out both` }}
                 >

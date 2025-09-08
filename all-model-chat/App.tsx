@@ -227,6 +227,31 @@ const App: React.FC = () => {
     }, 0);
   };
 
+  const handleOrganizeInfoSuggestionClick = (text: string) => {
+    // 1. Ensure Canvas Helper is active
+    if (currentChatSettings.systemInstruction !== CANVAS_ASSISTANT_SYSTEM_PROMPT) {
+        const newSystemInstruction = CANVAS_ASSISTANT_SYSTEM_PROMPT;
+        
+        setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
+
+        if (activeSessionId && setCurrentChatSettings) {
+          setCurrentChatSettings(prevSettings => ({
+            ...prevSettings,
+            systemInstruction: newSystemInstruction,
+          }));
+        }
+    }
+    
+    // 2. Set the commanded input
+    setCommandedInput({ text: text + '\n', id: Date.now() });
+
+    // 3. Focus textarea
+    setTimeout(() => {
+        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+        if (textarea) textarea.focus();
+    }, 0);
+  };
+
   const handleFollowUpSuggestionClick = (text: string) => {
     if (appSettings.isAutoSendOnSuggestionClick ?? true) {
       handleSendMessage({ text });
@@ -293,6 +318,7 @@ const App: React.FC = () => {
         isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
         isGraphvizRenderingEnabled={appSettings.isGraphvizRenderingEnabled ?? true}
         onSuggestionClick={handleHomepageSuggestionClick}
+        onOrganizeInfoClick={handleOrganizeInfoSuggestionClick}
         onFollowUpSuggestionClick={handleFollowUpSuggestionClick}
         onTextToSpeech={handleTextToSpeech}
         ttsMessageId={ttsMessageId}
