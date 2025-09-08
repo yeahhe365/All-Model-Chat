@@ -14,17 +14,19 @@ if (appleTouchIcon) {
   appleTouchIcon.setAttribute('href', APP_LOGO_SVG_DATA_URI);
 }
 
-// 初始化代理拦截器
-initializeProxyInterceptor();
+(async () => {
+  // 初始化代理拦截器
+  await initializeProxyInterceptor();
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    throw new Error("Could not find root element to mount to");
+  }
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+})();

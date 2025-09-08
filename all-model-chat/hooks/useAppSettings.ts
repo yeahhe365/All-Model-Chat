@@ -1,22 +1,30 @@
-
-
 import { useState, useEffect } from 'react';
 import { AppSettings } from '../types';
-import { DEFAULT_APP_SETTINGS, APP_SETTINGS_KEY } from '../constants/appConstants';
+import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { geminiServiceInstance } from '../services/geminiService';
-import { generateThemeCssVariables } from '../utils/appUtils';
+import { generateThemeCssVariables, logService } from '../utils/appUtils';
+import { dbService } from '../utils/db';
 
 export const useAppSettings = () => {
-    const [appSettings, setAppSettings] = useState<AppSettings>(() => {
-        const stored = localStorage.getItem(APP_SETTINGS_KEY);
-        const loadedSettings = stored ? JSON.parse(stored) : {};
-        if (!['system', 'onyx', 'pearl'].includes(loadedSettings.themeId)) {
-            loadedSettings.themeId = DEFAULT_APP_SETTINGS.themeId;
-        }
-        return { ...DEFAULT_APP_SETTINGS, ...loadedSettings };
-    });
+    const [appSettings, setAppSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
+    const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const storedSettings = await dbService.getAppSettings();
+                if (storedSettings) {
+                    setAppSettings(prev => ({...prev, ...storedSettings}));
+                }
+            } catch (error) {
+                logService.error("Failed to load settings from IndexedDB", { error });
+            } finally {
+                setIsSettingsLoaded(true);
+            }
+        };
+        loadSettings();
+    }, []);
+    
     const [language, setLanguage] = useState<'en' | 'zh'>('en');
 
     const [resolvedThemeId, setResolvedThemeId] = useState<'onyx' | 'pearl'>(() => {
@@ -42,7 +50,10 @@ export const useAppSettings = () => {
     const currentTheme = AVAILABLE_THEMES.find(t => t.id === resolvedThemeId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
 
     useEffect(() => {
-        localStorage.setItem(APP_SETTINGS_KEY, JSON.stringify(appSettings));
+        // Only save settings after they've been loaded to prevent overwriting stored settings with defaults.
+        if (isSettingsLoaded) {
+            dbService.setAppSettings(appSettings).catch(e => logService.error("Failed to save settings", { error: e }));
+        }
 
         const themeVariablesStyleTag = document.getElementById('theme-variables');
         if (themeVariablesStyleTag) {
@@ -93,7 +104,7 @@ export const useAppSettings = () => {
         }
 
 
-    }, [appSettings, currentTheme]);
+    }, [appSettings, currentTheme, isSettingsLoaded]);
 
     return { appSettings, setAppSettings, currentTheme, language };
 };

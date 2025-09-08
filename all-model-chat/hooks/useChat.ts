@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, ChatGroup } from '../types';
-import { DEFAULT_CHAT_SETTINGS, APP_SETTINGS_KEY } from '../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
@@ -9,11 +9,11 @@ import { useMessageHandler } from './useMessageHandler';
 import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
-import { applyImageCachePolicy, generateUniqueId, getKeyForRequest, logService, createChatHistoryForApi } from '../utils/appUtils';
-import { CHAT_HISTORY_SESSIONS_KEY, CHAT_HISTORY_GROUPS_KEY } from '../constants/appConstants';
+import { generateUniqueId, getKeyForRequest, logService, createChatHistoryForApi } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
+import { dbService } from '../utils/db';
 
 
 export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
@@ -35,26 +35,26 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const userScrolledUp = useRef<boolean>(false);
     const [chat, setChat] = useState<Chat | null>(null);
 
-    const updateAndPersistSessions = useCallback((
+    const updateAndPersistSessions = useCallback(async (
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
+        let newSessions: SavedChatSession[] = [];
         setSavedSessions(prevSessions => {
-            const newSessions = updater(prevSessions);
-            if (persist) {
-                const sessionsForStorage = applyImageCachePolicy(newSessions);
-                localStorage.setItem(CHAT_HISTORY_SESSIONS_KEY, JSON.stringify(sessionsForStorage));
-                logService.debug('Persisted sessions to localStorage.');
-            }
+            newSessions = updater(prevSessions);
             return newSessions;
         });
+        if (persist) {
+            await dbService.setAllSessions(newSessions);
+            logService.debug('Persisted sessions to IndexedDB.');
+        }
     }, []);
     
-    const updateAndPersistGroups = useCallback((updater: (prev: ChatGroup[]) => ChatGroup[]) => {
+    const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
         setSavedGroups(prevGroups => {
             const newGroups = updater(prevGroups);
-            localStorage.setItem(CHAT_HISTORY_GROUPS_KEY, JSON.stringify(newGroups));
+            dbService.setAllGroups(newGroups);
             return newGroups;
         });
     }, []);
@@ -106,8 +106,8 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
                 return;
             }
             
-            const storedSettings = localStorage.getItem(APP_SETTINGS_KEY);
-            const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+            const storedSettings = await dbService.getAppSettings();
+            const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
             const ai = getApiClient(keyResult.key, apiProxyUrl);
             
             // Use only non-loading messages for history when creating the object
@@ -166,8 +166,10 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     
     const { loadChatSession, startNewChat, handleDeleteChatHistorySession } = historyHandler;
 
-    useEffect(() => { historyHandler.loadInitialData(); // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    useEffect(() => {
+        const loadData = async () => await historyHandler.loadInitialData();
+        loadData();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     
     // This effect handles the case where the active session is deleted.
     useEffect(() => {

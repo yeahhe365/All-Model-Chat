@@ -1,6 +1,7 @@
 import { getClient } from './baseApi';
 import { ModelOption } from '../../types';
 import { logService } from "../logService";
+import { dbService } from '../../utils/db';
 
 export const getAvailableModelsApi = async (apiKeysString: string | null): Promise<ModelOption[]> => {
     logService.info('🔄 [ModelAPI] Fetching available models...');
@@ -18,10 +19,9 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
     // if the proxy settings are enabled.
     try {
         // Get proxy URL from localStorage if available
-        const storedSettings = localStorage.getItem('app-settings');
-        const settings = storedSettings ? JSON.parse(storedSettings) : {};
-        const useApiProxy = settings.useCustomApiConfig && settings.useApiProxy;
-        const apiProxyUrl = useApiProxy ? settings.apiProxyUrl : null;
+        const settings = await dbService.getAppSettings();
+        const useApiProxy = settings?.useCustomApiConfig && settings?.useApiProxy;
+        const apiProxyUrl = useApiProxy ? settings?.apiProxyUrl : null;
         
         const ai = getClient(randomKey, apiProxyUrl);
 

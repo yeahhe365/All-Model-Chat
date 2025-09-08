@@ -2,6 +2,7 @@
  * 增强版代理拦截器
  * 自动拦截所有网络请求并重定向到代理服务器
  */
+import { dbService } from './db';
 
 interface ProxyConfig {
   enabled: boolean;
@@ -239,12 +240,11 @@ class ProxyInterceptor {
 export const proxyInterceptor = new ProxyInterceptor();
 
 // 自动初始化函数
-export const initializeProxyInterceptor = (): void => {
+export const initializeProxyInterceptor = async (): Promise<void> => {
   try {
     // 从localStorage读取设置
-    const settings = localStorage.getItem('chatAppSettings');
-    if (settings) {
-      const appSettings = JSON.parse(settings);
+    const appSettings = await dbService.getAppSettings();
+    if (appSettings) {
       
       // 如果启用了自定义API配置、代理开关，并且有代理URL，则启用拦截器
       if (appSettings.useCustomApiConfig && appSettings.useApiProxy && appSettings.apiProxyUrl) {

@@ -22,6 +22,10 @@ const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
         'bash': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
         'shell': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
         'sh': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
+        'json': { color: '#F16C2E', backgroundColor: 'rgba(241, 108, 46, 0.1)', borderColor: 'rgba(241, 108, 46, 0.2)' },
+        'md': { color: '#087ea4', backgroundColor: 'rgba(8, 126, 164, 0.1)', borderColor: 'rgba(8, 126, 164, 0.2)' },
+        'markdown': { color: '#087ea4', backgroundColor: 'rgba(8, 126, 164, 0.1)', borderColor: 'rgba(8, 126, 164, 0.2)' },
+        'txt': { color: '#6c757d', backgroundColor: 'rgba(108, 117, 125, 0.1)', borderColor: 'rgba(108, 117, 125, 0.2)' },
     };
 
     const style = styleMap[lang];

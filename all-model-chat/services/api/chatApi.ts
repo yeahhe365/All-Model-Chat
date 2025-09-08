@@ -2,6 +2,7 @@ import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } f
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getApiClient } from "./baseApi";
+import { dbService } from '../../utils/db';
 
 export const sendMessageStreamApi = async (
     chat: Chat,
@@ -152,8 +153,8 @@ export const sendStatelessMessageStreamApi = async (
     logService.info(`Sending message via stateless generateContent (stream) for model ${modelId}`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+    const storedSettings = await dbService.getAppSettings();
+    const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
     const ai = getApiClient(apiKey, apiProxyUrl);
 
     try {
@@ -196,8 +197,8 @@ export const sendStatelessMessageNonStreamApi = async (
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
-    const storedSettings = localStorage.getItem('app-settings');
-    const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+    const storedSettings = await dbService.getAppSettings();
+    const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
     const ai = getApiClient(apiKey, apiProxyUrl);
 
     try {

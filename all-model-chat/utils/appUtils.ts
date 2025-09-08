@@ -5,5 +5,6 @@ export * from './apiUtils';
 export * from './domainUtils';
 export * from './translations';
 export * from './uiUtils';
+export * from './db';
 
 export { logService } from '../services/logService';

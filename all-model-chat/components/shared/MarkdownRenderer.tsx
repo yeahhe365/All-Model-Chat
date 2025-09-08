@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
@@ -115,13 +116,19 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     }
   }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading]);
 
+  // Workaround for a Markdown parsing issue with CJK characters and colons.
+  // The parser fails to correctly render bold text like "**标题：**后面字符"
+  // but works with "**标题：** 后面字符". This regex adds the necessary space.
+  // It handles both full-width (：) and half-width (:) colons.
+  const processedContent = content.replace(/((:|：)\*\*)(\S)/g, '$1 $3');
+
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkMath]}
+      remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
       rehypePlugins={rehypePlugins as any}
       components={components}
     >
-      {content}
+      {processedContent}
     </ReactMarkdown>
   );
 });

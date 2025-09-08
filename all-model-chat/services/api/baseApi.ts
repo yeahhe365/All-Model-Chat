@@ -1,5 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
+import { dbService } from '../../utils/db';
+
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes

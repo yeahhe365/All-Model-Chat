@@ -1,16 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile } from '../types';
 import { Message } from './message/Message';
-import { X, Bot, Lightbulb, ArrowUp, ArrowDown } from 'lucide-react';
+import { X, Bot, Lightbulb, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 import { HtmlPreviewModal } from './HtmlPreviewModal';
 import { ImageZoomModal } from './shared/ImageZoomModal';
 
 const SUGGESTIONS_KEYS = [
-  { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
   { titleKey: 'suggestion_organize_title', descKey: 'suggestion_organize_desc', specialAction: 'organize' },
   { titleKey: 'suggestion_translate_title', descKey: 'suggestion_translate_desc' },
   { titleKey: 'suggestion_ocr_title', descKey: 'suggestion_ocr_desc' },
+  { titleKey: 'suggestion_explain_title', descKey: 'suggestion_explain_desc' },
+  { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc' },
 ];
 
 const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ height, onVisible }) => {
@@ -59,6 +60,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
+  const [suggestionPage, setSuggestionPage] = useState(0);
   
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(() => {
     // Initially, make the last 15 messages visible to prevent a blank screen on load
@@ -119,6 +121,13 @@ export const MessageList: React.FC<MessageListProps> = ({
     setInitialTrueFullscreenRequest(false);
   }, []);
 
+  const suggestionsPerPage = 4;
+  const totalSuggestionPages = Math.ceil(SUGGESTIONS_KEYS.length / suggestionsPerPage);
+  const paginatedSuggestions = SUGGESTIONS_KEYS.slice(
+      suggestionPage * suggestionsPerPage, 
+      (suggestionPage * suggestionsPerPage) + suggestionsPerPage
+  );
+
   return (
     <>
     <div 
@@ -134,12 +143,37 @@ export const MessageList: React.FC<MessageListProps> = ({
             <h1 className="text-3xl sm:text-4xl font-bold text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate">
               {t('welcome_greeting')}
             </h1>
-            <div className="text-left mb-2 sm:mb-3 flex items-center gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
-              <Lightbulb size={16} className="text-[var(--theme-text-link)]" />
-              <span>{t('welcome_suggestion_title')}</span>
+            <div className="text-left mb-2 sm:mb-3 flex items-center justify-between gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
+                <div className="flex items-center gap-2">
+                    <Lightbulb size={16} className="text-[var(--theme-text-link)]" />
+                    <span>{t('welcome_suggestion_title')}</span>
+                </div>
+                {totalSuggestionPages > 1 && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs tabular-nums">
+                            {suggestionPage + 1} / {totalSuggestionPages}
+                        </span>
+                        <button
+                            onClick={() => setSuggestionPage(p => Math.max(0, p - 1))}
+                            disabled={suggestionPage === 0}
+                            className="p-1 rounded-md hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            aria-label="Previous suggestions"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                        <button
+                            onClick={() => setSuggestionPage(p => Math.min(totalSuggestionPages - 1, p + 1))}
+                            disabled={suggestionPage >= totalSuggestionPages - 1}
+                            className="p-1 rounded-md hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            aria-label="Next suggestions"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {SUGGESTIONS_KEYS.map((s, i) => (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {paginatedSuggestions.map((s, i) => (
                 <button
                   key={i}
                   onClick={() => {
@@ -155,7 +189,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 >
                   <div>
                     <h3 className="font-semibold text-base text-[var(--theme-text-primary)]">{t(s.titleKey as any)}</h3>
-                    <p className="text-sm text-[var(--theme-text-secondary)] mt-1">{t(s.descKey as any)}</p>
+                    <p className="text-sm text-[var(--theme-text-secondary)] mt-1 line-clamp-3">{t(s.descKey as any)}</p>
                   </div>
                   <div className="flex justify-between items-center mt-auto text-[var(--theme-text-tertiary)] opacity-70 group-hover:opacity-100 transition-opacity">
                     <span className="text-sm">{t('suggestion_prompt_label')}</span>

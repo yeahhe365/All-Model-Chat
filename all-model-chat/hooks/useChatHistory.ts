@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup } from '../types';
-import { CHAT_HISTORY_SESSIONS_KEY, ACTIVE_CHAT_SESSION_ID_KEY, DEFAULT_CHAT_SETTINGS, CHAT_HISTORY_GROUPS_KEY } from '../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { generateUniqueId, logService, getTranslator } from '../utils/appUtils';
+import { dbService } from '../utils/db';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
-type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
+type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => Promise<void>;
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -63,7 +64,7 @@ export const useChatHistory = ({
 
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
         setActiveSessionId(newSessionId);
-        localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, newSessionId);
+        dbService.setActiveSessionId(newSessionId);
 
         setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]);
@@ -79,7 +80,7 @@ export const useChatHistory = ({
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
         if (sessionToLoad) {
             setActiveSessionId(sessionToLoad.id);
-            localStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, sessionId);
+            dbService.setActiveSessionId(sessionId);
             setCommandedInput({ text: '', id: Date.now() });
             setSelectedFiles([]);
             setEditingMessageId(null);
@@ -92,41 +93,18 @@ export const useChatHistory = ({
         }
     }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat]);
 
-    const loadInitialData = useCallback(() => {
+    const loadInitialData = useCallback(async () => {
         try {
-            logService.info('Attempting to load chat history from localStorage.');
-            const storedSessions = localStorage.getItem(CHAT_HISTORY_SESSIONS_KEY);
-            let sessions: SavedChatSession[] = [];
-            if (storedSessions) {
-                try {
-                    const parsed = JSON.parse(storedSessions);
-                    if (Array.isArray(parsed)) {
-                        sessions = parsed;
-                    } else {
-                        logService.warn('Stored chat history is corrupted (not an array). Discarding.');
-                        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
-                    }
-                } catch (e) {
-                    logService.error('Failed to parse chat history from localStorage. Discarding.', { error: e });
-                    localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
-                }
-            }
+            logService.info('Attempting to load chat history from IndexedDB.');
+            const [sessions, groups, storedActiveId] = await Promise.all([
+                dbService.getAllSessions(),
+                dbService.getAllGroups(),
+                dbService.getActiveSessionId()
+            ]);
             sessions.sort((a,b) => b.timestamp - a.timestamp);
             setSavedSessions(sessions);
+            setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
-            const storedGroups = localStorage.getItem(CHAT_HISTORY_GROUPS_KEY);
-            if (storedGroups) {
-                try {
-                    const parsedGroups = JSON.parse(storedGroups);
-                    if (Array.isArray(parsedGroups)) {
-                        setSavedGroups(parsedGroups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
-                    }
-                } catch (e) {
-                    logService.error('Failed to parse groups from localStorage.', { error: e });
-                }
-            }
-
-            const storedActiveId = localStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
             if (storedActiveId && sessions.find(s => s.id === storedActiveId)) {
                 loadChatSession(storedActiveId, sessions);
             } else if (sessions.length > 0) {
@@ -211,9 +189,7 @@ export const useChatHistory = ({
         logService.warn('User clearing all chat history.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
-        localStorage.removeItem(CHAT_HISTORY_SESSIONS_KEY);
-        localStorage.removeItem(CHAT_HISTORY_GROUPS_KEY);
-        localStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+        Promise.all([dbService.setAllSessions([]), dbService.setAllGroups([]), dbService.setActiveSessionId(null)]);
         setSavedSessions([]);
         setSavedGroups([]);
         startNewChat();
@@ -224,7 +200,7 @@ export const useChatHistory = ({
         logService.warn('User clearing all application cache and settings.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
-        localStorage.clear();
+        dbService.clearAllData();
         setTimeout(() => window.location.reload(), 50);
     }, [activeJobs, t]);
 

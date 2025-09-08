@@ -18,6 +18,8 @@ export const messagesTranslations = {
     },
     suggestion_ocr_title: { en: 'OCR', zh: 'OCR' },
     suggestion_ocr_desc: { en: 'Extract text from the attached image. Do not add any prefixes or explanations.', zh: '从附加的图片中提取文字，不要添加任何前缀或解释。' },
+    suggestion_explain_title: { en: 'Explain Concept', zh: '概念解释' },
+    suggestion_explain_desc: { en: 'In an innovative and easy-to-understand way, help beginners quickly grasp new concepts:', zh: '以创新和通俗易懂的方式，帮助初学者快速掌握新概念：' },
     suggestion_prompt_label: { en: 'Prompt', zh: '提示' },
     welcome_title: { en: 'Welcome to All Model Chat', zh: '欢迎使用 All Model Chat' },
     welcome_p1: { en: 'Start a conversation by typing below. You can also attach files, load scenarios via the', zh: '在下方输入文字开始对话。您也可以附加文件，或通过' },

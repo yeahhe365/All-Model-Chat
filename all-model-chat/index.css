@@ -45,6 +45,18 @@ body::-webkit-scrollbar-thumb {
   color: var(--theme-text-primary) !important;
   overflow-wrap: break-word;
   word-break: break-word;
+  font-size: 1rem; /* Set a base font size for the markdown content */
+  line-height: 1.7;
+}
+
+/* Restore paragraph spacing removed by Tailwind's Preflight reset */
+.markdown-body p {
+    margin-bottom: 1rem !important;
+    margin-top: 0 !important;
+}
+/* A general rule to remove bottom margin from the last element in a message for tighter spacing. */
+.markdown-body > :last-child {
+    margin-bottom: 0 !important;
 }
 
 .markdown-body strong,
@@ -53,15 +65,26 @@ body::-webkit-scrollbar-thumb {
   color: var(--theme-text-primary);
 }
 
-/* Headings: Clean and simple. Let h1 have its border from the base sheet. */
+/* Headings: Clean and simple */
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   color: var(--theme-text-primary) !important;
   font-weight: 600;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.8em !important;
+  padding-bottom: 0 !important; /* Remove any padding */
 }
-/* Remove borders from H2 downwards for a cleaner Typora-like look */
-.markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+/* Remove borders from all headings for a cleaner Typora-like look */
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
   border-bottom: none !important;
 }
+
+.markdown-body h1 { font-size: 2.25em !important; }
+.markdown-body h2 { font-size: 1.75em !important; }
+.markdown-body h3 { font-size: 1.5em !important; }
+.markdown-body h4 { font-size: 1.25em !important; }
+.markdown-body h5 { font-size: 1.1em !important; }
+.markdown-body h6 { font-size: 1em !important; color: var(--theme-text-secondary) !important; }
+
 
 /* Inline Code: Subtle background, no border. */
 .markdown-body code:not(pre code) {
@@ -93,6 +116,7 @@ body::-webkit-scrollbar-thumb {
   color: inherit !important;
   padding: 0 !important;
   font-size: 0.85rem !important;
+  line-height: 1.6; /* Improve line spacing in code blocks */
   overflow-x: auto;
   display: block;
 }
@@ -114,7 +138,7 @@ body::-webkit-scrollbar-thumb {
 }
 /* Blockquotes: Subtle left border, no background color. */
 .markdown-body blockquote {
-    margin-left: 0.5em;
+    margin-left: 0;
     padding: 0.5em 1.2em;
     border-left: 3px solid var(--theme-border-secondary) !important;
     background-color: transparent !important;
@@ -132,7 +156,7 @@ body::-webkit-scrollbar-thumb {
     height: 1px !important;
     border: none !important;
     background-color: var(--theme-border-secondary) !important;
-    margin: 2em 0 !important;
+    margin: 2.5em 0 !important;
     padding: 0 !important;
 }
 /* Tables: Clean, with subtle borders and striping. */

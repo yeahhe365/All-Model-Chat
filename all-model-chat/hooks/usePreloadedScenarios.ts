@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { PreloadedMessage, ChatMessage, SavedScenario, SavedChatSession } from '../types';
-import { PRELOADED_SCENARIO_KEY } from '../constants/appConstants';
-import { generateUniqueId, generateSessionTitle } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle, logService } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
+import { dbService } from '../utils/db';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => Promise<void>;
 
 interface PreloadedScenariosProps {
     startNewChat: () => void;
@@ -15,21 +15,22 @@ export const usePreloadedScenarios = ({ startNewChat, updateAndPersistSessions }
     const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
 
     useEffect(() => {
-        try {
-            const storedScenarios = localStorage.getItem(PRELOADED_SCENARIO_KEY);
-            if (storedScenarios) {
-                const parsed = JSON.parse(storedScenarios);
-                // Basic validation
-                if (Array.isArray(parsed) && parsed.every(s => s.id && s.title && Array.isArray(s.messages))) {
-                    setSavedScenarios(parsed);
-                }
+        const loadScenarios = async () => {
+            try {
+                const storedScenarios = await dbService.getAllScenarios();
+                setSavedScenarios(storedScenarios);
+            } catch (error) {
+                logService.error("Error loading preloaded scenarios:", { error });
             }
-        } catch (error) { console.error("Error loading preloaded scenarios:", error); }
+        };
+        loadScenarios();
     }, []);
     
     const handleSaveAllScenarios = (updatedScenarios: SavedScenario[]) => { 
         setSavedScenarios(updatedScenarios); 
-        localStorage.setItem(PRELOADED_SCENARIO_KEY, JSON.stringify(updatedScenarios)); 
+        dbService.setAllScenarios(updatedScenarios).catch(error => {
+            logService.error("Failed to save scenarios to DB", { error });
+        });
     };
     
     const handleLoadPreloadedScenario = (scenarioToLoad: PreloadedMessage[]) => { 
