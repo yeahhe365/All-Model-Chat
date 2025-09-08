@@ -11,23 +11,23 @@ type SessionItemPassedProps = Omit<React.ComponentProps<typeof SessionItem>, 'se
 interface GroupItemProps extends SessionItemPassedProps {
   group: ChatGroup;
   sessions: SavedChatSession[];
-  editingGroup: { id: string, title: string } | null;
+  editingItem: { type: 'session' | 'group', id: string, title: string } | null;
   dragOverId: string | null;
   onToggleGroupExpansion: (groupId: string) => void;
   handleGroupStartEdit: (item: ChatGroup) => void;
   handleDrop: (e: React.DragEvent, groupId: string | null) => void;
   handleDragOver: (e: React.DragEvent) => void;
   setDragOverId: (id: string | null) => void;
-  setEditingGroup: (group: { id: string, title: string } | null) => void;
+  setEditingItem: (item: { type: 'session' | 'group', id: string, title: string } | null) => void;
   onDeleteGroup: (groupId: string) => void;
   t: (key: keyof typeof translations) => string;
 }
 
 export const GroupItem: React.FC<GroupItemProps> = (props) => {
   const { 
-    group, sessions, editingGroup, dragOverId, onToggleGroupExpansion, 
+    group, sessions, editingItem, dragOverId, onToggleGroupExpansion, 
     handleGroupStartEdit, handleDrop, handleDragOver, setDragOverId,
-    setEditingGroup, onDeleteGroup, t, ...sessionItemProps
+    setEditingItem, onDeleteGroup, t, ...sessionItemProps
   } = props;
   
   return (
@@ -45,8 +45,8 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
         >
           <div className="flex items-center gap-2 min-w-0">
              <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] transition-transform group-open/details:rotate-180 flex-shrink-0" />
-             {editingGroup?.id === group.id ? (
-                <input ref={props.editInputRef} type="text" value={editingGroup.title} onChange={(e) => setEditingGroup({...editingGroup, title: e.target.value})} onBlur={props.handleRenameConfirm} onKeyDown={props.handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
+             {editingItem?.type === 'group' && editingItem.id === group.id ? (
+                <input ref={props.editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({...editingItem, title: e.target.value})} onBlur={props.handleRenameConfirm} onKeyDown={props.handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
              ) : (
                 <span className="font-semibold text-sm truncate text-[var(--theme-text-secondary)]">{group.title}</span>
              )}

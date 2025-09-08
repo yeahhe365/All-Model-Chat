@@ -1,4 +1,5 @@
 
+
 /**
  * Triggers a file download in the browser.
  * @param href The URL or data URI of the file to download.
@@ -115,5 +116,56 @@ export const exportHtmlStringAsFile = (htmlContent: string, filename:string) => 
  */
 export const exportTextStringAsFile = (textContent: string, filename: string) => {
     const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    triggerDownload(URL.createObjectURL(blob), filename);
+};
+
+/**
+ * Converts an SVG string to a PNG data URL and triggers a download.
+ * @param svgString The string content of the SVG.
+ * @param filename The desired filename for the downloaded PNG.
+ * @param scale The resolution scale factor for the output PNG.
+ */
+export const exportSvgAsPng = async (svgString: string, filename: string, scale: number = 3): Promise<void> => {
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    const img = new Image();
+
+    return new Promise((resolve, reject) => {
+        img.onload = () => {
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+
+            if (imgWidth === 0 || imgHeight === 0) {
+                return reject(new Error("Diagram has zero dimensions, cannot export."));
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = imgWidth * scale;
+            canvas.height = imgHeight * scale;
+            const ctx = canvas.getContext('2d');
+
+            if (ctx) {
+                ctx.drawImage(img, 0, 0, imgWidth * scale, imgHeight * scale);
+                const pngUrl = canvas.toDataURL('image/png');
+                triggerDownload(pngUrl, filename);
+                resolve();
+            } else {
+                reject(new Error("Could not get canvas context."));
+            }
+        };
+
+        img.onerror = () => {
+            reject(new Error("Failed to load SVG into an image element for conversion."));
+        };
+
+        img.src = svgDataUrl;
+    });
+};
+
+/**
+ * Exports a string of SVG content as an .svg file.
+ * @param svgContent The SVG content to save.
+ * @param filename The desired filename.
+ */
+export const exportSvgStringAsFile = (svgContent: string, filename: string) => {
+    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
     triggerDownload(URL.createObjectURL(blob), filename);
 };

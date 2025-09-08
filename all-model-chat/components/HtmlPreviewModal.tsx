@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { X, Download, Maximize, Minimize, Expand, RotateCw, ZoomIn, ZoomOut } from 'lucide-react'; 
+import { createPortal } from 'react-dom';
+import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Minimize, Expand } from 'lucide-react';
 import { getResponsiveValue } from '../utils/appUtils';
+import { sanitizeFilename } from '../utils/exportUtils';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -8,24 +10,6 @@ interface HtmlPreviewModalProps {
   htmlContent: string | null;
   initialTrueFullscreenRequest?: boolean;
 }
-
-const sanitizeFilename = (name: string): string => {
-  if (!name || typeof name !== 'string') {
-    return "preview";
-  }
-  // Remove illegal characters for filenames and control characters
-  let saneName = name.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
-  
-  // Windows doesn't like filenames ending with a period or space.
-  saneName = saneName.replace(/[. ]+$/, '');
-
-  // Limit length to avoid issues with filesystems
-  if (saneName.length > 100) {
-    saneName = saneName.substring(0, 100);
-  }
-  
-  return saneName || "preview";
-};
 
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.2;

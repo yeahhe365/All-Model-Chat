@@ -1,8 +1,10 @@
 
 
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon } from 'lucide-react';
+import { exportSvgAsPng, exportSvgStringAsFile } from '../../utils/exportUtils';
 
 declare var Viz: any;
 declare var Panzoom: any;
@@ -101,59 +103,22 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
     setLayout(newLayout);
   };
   
-  const handleDownload = (format: 'png' | 'svg') => {
+  const handleDownload = async (format: 'png' | 'svg') => {
     if (!svgContent || isDownloading !== 'none') return;
     
-    if (format === 'svg') {
-        setIsDownloading('svg');
-        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `graphviz-diagram-${Date.now()}.svg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+    setIsDownloading(format);
+    try {
+        if (format === 'svg') {
+            exportSvgStringAsFile(svgContent, `graphviz-diagram-${Date.now()}.svg`);
+        } else { // png
+            await exportSvgAsPng(svgContent, `graphviz-diagram-${Date.now()}.png`);
+        }
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram.';
+        setError(errorMessage);
+    } finally {
         setIsDownloading('none');
-        return;
     }
-
-    // PNG Download
-    setIsDownloading('png');
-    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
-    const img = new Image();
-    img.onload = () => {
-        const imgWidth = img.width;
-        const imgHeight = img.height;
-        if (imgWidth === 0 || imgHeight === 0) {
-            setError("Diagram has zero dimensions, cannot export.");
-            setIsDownloading('none');
-            return;
-        }
-        const canvas = document.createElement('canvas');
-        const padding = 0;
-        const scale = 3;
-        canvas.width = (imgWidth + padding * 2) * scale;
-        canvas.height = (imgHeight + padding * 2) * scale;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.drawImage(img, padding * scale, padding * scale, imgWidth * scale, imgHeight * scale);
-            const pngUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = pngUrl;
-            link.download = `graphviz-diagram-${Date.now()}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        setIsDownloading('none');
-    };
-    img.onerror = () => {
-        setError("Failed to convert diagram to PNG.");
-        setIsDownloading('none');
-    };
-    img.src = svgDataUrl;
   };
 
   const handleOpenModal = useCallback(() => setIsModalOpen(true), []);

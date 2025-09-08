@@ -7,7 +7,7 @@ import { SessionItemMenu } from './SessionItemMenu';
 interface SessionItemProps {
   session: SavedChatSession;
   activeSessionId: string | null;
-  editingSession: { id: string, title: string } | null;
+  editingItem: { type: 'session' | 'group', id: string, title: string } | null;
   activeMenu: string | null;
   loadingSessionIds: Set<string>;
   generatingTitleSessionIds: Set<string>;
@@ -21,7 +21,7 @@ interface SessionItemProps {
   handleStartEdit: (item: SavedChatSession) => void;
   handleRenameConfirm: () => void;
   handleRenameKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  setEditingSession: (session: { id: string, title: string } | null) => void;
+  setEditingItem: (item: { type: 'session' | 'group', id: string, title: string } | null) => void;
   toggleMenu: (e: React.MouseEvent, id: string) => void;
   setActiveMenu: (id: string | null) => void;
   handleDragStart: (e: React.DragEvent, sessionId: string) => void;
@@ -30,10 +30,10 @@ interface SessionItemProps {
 
 export const SessionItem: React.FC<SessionItemProps> = (props) => {
   const {
-    session, activeSessionId, editingSession, activeMenu, loadingSessionIds,
+    session, activeSessionId, editingItem, activeMenu, loadingSessionIds,
     generatingTitleSessionIds, newlyTitledSessionId, editInputRef, menuRef,
     onSelectSession, onTogglePinSession, onDeleteSession, onOpenExportModal,
-    handleStartEdit, handleRenameConfirm, handleRenameKeyDown, setEditingSession,
+    handleStartEdit, handleRenameConfirm, handleRenameKeyDown, setEditingItem,
     toggleMenu, setActiveMenu, handleDragStart, t
   } = props;
 
@@ -44,8 +44,8 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
       className={`group relative rounded-lg my-0.5 ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${newlyTitledSessionId === session.id ? 'title-update-animate' : ''}`}
     >
       <div className={`w-full flex items-center justify-between text-left px-1 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
-        {editingSession?.id === session.id ? (
-          <input ref={editInputRef} type="text" value={editingSession.title} onChange={(e) => setEditingSession({ ...editingSession, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
+        {editingItem?.type === 'session' && editingItem.id === session.id ? (
+          <input ref={editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
         ) : (
           <button onClick={() => onSelectSession(session.id)} className="flex items-center flex-grow min-w-0" aria-current={session.id === activeSessionId ? "page" : undefined}>
             {session.isPinned && <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" />}

@@ -197,6 +197,9 @@ export const MessageList: React.FC<MessageListProps> = ({
                   </div>
                 </button>
               ))}
+              {Array.from({ length: Math.max(0, suggestionsPerPage - paginatedSuggestions.length) }).map((_, i) => (
+                <div key={`placeholder-${i}`} className="h-40 sm:h-44 rounded-2xl" />
+              ))}
             </div>
           </div>
         </div>

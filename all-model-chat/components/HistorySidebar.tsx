@@ -52,8 +52,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [editingSession, setEditingSession] = useState<{ id: string, title: string } | null>(null);
-  const [editingGroup, setEditingGroup] = useState<{ id: string, title: string } | null>(null);
+  const [editingItem, setEditingItem] = useState<{ type: 'session' | 'group', id: string, title: string } | null>(null);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,8 +69,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   }, [activeMenu]);
 
   useEffect(() => {
-    if (editingSession || editingGroup) editInputRef.current?.focus();
-  }, [editingSession, editingGroup]);
+    if (editingItem) editInputRef.current?.focus();
+  }, [editingItem]);
   
   useEffect(() => {
     const prevIds = prevGeneratingTitleSessionIdsRef.current;
@@ -85,19 +84,25 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   }, [generatingTitleSessionIds]);
 
   const handleStartEdit = (type: 'session' | 'group', item: SavedChatSession | ChatGroup) => {
-    if (type === 'session') setEditingSession({ id: item.id, title: (item as SavedChatSession).title });
-    else setEditingGroup({ id: item.id, title: (item as ChatGroup).title });
+    const title = 'title' in item ? item.title : '';
+    setEditingItem({ type, id: item.id, title });
     setActiveMenu(null);
   };
 
   const handleRenameConfirm = () => {
-    if (editingSession && editingSession.title.trim()) onRenameSession(editingSession.id, editingSession.title.trim());
-    if (editingGroup && editingGroup.title.trim()) onRenameGroup(editingGroup.id, editingGroup.title.trim());
-    setEditingSession(null);
-    setEditingGroup(null);
+    if (!editingItem || !editingItem.title.trim()) {
+        setEditingItem(null);
+        return;
+    }
+    if (editingItem.type === 'session') {
+        onRenameSession(editingItem.id, editingItem.title.trim());
+    } else if (editingItem.type === 'group') {
+        onRenameGroup(editingItem.id, editingItem.title.trim());
+    }
+    setEditingItem(null);
   };
   
-  const handleRenameCancel = () => { setEditingSession(null); setEditingGroup(null); };
+  const handleRenameCancel = () => { setEditingItem(null); };
 
   const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') handleRenameConfirm();
@@ -201,11 +206,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const { categories, categoryOrder } = categorizedUngroupedSessions;
 
   const sessionItemSharedProps = {
-    activeSessionId, editingSession, activeMenu, loadingSessionIds,
+    activeSessionId, editingItem, activeMenu, loadingSessionIds,
     generatingTitleSessionIds, newlyTitledSessionId, editInputRef, menuRef,
     onSelectSession, onTogglePinSession, onDeleteSession, onOpenExportModal,
     handleStartEdit: (item: SavedChatSession) => handleStartEdit('session', item),
-    handleRenameConfirm, handleRenameKeyDown, setEditingSession, toggleMenu, setActiveMenu, handleDragStart, t
+    handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
   };
 
   return (
@@ -239,14 +244,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                 key={group.id}
                 group={group}
                 sessions={sessionsByGroupId.get(group.id) || []}
-                editingGroup={editingGroup}
+                editingItem={editingItem}
                 dragOverId={dragOverId}
                 onToggleGroupExpansion={onToggleGroupExpansion}
                 handleGroupStartEdit={(item) => handleStartEdit('group', item)}
                 handleDrop={handleDrop}
                 handleDragOver={handleDragOver}
                 setDragOverId={setDragOverId}
-                setEditingGroup={setEditingGroup}
+                setEditingItem={setEditingItem}
                 onDeleteGroup={onDeleteGroup}
                 {...sessionItemSharedProps}
               />

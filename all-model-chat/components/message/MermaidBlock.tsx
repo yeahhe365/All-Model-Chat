@@ -1,9 +1,11 @@
 
 
+
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { Loader2, AlertTriangle, Download, Maximize } from 'lucide-react';
 import { UploadedFile } from '../../types';
+import { exportSvgAsPng } from '../../utils/exportUtils';
 
 interface MermaidBlockProps {
   code: string;
@@ -61,66 +63,17 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
     }
   }, [code, isMessageLoading]);
 
-  const handleDownloadPng = () => {
-    if (!svg || isDownloading || !diagramContainerRef.current) return;
+  const handleDownloadPng = async () => {
+    if (!svg || isDownloading) return;
     setIsDownloading(true);
-    
-    const svgElement = diagramContainerRef.current.querySelector('svg');
-    if (!svgElement) {
-        setError("Could not find the rendered diagram to export.");
+    try {
+        await exportSvgAsPng(svg, `mermaid-diagram-${Date.now()}.png`);
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram as PNG.';
+        setError(errorMessage);
+    } finally {
         setIsDownloading(false);
-        return;
     }
-
-    const rect = svgElement.getBoundingClientRect();
-    const imgWidth = rect.width;
-    const imgHeight = rect.height;
-
-    if (imgWidth === 0 || imgHeight === 0) {
-        setError("Diagram has zero dimensions, cannot export.");
-        setIsDownloading(false);
-        return;
-    }
-
-    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-    const img = new Image();
-
-    img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const padding = 0;
-        const scale = 3; // Increase resolution
-        
-        canvas.width = (imgWidth + padding * 2) * scale;
-        canvas.height = (imgHeight + padding * 2) * scale;
-        const ctx = canvas.getContext('2d');
-
-        if (ctx) {
-            // Draw scaled image with padding
-            ctx.drawImage(
-                img, 
-                padding * scale, 
-                padding * scale, 
-                imgWidth * scale, 
-                imgHeight * scale
-            );
-
-            const pngUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = pngUrl;
-            link.download = `mermaid-diagram-${Date.now()}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        setIsDownloading(false);
-    };
-    
-    img.onerror = () => {
-        setError("Failed to convert diagram to PNG.");
-        setIsDownloading(false);
-    };
-
-    img.src = svgDataUrl;
   };
 
 
