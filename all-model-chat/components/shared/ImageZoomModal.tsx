@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
 import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
@@ -110,36 +109,20 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
         return;
     }
 
-    // PNG Download
+    // Direct download for all other image types to preserve original size and format
     setIsDownloading(true);
-    const img = new Image();
-    img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const padding = 0;
-        const exportScale = 3; // high-res
-        
-        canvas.width = (img.width + padding * 2) * exportScale;
-        canvas.height = (img.height + padding * 2) * exportScale;
-        const ctx = canvas.getContext('2d');
-
-        if (ctx) {
-            ctx.drawImage(img, padding * exportScale, padding * exportScale, img.width * exportScale, img.height * exportScale);
-
-            const pngUrl = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.href = pngUrl;
-            link.download = `${file.name.split('.')[0] || 'image'}.png`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        setIsDownloading(false);
-    };
-    img.onerror = () => {
-        console.error("Failed to load image for PNG conversion.");
-        setIsDownloading(false);
-    };
-    img.src = file.dataUrl;
+    try {
+      const link = document.createElement('a');
+      link.href = file.dataUrl;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error("Failed to initiate download:", e);
+    } finally {
+      setIsDownloading(false);
+    }
   }, [file, isDownloading]);
 
   const handleWheel = useCallback((event: WheelEvent) => {
@@ -280,7 +263,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
           
-          <button onClick={() => handleDownload('png')} disabled={isDownloading} className={controlButtonClasses} title="Download as PNG">
+          <button onClick={() => handleDownload('png')} disabled={isDownloading} className={controlButtonClasses} title="Download Image">
             {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
           </button>
           
