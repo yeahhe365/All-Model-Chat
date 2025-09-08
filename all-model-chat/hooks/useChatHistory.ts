@@ -66,7 +66,7 @@ export const useChatHistory = ({
 }: ChatHistoryProps) => {
     const t = getTranslator(language);
 
-    const startNewChat = useCallback(() => {
+    const startNewChat = useCallback(async () => {
         logService.info('Starting new chat session.');
         
         let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
@@ -89,9 +89,9 @@ export const useChatHistory = ({
             groupId: null,
         };
 
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        await updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
         setActiveSessionId(newSessionId);
-        dbService.setActiveSessionId(newSessionId);
+        await dbService.setActiveSessionId(newSessionId);
 
         setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]);
@@ -150,9 +150,9 @@ export const useChatHistory = ({
         }
     }, [setSavedSessions, setSavedGroups, loadChatSession, startNewChat]);
     
-    const handleDeleteChatHistorySession = useCallback((sessionId: string) => {
+    const handleDeleteChatHistorySession = useCallback(async (sessionId: string) => {
         logService.info(`Deleting session: ${sessionId}`);
-        updateAndPersistSessions(prev => {
+        await updateAndPersistSessions(prev => {
              const sessionToDelete = prev.find(s => s.id === sessionId);
              if (sessionToDelete) {
                  sessionToDelete.messages.forEach(msg => {
@@ -167,22 +167,22 @@ export const useChatHistory = ({
         // The logic to switch to a new active session is now handled declaratively in useChat.ts's useEffect.
     }, [updateAndPersistSessions, activeJobs]);
     
-    const handleRenameSession = useCallback((sessionId: string, newTitle: string) => {
+    const handleRenameSession = useCallback(async (sessionId: string, newTitle: string) => {
         if (!newTitle.trim()) return;
         logService.info(`Renaming session ${sessionId} to "${newTitle}"`);
-        updateAndPersistSessions(prev =>
+        await updateAndPersistSessions(prev =>
             prev.map(s => (s.id === sessionId ? { ...s, title: newTitle.trim() } : s))
         );
     }, [updateAndPersistSessions]);
 
-    const handleTogglePinSession = useCallback((sessionId: string) => {
+    const handleTogglePinSession = useCallback(async (sessionId: string) => {
         logService.info(`Toggling pin for session ${sessionId}`);
-        updateAndPersistSessions(prev =>
+        await updateAndPersistSessions(prev =>
             prev.map(s => s.id === sessionId ? { ...s, isPinned: !s.isPinned } : s)
         );
     }, [updateAndPersistSessions]);
 
-    const handleAddNewGroup = useCallback(() => {
+    const handleAddNewGroup = useCallback(async () => {
         logService.info('Adding new group.');
         const newGroup: ChatGroup = {
             id: `group-${generateUniqueId()}`,
@@ -190,39 +190,39 @@ export const useChatHistory = ({
             timestamp: Date.now(),
             isExpanded: true,
         };
-        updateAndPersistGroups(prev => [newGroup, ...prev]);
+        await updateAndPersistGroups(prev => [newGroup, ...prev]);
     }, [updateAndPersistGroups, t]);
 
-    const handleDeleteGroup = useCallback((groupId: string) => {
+    const handleDeleteGroup = useCallback(async (groupId: string) => {
         logService.info(`Deleting group: ${groupId}`);
-        updateAndPersistGroups(prev => prev.filter(g => g.id !== groupId));
-        updateAndPersistSessions(prev => prev.map(s => s.groupId === groupId ? { ...s, groupId: null } : s));
+        await updateAndPersistGroups(prev => prev.filter(g => g.id !== groupId));
+        await updateAndPersistSessions(prev => prev.map(s => s.groupId === groupId ? { ...s, groupId: null } : s));
     }, [updateAndPersistGroups, updateAndPersistSessions]);
 
-    const handleRenameGroup = useCallback((groupId: string, newTitle: string) => {
+    const handleRenameGroup = useCallback(async (groupId: string, newTitle: string) => {
         if (!newTitle.trim()) return;
         logService.info(`Renaming group ${groupId} to "${newTitle}"`);
-        updateAndPersistGroups(prev => prev.map(g => g.id === groupId ? { ...g, title: newTitle.trim() } : g));
+        await updateAndPersistGroups(prev => prev.map(g => g.id === groupId ? { ...g, title: newTitle.trim() } : g));
     }, [updateAndPersistGroups]);
     
-    const handleMoveSessionToGroup = useCallback((sessionId: string, groupId: string | null) => {
+    const handleMoveSessionToGroup = useCallback(async (sessionId: string, groupId: string | null) => {
         logService.info(`Moving session ${sessionId} to group ${groupId}`);
-        updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, groupId } : s));
+        await updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? { ...s, groupId } : s));
     }, [updateAndPersistSessions]);
 
-    const handleToggleGroupExpansion = useCallback((groupId: string) => {
-        updateAndPersistGroups(prev => prev.map(g => g.id === groupId ? { ...g, isExpanded: !(g.isExpanded ?? true) } : g));
+    const handleToggleGroupExpansion = useCallback(async (groupId: string) => {
+        await updateAndPersistGroups(prev => prev.map(g => g.id === groupId ? { ...g, isExpanded: !(g.isExpanded ?? true) } : g));
     }, [updateAndPersistGroups]);
 
-    const clearAllHistory = useCallback(() => {
+    const clearAllHistory = useCallback(async () => {
         if (!window.confirm(t('settingsClearHistory_confirm'))) return;
         logService.warn('User clearing all chat history.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
-        Promise.all([dbService.setAllSessions([]), dbService.setAllGroups([]), dbService.setActiveSessionId(null)]);
+        await Promise.all([dbService.setAllSessions([]), dbService.setAllGroups([]), dbService.setActiveSessionId(null)]);
         setSavedSessions([]);
         setSavedGroups([]);
-        startNewChat();
+        await startNewChat();
     }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs, t]);
     
     const clearCacheAndReload = useCallback(() => {

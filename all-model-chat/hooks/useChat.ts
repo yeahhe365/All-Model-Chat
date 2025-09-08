@@ -35,29 +35,49 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const userScrolledUp = useRef<boolean>(false);
     const [chat, setChat] = useState<Chat | null>(null);
 
-    const updateAndPersistSessions = useCallback(async (
+    const updateAndPersistSessions = useCallback((
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
-        let newSessions: SavedChatSession[] = [];
-        setSavedSessions(prevSessions => {
-            newSessions = updater(prevSessions);
-            return newSessions;
+        return new Promise<void>((resolve, reject) => {
+            setSavedSessions(prevSessions => {
+                const newSessions = updater(prevSessions);
+                if (persist) {
+                    dbService.setAllSessions(newSessions)
+                        .then(() => {
+                            logService.debug('Persisted sessions to IndexedDB.');
+                            resolve();
+                        })
+                        .catch(e => {
+                            logService.error('Failed to persist sessions', e);
+                            reject(e);
+                        });
+                } else {
+                    resolve();
+                }
+                return newSessions;
+            });
         });
-        if (persist) {
-            await dbService.setAllSessions(newSessions);
-            logService.debug('Persisted sessions to IndexedDB.');
-        }
-    }, []);
+    }, [setSavedSessions]);
     
-    const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
-        setSavedGroups(prevGroups => {
-            const newGroups = updater(prevGroups);
-            dbService.setAllGroups(newGroups);
-            return newGroups;
+    const updateAndPersistGroups = useCallback((updater: (prev: ChatGroup[]) => ChatGroup[]) => {
+        return new Promise<void>((resolve, reject) => {
+            setSavedGroups(prevGroups => {
+                const newGroups = updater(prevGroups);
+                dbService.setAllGroups(newGroups)
+                    .then(() => {
+                        logService.debug('Persisted groups to IndexedDB.');
+                        resolve();
+                    })
+                    .catch(e => {
+                        logService.error('Failed to persist groups', e);
+                        reject(e);
+                    });
+                return newGroups;
+            });
         });
-    }, []);
+    }, [setSavedGroups]);
 
     // 2. Derive active session state
     const activeChat = useMemo(() => savedSessions.find(s => s.id === activeSessionId), [savedSessions, activeSessionId]);
