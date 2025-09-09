@@ -5,6 +5,8 @@ import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { CodeBlock } from '../message/CodeBlock';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
@@ -33,31 +35,33 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 }) => {
 
   const rehypePlugins = useMemo(() => {
-    // Custom schema to allow classes and attributes needed by highlight.js
+    // Custom schema to allow classes and attributes needed by highlight.js and KaTeX
     const sanitizeSchema = {
       ...defaultSchema,
       attributes: {
         ...defaultSchema.attributes,
         // Allow `className` for elements used by highlight.js.
-        // This is crucial for styling to apply correctly.
         code: [...(defaultSchema.attributes?.code || []), 'className'],
-        span: [...(defaultSchema.attributes?.span || []), 'className'],
-        div: [...(defaultSchema.attributes?.div || []), 'className'],
+        // Allow attributes used by KaTeX
+        span: [...(defaultSchema.attributes?.span || []), 'className', 'style', 'aria-hidden'],
+        div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
       },
     };
 
     // The order of plugins is important for security and functionality.
-    const plugins: any[] = [];
+    const plugins: any[] = [
+      rehypeKatex, // 1. Process math nodes into HTML.
+    ];
     
     if (allowHtml) {
-      // 1. If allowing raw HTML, it must be parsed first.
+      // 2. If allowing raw HTML, it must be parsed next.
       plugins.push(rehypeRaw);
     }
     
-    // 2. Add rehype-highlight to automatically apply syntax highlighting classes.
+    // 3. Add rehype-highlight to automatically apply syntax highlighting classes.
     plugins.push(rehypeHighlight);
 
-    // 3. Sanitize the entire generated HTML tree at the end.
+    // 4. Sanitize the entire generated HTML tree at the end.
     // This ensures that both the raw HTML (if allowed) and the output from
     // other plugins are safe.
     plugins.push([rehypeSanitize, sanitizeSchema]);
@@ -121,7 +125,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkBreaks]}
+      remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
       rehypePlugins={rehypePlugins as any}
       components={components}
     >
