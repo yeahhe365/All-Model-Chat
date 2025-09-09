@@ -1,6 +1,8 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
+declare const hljs: any;
+
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
   const s = textContent.trim().toLowerCase();

@@ -2,11 +2,9 @@ import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
-import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import rehypeHighlight from 'rehype-highlight';
 import { CodeBlock } from '../message/CodeBlock';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
@@ -35,12 +33,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 }) => {
 
   const rehypePlugins = useMemo(() => {
-    // Custom schema to allow classes and attributes needed by KaTeX and highlight.js
+    // Custom schema to allow classes and attributes needed by highlight.js
     const sanitizeSchema = {
       ...defaultSchema,
       attributes: {
         ...defaultSchema.attributes,
-        // Allow `className` for elements used by KaTeX and highlight.js.
+        // Allow `className` for elements used by highlight.js.
         // This is crucial for styling to apply correctly.
         code: [...(defaultSchema.attributes?.code || []), 'className'],
         span: [...(defaultSchema.attributes?.span || []), 'className'],
@@ -55,9 +53,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       // 1. If allowing raw HTML, it must be parsed first.
       plugins.push(rehypeRaw);
     }
-
-    // 2. Transform special markdown syntax (math, code) into HTML.
-    plugins.push([rehypeKatex, { throwOnError: false, macros: { "\\RR": "\\mathbb{R}" } }]);
+    
+    // 2. Add rehype-highlight to automatically apply syntax highlighting classes.
     plugins.push(rehypeHighlight);
 
     // 3. Sanitize the entire generated HTML tree at the end.
@@ -124,7 +121,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
+      remarkPlugins={[remarkGfm, remarkBreaks]}
       rehypePlugins={rehypePlugins as any}
       components={components}
     >

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import hljs from 'highlight.js';
 import { Loader2, Check, AlertCircle, ImageIcon, FileCode2 } from 'lucide-react';
 import { ThemeColors } from '../../../types';
 import { translations, getResponsiveValue } from '../../../utils/appUtils';
 import { exportElementAsPng, exportHtmlStringAsFile, gatherPageStyles } from '../../../utils/exportUtils';
+
+declare const hljs: any;
 
 interface ExportMessageButtonProps {
     markdownContent: string;
@@ -59,9 +60,11 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdo
             
             document.body.appendChild(tempContainer);
             
-            tempContainer.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block as HTMLElement);
-            });
+            if (typeof hljs !== 'undefined') {
+                tempContainer.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block as HTMLElement);
+                });
+            }
             
             const filename = `chat-message-${messageId}.png`;
             await exportElementAsPng(tempContainer, filename, { backgroundColor: null, scale: 2.5 });
