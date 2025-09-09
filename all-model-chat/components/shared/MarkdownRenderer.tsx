@@ -3,7 +3,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeHighlight from 'rehype-highlight';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -35,36 +34,21 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 }) => {
 
   const rehypePlugins = useMemo(() => {
-    // Custom schema to allow classes and attributes needed by highlight.js and KaTeX
-    const sanitizeSchema = {
-      ...defaultSchema,
-      attributes: {
-        ...defaultSchema.attributes,
-        // Allow `className` for elements used by highlight.js.
-        code: [...(defaultSchema.attributes?.code || []), 'className'],
-        // Allow attributes used by KaTeX
-        span: [...(defaultSchema.attributes?.span || []), 'className', 'style', 'aria-hidden'],
-        div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
-      },
-    };
-
-    // The order of plugins is important for security and functionality.
+    // The order of plugins is important.
     const plugins: any[] = [
-      rehypeKatex, // 1. Process math nodes into HTML.
+      rehypeKatex, // Process math nodes into HTML.
     ];
     
     if (allowHtml) {
-      // 2. If allowing raw HTML, it must be parsed next.
+      // If allowing raw HTML, it must be parsed next.
       plugins.push(rehypeRaw);
     }
     
-    // 3. Add rehype-highlight to automatically apply syntax highlighting classes.
+    // Add rehype-highlight to automatically apply syntax highlighting classes.
     plugins.push(rehypeHighlight);
 
-    // 4. Sanitize the entire generated HTML tree at the end.
-    // This ensures that both the raw HTML (if allowed) and the output from
-    // other plugins are safe.
-    plugins.push([rehypeSanitize, sanitizeSchema]);
+    // rehype-sanitize was removed to allow complex KaTeX rendering.
+    // The output is now less secure against malicious HTML from the model if `allowHtml` is true.
 
     return plugins;
   }, [allowHtml]);
