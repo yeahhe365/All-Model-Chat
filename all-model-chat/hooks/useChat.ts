@@ -214,7 +214,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
                 modelToUse,
                 {
                     isThinkingEnabled: appSettings.isTranscriptionThinkingEnabled,
-                    context: currentChatSettings.systemInstruction,
+                    context: appSettings.transcriptionContext,
                     language: appSettings.transcriptionLanguage,
                     enableItn: appSettings.enableItn,
                 }

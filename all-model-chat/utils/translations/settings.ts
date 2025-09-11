@@ -102,6 +102,9 @@ export const settingsTranslations = {
     settings_transcriptionLanguage_label: { en: 'Transcription Language', zh: '语音转录语言' },
     settings_enableItn_label: { en: 'Enable Inverse Text Normalization (ITN)', zh: '启用反向文本标准化 (ITN)' },
     settings_enableItn_tooltip: { en: "Converts numbers from words to digits (e.g., 'one hundred' to '100'). Useful for ASR models like Qwen.", zh: '将数字从文字转为数字（例如，“一百”转为“100”）。对 Qwen 等 ASR 模型很有用。' },
+    settings_transcriptionContext_label: { en: 'Transcription Context', zh: '语音转录上下文' },
+    settings_transcriptionContext_tooltip: { en: 'Provide context to improve transcription accuracy, especially for specific terms or names. Used by Qwen ASR.', zh: '提供上下文信息以提高转录准确性，尤其适用于特定术语或名称。用于 Qwen ASR 模型。' },
+    settings_transcriptionContext_placeholder: { en: 'e.g., When transcribing Chinese, use Simplified characters.', zh: '例如：转录中文时，请用简体。' },
     
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
