@@ -12,13 +12,29 @@ export const DEFAULT_SHOW_THOUGHTS = true;
 export const DEFAULT_THINKING_BUDGET = -1; // -1 for auto/unlimited budget
 export const DEFAULT_TTS_VOICE = 'Zephyr';
 
-export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-2.5-flash';
+export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'qwen-asr';
 export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
 
 export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default)' },
+    { id: 'qwen-asr', name: 'Qwen ASR (Default)' },
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
     { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (Fastest)' },
+];
+
+export const AVAILABLE_TRANSCRIPTION_LANGUAGES: { id: string, name: string }[] = [
+    { id: 'auto', name: '🌐 Auto Detect' },
+    { id: 'zh', name: '🇨🇳 Chinese' },
+    { id: 'en', name: '🇺🇸 English' },
+    { id: 'ja', name: '🇯🇵 Japanese' },
+    { id: 'ko', name: '🇰🇷 Korean' },
+    { id: 'es', name: '🇪🇸 Spanish' },
+    { id: 'fr', name: '🇫🇷 French' },
+    { id: 'de', name: '🇩🇪 German' },
+    { id: 'ar', name: '🇸🇦 Arabic' },
+    { id: 'it', name: '🇮🇹 Italian' },
+    { id: 'ru', name: '🇷🇺 Russian' },
+    { id: 'pt', name: '🇵🇹 Portuguese' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [

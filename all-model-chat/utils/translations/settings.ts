@@ -99,6 +99,9 @@ export const settingsTranslations = {
     settingsViewLogs: { en: 'View Logs', zh: '查看日志' },
     settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
+    settings_transcriptionLanguage_label: { en: 'Transcription Language', zh: '语音转录语言' },
+    settings_enableItn_label: { en: 'Enable Inverse Text Normalization (ITN)', zh: '启用反向文本标准化 (ITN)' },
+    settings_enableItn_tooltip: { en: "Converts numbers from words to digits (e.g., 'one hundred' to '100'). Useful for ASR models like Qwen.", zh: '将数字从文字转为数字（例如，“一百”转为“100”）。对 Qwen 等 ASR 模型很有用。' },
     
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
