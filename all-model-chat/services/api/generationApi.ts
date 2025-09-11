@@ -95,7 +95,8 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
     }
 };
 
-export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean): Promise<string> => {
+export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean }): Promise<string> => {
+    const { isThinkingEnabled } = options;
     logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size, thinking: isThinkingEnabled });
     // Get proxy URL from localStorage if available
     const storedSettings = await dbService.getAppSettings();

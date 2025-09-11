@@ -32,6 +32,10 @@ interface ChatBehaviorSectionProps {
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
+  enableItn: boolean;
+  setEnableItn: (value: boolean) => void;
+  transcriptionLanguage: string;
+  setTranscriptionLanguage: (value: string) => void;
 }
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
@@ -61,6 +65,10 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 setGenerateQuadImages={props.setGenerateQuadImages}
                 ttsVoice={props.ttsVoice}
                 setTtsVoice={props.setTtsVoice}
+                transcriptionLanguage={props.transcriptionLanguage}
+                setTranscriptionLanguage={props.setTranscriptionLanguage}
+                enableItn={props.enableItn}
+                setEnableItn={props.setEnableItn}
                 t={t}
             />
         </div>

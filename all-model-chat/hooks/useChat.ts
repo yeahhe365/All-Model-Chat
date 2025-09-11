@@ -208,7 +208,17 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     
         try {
             const modelToUse = appSettings.transcriptionModelId || 'gemini-2.5-flash';
-            const transcribedText = await geminiServiceInstance.transcribeAudio( keyResult.key, audioFile, modelToUse, appSettings.isTranscriptionThinkingEnabled, );
+            const transcribedText = await geminiServiceInstance.transcribeAudio(
+                keyResult.key,
+                audioFile,
+                modelToUse,
+                {
+                    isThinkingEnabled: appSettings.isTranscriptionThinkingEnabled,
+                    context: currentChatSettings.systemInstruction,
+                    language: appSettings.transcriptionLanguage,
+                    enableItn: appSettings.enableItn,
+                }
+            );
             return transcribedText;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";

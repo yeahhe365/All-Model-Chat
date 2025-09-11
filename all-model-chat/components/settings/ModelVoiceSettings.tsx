@@ -1,7 +1,7 @@
 import React from 'react';
 import { ModelOption } from '../../types';
 import { Loader2, Info, Mic, Volume2 } from 'lucide-react';
-import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS } from '../../constants/appConstants';
+import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS, AVAILABLE_TRANSCRIPTION_LANGUAGES } from '../../constants/appConstants';
 import { getResponsiveValue } from '../../utils/appUtils';
 import { Tooltip, Select, Toggle } from './shared/Tooltip';
 
@@ -22,6 +22,10 @@ interface ModelVoiceSettingsProps {
   ttsVoice: string;
   setTtsVoice: (value: string) => void;
   t: (key: string) => string;
+  enableItn: boolean;
+  setEnableItn: (value: boolean) => void;
+  transcriptionLanguage: string;
+  setTranscriptionLanguage: (value: string) => void;
 }
 
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
@@ -29,7 +33,10 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
   transcriptionModelId, setTranscriptionModelId, isTranscriptionThinkingEnabled, setIsTranscriptionThinkingEnabled,
   useFilesApiForImages, setUseFilesApiForImages,
   generateQuadImages, setGenerateQuadImages,
-  ttsVoice, setTtsVoice, t
+  ttsVoice, setTtsVoice, 
+  enableItn, setEnableItn,
+  transcriptionLanguage, setTranscriptionLanguage,
+  t
 }) => {
   const iconSize = getResponsiveValue(14, 16);
 
@@ -75,6 +82,16 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
       >
         {AVAILABLE_TRANSCRIPTION_MODELS.map((model) => ( <option key={model.id} value={model.id}>{model.name}</option>))}
       </Select>
+      <Select
+        id="transcription-language-select"
+        label=""
+        labelContent={<span className='flex items-center'>{t('settings_transcriptionLanguage_label')}</span>}
+        value={transcriptionLanguage}
+        onChange={(e) => setTranscriptionLanguage(e.target.value)}
+        aria-label="Select language for voice input transcription"
+      >
+        {AVAILABLE_TRANSCRIPTION_LANGUAGES.map((lang) => ( <option key={lang.id} value={lang.id}>{lang.name}</option>))}
+      </Select>
        <label htmlFor="transcription-thinking-toggle" className="flex items-center justify-between py-1 cursor-pointer">
         <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
           {t('settingsTranscriptionThinking')}
@@ -83,6 +100,15 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
           </Tooltip>
         </span>
         <Toggle id="transcription-thinking-toggle" checked={isTranscriptionThinkingEnabled} onChange={setIsTranscriptionThinkingEnabled} />
+      </label>
+       <label htmlFor="enable-itn-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+        <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
+            {t('settings_enableItn_label')}
+          <Tooltip text={t('settings_enableItn_tooltip')}>
+            <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+          </Tooltip>
+        </span>
+        <Toggle id="enable-itn-toggle" checked={enableItn} onChange={setEnableItn} />
       </label>
       <Select
         id="tts-voice-select"

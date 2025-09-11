@@ -136,6 +136,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 isModelsLoading={isModelsLoading}
                 modelsLoadingError={modelsLoadingError}
                 availableModels={availableModels}
+                transcriptionLanguage={settings.transcriptionLanguage}
+                setTranscriptionLanguage={(v) => updateSetting('transcriptionLanguage', v)}
+                enableItn={settings.enableItn}
+                setEnableItn={(v) => updateSetting('enableItn', v)}
                 t={t}
             />
           )}

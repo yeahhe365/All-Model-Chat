@@ -78,27 +78,15 @@ export const exportElementAsPng = async (
     options?: { backgroundColor?: string | null, scale?: number }
 ) => {
     const html2canvas = (await import('html2canvas')).default;
-    const ownerDoc = element.ownerDocument;
 
     // Wait for images inside the element to load before capturing
     const images = element.querySelectorAll('img');
     const imageLoadPromises = Array.from(images).map(img => {
         if (img.complete) return Promise.resolve();
-        return new Promise<void>(resolve => { img.onload = img.onerror = () => resolve(); });
+        return new Promise(resolve => { img.onload = img.onerror = resolve; });
     });
     await Promise.all(imageLoadPromises);
-
-    // Explicitly wait for fonts to be ready
-    if (ownerDoc?.fonts) {
-        try {
-            await ownerDoc.fonts.ready;
-        } catch (err) {
-            console.warn("Error waiting for fonts to be ready for screenshot:", err);
-        }
-    }
-    
-    // A small delay for rendering final styles and fonts, especially after font loading
-    await new Promise(resolve => setTimeout(resolve, 300)); 
+    await new Promise(resolve => setTimeout(resolve, 250)); // Small delay for rendering final styles
 
     const canvas = await html2canvas(element, {
         height: element.scrollHeight,
@@ -106,7 +94,6 @@ export const exportElementAsPng = async (
         useCORS: true,
         backgroundColor: options?.backgroundColor,
         scale: options?.scale ?? 2,
-        foreignObjectRendering: true, // Improves rendering of complex elements like SVGs and web fonts.
     });
     triggerDownload(canvas.toDataURL('image/png'), filename);
 };
