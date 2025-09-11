@@ -1,8 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
-declare const hljs: any;
-
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
   const s = textContent.trim().toLowerCase();
@@ -118,7 +116,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         }
     };
 
-    const codeContent = React.Children.only(children) as React.ReactElement;
+    const codeElement = React.Children.toArray(children).find(
+        (child): child is React.ReactElement => React.isValidElement(child) && child.type === 'code'
+    );
     
     const langMatch = className?.match(/language-(\S+)/);
     let language = langMatch ? langMatch[1] : 'txt';
@@ -185,11 +185,15 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                     overflowY: 'auto',
                 }}
             >
-                {React.cloneElement(codeContent, {
-                    // This is a bit of a hack to ensure the inner `code` gets padding
-                    // since we removed it from the `pre` tag.
-                    className: `${codeContent.props.className || ''} !p-3 sm:!p-4 !block`,
-                })}
+                {codeElement ? (
+                    React.cloneElement(codeElement, {
+                        // This is a bit of a hack to ensure the inner `code` gets padding
+                        // since we removed it from the `pre` tag.
+                        className: `${codeElement.props.className || ''} !p-3 sm:!p-4 !block`,
+                    })
+                ) : (
+                    children
+                )}
             </pre>
             {isOverflowing && !isExpanded && (
                 <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none"></div>

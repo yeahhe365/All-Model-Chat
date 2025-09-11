@@ -3,7 +3,7 @@ import { Part, UsageMetadata, File as GeminiFile, Chat, Modality } from "@google
 import { getAvailableModelsApi } from './api/modelApi';
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
-import { sendMessageStreamApi, sendMessageNonStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
+import { sendMessageStreamApi, sendMessageNonStreamApi, sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
 
 class GeminiServiceImpl implements GeminiService {
@@ -101,6 +101,23 @@ class GeminiServiceImpl implements GeminiService {
     ): Promise<void> {
         return sendMessageNonStreamApi(
             chat, parts, abortSignal, onError, onComplete
+        );
+    }
+
+    async sendStatelessMessageStream(
+        apiKey: string,
+        modelId: string,
+        history: ChatHistoryItem[],
+        parts: Part[],
+        config: any,
+        abortSignal: AbortSignal,
+        onPart: (part: Part) => void,
+        onThoughtChunk: (chunk: string) => void,
+        onError: (error: Error) => void,
+        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+    ): Promise<void> {
+        return sendStatelessMessageStreamApi(
+            apiKey, modelId, history, parts, config, abortSignal, onPart, onThoughtChunk, onError, onComplete
         );
     }
 

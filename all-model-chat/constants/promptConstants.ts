@@ -6,6 +6,8 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Canvas 助手</title>
+<script>MathJax={chtml:{fontURL:'https://cdn.jsdelivr.net/npm/mathjax@3/es5/output/chtml/fonts/woff-v2'}}</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" id="MathJax-script" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js" defer></script>
 <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js" defer></script>
@@ -43,7 +45,31 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 </div>
 </div>
 <hr class="section-divider">
-<h3><span class="material-icons-outlined">code</span>2. 代码（可选）</h3>
+<h3><span class="material-icons-outlined">functions</span>2. 数学（可选）</h3>
+<ul>
+    <li><span class="material-icons-outlined">layers</span><strong>渲染引擎：</strong><strong class="strong-emphasis">必须</strong>使用 MathJax (CHTML) 在 HTML 页面内渲染。</li>
+    <li>
+        <span class="material-icons-outlined" style="color: #dc3545;">rule_folder</span>
+        <strong class="text-danger">强制性定界符规则:</strong> 所有数学公式 <strong class="text-danger">必须</strong> 使用指定的定界符包裹，<strong class="text-danger">不可省略</strong>。
+        <ul style="padding-left: 20px; margin-top: 0.8em; list-style-type: disc;">
+            <li style="padding-left: 5px; margin-bottom: 0.3em; position: static;">行内公式: <strong class="strong-emphasis">必须</strong>使用 <code>\\(...\\)</code>。</li>
+            <li style="padding-left: 5px; position: static;">行间公式: <strong class="strong-emphasis">必须</strong>使用 <code>\\[...\\]</code>。</li>
+        </ul>
+    </li>
+</ul>
+<div class="two-col-grid-container">
+<div class="col">
+<p class="sub-topic-heading text-highlight-blue"><span class="material-icons-outlined">horizontal_rule</span>行内公式</p>
+<p>嵌入文本中，使用 <code>\\( ... \\)</code> 作为分隔符，例如著名的质能方程 <strong class="text-primary">\\( \\color{#007bff}{E} = \\color{#28a745}{m}\\color{#dc3545}{c}^2 \\)</strong>。</p>
+</div>
+<div class="col">
+<p class="sub-topic-heading text-highlight-purple"><span class="material-icons-outlined">subject</span>块级公式</p>
+<p>块级公式单独成行并居中显示，使用 <code>\\[ ... \\]</code> 作为分隔符。例如经典的欧拉恒等式：</p>
+<div class="math-formula">\\[ \\color{#AE3EC9}{e}^{\\color{#ff8f00}{i\\pi}} \\color{#AE3EC9}{+} \\color{#17a2b8}{1} = \\color{#374151}{0} \\]</div>
+</div>
+</div>
+<hr class="section-divider">
+<h3><span class="material-icons-outlined">code</span>3. 代码（可选）</h3>
 <ul>
 <li><span class="material-icons-outlined" style="color:#28a745">colorize</span><strong class="text-accent2">代码高亮：</strong>如果包含代码块，将使用 <strong class="strong-emphasis">Prism.js</strong> 进行语法高亮。</li>
 <li><span class="material-icons-outlined" style="color:#28a745">content_copy</span><strong class="text-accent2">复制功能提示：</strong>页面中出现的任何代码块，其右上角将自动提供“复制”按钮，点击即可复制代码到剪贴板，并显示操作成功提示（“已复制!”）。</li>
@@ -57,7 +83,7 @@ export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
 // 调用函数并打印到控制台
 console.log(greet('开发者'));</code></pre>
 <hr class="section-divider">
-<h3><span class="material-icons-outlined">visibility</span>3. 图形可视化（可选）</h3>
+<h3><span class="material-icons-outlined">visibility</span>4. 图形可视化（可选）</h3>
 <div class="two-col-grid-container">
 <div class="col">
 <h4><span class="material-icons-outlined">bar_chart</span>ECharts</h4>
