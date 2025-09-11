@@ -128,6 +128,7 @@ export interface AppSettings extends ChatSettings {
  autoFullscreenHtml?: boolean;
  transcriptionLanguage: string;
  enableItn: boolean;
+ transcriptionContext: string;
 }
 
 

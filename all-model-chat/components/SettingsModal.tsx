@@ -140,6 +140,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 setTranscriptionLanguage={(v) => updateSetting('transcriptionLanguage', v)}
                 enableItn={settings.enableItn}
                 setEnableItn={(v) => updateSetting('enableItn', v)}
+                transcriptionContext={settings.transcriptionContext}
+                setTranscriptionContext={(v) => updateSetting('transcriptionContext', v)}
                 t={t}
             />
           )}

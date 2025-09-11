@@ -36,6 +36,8 @@ interface ChatBehaviorSectionProps {
   setEnableItn: (value: boolean) => void;
   transcriptionLanguage: string;
   setTranscriptionLanguage: (value: string) => void;
+  transcriptionContext: string;
+  setTranscriptionContext: (value: string) => void;
 }
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
@@ -69,6 +71,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 setTranscriptionLanguage={props.setTranscriptionLanguage}
                 enableItn={props.enableItn}
                 setEnableItn={props.setEnableItn}
+                transcriptionContext={props.transcriptionContext}
+                setTranscriptionContext={props.setTranscriptionContext}
                 t={t}
             />
         </div>

@@ -26,6 +26,8 @@ interface ModelVoiceSettingsProps {
   setEnableItn: (value: boolean) => void;
   transcriptionLanguage: string;
   setTranscriptionLanguage: (value: string) => void;
+  transcriptionContext: string;
+  setTranscriptionContext: (value: string) => void;
 }
 
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
@@ -36,9 +38,13 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
   ttsVoice, setTtsVoice, 
   enableItn, setEnableItn,
   transcriptionLanguage, setTranscriptionLanguage,
+  transcriptionContext, setTranscriptionContext,
   t
 }) => {
   const iconSize = getResponsiveValue(14, 16);
+  const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
+  const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
+  const isQwenAsrSelected = transcriptionModelId === 'qwen-asr';
 
   return (
     <div className="space-y-4">
@@ -82,34 +88,64 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
       >
         {AVAILABLE_TRANSCRIPTION_MODELS.map((model) => ( <option key={model.id} value={model.id}>{model.name}</option>))}
       </Select>
-      <Select
-        id="transcription-language-select"
-        label=""
-        labelContent={<span className='flex items-center'>{t('settings_transcriptionLanguage_label')}</span>}
-        value={transcriptionLanguage}
-        onChange={(e) => setTranscriptionLanguage(e.target.value)}
-        aria-label="Select language for voice input transcription"
-      >
-        {AVAILABLE_TRANSCRIPTION_LANGUAGES.map((lang) => ( <option key={lang.id} value={lang.id}>{lang.name}</option>))}
-      </Select>
-       <label htmlFor="transcription-thinking-toggle" className="flex items-center justify-between py-1 cursor-pointer">
-        <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
-          {t('settingsTranscriptionThinking')}
-          <Tooltip text={t('chatBehavior_transcriptionThinking_tooltip')}>
-            <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
-          </Tooltip>
-        </span>
-        <Toggle id="transcription-thinking-toggle" checked={isTranscriptionThinkingEnabled} onChange={setIsTranscriptionThinkingEnabled} />
-      </label>
-       <label htmlFor="enable-itn-toggle" className="flex items-center justify-between py-1 cursor-pointer">
-        <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
-            {t('settings_enableItn_label')}
-          <Tooltip text={t('settings_enableItn_tooltip')}>
-            <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
-          </Tooltip>
-        </span>
-        <Toggle id="enable-itn-toggle" checked={enableItn} onChange={setEnableItn} />
-      </label>
+      
+      {/* Gemini-specific transcription settings */}
+      {!isQwenAsrSelected && (
+        <div style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+           <label htmlFor="transcription-thinking-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+            <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
+              {t('settingsTranscriptionThinking')}
+              <Tooltip text={t('chatBehavior_transcriptionThinking_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+              </Tooltip>
+            </span>
+            <Toggle id="transcription-thinking-toggle" checked={isTranscriptionThinkingEnabled} onChange={setIsTranscriptionThinkingEnabled} />
+          </label>
+        </div>
+      )}
+
+      {/* Qwen ASR-specific transcription settings */}
+      {isQwenAsrSelected && (
+        <div className="space-y-4 pt-3 mt-2 border-t border-[var(--theme-border-secondary)]" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
+          <Select
+            id="transcription-language-select"
+            label=""
+            labelContent={<span className='flex items-center'>{t('settings_transcriptionLanguage_label')}</span>}
+            value={transcriptionLanguage}
+            onChange={(e) => setTranscriptionLanguage(e.target.value)}
+            aria-label="Select language for voice input transcription"
+          >
+            {AVAILABLE_TRANSCRIPTION_LANGUAGES.map((lang) => ( <option key={lang.id} value={lang.id}>{lang.name}</option>))}
+          </Select>
+          <div>
+            <label htmlFor="transcription-context" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5 flex items-center">
+                {t('settings_transcriptionContext_label')}
+                <Tooltip text={t('settings_transcriptionContext_tooltip')}>
+                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                </Tooltip>
+            </label>
+            <textarea
+                id="transcription-context"
+                rows={2}
+                value={transcriptionContext}
+                onChange={(e) => setTranscriptionContext(e.target.value)}
+                className={`${inputBaseClasses} ${enabledInputClasses} resize-y min-h-[40px] custom-scrollbar`}
+                placeholder={t('settings_transcriptionContext_placeholder')}
+                aria-label="Transcription context"
+            />
+          </div>
+          <label htmlFor="enable-itn-toggle" className="flex items-center justify-between py-1 cursor-pointer">
+            <span className="text-sm font-medium text-[var(--theme-text-secondary)] flex items-center">
+                {t('settings_enableItn_label')}
+              <Tooltip text={t('settings_enableItn_tooltip')}>
+                <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+              </Tooltip>
+            </span>
+            <Toggle id="enable-itn-toggle" checked={enableItn} onChange={setEnableItn} />
+          </label>
+        </div>
+      )}
+
       <Select
         id="tts-voice-select"
         label=""
