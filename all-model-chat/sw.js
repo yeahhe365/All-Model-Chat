@@ -7,7 +7,14 @@ try {
 
 const CACHE_NAME = 'all-model-chat-cache-v3';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
+const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
+
+let proxyUrl = null;
+
+// Map to track active streaming requests and allow them to be aborted.
+// Key: generationId, Value: { controller: AbortController }
+const activeStreams = new Map();
 
 /**
  * Fetches and parses the main HTML file to dynamically discover all critical resources.
@@ -39,14 +46,91 @@ const getDynamicAppShellUrls = async () => {
     }
 };
 
+/**
+ * Handles a streaming request from the client by calling the Gemini API.
+ * @param {string} generationId - A unique ID for this specific generation request.
+ * @param {object} payload - Data needed for the API call (apiKey, modelId, etc.).
+ * @param {string} clientId - The ID of the client window that made the request.
+ */
+async function handleStreamRequest(generationId, payload, clientId) {
+    if (!self.GoogleGenAI) {
+        const client = await self.clients.get(clientId);
+        if (client) {
+            client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { message: 'Service Worker could not load the Gemini SDK.' } });
+        }
+        return;
+    }
+
+    const { apiKey, modelId, contents, config } = payload;
+    const controller = new AbortController();
+    activeStreams.set(generationId, { controller });
+    let hasError = false;
+
+    try {
+        // 如果设置了代理 URL，我们应该让 fetch 事件处理器来处理请求
+        // 而不是在这里直接使用 GoogleGenAI
+        const ai = new self.GoogleGenAI({ apiKey });
+        const result = await ai.models.generateContentStream({ model: modelId, contents, config });
+
+        for await (const chunk of result) {
+            if (controller.signal.aborted) {
+                console.log(`[SW] Stream ${generationId} aborted.`);
+                break;
+            }
+            const client = await self.clients.get(clientId);
+            if (client) {
+                client.postMessage({ type: 'GEMINI_STREAM_CHUNK', generationId, payload: chunk });
+            } else {
+                console.warn(`[SW] Client ${clientId} not found for stream ${generationId}. Aborting.`);
+                controller.abort();
+                break;
+            }
+        }
+    } catch (error) {
+        hasError = true;
+        console.error(`[SW] Error during Gemini stream for ${generationId}:`, error);
+        const client = await self.clients.get(clientId);
+        if (client) {
+            client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { name: error.name, message: error.message } });
+        }
+    } finally {
+        if (!hasError) {
+            const client = await self.clients.get(clientId);
+            if (client) {
+                client.postMessage({ type: 'GEMINI_STREAM_COMPLETE', generationId });
+            }
+        }
+        activeStreams.delete(generationId);
+    }
+}
+
+/**
+ * Aborts an ongoing stream request.
+ * @param {string} generationId - The ID of the stream to abort.
+ */
+function handleStreamAbort(generationId) {
+    if (activeStreams.has(generationId)) {
+        activeStreams.get(generationId).controller.abort();
+    }
+}
 
 self.addEventListener('message', (event) => {
     if (!event.data || !event.data.type) return;
-    const { type } = event.data;
+    const { type, generationId, payload } = event.data;
 
     switch (type) {
+        case 'GEMINI_STREAM_REQUEST':
+            handleStreamRequest(generationId, payload, event.source.id);
+            break;
+        case 'GEMINI_STREAM_ABORT':
+            handleStreamAbort(generationId);
+            break;
         case 'SKIP_WAITING':
             self.skipWaiting();
+            break;
+        case 'SET_PROXY_URL':
+            proxyUrl = event.data.url || null;
+            console.log('[SW] Proxy URL set to:', proxyUrl);
             break;
     }
 });
@@ -86,35 +170,54 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+    
+    // 记录所有 API 请求以便调试
+    if (request.url.includes('generativelanguage.googleapis.com')) {
+        console.log('[SW] Intercepting API request:', request.url);
+        console.log('[SW] Proxy URL:', proxyUrl);
+    }
 
-    // For non-GET requests (like API POST calls), always go to the network.
-    // The proxyInterceptor on the client-side handles any necessary URL rewriting.
-    if (request.method !== 'GET') {
+    // 如果设置了代理 URL，拦截所有对 Google API 的请求
+    if (proxyUrl && request.url.startsWith(TARGET_URL_PREFIX)) {
+        console.log('[SW] Redirecting to proxy:', proxyUrl);
+        const newUrl = request.url.replace(TARGET_URL_PREFIX, proxyUrl);
+        const newRequest = new Request(newUrl, {
+            method: request.method,
+            headers: request.headers,
+            body: request.body,
+            mode: 'cors',
+            credentials: 'omit'
+        });
+        event.respondWith(fetch(newRequest));
+        return;
+    }
+
+    // 如果没有代理 URL，但是是 API 请求，直接通过
+    if (API_HOSTS.some(host => new URL(request.url).hostname === host)) {
+        console.log('[SW] Direct API request (no proxy):', request.url);
         event.respondWith(fetch(request));
         return;
     }
 
-    // For GET requests, use a cache-first strategy for the app shell and assets.
-    event.respondWith(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.match(request).then((cachedResponse) => {
-                const fetchPromise = fetch(request).then((networkResponse) => {
-                    // Check if we received a valid response
-                    if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
-                        cache.put(request, networkResponse.clone());
-                    }
-                    return networkResponse;
-                }).catch(error => {
-                    console.warn(`[SW] Network request for ${request.url} failed:`, error);
-                    // If a navigation request fails and isn't in cache, serve the main app page.
-                    if (request.mode === 'navigate' && !cachedResponse) {
-                        return caches.match('/index.html');
-                    }
-                });
+    if (request.method === 'GET') {
+        event.respondWith(
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.match(request).then((cachedResponse) => {
+                    const fetchPromise = fetch(request).then((networkResponse) => {
+                        if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+                            cache.put(request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    }).catch(error => {
+                        console.warn(`[SW] Network request for ${request.url} failed:`, error);
+                        if (request.mode === 'navigate' && !cachedResponse) {
+                            return caches.match('/index.html');
+                        }
+                    });
 
-                // Return from cache if available, otherwise fetch from network.
-                return cachedResponse || fetchPromise;
-            });
-        })
-    );
+                    return cachedResponse || fetchPromise;
+                });
+            })
+        );
+    }
 });

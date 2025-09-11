@@ -6,14 +6,13 @@ import { Theme } from '../constants/themeConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 import { ApiConfigSection } from './settings/ApiConfigSection';
 import { AppearanceSection } from './settings/AppearanceSection';
+import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
 import { DataManagementSection } from './settings/DataManagementSection';
 import { SettingsActions } from './settings/SettingsActions';
 import { AboutSection } from './settings/AboutSection';
 import { ModelOption } from '../types';
 import { Modal } from './shared/Modal';
 import { Tooltip } from './settings/shared/Tooltip';
-import { ModelVoiceSettings } from './settings/ModelVoiceSettings';
-import { GenerationSettings } from './settings/GenerationSettings';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -122,48 +121,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
           {activeTab === 'model' && (
-             <div>
-                <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center mb-4">
-                  {t('settingsModelParameters')}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                  <div className="space-y-4">
-                      <ModelVoiceSettings
-                          modelId={settings.modelId}
-                          setModelId={(v) => updateSetting('modelId', v)}
-                          isModelsLoading={isModelsLoading}
-                          modelsLoadingError={modelsLoadingError}
-                          availableModels={availableModels}
-                          transcriptionModelId={settings.transcriptionModelId}
-                          setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
-                          isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled}
-                          setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
-                          useFilesApiForImages={settings.useFilesApiForImages}
-                          setUseFilesApiForImages={(v) => updateSetting('useFilesApiForImages', v)}
-                          generateQuadImages={settings.generateQuadImages ?? false}
-                          setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
-                          ttsVoice={settings.ttsVoice}
-                          setTtsVoice={(v) => updateSetting('ttsVoice', v)}
-                          t={t}
-                      />
-                  </div>
-                  <div className="space-y-4 md:pl-8 md:border-l md:border-[var(--theme-border-primary)] md:border-opacity-50 pt-6 md:pt-0 border-t md:border-t-0 border-[var(--theme-border-primary)] border-opacity-50">
-                      <GenerationSettings
-                          systemInstruction={settings.systemInstruction}
-                          setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
-                          temperature={settings.temperature}
-                          setTemperature={(v) => updateSetting('temperature', v)}
-                          topP={settings.topP}
-                          setTopP={(v) => updateSetting('topP', v)}
-                          thinkingBudget={settings.thinkingBudget}
-                          setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
-                          showThoughts={settings.showThoughts}
-                          setShowThoughts={(v) => updateSetting('showThoughts', v)}
-                          t={t}
-                      />
-                  </div>
-                </div>
-              </div>
+             <ChatBehaviorSection
+                modelId={settings.modelId} setModelId={(v) => updateSetting('modelId', v)}
+                transcriptionModelId={settings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
+                isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled} setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
+                useFilesApiForImages={settings.useFilesApiForImages} setUseFilesApiForImages={(v) => updateSetting('useFilesApiForImages', v)}
+                generateQuadImages={settings.generateQuadImages ?? false} setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
+                ttsVoice={settings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
+                systemInstruction={settings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
+                temperature={settings.temperature} setTemperature={(v) => updateSetting('temperature', v)}
+                topP={settings.topP} setTopP={(v) => updateSetting('topP', v)}
+                showThoughts={settings.showThoughts} setShowThoughts={(v) => updateSetting('showThoughts', v)}
+                thinkingBudget={settings.thinkingBudget} setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
+                isModelsLoading={isModelsLoading}
+                modelsLoadingError={modelsLoadingError}
+                availableModels={availableModels}
+                t={t}
+            />
           )}
           {activeTab === 'account' && (
             <ApiConfigSection

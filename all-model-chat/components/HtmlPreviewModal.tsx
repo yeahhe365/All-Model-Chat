@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Minimize, Expand } from 'lucide-react';
 import { getResponsiveValue } from '../utils/appUtils';
-import { sanitizeFilename } from '../utils/exportUtils';
+import { sanitizeFilename, exportElementAsPng } from '../utils/exportUtils';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -26,6 +26,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   const iconSize = getResponsiveValue(18, 20);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const [scale, setScale] = useState(1);
+  const [isScreenshotting, setIsScreenshotting] = useState(false);
 
   const handleZoomIn = () => setScale(s => Math.min(MAX_ZOOM, s + ZOOM_STEP));
   const handleZoomOut = () => setScale(s => Math.max(MIN_ZOOM, s - ZOOM_STEP));
@@ -157,6 +158,26 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const handleScreenshot = async () => {
+    if (!iframeRef.current?.contentDocument?.body || isScreenshotting) return;
+    setIsScreenshotting(true);
+    try {
+        const iframeBody = iframeRef.current.contentDocument.body;
+        const filename = `${sanitizeFilename(previewTitle)}-screenshot.png`;
+        iframeRef.current.contentWindow?.scrollTo(0, 0);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        await exportElementAsPng(iframeBody, filename, {
+            backgroundColor: iframeRef.current.contentDocument.body.style.backgroundColor || getComputedStyle(iframeRef.current.contentDocument.body).backgroundColor || '#ffffff',
+            scale: 2,
+        });
+    } catch (err) {
+        console.error("Failed to take screenshot of iframe content:", err);
+        alert("Sorry, the screenshot could not be captured. Please check the console for errors.");
+    } finally {
+        setIsScreenshotting(false);
+    }
+  };
+
   const handleRefresh = useCallback(() => {
     if (iframeRef.current && htmlContent) {
       // Temporarily clear srcdoc to force a full reload if the content is identical
@@ -235,6 +256,15 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 title="Download HTML"
             >
                 <Download size={iconSize} /> 
+            </button>
+            <button
+                onClick={handleScreenshot}
+                disabled={isScreenshotting}
+                className={buttonClasses}
+                aria-label="Take screenshot of content"
+                title="Screenshot"
+            >
+                {isScreenshotting ? <Loader2 size={iconSize} className="animate-spin" /> : <ImageIcon size={iconSize} />}
             </button>
             <button
               onClick={handleRefresh}

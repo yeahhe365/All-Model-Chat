@@ -149,6 +149,18 @@ export interface GeminiService {
     onError: (error: Error) => void,
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
   ) => Promise<void>;
+  sendStatelessMessageStream: (
+    apiKey: string,
+    modelId: string,
+    history: ChatHistoryItem[],
+    parts: Part[],
+    config: any,
+    abortSignal: AbortSignal,
+    onPart: (part: Part) => void,
+    onThoughtChunk: (chunk: string) => void,
+    onError: (error: Error) => void,
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+  ) => Promise<void>;
   sendStatelessMessageNonStream: (
     apiKey: string,
     modelId: string,

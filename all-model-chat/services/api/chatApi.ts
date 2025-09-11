@@ -138,6 +138,54 @@ export const sendMessageNonStreamApi = async (
 };
 
 // Stateless API calls for models that don't support the Chat object (like image-edit)
+export const sendStatelessMessageStreamApi = async (
+    apiKey: string,
+    modelId: string,
+    history: ChatHistoryItem[],
+    parts: Part[],
+    config: any,
+    abortSignal: AbortSignal,
+    onPart: (part: Part) => void,
+    onThoughtChunk: (chunk: string) => void,
+    onError: (error: Error) => void,
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+): Promise<void> => {
+    logService.info(`Sending message via stateless generateContent (stream) for model ${modelId}`);
+    let finalUsageMetadata: UsageMetadata | undefined = undefined;
+    let finalGroundingMetadata: any = null;
+    const storedSettings = await dbService.getAppSettings();
+    const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
+    const ai = getApiClient(apiKey, apiProxyUrl);
+
+    try {
+        const result = await ai.models.generateContentStream({
+            model: modelId,
+            contents: [...history, { role: 'user', parts }],
+            config: config
+        });
+
+        for await (const chunkResponse of result) {
+            if (abortSignal.aborted) { logService.warn("Streaming aborted by signal."); break; }
+            if (chunkResponse.usageMetadata) finalUsageMetadata = chunkResponse.usageMetadata;
+            if (chunkResponse.candidates?.[0]?.groundingMetadata) finalGroundingMetadata = chunkResponse.candidates[0].groundingMetadata;
+
+            if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
+                for (const part of chunkResponse.candidates[0].content.parts) {
+                    const pAsThoughtSupporting = part as ThoughtSupportingPart;
+                    if (pAsThoughtSupporting.thought) onThoughtChunk(part.text);
+                    else onPart(part);
+                }
+            }
+        }
+    } catch (error) {
+        logService.error(`Error in stateless stream for ${modelId}:`, error);
+        onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during stateless streaming."));
+    } finally {
+        logService.info(`Stateless stream complete for ${modelId}.`, { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
+        onComplete(finalUsageMetadata, finalGroundingMetadata);
+    }
+};
+
 export const sendStatelessMessageNonStreamApi = async (
     apiKey: string,
     modelId: string,

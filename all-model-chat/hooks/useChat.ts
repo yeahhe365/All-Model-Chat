@@ -5,9 +5,7 @@ import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
-import { useMessageSender } from './useMessageSender';
-import { useMessageActions } from './useMessageActions';
-import { useTextToSpeechHandler } from './useTextToSpeechHandler';
+import { useMessageHandler } from './useMessageHandler';
 import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
@@ -37,49 +35,29 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const userScrolledUp = useRef<boolean>(false);
     const [chat, setChat] = useState<Chat | null>(null);
 
-    const updateAndPersistSessions = useCallback((
+    const updateAndPersistSessions = useCallback(async (
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
-        return new Promise<void>((resolve, reject) => {
-            setSavedSessions(prevSessions => {
-                const newSessions = updater(prevSessions);
-                if (persist) {
-                    dbService.setAllSessions(newSessions)
-                        .then(() => {
-                            logService.debug('Persisted sessions to IndexedDB.');
-                            resolve();
-                        })
-                        .catch(e => {
-                            logService.error('Failed to persist sessions', e);
-                            reject(e);
-                        });
-                } else {
-                    resolve();
-                }
-                return newSessions;
-            });
+        let newSessions: SavedChatSession[] = [];
+        setSavedSessions(prevSessions => {
+            newSessions = updater(prevSessions);
+            return newSessions;
         });
-    }, [setSavedSessions]);
+        if (persist) {
+            await dbService.setAllSessions(newSessions);
+            logService.debug('Persisted sessions to IndexedDB.');
+        }
+    }, []);
     
-    const updateAndPersistGroups = useCallback((updater: (prev: ChatGroup[]) => ChatGroup[]) => {
-        return new Promise<void>((resolve, reject) => {
-            setSavedGroups(prevGroups => {
-                const newGroups = updater(prevGroups);
-                dbService.setAllGroups(newGroups)
-                    .then(() => {
-                        logService.debug('Persisted groups to IndexedDB.');
-                        resolve();
-                    })
-                    .catch(e => {
-                        logService.error('Failed to persist groups', e);
-                        reject(e);
-                    });
-                return newGroups;
-            });
+    const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
+        setSavedGroups(prevGroups => {
+            const newGroups = updater(prevGroups);
+            dbService.setAllGroups(newGroups);
+            return newGroups;
         });
-    }, [setSavedGroups]);
+    }, []);
 
     // 2. Derive active session state
     const activeChat = useMemo(() => savedSessions.find(s => s.id === activeSessionId), [savedSessions, activeSessionId]);
@@ -182,59 +160,7 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const fileHandler = useFileHandling({ appSettings, selectedFiles, setSelectedFiles, setAppFileError, isAppProcessingFile, setIsAppProcessingFile, currentChatSettings, setCurrentChatSettings: setCurrentChatSettings, });
     const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
     const scrollHandler = useChatScroll({ messages, userScrolledUp });
-
-    const { handleSendMessage } = useMessageSender({
-        appSettings,
-        messages,
-        currentChatSettings,
-        selectedFiles,
-        setSelectedFiles,
-        editingMessageId,
-        setEditingMessageId,
-        setAppFileError,
-        aspectRatio,
-        userScrolledUp,
-        activeSessionId,
-        setActiveSessionId,
-        activeJobs,
-        setLoadingSessionIds,
-        updateAndPersistSessions,
-        scrollContainerRef: scrollHandler.scrollContainerRef,
-        chat,
-    });
-    
-    const {
-        handleStopGenerating,
-        handleEditMessage,
-        handleCancelEdit,
-        handleDeleteMessage,
-        handleRetryMessage,
-        handleRetryLastTurn,
-        handleEditLastUserMessage,
-    } = useMessageActions({
-        messages,
-        isLoading,
-        activeSessionId,
-        editingMessageId,
-        activeJobs,
-        setCommandedInput,
-        setSelectedFiles,
-        setEditingMessageId,
-        setAppFileError,
-        updateAndPersistSessions,
-        userScrolledUp,
-        handleSendMessage,
-        setLoadingSessionIds,
-    });
-    
-    const { handleTextToSpeech } = useTextToSpeechHandler({
-        appSettings,
-        currentChatSettings,
-        ttsMessageId,
-        setTtsMessageId,
-        updateAndPersistSessions,
-    });
-
+    const messageHandler = useMessageHandler({ appSettings, messages, isLoading, currentChatSettings, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, setLoadingSessionIds, updateAndPersistSessions, language, scrollContainerRef: scrollHandler.scrollContainerRef, chat });
     useAutoTitling({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds });
     useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language });
     
@@ -341,19 +267,19 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             updateAndPersistSessions(prev => [newSession, ...prev]);
             setActiveSessionId(newSessionId);
         } else {
-            if (isLoading) handleStopGenerating();
+            if (isLoading) messageHandler.handleStopGenerating();
             if (modelId !== currentChatSettings.modelId) {
                 setIsSwitchingModel(true);
                 updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, settings: { ...s.settings, modelId } } : s));
             }
         }
         userScrolledUp.current = false;
-    }, [isLoading, currentChatSettings.modelId, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId]);
+    }, [isLoading, currentChatSettings.modelId, updateAndPersistSessions, activeSessionId, userScrolledUp, messageHandler, appSettings, setActiveSessionId]);
 
     useEffect(() => { if (isSwitchingModel) { const timer = setTimeout(() => setIsSwitchingModel(false), 0); return () => clearTimeout(timer); } }, [isSwitchingModel]);
     
     const handleClearCurrentChat = useCallback(() => {
-        if (isLoading) handleStopGenerating();
+        if (isLoading) messageHandler.handleStopGenerating();
         if (activeSessionId) {
             updateAndPersistSessions(prev =>
                 prev.map(s =>
@@ -372,26 +298,26 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         } else {
             startNewChat();
         }
-    }, [isLoading, activeSessionId, handleStopGenerating, updateAndPersistSessions, setSelectedFiles, startNewChat]);
+    }, [isLoading, activeSessionId, messageHandler.handleStopGenerating, updateAndPersistSessions, setSelectedFiles, startNewChat]);
 
 
      const toggleGoogleSearch = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
+        if (isLoading) messageHandler.handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isGoogleSearchEnabled: !prev.isGoogleSearchEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
     
     const toggleCodeExecution = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
+        if (isLoading) messageHandler.handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isCodeExecutionEnabled: !prev.isCodeExecutionEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
 
     const toggleUrlContext = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
+        if (isLoading) messageHandler.handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isUrlContextEnabled: !prev.isUrlContextEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, isLoading, setCurrentChatSettings, messageHandler]);
     
     const handleTogglePinCurrentSession = useCallback(() => {
         if (activeSessionId) {
@@ -454,16 +380,16 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
         handleAppDrop: fileHandler.handleAppDrop,
         handleCancelFileUpload: fileHandler.handleCancelFileUpload,
         handleAddFileById: fileHandler.handleAddFileById,
-        // from messageHandler (now directly in useChat)
-        handleSendMessage,
-        handleStopGenerating,
-        handleEditMessage,
-        handleCancelEdit,
-        handleDeleteMessage,
-        handleRetryMessage,
-        handleRetryLastTurn,
-        handleEditLastUserMessage,
-        handleTextToSpeech,
+        // from messageHandler
+        handleSendMessage: messageHandler.handleSendMessage,
+        handleStopGenerating: messageHandler.handleStopGenerating,
+        handleEditMessage: messageHandler.handleEditMessage,
+        handleCancelEdit: messageHandler.handleCancelEdit,
+        handleDeleteMessage: messageHandler.handleDeleteMessage,
+        handleRetryMessage: messageHandler.handleRetryMessage,
+        handleRetryLastTurn: messageHandler.handleRetryLastTurn,
+        handleTextToSpeech: messageHandler.handleTextToSpeech,
+        handleEditLastUserMessage: messageHandler.handleEditLastUserMessage,
         // from scenarioHandler
         savedScenarios: scenarioHandler.savedScenarios,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
