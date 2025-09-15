@@ -65,7 +65,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             <button
                 type="button"
                 onClick={onTranslate}
-                disabled={!inputText.trim() || isLoading || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
+                disabled={!inputText.trim() || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
                 className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
                 aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
                 title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
@@ -79,7 +79,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             <button
                 type="button"
                 onClick={onRecordButtonClick}
-                disabled={isLoading || isEditing || disabled || isTranscribing || isMicInitializing}
+                disabled={disabled || isTranscribing || isMicInitializing}
                 className={`${buttonBaseClass} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]'}`}
                 aria-label={
                     isRecording ? t('voiceInput_stop_aria') :

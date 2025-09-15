@@ -352,7 +352,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   };
   
   const handleTranslate = async () => {
-    if (!inputText.trim() || isTranslating || isLoading) return;
+    if (!inputText.trim() || isTranslating) return;
 
     setIsTranslating(true);
     setAppFileError(null);
