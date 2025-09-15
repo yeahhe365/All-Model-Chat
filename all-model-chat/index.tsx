@@ -15,6 +15,25 @@ if (appleTouchIcon) {
 }
 
 (async () => {
+  // Request persistent storage to prevent data loss on mobile devices
+  if (navigator.storage && navigator.storage.persist) {
+    try {
+      const isPersisted = await navigator.storage.persisted();
+      if (!isPersisted) {
+        const wasGranted = await navigator.storage.persist();
+        if (wasGranted) {
+          console.log('✅ Storage persistence successfully granted.');
+        } else {
+          console.warn('⚠️ Storage persistence was not granted. Data may be cleared under storage pressure.');
+        }
+      } else {
+        console.log('✅ Storage is already persistent.');
+      }
+    } catch (error) {
+      console.error('Error checking or requesting storage persistence:', error);
+    }
+  }
+
   // 初始化代理拦截器
   await initializeProxyInterceptor();
 

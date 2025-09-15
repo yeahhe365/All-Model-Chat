@@ -139,38 +139,12 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
             console.log('[SW] Installation started.');
-            try {
-                const urlsToCache = await getDynamicAppShellUrls();
-                const cache = await caches.open(CACHE_NAME);
-                console.log(`[SW] Caching ${urlsToCache.length} dynamic app shell files.`);
-                
-                let successCount = 0;
-                let failureCount = 0;
-
-                for (const url of urlsToCache) {
-                    try {
-                        // Use a cache-busting parameter for external resources, just in case.
-                        const request = new Request(url, { cache: 'reload' });
-                        await cache.add(request);
-                        successCount++;
-                    } catch (error) {
-                        failureCount++;
-                        console.warn(`[SW] Failed to cache: ${url}`, error);
-                    }
-                }
-
-                console.log(`[SW] Caching finished. Success: ${successCount}, Failed: ${failureCount}`);
-                
-                if (failureCount > 0) {
-                    console.warn('[SW] Some non-critical assets might not be available offline.');
-                }
-
-            } catch (error) {
-                console.error('[SW] Critical error during installation, could not cache app shell.', error);
-            } finally {
-                await self.skipWaiting();
-                console.log('[SW] Installation process complete, proceeding to activation.');
-            }
+            const urlsToCache = await getDynamicAppShellUrls();
+            const cache = await caches.open(CACHE_NAME);
+            console.log(`[SW] Caching ${urlsToCache.length} dynamic app shell files.`);
+            await cache.addAll(urlsToCache);
+            await self.skipWaiting();
+            console.log('[SW] Installation complete.');
         })()
     );
 });
