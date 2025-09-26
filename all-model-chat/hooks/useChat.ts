@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, ChatGroup } from '../types';
-import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
 import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
@@ -274,8 +274,9 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     }, [isModelsLoading, apiModels, activeChat, activeSessionId, updateAndPersistSessions]);
     
     const handleSelectModelInHeader = useCallback((modelId: string) => {
-        const targetModels = ['gemini-2.5-pro', 'models/gemini-flash-latest', 'models/gemini-flash-lite-latest'];
-        const newThinkingBudget = targetModels.includes(modelId) ? 1000 : DEFAULT_CHAT_SETTINGS.thinkingBudget;
+        const newThinkingBudget = THINKING_BUDGET_RANGES[modelId]
+            ? THINKING_BUDGET_RANGES[modelId].max
+            : DEFAULT_CHAT_SETTINGS.thinkingBudget;
 
         const newSettingsPartial: Partial<IndividualChatSettings> = {
             modelId,

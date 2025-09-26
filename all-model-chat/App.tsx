@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from './types';
-import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS } from './constants/appConstants';
+import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from './constants/appConstants';
 import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
@@ -202,8 +202,9 @@ const App: React.FC = () => {
 
   const handleSetDefaultModel = (modelId: string) => {
     logService.info(`Setting new default model: ${modelId}`);
-    const targetModels = ['gemini-2.5-pro', 'models/gemini-flash-latest', 'models/gemini-flash-lite-latest'];
-    const newThinkingBudget = targetModels.includes(modelId) ? 1000 : DEFAULT_APP_SETTINGS.thinkingBudget;
+    const newThinkingBudget = THINKING_BUDGET_RANGES[modelId]
+      ? THINKING_BUDGET_RANGES[modelId].max
+      : DEFAULT_APP_SETTINGS.thinkingBudget;
 
     setAppSettings(prev => ({ ...prev, modelId, thinkingBudget: newThinkingBudget }));
   };
