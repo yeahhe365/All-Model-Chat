@@ -39,6 +39,12 @@ interface SettingsModalProps {
 
 type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'about';
 
+const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
+    'models/gemini-flash-latest': { min: 1, max: 24576 },
+    'gemini-2.5-pro': { min: 128, max: 32768 },
+    'models/gemini-flash-lite-latest': { min: 512, max: 24576 },
+};
+
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
   onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer,
@@ -55,12 +61,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setSettings(currentSettings);
+      let initialSettings = { ...currentSettings };
+      
+      const isThinkingModel = Object.keys(THINKING_BUDGET_RANGES).includes(initialSettings.modelId);
+      
+      // If the loaded settings have a thinking model with 'auto' budget, default it to 'custom' with max budget.
+      if (isThinkingModel && initialSettings.thinkingBudget < 0) {
+        initialSettings.thinkingBudget = THINKING_BUDGET_RANGES[initialSettings.modelId].max;
+      }
+      
+      setSettings(initialSettings);
       setActiveTab('interface');
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
   }, [isOpen, currentSettings]);
+
 
   if (!isOpen) return null;
 
@@ -75,6 +91,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
+
+  const handleModelChangeInSettings = (newModelId: string) => {
+    setSettings(prevSettings => {
+        const isThinkingModel = Object.keys(THINKING_BUDGET_RANGES).includes(newModelId);
+        
+        let newThinkingBudget;
+
+        if (isThinkingModel) {
+            // When switching to any thinking model, set its budget to its maximum value.
+            // This ensures the correct budget is always applied when changing models in the settings.
+            newThinkingBudget = THINKING_BUDGET_RANGES[newModelId].max;
+        } else {
+            // If the new model is not a thinking model, reset the budget to the app's default (auto).
+            newThinkingBudget = DEFAULT_APP_SETTINGS.thinkingBudget; // -1
+        }
+        
+        return {
+            ...prevSettings,
+            modelId: newModelId,
+            thinkingBudget: newThinkingBudget
+        };
+    });
+  };
+
 
   const tabs: { id: SettingsTab; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
     { id: 'interface', labelKey: 'settingsTabInterface', icon: <Monitor size={tabIconSize} /> },
@@ -122,7 +162,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
           {activeTab === 'model' && (
              <ChatBehaviorSection
-                modelId={settings.modelId} setModelId={(v) => updateSetting('modelId', v)}
+                modelId={settings.modelId} setModelId={handleModelChangeInSettings}
                 transcriptionModelId={settings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
                 isTranscriptionThinkingEnabled={settings.isTranscriptionThinkingEnabled} setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
                 useFilesApiForImages={settings.useFilesApiForImages} setUseFilesApiForImages={(v) => updateSetting('useFilesApiForImages', v)}
