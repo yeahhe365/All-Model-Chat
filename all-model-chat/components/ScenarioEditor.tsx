@@ -11,7 +11,7 @@ interface ScenarioEditorProps {
 }
 
 export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave, onCancel, t }) => {
-    const [scenario, setScenario] = useState<SavedScenario>(initialScenario || { id: Date.now().toString(), title: '', messages: [] });
+    const [scenario, setScenario] = useState<SavedScenario>(initialScenario || { id: Date.now().toString(), title: '', messages: [], systemInstruction: '' });
     const [editingMessage, setEditingMessage] = useState<PreloadedMessage | null>(null);
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');
@@ -71,6 +71,19 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     onChange={(e) => setScenario(prev => ({...prev, title: e.target.value}))}
                     placeholder={t('scenarios_editor_title_placeholder')}
                     className="w-full p-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-2 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm"
+                />
+            </div>
+            
+            {/* System Prompt Editor */}
+            <div className="mb-4">
+                <label htmlFor="scenario-system-prompt" className="block text-sm font-medium text-[var(--theme-text-secondary)] mb-1.5">System Prompt (optional)</label>
+                <textarea
+                    id="scenario-system-prompt"
+                    rows={3}
+                    value={scenario.systemInstruction || ''}
+                    onChange={(e) => setScenario(prev => ({...prev, systemInstruction: e.target.value}))}
+                    placeholder="e.g., You are a helpful AI assistant."
+                    className="w-full p-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-2 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm resize-y custom-scrollbar"
                 />
             </div>
 

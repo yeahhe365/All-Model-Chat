@@ -1,6 +1,6 @@
 export const DEFAULT_SYSTEM_INSTRUCTION = '';
 
-export const CANVAS_ASSISTANT_SYSTEM_PROMPT = `<!DOCTYPE html>
+export const CANVAS_SYSTEM_PROMPT = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">

@@ -75,9 +75,9 @@ export const buildGenerationConfig = (
     }
 
     const modelSupportsThinking = [
-        'gemini-2.5-flash-lite',
+        'models/gemini-flash-lite-latest',
         'gemini-2.5-pro',
-        'gemini-2.5-flash'
+        'models/gemini-flash-latest'
     ].includes(modelId);
 
     if (modelSupportsThinking) {

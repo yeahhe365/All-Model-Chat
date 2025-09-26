@@ -16,7 +16,7 @@ import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 import { dbService } from '../utils/db';
 
 
-export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
+export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
     // 1. Core application state
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
     const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
@@ -158,7 +158,12 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
     const historyHandler = useChatHistory({ appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, updateAndPersistSessions, activeChat, language, updateAndPersistGroups });
     const fileHandler = useFileHandling({ appSettings, selectedFiles, setSelectedFiles, setAppFileError, isAppProcessingFile, setIsAppProcessingFile, currentChatSettings, setCurrentChatSettings: setCurrentChatSettings, });
-    const scenarioHandler = usePreloadedScenarios({ startNewChat: historyHandler.startNewChat, updateAndPersistSessions });
+    const scenarioHandler = usePreloadedScenarios({
+        appSettings,
+        setAppSettings,
+        updateAndPersistSessions,
+        setActiveSessionId,
+    });
     const scrollHandler = useChatScroll({ messages, userScrolledUp });
     const messageHandler = useMessageHandler({ appSettings, messages, isLoading, currentChatSettings, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, setLoadingSessionIds, updateAndPersistSessions, language, scrollContainerRef: scrollHandler.scrollContainerRef, chat });
     useAutoTitling({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds });
@@ -269,10 +274,18 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
     }, [isModelsLoading, apiModels, activeChat, activeSessionId, updateAndPersistSessions]);
     
     const handleSelectModelInHeader = useCallback((modelId: string) => {
+        const targetModels = ['gemini-2.5-pro', 'models/gemini-flash-latest', 'models/gemini-flash-lite-latest'];
+        const newThinkingBudget = targetModels.includes(modelId) ? 1000 : DEFAULT_CHAT_SETTINGS.thinkingBudget;
+
+        const newSettingsPartial: Partial<IndividualChatSettings> = {
+            modelId,
+            thinkingBudget: newThinkingBudget,
+        };
+
         if (!activeSessionId) {
             const newSessionId = generateUniqueId();
             const newSession: SavedChatSession = {
-                id: newSessionId, title: 'New Chat', messages: [], timestamp: Date.now(), settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, modelId: modelId },
+                id: newSessionId, title: 'New Chat', messages: [], timestamp: Date.now(), settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...newSettingsPartial },
             };
             updateAndPersistSessions(prev => [newSession, ...prev]);
             setActiveSessionId(newSessionId);
@@ -280,11 +293,15 @@ export const useChat = (appSettings: AppSettings, language: 'en' | 'zh') => {
             if (isLoading) messageHandler.handleStopGenerating();
             if (modelId !== currentChatSettings.modelId) {
                 setIsSwitchingModel(true);
-                updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, settings: { ...s.settings, modelId } } : s));
+                updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, settings: { ...s.settings, ...newSettingsPartial } } : s));
+            } else {
+                if (currentChatSettings.thinkingBudget !== newThinkingBudget) {
+                    setCurrentChatSettings(prev => ({...prev, thinkingBudget: newThinkingBudget}));
+                }
             }
         }
         userScrolledUp.current = false;
-    }, [isLoading, currentChatSettings.modelId, updateAndPersistSessions, activeSessionId, userScrolledUp, messageHandler, appSettings, setActiveSessionId]);
+    }, [isLoading, currentChatSettings.modelId, currentChatSettings.thinkingBudget, updateAndPersistSessions, activeSessionId, userScrolledUp, messageHandler, appSettings, setActiveSessionId, setCurrentChatSettings]);
 
     useEffect(() => { if (isSwitchingModel) { const timer = setTimeout(() => setIsSwitchingModel(false), 0); return () => clearTimeout(timer); } }, [isSwitchingModel]);
     

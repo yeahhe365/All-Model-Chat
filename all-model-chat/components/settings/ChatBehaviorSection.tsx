@@ -78,6 +78,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
         </div>
         <div className="space-y-4 md:pl-8 md:border-l md:border-[var(--theme-border-primary)] md:border-opacity-50 pt-6 md:pt-0 border-t md:border-t-0 border-[var(--theme-border-primary)] border-opacity-50">
             <GenerationSettings
+                modelId={props.modelId}
                 systemInstruction={props.systemInstruction}
                 setSystemInstruction={props.setSystemInstruction}
                 temperature={props.temperature}

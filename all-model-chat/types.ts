@@ -343,6 +343,7 @@ export interface SavedScenario {
   id: string;
   title: string;
   messages: PreloadedMessage[];
+  systemInstruction?: string;
 }
 
 export interface AppModalsProps {
@@ -370,7 +371,7 @@ export interface AppModalsProps {
   setIsPreloadedMessagesModalOpen: (isOpen: boolean) => void;
   savedScenarios: SavedScenario[];
   handleSaveAllScenarios: (scenarios: SavedScenario[]) => void;
-  handleLoadPreloadedScenario: (messages: PreloadedMessage[]) => void;
+  handleLoadPreloadedScenario: (scenario: SavedScenario) => void;
 
   isExportModalOpen: boolean;
   setIsExportModalOpen: (isOpen: boolean) => void;

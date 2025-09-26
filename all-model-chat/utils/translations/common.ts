@@ -13,7 +13,7 @@ export const commonTranslations = {
     cut: { en: 'Cut', zh: '剪切' },
     paste: { en: 'Paste', zh: '粘贴' },
     fill_input: { en: 'Fill Input', zh: '填入输入框' },
-    canvasHelperToggle: { en: 'Toggle Canvas Helper', zh: '切换 Canvas 助手' },
+    canvasHelperToggle: { en: 'Toggle Canvas', zh: '切换 Canvas' },
     pipEnter: { en: 'Enter Picture-in-Picture', zh: '进入画中画' },
     pipExit: { en: 'Exit Picture-in-Picture', zh: '退出画中画' },
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario, PreloadedMessage } from '../types';
-import { X, PlusCircle, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, Zap, Play, Save } from 'lucide-react';
+import { X, PlusCircle, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, Play, Save } from 'lucide-react';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 import { Modal } from './shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
@@ -10,7 +10,7 @@ interface PreloadedMessagesModalProps {
   onClose: () => void;
   savedScenarios: SavedScenario[];
   onSaveAllScenarios: (scenarios: SavedScenario[]) => void;
-  onLoadScenario: (messages: PreloadedMessage[]) => void;
+  onLoadScenario: (scenario: SavedScenario) => void;
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
@@ -95,12 +95,12 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
       showFeedback('info', 'Scenario deleted.');
   };
 
-  const handleLoadAndClose = (messages: PreloadedMessage[]) => {
-    if (messages.length === 0) {
+  const handleLoadAndClose = (scenario: SavedScenario) => {
+    if (scenario.messages.length === 0 && (!scenario.systemInstruction || !scenario.systemInstruction.trim())) {
       showFeedback('error', t('scenarios_feedback_empty'));
       return;
     }
-    onLoadScenario(messages);
+    onLoadScenario(scenario);
     showFeedback('success', t('scenarios_feedback_loaded'));
     setTimeout(handleClose, 700);
   };
@@ -119,9 +119,9 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                       <p className="text-[var(--theme-text-tertiary)] text-xs">{scenario.messages.length} message(s)</p>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1.5 ml-1">
-                      <button onClick={() => handleLoadAndClose(scenario.messages)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-green-500" title="Load Scenario"><Play size={actionIconSize} /></button>
-                      <button onClick={() => handleStartEdit(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]" title={t('scenarios_edit_title')}><Edit3 size={actionIconSize-2} /></button>
-                      <button onClick={() => handleDeleteScenario(scenario.id)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)]" title={t('scenarios_delete_title')}><Trash2 size={actionIconSize-2} /></button>
+                      <button onClick={() => handleLoadAndClose(scenario)} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-green-500" title="Load Scenario"><Play size={actionIconSize} /></button>
+                      <button onClick={() => handleStartEdit(scenario)} disabled={scenario.id === 'fop-scenario-default'} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] disabled:opacity-30 disabled:cursor-not-allowed" title={t('scenarios_edit_title')}><Edit3 size={actionIconSize-2} /></button>
+                      <button onClick={() => handleDeleteScenario(scenario.id)} disabled={scenario.id === 'fop-scenario-default'} className="p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] disabled:opacity-30 disabled:cursor-not-allowed" title={t('scenarios_delete_title')}><Trash2 size={actionIconSize-2} /></button>
                   </div>
                 </li>
               ))}

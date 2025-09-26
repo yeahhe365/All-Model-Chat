@@ -55,7 +55,7 @@ export const chatInputTranslations = {
     help_cmd_clear: { en: 'Clear current chat', zh: '清除当前聊天' },
     help_cmd_new: { en: 'Start a new chat', zh: '开始新聊天' },
     help_cmd_settings: { en: 'Open settings', zh: '打开设置' },
-    help_cmd_canvas: { en: 'Toggle Canvas Helper prompt', zh: '切换 Canvas 助手提示' },
+    help_cmd_canvas: { en: 'Toggle Canvas prompt', zh: '切换 Canvas 提示' },
     help_cmd_pip: { en: 'Toggle Picture-in-Picture mode', zh: '切换画中画模式' },
     
     // Help Modal
