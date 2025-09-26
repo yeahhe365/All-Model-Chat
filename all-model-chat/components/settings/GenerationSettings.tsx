@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import { Tooltip, Toggle } from './shared/Tooltip';
 
+const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
+    'models/gemini-flash-latest': { min: 1, max: 24576 },
+    'gemini-2.5-pro': { min: 128, max: 32768 },
+    'models/gemini-flash-lite-latest': { min: 512, max: 24576 },
+};
+
 interface GenerationSettingsProps {
   systemInstruction: string;
   setSystemInstruction: (value: string) => void;
@@ -14,6 +20,7 @@ interface GenerationSettingsProps {
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
+  modelId: string;
 }
 
 export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
@@ -22,11 +29,14 @@ export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
   topP, setTopP,
   thinkingBudget, setThinkingBudget,
   showThoughts, setShowThoughts,
-  t
+  t,
+  modelId,
 }) => {
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
   const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
+  
+  const budgetConfig = THINKING_BUDGET_RANGES[modelId];
 
   const [customBudgetValue, setCustomBudgetValue] = useState(
     thinkingBudget > 0 ? String(thinkingBudget) : '1000'
@@ -39,10 +49,14 @@ export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
       if (newMode === 'auto') setThinkingBudget(-1);
       else if (newMode === 'off') setThinkingBudget(0);
       else {
-          const budget = parseInt(customBudgetValue, 10);
-          const newBudget = budget > 0 ? budget : 1000;
-          if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
-          setThinkingBudget(newBudget);
+          if (budgetConfig) {
+              setThinkingBudget(budgetConfig.max);
+          } else {
+              const budget = parseInt(customBudgetValue, 10);
+              const newBudget = budget > 0 ? budget : 1000;
+              if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
+              setThinkingBudget(newBudget);
+          }
       }
   };
 
@@ -126,16 +140,39 @@ export const GenerationSettings: React.FC<GenerationSettingsProps> = ({
         </div>
         {mode === 'custom' && (
             <div className="mt-2" style={{ animation: 'fadeIn 0.3s ease-out both' }}>
-                <input
-                    type="number"
-                    value={customBudgetValue}
-                    onChange={handleCustomBudgetChange}
-                    placeholder={t('settingsThinkingCustom_placeholder')}
-                    className={`${inputBaseClasses} ${enabledInputClasses} w-full`}
-                    aria-label="Custom thinking token budget"
-                    min="1"
-                    step="100"
-                />
+                {budgetConfig ? (
+                    <div className="pt-2">
+                        <label htmlFor="thinking-budget-slider" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
+                            <span className='flex items-center'>
+                                {t('settingsThinkingBudget')}: <span className="font-mono text-[var(--theme-text-link)] ml-1">{thinkingBudget > 0 ? thinkingBudget.toLocaleString() : '...'}</span>
+                                <Tooltip text={t('settingsThinkingBudget_tooltip')}>
+                                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
+                                </Tooltip>
+                            </span>
+                        </label>
+                        <input
+                            id="thinking-budget-slider"
+                            type="range"
+                            min={budgetConfig.min}
+                            max={budgetConfig.max}
+                            step={1}
+                            value={thinkingBudget > 0 ? thinkingBudget : budgetConfig.min}
+                            onChange={(e) => setThinkingBudget(parseInt(e.target.value, 10))}
+                            className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]"
+                        />
+                    </div>
+                ) : (
+                    <input
+                        type="number"
+                        value={customBudgetValue}
+                        onChange={handleCustomBudgetChange}
+                        placeholder={t('settingsThinkingCustom_placeholder')}
+                        className={`${inputBaseClasses} ${enabledInputClasses} w-full`}
+                        aria-label="Custom thinking token budget"
+                        min="1"
+                        step="100"
+                    />
+                )}
             </div>
         )}
       </div>
