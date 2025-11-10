@@ -6,7 +6,7 @@ import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryFor
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { Part } from '@google/genai';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 interface ImageEditSenderProps {
     updateAndPersistSessions: SessionsUpdater;
@@ -56,10 +56,10 @@ export const useImageEditSender = ({
                 timestamp: Date.now(),
                 settings: newSessionSettings
             };
-            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            await updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSessionId);
         } else { // Existing Chat or Edit
-            updateAndPersistSessions(p => p.map(s => {
+            await updateAndPersistSessions(p => p.map(s => {
                 const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
                 if (!isSessionToUpdate) return s;
 

@@ -6,7 +6,7 @@ import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotifica
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 interface TtsImagenSenderProps {
     updateAndPersistSessions: SessionsUpdater;
@@ -57,10 +57,10 @@ export const useTtsImagenSender = ({
                 timestamp: Date.now(),
                 settings: newSessionSettings
             };
-            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            await updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSessionId);
         } else { // Existing Chat
-            updateAndPersistSessions(p => p.map(s => {
+            await updateAndPersistSessions(p => p.map(s => {
                 if (s.id !== finalSessionId) return s;
                 const newMessages = [...s.messages, userMessage, modelMessage];
                 let newTitle = s.title;

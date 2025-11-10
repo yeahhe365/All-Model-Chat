@@ -89,7 +89,8 @@ export const useChatHistory = ({
             groupId: null,
         };
 
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        // Don't persist empty sessions to avoid losing history on refresh
+        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)], { persist: false });
         setActiveSessionId(newSessionId);
         dbService.setActiveSessionId(newSessionId);
 

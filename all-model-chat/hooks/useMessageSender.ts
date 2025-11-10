@@ -6,10 +6,10 @@ import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './useChatStreamHandler';
 import { useTtsImagenSender } from './useTtsImagenSender';
 import { useImageEditSender } from './useImageEditSender';
-import { Chat, ChatHistoryItem } from '@google/genai';
+import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 interface MessageSenderProps {
     appSettings: AppSettings;
@@ -150,10 +150,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
             
             userMessageContent.cumulativeTotalTokens = 0;
             const newSession: SavedChatSession = { id: newSessionId, title: "New Chat", messages: [userMessageContent, modelMessageContent], timestamp: Date.now(), settings: newSessionSettings };
-            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            await updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSessionId);
         } else { // Existing Chat or Edit
-            updateAndPersistSessions(prev => prev.map(s => {
+            await updateAndPersistSessions(prev => prev.map(s => {
                 const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
                 if (!isSessionToUpdate) return s;
 
