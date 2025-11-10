@@ -56,7 +56,7 @@ export const useImageEditSender = ({
                 timestamp: Date.now(),
                 settings: newSessionSettings
             };
-            await updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            await updateAndPersistSessions(p => [newSession, ...p]);
             setActiveSessionId(newSessionId);
         } else { // Existing Chat or Edit
             await updateAndPersistSessions(p => p.map(s => {

@@ -90,9 +90,37 @@ async function clearAllData(): Promise<void> {
   return transactionToPromise(tx);
 }
 
+// Add or update a single session
+async function upsertSession(session: SavedChatSession): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(SESSIONS_STORE, 'readwrite');
+  tx.objectStore(SESSIONS_STORE).put(session);
+  return transactionToPromise(tx);
+}
+
+// Delete a single session
+async function deleteSession(sessionId: string): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(SESSIONS_STORE, 'readwrite');
+  tx.objectStore(SESSIONS_STORE).delete(sessionId);
+  return transactionToPromise(tx);
+}
+
+// Batch upsert sessions
+async function upsertSessions(sessions: SavedChatSession[]): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(SESSIONS_STORE, 'readwrite');
+  const store = tx.objectStore(SESSIONS_STORE);
+  sessions.forEach(session => store.put(session));
+  return transactionToPromise(tx);
+}
+
 export const dbService = {
   getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
+  upsertSession,
+  deleteSession,
+  upsertSessions,
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
   setAllGroups: (groups: ChatGroup[]) => setAll<ChatGroup>(GROUPS_STORE, groups),
   getAllScenarios: () => getAll<SavedScenario>(SCENARIOS_STORE),

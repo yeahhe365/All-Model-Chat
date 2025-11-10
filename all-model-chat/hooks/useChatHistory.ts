@@ -89,8 +89,8 @@ export const useChatHistory = ({
             groupId: null,
         };
 
-        // Don't persist empty sessions to avoid losing history on refresh
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)], { persist: false });
+        // Add new empty session to memory, will be persisted when it gets messages
+        updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSessionId);
         dbService.setActiveSessionId(newSessionId);
 
@@ -151,8 +151,12 @@ export const useChatHistory = ({
         }
     }, [setSavedSessions, setSavedGroups, loadChatSession, startNewChat]);
     
-    const handleDeleteChatHistorySession = useCallback((sessionId: string) => {
+    const handleDeleteChatHistorySession = useCallback(async (sessionId: string) => {
         logService.info(`Deleting session: ${sessionId}`);
+        // Delete from database first
+        await dbService.deleteSession(sessionId);
+        
+        // Then update memory state
         updateAndPersistSessions(prev => {
              const sessionToDelete = prev.find(s => s.id === sessionId);
              if (sessionToDelete) {
@@ -164,7 +168,7 @@ export const useChatHistory = ({
                  });
              }
              return prev.filter(s => s.id !== sessionId);
-        });
+        }, { persist: false }); // Don't persist since we already deleted from DB
         // The logic to switch to a new active session is now handled declaratively in useChat.ts's useEffect.
     }, [updateAndPersistSessions, activeJobs]);
     

@@ -150,7 +150,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
             
             userMessageContent.cumulativeTotalTokens = 0;
             const newSession: SavedChatSession = { id: newSessionId, title: "New Chat", messages: [userMessageContent, modelMessageContent], timestamp: Date.now(), settings: newSessionSettings };
-            await updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
+            await updateAndPersistSessions(p => [newSession, ...p]);
             setActiveSessionId(newSessionId);
         } else { // Existing Chat or Edit
             await updateAndPersistSessions(prev => prev.map(s => {

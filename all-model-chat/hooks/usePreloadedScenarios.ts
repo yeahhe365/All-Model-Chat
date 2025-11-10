@@ -73,8 +73,8 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
             timestamp: Date.now(),
         };
 
-        // Only persist if the scenario has messages, otherwise keep in memory only
-        await updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)], { persist: messages.length > 0 });
+        // Add to memory, will be persisted automatically if it has messages
+        await updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSession.id);
         await dbService.setActiveSessionId(newSession.id);
 
