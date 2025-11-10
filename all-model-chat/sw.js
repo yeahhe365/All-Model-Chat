@@ -37,12 +37,26 @@ const getDynamicAppShellUrls = async () => {
         const stylesheetUrls = linkTagMatches.map(match => match[0]).filter(tag => tag.includes('rel="stylesheet"')).map(tag => tag.match(/href="([^"]+)"/)?.[1]).filter(Boolean);
         const scriptMatches = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)];
         const scriptUrls = scriptMatches.map(match => match[1]);
-        const uniqueUrls = [...new Set([...STATIC_APP_SHELL_URLS, ...importmapUrls, ...stylesheetUrls, ...scriptUrls].filter(Boolean))];
+        
+        // Ensure all URLs are absolute paths starting with /
+        const normalizeUrl = (url) => {
+            if (!url) return null;
+            if (url.startsWith('http://') || url.startsWith('https://')) return url;
+            if (url.startsWith('/')) return url;
+            return '/' + url;
+        };
+        
+        const allUrls = [...STATIC_APP_SHELL_URLS, ...importmapUrls, ...stylesheetUrls, ...scriptUrls]
+            .map(normalizeUrl)
+            .filter(Boolean);
+        
+        const uniqueUrls = [...new Set(allUrls)];
         console.log('[SW] Dynamic App Shell URLs to cache:', uniqueUrls);
         return uniqueUrls;
     } catch (error) {
         console.error('[SW] Could not build dynamic app shell.', error);
-        throw error;
+        // Return minimal URLs to avoid installation failure
+        return STATIC_APP_SHELL_URLS;
     }
 };
 
@@ -139,12 +153,26 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
             console.log('[SW] Installation started.');
-            const urlsToCache = await getDynamicAppShellUrls();
-            const cache = await caches.open(CACHE_NAME);
-            console.log(`[SW] Caching ${urlsToCache.length} dynamic app shell files.`);
-            await cache.addAll(urlsToCache);
-            await self.skipWaiting();
-            console.log('[SW] Installation complete.');
+            try {
+                const urlsToCache = await getDynamicAppShellUrls();
+                const cache = await caches.open(CACHE_NAME);
+                console.log(`[SW] Caching ${urlsToCache.length} dynamic app shell files.`);
+                
+                // Cache files one by one to avoid failing on missing resources
+                for (const url of urlsToCache) {
+                    try {
+                        await cache.add(url);
+                    } catch (error) {
+                        console.warn(`[SW] Failed to cache ${url}:`, error);
+                    }
+                }
+                
+                await self.skipWaiting();
+                console.log('[SW] Installation complete.');
+            } catch (error) {
+                console.error('[SW] Installation error:', error);
+                await self.skipWaiting();
+            }
         })()
     );
 });
