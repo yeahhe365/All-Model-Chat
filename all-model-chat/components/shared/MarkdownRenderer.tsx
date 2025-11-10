@@ -7,6 +7,7 @@ import rehypeRaw from 'rehype-raw';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import type { PropertyDefinition } from 'hast-util-sanitize';
 import { CodeBlock } from '../message/CodeBlock';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
@@ -36,15 +37,35 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
   const rehypePlugins = useMemo(() => {
     // Custom schema to allow classes and attributes needed by KaTeX and highlight.js
+    const extendAttributes = (
+      source: PropertyDefinition[] | undefined,
+      attr: PropertyDefinition
+    ): PropertyDefinition[] => {
+      const list = source ? [...source] : [];
+      const exists = list.some((item) => {
+        if (Array.isArray(item) && Array.isArray(attr)) {
+          return item[0] === attr[0];
+        }
+        return item === attr;
+      });
+      if (!exists) {
+        list.push(attr);
+      }
+      return list;
+    };
+
+    const safeStyleAttr: PropertyDefinition = ['style', /^[A-Za-z0-9\s:;.,\-()%]+$/];
+
     const sanitizeSchema = {
       ...defaultSchema,
       attributes: {
         ...defaultSchema.attributes,
-        // Allow `className` for elements used by KaTeX and highlight.js.
-        // This is crucial for styling to apply correctly.
-        code: [...(defaultSchema.attributes?.code || []), 'className'],
-        span: [...(defaultSchema.attributes?.span || []), 'className'],
-        div: [...(defaultSchema.attributes?.div || []), 'className'],
+        code: extendAttributes(defaultSchema.attributes?.code as PropertyDefinition[] | undefined, 'className'),
+        span: extendAttributes(
+          extendAttributes(defaultSchema.attributes?.span as PropertyDefinition[] | undefined, 'className'),
+          safeStyleAttr
+        ),
+        div: extendAttributes(defaultSchema.attributes?.div as PropertyDefinition[] | undefined, 'className'),
       },
     };
 
