@@ -3,7 +3,7 @@ import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession }
 import { getKeyForRequest, logService, pcmBase64ToWavUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 interface TextToSpeechHandlerProps {
     appSettings: AppSettings;

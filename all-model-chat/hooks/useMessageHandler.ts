@@ -6,7 +6,7 @@ import { useTextToSpeechHandler } from './useTextToSpeechHandler';
 import { Chat } from '@google/genai';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 interface MessageHandlerProps {
     appSettings: AppSettings;

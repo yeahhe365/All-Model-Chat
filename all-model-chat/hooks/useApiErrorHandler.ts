@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { logService } from '../utils/appUtils';
 import { SavedChatSession } from '../types';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 export const useApiErrorHandler = (updateAndPersistSessions: SessionsUpdater) => {
     const handleApiError = useCallback((error: unknown, sessionId: string, modelMessageId: string, errorPrefix: string = "Error") => {

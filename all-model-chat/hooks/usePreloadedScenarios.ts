@@ -51,7 +51,7 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
         });
     };
     
-    const handleLoadPreloadedScenario = (scenarioToLoad: SavedScenario) => {
+    const handleLoadPreloadedScenario = async (scenarioToLoad: SavedScenario) => {
         const messages: ChatMessage[] = scenarioToLoad.messages.map(pm => ({
             ...pm,
             id: generateUniqueId(),
@@ -73,9 +73,10 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
             timestamp: Date.now(),
         };
 
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        // Add to memory, will be persisted automatically if it has messages
+        await updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSession.id);
-        dbService.setActiveSessionId(newSession.id);
+        await dbService.setActiveSessionId(newSession.id);
 
         // Also update the global/default system prompt in app settings
         setAppSettings(prev => ({

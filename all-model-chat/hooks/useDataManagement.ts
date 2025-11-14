@@ -1,11 +1,12 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, SavedChatSession, SavedScenario, ChatGroup, Theme } from '../types';
+import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../types';
+import { Theme } from '../constants/themeConstants';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { logService } from '../utils/appUtils';
 import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles, triggerDownload } from '../utils/exportUtils';
 import DOMPurify from 'dompurify';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
 
 interface DataManagementProps {

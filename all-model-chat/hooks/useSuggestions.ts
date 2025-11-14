@@ -4,7 +4,7 @@ import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings }
 import { getKeyForRequest, logService } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 
 interface SuggestionsProps {
     appSettings: AppSettings;

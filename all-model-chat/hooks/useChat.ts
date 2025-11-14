@@ -40,14 +40,27 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
+        let prevSessions: SavedChatSession[] = [];
         let newSessions: SavedChatSession[] = [];
-        setSavedSessions(prevSessions => {
-            newSessions = updater(prevSessions);
+        setSavedSessions(prevSessionsState => {
+            prevSessions = prevSessionsState;
+            newSessions = updater(prevSessionsState);
             return newSessions;
         });
         if (persist) {
-            await dbService.setAllSessions(newSessions);
-            logService.debug('Persisted sessions to IndexedDB.');
+            // Incremental update: only save changed sessions with messages
+            const sessionsWithMessages = newSessions.filter(s => s.messages.length > 0);
+            const prevSessionsMap = new Map(prevSessions.map(s => [s.id, s]));
+            const sessionsToUpsert = sessionsWithMessages.filter(newSession => {
+                const prevSession = prevSessionsMap.get(newSession.id);
+                // Save if new or changed
+                return !prevSession || JSON.stringify(prevSession) !== JSON.stringify(newSession);
+            });
+            
+            if (sessionsToUpsert.length > 0) {
+                await dbService.upsertSessions(sessionsToUpsert);
+                logService.debug('Upserted sessions to IndexedDB.', { count: sessionsToUpsert.length });
+            }
         }
     }, []);
     
@@ -165,7 +178,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setActiveSessionId,
     });
     const scrollHandler = useChatScroll({ messages, userScrolledUp });
-    const messageHandler = useMessageHandler({ appSettings, messages, isLoading, currentChatSettings, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, setLoadingSessionIds, updateAndPersistSessions, language, scrollContainerRef: scrollHandler.scrollContainerRef, chat });
+    const messageHandler = useMessageHandler({ appSettings, messages, isLoading, currentChatSettings, selectedFiles, setSelectedFiles, editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, setLoadingSessionIds, updateAndPersistSessions, scrollContainerRef: scrollHandler.scrollContainerRef, chat });
     useAutoTitling({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds });
     useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language });
     
@@ -288,6 +301,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
             const newSession: SavedChatSession = {
                 id: newSessionId, title: 'New Chat', messages: [], timestamp: Date.now(), settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...newSettingsPartial },
             };
+            // Add new empty session to memory, will be persisted when it gets messages
             updateAndPersistSessions(prev => [newSession, ...prev]);
             setActiveSessionId(newSessionId);
         } else {
@@ -309,6 +323,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const handleClearCurrentChat = useCallback(() => {
         if (isLoading) messageHandler.handleStopGenerating();
         if (activeSessionId) {
+            // Clear messages, empty session will not be persisted automatically
             updateAndPersistSessions(prev =>
                 prev.map(s =>
                     s.id === activeSessionId
