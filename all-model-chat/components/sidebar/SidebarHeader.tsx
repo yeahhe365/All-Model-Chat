@@ -16,7 +16,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggle, isOpen, 
       <span className="text-lg font-semibold text-[var(--theme-text-primary)]">All Model Chat</span>
     </a>
     <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
-      <PanelLeftClose size={20} />
+      <PanelLeftClose size={20} strokeWidth={1.5} />
     </button>
   </div>
 );

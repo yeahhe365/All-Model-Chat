@@ -79,6 +79,7 @@ export interface ChatSettings {
   systemInstruction: string;
   ttsVoice: string;
   thinkingBudget: number;
+  thinkingLevel?: 'LOW' | 'HIGH'; // New for Gemini 3.0
   lockedApiKey?: string | null;
   isGoogleSearchEnabled?: boolean;
   isCodeExecutionEnabled?: boolean;
@@ -126,9 +127,6 @@ export interface AppSettings extends ChatSettings {
  isAutoSendOnSuggestionClick?: boolean;
  generateQuadImages?: boolean;
  autoFullscreenHtml?: boolean;
- transcriptionLanguage: string;
- enableItn: boolean;
- transcriptionContext: string;
 }
 
 
@@ -176,7 +174,7 @@ export interface GeminiService {
   ) => Promise<void>;
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
-  transcribeAudio: (apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean, context: string, language: string, enableItn: boolean }) => Promise<string>;
+  transcribeAudio: (apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean }) => Promise<string>;
   translateText(apiKey: string, text: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
@@ -257,6 +255,7 @@ export interface ChatInputProps {
   onEditLastUserMessage: () => void;
   onTogglePip: () => void;
   isPipActive?: boolean;
+  isHistorySidebarOpen?: boolean;
 }
 
 export interface ChatInputToolbarProps {
@@ -330,6 +329,7 @@ export interface ChatInputModalsProps {
   isProcessingFile: boolean;
   isLoading: boolean;
   t: (key: keyof typeof translations) => string;
+  isHistorySidebarOpen?: boolean;
 }
 
 

@@ -44,14 +44,14 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
             onClick={(e) => { e.preventDefault(); onToggleGroupExpansion(group.id); }}
         >
           <div className="flex items-center gap-2 min-w-0">
-             <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] transition-transform group-open/details:rotate-180 flex-shrink-0" />
+             <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] transition-transform group-open/details:rotate-180 flex-shrink-0" strokeWidth={1.5} />
              {editingItem?.type === 'group' && editingItem.id === group.id ? (
                 <input ref={props.editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({...editingItem, title: e.target.value})} onBlur={props.handleRenameConfirm} onKeyDown={props.handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
              ) : (
                 <span className="font-semibold text-sm truncate text-[var(--theme-text-secondary)]">{group.title}</span>
              )}
           </div>
-            <button onClick={(e) => props.toggleMenu(e, group.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} /></button>
+            <button onClick={(e) => props.toggleMenu(e, group.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} strokeWidth={1.5} /></button>
         </summary>
         {props.activeMenu === group.id && (
           <GroupItemMenu

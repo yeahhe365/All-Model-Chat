@@ -1,7 +1,5 @@
 import React from 'react';
 import { ModelOption } from '../../types';
-import { Settings2 } from 'lucide-react';
-import { getResponsiveValue } from '../../utils/appUtils';
 import { ModelVoiceSettings } from './ModelVoiceSettings';
 import { GenerationSettings } from './GenerationSettings';
 
@@ -29,28 +27,19 @@ interface ChatBehaviorSectionProps {
   setIsTranscriptionThinkingEnabled: (value: boolean) => void;
   thinkingBudget: number;
   setThinkingBudget: (value: number) => void;
+  thinkingLevel?: 'LOW' | 'HIGH';
+  setThinkingLevel?: (value: 'LOW' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
-  enableItn: boolean;
-  setEnableItn: (value: boolean) => void;
-  transcriptionLanguage: string;
-  setTranscriptionLanguage: (value: string) => void;
-  transcriptionContext: string;
-  setTranscriptionContext: (value: string) => void;
 }
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
   const { t } = props;
-  const iconSize = getResponsiveValue(14, 16);
 
   return (
-    <div>
-      <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center mb-4">
-        {t('settingsModelParameters')}
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-        <div className="space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="space-y-8">
             <ModelVoiceSettings
                 modelId={props.modelId}
                 setModelId={props.setModelId}
@@ -67,32 +56,27 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 setGenerateQuadImages={props.setGenerateQuadImages}
                 ttsVoice={props.ttsVoice}
                 setTtsVoice={props.setTtsVoice}
-                transcriptionLanguage={props.transcriptionLanguage}
-                setTranscriptionLanguage={props.setTranscriptionLanguage}
-                enableItn={props.enableItn}
-                setEnableItn={props.setEnableItn}
-                transcriptionContext={props.transcriptionContext}
-                setTranscriptionContext={props.setTranscriptionContext}
+                systemInstruction={props.systemInstruction}
+                setSystemInstruction={props.setSystemInstruction}
                 t={t}
             />
         </div>
-        <div className="space-y-4 md:pl-8 md:border-l md:border-[var(--theme-border-primary)] md:border-opacity-50 pt-6 md:pt-0 border-t md:border-t-0 border-[var(--theme-border-primary)] border-opacity-50">
+        <div className="space-y-8 lg:pl-8 lg:border-l lg:border-[var(--theme-border-primary)]/50">
             <GenerationSettings
                 modelId={props.modelId}
-                systemInstruction={props.systemInstruction}
-                setSystemInstruction={props.setSystemInstruction}
                 temperature={props.temperature}
                 setTemperature={props.setTemperature}
                 topP={props.topP}
                 setTopP={props.setTopP}
                 thinkingBudget={props.thinkingBudget}
                 setThinkingBudget={props.setThinkingBudget}
+                thinkingLevel={props.thinkingLevel}
+                setThinkingLevel={props.setThinkingLevel}
                 showThoughts={props.showThoughts}
                 setShowThoughts={props.setShowThoughts}
                 t={t}
             />
         </div>
-      </div>
     </div>
   );
 };

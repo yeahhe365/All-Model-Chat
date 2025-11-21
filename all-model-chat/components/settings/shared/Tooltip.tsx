@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronDown, Check } from 'lucide-react';
 
 export const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
   <div className="tooltip-container ml-1.5">
@@ -7,32 +9,144 @@ export const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({
   </div>
 );
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label: string;
   children: React.ReactNode;
   labelContent?: React.ReactNode;
+  onChange: (e: { target: { value: string } }) => void;
 }
 
-export const Select: React.FC<SelectProps> = ({ id, label, children, labelContent, ...rest }) => {
-    const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm";
-    const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
+export const Select: React.FC<SelectProps> = ({ id, label, children, labelContent, value, onChange, disabled, className, ...rest }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const options = useMemo(() => {
+        return React.Children.toArray(children).map((child) => {
+            if (React.isValidElement(child) && child.type === 'option') {
+                return {
+                    value: child.props.value,
+                    label: child.props.children,
+                    disabled: child.props.disabled
+                };
+            }
+            return null;
+        }).filter((opt): opt is { value: string, label: React.ReactNode, disabled?: boolean } => opt !== null);
+    }, [children]);
+
+    const selectedOption = options.find(opt => String(opt.value) === String(value));
+
+    const updatePosition = useCallback(() => {
+        if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            // For fixed positioning, we use viewport coordinates directly (rect.bottom/left)
+            // We do NOT add window.scrollY/X because 'fixed' is relative to the window, not the document.
+            setPosition({
+                top: rect.bottom + 4,
+                left: rect.left,
+                width: rect.width
+            });
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            updatePosition();
+        }
+    }, [isOpen, updatePosition]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                buttonRef.current && !buttonRef.current.contains(event.target as Node) &&
+                dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        };
+        
+        const handleScroll = (event: Event) => {
+            // If scrolling happens inside the dropdown menu itself, don't recalculate/close
+            if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
+                return;
+            }
+            // If the page or a parent container (like the modal) scrolls, update position to stay attached
+            updatePosition();
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            window.addEventListener('resize', updatePosition);
+            // Use capture=true to detect scrolling of any parent container (like the modal content div)
+            document.addEventListener('scroll', handleScroll, true); 
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            window.removeEventListener('resize', updatePosition);
+            document.removeEventListener('scroll', handleScroll, true);
+        };
+    }, [isOpen, updatePosition]);
+
+    const handleSelect = (val: string) => {
+        onChange({ target: { value: val } });
+        setIsOpen(false);
+    };
 
     return (
-        <div>
+        <div className={className}>
             <label htmlFor={id} className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
               {labelContent || label}
             </label>
             <div className="relative">
-                <select
-                  id={id}
-                  className={`${inputBaseClasses} ${enabledInputClasses} appearance-none pr-8`}
-                  {...rest}
+                <button
+                    ref={buttonRef}
+                    type="button"
+                    id={id}
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    disabled={disabled}
+                    className={`w-full p-2.5 text-left border rounded-lg flex items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--theme-bg-secondary)]' : 'cursor-pointer bg-[var(--theme-bg-input)] hover:border-[var(--theme-border-focus)]'} border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm`}
+                    {...rest as any}
                 >
-                  {children}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--theme-text-tertiary)]">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.043-.48 1.576 0L10 10.405l2.908-2.857c.533-.48 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615l-3.695 3.63c-.533.48-1.14.446-1.576 0L5.516 9.163c-.408-.418-.436-1.17 0-1.615z"/></svg>
-                </div>
+                    <span className="truncate mr-2">
+                        {selectedOption ? selectedOption.label : <span className="text-[var(--theme-text-tertiary)]">Select...</span>}
+                    </span>
+                    <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {isOpen && createPortal(
+                    <div
+                        ref={dropdownRef}
+                        className="fixed z-[100] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
+                        style={{
+                            top: position.top,
+                            left: position.left,
+                            width: position.width,
+                            maxHeight: '300px',
+                        }}
+                    >
+                        <div className="overflow-y-auto custom-scrollbar p-1">
+                            {options.map((opt, idx) => (
+                                <button
+                                    key={`${opt.value}-${idx}`}
+                                    type="button"
+                                    onClick={() => handleSelect(opt.value)}
+                                    disabled={opt.disabled}
+                                    className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between transition-colors ${
+                                        String(opt.value) === String(value)
+                                        ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium'
+                                        : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]/50 hover:text-[var(--theme-text-primary)]'
+                                    } ${opt.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                >
+                                    <span className="truncate">{opt.label}</span>
+                                    {String(opt.value) === String(value) && <Check size={14} className="text-[var(--theme-text-link)] flex-shrink-0 ml-2" />}
+                                </button>
+                            ))}
+                        </div>
+                    </div>,
+                    document.body
+                )}
             </div>
         </div>
     );

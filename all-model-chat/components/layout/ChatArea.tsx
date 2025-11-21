@@ -164,6 +164,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onEditLastUserMessage={onEditLastUserMessage}
             onTogglePip={onTogglePip}
             isPipActive={isPipActive}
+            isHistorySidebarOpen={isHistorySidebarOpen}
           />
         </div>
       </div>

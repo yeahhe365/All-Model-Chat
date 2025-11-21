@@ -197,7 +197,8 @@ const App: React.FC = () => {
       }));
     }
     
-    setIsSettingsModalOpen(false);
+    // Live update: Do not close modal automatically
+    // setIsSettingsModalOpen(false);
   };
 
   const handleSetDefaultModel = (modelId: string) => {

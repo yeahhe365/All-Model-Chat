@@ -19,5 +19,5 @@ export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy
       setTimeout(() => setCopied(false), 2000);
     } catch (err) { console.error('Failed to copy', err); }
   };
-  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={iconSize} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={iconSize} />}</button>;
+  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={iconSize} className="text-[var(--theme-text-success)]" strokeWidth={1.5} /> : <ClipboardCopy size={iconSize} strokeWidth={1.5} />}</button>;
 };

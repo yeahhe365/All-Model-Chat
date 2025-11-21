@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Info } from 'lucide-react';
-import { AppSettings, translations } from '../../types';
+import { ChevronDown, Check, Info, Moon, Sun, Monitor, Globe, Type } from 'lucide-react';
+import { translations } from '../../utils/appUtils';
 import { Toggle, Tooltip } from './shared/Tooltip';
 
 interface AppearanceSectionProps {
@@ -66,162 +66,138 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     };
   }, [isLanguageDropdownOpen]);
 
-  const themeOptions: { id: 'system' | 'onyx' | 'pearl'; labelKey: keyof typeof translations }[] = [
-    { id: 'system', labelKey: 'settingsThemeSystem' },
-    { id: 'onyx', labelKey: 'settingsThemeDark' },
-    { id: 'pearl', labelKey: 'settingsThemeLight' },
+  const themeOptions: { id: 'system' | 'onyx' | 'pearl'; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
+    { id: 'system', labelKey: 'settingsThemeSystem', icon: <Monitor size={16} strokeWidth={1.5} /> },
+    { id: 'onyx', labelKey: 'settingsThemeDark', icon: <Moon size={16} strokeWidth={1.5} /> },
+    { id: 'pearl', labelKey: 'settingsThemeLight', icon: <Sun size={16} strokeWidth={1.5} /> },
   ];
 
   const languageOptions: { id: 'system' | 'en' | 'zh'; label: string; }[] = [
-    { id: 'system', label: 'System Default (跟随系统)' },
+    { id: 'system', label: 'System Default' },
     { id: 'en', label: 'English' },
     { id: 'zh', label: '简体中文' },
   ];
 
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
 
+  const ToggleItem = ({ label, checked, onChange, tooltip }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string }) => (
+      <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)] transition-colors">
+          <span className="text-sm text-[var(--theme-text-primary)] flex items-center gap-2">
+              {label}
+              {tooltip && <Tooltip text={tooltip}><Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} /></Tooltip>}
+          </span>
+          <Toggle id={label} checked={checked} onChange={onChange} />
+      </div>
+  );
+
   return (
-    <div>
-      <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center mb-4">
-        {t('settingsTabInterface')}
-      </h3>
-      <div className="divide-y divide-[var(--theme-border-primary)]">
-        
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settingsTheme')}</span>
-            <div role="radiogroup" className="flex bg-[var(--theme-bg-tertiary)] p-0.5 rounded-lg">
-                {themeOptions.map(option => (
-                <button
-                    key={option.id}
-                    role="radio"
-                    aria-checked={themeId === option.id}
-                    onClick={() => setThemeId(option.id)}
-                    className={`flex-1 text-center px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-tertiary)] focus:ring-[var(--theme-border-focus)] ${
-                        themeId === option.id
-                        ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-link)] shadow-sm'
-                        : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)]/50'
-                    }`}
-                >
-                    {t(option.labelKey)}
-                </button>
-                ))}
-            </div>
-        </div>
-        
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settingsLanguage')}</span>
-            <div className="relative" ref={languageDropdownRef}>
-                <button
-                onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
-                className="flex items-center gap-2 text-left text-sm rounded-md transition-colors hover:bg-[var(--theme-bg-tertiary)]/50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] p-1 -m-1"
-                aria-haspopup="listbox"
-                aria-expanded={isLanguageDropdownOpen}
-                >
-                <span className="text-[var(--theme-text-secondary)]">{currentLanguageDisplay}</span>
-                <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
+    <div className="space-y-8">
+      {/* Theme & Language */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
+                  {t('settingsTheme')}
+              </label>
+              <div className="flex gap-2 p-1 bg-[var(--theme-bg-tertiary)]/50 rounded-xl border border-[var(--theme-border-secondary)]">
+                  {themeOptions.map(option => (
+                    <button
+                        key={option.id}
+                        onClick={() => setThemeId(option.id)}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
+                            themeId === option.id
+                            ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm'
+                            : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)]/50'
+                        }`}
+                    >
+                        {option.icon}
+                        <span className="hidden sm:inline">{t(option.labelKey)}</span>
+                    </button>
+                  ))}
+              </div>
+          </div>
 
-                {isLanguageDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-md shadow-lg z-10 py-1" style={{ animation: 'fadeInUp 0.2s ease-out both' }} role="listbox">
-                    <ul className="space-y-0.5">
-                    {languageOptions.map(option => (
-                        <li key={option.id}>
-                        <button
-                            onClick={() => {
-                            setLanguage(option.id);
-                            setIsLanguageDropdownOpen(false);
-                            }}
-                            className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between rounded-md mx-1 w-[calc(100%-0.5rem)] transition-colors ${
-                            language === option.id
-                                ? 'bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-300'
-                                : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'
-                            }`}
-                            role="option"
-                            aria-selected={language === option.id}
-                        >
-                            <span>{option.label}</span>
-                            {language === option.id && <Check size={16} />}
-                        </button>
-                        </li>
-                    ))}
-                    </ul>
-                </div>
-                )}
-            </div>
-        </div>
-        
-        <div className="py-4">
-            <label htmlFor="base-font-size-slider" className="block text-sm font-medium text-[var(--theme-text-primary)] mb-2">
-                {t('settingsFontSize')}: <span className="font-mono text-[var(--theme-text-link)]">{baseFontSize}px</span>
-            </label>
-            <input
-                id="base-font-size-slider" type="range" min="12" max="24" step="1"
-                value={baseFontSize} onChange={(e) => setBaseFontSize(parseInt(e.target.value, 10))}
-                className="w-full h-2 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)]"
-                aria-label={`Base font size for the application: ${baseFontSize}px`}
-            />
-        </div>
+          <div className="space-y-3">
+              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
+                   {t('settingsLanguage')}
+              </label>
+              <div className="relative" ref={languageDropdownRef}>
+                  <button
+                    onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-xl hover:border-[var(--theme-border-focus)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                  >
+                    <span className="flex items-center gap-2 text-[var(--theme-text-primary)]">
+                        <Globe size={16} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />
+                        {currentLanguageDisplay}
+                    </span>
+                    <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
+                  </button>
 
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('headerStream')}</span>
-            <Toggle id="streaming-toggle" checked={isStreamingEnabled} onChange={setIsStreamingEnabled} />
-        </div>
-        
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('isAutoTitleEnabled')}</span>
-            <Toggle id="auto-title-toggle" checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} />
-        </div>
-        
-        <div className="py-4">
-            <div className="flex justify-between items-center">
-                <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_enableSuggestions_label')}</span>
-                <Toggle id="suggestions-toggle" checked={isSuggestionsEnabled} onChange={setIsSuggestionsEnabled} />
-            </div>
-            {isSuggestionsEnabled && (
-                <div style={{ animation: 'fadeIn 0.3s ease-out both' }} className="pl-6 pt-4">
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm text-[var(--theme-text-secondary)]">{t('settings_autoSendOnSuggestionClick_label')}</span>
-                        <Toggle id="auto-send-suggestions-toggle" checked={isAutoSendOnSuggestionClick} onChange={setIsAutoSendOnSuggestionClick} />
+                  {isLanguageDropdownOpen && (
+                    <div className="absolute top-full left-0 w-full mt-2 py-1 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        {languageOptions.map(option => (
+                            <button
+                                key={option.id}
+                                onClick={() => { setLanguage(option.id as any); setIsLanguageDropdownOpen(false); }}
+                                className={`w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors ${language === option.id ? 'text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)]/30' : 'text-[var(--theme-text-primary)]'}`}
+                            >
+                                {option.label}
+                                {language === option.id && <Check size={14} strokeWidth={1.5} />}
+                            </button>
+                        ))}
                     </div>
-                </div>
-            )}
-        </div>
+                  )}
+              </div>
+          </div>
+      </div>
 
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_enableCompletionNotification_label')}</span>
-            <Toggle id="completion-notification-toggle" checked={isCompletionNotificationEnabled} onChange={setIsCompletionNotificationEnabled} />
-        </div>
+      <hr className="border-[var(--theme-border-primary)]/50" />
 
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_autoScrollOnSend_label')}</span>
-            <Toggle id="auto-scroll" checked={isAutoScrollOnSendEnabled} onChange={setIsAutoScrollOnSendEnabled} />
+      {/* Font Size */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
+                <Type size={14} strokeWidth={1.5} /> {t('settingsFontSize')}
+            </label>
+            <span className="text-sm font-mono text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)] px-2 py-0.5 rounded-md">{baseFontSize}px</span>
         </div>
+        <input
+            type="range" min="12" max="24" step="1"
+            value={baseFontSize} onChange={(e) => setBaseFontSize(parseInt(e.target.value, 10))}
+            className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
+        />
+        <div className="flex justify-between text-xs text-[var(--theme-text-tertiary)] font-mono px-1">
+            <span>12px</span>
+            <span>18px</span>
+            <span>24px</span>
+        </div>
+      </div>
 
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_expandCodeBlocksByDefault_label')}</span>
-            <Toggle id="expand-code-blocks" checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} />
-        </div>
-        
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_enableMermaidRendering_label')}</span>
-            <Toggle id="mermaid-rendering" checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} />
-        </div>
-        
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)]">{t('settings_enableGraphvizRendering_label')}</span>
-            <Toggle id="graphviz-rendering" checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} />
-        </div>
-        
-        <div className="flex justify-between items-center py-4">
-            <span className="text-sm text-[var(--theme-text-primary)] flex items-center">
-                {t('settings_autoFullscreenHtml_label')}
-                <Tooltip text={t('settings_autoFullscreenHtml_tooltip')}>
-                    <Info size={12} className="text-[var(--theme-text-tertiary)] cursor-help" />
-                </Tooltip>
-            </span>
-            <Toggle id="auto-preview-html" checked={autoFullscreenHtml} onChange={setAutoFullscreenHtml} />
-        </div>
-        
+      <hr className="border-[var(--theme-border-primary)]/50" />
+
+      {/* Interface Toggles Grid */}
+      <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-4">
+              Interface Options
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <ToggleItem label={t('headerStream')} checked={isStreamingEnabled} onChange={setIsStreamingEnabled} />
+              <ToggleItem label={t('isAutoTitleEnabled')} checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} />
+              
+              <ToggleItem label={t('settings_enableSuggestions_label')} checked={isSuggestionsEnabled} onChange={setIsSuggestionsEnabled} tooltip={t('settings_enableSuggestions_tooltip')} />
+              
+              {isSuggestionsEnabled && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                      <ToggleItem label={t('settings_autoSendOnSuggestionClick_label')} checked={isAutoSendOnSuggestionClick} onChange={setIsAutoSendOnSuggestionClick} tooltip={t('settings_autoSendOnSuggestionClick_tooltip')} />
+                  </div>
+              )}
+
+              <ToggleItem label={t('settings_autoScrollOnSend_label')} checked={isAutoScrollOnSendEnabled} onChange={setIsAutoScrollOnSendEnabled} />
+              <ToggleItem label={t('settings_enableCompletionNotification_label')} checked={isCompletionNotificationEnabled} onChange={setIsCompletionNotificationEnabled} />
+              <ToggleItem label={t('settings_expandCodeBlocksByDefault_label')} checked={expandCodeBlocksByDefault} onChange={setExpandCodeBlocksByDefault} />
+              <ToggleItem label={t('settings_autoFullscreenHtml_label')} checked={autoFullscreenHtml} onChange={setAutoFullscreenHtml} tooltip={t('settings_autoFullscreenHtml_tooltip')} />
+              <ToggleItem label={t('settings_enableMermaidRendering_label')} checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} tooltip={t('settings_enableMermaidRendering_tooltip')} />
+              <ToggleItem label={t('settings_enableGraphvizRendering_label')} checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} tooltip={t('settings_enableGraphvizRendering_tooltip')} />
+          </div>
       </div>
     </div>
   );

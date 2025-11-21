@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyRound, Info } from 'lucide-react';
+import { KeyRound, Info, Check, AlertCircle } from 'lucide-react';
 import { getResponsiveValue } from '../../utils/appUtils';
 import { Toggle } from './shared/Tooltip';
 
@@ -28,92 +28,109 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 }) => {
   const [isApiKeyFocused, setIsApiKeyFocused] = useState(false);
 
-  const inputBaseClasses = "w-full p-2 border rounded-md focus:ring-2 focus:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm custom-scrollbar";
-  const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:ring-[var(--theme-border-focus)]";
-  const disabledInputClasses = "bg-[var(--theme-bg-secondary)] border-[var(--theme-border-primary)] opacity-60 cursor-not-allowed";
-  const iconSize = getResponsiveValue(14, 16);
+  const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
+  const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]";
+  
+  const iconSize = getResponsiveValue(18, 20);
 
-  const apiKeyBlurClass = !isApiKeyFocused && useCustomApiConfig && apiKey ? 'text-transparent [text-shadow:0_0_5px_var(--theme-text-primary)]' : '';
+  // Visual blur effect for API key when not focused
+  const apiKeyBlurClass = !isApiKeyFocused && useCustomApiConfig && apiKey ? 'text-transparent [text-shadow:0_0_6px_var(--theme-text-primary)] tracking-widest' : '';
 
   const getProxyPlaceholder = () => {
     if (!useCustomApiConfig) return 'Enable custom config first';
     if (!useApiProxy) return 'Enable proxy URL to set value';
-    return 'e.g., http://localhost:3000/v1beta';
+    return 'e.g., https://my-proxy.com/v1beta';
   };
 
   return (
-    <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-[var(--theme-bg-secondary)]">
-      <h3 className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center mb-2">
-        <KeyRound size={iconSize} className="mr-2 text-[var(--theme-text-link)] opacity-80" />
-        {t('settingsApiConfig')}
-      </h3>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+         <h3 className="text-base font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
+             <KeyRound size={iconSize} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
+             {t('settingsApiConfig')}
+         </h3>
+      </div>
 
-      <label htmlFor="use-custom-api-config-toggle" className="flex items-center justify-between py-1 cursor-pointer">
-        <span className="text-sm font-medium text-[var(--theme-text-secondary)]">
-          {t('settingsUseCustomApi')}
-        </span>
-        <Toggle
-          id="use-custom-api-config-toggle"
-          checked={useCustomApiConfig}
-          onChange={setUseCustomApiConfig}
-        />
-      </label>
-
-      {!useCustomApiConfig && (
-        <p className="text-xs text-[var(--theme-text-tertiary)] flex items-center bg-[var(--theme-bg-info)] bg-opacity-30 p-2 rounded-md border border-[var(--theme-border-secondary)]">
-          <Info size={14} className="mr-2 flex-shrink-0 text-[var(--theme-text-info)]" />
-          {t('apiConfig_default_info')}
-        </p>
-      )}
-
-      <div className={`space-y-4 ${!useCustomApiConfig ? 'opacity-50' : ''}`}>
-        <div>
-            <label htmlFor="api-key-input" className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">{t('settingsApiKey')}</label>
-            <textarea
-              id="api-key-input"
-              rows={3}
-              value={apiKey || ''}
-              onChange={(e) => setApiKey(e.target.value || null)}
-              onFocus={() => setIsApiKeyFocused(true)}
-              onBlur={() => setIsApiKeyFocused(false)}
-              className={`${inputBaseClasses} ${useCustomApiConfig ? enabledInputClasses : disabledInputClasses} resize-y min-h-[60px] transition-all duration-200 ease-in-out ${apiKeyBlurClass}`}
-              placeholder={useCustomApiConfig ? t('apiConfig_key_placeholder') : t('apiConfig_key_placeholder_disabled')}
-              aria-label="Gemini API Key input"
-              disabled={!useCustomApiConfig}
-            />
-            {useCustomApiConfig && (
-              <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">
-                {t('settingsApiKeyHelpText')}
-              </p>
-            )}
-        </div>
-        <div>
-          <label htmlFor="use-api-proxy-toggle" className="flex items-center justify-between py-1 cursor-pointer">
-            <span className="text-sm font-medium text-[var(--theme-text-secondary)]">
-              Use API Proxy URL
-            </span>
+      <div className={`rounded-xl border transition-all duration-300 overflow-hidden ${useCustomApiConfig ? 'bg-[var(--theme-bg-tertiary)]/30 border-[var(--theme-border-secondary)]' : 'bg-[var(--theme-bg-secondary)] border-[var(--theme-border-primary)]'}`}>
+        {/* Header Toggle */}
+        <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/50 transition-colors" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
+            <div className="flex flex-col">
+                <span className="text-sm font-medium text-[var(--theme-text-primary)]">
+                  {t('settingsUseCustomApi')}
+                </span>
+                <span className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">
+                    {useCustomApiConfig ? 'Using your own API keys' : t('apiConfig_default_info')}
+                </span>
+            </div>
             <Toggle
-              id="use-api-proxy-toggle"
-              checked={useApiProxy}
-              onChange={setUseApiProxy}
-              disabled={!useCustomApiConfig}
+              id="use-custom-api-config-toggle"
+              checked={useCustomApiConfig}
+              onChange={setUseCustomApiConfig}
             />
-          </label>
-          <input
-            id="api-proxy-url-input"
-            type="text"
-            value={apiProxyUrl || ''}
-            onChange={(e) => setApiProxyUrl(e.target.value || null)}
-            className={`${inputBaseClasses} ${useCustomApiConfig && useApiProxy ? enabledInputClasses : disabledInputClasses} mt-2`}
-            placeholder={getProxyPlaceholder()}
-            aria-label="API Proxy URL"
-            disabled={!useCustomApiConfig || !useApiProxy}
-          />
-          {useCustomApiConfig && (
-            <p className="text-xs text-[var(--theme-text-tertiary)] mt-1.5">
-              Replaces <code>https://generativelanguage.googleapis.com/v1beta</code> for API calls.
-            </p>
-          )}
+        </div>
+
+        {/* Content */}
+        <div className={`border-t border-[var(--theme-border-secondary)] transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[500px]' : 'opacity-50 max-h-0 overflow-hidden border-none'}`}>
+            <div className="p-4 space-y-5">
+                {/* API Key Input */}
+                <div className="space-y-2">
+                    <label htmlFor="api-key-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+                        {t('settingsApiKey')}
+                    </label>
+                    <div className="relative">
+                        <textarea
+                          id="api-key-input"
+                          rows={3}
+                          value={apiKey || ''}
+                          onChange={(e) => setApiKey(e.target.value || null)}
+                          onFocus={() => setIsApiKeyFocused(true)}
+                          onBlur={() => setIsApiKeyFocused(false)}
+                          className={`${inputBaseClasses} ${enabledInputClasses} resize-y min-h-[80px] ${apiKeyBlurClass}`}
+                          placeholder={t('apiConfig_key_placeholder')}
+                          spellCheck={false}
+                        />
+                        {!isApiKeyFocused && apiKey && (
+                            <div className="absolute top-3 right-3 pointer-events-none">
+                                <Check size={16} className="text-[var(--theme-text-success)]" strokeWidth={1.5} />
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-[var(--theme-text-tertiary)] flex gap-1.5">
+                        <Info size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                        <span>{t('settingsApiKeyHelpText')}</span>
+                    </p>
+                </div>
+
+                {/* Proxy Settings */}
+                <div className="space-y-3 pt-2 border-t border-[var(--theme-border-primary)]/50">
+                    <div className="flex items-center justify-between">
+                        <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer flex items-center gap-2" onClick={() => setUseApiProxy(!useApiProxy)}>
+                            API Proxy
+                        </label>
+                        <Toggle
+                          id="use-api-proxy-toggle"
+                          checked={useApiProxy}
+                          onChange={setUseApiProxy}
+                        />
+                    </div>
+                    
+                    <div className={`transition-all duration-200 ${useApiProxy ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+                        <input
+                            id="api-proxy-url-input"
+                            type="text"
+                            value={apiProxyUrl || ''}
+                            onChange={(e) => setApiProxyUrl(e.target.value || null)}
+                            className={`${inputBaseClasses} ${enabledInputClasses}`}
+                            placeholder={getProxyPlaceholder()}
+                            aria-label="API Proxy URL"
+                        />
+                         <p className="text-xs text-[var(--theme-text-tertiary)] mt-2 flex gap-1.5">
+                            <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                            <span>Overwrites <code>https://generativelanguage.googleapis.com/v1beta</code> base URL.</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
       </div>
     </div>

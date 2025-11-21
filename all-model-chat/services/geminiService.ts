@@ -5,7 +5,6 @@ import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
 import { sendMessageStreamApi, sendMessageNonStreamApi, sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
-import { transcribeWithQwen } from './qwenAsrService';
 
 class GeminiServiceImpl implements GeminiService {
     constructor() {
@@ -32,10 +31,7 @@ class GeminiServiceImpl implements GeminiService {
         return generateSpeechApi(apiKey, modelId, text, voice, abortSignal);
     }
 
-    async transcribeAudio(apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean, context: string, language: string, enableItn: boolean }): Promise<string> {
-        if (modelId === 'qwen-asr') {
-            return transcribeWithQwen(audioFile, options.context, options.language, options.enableItn);
-        }
+    async transcribeAudio(apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean }): Promise<string> {
         return transcribeAudioApi(apiKey, audioFile, modelId, options);
     }
 
