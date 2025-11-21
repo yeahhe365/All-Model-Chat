@@ -1,14 +1,26 @@
-export const DEFAULT_MODEL_ID = 'gemini-2.5-pro'; 
+export const DEFAULT_MODEL_ID = 'gemini-3-pro-preview'; 
 
 export const TAB_CYCLE_MODELS: string[] = [
+    'gemini-3-pro-preview',
     'gemini-2.5-pro',
     'models/gemini-flash-latest',
     'models/gemini-flash-lite-latest',
 ];
 
+export const GEMINI_3_RO_MODELS: string[] = ['gemini-3-pro-preview', 'models/gemini-3-pro-preview'];
+
+export const THINKING_LEVELS = [
+    { id: 'LOW', name: 'Low' },
+    { id: 'HIGH', name: 'High' },
+];
+
+export const DEFAULT_THINKING_LEVEL = 'HIGH';
+
 export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
     'models/gemini-flash-latest': { min: 1, max: 24576 },
     'gemini-2.5-pro': { min: 128, max: 32768 },
+    'gemini-3-pro-preview': { min: 128, max: 32768 }, // Note: This budget range is kept for potential future use or fallback, but the main logic uses thinkingLevel for 3.0
+    'models/gemini-3-pro-preview': { min: 128, max: 32768 },
     'models/gemini-flash-lite-latest': { min: 512, max: 24576 },
 };
 
@@ -18,29 +30,13 @@ export const DEFAULT_SHOW_THOUGHTS = true;
 export const DEFAULT_THINKING_BUDGET = -1; // -1 for auto/unlimited budget
 export const DEFAULT_TTS_VOICE = 'Zephyr';
 
-export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'qwen-asr';
+export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'models/gemini-flash-latest';
 export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
 
 export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
-    { id: 'qwen-asr', name: 'Qwen ASR (Default)' },
-    { id: 'models/gemini-flash-latest', name: 'Gemini 2.5 Flash' },
+    { id: 'models/gemini-flash-latest', name: 'Gemini 2.5 Flash (Default)' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
     { id: 'models/gemini-flash-lite-latest', name: 'Gemini 2.5 Flash Lite (Fastest)' },
-];
-
-export const AVAILABLE_TRANSCRIPTION_LANGUAGES: { id: string, name: string }[] = [
-    { id: 'auto', name: '🌐 Auto Detect' },
-    { id: 'zh', name: '🇨🇳 Chinese' },
-    { id: 'en', name: '🇺🇸 English' },
-    { id: 'ja', name: '🇯🇵 Japanese' },
-    { id: 'ko', name: '🇰🇷 Korean' },
-    { id: 'es', name: '🇪🇸 Spanish' },
-    { id: 'fr', name: '🇫🇷 French' },
-    { id: 'de', name: '🇩🇪 German' },
-    { id: 'ar', name: '🇸🇦 Arabic' },
-    { id: 'it', name: '🇮🇹 Italian' },
-    { id: 'ru', name: '🇷🇺 Russian' },
-    { id: 'pt', name: '🇵🇹 Portuguese' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [

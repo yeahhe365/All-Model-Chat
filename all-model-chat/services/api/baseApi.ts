@@ -1,6 +1,7 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
+import { GEMINI_3_RO_MODELS } from "../../constants/modelConstants";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -58,6 +59,7 @@ export const buildGenerationConfig = (
     isGoogleSearchEnabled?: boolean,
     isCodeExecutionEnabled?: boolean,
     isUrlContextEnabled?: boolean,
+    thinkingLevel?: 'LOW' | 'HIGH'
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview') {
         // This model has specific requirements and doesn't support other configs.
@@ -74,20 +76,35 @@ export const buildGenerationConfig = (
         delete generationConfig.systemInstruction;
     }
 
-    const modelSupportsThinking = [
-        'models/gemini-flash-lite-latest',
-        'gemini-2.5-pro',
-        'models/gemini-flash-latest'
-    ].includes(modelId);
-
-    if (modelSupportsThinking) {
-        // Decouple thinking budget from showing thoughts.
-        // `thinkingBudget` controls if and how much the model thinks.
-        // `showThoughts` controls if the `thought` field is returned in the stream.
+    // Robust check for Gemini 3
+    if (GEMINI_3_RO_MODELS.includes(modelId) || modelId.includes('gemini-3-pro')) {
+        // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
+        // We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {
-            thinkingBudget: thinkingBudget,
             includeThoughts: showThoughts,
         };
+
+        if (thinkingBudget > 0) {
+            generationConfig.thinkingConfig.thinkingBudget = thinkingBudget;
+        } else {
+            generationConfig.thinkingConfig.thinkingLevel = thinkingLevel || 'HIGH';
+        }
+    } else {
+        const modelSupportsThinking = [
+            'models/gemini-flash-lite-latest',
+            'gemini-2.5-pro',
+            'models/gemini-flash-latest'
+        ].includes(modelId) || modelId.includes('gemini-2.5');
+
+        if (modelSupportsThinking) {
+            // Decouple thinking budget from showing thoughts.
+            // `thinkingBudget` controls if and how much the model thinks.
+            // `showThoughts` controls if the `thought` field is returned in the stream.
+            generationConfig.thinkingConfig = {
+                thinkingBudget: thinkingBudget,
+                includeThoughts: showThoughts,
+            };
+        }
     }
 
     const tools = [];

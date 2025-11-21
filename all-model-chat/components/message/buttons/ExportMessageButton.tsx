@@ -124,10 +124,10 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdo
   let icon, title;
   const upperType = type.toUpperCase();
   switch (exportState) {
-    case 'exporting': icon = <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" />; title = t('exporting_title').replace('{type}', upperType); break;
-    case 'success': icon = <Check size={iconSize} className="text-[var(--theme-text-success)]" />; title = t('exported_title').replace('{type}', upperType); break;
-    case 'error': icon = <AlertCircle size={iconSize} className="text-[var(--theme-text-danger)]" />; title = t('export_failed_title'); break;
-    default: icon = type === 'png' ? <ImageIcon size={iconSize} /> : <FileCode2 size={iconSize} />; title = t('export_as_title').replace('{type}', upperType);
+    case 'exporting': icon = <Loader2 size={iconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={1.5} />; title = t('exporting_title').replace('{type}', upperType); break;
+    case 'success': icon = <Check size={iconSize} className="text-[var(--theme-text-success)]" strokeWidth={1.5} />; title = t('exported_title').replace('{type}', upperType); break;
+    case 'error': icon = <AlertCircle size={iconSize} className="text-[var(--theme-text-danger)]" strokeWidth={1.5} />; title = t('export_failed_title'); break;
+    default: icon = type === 'png' ? <ImageIcon size={iconSize} strokeWidth={1.5} /> : <FileCode2 size={iconSize} strokeWidth={1.5} />; title = t('export_as_title').replace('{type}', upperType);
   }
 
   return <button onClick={handleExport} disabled={exportState === 'exporting'} className={`${className}`} aria-label={title} title={title}>{icon}</button>;

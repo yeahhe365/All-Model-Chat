@@ -206,7 +206,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 config: buildGenerationConfig(
                     activeModelId, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP },
                     sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget,
-                    !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, !!sessionToUpdate.isUrlContextEnabled
+                    !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, !!sessionToUpdate.isUrlContextEnabled,
+                    sessionToUpdate.thinkingLevel
                 ),
             });
         }

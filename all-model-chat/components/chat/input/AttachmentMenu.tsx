@@ -37,15 +37,15 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
     };
     
     const menuItems: { labelKey: keyof typeof translations, icon: React.ReactNode, action: AttachmentAction }[] = [
-        { labelKey: 'attachMenu_upload', icon: <UploadCloud size={16}/>, action: 'upload' },
-        { labelKey: 'attachMenu_gallery', icon: <Image size={16}/>, action: 'gallery' },
-        { labelKey: 'attachMenu_uploadVideo', icon: <FileVideo size={16}/>, action: 'video' },
-        { labelKey: 'attachMenu_takePhoto', icon: <Camera size={16}/>, action: 'camera' },
-        { labelKey: 'attachMenu_screenshot', icon: <ScreenShare size={16}/>, action: 'screenshot' },
-        { labelKey: 'attachMenu_recordAudio', icon: <Mic size={16}/>, action: 'recorder' },
-        { labelKey: 'attachMenu_addById', icon: <Link2 size={16}/>, action: 'id' },
-        { labelKey: 'attachMenu_addByUrl', icon: <Youtube size={16}/>, action: 'url' },
-        { labelKey: 'attachMenu_createText', icon: <FileSignature size={16}/>, action: 'text' }
+        { labelKey: 'attachMenu_upload', icon: <UploadCloud size={16} strokeWidth={1.5} />, action: 'upload' },
+        { labelKey: 'attachMenu_gallery', icon: <Image size={16} strokeWidth={1.5} />, action: 'gallery' },
+        { labelKey: 'attachMenu_uploadVideo', icon: <FileVideo size={16} strokeWidth={1.5} />, action: 'video' },
+        { labelKey: 'attachMenu_takePhoto', icon: <Camera size={16} strokeWidth={1.5} />, action: 'camera' },
+        { labelKey: 'attachMenu_screenshot', icon: <ScreenShare size={16} strokeWidth={1.5} />, action: 'screenshot' },
+        { labelKey: 'attachMenu_recordAudio', icon: <Mic size={16} strokeWidth={1.5} />, action: 'recorder' },
+        { labelKey: 'attachMenu_addById', icon: <Link2 size={16} strokeWidth={1.5} />, action: 'id' },
+        { labelKey: 'attachMenu_addByUrl', icon: <Youtube size={16} strokeWidth={1.5} />, action: 'url' },
+        { labelKey: 'attachMenu_createText', icon: <FileSignature size={16} strokeWidth={1.5} />, action: 'text' }
     ];
 
     return (
@@ -61,7 +61,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                 aria-haspopup="true"
                 aria-expanded={isOpen}
             >
-                <Plus size={attachIconSize} />
+                <Plus size={attachIconSize} strokeWidth={1.5} />
             </button>
             {isOpen && (
                 <div ref={menuRef} className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">

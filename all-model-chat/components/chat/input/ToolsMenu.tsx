@@ -32,7 +32,7 @@ const ActiveToolBadge: React.FC<{
                 className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] p-0.5 rounded-full hover:bg-[var(--theme-bg-tertiary)] transition-colors"
                 aria-label={removeAriaLabel}
             >
-                <X size={14} />
+                <X size={14} strokeWidth={1.5} />
             </button>
         </div>
     </>
@@ -69,9 +69,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     };
     
     const menuItems = [
-      { labelKey: 'web_search_label', icon: <Globe size={16}/>, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
-      { labelKey: 'code_execution_label', icon: <Terminal size={16}/>, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
-      { labelKey: 'url_context_label', icon: <Link size={16}/>, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) }
+      { labelKey: 'web_search_label', icon: <Globe size={16} strokeWidth={1.5} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
+      { labelKey: 'code_execution_label', icon: <Terminal size={16} strokeWidth={1.5} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
+      { labelKey: 'url_context_label', icon: <Link size={16} strokeWidth={1.5} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) }
     ];
     
     return (
@@ -92,7 +92,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 aria-haspopup="true"
                 aria-expanded={isOpen}
             >
-                <SlidersHorizontal size={16} />
+                <SlidersHorizontal size={16} strokeWidth={1.5} />
                 {!hasActiveTools && <span className="text-sm font-medium">{t('tools_button')}</span>}
             </button>
             {isOpen && (
@@ -100,15 +100,15 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     {menuItems.map(item => (
                       <button key={item.labelKey} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
                         <span className="flex items-center gap-3">{item.icon} {t(item.labelKey as any)}</span>
-                        {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" />}
+                        {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />}
                       </button>
                     ))}
                 </div>
             )}
         </div>
-        {isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_label')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} />} />}
-        {isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_label')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} />} />}
-        {isUrlContextEnabled && <ActiveToolBadge label={t('url_context_label')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} />} />}
+        {isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_label')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={1.5} />} />}
+        {isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_label')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={1.5} />} />}
+        {isUrlContextEnabled && <ActiveToolBadge label={t('url_context_label')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={1.5} />} />}
       </div>
     );
 };

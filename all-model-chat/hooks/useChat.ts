@@ -85,6 +85,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         topP,
         showThoughts,
         thinkingBudget,
+        thinkingLevel,
         isGoogleSearchEnabled,
         isCodeExecutionEnabled,
         isUrlContextEnabled,
@@ -128,7 +129,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
                     activeSession.settings.thinkingBudget,
                     activeSession.settings.isGoogleSearchEnabled,
                     activeSession.settings.isCodeExecutionEnabled,
-                    activeSession.settings.isUrlContextEnabled
+                    activeSession.settings.isUrlContextEnabled,
+                    activeSession.settings.thinkingLevel
                 )
             });
             setChat(newChat);
@@ -147,6 +149,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         topP,
         showThoughts,
         thinkingBudget,
+        thinkingLevel,
         isGoogleSearchEnabled,
         isCodeExecutionEnabled,
         isUrlContextEnabled,
@@ -212,16 +215,13 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         }
     
         try {
-            const modelToUse = appSettings.transcriptionModelId || 'gemini-2.5-flash';
+            const modelToUse = appSettings.transcriptionModelId || 'models/gemini-flash-latest';
             const transcribedText = await geminiServiceInstance.transcribeAudio(
                 keyResult.key,
                 audioFile,
                 modelToUse,
                 {
                     isThinkingEnabled: appSettings.isTranscriptionThinkingEnabled,
-                    context: appSettings.transcriptionContext,
-                    language: appSettings.transcriptionLanguage,
-                    enableItn: appSettings.enableItn,
                 }
             );
             return transcribedText;
@@ -391,7 +391,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         startNewChat: historyHandler.startNewChat,
         handleDeleteChatHistorySession: historyHandler.handleDeleteChatHistorySession,
         handleRenameSession: historyHandler.handleRenameSession,
-        handleTogglePinSession: historyHandler.handleTogglePinSession,
+        handleTogglePinCurrentSession: historyHandler.handleTogglePinCurrentSession,
         handleAddNewGroup: historyHandler.handleAddNewGroup,
         handleDeleteGroup: historyHandler.handleDeleteGroup,
         handleRenameGroup: historyHandler.handleRenameGroup,

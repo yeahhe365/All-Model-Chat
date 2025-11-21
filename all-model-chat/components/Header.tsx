@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Settings, ChevronDown, Check, Loader2, Trash2, Pin, MessagesSquare, PanelLeftOpen, PanelLeftClose, SquarePen, Wand2, Lock, Download, PictureInPicture, PictureInPicture2 } from 'lucide-react'; 
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ChevronDown, Check, Loader2, Pin, PanelLeftOpen, PanelLeftClose, SquarePen, Search, X, Wand2, MessageSquareText, PictureInPicture, Settings, PictureInPicture2 } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
@@ -53,8 +54,11 @@ export const Header: React.FC<HeaderProps> = ({
   themeId,
 }) => {
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-  const [hoveredModelId, setHoveredModelId] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
   const modelSelectorRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const [newChatShortcut, setNewChatShortcut] = useState('');
   const [pipShortcut, setPipShortcut] = useState('');
 
@@ -75,6 +79,17 @@ export const Header: React.FC<HeaderProps> = ({
     };
     if (isModelSelectorOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      // Focus search input when opened
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    } else {
+      // Clear search when closed
+      const timer = setTimeout(() => {
+          setModelSearchQuery('');
+          setHighlightedIndex(0);
+      }, 200);
+      return () => clearTimeout(timer);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -92,9 +107,57 @@ export const Header: React.FC<HeaderProps> = ({
       setIsModelSelectorOpen(false);
   }
 
-  const canvasPromptButtonBaseClasses = "p-2 sm:p-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 active:scale-100";
-  const canvasPromptButtonActiveClasses = `bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] shadow-premium`;
-  const canvasPromptButtonInactiveClasses = `bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-input)]`;
+  const filteredModels = useMemo(() => {
+    if (!modelSearchQuery.trim()) return availableModels;
+    const query = modelSearchQuery.toLowerCase();
+    return availableModels.filter(model => 
+      model.name.toLowerCase().includes(query) || 
+      model.id.toLowerCase().includes(query)
+    );
+  }, [availableModels, modelSearchQuery]);
+
+  // Reset highlighted index when search query changes
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [modelSearchQuery]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (isModelSelectorOpen && listRef.current && filteredModels.length > 0) {
+      const activeItem = listRef.current.children[highlightedIndex] as HTMLElement;
+      if (activeItem) {
+        activeItem.scrollIntoView({ block: 'nearest' });
+      }
+    }
+  }, [highlightedIndex, isModelSelectorOpen, filteredModels.length]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (filteredModels.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % filteredModels.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev - 1 + filteredModels.length) % filteredModels.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const selectedModel = filteredModels[highlightedIndex];
+      if (selectedModel) {
+        handleModelSelect(selectedModel.id);
+      }
+    }
+  };
+
+  // Standardized button styles matching the requested aesthetic (Soft, Rounded, Clean)
+  // Added flex-shrink-0 to prevent buttons from being squished on small screens
+  const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] hover:shadow-md active:scale-95";
+  
+  // Default state (Inactive) - Transparent background
+  const headerButtonInactive = "bg-transparent text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]";
+  
+  // Active State (e.g. Canvas active)
+  const headerButtonActive = "bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] shadow-premium hover:bg-[var(--theme-bg-accent-hover)]";
 
   const canvasPromptAriaLabel = isCanvasPromptActive 
     ? t('canvasHelperActive_aria')
@@ -103,48 +166,81 @@ export const Header: React.FC<HeaderProps> = ({
     ? t('canvasHelperActive_title')
     : t('canvasHelperInactive_title');
 
+  const iconSize = 20; 
+  const strokeWidth = 2; 
 
   return (
-    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 shadow-premium flex items-center justify-between gap-2 border-b border-[var(--theme-border-primary)] flex-shrink-0`}>
-      <div className="flex items-center gap-1 min-w-0">
+    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 sm:p-3 shadow-premium flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0`}>
+      
+      {/* Left Section: Navigation & Model Selector */}
+      <div className="flex items-center gap-2 min-w-0">
         <button
             onClick={onToggleHistorySidebar}
-            className={`p-1.5 sm:p-2 text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105 ${isHistorySidebarOpen ? 'md:hidden' : ''}`}
+            className={`${headerButtonBase} ${headerButtonInactive} ${isHistorySidebarOpen ? 'md:hidden' : ''}`}
             aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
             title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
         >
-            {isHistorySidebarOpen ? <PanelLeftClose size={getResponsiveValue(18, 20)} /> : <PanelLeftOpen size={getResponsiveValue(18, 20)} />}
+            {isHistorySidebarOpen ? <PanelLeftClose size={iconSize} strokeWidth={strokeWidth} /> : <PanelLeftOpen size={iconSize} strokeWidth={strokeWidth} />}
         </button>
+        
         {!isHistorySidebarOpen && (
           <button
             onClick={onNewChat}
-            className="p-1.5 sm:p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] transition-transform hover:scale-110 active:scale-105"
+            className={`${headerButtonBase} ${headerButtonInactive} hidden sm:flex`}
             aria-label={t('headerNewChat_aria')}
             title={`${t('newChat')} (${newChatShortcut})`}
           >
-            <SquarePen size={getResponsiveValue(18, 20)} />
+            <SquarePen size={iconSize} strokeWidth={strokeWidth} />
           </button>
         )}
+
         <div className="relative" ref={modelSelectorRef}>
           <button
             onClick={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
             disabled={isModelsLoading || isLoading || isSwitchingModel}
-            className={`flex items-center gap-2 rounded-xl px-2.5 py-1 text-base transition-colors hover:bg-[var(--theme-bg-tertiary)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed ${isSwitchingModel ? 'animate-pulse' : ''}`}
+            className={`h-10 flex items-center gap-2 rounded-xl px-2 sm:px-3 bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium text-base transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed border border-transparent hover:border-[var(--theme-border-secondary)] ${isSwitchingModel ? 'animate-pulse' : ''}`}
             title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
             aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
             aria-haspopup="listbox"
             aria-expanded={isModelSelectorOpen}
           >
-            {isModelsLoading && !currentModelName && <Loader2 size={18} className="animate-spin text-[var(--theme-text-link)]" />}
-            <span className="truncate max-w-[144px] sm:max-w-[300px] font-medium">{displayModelName}</span>
+            {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
+            <span className="truncate max-w-[85px] sm:max-w-[240px]">{displayModelName}</span>
+            <ChevronDown size={16} className="opacity-50" />
           </button>
 
           {isModelSelectorOpen && (
             <div 
-              className="absolute top-full left-0 mt-1 w-80 sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-20 flex flex-col modal-enter-animation"
-              onMouseLeave={() => setHoveredModelId(null)}
+              className="fixed top-14 left-2 right-2 w-auto sm:absolute sm:top-full sm:left-0 sm:right-auto sm:w-96 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-50 flex flex-col modal-enter-animation overflow-hidden"
             >
-              <div className="max-h-96 overflow-y-auto custom-scrollbar" role="listbox" aria-labelledby="model-selector-button">
+              <div className="px-3 py-2 border-b border-[var(--theme-border-secondary)] sticky top-0 bg-[var(--theme-bg-secondary)] z-10">
+                  <div className="flex items-center gap-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg px-2 py-1.5 focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)]">
+                      <Search size={16} className="text-[var(--theme-text-tertiary)]" />
+                      <input 
+                          ref={searchInputRef}
+                          type="text"
+                          className="flex-1 bg-transparent border-none outline-none text-base text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] min-w-0"
+                          placeholder={t('header_model_search_placeholder' as any) || "Search models..."}
+                          value={modelSearchQuery}
+                          onChange={(e) => setModelSearchQuery(e.target.value)}
+                          onKeyDown={handleSearchKeyDown}
+                          onClick={(e) => e.stopPropagation()}
+                          autoComplete="off"
+                      />
+                      {modelSearchQuery && (
+                          <button onClick={(e) => { e.stopPropagation(); setModelSearchQuery(''); searchInputRef.current?.focus(); }} className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]">
+                              <X size={14} />
+                          </button>
+                      )}
+                  </div>
+              </div>
+
+              <div 
+                ref={listRef}
+                className="max-h-96 overflow-y-auto custom-scrollbar" 
+                role="listbox" 
+                aria-labelledby="model-selector-button"
+              >
                 {isModelsLoading ? (
                   <div>
                     {[...Array(3)].map((_, i) => (
@@ -154,38 +250,42 @@ export const Header: React.FC<HeaderProps> = ({
                       </div>
                     ))}
                   </div>
-                ) : availableModels.length > 0 ? (
-                  availableModels.map(model => (
+                ) : filteredModels.length > 0 ? (
+                  filteredModels.map((model, index) => (
                     <div
                       key={model.id}
                       onClick={() => handleModelSelect(model.id)}
-                      onMouseEnter={() => setHoveredModelId(model.id)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
                       role="option"
-                      aria-selected={model.id === selectedModelId}
-                      className={`cursor-pointer w-full text-left px-4 py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
-                        ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`
-                      }
+                      aria-selected={index === highlightedIndex}
+                      className={`cursor-pointer w-full text-left px-4 py-2.5 text-base transition-colors
+                        ${index === highlightedIndex ? 'bg-[var(--theme-bg-tertiary)]' : ''}
+                        ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]/50' : ''}
+                      `}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
                           {model.isPinned && (
-                            <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                            <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
                           )}
-                          <span className={`truncate ${model.id === selectedModelId ? 'text-[var(--theme-text-link)] font-semibold' : 'text-[var(--theme-text-primary)]'}`} title={model.name}>{model.name}</span>
+                          <span className={`truncate ${model.id === selectedModelId ? 'text-[var(--theme-text-link)] font-semibold' : 'text-[var(--theme-text-primary)]'}`} title={model.name}>
+                            {model.name}
+                          </span>
                         </div>
-                        {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                        {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" strokeWidth={2} />}
                       </div>
                       
                       {model.id === defaultModelId ? (
                         <div className="mt-2 pl-1 text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
-                            <Check size={14} />
+                            <Check size={14} strokeWidth={1.5} />
                             <span>{t('header_setDefault_isDefault')}</span>
                         </div>
-                      ) : hoveredModelId === model.id ? (
+                      ) : index === highlightedIndex ? (
                           <div className="mt-2 pl-1" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
                               <button
                                   onClick={(e) => handleSetDefault(e, model.id)}
-                                  className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"
+                                  className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5 focus:outline-none"
+                                  tabIndex={-1}
                               >
                                   <span>{t('header_setDefault_action')}</span>
                               </button>
@@ -194,48 +294,61 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-2.5 text-sm sm:text-base text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
+                  <div className="px-4 py-8 text-center text-sm text-[var(--theme-text-tertiary)] flex flex-col items-center justify-center gap-2">
+                      <Search size={24} className="opacity-50" />
+                      <p>{modelSearchQuery ? "No matching models found" : t('headerModelSelectorNoModels')}</p>
+                  </div>
                 )}
               </div>
             </div>
           )}
         </div>
       </div>
-      <div className="flex items-center gap-1.5 sm:gap-2 justify-end flex-shrink-0">
+
+      {/* Right Section: Action Buttons (Redesigned) */}
+      <div className="flex items-center gap-1 sm:gap-2.5 justify-end flex-shrink-0">
+        
+        {/* 1. Canvas Helper Button (Arc/Wand) */}
         <button
           onClick={onLoadCanvasPrompt}
           disabled={isLoading}
-          className={`${canvasPromptButtonBaseClasses} ${isCanvasPromptActive ? canvasPromptButtonActiveClasses : canvasPromptButtonInactiveClasses}`}
+          className={`${headerButtonBase} ${isCanvasPromptActive ? headerButtonActive : headerButtonInactive}`}
           aria-label={canvasPromptAriaLabel}
           title={canvasPromptTitle}
         >
-          <Wand2 size={getResponsiveValue(16, 18)} />
+          <Wand2 size={iconSize} strokeWidth={strokeWidth} />
         </button>
+
+        {/* 2. Scenarios Button (Chat Bubbles) */}
         <button
           onClick={onOpenScenariosModal}
-          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
+          className={`${headerButtonBase} ${headerButtonInactive}`}
           aria-label={t('scenariosManage_aria')}
           title={t('scenariosManage_title')}
         >
-          <MessagesSquare size={getResponsiveValue(16, 18)} />
+          <MessageSquareText size={iconSize} strokeWidth={strokeWidth} />
         </button>
+
+        {/* 3. PiP Button (Expand) */}
         {isPipSupported && (
             <button
               onClick={onTogglePip}
-              className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
+              className={`${headerButtonBase} ${headerButtonInactive}`}
               aria-label={isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
               title={`${isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'} (${pipShortcut})`}
             >
-              {isPipActive ? <PictureInPicture2 size={getResponsiveValue(16, 18)} /> : <PictureInPicture size={getResponsiveValue(16, 18)} />}
+              {isPipActive ? <PictureInPicture2 size={iconSize} strokeWidth={strokeWidth} /> : <PictureInPicture size={iconSize} strokeWidth={strokeWidth} />}
             </button>
         )}
+
+        {/* 4. Settings Button (Gear) */}
         <button
           onClick={onOpenSettingsModal} 
-          className="p-2 sm:p-2.5 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-icon-settings)] rounded-lg shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] flex items-center justify-center hover:scale-105 active:scale-100"
+          className={`${headerButtonBase} ${headerButtonInactive}`}
           aria-label={t('settingsOpen_aria')}
           title={t('settingsOpen_title')}
         >
-          <Settings size={getResponsiveValue(16, 18)} />
+          <Settings size={iconSize} strokeWidth={strokeWidth} />
         </button>
       </div>
     </header>

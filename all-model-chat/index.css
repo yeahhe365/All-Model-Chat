@@ -1,7 +1,4 @@
 
-
-@import 'highlight.js/styles/github-dark.css';
-
 html, body, #root {
   height: 100%;
   background-color: var(--theme-bg-primary);
@@ -86,23 +83,37 @@ body::-webkit-scrollbar-thumb {
 .markdown-body h6 { font-size: 1em !important; color: var(--theme-text-secondary) !important; }
 
 
-/* Inline Code: Subtle background, no border. */
+/* Inline Code: Emphasized color, interactive cursor. */
 .markdown-body code:not(pre code) {
   background-color: var(--theme-bg-tertiary) !important;
-  color: var(--theme-text-code) !important;
+  color: #f59e0b !important; /* Amber-500 for emphasis */
   border: none;
   padding: 0.2em 0.4em;
   margin: 0;
   font-size: 88%;
   border-radius: 4px;
+  cursor: pointer; /* Make it clickable */
+  transition: background-color 0.2s, transform 0.1s;
 }
+body.theme-onyx .markdown-body code:not(pre code) {
+    color: #fbbf24 !important; /* Amber-400 for dark mode */
+}
+.markdown-body code:not(pre code):hover {
+    background-color: var(--theme-bg-input) !important;
+}
+.markdown-body code:not(pre code):active {
+    transform: scale(0.95);
+}
+
 .markdown-body pre {
   padding: 10px !important;
   border-radius: 6px !important;
   overflow: auto;
   position: relative !important;
   border: 1px solid var(--theme-border-primary);
+  background-color: var(--markdown-pre-bg) !important;
 }
+
 .tool-result pre, .markdown-body pre:has(> .code-block-header) {
   padding-top: 2rem !important;
 }
@@ -111,20 +122,41 @@ body::-webkit-scrollbar-thumb {
         padding-top: 2.2rem !important;
     }
  }
+
+/* Code Block Text Styling - FIXED: Removed color: inherit !important to allow syntax highlighting */
 .markdown-body pre code, .markdown-body pre code.hljs {
   background-color: transparent !important;
-  color: inherit !important;
   padding: 0 !important;
   font-size: 0.85rem !important;
-  line-height: 1.6; /* Improve line spacing in code blocks */
+  line-height: 1.6; 
   overflow-x: auto;
   display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
+
  @media (min-width: 640px) {
     .markdown-body pre code, .markdown-body pre code.hljs {
         font-size: 0.9rem !important;
     }
  }
+
+/* Only apply padding to hljs class to ensure spacing */
+.markdown-body pre code.hljs {
+  padding: 0.8em !important;
+}
+@media (min-width: 640px) {
+    .markdown-body pre code.hljs {
+        padding: 1em !important;
+    }
+}
+
+/* Fallback for code blocks that didn't get highlighted by HLJS (e.g. plaintext) */
+.markdown-body pre code:not(.hljs) {
+    background-color: transparent !important;
+    color: var(--theme-text-code) !important;
+    padding: 0 !important;
+}
+
 /* Links: Understated color, underline on hover. */
 .markdown-body a {
     color: var(--markdown-link-text) !important;
@@ -159,44 +191,96 @@ body::-webkit-scrollbar-thumb {
     margin: 2.5em 0 !important;
     padding: 0 !important;
 }
-/* Tables: Clean, with subtle borders and striping. */
+
+/* Tables: Modern, Clean, Card-style */
 .markdown-body table {
+    display: block;
     width: 100%;
-    border-collapse: collapse;
-    display: table;
     overflow-x: auto;
-    white-space: normal;
-    border: 1px solid var(--theme-border-primary);
-    border-radius: 6px;
+    -webkit-overflow-scrolling: touch;
     border-spacing: 0;
+    border-collapse: separate;
+    margin: 1rem 0 !important;
+    border: 1px solid var(--theme-border-secondary);
+    border-radius: 8px;
+    background-color: var(--theme-bg-primary) !important; 
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.markdown-body table th, .markdown-body table td {
-    border: none !important;
+
+/* Fix for dark stripes: Explicitly set TR backgrounds to override GFM defaults */
+.markdown-body table tr {
+    background-color: var(--theme-bg-primary) !important;
+}
+.markdown-body table tr:nth-child(2n) {
+    background-color: var(--theme-bg-secondary) !important; /* Zebra striping */
+}
+
+.markdown-body table th, 
+.markdown-body table td {
+    padding: 0.75rem 1rem !important;
     border-bottom: 1px solid var(--theme-border-primary) !important;
-    padding: 0.75em 1em;
+    border-right: 1px solid var(--theme-border-primary) !important;
+    min-width: 120px;
+    text-align: left;
 }
+
+.markdown-body table th:last-child,
+.markdown-body table td:last-child {
+    border-right: none !important;
+}
+
 .markdown-body table tr:last-child td {
     border-bottom: none !important;
 }
+
 .markdown-body table th {
     background-color: var(--theme-bg-tertiary) !important;
     color: var(--theme-text-primary) !important;
     font-weight: 600;
-    text-align: left;
-    border-bottom-width: 2px !important;
-    border-bottom-color: var(--theme-border-secondary) !important;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--theme-border-secondary) !important;
 }
+
+/* Round corners for the table */
+.markdown-body table tr:first-child th:first-child {
+    border-top-left-radius: 7px;
+}
+.markdown-body table tr:first-child th:last-child {
+    border-top-right-radius: 7px;
+}
+.markdown-body table tr:last-child td:first-child {
+    border-bottom-left-radius: 7px;
+}
+.markdown-body table tr:last-child td:last-child {
+    border-bottom-right-radius: 7px;
+}
+
 .markdown-body table td {
-    color: var(--theme-text-secondary) !important;
+    color: var(--theme-text-primary) !important;
+    vertical-align: top;
+    background-color: transparent !important; /* Inherit from TR */
 }
-.markdown-body table tr:nth-of-type(odd) td {
-    background-color: transparent !important;
+
+/* Hover effect for rows */
+.markdown-body table tr:hover td {
+    background-color: var(--theme-bg-tertiary) !important;
+    transition: background-color 0.2s;
 }
-.markdown-body table tr:nth-of-type(even) td {
-    background-color: var(--theme-bg-secondary) !important; /* A very subtle striping */
+
+.markdown-body table::-webkit-scrollbar {
+    height: 6px;
 }
-.markdown-body table th:first-child { border-top-left-radius: 6px; }
-.markdown-body table th:last-child { border-top-right-radius: 6px; }
+.markdown-body table::-webkit-scrollbar-track {
+    background: transparent;
+}
+.markdown-body table::-webkit-scrollbar-thumb {
+    background-color: var(--theme-scrollbar-thumb);
+    border-radius: 3px;
+}
+.markdown-body table::-webkit-scrollbar-thumb:hover {
+    background-color: var(--theme-border-focus);
+}
+
 /* Lists: Muted markers. */
 .markdown-body ol, .markdown-body ul {
   list-style: revert;
@@ -263,24 +347,6 @@ body::-webkit-scrollbar-thumb {
   border-style: solid;
 }
 
-.markdown-body pre {
-  background-color: var(--markdown-pre-bg) !important; /* This is the outer pre background */
-}
-/* Let the imported a11y-dark.min.css handle the background and color for highlighted code. */
-/* Only override padding for consistency with our custom code block header. */
-.markdown-body pre code.hljs {
-  padding: 0.8em !important; /* Mobile padding for hljs */
-}
- @media (min-width: 640px) { /* sm breakpoint */
-    .markdown-body pre code.hljs {
-        padding: 1em !important;
-    }
- }
- .markdown-body pre code:not(.hljs) { /* Non-highlighted code inside pre, e.g. language not found */
-    background-color: transparent !important; /* Make sure it's transparent */
-    color: var(--theme-text-code) !important; /* Use a fallback color */
-    padding: 0 !important;
- }
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;

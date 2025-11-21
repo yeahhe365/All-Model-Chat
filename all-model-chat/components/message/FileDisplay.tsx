@@ -80,7 +80,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         imageElement
       ) : SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
-          <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+          <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
@@ -88,7 +88,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         </>
       ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
-          <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+          <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
@@ -96,7 +96,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         </>
       ) : file.type === 'video/youtube-link' && !file.error ? (
         <>
-          <Youtube size={iconSize} className="text-red-500 flex-shrink-0" />
+          <Youtube size={iconSize} className="text-red-500 flex-shrink-0" strokeWidth={1.5} />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>YouTube Video</span>
@@ -104,7 +104,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         </>
       ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
-          <FileVideo size={iconSize} className="text-purple-400 flex-shrink-0" />
+          <FileVideo size={iconSize} className="text-purple-400 flex-shrink-0" strokeWidth={1.5} />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>{`${file.type} - ${formatFileSize(file.size)}`}</span>
@@ -112,7 +112,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         </>
       ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( 
         <>
-          <FileText size={iconSize} className="text-red-500 flex-shrink-0" /> 
+          <FileText size={iconSize} className="text-red-500 flex-shrink-0" strokeWidth={1.5} /> 
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
@@ -120,7 +120,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         </>
       ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !file.error ? (
         <>
-          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
           <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
@@ -128,7 +128,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
         </>
       ) : ( 
         <>
-          <AlertCircle size={iconSize} className={`${file.error ? 'text-[var(--theme-text-danger)]' : 'text-[var(--theme-text-tertiary)]'} flex-shrink-0`} />
+          <AlertCircle size={iconSize} className={`${file.error ? 'text-[var(--theme-text-danger)]' : 'text-[var(--theme-text-tertiary)]'} flex-shrink-0`} strokeWidth={1.5} />
            <div className={textClasses}>
             <span className={nameClass} title={file.name}>{file.name}</span>
             <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
@@ -145,7 +145,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
             aria-label="Download Image"
             className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
         >
-            <Download size={14} />
+            <Download size={14} strokeWidth={1.5} />
         </button>
       )}
       {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
@@ -157,7 +157,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
                       ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-link)]'}
                       opacity-0 group-hover:opacity-100 focus:opacity-100`}
         >
-          {idCopied ? <Check size={12} /> : <ClipboardCopy size={12} />}
+          {idCopied ? <Check size={12} strokeWidth={1.5} /> : <ClipboardCopy size={12} strokeWidth={1.5} />}
         </button>
       )}
     </div>

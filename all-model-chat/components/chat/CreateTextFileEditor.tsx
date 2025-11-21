@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Save, X } from 'lucide-react';
 
 interface CreateTextFileEditorProps {
@@ -6,6 +6,7 @@ interface CreateTextFileEditorProps {
   onCancel: () => void;
   isProcessing: boolean;
   isLoading: boolean;
+  isHistorySidebarOpen?: boolean;
 }
 
 export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
@@ -13,15 +14,33 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
   onCancel,
   isProcessing,
   isLoading,
+  isHistorySidebarOpen,
 }) => {
   const [createTextContent, setCreateTextContent] = React.useState('');
   const [customFilename, setCustomFilename] = React.useState('');
   const createTextEditorTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [leftOffset, setLeftOffset] = useState('0px');
 
   React.useEffect(() => {
     // Focus the textarea when the editor becomes visible
     setTimeout(() => createTextEditorTextareaRef.current?.focus(), 0);
   }, []);
+
+  useEffect(() => {
+    const calculateOffset = () => {
+      // The sidebar is 18rem (288px) wide on screens >= 768px (md breakpoint).
+      // On smaller screens, it's an overlay, so the editor should be fullscreen.
+      if (isHistorySidebarOpen && window.innerWidth >= 768) {
+        setLeftOffset('18rem');
+      } else {
+        setLeftOffset('0px');
+      }
+    };
+
+    calculateOffset();
+    window.addEventListener('resize', calculateOffset);
+    return () => window.removeEventListener('resize', calculateOffset);
+  }, [isHistorySidebarOpen]);
 
   const handleConfirm = () => {
     if (!createTextContent.trim() || isProcessing || isLoading) return;
@@ -30,7 +49,8 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-[var(--theme-bg-primary)] z-50 flex flex-col p-3 sm:p-4 md:p-6"
+      className="fixed top-0 right-0 bottom-0 bg-[var(--theme-bg-primary)] z-50 flex flex-col p-3 sm:p-4 md:p-6"
+      style={{ left: leftOffset, transition: 'left 0.3s ease-in-out' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-text-file-title"

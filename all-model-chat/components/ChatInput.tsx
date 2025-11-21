@@ -53,6 +53,7 @@ interface ChatInputProps {
   onEditLastUserMessage: () => void;
   onTogglePip: () => void;
   isPipActive?: boolean;
+  isHistorySidebarOpen?: boolean;
 }
 
 const INITIAL_TEXTAREA_HEIGHT_PX = 28;
@@ -68,7 +69,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
-    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive,
+    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen,
   } = props;
 
   const [inputText, setInputText] = useState('');
@@ -385,6 +386,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isProcessingFile={isProcessingFile}
         isLoading={isLoading}
         t={t}
+        isHistorySidebarOpen={isHistorySidebarOpen}
       />
 
       <div

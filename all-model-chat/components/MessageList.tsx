@@ -145,7 +145,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             </h1>
             <div className="text-left mb-2 sm:mb-3 flex items-center justify-between gap-2 text-sm font-medium text-[var(--theme-text-secondary)]">
                 <div className="flex items-center gap-2">
-                    <Lightbulb size={16} className="text-[var(--theme-text-link)]" />
+                    <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
                     <span>{t('welcome_suggestion_title')}</span>
                 </div>
                 {totalSuggestionPages > 1 && (
@@ -159,7 +159,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                             className="p-1 rounded-md hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             aria-label="Previous suggestions"
                         >
-                            <ChevronLeft size={18} />
+                            <ChevronLeft size={18} strokeWidth={1.5} />
                         </button>
                         <button
                             onClick={() => setSuggestionPage(p => Math.min(totalSuggestionPages - 1, p + 1))}
@@ -167,7 +167,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                             className="p-1 rounded-md hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             aria-label="Next suggestions"
                         >
-                            <ChevronRight size={18} />
+                            <ChevronRight size={18} strokeWidth={1.5} />
                         </button>
                     </div>
                 )}
@@ -193,7 +193,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                   </div>
                   <div className="flex justify-between items-center mt-auto text-[var(--theme-text-tertiary)] opacity-70 group-hover:opacity-100 transition-opacity">
                     <span className="text-sm">{t('suggestion_prompt_label')}</span>
-                    <ArrowUp size={20} />
+                    <ArrowUp size={20} strokeWidth={1.5} />
                   </div>
                 </button>
               ))}
@@ -256,7 +256,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     aria-label="Scroll to previous turn"
                     title="Scroll to previous turn"
                 >
-                    <ArrowUp size={20} />
+                    <ArrowUp size={20} strokeWidth={1.5} />
                 </button>
             )}
             {scrollNavVisibility.down && (
@@ -266,7 +266,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     aria-label="Scroll to next turn or bottom"
                     title="Scroll to next turn or bottom"
                 >
-                    <ArrowDown size={20} />
+                    <ArrowDown size={20} strokeWidth={1.5} />
                 </button>
             )}
           </div>

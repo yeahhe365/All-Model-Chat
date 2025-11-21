@@ -54,7 +54,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
           aria-label={`Cancel upload for ${file.name}`}
           title={`Cancel Upload`}
         >
-          <Ban size={16} />
+          <Ban size={16} strokeWidth={1.5} />
         </button>
       )}
       {showRemoveButton && !isCancellable && ( 
@@ -64,14 +64,14 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
           aria-label={`Remove ${file.name}`}
           title={`Remove ${file.name}`}
         >
-          <XCircle size={16} />
+          <XCircle size={16} strokeWidth={1.5} />
         </button>
       )}
       <div className="file-preview-box h-16 sm:h-20 w-full rounded-lg border border-[var(--theme-border-secondary)] flex flex-col items-center justify-center bg-[var(--theme-bg-tertiary)] overflow-hidden">
         {file.error && file.uploadState !== 'cancelled' ? ( // Don't show error icon if just cancelled
-          <AlertTriangleIcon size={iconSize} className="text-[var(--theme-text-danger)]" />
+          <AlertTriangleIcon size={iconSize} className="text-[var(--theme-text-danger)]" strokeWidth={1.5} />
         ) : file.uploadState === 'cancelled' ? (
-          <Ban size={iconSize} className="text-[var(--theme-text-tertiary)]" />
+          <Ban size={iconSize} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />
         ) : file.dataUrl && SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) ? (
           <img 
             src={file.dataUrl} 
@@ -79,19 +79,19 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             className="max-h-full max-w-full h-auto w-auto object-contain" 
           />
         ) : SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) ? (
-          <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)]" />
+          <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />
         ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) ? (
-          <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)]" />
+          <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />
         ) : file.type === 'video/youtube-link' ? (
-          <Youtube size={iconSize} className="text-red-500" />
+          <Youtube size={iconSize} className="text-red-500" strokeWidth={1.5} />
         ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) ? (
-          <FileVideo size={iconSize} className="text-purple-400" />
+          <FileVideo size={iconSize} className="text-purple-400" strokeWidth={1.5} />
         ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (
-          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)]" />
+          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />
         ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) ? (
-          <FileText size={iconSize} className="text-red-500" />
+          <FileText size={iconSize} className="text-red-500" strokeWidth={1.5} />
         ) : ( 
-          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)]" /> 
+          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} /> 
         )}
       </div>
       <div className="text-xs text-[var(--theme-text-tertiary)] mt-0.5 truncate w-full" title={file.name}>{file.name}</div>
@@ -106,7 +106,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       )}
       {file.uploadState === 'uploading' && (
           <div className="text-xs text-[var(--theme-text-link)] mt-0.5 flex items-center justify-center">
-              <Loader2 size={10} className="animate-spin mr-1" /> Uploading...
+              <Loader2 size={10} className="animate-spin mr-1" strokeWidth={1.5} /> Uploading...
           </div>
       )}
       {file.isProcessing && file.uploadState !== 'uploading' && file.uploadState !== 'cancelled' && (
@@ -117,7 +117,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       )}
       {!file.isProcessing && !file.error && file.uploadState === 'active' && (
             <div className="text-xs text-green-500 mt-0.5 flex items-center justify-center">
-                <CheckCircle size={10} className="mr-1" /> Ready
+                <CheckCircle size={10} className="mr-1" strokeWidth={1.5} /> Ready
             </div>
       )}
       {file.fileApiName && file.uploadState === 'active' && !file.error && (
@@ -130,7 +130,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
                       ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)]'}
                       opacity-0 group-hover:opacity-100 focus:opacity-100`}
         >
-          {idCopied ? <Check size={10} /> : <ClipboardCopy size={10} />}
+          {idCopied ? <Check size={10} strokeWidth={1.5} /> : <ClipboardCopy size={10} strokeWidth={1.5} />}
         </button>
       )}
     </div>
