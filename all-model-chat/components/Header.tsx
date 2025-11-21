@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronDown, Check, Loader2, Pin, PanelLeftOpen, PanelLeftClose, SquarePen, Search, X, Wand2, MessageSquareText, PictureInPicture, Settings, PictureInPicture2 } from 'lucide-react'; 
+import { ChevronDown, Check, Loader2, Pin, PanelLeft, SquarePen, Search, X, Wand2, MessageSquareText, PictureInPicture, Settings, PictureInPicture2 } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 
@@ -63,6 +63,21 @@ export const Header: React.FC<HeaderProps> = ({
   const [pipShortcut, setPipShortcut] = useState('');
 
   const displayModelName = isModelsLoading && !currentModelName ? t('loading') : currentModelName;
+
+  const abbreviatedModelName = useMemo(() => {
+    if (!displayModelName) return '';
+    if (displayModelName === t('loading')) return displayModelName;
+    
+    let name = displayModelName;
+    // Remove "Gemini" prefix (case insensitive)
+    name = name.replace(/^Gemini\s+/i, '');
+    // Remove "Preview" (case insensitive)
+    name = name.replace(/\s+Preview/i, '');
+    // Remove "Latest" (case insensitive)
+    name = name.replace(/\s+Latest/i, '');
+    
+    return name;
+  }, [displayModelName, t]);
 
   useEffect(() => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -180,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label={isHistorySidebarOpen ? t('historySidebarClose') : t('historySidebarOpen')}
             title={isHistorySidebarOpen ? t('historySidebarClose_short') : t('historySidebarOpen_short')}
         >
-            {isHistorySidebarOpen ? <PanelLeftClose size={iconSize} strokeWidth={strokeWidth} /> : <PanelLeftOpen size={iconSize} strokeWidth={strokeWidth} />}
+            <PanelLeft size={iconSize} strokeWidth={strokeWidth} />
         </button>
         
         {!isHistorySidebarOpen && (
@@ -205,8 +220,9 @@ export const Header: React.FC<HeaderProps> = ({
             aria-expanded={isModelSelectorOpen}
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
-            <span className="truncate max-w-[85px] sm:max-w-[240px]">{displayModelName}</span>
-            <ChevronDown size={16} className="opacity-50" />
+            <span className="truncate max-w-[120px] sm:max-w-[240px] lg:hidden">{abbreviatedModelName}</span>
+            <span className="hidden lg:block truncate max-w-[400px]">{displayModelName}</span>
+            <ChevronDown size={16} className="opacity-50 flex-shrink-0" />
           </button>
 
           {isModelSelectorOpen && (

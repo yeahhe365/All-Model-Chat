@@ -4,6 +4,7 @@ import { ChatMessage, UploadedFile, ThemeColors, AppSettings } from '../../types
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
 import { MessageActions } from './MessageActions';
+import { useIsTouch } from '../../hooks/useDevice';
 
 interface MessageProps {
     message: ChatMessage;
@@ -53,12 +54,14 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     const [copied, setCopied] = useState(false);
     const touchStartRef = useRef({ x: 0, y: 0 });
     const isSwipeGesture = useRef<boolean | null>(null);
-    const isMobile = useMemo(() => typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0), []);
+    
+    // Use the robust hook for detecting touch capability
+    const isTouchDevice = useIsTouch();
 
     const SWIPE_THRESHOLD = 80;
 
     const handleTouchStart = (e: React.TouchEvent) => {
-        if (!isMobile || message.isLoading) return;
+        if (!isTouchDevice || message.isLoading) return;
         touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
         isSwipeGesture.current = null;
         setIsSwiping(true);
@@ -66,7 +69,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     };
 
     const handleTouchMove = (e: React.TouchEvent) => {
-        if (!isMobile || !isSwiping || message.isLoading) return;
+        if (!isTouchDevice || !isSwiping || message.isLoading) return;
         const currentX = e.touches[0].clientX;
         const currentY = e.touches[0].clientY;
         const dx = currentX - touchStartRef.current.x;
@@ -90,7 +93,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     };
 
     const handleTouchEnd = () => {
-        if (!isMobile || message.isLoading) return;
+        if (!isTouchDevice || message.isLoading) return;
         
         if (isSwipeGesture.current) {
             if (deltaX > SWIPE_THRESHOLD) {
@@ -116,7 +119,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             data-message-id={message.id} 
             data-message-role={message.role}
         >
-             {isMobile && (
+             {isTouchDevice && (
                 <div 
                     className={`absolute inset-0 rounded-2xl ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'}`}
                     aria-hidden="true"
