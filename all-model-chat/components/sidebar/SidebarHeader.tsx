@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { PanelLeftClose } from 'lucide-react';
+import { PanelLeft } from 'lucide-react';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { translations } from '../../utils/appUtils';
 
@@ -16,7 +17,7 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({ onToggle, isOpen, 
       <span className="text-lg font-semibold text-[var(--theme-text-primary)]">All Model Chat</span>
     </a>
     <button onClick={onToggle} className="p-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md" aria-label={isOpen ? t('historySidebarClose') : t('historySidebarOpen')}>
-      <PanelLeftClose size={20} strokeWidth={1.5} />
+      <PanelLeft size={20} strokeWidth={1.5} />
     </button>
   </div>
 );

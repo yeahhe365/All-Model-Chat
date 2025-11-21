@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
-import { Settings, X, Monitor, Layers, MessageSquare, User, Info, DatabaseZap, KeyRound } from 'lucide-react';
+import { X } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
 import { Theme } from '../constants/themeConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
@@ -11,6 +12,7 @@ import { DataManagementSection } from './settings/DataManagementSection';
 import { AboutSection } from './settings/AboutSection';
 import { ModelOption } from '../types';
 import { Modal } from './shared/Modal';
+import { IconInterface, IconModel, IconApiKey, IconData, IconAbout } from './icons/CustomIcons';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -48,7 +50,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [activeTab, setActiveTab] = useState<SettingsTab>('interface');
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   
-  const tabIconSize = getResponsiveValue(18, 20);
+  const tabIconSize = getResponsiveValue(20, 22); // Slightly larger for custom icons to look good
 
   useEffect(() => {
     if (isOpen) {
@@ -89,11 +91,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const tabs: { id: SettingsTab; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
-    { id: 'interface', labelKey: 'settingsTabInterface', icon: <Monitor size={tabIconSize} strokeWidth={1.5} /> },
-    { id: 'model', labelKey: 'settingsTabModel', icon: <Layers size={tabIconSize} strokeWidth={1.5} /> },
-    { id: 'account', labelKey: 'settingsTabAccount', icon: <KeyRound size={tabIconSize} strokeWidth={1.5} /> },
-    { id: 'data', labelKey: 'settingsTabData', icon: <DatabaseZap size={tabIconSize} strokeWidth={1.5} /> },
-    { id: 'about', labelKey: 'settingsTabAbout', icon: <Info size={tabIconSize} strokeWidth={1.5} /> },
+    { id: 'interface', labelKey: 'settingsTabInterface', icon: <IconInterface size={tabIconSize} strokeWidth={1.5} /> },
+    { id: 'model', labelKey: 'settingsTabModel', icon: <IconModel size={tabIconSize} strokeWidth={1.5} /> },
+    { id: 'account', labelKey: 'settingsTabAccount', icon: <IconApiKey size={tabIconSize} strokeWidth={1.5} /> },
+    { id: 'data', labelKey: 'settingsTabData', icon: <IconData size={tabIconSize} strokeWidth={1.5} /> },
+    { id: 'about', labelKey: 'settingsTabAbout', icon: <IconAbout size={tabIconSize} strokeWidth={1.5} /> },
   ];
 
   const currentTabLabel = tabs.find(t => t.id === activeTab)?.labelKey;

@@ -10,6 +10,7 @@ import { ChatInputModals } from './chat/input/ChatInputModals';
 import { useChatInputModals } from '../hooks/useChatInputModals';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useSlashCommands } from '../hooks/useSlashCommands';
+import { useIsMobile, useIsDesktop } from '../hooks/useDevice';
 
 interface ChatInputProps {
   appSettings: AppSettings;
@@ -85,16 +86,20 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const justInitiatedFileOpRef = useRef(false);
   const prevIsProcessingFileRef = useRef(isProcessingFile);
   const isComposingRef = useRef(false);
+  
+  const isMobile = useIsMobile();
+  const isDesktop = useIsDesktop();
 
   const adjustTextareaHeight = useCallback(() => {
     const target = textareaRef.current;
     if (!target) return;
-    const currentInitialHeight = getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX);
+    // Use isMobile hook for reactive resizing instead of one-off calculation
+    const currentInitialHeight = isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX;
     target.style.height = 'auto';
     const scrollHeight = target.scrollHeight;
     const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
     target.style.height = `${newHeight}px`;
-  }, []);
+  }, [isMobile]);
 
   const {
     showCamera, showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -329,8 +334,11 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
       return;
     }
 
-    const isMobile = getResponsiveValue(true, false);
-    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
+    // On mobile (small screens), Enter usually creates a new line.
+    // On desktop, Enter sends message, Shift+Enter creates a new line.
+    // Optimization: If it is a desktop device (pointer: fine), we always want Enter to send,
+    // even if the window is small (responsive mobile layout).
+    if (e.key === 'Enter' && !e.shiftKey && (!isMobile || isDesktop)) {
         const trimmedInput = inputText.trim();
         if (trimmedInput.startsWith('/')) {
             e.preventDefault();
@@ -433,7 +441,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                         onCompositionEnd={() => isComposingRef.current = false}
                         placeholder={t('chatInputPlaceholder')}
                         className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
-                        style={{ height: `${getResponsiveValue(24, INITIAL_TEXTAREA_HEIGHT_PX)}px` }}
+                        style={{ height: `${isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording}
                         rows={1}

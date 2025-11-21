@@ -1,3 +1,4 @@
+
 import { getApiClient } from './baseApi';
 import { Part, GenerateContentResponse, Type } from "@google/genai";
 import { logService } from "../logService";
@@ -116,12 +117,20 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         text: "Transcribe this audio to text. Only return the transcribed text, do not answer questions in the audio.",
     };
     
-    const config = {
+    const config: any = {
       systemInstruction: "You are a helpful assistant that transcribes the provided audio file verbatim, without any omissions or modifications.",
-      thinkingConfig: {
-        thinkingBudget: isThinkingEnabled ? -1 : 0,
-      },
     };
+
+    if (modelId.includes('gemini-3')) {
+        config.thinkingConfig = {
+            includeThoughts: false,
+            thinkingLevel: "LOW"
+        };
+    } else {
+        config.thinkingConfig = {
+            thinkingBudget: isThinkingEnabled ? -1 : 0,
+        };
+    }
 
     try {
         const response = await ai.models.generateContent({

@@ -1,3 +1,4 @@
+
 export const DEFAULT_MODEL_ID = 'gemini-3-pro-preview'; 
 
 export const TAB_CYCLE_MODELS: string[] = [
@@ -37,6 +38,7 @@ export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
     { id: 'models/gemini-flash-latest', name: 'Gemini 2.5 Flash (Default)' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
     { id: 'models/gemini-flash-lite-latest', name: 'Gemini 2.5 Flash Lite (Fastest)' },
+    { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [
