@@ -1,6 +1,8 @@
+
 import React from 'react';
-import { SquarePen, FolderPlus, Search, X } from 'lucide-react';
+import { FolderPlus, Search, X } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
+import { IconNewChat } from '../icons/CustomIcons';
 
 interface SidebarActionsProps {
   onNewChat: () => void;
@@ -16,7 +18,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
   <>
     <div className="px-2 pt-3 flex items-center gap-2">
       <button onClick={onNewChat} className="flex-grow flex items-center gap-3 w-full text-left px-3 py-2 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" aria-label={t('headerNewChat_aria')}>
-        <SquarePen size={18} className="text-[var(--theme-text-secondary)]" strokeWidth={1.5} />
+        <IconNewChat size={18} className="text-[var(--theme-text-secondary)]" strokeWidth={1.5} />
         <span className="text-[var(--theme-text-link)]">{t('newChat')}</span>
       </button>
       <button onClick={onAddNewGroup} className="flex-shrink-0 p-2 text-[var(--theme-text-secondary)] bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--theme-border-focus)] transition-colors" title="New Group">
