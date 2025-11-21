@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronDown, Check, Loader2, Pin, PanelLeft, SquarePen, Search, X, Wand2, MessageSquareText, PictureInPicture, Settings, PictureInPicture2 } from 'lucide-react'; 
+import { ChevronDown, Check, Loader2, Pin, PanelLeft, Search, X, Wand2, MessageSquareText, PictureInPicture, Settings, PictureInPicture2 } from 'lucide-react'; 
 import { ModelOption } from '../types';
 import { translations, getResponsiveValue } from '../utils/appUtils';
+import { IconNewChat } from './icons/CustomIcons';
 
 interface HeaderProps {
   onNewChat: () => void;
@@ -205,7 +206,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-label={t('headerNewChat_aria')}
             title={`${t('newChat')} (${newChatShortcut})`}
           >
-            <SquarePen size={iconSize} strokeWidth={strokeWidth} />
+            <IconNewChat size={iconSize} strokeWidth={strokeWidth} />
           </button>
         )}
 

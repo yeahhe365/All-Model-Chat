@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { GitBranch } from 'lucide-react';
-import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { getResponsiveValue, translations } from '../../utils/appUtils';
+import { AppLogo } from '../icons/AppLogo';
 
 interface AboutSectionProps {
   t: (key: keyof typeof translations) => string;
@@ -13,7 +14,9 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
 
   return (
     <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-[var(--theme-bg-secondary)] text-center">
-      <img src={APP_LOGO_SVG_DATA_URI} alt={t('about_logo_alt')} className="w-16 h-16 mx-auto mb-4" />
+      <div className="flex justify-center mb-4">
+        <AppLogo className="w-40 h-auto" />
+      </div>
       <h3 className="text-xl font-semibold text-[var(--theme-text-primary)] flex items-center justify-center mb-1">
         {t('about_title')}
       </h3>
