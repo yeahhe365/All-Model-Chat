@@ -71,7 +71,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
-        const isImageEditModel = activeModelId.includes('image-preview');
+        const isImageEditModel = activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image');
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId });
 
@@ -126,7 +126,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         if (isImageEditModel) {
             const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
             const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
-            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, { shouldLockKey });
+            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, aspectRatio, { shouldLockKey });
             if (editingMessageId) {
                 setEditingMessageId(null);
             }
@@ -207,7 +207,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
                     activeModelId, sessionToUpdate.systemInstruction, { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP },
                     sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget,
                     !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, !!sessionToUpdate.isUrlContextEnabled,
-                    sessionToUpdate.thinkingLevel
+                    sessionToUpdate.thinkingLevel,
+                    aspectRatio // Add this
                 ),
             });
         }

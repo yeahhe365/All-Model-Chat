@@ -1,3 +1,4 @@
+
 export interface ThemeColors {
   // Backgrounds
   bgPrimary: string;
@@ -64,65 +65,65 @@ export interface Theme {
 
 export const ONYX_THEME_COLORS: ThemeColors = {
   // Backgrounds
-  bgPrimary: '#1d1d20',
-  bgSecondary: '#2b2b31',
-  bgTertiary: '#40414F',
-  bgAccent: '#10a37f',
-  bgAccentHover: '#0e906d',
-  bgDanger: '#DA3633',
-  bgDangerHover: '#F85149',
-  bgInput: '#40414F',
-  bgCodeBlock: '#202123',
-  bgCodeBlockHeader: 'rgba(64, 65, 79, 0.7)',
-  bgUserMessage: '#10a37f',
-  bgModelMessage: '#2b2b31',
-  bgErrorMessage: 'rgba(218, 54, 51, 0.2)',
-  bgSuccess: 'rgba(74, 222, 128, 0.15)',
+  bgPrimary: '#09090b', // Zinc 950
+  bgSecondary: '#18181b', // Zinc 900
+  bgTertiary: '#27272a', // Zinc 800
+  bgAccent: '#2563eb', // Blue 600
+  bgAccentHover: '#3b82f6', // Blue 500
+  bgDanger: '#ef4444',
+  bgDangerHover: '#dc2626',
+  bgInput: '#27272a', // Zinc 800
+  bgCodeBlock: '#18181b', // Zinc 900 (inset effect)
+  bgCodeBlockHeader: '#27272a', // Zinc 800
+  bgUserMessage: '#2563eb', // Blue 600
+  bgModelMessage: 'transparent',
+  bgErrorMessage: 'rgba(127, 29, 29, 0.2)',
+  bgSuccess: 'rgba(20, 83, 45, 0.2)',
   textSuccess: '#4ade80',
-  bgInfo: 'rgba(138, 138, 145, 0.15)',
-  textInfo: '#C5C5D2',
-  bgWarning: 'rgba(212, 167, 44, 0.15)',
-  textWarning: '#D4A72C',
+  bgInfo: 'rgba(30, 58, 138, 0.2)',
+  textInfo: '#60a5fa',
+  bgWarning: 'rgba(120, 53, 15, 0.2)',
+  textWarning: '#fbbf24',
 
   // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#E0E0E0',
-  textTertiary: '#8A8A91',
-  textAccent: '#FFFFFF',
-  textDanger: '#FFFFFF',
-  textLink: '#C5C5D2',
-  textCode: '#C5C5D2',
-  bgUserMessageText: '#FFFFFF',
-  bgModelMessageText: '#FFFFFF',
-  bgErrorMessageText: '#FFFFFF',
+  textPrimary: '#fafafa', // Zinc 50
+  textSecondary: '#a1a1aa', // Zinc 400
+  textTertiary: '#71717a', // Zinc 500
+  textAccent: '#ffffff',
+  textDanger: '#ffffff',
+  textLink: '#38bdf8', // Sky 400
+  textCode: '#e4e4e7', // Zinc 200
+  bgUserMessageText: '#ffffff',
+  bgModelMessageText: '#e4e4e7', // Zinc 200
+  bgErrorMessageText: '#fca5a5',
 
   // Borders
-  borderPrimary: '#444654',
-  borderSecondary: '#565869',
-  borderFocus: '#8E8EA0',
+  borderPrimary: '#27272a', // Zinc 800
+  borderSecondary: '#3f3f46', // Zinc 700
+  borderFocus: '#3b82f6', // Blue 500
 
   // Scrollbar
-  scrollbarThumb: '#565869',
-  scrollbarTrack: '#2b2b31',
+  scrollbarThumb: '#3f3f46', // Zinc 700
+  scrollbarTrack: 'transparent',
 
   // Icons
-  iconUser: '#E0E0E0',
-  iconModel: '#10a37f',
-  iconError: '#F85149',
-  iconThought: '#8A8A91',
-  iconSettings: '#E0E0E0',
-  iconClearChat: '#FFFFFF',
-  iconSend: '#FFFFFF',
-  iconAttach: '#E0E0E0',
-  iconStop: '#FFFFFF',
-  iconEdit: '#E0E0E0',
-  iconHistory: '#E0E0E0',
+  iconUser: '#ffffff',
+  iconModel: '#3b82f6', // Brand Blue
+  iconError: '#ef4444',
+  iconThought: '#71717a',
+  iconSettings: '#a1a1aa',
+  iconClearChat: '#fafafa',
+  iconSend: '#ffffff',
+  iconAttach: '#a1a1aa',
+  iconStop: '#ffffff',
+  iconEdit: '#a1a1aa',
+  iconHistory: '#a1a1aa',
 };
 
 export const PEARL_THEME_COLORS: ThemeColors = {
   // Backgrounds
   bgPrimary: '#FFFFFF',
-  bgSecondary: '#F7F7F8',
+  bgSecondary: '#f9f9f9',
   bgTertiary: '#ECECF1',
   bgAccent: '#40414F',
   bgAccentHover: '#202123',
@@ -131,8 +132,8 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   bgInput: '#FFFFFF',
   bgCodeBlock: '#F7F7F8',
   bgCodeBlockHeader: 'rgba(236, 236, 241, 0.9)',
-  bgUserMessage: '#FFFFFF',
-  bgModelMessage: '#F7F7F8',
+  bgUserMessage: '#f3f4f6', // Updated: Light Gray
+  bgModelMessage: '#FFFFFF', // Updated: White
   bgErrorMessage: '#FEE',
   bgSuccess: 'rgba(22, 163, 74, 0.1)',
   textSuccess: '#16a34a',
@@ -149,8 +150,8 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   textDanger: '#FFFFFF',
   textLink: '#565869',
   textCode: '#40414f',
-  bgUserMessageText: '#202123',
-  bgModelMessageText: '#202123',
+  bgUserMessageText: '#1f2937', // Updated: Dark Gray
+  bgModelMessageText: '#1f2937', // Updated: Dark Gray
   bgErrorMessageText: '#DF3434',
 
   // Borders
@@ -166,14 +167,14 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   iconUser: '#202123',
   iconModel: '#10a37f',
   iconError: '#DF3434',
-  iconThought: '#565869',
-  iconSettings: '#565869',
+  iconThought: '#323232',
+  iconSettings: '#323232',
   iconClearChat: '#FFFFFF',
   iconSend: '#FFFFFF',
-  iconAttach: '#565869',
+  iconAttach: '#323232',
   iconStop: '#FFFFFF',
-  iconEdit: '#565869',
-  iconHistory: '#565869',
+  iconEdit: '#323232',
+  iconHistory: '#323232',
 };
 
 export const AVAILABLE_THEMES: Theme[] = [

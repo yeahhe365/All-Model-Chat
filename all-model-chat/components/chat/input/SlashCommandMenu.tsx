@@ -36,9 +36,10 @@ interface SlashCommandMenuProps {
     commands: Command[];
     onSelect: (command: Command) => void;
     selectedIndex: number;
+    className?: string;
 }
 
-export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({ isOpen, commands, onSelect, selectedIndex }) => {
+export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({ isOpen, commands, onSelect, selectedIndex, className }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const selectedItemRef = useRef<HTMLLIElement>(null);
 
@@ -55,9 +56,12 @@ export const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({ isOpen, comm
         return null;
     }
 
+    const defaultClasses = "absolute bottom-full left-0 right-0 mb-2 w-full max-w-7xl mx-auto px-2 sm:px-3";
+    const finalClassName = className || defaultClasses;
+
     return (
         <div 
-          className="absolute bottom-full left-0 right-0 mb-2 w-full max-w-7xl mx-auto px-2 sm:px-3"
+          className={finalClassName}
           style={{ animation: 'fadeInUp 0.2s ease-out both' }}
         >
             <div ref={scrollContainerRef} className="bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium max-h-60 overflow-y-auto custom-scrollbar p-2">

@@ -59,12 +59,16 @@ export const buildGenerationConfig = (
     isGoogleSearchEnabled?: boolean,
     isCodeExecutionEnabled?: boolean,
     isUrlContextEnabled?: boolean,
-    thinkingLevel?: 'LOW' | 'HIGH'
+    thinkingLevel?: 'LOW' | 'HIGH',
+    aspectRatio?: string
 ): any => {
-    if (modelId === 'gemini-2.5-flash-image-preview') {
+    if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         // This model has specific requirements and doesn't support other configs.
         return {
             responseModalities: [Modality.IMAGE, Modality.TEXT],
+            imageConfig: {
+                aspectRatio: aspectRatio || '1:1',
+            }
         };
     }
     

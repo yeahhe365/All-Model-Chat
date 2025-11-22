@@ -1,3 +1,4 @@
+
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -31,11 +32,13 @@ export const settingsTranslations = {
     settingsShowThoughts_tooltip: { en: "Displays the model's step-by-step thinking process before the final answer. Requires Thinking Mode to be enabled.", zh: "在最终答案之前，显示模型的逐步思考过程。需要启用思考模式。" },
     settingsThinkingMode: { en: 'Thinking Mode', zh: '思考模式' },
     settingsThinkingMode_auto: { en: 'Auto', zh: '自动' },
+    settingsThinkingMode_preset: { en: 'Thinking Level', zh: '思考等级' },
     settingsThinkingMode_off: { en: 'Off', zh: '关闭' },
-    settingsThinkingMode_custom: { en: 'Custom', zh: '自定义' },
+    settingsThinkingMode_custom: { en: 'Thinking Budget', zh: '思考预算' },
     settingsThinkingMode_tooltip: { en: "Controls the model's 'thinking' process. Auto is recommended for quality. Off prioritizes speed. Custom lets you set a specific token budget for thinking.", zh: '控制模型的“思考”过程。为保证质量建议设为“自动”。“关闭”则优先考虑速度。“自定义”允许您为思考设置特定的令牌预算。' },
     settingsThinkingCustom_placeholder: { en: 'Token budget', zh: '令牌预算' },
     settingsThinkingBudget: { en: 'Thinking Budget', zh: '思考预算' },
+    settingsThinkingLevel: { en: 'Thinking Level', zh: '思考等级' },
     settingsThinkingBudget_tooltip: { en: 'Set token budget for thinking. -1 for auto/unlimited, 0 to disable (like toggle off), >0 for specific token limit.', zh: '设置思考的令牌预算。-1 为自动/无限制，0 为禁用（与关闭开关效果相同），大于 0 为指定的令牌限制。' },
     settingsThinkingBudget_placeholder: { en: 'e.g., -1 for auto', zh: '例如：-1 代表自动' },
     settingsTranscriptionThinking: { en: 'Enable Thinking for Voice Input', zh: '启用语音输入思考功能' },

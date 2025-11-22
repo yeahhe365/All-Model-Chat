@@ -51,12 +51,6 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
     }, []);
 
     useEffect(() => {
-        if (isOpen) {
-            updatePosition();
-        }
-    }, [isOpen, updatePosition]);
-
-    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 buttonRef.current && !buttonRef.current.contains(event.target as Node) &&
@@ -94,6 +88,14 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
         setIsOpen(false);
     };
 
+    const handleToggle = () => {
+        if (disabled) return;
+        if (!isOpen) {
+            updatePosition();
+        }
+        setIsOpen(!isOpen);
+    };
+
     return (
         <div className={className}>
             <label htmlFor={id} className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
@@ -104,7 +106,7 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
                     ref={buttonRef}
                     type="button"
                     id={id}
-                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    onClick={handleToggle}
                     disabled={disabled}
                     className={`w-full p-2.5 text-left border rounded-lg flex items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--theme-bg-secondary)]' : 'cursor-pointer bg-[var(--theme-bg-input)] hover:border-[var(--theme-border-focus)]'} border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm`}
                     {...rest as any}
@@ -112,13 +114,13 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
                     <span className="truncate mr-2">
                         {selectedOption ? selectedOption.label : <span className="text-[var(--theme-text-tertiary)]">Select...</span>}
                     </span>
-                    <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
                 </button>
                 
                 {isOpen && createPortal(
                     <div
                         ref={dropdownRef}
-                        className="fixed z-[100] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
+                        className="fixed z-[2200] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
                         style={{
                             top: position.top,
                             left: position.left,
@@ -140,7 +142,7 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
                                     } ${opt.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                                 >
                                     <span className="truncate">{opt.label}</span>
-                                    {String(opt.value) === String(value) && <Check size={14} className="text-[var(--theme-text-link)] flex-shrink-0 ml-2" />}
+                                    {String(opt.value) === String(value) && <Check size={14} className="text-[var(--theme-text-link)] flex-shrink-0 ml-2" strokeWidth={1.5} />}
                                 </button>
                             ))}
                         </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Mic, StopCircle, Check, X, Trash2, Loader2 } from 'lucide-react';
 
@@ -177,7 +176,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
 
     return (
         <div
-            className="fixed inset-0 bg-black/80 z-50 flex flex-col items-center justify-center p-4 backdrop-blur-sm modal-enter-animation"
+            className="fixed inset-0 bg-black/80 z-[2100] flex flex-col items-center justify-center p-4 backdrop-blur-sm modal-enter-animation"
             role="dialog"
             aria-modal="true"
             aria-labelledby="audio-recorder-title"

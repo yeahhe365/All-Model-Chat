@@ -1,4 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { translations, getResponsiveValue, getKeyForRequest } from '../utils/appUtils';
@@ -81,6 +82,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [urlInput, setUrlInput] = useState('');
   const [isAddingByUrl, setIsAddingByUrl] = useState(false);
   const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const justInitiatedFileOpRef = useRef(false);
@@ -91,6 +93,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const isDesktop = useIsDesktop();
 
   const adjustTextareaHeight = useCallback(() => {
+    if (isFullscreen) return; // Do not adjust height in fullscreen mode
     const target = textareaRef.current;
     if (!target) return;
     // Use isMobile hook for reactive resizing instead of one-off calculation
@@ -99,7 +102,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     const scrollHeight = target.scrollHeight;
     const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
     target.style.height = `${newHeight}px`;
-  }, [isMobile]);
+  }, [isMobile, isFullscreen]);
 
   const {
     showCamera, showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -174,9 +177,12 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             setIsWaitingForUpload(false);
             setIsAnimatingSend(true);
             setTimeout(() => setIsAnimatingSend(false), 400);
+            if (isFullscreen) {
+                setIsFullscreen(false); // Close fullscreen on send
+            }
         }
     }
-  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft]);
+  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft, isFullscreen]);
 
   // Load draft from localStorage when session changes
   useEffect(() => {
@@ -284,7 +290,10 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             setInputText('');
             onMessageSent();
             setIsAnimatingSend(true);
-            setTimeout(() => setIsAnimatingSend(false), 400); 
+            setTimeout(() => setIsAnimatingSend(false), 400);
+            if (isFullscreen) {
+                setIsFullscreen(false);
+            }
         }
     }
   };
@@ -295,7 +304,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     setIsTranslating(true);
     setAppFileError(null);
 
-    const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+    // Use skipIncrement: true for translation tool to avoid burning through rotation keys
+    const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
     if ('error' in keyResult) {
         setAppFileError(keyResult.error);
         setIsTranslating(false);
@@ -349,6 +359,9 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             e.preventDefault();
             handleSubmit(e as unknown as React.FormEvent);
         }
+    } else if (e.key === 'Escape' && isFullscreen) {
+        e.preventDefault();
+        handleToggleFullscreen();
     }
   };
 
@@ -375,33 +388,44 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     toggleFunc();
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
-  
-  return (
-    <>
-      <ChatInputModals
-        showCamera={showCamera}
-        onPhotoCapture={handlePhotoCapture}
-        onCameraCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }}
-        showRecorder={showRecorder}
-        onAudioRecord={handleAudioRecord}
-        onRecorderCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }}
-        showCreateTextFileEditor={showCreateTextFileEditor}
-        onConfirmCreateTextFile={handleConfirmCreateTextFile}
-        onCreateTextFileCancel={() => { setShowCreateTextFileEditor(false); textareaRef.current?.focus(); }}
-        isHelpModalOpen={isHelpModalOpen}
-        onHelpModalClose={() => setIsHelpModalOpen(false)}
-        allCommandsForHelp={allCommandsForHelp}
-        isProcessingFile={isProcessingFile}
-        isLoading={isLoading}
-        t={t}
-        isHistorySidebarOpen={isHistorySidebarOpen}
-      />
 
+  const handleToggleFullscreen = () => {
+      setIsFullscreen(prev => {
+          const newState = !prev;
+          if (newState) {
+              // Entering fullscreen, we want to focus. Height is handled by CSS.
+              setTimeout(() => textareaRef.current?.focus(), 50);
+          } else {
+              // Exiting fullscreen, need to reset height calculation
+              setTimeout(() => adjustTextareaHeight(), 0);
+          }
+          return newState;
+      });
+  };
+  
+  // Conditional styles for fullscreen
+  const wrapperClass = isFullscreen 
+    ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] p-4 sm:p-6 flex flex-col animate-in fade-in duration-200" 
+    : `bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`;
+
+  const innerContainerClass = isFullscreen
+    ? "w-full max-w-6xl mx-auto flex flex-col h-full"
+    : `mx-auto w-full ${!isPipActive ? 'max-w-6xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
+
+  const formClass = isFullscreen
+    ? "flex-grow flex flex-col relative min-h-0"
+    : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
+
+  const inputContainerClass = isFullscreen
+    ? "flex flex-col gap-1 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-3 shadow-none h-full transition-all duration-200"
+    : "flex flex-col gap-1 rounded-2xl border border-[color:var(--theme-border-secondary)/0.5] bg-[var(--theme-bg-input)] px-2 py-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200";
+
+  const chatInputContent = (
       <div
-        className={`bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`}
+        className={wrapperClass}
         aria-hidden={isAnyModalOpen}
       >
-        <div className={`mx-auto w-full ${!isPipActive ? 'max-w-6xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`}>
+        <div className={innerContainerClass}>
             <ChatInputToolbar
               isImagenModel={isImagenModel || false}
               aspectRatio={aspectRatio}
@@ -426,27 +450,28 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
               t={t}
             />
             
-            <form onSubmit={handleSubmit} className={`relative ${isAnimatingSend ? 'form-send-animate' : ''}`}>
+            <form onSubmit={handleSubmit} className={formClass}>
                 <SlashCommandMenu
                     isOpen={slashCommandState.isOpen}
                     commands={slashCommandState.filteredCommands}
                     onSelect={handleCommandSelect}
                     selectedIndex={slashCommandState.selectedIndex}
+                    className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
                 />
-                <div className="flex flex-col gap-1 rounded-2xl border border-[color:var(--theme-border-secondary)/0.5] bg-[var(--theme-bg-input)] px-2 py-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200">
+                <div className={inputContainerClass}>
                     <textarea
                         ref={textareaRef} value={inputText} onChange={handleInputChange}
                         onKeyDown={handleKeyDown} onPaste={handlePaste}
                         onCompositionStart={() => isComposingRef.current = true}
                         onCompositionEnd={() => isComposingRef.current = false}
                         placeholder={t('chatInputPlaceholder')}
-                        className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar"
-                        style={{ height: `${isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
+                        className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow"
+                        style={{ height: isFullscreen ? '100%' : `${isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording}
                         rows={1}
                     />
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-2">
                         <ChatInputActions
                             onAttachmentAction={handleAttachmentAction}
                             disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}
@@ -471,6 +496,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                             onTranslate={handleTranslate}
                             isTranslating={isTranslating}
                             inputText={inputText}
+                            onToggleFullscreen={handleToggleFullscreen}
+                            isFullscreen={isFullscreen}
                         />
                          {/* Hidden inputs for file selection, triggered by AttachmentMenu */}
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
@@ -481,6 +508,30 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             </form>
         </div>
       </div>
+  );
+
+  return (
+    <>
+      <ChatInputModals
+        showCamera={showCamera}
+        onPhotoCapture={handlePhotoCapture}
+        onCameraCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }}
+        showRecorder={showRecorder}
+        onAudioRecord={handleAudioRecord}
+        onRecorderCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }}
+        showCreateTextFileEditor={showCreateTextFileEditor}
+        onConfirmCreateTextFile={handleConfirmCreateTextFile}
+        onCreateTextFileCancel={() => { setShowCreateTextFileEditor(false); textareaRef.current?.focus(); }}
+        isHelpModalOpen={isHelpModalOpen}
+        onHelpModalClose={() => setIsHelpModalOpen(false)}
+        allCommandsForHelp={allCommandsForHelp}
+        isProcessingFile={isProcessingFile}
+        isLoading={isLoading}
+        t={t}
+        isHistorySidebarOpen={isHistorySidebarOpen}
+      />
+
+      {isFullscreen ? createPortal(chatInputContent, document.body) : chatInputContent}
     </>
   );
 };

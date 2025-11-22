@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedChatSession, ChatGroup } from '../types';
 import { translations } from '../utils/appUtils';
@@ -5,6 +6,8 @@ import { SidebarHeader } from './sidebar/SidebarHeader';
 import { SidebarActions } from './sidebar/SidebarActions';
 import { SessionItem } from './sidebar/SessionItem';
 import { GroupItem } from './sidebar/GroupItem';
+import { PanelLeft, SquarePen, Search, MessageSquareText, Settings, MessageSquare } from 'lucide-react';
+import { IconNewChat, IconSidebarToggle } from './icons/CustomIcons';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -25,6 +28,8 @@ interface HistorySidebarProps {
   onRenameGroup: (groupId: string, newTitle: string) => void;
   onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
   onToggleGroupExpansion: (groupId: string) => void;
+  onOpenSettingsModal: () => void;
+  onOpenScenariosModal: () => void;
   themeColors: {
     bgPrimary: string;
     bgSecondary: string;
@@ -47,7 +52,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     isOpen, onToggle, sessions, groups, activeSessionId, loadingSessionIds,
     generatingTitleSessionIds, onSelectSession, onOpenExportModal, onAddNewGroup,
     onDeleteGroup, onRenameGroup, onMoveSessionToGroup, onToggleGroupExpansion,
-    themeId, t, language, onNewChat, onDeleteSession, onRenameSession, onTogglePinSession
+    themeId, t, language, onNewChat, onDeleteSession, onRenameSession, onTogglePinSession,
+    onOpenSettingsModal, onOpenScenariosModal
   } = props;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -191,14 +197,34 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
 }, [sessionsByGroupId, t, language]);
 
 
-  const handleDragStart = (e: React.DragEvent, sessionId: string) => { e.dataTransfer.setData('sessionId', sessionId); };
-  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); };
+  const handleDragStart = (e: React.DragEvent, sessionId: string) => { 
+      e.dataTransfer.setData('sessionId', sessionId);
+      e.dataTransfer.effectAllowed = 'move';
+  };
+  
+  const handleDragOver = (e: React.DragEvent) => { 
+      e.preventDefault(); 
+      e.dataTransfer.dropEffect = 'move';
+  };
+  
   const handleDrop = (e: React.DragEvent, groupId: string | null) => {
     e.preventDefault();
+    e.stopPropagation(); // Stop bubbling to prevent double drops
     const sessionId = e.dataTransfer.getData('sessionId');
     const targetGroupId = groupId === 'all-conversations' ? null : groupId;
     if (sessionId) onMoveSessionToGroup(sessionId, targetGroupId);
     setDragOverId(null);
+  };
+
+  const handleMainDragLeave = (e: React.DragEvent) => {
+      // Only reset if leaving the main container, not entering a child
+      if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+      setDragOverId(null);
+  };
+
+  const handleMiniSearchClick = () => {
+      onToggle();
+      setIsSearching(true);
   };
 
   const ungroupedSessions = sessionsByGroupId.get(null) || [];
@@ -213,70 +239,120 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
   };
 
+  const MiniSidebarButton = ({ onClick, icon: Icon, title }: { onClick: () => void, icon: React.ElementType, title: string }) => (
+      <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+          title={title}
+          aria-label={title}
+      >
+          <Icon size={20} strokeWidth={2} />
+      </button>
+  );
+
   return (
     <aside
-      className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} shadow-lg flex-shrink-0
-                 transition-all duration-300 ease-in-out
-                 absolute md:static top-0 left-0 z-30
-                 transform md:transform-none
-                 w-64 md:w-72
-                 ${isOpen ? 'translate-x-0 md:ml-0' : '-translate-x-full md:-ml-72'}
-                 ${isOpen ? 'border-r border-[var(--theme-border-primary)]' : ''}`}
+      className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} flex-shrink-0
+                 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+                 absolute md:static top-0 left-0 z-50
+                 overflow-hidden
+                 ${isOpen ? 'w-64 md:w-72 translate-x-0' : 'w-64 md:w-[68px] -translate-x-full md:translate-x-0'}
+                 
+                 border-r border-[var(--theme-border-primary)]`}
       role="complementary" aria-label={t('history_title')}
     >
-      <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
-      <SidebarActions 
-        onNewChat={onNewChat}
-        onAddNewGroup={onAddNewGroup}
-        isSearching={isSearching}
-        setIsSearching={setIsSearching}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        t={t}
-      />
-      <div className="flex-grow overflow-y-auto custom-scrollbar p-2">
-        {sessions.length === 0 && !searchQuery ? (
-          <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
-        ) : (
-          <div onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, 'all-conversations')} onDragEnter={() => setDragOverId('all-conversations')} onDragLeave={() => setDragOverId(null)} className={`rounded-lg transition-colors ${dragOverId === 'all-conversations' ? 'bg-[var(--theme-bg-accent)] bg-opacity-20' : ''}`}>
-            {sortedGroups.map(group => (
-              <GroupItem 
-                key={group.id}
-                group={group}
-                sessions={sessionsByGroupId.get(group.id) || []}
-                editingItem={editingItem}
-                dragOverId={dragOverId}
-                onToggleGroupExpansion={onToggleGroupExpansion}
-                handleGroupStartEdit={(item) => handleStartEdit('group', item)}
-                handleDrop={handleDrop}
-                handleDragOver={handleDragOver}
-                setDragOverId={setDragOverId}
-                setEditingItem={setEditingItem}
-                onDeleteGroup={onDeleteGroup}
-                {...sessionItemSharedProps}
-              />
-            ))}
-            
-            {pinnedUngrouped.length > 0 && (
-                <div>
-                    <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{t('history_pinned')}</div>
-                    <ul>
-                        {pinnedUngrouped.map(session => <SessionItem key={session.id} session={session} {...sessionItemSharedProps} />)}
-                    </ul>
+      {isOpen ? (
+        <div className="w-64 md:w-72 h-full flex flex-col min-w-[16rem] md:min-w-[18rem]">
+            <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
+            <SidebarActions 
+                onNewChat={onNewChat}
+                onAddNewGroup={onAddNewGroup}
+                isSearching={isSearching}
+                setIsSearching={setIsSearching}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                t={t}
+            />
+            <div className="flex-grow overflow-y-auto custom-scrollbar p-2">
+                {sessions.length === 0 && !searchQuery ? (
+                <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
+                ) : (
+                <div 
+                    onDragOver={handleDragOver} 
+                    onDrop={(e) => handleDrop(e, 'all-conversations')} 
+                    onDragEnter={() => setDragOverId('all-conversations')} 
+                    onDragLeave={handleMainDragLeave} 
+                    className={`rounded-lg transition-colors min-h-[50px] ${dragOverId === 'all-conversations' ? 'bg-[var(--theme-bg-accent)] bg-opacity-10 ring-2 ring-[var(--theme-bg-accent)] ring-inset ring-opacity-50' : ''}`}
+                >
+                    {sortedGroups.map(group => (
+                    <GroupItem 
+                        key={group.id}
+                        group={group}
+                        sessions={sessionsByGroupId.get(group.id) || []}
+                        editingItem={editingItem}
+                        dragOverId={dragOverId}
+                        onToggleGroupExpansion={onToggleGroupExpansion}
+                        handleGroupStartEdit={(item) => handleStartEdit('group', item)}
+                        handleDrop={handleDrop}
+                        handleDragOver={handleDragOver}
+                        setDragOverId={setDragOverId}
+                        setEditingItem={setEditingItem}
+                        onDeleteGroup={onDeleteGroup}
+                        {...sessionItemSharedProps}
+                    />
+                    ))}
+                    
+                    {pinnedUngrouped.length > 0 && (
+                        <div>
+                            <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{t('history_pinned')}</div>
+                            <ul>
+                                {pinnedUngrouped.map(session => <SessionItem key={session.id} session={session} {...sessionItemSharedProps} />)}
+                            </ul>
+                        </div>
+                    )}
+                    
+                    {categoryOrder.map(categoryName => (
+                        <div key={categoryName}>
+                            <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{categoryName}</div>
+                            <ul>
+                                {categories[categoryName].map(session => <SessionItem key={session.id} session={session} {...sessionItemSharedProps} />)}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
-            )}
+                )}
+            </div>
             
-            {categoryOrder.map(categoryName => (
-                <div key={categoryName}>
-                    <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{categoryName}</div>
-                    <ul>
-                        {categories[categoryName].map(session => <SessionItem key={session.id} session={session} {...sessionItemSharedProps} />)}
-                    </ul>
-                </div>
-            ))}
+            <div className="p-2 flex justify-between items-center">
+                 <button
+                    onClick={onOpenSettingsModal}
+                    className="p-2 text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] rounded-lg transition-colors flex items-center gap-2 text-sm flex-grow"
+                 >
+                    <Settings size={18} strokeWidth={2} />
+                    <span>{t('settingsTitle')}</span>
+                 </button>
+            </div>
+        </div>
+      ) : (
+          <div 
+            className="hidden md:flex flex-col items-center py-4 h-full gap-4 w-full min-w-[68px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors"
+            onClick={onToggle}
+          >
+              <MiniSidebarButton onClick={onToggle} icon={IconSidebarToggle} title={t('historySidebarOpen')} />
+              
+              <div className="w-8 h-px bg-[var(--theme-border-primary)] my-1"></div>
+              
+              <MiniSidebarButton onClick={onNewChat} icon={IconNewChat} title={t('newChat')} />
+              <MiniSidebarButton onClick={handleMiniSearchClick} icon={Search} title={t('history_search_button')} />
+              
+              <div className="mt-auto">
+                  <MiniSidebarButton onClick={onOpenSettingsModal} icon={Settings} title={t('settingsTitle')} />
+              </div>
           </div>
-        )}
-      </div>
+      )}
     </aside>
   );
 };

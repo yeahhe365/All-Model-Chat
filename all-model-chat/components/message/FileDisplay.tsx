@@ -30,12 +30,8 @@ const formatFileSize = (sizeInBytes: number): string => {
 };
 
 export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList, isGridView }) => {
-  const commonClasses = "inline-flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 rounded-md bg-[var(--theme-bg-input)] bg-opacity-50 border border-[var(--theme-border-secondary)]";
-  const textClasses = "text-xs sm:text-sm";
-  const nameClass = "font-medium truncate block";
-  const detailsClass = "text-xs text-[var(--theme-text-tertiary)]";
   const [idCopied, setIdCopied] = useState(false);
-  const iconSize = getResponsiveValue(20, 24);
+  const iconSize = 20;
 
   const isClickableImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error && onImageClick;
 
@@ -62,104 +58,94 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
     document.body.removeChild(link);
   };
 
-  const imageElement = (
-      <img 
-        src={file.dataUrl} 
-        alt={file.name} 
-        className={`max-w-full min-w-0 rounded-md object-contain ${!isGridView && 'max-h-72 sm:max-h-80'} ${isClickableImage ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
-        aria-label={`Uploaded image: ${file.name}`}
-        onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
-        tabIndex={isClickableImage ? 0 : -1} 
-        onKeyDown={isClickableImage ? (e) => { if ((e.key === 'Enter' || e.key === ' ') && onImageClick) onImageClick(file); } : undefined}
-      />
-  );
+  // Render Image Content
+  if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error) {
+      return (
+        <div className={`relative group rounded-xl overflow-hidden border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] shadow-sm transition-all hover:shadow-md ${isGridView ? '' : 'w-fit max-w-full sm:max-w-md'}`}>
+            <img 
+                src={file.dataUrl} 
+                alt={file.name} 
+                className={`block ${isGridView ? 'w-full h-full object-cover aspect-square' : 'w-auto h-auto max-w-full max-h-[60vh] object-contain'} ${isClickableImage ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''}`}
+                aria-label={`Uploaded image: ${file.name}`}
+                onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
+            />
+            {isFromMessageList && (
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {(file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && (
+                        <button
+                            onClick={handleDownloadImage}
+                            title="Download Image"
+                            className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-colors"
+                        >
+                            <Download size={14} strokeWidth={2} />
+                        </button>
+                    )}
+                    {file.fileApiName && file.uploadState === 'active' && (
+                        <button
+                            onClick={handleCopyId}
+                            title={idCopied ? "ID Copied!" : "Copy File ID"}
+                            className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${idCopied ? 'text-green-400' : 'text-white'}`}
+                        >
+                            {idCopied ? <Check size={14} strokeWidth={2} /> : <ClipboardCopy size={14} strokeWidth={2} />}
+                        </button>
+                    )}
+                </div>
+            )}
+        </div>
+      );
+  }
+
+  // Render File Card
+  let Icon = FileText;
+  let iconColorClass = "text-[var(--theme-text-tertiary)]";
   
+  if (SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) {
+      Icon = FileAudio;
+  } else if (file.type === 'video/youtube-link') {
+      Icon = Youtube;
+      iconColorClass = "text-red-500";
+  } else if (SUPPORTED_VIDEO_MIME_TYPES.includes(file.type)) {
+      Icon = FileVideo;
+      iconColorClass = "text-purple-500";
+  } else if (SUPPORTED_PDF_MIME_TYPES.includes(file.type)) {
+      Icon = FileText;
+      iconColorClass = "text-red-500";
+  } else if (file.error) {
+      Icon = AlertCircle;
+      iconColorClass = "text-[var(--theme-text-danger)]";
+  }
+
   return (
-    <div className={`${commonClasses} ${file.error ? 'border-[var(--theme-bg-danger)]' : ''} relative group`}>
-      {SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error ? (
-        imageElement
-      ) : SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.error ? (
-        <>
-          <ImageIcon size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
-          </div>
-        </>
-      ) : SUPPORTED_AUDIO_MIME_TYPES.includes(file.type) && !file.error ? (
-        <>
-          <FileAudio size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
-          </div>
-        </>
-      ) : file.type === 'video/youtube-link' && !file.error ? (
-        <>
-          <Youtube size={iconSize} className="text-red-500 flex-shrink-0" strokeWidth={1.5} />
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>YouTube Video</span>
-          </div>
-        </>
-      ) : SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) && !file.error ? (
-        <>
-          <FileVideo size={iconSize} className="text-purple-400 flex-shrink-0" strokeWidth={1.5} />
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{`${file.type} - ${formatFileSize(file.size)}`}</span>
-          </div>
-        </>
-      ) : SUPPORTED_PDF_MIME_TYPES.includes(file.type) && !file.error ? ( 
-        <>
-          <FileText size={iconSize} className="text-red-500 flex-shrink-0" strokeWidth={1.5} /> 
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
-          </div>
-        </>
-      ) : SUPPORTED_TEXT_MIME_TYPES.includes(file.type) && !file.error ? (
-        <>
-          <FileText size={iconSize} className="text-[var(--theme-text-tertiary)] flex-shrink-0" strokeWidth={1.5} />
-          <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
-          </div>
-        </>
-      ) : ( 
-        <>
-          <AlertCircle size={iconSize} className={`${file.error ? 'text-[var(--theme-text-danger)]' : 'text-[var(--theme-text-tertiary)]'} flex-shrink-0`} strokeWidth={1.5} />
-           <div className={textClasses}>
-            <span className={nameClass} title={file.name}>{file.name}</span>
-            <span className={detailsClass}>{file.type} - {formatFileSize(file.size)}</span>
-          </div>
-        </>
-      )}
-      {file.error && (
-        <p className="text-xs text-[var(--theme-text-danger)] ml-auto pl-2 flex-shrink-0" title={file.error}>Error</p>
-      )}
-      {isFromMessageList && file.dataUrl && (file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && !file.error && (
-        <button
-            onClick={handleDownloadImage}
-            title="Download Image"
-            aria-label="Download Image"
-            className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-white/50"
-        >
-            <Download size={14} strokeWidth={1.5} />
-        </button>
-      )}
-      {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
-        <button
-          onClick={handleCopyId}
-          title={idCopied ? "File ID Copied!" : "Copy File ID (e.g., files/xyz123)"}
-          aria-label={idCopied ? "File ID Copied!" : "Copy File ID"}
-          className={`absolute top-0.5 right-0.5 sm:top-1 sm:right-1 p-0.5 rounded-full bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] transition-all
-                      ${idCopied ? 'text-[var(--theme-text-success)]' : 'text-[var(--theme-text-link)]'}
-                      opacity-0 group-hover:opacity-100 focus:opacity-100`}
-        >
-          {idCopied ? <Check size={12} strokeWidth={1.5} /> : <ClipboardCopy size={12} strokeWidth={1.5} />}
-        </button>
-      )}
+    <div className={`flex items-center gap-3 p-2.5 rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all shadow-sm hover:shadow max-w-xs sm:max-w-sm relative group ${file.error ? 'border-[var(--theme-bg-danger)]/50' : ''}`}>
+        <div className="w-10 h-10 rounded-lg bg-[var(--theme-bg-tertiary)] flex items-center justify-center flex-shrink-0">
+            <Icon size={20} className={iconColorClass} strokeWidth={1.5} />
+        </div>
+        
+        <div className="flex-grow min-w-0">
+            <p className="text-sm font-medium text-[var(--theme-text-primary)] truncate" title={file.name}>
+                {file.name}
+            </p>
+            <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]">
+                <span className="truncate max-w-[100px]">{file.type.split('/').pop()?.toUpperCase() || 'FILE'}</span>
+                {file.size > 0 && (
+                    <>
+                        <span className="w-0.5 h-0.5 rounded-full bg-current"></span>
+                        <span>{formatFileSize(file.size)}</span>
+                    </>
+                )}
+                {file.error && <span className="text-[var(--theme-text-danger)] ml-1">Error</span>}
+            </div>
+        </div>
+
+        {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
+            <button
+                onClick={handleCopyId}
+                title={idCopied ? "Copied!" : "Copy File ID"}
+                className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}
+            >
+                {idCopied ? <Check size={16} strokeWidth={2} /> : <ClipboardCopy size={16} strokeWidth={2} />}
+            </button>
+        )}
     </div>
   );
 };

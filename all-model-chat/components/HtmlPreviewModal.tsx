@@ -200,7 +200,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
       aria-label={isTrueFullscreen ? "Exit true fullscreen" : "Enter true fullscreen"}
       title={isTrueFullscreen ? "Exit Fullscreen" : "Enter Fullscreen (Browser)"}
     >
-      {isTrueFullscreen ? <Minimize size={iconSize} /> : <Expand size={iconSize} strokeWidth={2.5} />}
+      {isTrueFullscreen ? <Minimize size={iconSize} strokeWidth={1.5} /> : <Expand size={iconSize} strokeWidth={1.5} />}
     </button>
   );
 
@@ -211,7 +211,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] backdrop-blur-sm"
+      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[2100] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="html-preview-modal-title"
@@ -233,7 +233,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 aria-label="Zoom out"
                 title="Zoom Out"
             >
-                <ZoomOut size={iconSize} />
+                <ZoomOut size={iconSize} strokeWidth={1.5} />
             </button>
             <span className="text-xs w-12 text-center text-[var(--theme-text-tertiary)] font-mono tabular-nums select-none">
                 {(scale * 100).toFixed(0)}%
@@ -245,7 +245,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 aria-label="Zoom in"
                 title="Zoom In"
             >
-                <ZoomIn size={iconSize} />
+                <ZoomIn size={iconSize} strokeWidth={1.5} />
             </button>
             <span className="w-px h-4 bg-[var(--theme-border-secondary)] mx-1"></span>
             <FullscreenToggleButton />
@@ -255,7 +255,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 aria-label="Download HTML content"
                 title="Download HTML"
             >
-                <Download size={iconSize} /> 
+                <Download size={iconSize} strokeWidth={1.5} /> 
             </button>
             <button
                 onClick={handleScreenshot}
@@ -264,7 +264,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 aria-label="Take screenshot of content"
                 title="Screenshot"
             >
-                {isScreenshotting ? <Loader2 size={iconSize} className="animate-spin" /> : <ImageIcon size={iconSize} />}
+                {isScreenshotting ? <Loader2 size={iconSize} className="animate-spin" strokeWidth={1.5} /> : <ImageIcon size={iconSize} strokeWidth={1.5} />}
             </button>
             <button
               onClick={handleRefresh}
@@ -272,7 +272,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
               aria-label="Refresh preview content"
               title="Refresh Preview"
             >
-              <RotateCw size={iconSize} />
+              <RotateCw size={iconSize} strokeWidth={1.5} />
             </button>
             {!isTrueFullscreen && (
                 <button
@@ -281,7 +281,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
                 aria-label="Close HTML preview"
                 title="Close Preview (Esc)"
                 >
-                <X size={iconSize + 2} />
+                <X size={iconSize + 2} strokeWidth={1.5} />
                 </button>
             )}
           </div>

@@ -1,3 +1,4 @@
+
 // Use a specific version to ensure stability, matching the one in the app's import map.
 try {
   self.importScripts('https://esm.sh/@google/genai@1.2.0');
@@ -5,7 +6,7 @@ try {
   console.error('[SW] Failed to import @google/genai SDK:', e);
 }
 
-const CACHE_NAME = 'all-model-chat-cache-v3';
+const CACHE_NAME = 'all-model-chat-cache-v1.7.2';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
 const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];

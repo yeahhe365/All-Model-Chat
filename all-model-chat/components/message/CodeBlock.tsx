@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
 
@@ -10,38 +11,40 @@ const isLikelyHtml = (textContent: string): boolean => {
 const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
     const lang = language.toLowerCase();
 
-    const styleMap: { [key: string]: React.CSSProperties } = {
-        'html': { color: '#E34F26', backgroundColor: 'rgba(227, 79, 38, 0.1)', borderColor: 'rgba(227, 79, 38, 0.2)' },
-        'css': { color: '#1572B6', backgroundColor: 'rgba(21, 114, 182, 0.1)', borderColor: 'rgba(21, 114, 182, 0.2)' },
-        'js': { color: '#323330', backgroundColor: '#F0DB4F', borderColor: '#C8B438' },
-        'javascript': { color: '#323330', backgroundColor: '#F0DB4F', borderColor: '#C8B438' },
-        'ts': { color: '#FFFFFF', backgroundColor: '#3178C6', borderColor: '#265E9D' },
-        'typescript': { color: '#FFFFFF', backgroundColor: '#3178C6', borderColor: '#265E9D' },
-        'python': { color: '#3776AB', backgroundColor: 'rgba(55, 118, 171, 0.1)', borderColor: 'rgba(55, 118, 171, 0.2)' },
-        'py': { color: '#3776AB', backgroundColor: 'rgba(55, 118, 171, 0.1)', borderColor: 'rgba(55, 118, 171, 0.2)' },
-        'bash': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
-        'shell': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
-        'sh': { color: '#4EAA25', backgroundColor: 'rgba(78, 170, 37, 0.1)', borderColor: 'rgba(78, 170, 37, 0.2)' },
-        'json': { color: '#F16C2E', backgroundColor: 'rgba(241, 108, 46, 0.1)', borderColor: 'rgba(241, 108, 46, 0.2)' },
-        'md': { color: '#087ea4', backgroundColor: 'rgba(8, 126, 164, 0.1)', borderColor: 'rgba(8, 126, 164, 0.2)' },
-        'markdown': { color: '#087ea4', backgroundColor: 'rgba(8, 126, 164, 0.1)', borderColor: 'rgba(8, 126, 164, 0.2)' },
-        'txt': { color: '#6c757d', backgroundColor: 'rgba(108, 117, 125, 0.1)', borderColor: 'rgba(108, 117, 125, 0.2)' },
+    const colorMap: { [key: string]: string } = {
+        'html': '#E34F26',
+        'css': '#1572B6',
+        'js': '#F0DB4F',
+        'javascript': '#F0DB4F',
+        'ts': '#3178C6',
+        'typescript': '#3178C6',
+        'python': '#3776AB',
+        'py': '#3776AB',
+        'bash': '#4EAA25',
+        'shell': '#4EAA25',
+        'sh': '#4EAA25',
+        'json': '#F16C2E',
+        'md': '#087ea4',
+        'markdown': '#087ea4',
+        'txt': '#858585',
+        'jsx': '#61DAFB',
+        'tsx': '#3178C6',
+        'sql': '#e38c00',
+        'java': '#b07219',
+        'c': '#555555',
+        'cpp': '#f34b7d',
+        'go': '#00ADD8',
+        'rust': '#dea584',
     };
 
-    const style = styleMap[lang];
-
-    if (style) {
-        return (
-            <span style={style} className="language-icon-badge">
-                {lang}
-            </span>
-        );
-    }
+    const color = colorMap[lang] || '#858585';
 
     return (
-        <span className="text-xs text-[var(--theme-text-tertiary)] select-none font-mono uppercase">
-            {lang}
-        </span>
+        <div className="flex items-center gap-2 select-none">
+            <span className="text-xs font-bold tracking-wide uppercase text-[var(--theme-text-secondary)] font-mono">
+                {lang}
+            </span>
+        </div>
     );
 };
 
@@ -136,18 +139,21 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
 
 
     return (
-        <div className="code-block-container group relative border border-[var(--theme-border-primary)] rounded-md overflow-hidden bg-[var(--markdown-pre-bg)] my-2">
-            <div className='code-block-header flex items-center justify-between'>
-                <LanguageIcon language={finalLanguage} />
+        <div className="code-block-container group relative border border-[var(--theme-border-primary)] rounded-lg overflow-hidden bg-[var(--markdown-pre-bg)] my-3 shadow-sm transition-all duration-200 hover:border-[var(--theme-border-secondary)]">
+            <div className='code-block-header flex items-center justify-between h-9 px-3 bg-[var(--theme-bg-code-block-header)] border-b border-[var(--theme-border-secondary)]'>
                 
-                <div className='flex items-center gap-1 sm:gap-1.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200'>
+                <div className="flex items-center gap-2">
+                    <LanguageIcon language={finalLanguage} />
+                </div>
+                
+                <div className='flex items-center gap-1'>
                     {likelyHTML && (
                         <>
-                            <button className="code-block-utility-button rounded-md" title="True Fullscreen Preview" onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> <ExternalLink size={14} /> </button>
-                            <button className="code-block-utility-button rounded-md" title="Modal Preview" onClick={() => onOpenHtmlPreview(codeText.current)}> <Maximize size={14} /> </button>
+                            <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title="True Fullscreen Preview" onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> <ExternalLink size={14} strokeWidth={1.5} /> </button>
+                            <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title="Modal Preview" onClick={() => onOpenHtmlPreview(codeText.current)}> <Maximize size={14} strokeWidth={1.5} /> </button>
                         </>
                     )}
-                    <button className="code-block-utility-button rounded-md" title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
+                    <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
                         let filename = `snippet.${finalLanguage}`;
                         if (downloadMimeType === 'text/html') {
                             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
@@ -166,13 +172,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                         a.click();
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
-                    }}> <FileCode2 size={14} /> </button>
-                     <button className="code-block-utility-button rounded-md" title={copied ? "Copied!" : "Copy code"} onClick={handleCopy}>
-                        {copied ? <Check size={14} className="text-[var(--theme-text-success)]" /> : <ClipboardCopy size={14} />}
+                    }}> <FileCode2 size={14} strokeWidth={1.5} /> </button>
+                     <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title={copied ? "Copied!" : "Copy code"} onClick={handleCopy}>
+                        {copied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <ClipboardCopy size={14} strokeWidth={1.5} />}
                     </button>
                     {isOverflowing && (
-                        <button onClick={handleToggleExpand} className="code-block-utility-button rounded-md" aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
-                            {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        <button onClick={handleToggleExpand} className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
+                            {isExpanded ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />}
                         </button>
                     )}
                 </div>
@@ -196,7 +202,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 )}
             </pre>
             {isOverflowing && !isExpanded && (
-                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none flex items-end justify-center pb-2">
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-[var(--theme-text-tertiary)] opacity-50 bg-[var(--markdown-pre-bg)] px-2 py-0.5 rounded-full mb-1 shadow-sm border border-[var(--theme-border-secondary)]/50">Expand to see more</span>
+                </div>
             )}
         </div>
     );

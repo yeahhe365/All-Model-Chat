@@ -69,7 +69,9 @@ export const useFileHandling = ({
                         return;
                     }
 
-                    const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+                    // Optimize polling by not rotating keys unnecessarily. 
+                    // We reuse the current index/key to avoid burning through rotation turns on poll ticks.
+                    const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
                     if ('error' in keyResult) {
                         logService.error(`Polling for ${fileApiName} stopped: ${keyResult.error}`);
                         setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, error: keyResult.error, uploadState: 'failed', isProcessing: false } : f));
@@ -242,6 +244,7 @@ export const useFileHandling = ({
             return; 
         }
 
+        // Adding file by ID is an explicit user action, we rotate key to be safe/fair
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
             logService.error('Cannot add file by ID: API key not configured.');

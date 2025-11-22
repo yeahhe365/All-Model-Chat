@@ -89,7 +89,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
 
   return (
     <div 
-      className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-2 sm:p-4"
+      className="fixed inset-0 bg-black/90 z-[2100] flex flex-col items-center justify-center p-2 sm:p-4"
       role="dialog" aria-modal="true" aria-labelledby="camera-capture-title"
     >
       <div className="relative w-full max-w-2xl bg-black rounded-lg shadow-2xl flex flex-col">

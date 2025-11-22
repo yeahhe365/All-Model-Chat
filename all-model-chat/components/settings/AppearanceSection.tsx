@@ -1,7 +1,9 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Info, Moon, Sun, Monitor, Globe, Type } from 'lucide-react';
+import { ChevronDown, Check, Info, Globe, Type } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Toggle, Tooltip } from './shared/Tooltip';
+import { IconThemeSystem, IconThemeDark, IconThemeLight } from '../icons/CustomIcons';
 
 interface AppearanceSectionProps {
   themeId: 'system' | 'onyx' | 'pearl';
@@ -67,9 +69,9 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   }, [isLanguageDropdownOpen]);
 
   const themeOptions: { id: 'system' | 'onyx' | 'pearl'; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
-    { id: 'system', labelKey: 'settingsThemeSystem', icon: <Monitor size={16} strokeWidth={1.5} /> },
-    { id: 'onyx', labelKey: 'settingsThemeDark', icon: <Moon size={16} strokeWidth={1.5} /> },
-    { id: 'pearl', labelKey: 'settingsThemeLight', icon: <Sun size={16} strokeWidth={1.5} /> },
+    { id: 'system', labelKey: 'settingsThemeSystem', icon: <IconThemeSystem size={16} strokeWidth={1.5} /> },
+    { id: 'onyx', labelKey: 'settingsThemeDark', icon: <IconThemeDark size={16} strokeWidth={1.5} /> },
+    { id: 'pearl', labelKey: 'settingsThemeLight', icon: <IconThemeLight size={16} strokeWidth={1.5} /> },
   ];
 
   const languageOptions: { id: 'system' | 'en' | 'zh'; label: string; }[] = [
@@ -81,7 +83,7 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
 
   const ToggleItem = ({ label, checked, onChange, tooltip }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string }) => (
-      <div className="flex items-center justify-between p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)] transition-colors">
+      <div className="flex items-center justify-between py-3 transition-colors">
           <span className="text-sm text-[var(--theme-text-primary)] flex items-center gap-2">
               {label}
               {tooltip && <Tooltip text={tooltip}><Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} /></Tooltip>}
@@ -91,62 +93,61 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Theme & Language */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
+      <div className="grid grid-cols-1 gap-2">
+          
+          {/* Theme Selector - Row Layout */}
+          <div className="flex items-center justify-between py-3 transition-colors">
+              <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2">
                   {t('settingsTheme')}
-              </label>
-              <div className="flex gap-2 p-1 bg-[var(--theme-bg-tertiary)]/50 rounded-xl border border-[var(--theme-border-secondary)]">
+              </span>
+              <div className="flex p-1 bg-[var(--theme-bg-input)]/50 rounded-lg border border-[var(--theme-border-secondary)]">
                   {themeOptions.map(option => (
                     <button
                         key={option.id}
                         onClick={() => setThemeId(option.id)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
                             themeId === option.id
                             ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm'
-                            : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-input)]/50'
+                            : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
                         }`}
                     >
-                        {option.icon}
-                        <span className="hidden sm:inline">{t(option.labelKey)}</span>
+                        {t(option.labelKey)}
                     </button>
                   ))}
               </div>
           </div>
 
-          <div className="space-y-3">
-              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
-                   {t('settingsLanguage')}
-              </label>
-              <div className="relative" ref={languageDropdownRef}>
-                  <button
-                    onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-xl hover:border-[var(--theme-border-focus)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
-                  >
-                    <span className="flex items-center gap-2 text-[var(--theme-text-primary)]">
-                        <Globe size={16} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />
-                        {currentLanguageDisplay}
-                    </span>
-                    <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
-                  </button>
+          {/* Language Selector - Row Layout */}
+          <div className="relative" ref={languageDropdownRef}>
+              <button
+                onClick={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                className="w-full flex items-center justify-between py-3 transition-colors focus:outline-none"
+              >
+                <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2">
+                    {t('settingsLanguage')}
+                </span>
+                <span className="flex items-center gap-2 text-xs font-medium text-[var(--theme-text-secondary)] bg-[var(--theme-bg-input)]/50 px-3 py-1.5 rounded-lg border border-[var(--theme-border-secondary)]">
+                    {currentLanguageDisplay}
+                    <ChevronDown size={14} className={`text-[var(--theme-text-tertiary)] transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
+                </span>
+              </button>
 
-                  {isLanguageDropdownOpen && (
-                    <div className="absolute top-full left-0 w-full mt-2 py-1 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                        {languageOptions.map(option => (
-                            <button
-                                key={option.id}
-                                onClick={() => { setLanguage(option.id as any); setIsLanguageDropdownOpen(false); }}
-                                className={`w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors ${language === option.id ? 'text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)]/30' : 'text-[var(--theme-text-primary)]'}`}
-                            >
-                                {option.label}
-                                {language === option.id && <Check size={14} strokeWidth={1.5} />}
-                            </button>
-                        ))}
-                    </div>
-                  )}
-              </div>
+              {isLanguageDropdownOpen && (
+                <div className="absolute top-full right-0 mt-2 w-48 py-1 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    {languageOptions.map(option => (
+                        <button
+                            key={option.id}
+                            onClick={() => { setLanguage(option.id as any); setIsLanguageDropdownOpen(false); }}
+                            className={`w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors ${language === option.id ? 'text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)]/30' : 'text-[var(--theme-text-primary)]'}`}
+                        >
+                            {option.label}
+                            {language === option.id && <Check size={14} strokeWidth={1.5} />}
+                        </button>
+                    ))}
+                </div>
+              )}
           </div>
       </div>
 
@@ -176,10 +177,10 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
 
       {/* Interface Toggles Grid */}
       <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-4">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-2">
               Interface Options
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-1">
               <ToggleItem label={t('headerStream')} checked={isStreamingEnabled} onChange={setIsStreamingEnabled} />
               <ToggleItem label={t('isAutoTitleEnabled')} checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} />
               

@@ -178,7 +178,7 @@ export interface GeminiService {
   translateText(apiKey: string, text: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
-  editImage: (apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal) => Promise<Part[]>;
+  editImage: (apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string) => Promise<Part[]>;
 }
 
 export interface ThoughtSupportingPart extends Part {
@@ -306,6 +306,8 @@ export interface ChatInputActionsProps {
   onTranslate: () => void;
   isTranslating: boolean;
   inputText: string;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
 }
 
 export interface CommandInfo {

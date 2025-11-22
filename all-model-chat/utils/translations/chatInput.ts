@@ -40,6 +40,8 @@ export const chatInputTranslations = {
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
     translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
     translating_button_title: { en: 'Translating...', zh: '翻译中...' },
+    fullscreen_tooltip_expand: { en: 'Expand Input', zh: '展开输入框' },
+    fullscreen_tooltip_collapse: { en: 'Collapse Input', zh: '收起输入框' },
 
     // Command descriptions for help modal
     help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },

@@ -1,65 +1,123 @@
-// services/logService.ts
+
+import { dbService } from "../utils/db";
 
 export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
+export type LogCategory = 'SYSTEM' | 'NETWORK' | 'USER' | 'MODEL' | 'DB' | 'AUTH' | 'FILE';
 
 export interface LogEntry {
-  id: number;
+  id?: number; // Auto-incremented by IndexedDB
   timestamp: Date;
   level: LogLevel;
+  category: LogCategory;
   message: string;
   data?: any;
 }
 
-type LogListener = (logs: LogEntry[]) => void;
+type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
 
-const LOG_STORAGE_KEY = 'chatLogEntries';
 const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
 const LOG_RETENTION_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
+const FLUSH_INTERVAL_MS = 2000; // 2 seconds
+const FLUSH_THRESHOLD = 50; // Flush if 50 items accumulate
 
 class LogServiceImpl {
-  private logs: LogEntry[] = [];
   private listeners: Set<LogListener> = new Set();
   private apiKeyUsage: Map<string, number> = new Map();
   private apiKeyListeners: Set<ApiKeyListener> = new Set();
-  private idCounter = 0;
+  
+  // Batching Buffer
+  private logBuffer: LogEntry[] = [];
+  private flushTimer: any = null;
 
   constructor() {
-    this.loadLogs();
     this.loadApiKeyUsage();
-    this.addLog('INFO', 'Log service initialized.');
+    this.pruneOldLogs();
+    this.info('Log service initialized (IndexedDB Batched Mode).', { category: 'SYSTEM' });
   }
 
-  private loadLogs() {
+  // --- Core Logging Logic ---
+
+  private createLogEntry(level: LogLevel, category: LogCategory, message: string, data?: any): LogEntry {
+    return {
+      timestamp: new Date(),
+      level,
+      category,
+      message,
+      data: this.safeSerialize(data),
+    };
+  }
+
+  private safeSerialize(data: any): any {
+    if (data === undefined || data === null) return undefined;
     try {
-      const storedLogs = localStorage.getItem(LOG_STORAGE_KEY);
-      if (storedLogs) {
-        const parsed = JSON.parse(storedLogs, (key, value) => {
-          if (key === 'timestamp' && typeof value === 'string') {
-            return new Date(value);
-          }
-          return value;
-        });
-        if (Array.isArray(parsed)) {
-          const twoDaysAgo = Date.now() - LOG_RETENTION_MS;
-          this.logs = parsed.filter((log: LogEntry) => log.timestamp && log.timestamp.getTime() >= twoDaysAgo);
-          this.idCounter = this.logs.length > 0 ? Math.max(...this.logs.map(l => l.id)) + 1 : 0;
-          this.saveLogs(); // Save back to prune any old logs from storage
+      // Simple circular reference handler
+      const seen = new WeakSet();
+      return JSON.parse(JSON.stringify(data, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) return '[Circular]';
+          seen.add(value);
         }
-      }
+        // Truncate extremely long strings to save DB space
+        if (typeof value === 'string' && value.length > 5000) {
+            return value.substring(0, 5000) + '...[TRUNCATED]';
+        }
+        return value;
+      }));
     } catch (e) {
-      console.error("Failed to load logs:", e);
-      this.logs = [];
+      return '[Serialization Failed]';
     }
   }
 
-  private saveLogs() {
-    try {
-      localStorage.setItem(LOG_STORAGE_KEY, JSON.stringify(this.logs));
-    } catch (e) {
-      console.error("Failed to save logs:", e);
+  private queueLog(entry: LogEntry) {
+    this.logBuffer.push(entry);
+    
+    // Notify listeners immediately for "live" feeling, even if not persisted yet
+    this.notifyListeners([entry]);
+
+    if (this.logBuffer.length >= FLUSH_THRESHOLD) {
+      this.flush();
+    } else if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => this.flush(), FLUSH_INTERVAL_MS);
     }
   }
+
+  private async flush() {
+    if (this.logBuffer.length === 0) return;
+    
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+
+    const logsToSave = [...this.logBuffer];
+    this.logBuffer = []; // Clear buffer immediately
+
+    try {
+      await dbService.addLogs(logsToSave);
+    } catch (e) {
+      console.error("Failed to flush logs to DB:", e);
+      // In a critical system we might retry, but for logs we prefer not to block/explode
+    }
+  }
+
+  private notifyListeners(newLogs: LogEntry[]) {
+    const listenersToNotify = Array.from(this.listeners);
+    for (const listener of listenersToNotify) {
+      listener(newLogs);
+    }
+  }
+
+  private async pruneOldLogs() {
+    try {
+      const cutoff = Date.now() - LOG_RETENTION_MS;
+      await dbService.pruneLogs(cutoff);
+    } catch (e) {
+      console.error("Failed to prune old logs:", e);
+    }
+  }
+
+  // --- API Usage Tracking (Kept in LocalStorage for speed/simplicity) ---
 
   private loadApiKeyUsage() {
       try {
@@ -71,8 +129,7 @@ class LogServiceImpl {
               }
           }
       } catch (e) {
-          console.error("Failed to load API key usage data:", e);
-          this.apiKeyUsage = new Map();
+          console.error("Failed to load API key usage:", e);
       }
   }
 
@@ -80,35 +137,7 @@ class LogServiceImpl {
       try {
           const usageArray = Array.from(this.apiKeyUsage.entries());
           localStorage.setItem(API_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
-      } catch (e) {
-          console.error("Failed to save API key usage data:", e);
-      }
-  }
-
-  private addLog(level: LogLevel, message: string, data?: any) {
-    const newLog: LogEntry = {
-      id: this.idCounter++,
-      timestamp: new Date(),
-      level,
-      message,
-      data,
-    };
-    this.logs.push(newLog);
-
-    // Prune logs older than retention period.
-    const twoDaysAgo = Date.now() - LOG_RETENTION_MS;
-    this.logs = this.logs.filter(log => log.timestamp.getTime() >= twoDaysAgo);
-
-    this.saveLogs();
-    this.notifyListeners();
-  }
-
-  private notifyListeners() {
-    // Create a copy to avoid issues if a listener unsubscribes during iteration
-    const listenersToNotify = Array.from(this.listeners);
-    for (const listener of listenersToNotify) {
-      listener([...this.logs]);
-    }
+      } catch (e) { console.error(e); }
   }
 
   private notifyApiKeyListeners() {
@@ -118,20 +147,53 @@ class LogServiceImpl {
     }
   }
 
-  public info(message: string, data?: any) {
-    this.addLog('INFO', message, data);
+  // --- Public Interface ---
+
+  /**
+   * Standard log methods. 
+   * Data argument is optional. 
+   * Category defaults to SYSTEM if not specified in options or inferred.
+   */
+  public info(message: string, options?: { category?: LogCategory, data?: any } | any) {
+    // Backwards compatibility: if options is just data object
+    const category = options?.category || 'SYSTEM';
+    const data = options?.category ? options.data : options;
+    this.queueLog(this.createLogEntry('INFO', category, message, data));
   }
 
-  public warn(message: string, data?: any) {
-    this.addLog('WARN', message, data);
+  public warn(message: string, options?: { category?: LogCategory, data?: any } | any) {
+    const category = options?.category || 'SYSTEM';
+    const data = options?.category ? options.data : options;
+    this.queueLog(this.createLogEntry('WARN', category, message, data));
   }
 
-  public error(message: string, data?: any) {
-    this.addLog('ERROR', message, data);
+  public error(message: string, options?: { category?: LogCategory, data?: any, error?: any } | any) {
+    const category = options?.category || 'SYSTEM';
+    // Extract 'error' object if passed explicitly for better stack tracing
+    let data = options?.category ? options.data : options;
+    if (options?.error) {
+        data = { ...data, error: this.serializeError(options.error) };
+    }
+    this.queueLog(this.createLogEntry('ERROR', category, message, data));
   }
 
-  public debug(message: string, data?: any) {
-    this.addLog('DEBUG', message, data);
+  public debug(message: string, options?: { category?: LogCategory, data?: any } | any) {
+    const category = options?.category || 'SYSTEM';
+    const data = options?.category ? options.data : options;
+    this.queueLog(this.createLogEntry('DEBUG', category, message, data));
+  }
+
+  // Helper to extract stack traces
+  private serializeError(error: any) {
+      if (error instanceof Error) {
+          return {
+              message: error.message,
+              name: error.name,
+              stack: error.stack,
+              cause: error.cause
+          };
+      }
+      return error;
   }
 
   public recordApiKeyUsage(apiKey: string) {
@@ -142,38 +204,39 @@ class LogServiceImpl {
     this.notifyApiKeyListeners();
   }
 
+  // --- Subscription & Retrieval ---
+
+  /**
+   * Subscribes to NEW logs as they happen (for live view).
+   */
   public subscribe(listener: LogListener): () => void {
     this.listeners.add(listener);
-    // Immediately provide the current logs to the new subscriber
-    listener([...this.logs]);
-
-    return () => {
-      this.listeners.delete(listener);
-    };
+    return () => this.listeners.delete(listener);
   }
 
   public subscribeToApiKeys(listener: ApiKeyListener): () => void {
     this.apiKeyListeners.add(listener);
-    listener(new Map(this.apiKeyUsage)); // Immediately provide current usage
-
-    return () => {
-      this.apiKeyListeners.delete(listener);
-    };
+    listener(new Map(this.apiKeyUsage));
+    return () => this.apiKeyListeners.delete(listener);
   }
 
-  public getLogs(): LogEntry[] {
-    return [...this.logs];
+  /**
+   * Async fetch logs from DB with pagination.
+   */
+  public async getRecentLogs(limit = 200, offset = 0): Promise<LogEntry[]> {
+    // Ensure buffer is flushed before reading to get latest state
+    await this.flush(); 
+    return dbService.getLogs(limit, offset);
   }
 
-  public clearLogs() {
-    this.logs = [];
+  public async clearLogs() {
+    this.logBuffer = [];
+    await dbService.clearLogs();
     this.apiKeyUsage.clear();
-    this.saveLogs();
     this.saveApiKeyUsage();
-    this.notifyListeners();
+    // Notify listeners of clear by sending empty or a system event (optional)
+    this.info('Logs cleared by user.', { category: 'USER' });
     this.notifyApiKeyListeners();
-    // Avoid adding a new log entry immediately after clearing
-    console.info('Logs and stats cleared.');
   }
 }
 

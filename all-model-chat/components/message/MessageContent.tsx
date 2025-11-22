@@ -1,11 +1,14 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Loader2, ChevronDown, Sigma, Zap } from 'lucide-react';
+import { Loader2, ChevronDown, Sigma, Zap, Sparkles } from 'lucide-react';
 
 import { ChatMessage, UploadedFile, AppSettings } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { translations } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
+
+const GEMINI_ICON_URL = "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg";
 
 const MessageTimer: React.FC<{ startTime?: Date; endTime?: Date; isLoading?: boolean }> = ({ startTime, endTime, isLoading }) => {
   const [elapsedTime, setElapsedTime] = useState<string>('');
@@ -22,7 +25,7 @@ const MessageTimer: React.FC<{ startTime?: Date; endTime?: Date; isLoading?: boo
   }, [startTime, endTime, isLoading]);
 
   if (!elapsedTime && !(isLoading && startTime)) return null;
-  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center">{isLoading && startTime && <Loader2 size={10} className="animate-spin mr-1" />} {elapsedTime || "0.0s"}</span>;
+  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center">{isLoading && startTime && <Loader2 size={10} className="animate-spin mr-1" strokeWidth={1.5} />} {elapsedTime || "0.0s"}</span>;
 };
 
 const TokenDisplay: React.FC<{ message: ChatMessage; t: (key: keyof typeof translations) => string }> = ({ message, t }) => {
@@ -33,7 +36,7 @@ const TokenDisplay: React.FC<{ message: ChatMessage; t: (key: keyof typeof trans
     typeof message.cumulativeTotalTokens === 'number' && `Total: ${message.cumulativeTotalTokens}`,
   ].filter(Boolean);
   if (parts.length === 0) return null;
-  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Token Usage"><Sigma size={10} className="mr-1.5 opacity-80" />{parts.join(' | ')}<span className="ml-1">{t('tokens_unit')}</span></span>;
+  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Token Usage"><Sigma size={10} className="mr-1.5 opacity-80" strokeWidth={1.5} />{parts.join(' | ')}<span className="ml-1">{t('tokens_unit')}</span></span>;
 };
 
 const TokenRateDisplay: React.FC<{ message: ChatMessage }> = ({ message }) => {
@@ -57,7 +60,7 @@ const TokenRateDisplay: React.FC<{ message: ChatMessage }> = ({ message }) => {
 
   return (
     <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center" title="Tokens per second">
-        <Zap size={10} className="mr-1.5 opacity-80 text-yellow-500" />
+        <Zap size={10} className="mr-1.5 opacity-80 text-yellow-500" strokeWidth={1.5} />
         {tokensPerSecond.toFixed(1)} tokens/s
     </span>
   );
@@ -111,13 +114,13 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
         if (lastHeadingIndex === -1) {
              const content = lines.slice(-5).join('\n').trim();
-             return { title: 'Latest thought', content };
+             return { title: 'Latest thought', content, isFallback: true };
         }
         
         const contentLines = lines.slice(lastHeadingIndex + 1);
         const content = contentLines.filter(l => l.trim() !== '').join('\n').trim();
 
-        return { title: lastHeading, content };
+        return { title: lastHeading, content, isFallback: false };
     }, [thoughts]);
     
     const prevIsLoadingRef = useRef(isLoading);
@@ -157,52 +160,86 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {areThoughtsVisible && (
-                <details className="mb-1.5 p-2 rounded-md bg-[var(--theme-bg-tertiary)] bg-opacity-50 border border-[var(--theme-border-secondary)] group">
-                    <summary className="flex flex-col cursor-pointer text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] list-none">
-                        <div className="flex items-center justify-between w-full">
-                            <span className="flex items-center">
-                                {message.thinkingTimeMs !== undefined ? (
-                                    t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
-                                ) : isLoading ? (
-                                    <>
-                                        <Loader2 size={12} className="animate-spin mr-1.5" />
-                                        {t('thinking_text')}
-                                    </>
-                                ) : (
-                                    'Thinking finished' // Fallback
-                                )}
-                            </span>
-                            <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] group-open:rotate-180 transition-transform"/>
-                        </div>
-                        {isLoading && lastThought && message.thinkingTimeMs === undefined && (
-                            <div className="group-open:hidden mt-2 text-left w-full pr-4">
-                               <h4 className="font-semibold text-[var(--theme-bg-model-message-text)] text-sm">
-                                   {lastThought.title}
-                               </h4>
-                               <p className="text-xs text-[var(--theme-text-tertiary)] mt-1 line-clamp-3">
-                                   {lastThought.content}
-                               </p>
+                <div className="mb-2 mt-1">
+                    <details className="group rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 open:bg-[var(--theme-bg-tertiary)]/30 open:shadow-sm">
+                        <summary className="list-none flex select-none items-center justify-between px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none">
+                            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+                                {/* Icon Area */}
+                                <div className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors duration-300 ${isLoading ? 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)]' : ''}`}>
+                                    {isLoading ? (
+                                        <Loader2 size={14} className="animate-spin" strokeWidth={2} />
+                                    ) : (
+                                        <img src={GEMINI_ICON_URL} alt="Gemini" className="w-4 h-4" />
+                                    )}
+                                </div>
+
+                                {/* Text Area */}
+                                <div className="flex flex-col min-w-0 justify-center">
+                                    {isLoading ? (
+                                        <>
+                                            <span className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-secondary)] truncate opacity-90">
+                                                {lastThought && !lastThought.isFallback ? lastThought.title : t('thinking_text')}
+                                            </span>
+                                            <span className="text-[10px] text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
+                                                {message.thinkingTimeMs !== undefined ? (
+                                                    t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
+                                                ) : (
+                                                    message.generationEndTime && message.generationStartTime 
+                                                    ? t('thinking_took_time').replace('{seconds}', Math.round((new Date(message.generationEndTime).getTime() - new Date(message.generationStartTime).getTime()) / 1000).toString()) 
+                                                    : 'Processing...'
+                                                )}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-xs text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
+                                            {message.thinkingTimeMs !== undefined 
+                                                ? t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString()) 
+                                                : 'Thought Process'}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </summary>
-                    <div className="mt-2 pt-2 border-t border-[var(--theme-border-secondary)] text-xs text-[var(--theme-text-secondary)] markdown-body">
-                      <MarkdownRenderer
-                          content={thoughts}
-                          isLoading={isLoading}
-                          onImageClick={onImageClick}
-                          onOpenHtmlPreview={onOpenHtmlPreview}
-                          expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-                          isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-                          isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                          allowHtml={true}
-                      />
-                    </div>
-                </details>
+                            
+                            {/* Chevron */}
+                            <div className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-[var(--theme-bg-input)] transition-colors">
+                                <ChevronDown size={14} className="text-[var(--theme-text-tertiary)] transition-transform duration-300 group-open:rotate-180" strokeWidth={2}/>
+                            </div>
+                        </summary>
+
+                        {/* Expanded Content */}
+                        <div className="px-3 pb-3 pt-2 border-t border-[var(--theme-border-secondary)]/50 animate-in fade-in slide-in-from-top-2 duration-300">
+                            {/* Live preview of current step when loading and open */}
+                            {isLoading && lastThought && message.thinkingTimeMs === undefined && (
+                                <div className="mb-2 p-2 rounded-md bg-[var(--theme-bg-input)]/50 border border-[var(--theme-border-secondary)]/50 flex items-start gap-2">
+                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-[var(--theme-text-link)] animate-pulse flex-shrink-0 shadow-[0_0_8px_currentColor]" />
+                                    <div className="min-w-0">
+                                        <span className="block text-xs font-semibold text-[var(--theme-text-primary)] mb-0.5">{lastThought.title}</span>
+                                        <span className="block text-[11px] text-[var(--theme-text-tertiary)] line-clamp-2 leading-normal">{lastThought.content}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="prose prose-sm max-w-none dark:prose-invert text-[var(--theme-text-secondary)] text-sm leading-relaxed markdown-body thought-process-content opacity-90">
+                                <MarkdownRenderer
+                                    content={thoughts}
+                                    isLoading={isLoading}
+                                    onImageClick={onImageClick}
+                                    onOpenHtmlPreview={onOpenHtmlPreview}
+                                    expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+                                    isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+                                    isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
+                                    allowHtml={true}
+                                />
+                            </div>
+                        </div>
+                    </details>
+                </div>
             )}
 
             {showPrimaryThinkingIndicator && (
-                <div className="flex items-center text-sm text-[var(--theme-bg-model-message-text)] py-0.5">
-                    <Loader2 size={16} className="animate-spin mr-2 text-[var(--theme-bg-accent)]" /> {t('thinking_text')}
+                <div className="flex items-center text-sm text-[var(--theme-bg-model-message-text)] py-1 px-1 opacity-80 animate-pulse">
+                    <div className="gemini-loader w-3.5 h-3.5 animate-spin mr-2.5 flex-shrink-0" /> 
+                    <span className="font-medium">{t('thinking_text')}</span>
                 </div>
             )}
 
@@ -243,16 +280,17 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         <button
                             key={index}
                             onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
-                            className="suggestion-bubble"
+                            className="suggestion-bubble group"
                         >
-                            {suggestion}
+                            <Sparkles size={13} className="opacity-50 group-hover:opacity-100 group-hover:text-[var(--theme-text-link)] transition-opacity duration-200 flex-shrink-0 mt-[3px]" strokeWidth={1.5} />
+                            <span>{suggestion}</span>
                         </button>
                     ))}
                 </div>
             )}
             { isGeneratingSuggestions && (
                 <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)] border-opacity-30 flex items-center gap-2 text-sm text-[var(--theme-text-tertiary)] animate-pulse">
-                    <Loader2 size={14} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" strokeWidth={1.5} />
                     <span>Generating suggestions...</span>
                 </div>
             )}
