@@ -244,32 +244,32 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
           aria-label={t('imageZoom_close_aria')}
           title={t('imageZoom_close_title')}
         >
-          <X size={getResponsiveValue(20, 24)} />
+          <X size={getResponsiveValue(20, 24)} strokeWidth={1.5} />
         </button>
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 rounded-lg shadow-lg backdrop-blur-sm border border-white/10" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} /></button>
+          <button onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} strokeWidth={1.5} /></button>
           <div className="text-xs text-white font-mono tabular-nums select-none w-16 text-center">
             {(scale * 100).toFixed(0)}%
           </div>
-          <button onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} className={controlButtonClasses} title="Zoom In"><ZoomIn size={18} /></button>
+          <button onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} className={controlButtonClasses} title="Zoom In"><ZoomIn size={18} strokeWidth={1.5} /></button>
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
 
-          <button onClick={handleReset} className={controlButtonClasses} title="Reset View"><RotateCw size={18} /></button>
+          <button onClick={handleReset} className={controlButtonClasses} title="Reset View"><RotateCw size={18} strokeWidth={1.5} /></button>
 
           <button onClick={handleCopy} disabled={isCopied} className={controlButtonClasses} title={isCopied ? "Copied!" : "Copy Image"}>
-              {isCopied ? <Check size={18} className="text-green-400" /> : <ClipboardCopy size={18} />}
+              {isCopied ? <Check size={18} className="text-green-400" strokeWidth={1.5} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
           </button>
           
           <div className="w-px h-6 bg-white/20 mx-1"></div>
           
           <button onClick={() => handleDownload('png')} disabled={isDownloading} className={controlButtonClasses} title="Download Image">
-            {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <ImageIcon size={18} />}
+            {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <ImageIcon size={18} strokeWidth={1.5} />}
           </button>
           
           {isMermaidDiagram && (
             <button onClick={() => handleDownload('svg')} disabled={isDownloading} className={controlButtonClasses} title="Download as SVG">
-                {isDownloading ? <Loader2 size={18} className="animate-spin"/> : <FileCode2 size={18} />}
+                {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <FileCode2 size={18} strokeWidth={1.5} />}
             </button>
           )}
         </div>

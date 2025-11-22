@@ -47,7 +47,7 @@ class GeminiServiceImpl implements GeminiService {
         return generateSuggestionsApi(apiKey, userContent, modelContent, language);
     }
 
-    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal): Promise<Part[]> {
+    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string): Promise<Part[]> {
         return new Promise((resolve, reject) => {
             if (abortSignal.aborted) {
                 const abortError = new Error("aborted");
@@ -61,9 +61,15 @@ class GeminiServiceImpl implements GeminiService {
                 reject(error);
             };
             
-            const config = {
+            const config: any = {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             };
+            
+            if (aspectRatio) {
+                config.imageConfig = {
+                    aspectRatio: aspectRatio
+                };
+            }
 
             sendStatelessMessageNonStreamApi(
                 apiKey,

@@ -21,7 +21,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
-    isProcessingFile, fileError, isImagenModel, isImageEditModel, aspectRatio, setAspectRatio,
+    isProcessingFile, fileError, isImageEditModel, aspectRatio, setAspectRatio,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
@@ -48,6 +48,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
 
     return () => resizeObserver.disconnect();
   }, []);
+
+  // Determine if the model supports aspect ratio selection (Imagen models OR Gemini 2.5 Flash Image)
+  const isImagenModel = currentChatSettings.modelId?.includes('imagen') || currentChatSettings.modelId?.includes('gemini-2.5-flash-image');
 
   return (
     <div

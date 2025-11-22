@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon } from 'lucide-react';
@@ -207,7 +208,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
 
   const modalJsx = (
     <div 
-        className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm modal-enter-animation"
+        className="fixed inset-0 bg-black/80 z-[2100] flex items-center justify-center backdrop-blur-sm modal-enter-animation"
         onClick={handleBackdropClick}
         role="dialog" aria-modal="true" aria-labelledby="graphviz-modal-title"
     >

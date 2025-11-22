@@ -49,7 +49,7 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
 
   return (
     <div 
-      className="fixed top-0 right-0 bottom-0 bg-[var(--theme-bg-primary)] z-50 flex flex-col p-3 sm:p-4 md:p-6"
+      className="fixed top-0 right-0 bottom-0 bg-[var(--theme-bg-primary)] z-[2100] flex flex-col p-3 sm:p-4 md:p-6"
       style={{ left: leftOffset, transition: 'left 0.3s ease-in-out' }}
       role="dialog"
       aria-modal="true"

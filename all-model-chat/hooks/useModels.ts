@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { ModelOption, AppSettings } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
@@ -29,9 +30,9 @@ export const useModels = (appSettings: AppSettings) => {
         ];
         const imagenModels: ModelOption[] = [
             { id: 'gemini-2.5-flash-image-preview', name: 'Nano Banana', isPinned: true },
-            { id: 'models/imagen-4.0-fast-generate-001', name: 'Imagen 4.0 Fast (Image Generation)', isPinned: true },
-            { id: 'models/imagen-4.0-generate-001', name: 'Imagen 4.0 (Image Generation)', isPinned: true },
-            { id: 'models/imagen-4.0-ultra-generate-001', name: 'Imagen 4.0 Ultra (Image Generation)', isPinned: true },
+            { id: 'models/imagen-4.0-fast-generate-001', name: 'Imagen 4.0 Fast', isPinned: true },
+            { id: 'models/imagen-4.0-generate-001', name: 'Imagen 4.0', isPinned: true },
+            { id: 'models/imagen-4.0-ultra-generate-001', name: 'Imagen 4.0 Ultra', isPinned: true },
         ];
         
         let modelsFromApi: ModelOption[] = [];
@@ -59,6 +60,15 @@ export const useModels = (appSettings: AppSettings) => {
         finalModels.sort((a, b) => {
             if (a.isPinned && !b.isPinned) return -1;
             if (!a.isPinned && b.isPinned) return 1;
+            
+            // If both are pinned, prioritize Gemini 3
+            if (a.isPinned && b.isPinned) {
+                const isA3 = a.id.includes('gemini-3');
+                const isB3 = b.id.includes('gemini-3');
+                if (isA3 && !isB3) return -1;
+                if (!isA3 && isB3) return 1;
+            }
+
             return a.name.localeCompare(b.name);
         });
         

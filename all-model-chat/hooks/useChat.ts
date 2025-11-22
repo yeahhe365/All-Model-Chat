@@ -130,7 +130,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
                     activeSession.settings.isGoogleSearchEnabled,
                     activeSession.settings.isCodeExecutionEnabled,
                     activeSession.settings.isUrlContextEnabled,
-                    activeSession.settings.thinkingLevel
+                    activeSession.settings.thinkingLevel,
+                    aspectRatio // Pass this
                 )
             });
             setChat(newChat);
@@ -154,6 +155,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         isCodeExecutionEnabled,
         isUrlContextEnabled,
         lockedApiKey,
+        aspectRatio, // Add this dependency
     ]);
 
 

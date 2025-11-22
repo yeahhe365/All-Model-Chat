@@ -29,7 +29,8 @@ export const useSuggestions = ({
             ...s, messages: s.messages.map(m => m.id === messageId ? {...m, isGeneratingSuggestions: true} : m)
         } : s));
 
-        const keyResult = getKeyForRequest(appSettings, sessionSettings);
+        // Use skipIncrement: true to avoid rotating API keys for background suggestions
+        const keyResult = getKeyForRequest(appSettings, sessionSettings, { skipIncrement: true });
         if ('error' in keyResult) {
             logService.error('Cannot generate suggestions: API key not configured.');
             // Hide loading state on error

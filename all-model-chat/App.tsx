@@ -1,3 +1,4 @@
+
 import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from './types';
@@ -365,7 +366,7 @@ const App: React.FC = () => {
       {isHistorySidebarOpen && (
         <div 
           onClick={() => setIsHistorySidebarOpen(false)} 
-          className="fixed inset-0 bg-black/60 z-20 transition-opacity duration-300 md:hidden"
+          className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 md:hidden"
           aria-hidden="true"
         />
       )}
@@ -388,6 +389,8 @@ const App: React.FC = () => {
         onRenameGroup={handleRenameGroup}
         onMoveSessionToGroup={handleMoveSessionToGroup}
         onToggleGroupExpansion={handleToggleGroupExpansion}
+        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
         themeColors={currentTheme.colors}
         t={t}
         themeId={currentTheme.id}

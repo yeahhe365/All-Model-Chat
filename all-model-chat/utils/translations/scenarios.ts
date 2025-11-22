@@ -1,3 +1,4 @@
+
 export const scenariosTranslations = {
     // PreloadedMessagesModal.tsx
     scenarios_title: { en: 'Manage Preloaded Scenarios', zh: '管理预加载场景' },
@@ -40,4 +41,16 @@ export const scenariosTranslations = {
     scenarios_moveDown_title: { en: 'Move down', zh: '下移' },
     scenarios_edit_title: { en: 'Edit message', zh: '编辑消息' },
     scenarios_delete_title: { en: 'Delete message', zh: '删除消息' },
+    
+    // New UI translations
+    scenarios_create_button: { en: 'Add', zh: '添加' },
+    scenarios_save_and_close: { en: 'Save', zh: '保存' },
+    scenarios_create_first: { en: 'Create your first scenario', zh: '创建您的第一个场景' },
+    scenarios_has_system_prompt: { en: 'Has System Prompt', zh: '包含系统提示' },
+    scenarios_system_prompt_label: { en: 'System Prompt', zh: '系统提示' },
+    scenarios_system_prompt_placeholder: { en: 'Define the persona or rules for the model...', zh: '定义模型的角色或规则...' },
+    scenarios_conversation_flow: { en: 'Conversation Flow', zh: '对话流程' },
+    scenarios_optional: { en: '(Optional)', zh: '(可选)' },
+    scenarios_role_user: { en: 'User', zh: '用户' },
+    scenarios_role_model: { en: 'Model', zh: '模型' },
 };

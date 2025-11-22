@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { translations } from '../../utils/appUtils';
-import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database } from 'lucide-react';
+import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database, RefreshCw } from 'lucide-react';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
@@ -18,22 +18,29 @@ interface DataManagementSectionProps {
   t: (key: keyof typeof translations) => string;
 }
 
-const ActionRow: React.FC<{ label: string; children: React.ReactNode; description?: string; icon?: React.ReactNode }> = ({ label, children, description, icon }) => (
-    <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-        <div className="flex items-start gap-3">
-            {icon && <div className="mt-0.5 text-[var(--theme-text-tertiary)]">{icon}</div>}
-            <div>
-                <span className="text-sm font-medium text-[var(--theme-text-primary)]">{label}</span>
-                {description && <p className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">{description}</p>}
+const ActionRow: React.FC<{ 
+    label: string; 
+    children: React.ReactNode; 
+    description?: string; 
+    icon?: React.ReactNode;
+    labelClassName?: string;
+    className?: string;
+}> = ({ label, children, description, icon, labelClassName, className }) => (
+    <div className={`flex items-center justify-between py-3 ${className || ''}`}>
+        <div className="flex items-center gap-3">
+            {icon && <div className={`flex-shrink-0 ${labelClassName ? 'opacity-90' : 'text-[var(--theme-text-tertiary)]'}`}>{icon}</div>}
+            <div className="flex flex-col">
+                <span className={`text-sm font-medium ${labelClassName || 'text-[var(--theme-text-primary)]'}`}>{label}</span>
+                {description && <p className={`text-xs mt-0.5 ${labelClassName ? 'opacity-75' : 'text-[var(--theme-text-tertiary)]'}`}>{description}</p>}
             </div>
         </div>
-        <div className="flex items-center gap-2 ml-4">{children}</div>
+        <div className="flex items-center gap-2 ml-4 flex-shrink-0">{children}</div>
     </div>
 );
 
 const DataCard: React.FC<{ title: string; icon?: React.ReactNode; children: React.ReactNode; className?: string }> = ({ title, icon, children, className }) => (
-    <div className={`p-4 sm:p-5 rounded-xl border ${className || 'bg-[var(--theme-bg-tertiary)]/30 border-[var(--theme-border-secondary)]'}`}>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-4 flex items-center gap-2">
+    <div className={`py-2 ${className || ''}`}>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-2 flex items-center gap-2">
             {icon}
             {title}
         </h4>
@@ -64,14 +71,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
 
   const btnClass = "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] border flex items-center gap-1.5";
   const outlineBtnClass = `${btnClass} bg-transparent border-[var(--theme-border-secondary)] text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]`;
-  const dangerBtnClass = `${btnClass} bg-[var(--theme-bg-danger)]/10 border-[var(--theme-bg-danger)]/20 text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/20`;
-  const whiteDangerBtnClass = `${btnClass} border-white/30 bg-white/10 text-white hover:bg-white/20 focus:ring-white/50`;
-
-  const handleFileImport = (ref: React.RefObject<HTMLInputElement>, handler: (file: File) => void) => {
-    const file = ref.current?.files?.[0];
-    if (file) handler(file);
-    if (ref.current) ref.current.value = "";
-  };
+  // Updated white button class for Danger Zone
+  const whiteDangerBtnClass = `${btnClass} border-white/30 bg-white/10 text-white hover:bg-white/20 focus:ring-white/50 focus:ring-offset-red-600`;
 
   return (
     <div className="space-y-6">
@@ -102,23 +103,41 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
               </ActionRow>
           </DataCard>
 
-          <div className="p-5 rounded-xl bg-[var(--theme-bg-danger)] text-white shadow-lg">
-              <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 text-white/90">
-                  <AlertTriangle size={14} strokeWidth={1.5} />
-                  Danger Zone
-              </h4>
+          {/* DANGER ZONE */}
+          <div className="p-5 rounded-xl bg-gradient-to-br from-red-600 to-red-700 text-white shadow-lg border border-red-800/50">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-white/10">
+                  <AlertTriangle size={16} strokeWidth={2} className="text-white" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                      Danger Zone
+                  </h4>
+              </div>
+              
               <div className="divide-y divide-white/10">
                   <ActionRow label={t('settingsReset')} labelClassName="text-white">
-                      <button onClick={onReset} className={whiteDangerBtnClass}>{t('settingsReset')}</button>
+                      <button onClick={onReset} className={whiteDangerBtnClass}>
+                          <RefreshCw size={12} strokeWidth={1.5} /> {t('settingsReset')}
+                      </button>
                   </ActionRow>
+                  
                   <ActionRow label={t('settingsClearHistory')} labelClassName="text-white">
-                      <button onClick={onClearHistory} className={whiteDangerBtnClass}><Trash2 size={12} strokeWidth={1.5} /> {t('settingsClearHistory')}</button>
+                      <button onClick={onClearHistory} className={whiteDangerBtnClass}>
+                          <Trash2 size={12} strokeWidth={1.5} /> {t('settingsClearHistory')}
+                      </button>
                   </ActionRow>
+                  
                   <ActionRow label={t('settingsClearCache')} labelClassName="text-white">
-                      <button onClick={onClearCache} className={whiteDangerBtnClass}><Database size={12} strokeWidth={1.5} /> {t('settingsClearCache')}</button>
+                      <button onClick={onClearCache} className={whiteDangerBtnClass}>
+                          <Database size={12} strokeWidth={1.5} /> {t('settingsClearCache')}
+                      </button>
                   </ActionRow>
               </div>
           </div>
     </div>
   );
+
+  function handleFileImport(ref: React.RefObject<HTMLInputElement>, handler: (file: File) => void) {
+    const file = ref.current?.files?.[0];
+    if (file) handler(file);
+    if (ref.current) ref.current.value = "";
+  }
 };

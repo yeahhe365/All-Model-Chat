@@ -32,7 +32,8 @@ export const useAutoTitling = ({
         setGeneratingTitleSessionIds(prev => new Set(prev).add(sessionId));
         logService.info(`Auto-generating title for session ${sessionId}`);
 
-        const keyResult = getKeyForRequest(appSettings, session.settings);
+        // Use skipIncrement to avoid rotating keys for background title generation
+        const keyResult = getKeyForRequest(appSettings, session.settings, { skipIncrement: true });
         if ('error' in keyResult) {
             logService.error(`Could not generate title for session ${sessionId}: ${keyResult.error}`);
             setGeneratingTitleSessionIds(prev => {

@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { ArrowUp, Square, X, Edit2, Loader2, Mic, Languages } from 'lucide-react';
+import { ArrowUp, Square, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
@@ -29,6 +30,8 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onTranslate,
   isTranslating,
   inputText,
+  onToggleFullscreen,
+  isFullscreen,
 }) => {
   const micIconSize = 18;
   const sendIconSize = 18;
@@ -62,25 +65,39 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                     {t('cancel')}
                 </button>
             )}
+            
+            {onToggleFullscreen && (
+                <button
+                    type="button"
+                    onClick={onToggleFullscreen}
+                    disabled={disabled}
+                    className={`${buttonBaseClass} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+                    aria-label={isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand')}
+                    title={isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand')}
+                >
+                    {isFullscreen ? <Minimize2 size={micIconSize} strokeWidth={2} /> : <Maximize2 size={micIconSize} strokeWidth={2} />}
+                </button>
+            )}
+
             <button
                 type="button"
                 onClick={onTranslate}
                 disabled={!inputText.trim() || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
-                className={`${buttonBaseClass} bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]`}
+                className={`${buttonBaseClass} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
                 aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
                 title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
             >
                 {isTranslating ? (
-                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={1.5} />
+                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
                 ) : (
-                    <Languages size={micIconSize} strokeWidth={1.5} />
+                    <Languages size={micIconSize} strokeWidth={2} />
                 )}
             </button>
             <button
                 type="button"
                 onClick={onRecordButtonClick}
                 disabled={disabled || isTranscribing || isMicInitializing}
-                className={`${buttonBaseClass} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-tertiary)]'}`}
+                className={`${buttonBaseClass} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
                 aria-label={
                     isRecording ? t('voiceInput_stop_aria') :
                     isTranscribing ? t('voiceInput_transcribing_aria') : 
@@ -93,18 +110,18 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 }
             >
                 {isTranscribing || isMicInitializing ? (
-                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={1.5} />
+                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
                 ) : (
-                    <Mic size={micIconSize} strokeWidth={1.5} />
+                    <Mic size={micIconSize} strokeWidth={2} />
                 )}
             </button>
 
             {isLoading ? ( 
-                <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Square size={14} fill="currentColor" strokeWidth={1.5} /></button>
+                <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Square size={14} fill="currentColor" strokeWidth={2} /></button>
             ) : isEditing ? (
                 <>
-                    <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={1.5} /></button>
-                    <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} strokeWidth={1.5} /></button>
+                    <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={2} /></button>
+                    <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} strokeWidth={2} /></button>
                 </>
             ) : (
                 <button 
@@ -115,9 +132,9 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                     title={isWaitingForUpload ? "Waiting for upload to complete before sending" : t('sendMessage_title')}
                 >
                     {isWaitingForUpload ? (
-                        <Loader2 size={sendIconSize} className="animate-spin" strokeWidth={1.5} />
+                        <Loader2 size={sendIconSize} className="animate-spin" strokeWidth={2} />
                     ) : (
-                        <ArrowUp size={sendIconSize} strokeWidth={1.5} />
+                        <ArrowUp size={sendIconSize} strokeWidth={2} />
                     )}
                 </button>
             )}

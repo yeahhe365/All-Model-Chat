@@ -58,22 +58,21 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                 setTtsVoice={props.setTtsVoice}
                 systemInstruction={props.systemInstruction}
                 setSystemInstruction={props.setSystemInstruction}
-                t={t}
-            />
-        </div>
-        <div className="space-y-8 lg:pl-8 lg:border-l lg:border-[var(--theme-border-primary)]/50">
-            <GenerationSettings
-                modelId={props.modelId}
-                temperature={props.temperature}
-                setTemperature={props.setTemperature}
-                topP={props.topP}
-                setTopP={props.setTopP}
                 thinkingBudget={props.thinkingBudget}
                 setThinkingBudget={props.setThinkingBudget}
                 thinkingLevel={props.thinkingLevel}
                 setThinkingLevel={props.setThinkingLevel}
                 showThoughts={props.showThoughts}
                 setShowThoughts={props.setShowThoughts}
+                t={t}
+            />
+        </div>
+        <div className="space-y-8 lg:pl-8 lg:border-l lg:border-[var(--theme-border-primary)]/50">
+            <GenerationSettings
+                temperature={props.temperature}
+                setTemperature={props.setTemperature}
+                topP={props.topP}
+                setTopP={props.setTopP}
                 t={t}
             />
         </div>

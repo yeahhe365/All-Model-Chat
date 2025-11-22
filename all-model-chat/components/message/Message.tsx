@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef } from 'react';
 import { ClipboardCopy, Check, Trash2 } from 'lucide-react';
 import { ChatMessage, UploadedFile, ThemeColors, AppSettings } from '../../types';
@@ -40,13 +41,15 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && props.showThoughts));
     
-    const messageContainerClasses = `flex items-start gap-1 sm:gap-1.5 group ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
-    const bubbleClasses = `w-fit max-w-[calc(100%-2.75rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-6xl p-1.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
+    const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
+    
+    // refined bubble classes: slightly more padding, distinct border radius logic
+    const bubbleClasses = `w-fit max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 py-3 sm:px-5 sm:py-4 shadow-sm flex flex-col min-w-0 transition-all duration-200 ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
 
     const roleSpecificBubbleClasses = {
-        user: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg',
-        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg',
-        error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-lg',
+        user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-2xl rounded-tr-sm border border-transparent',
+        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-2xl rounded-tl-sm border border-[var(--theme-border-secondary)]/30',
+        error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-2xl border border-transparent',
     };
 
     const [deltaX, setDeltaX] = useState(0);
@@ -115,13 +118,13 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     return (
         <div 
             className="relative message-container-animate"
-            style={{ animationDelay: `${Math.min(messageIndex * 80, 800)}ms` }}
+            style={{ animationDelay: `${Math.min(messageIndex * 50, 500)}ms` }}
             data-message-id={message.id} 
             data-message-role={message.role}
         >
              {isTouchDevice && (
                 <div 
-                    className={`absolute inset-0 rounded-2xl ${isGrouped ? 'mt-1' : 'mt-3 sm:mt-4'}`}
+                    className={`absolute inset-0 rounded-2xl ${isGrouped ? 'mt-1.5' : 'mt-6'}`}
                     aria-hidden="true"
                 >
                     <div className="absolute inset-y-0 left-0 w-full flex items-center justify-start pl-6 bg-red-500 text-white rounded-2xl"
@@ -144,7 +147,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
                 className={`${messageContainerClasses}`} 
                 style={{ 
                     transform: `translateX(${deltaX}px)`,
-                    transition: isSwiping ? 'none' : 'transform 0.3s ease',
+                    transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
                 }}
             >
                 {message.role !== 'user' && <MessageActions {...props} isGrouped={isGrouped} />}

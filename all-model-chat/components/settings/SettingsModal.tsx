@@ -262,9 +262,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-[var(--theme-bg-primary)] relative">
+      <div className="flex-1 flex flex-col min-w-0 bg-[var(--theme-bg-primary)] relative">
         {/* Mobile Header */}
-        <div className="sm:hidden flex items-center justify-between p-4 border-b border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)]">
+        <div className="sm:hidden flex items-center justify-between p-4 border-b border-[var(--theme-border-primary)] bg-[var(--theme-bg-secondary)] sticky top-0 z-10">
              <span className="font-semibold text-lg text-[var(--theme-text-primary)]">{t('settingsTitle')}</span>
              <button 
                 onClick={handleClose} 
@@ -275,7 +275,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         </div>
         
         {/* Mobile Tabs (Horizontal Scroll) */}
-        <div className="sm:hidden bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-primary)] shadow-sm">
+        <div className="sm:hidden bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-primary)] shadow-sm sticky top-[60px] z-10">
             <nav className="flex overflow-x-auto custom-scrollbar px-2 py-2 gap-2" role="tablist">
                 {tabs.map(tab => {
                     const Icon = tab.icon;
@@ -307,9 +307,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                  <h2 className="text-2xl font-bold text-[var(--theme-text-primary)] tracking-tight">
                     {currentTabLabel ? t(currentTabLabel as any) : ''}
                  </h2>
-                 <p className="text-sm text-[var(--theme-text-tertiary)] mt-1">
-                    {t('settingsOpen_title')}
-                 </p>
              </div>
              <button 
                 ref={closeButtonRef}

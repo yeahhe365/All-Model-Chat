@@ -24,7 +24,8 @@ export const useTextToSpeechHandler = ({
     const handleTextToSpeech = useCallback(async (messageId: string, text: string) => {
         if (ttsMessageId) return; 
 
-        const keyResult = getKeyForRequest(appSettings, currentChatSettings);
+        // Use skipIncrement to avoid rotating keys for TTS, as users might replay audio.
+        const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
         if ('error' in keyResult) {
             logService.error("TTS failed:", { error: keyResult.error });
             return;

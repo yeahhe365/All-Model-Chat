@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GitBranch } from 'lucide-react';
 import { getResponsiveValue, translations } from '../../utils/appUtils';
@@ -10,21 +9,19 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = getResponsiveValue(14, 16);
-  const version = "1.7.1"; 
+  const version = "1.7.2"; 
 
   return (
-    <div className="space-y-3 p-3 sm:p-4 rounded-lg bg-[var(--theme-bg-secondary)] text-center">
+    <div className="space-y-3 py-4 text-center">
       <div className="flex justify-center mb-4">
-        <AppLogo className="w-40 h-auto" />
+        <AppLogo className="w-32 h-auto" />
       </div>
-      <h3 className="text-xl font-semibold text-[var(--theme-text-primary)] flex items-center justify-center mb-1">
-        {t('about_title')}
-      </h3>
+      
       <p className="text-sm text-[var(--theme-text-tertiary)] mb-4">
         {t('about_version')}: <span className="font-semibold text-[var(--theme-text-primary)]">{version}</span>
       </p>
 
-      <p className="text-sm text-[var(--theme-text-secondary)] max-w-md mx-auto">
+      <p className="text-sm text-[var(--theme-text-secondary)] max-w-md mx-auto leading-relaxed">
         {t('about_description')}
       </p>
 

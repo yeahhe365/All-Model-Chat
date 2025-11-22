@@ -51,9 +51,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
          </h3>
       </div>
 
-      <div className={`rounded-xl border transition-all duration-300 overflow-hidden ${useCustomApiConfig ? 'bg-[var(--theme-bg-tertiary)]/30 border-[var(--theme-border-secondary)]' : 'bg-[var(--theme-bg-secondary)] border-[var(--theme-border-primary)]'}`}>
+      <div className="overflow-hidden">
         {/* Header Toggle */}
-        <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/50 transition-colors" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
+        <div className="flex items-center justify-between py-2 cursor-pointer" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
             <div className="flex flex-col">
                 <span className="text-sm font-medium text-[var(--theme-text-primary)]">
                   {t('settingsUseCustomApi')}
@@ -70,8 +70,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         </div>
 
         {/* Content */}
-        <div className={`border-t border-[var(--theme-border-secondary)] transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[500px]' : 'opacity-50 max-h-0 overflow-hidden border-none'}`}>
-            <div className="p-4 space-y-5">
+        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[500px] pt-4' : 'opacity-50 max-h-0 overflow-hidden'}`}>
+            <div className="space-y-5">
                 {/* API Key Input */}
                 <div className="space-y-2">
                     <label htmlFor="api-key-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
@@ -103,7 +103,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
                 {/* Proxy Settings */}
                 <div className="space-y-3 pt-2 border-t border-[var(--theme-border-primary)]/50">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between py-2">
                         <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer flex items-center gap-2" onClick={() => setUseApiProxy(!useApiProxy)}>
                             API Proxy
                         </label>
