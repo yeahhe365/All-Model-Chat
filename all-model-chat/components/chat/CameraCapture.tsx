@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, X, Loader2 } from 'lucide-react';
 
 interface CameraCaptureProps {
@@ -87,7 +88,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
     }
   }, [onCapture, stream, isCapturing]);
 
-  return (
+  return createPortal(
     <div 
       className="fixed inset-0 bg-black/90 z-[2100] flex flex-col items-center justify-center p-2 sm:p-4"
       role="dialog" aria-modal="true" aria-labelledby="camera-capture-title"
@@ -122,6 +123,7 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
             </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

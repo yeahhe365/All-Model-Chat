@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -56,7 +57,7 @@ export const Modal: React.FC<ModalProps> = ({
     return null;
   }
 
-  return (
+  return createPortal(
     <div
       className={`fixed inset-0 z-[2100] flex items-center justify-center ${noPadding ? '' : 'p-2 sm:p-4'} ${backdropClassName}`}
       role="dialog"
@@ -69,6 +70,7 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

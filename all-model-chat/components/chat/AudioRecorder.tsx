@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Mic, StopCircle, Check, X, Trash2, Loader2 } from 'lucide-react';
 
 interface AudioRecorderProps {
@@ -174,7 +175,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
     const scale = 1 + Math.min(volume, 100) / 100 * 0.5;
     const opacity = 0.2 + Math.min(volume, 100) / 100 * 0.5;
 
-    return (
+    return createPortal(
         <div
             className="fixed inset-0 bg-black/80 z-[2100] flex flex-col items-center justify-center p-4 backdrop-blur-sm modal-enter-animation"
             role="dialog"
@@ -244,6 +245,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                     </>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

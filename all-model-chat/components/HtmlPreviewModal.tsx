@@ -209,7 +209,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     // You could potentially display a message to the user here
   };
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 bg-black/70 flex items-center justify-center z-[2100] backdrop-blur-sm"
       role="dialog"
@@ -303,6 +303,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
