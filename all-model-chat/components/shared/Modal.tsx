@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 interface ModalProps {
   isOpen: boolean;
@@ -20,6 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const modalContentRef = useRef<HTMLDivElement>(null);
+  const { document: targetDocument } = useWindowContext();
 
   useEffect(() => {
     if (isOpen) {
@@ -38,13 +41,13 @@ export const Modal: React.FC<ModalProps> = ({
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
+      targetDocument.addEventListener('keydown', handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      targetDocument.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, targetDocument]);
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only close if the click is on the backdrop itself, not on any of its children
@@ -71,6 +74,6 @@ export const Modal: React.FC<ModalProps> = ({
         {children}
       </div>
     </div>,
-    document.body
+    targetDocument.body
   );
 };

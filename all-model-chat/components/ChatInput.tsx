@@ -14,6 +14,7 @@ import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useSlashCommands } from '../hooks/useSlashCommands';
 import { useIsMobile, useIsDesktop } from '../hooks/useDevice';
 import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
+import { useWindowContext } from '../contexts/WindowContext';
 
 interface ChatInputProps {
   appSettings: AppSettings;
@@ -93,6 +94,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
+  
+  const { document: targetDocument } = useWindowContext();
 
   const adjustTextareaHeight = useCallback(() => {
     if (isFullscreen) return; // Do not adjust height in fullscreen mode
@@ -538,7 +541,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isHistorySidebarOpen={isHistorySidebarOpen}
       />
 
-      {isFullscreen ? createPortal(chatInputContent, document.body) : chatInputContent}
+      {isFullscreen ? createPortal(chatInputContent, targetDocument.body) : chatInputContent}
     </>
   );
 };

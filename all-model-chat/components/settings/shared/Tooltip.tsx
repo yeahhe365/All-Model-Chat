@@ -1,6 +1,8 @@
+
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
+import { useWindowContext } from '../../../contexts/WindowContext';
 
 export const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
   <div className="tooltip-container ml-1.5">
@@ -21,6 +23,8 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
     const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    
+    const { document: targetDocument, window: targetWindow } = useWindowContext();
 
     const options = useMemo(() => {
         return React.Children.toArray(children).map((child) => {
@@ -70,18 +74,18 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
         };
 
         if (isOpen) {
-            document.addEventListener('mousedown', handleClickOutside);
-            window.addEventListener('resize', updatePosition);
+            targetDocument.addEventListener('mousedown', handleClickOutside);
+            targetWindow.addEventListener('resize', updatePosition);
             // Use capture=true to detect scrolling of any parent container (like the modal content div)
-            document.addEventListener('scroll', handleScroll, true); 
+            targetDocument.addEventListener('scroll', handleScroll, true); 
         }
 
         return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-            window.removeEventListener('resize', updatePosition);
-            document.removeEventListener('scroll', handleScroll, true);
+            targetDocument.removeEventListener('mousedown', handleClickOutside);
+            targetWindow.removeEventListener('resize', updatePosition);
+            targetDocument.removeEventListener('scroll', handleScroll, true);
         };
-    }, [isOpen, updatePosition]);
+    }, [isOpen, updatePosition, targetDocument, targetWindow]);
 
     const handleSelect = (val: string) => {
         onChange({ target: { value: val } });
@@ -147,7 +151,7 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
                             ))}
                         </div>
                     </div>,
-                    document.body
+                    targetDocument.body
                 )}
             </div>
         </div>

@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { Check, Copy, Maximize2, ExternalLink, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Check, Copy, Maximize2, ExternalLink, ChevronDown, ChevronUp, Download, Expand } from 'lucide-react';
+import { translations } from '../../utils/appUtils';
 
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
@@ -23,11 +24,12 @@ interface CodeBlockProps {
   className?: string;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
+  t: (key: keyof typeof translations) => string;
 }
 
 const COLLAPSE_THRESHOLD_PX = 320;
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault, t }) => {
     const preRef = useRef<HTMLPreElement>(null);
     const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
@@ -112,10 +114,10 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 <div className="flex items-center gap-0.5">
                     {likelyHTML && (
                         <>
-                            <button className={buttonClass} title="Open Fullscreen" onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
-                                <ExternalLink size={14} strokeWidth={2} /> 
+                            <button className={buttonClass} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
+                                <Expand size={14} strokeWidth={2} /> 
                             </button>
-                            <button className={buttonClass} title="Preview" onClick={() => onOpenHtmlPreview(codeText.current)}> 
+                            <button className={buttonClass} title={t('code_fullscreen_modal')} onClick={() => onOpenHtmlPreview(codeText.current)}> 
                                 <Maximize2 size={14} strokeWidth={2} /> 
                             </button>
                         </>
@@ -142,7 +144,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                     }}> 
                         <Download size={14} strokeWidth={2} /> 
                     </button>
-                     <button className={buttonClass} title={copied ? "Copied!" : "Copy code"} onClick={handleCopy}>
+                     <button className={buttonClass} title={copied ? t('copied_button_title') : t('copy_button_title')} onClick={handleCopy}>
                         {copied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                     </button>
                     {isOverflowing && (

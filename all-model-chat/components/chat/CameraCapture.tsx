@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, SwitchCamera, Loader2 } from 'lucide-react';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
@@ -18,6 +19,8 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
   const [isFlashing, setIsFlashing] = useState(false);
   const [isVideoReady, setIsVideoReady] = useState(false);
+  
+  const { document: targetDocument } = useWindowContext();
 
   // Check for multiple video input devices
   useEffect(() => {
@@ -238,6 +241,6 @@ export const CameraCapture: React.FC<CameraCaptureProps> = ({ onCapture, onCance
         </div>
       </div>
     </div>,
-    document.body
+    targetDocument.body
   );
 };

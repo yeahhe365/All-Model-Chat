@@ -144,7 +144,8 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                     const htmlContent = match[1].trim();
                     // Small delay to ensure the modal doesn't fight with other UI updates
                     setTimeout(() => {
-                        onOpenHtmlPreview(htmlContent, { initialTrueFullscreen: true });
+                        // Auto-preview defaults to Modal (Page Fullscreen) to avoid browser blocking
+                        onOpenHtmlPreview(htmlContent, { initialTrueFullscreen: false });
                     }, 100);
                 }
             }
@@ -236,6 +237,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                     isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                                     isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                                     allowHtml={true}
+                                    t={t}
                                 />
                             </div>
                         </div>
@@ -251,7 +253,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
 
             {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} />
+              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} t={t} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer
@@ -263,6 +265,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                         allowHtml={true}
+                        t={t}
                     />
                 </div>
             )}

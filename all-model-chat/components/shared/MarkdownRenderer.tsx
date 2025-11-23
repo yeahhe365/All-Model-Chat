@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -11,6 +12,7 @@ import { CodeBlock } from '../message/CodeBlock';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
 import { UploadedFile } from '../../types';
+import { translations } from '../../utils/appUtils';
 
 interface MarkdownRendererProps {
   content: string;
@@ -21,6 +23,7 @@ interface MarkdownRendererProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   allowHtml?: boolean;
+  t: (key: keyof typeof translations) => string;
 }
 
 const InlineCode = ({ className, children, inline, ...props }: any) => {
@@ -70,6 +73,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   isMermaidRenderingEnabled,
   isGraphvizRenderingEnabled,
   allowHtml = false,
+  t,
 }) => {
 
   const rehypePlugins = useMemo(() => {
@@ -177,7 +181,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         return (
           <div>
             <MermaidBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} />
-            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
+            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} t={t}>
               {codeElement || children}
             </CodeBlock>
           </div>
@@ -188,7 +192,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         return (
           <div>
             <GraphvizBlock code={rawCode} isLoading={isLoading} />
-            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault}>
+            <CodeBlock {...rest} className={codeClassName} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} t={t}>
               {codeElement || children}
             </CodeBlock>
           </div>
@@ -201,12 +205,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
           className={codeClassName} 
           onOpenHtmlPreview={onOpenHtmlPreview} 
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+          t={t}
         >
           {codeElement || children}
         </CodeBlock>
       );
     }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading]);
+  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t]);
 
   // Optimization: Safe replacement for CJK bold issue.
   const processedContent = useMemo(() => {

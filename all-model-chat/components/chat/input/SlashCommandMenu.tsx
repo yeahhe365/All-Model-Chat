@@ -1,5 +1,7 @@
+
 import React, { useRef, useEffect } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Square, Edit3, PictureInPicture } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Edit3, PictureInPicture } from 'lucide-react';
+import { IconStop } from '../../icons/CustomIcons';
 
 const CommandIcon: React.FC<{ icon: string }> = ({ icon }) => {
     const iconProps = { size: 16 };
@@ -9,7 +11,7 @@ const CommandIcon: React.FC<{ icon: string }> = ({ icon }) => {
         case 'edit': return <Edit3 {...iconProps} />;
         case 'pin': return <Pin {...iconProps} />;
         case 'retry': return <RotateCw {...iconProps} />;
-        case 'stop': return <Square {...iconProps} size={12} fill="currentColor" />;
+        case 'stop': return <IconStop size={12} color="currentColor" />;
         case 'search': return <Globe {...iconProps} />;
         case 'code': return <Terminal {...iconProps} />;
         case 'url': return <Link {...iconProps} />;
