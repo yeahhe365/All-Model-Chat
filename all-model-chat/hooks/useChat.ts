@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, ChatGroup } from '../types';
 import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
@@ -40,15 +41,16 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
-        let newSessions: SavedChatSession[] = [];
         setSavedSessions(prevSessions => {
-            newSessions = updater(prevSessions);
+            const newSessions = updater(prevSessions);
+            if (persist) {
+                // Fire and forget persistence to ensure we have the correct data scope
+                dbService.setAllSessions(newSessions)
+                    .then(() => logService.debug('Persisted sessions to IndexedDB.'))
+                    .catch(e => logService.error('Failed to persist sessions', { error: e }));
+            }
             return newSessions;
         });
-        if (persist) {
-            await dbService.setAllSessions(newSessions);
-            logService.debug('Persisted sessions to IndexedDB.');
-        }
     }, []);
     
     const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
