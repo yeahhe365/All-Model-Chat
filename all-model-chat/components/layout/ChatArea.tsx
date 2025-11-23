@@ -4,7 +4,7 @@ import { Header } from '../Header';
 import { MessageList } from '../MessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatAreaProps } from '../../types';
-import { getResponsiveValue } from '../../utils/appUtils';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
@@ -32,6 +32,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
 
   const [chatInputHeight, setChatInputHeight] = useState(160); // A reasonable default.
   const chatInputContainerRef = React.useRef<HTMLDivElement>(null);
+  const dragIconSize = useResponsiveValue(48, 64);
 
   React.useEffect(() => {
     const chatInputEl = chatInputContainerRef.current;
@@ -62,7 +63,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     >
       {isAppDraggingOver && (
         <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate">
-          <Paperclip size={getResponsiveValue(48, 64)} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
+          <Paperclip size={dragIconSize} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
           <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
             {t('appDragDropRelease')}
           </p>

@@ -4,8 +4,9 @@ import DOMPurify from 'dompurify';
 import hljs from 'highlight.js';
 import { Loader2, Check, AlertCircle, ImageIcon, FileCode2 } from 'lucide-react';
 import { ThemeColors } from '../../../types';
-import { translations, getResponsiveValue } from '../../../utils/appUtils';
+import { translations } from '../../../utils/appUtils';
 import { exportElementAsPng, exportHtmlStringAsFile, gatherPageStyles } from '../../../utils/exportUtils';
+import { useResponsiveValue } from '../../../hooks/useDevice';
 
 interface ExportMessageButtonProps {
     markdownContent: string;
@@ -20,7 +21,8 @@ interface ExportMessageButtonProps {
 
 export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ markdownContent, messageId, themeColors, themeId, className, type, t, iconSize: propIconSize }) => {
   const [exportState, setExportState] = useState<'idle' | 'exporting' | 'success' | 'error'>('idle');
-  const iconSize = propIconSize ?? getResponsiveValue(14, 16);
+  const responsiveIconSize = useResponsiveValue(14, 16);
+  const iconSize = propIconSize ?? responsiveIconSize;
 
   const handleExport = async () => {
     if (!markdownContent || exportState === 'exporting') return;

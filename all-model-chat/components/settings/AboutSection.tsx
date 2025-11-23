@@ -1,15 +1,15 @@
-
 import React, { useEffect, useState } from 'react';
 import { Github, Star, Heart } from 'lucide-react';
-import { getResponsiveValue, translations } from '../../utils/appUtils';
+import { translations } from '../../utils/appUtils';
 import { AppLogo } from '../icons/AppLogo';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 interface AboutSectionProps {
   t: (key: keyof typeof translations) => string;
 }
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
-  const iconSize = getResponsiveValue(18, 20);
+  const iconSize = useResponsiveValue(18, 20);
   const version = "1.7.5"; 
   const [stars, setStars] = useState<number | null>(null);
 

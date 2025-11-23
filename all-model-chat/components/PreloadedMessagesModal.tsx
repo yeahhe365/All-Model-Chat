@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario, PreloadedMessage } from '../types';
 import { X, Plus, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, Play, Save, ChevronRight } from 'lucide-react';
-import { translations, getResponsiveValue } from '../utils/appUtils';
+import { translations } from '../utils/appUtils';
 import { Modal } from './shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
+import { useResponsiveValue } from '../hooks/useDevice';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;
@@ -31,8 +32,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
-  const headingIconSize = getResponsiveValue(20, 24);
-  const actionIconSize = getResponsiveValue(16, 18);
+  const headingIconSize = useResponsiveValue(20, 24);
+  const actionIconSize = useResponsiveValue(16, 18);
 
   useEffect(() => {
     if (isOpen) {

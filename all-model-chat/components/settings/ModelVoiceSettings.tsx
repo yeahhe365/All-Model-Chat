@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ModelOption } from '../../types';
 import { Loader2, Info, Mic, Bot, Brain, Box, Volume2, Image as ImageIcon, Sparkles, Search, X, Check, ChevronDown } from 'lucide-react';
 import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS, THINKING_BUDGET_RANGES, THINKING_LEVELS, GEMINI_3_RO_MODELS } from '../../constants/appConstants';
-import { getResponsiveValue } from '../../utils/appUtils';
 import { Tooltip, Select, Toggle } from './shared/Tooltip';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -45,7 +44,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
   showThoughts, setShowThoughts,
   t
 }) => {
-  const iconSize = getResponsiveValue(16, 18);
+  const iconSize = useResponsiveValue(16, 18);
   const inputBaseClasses = "w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]";
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";

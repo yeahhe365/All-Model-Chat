@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { KeyRound, Info, Check, AlertCircle } from 'lucide-react';
-import { getResponsiveValue } from '../../utils/appUtils';
 import { Toggle } from './shared/Tooltip';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -31,7 +31,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
   const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]";
   
-  const iconSize = getResponsiveValue(18, 20);
+  const iconSize = useResponsiveValue(18, 20);
 
   // Visual blur effect for API key when not focused
   const apiKeyBlurClass = !isApiKeyFocused && useCustomApiConfig && apiKey ? 'text-transparent [text-shadow:0_0_6px_var(--theme-text-primary)] tracking-widest' : '';
