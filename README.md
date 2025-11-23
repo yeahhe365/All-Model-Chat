@@ -1,4 +1,3 @@
-
 <div align="center">
 
   <h1> All Model Chat</h1>
@@ -9,7 +8,7 @@
 
   <p>
     <a href="https://all-model-chat.pages.dev/" target="_blank">
-      <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=vercel&logoColor=white" alt="Online Demo">
+      <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
     </a>
     <a href="https://ai.studio/apps/drive/1flPV7sNJCnH5gE7dRtNW9C6hZVzI3eh3?fullscreenApplet=true" target="_blank">
       <img src="https://img.shields.io/badge/Google_AI_Studio-Try_Now-4285F4?style=for-the-badge&logo=google" alt="Try in AI Studio">
@@ -127,4 +126,3 @@ All-Model-Chat/
 │   ├── utils/              # 工具函数
 │   └── App.tsx             # 入口组件
 └── index.html
-```
