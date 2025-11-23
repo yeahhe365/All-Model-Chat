@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { AppSettings } from '../types';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { generateThemeCssVariables, logService } from '../utils/appUtils';
+import { applyThemeToDocument, logService } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 
 export const useAppSettings = () => {
@@ -55,29 +56,7 @@ export const useAppSettings = () => {
             dbService.setAppSettings(appSettings).catch(e => logService.error("Failed to save settings", { error: e }));
         }
 
-        const themeVariablesStyleTag = document.getElementById('theme-variables');
-        if (themeVariablesStyleTag) {
-            themeVariablesStyleTag.innerHTML = generateThemeCssVariables(currentTheme.colors);
-        }
-
-        const bodyClassList = document.body.classList;
-        AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
-        bodyClassList.add(`theme-${currentTheme.id}`, 'antialiased');
-
-        // Dynamically switch markdown and highlight.js themes
-        const markdownDarkTheme = document.getElementById('markdown-dark-theme') as HTMLLinkElement;
-        const markdownLightTheme = document.getElementById('markdown-light-theme') as HTMLLinkElement;
-        const hljsDarkTheme = document.getElementById('hljs-dark-theme') as HTMLLinkElement;
-        const hljsLightTheme = document.getElementById('hljs-light-theme') as HTMLLinkElement;
-
-        const isDark = currentTheme.id === 'onyx';
-
-        if (markdownDarkTheme) markdownDarkTheme.disabled = !isDark;
-        if (markdownLightTheme) markdownLightTheme.disabled = isDark;
-        if (hljsDarkTheme) hljsDarkTheme.disabled = !isDark;
-        if (hljsLightTheme) hljsLightTheme.disabled = isDark;
-
-        document.body.style.fontSize = `${appSettings.baseFontSize}px`;
+        applyThemeToDocument(document, currentTheme, appSettings);
 
         let effectiveLang: 'en' | 'zh' = 'en';
         const settingLang = appSettings.language || 'system';

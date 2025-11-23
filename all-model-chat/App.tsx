@@ -10,7 +10,7 @@ import { useAppUI } from './hooks/useAppUI';
 import { useAppEvents } from './hooks/useAppEvents';
 import { usePictureInPicture } from './hooks/usePictureInPicture';
 import { useDataManagement } from './hooks/useDataManagement';
-import { getTranslator, logService } from './utils/appUtils';
+import { getTranslator, logService, applyThemeToDocument } from './utils/appUtils';
 import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
 import { AppModals } from './components/modals/AppModals';
@@ -110,6 +110,13 @@ const App: React.FC = () => {
   } = useAppUI();
   
   const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture(setIsHistorySidebarOpen);
+
+  // Sync styles to PiP window when theme changes
+  useEffect(() => {
+    if (pipWindow && pipWindow.document) {
+        applyThemeToDocument(pipWindow.document, currentTheme, appSettings);
+    }
+  }, [pipWindow, currentTheme, appSettings]);
 
   const {
     installPromptEvent,

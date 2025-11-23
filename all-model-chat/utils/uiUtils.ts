@@ -1,4 +1,7 @@
+
 import { ThemeColors } from '../constants/themeConstants';
+import { AppSettings } from '../types';
+import { Theme, AVAILABLE_THEMES } from '../constants/themeConstants';
 
 export const getResponsiveValue = <T>(mobileValue: T, desktopValue: T, breakpoint: number = 640): T => {
     if (typeof window !== 'undefined' && window.innerWidth < breakpoint) {
@@ -23,6 +26,31 @@ export const generateThemeCssVariables = (colors: ThemeColors): string => {
   css += `  --markdown-table-border: ${colors.borderSecondary};\n`;
   css += '}';
   return css;
+};
+
+export const applyThemeToDocument = (doc: Document, theme: Theme, settings: AppSettings) => {
+  const themeVariablesStyleTag = doc.getElementById('theme-variables');
+  if (themeVariablesStyleTag) {
+    themeVariablesStyleTag.innerHTML = generateThemeCssVariables(theme.colors);
+  }
+
+  const bodyClassList = doc.body.classList;
+  AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
+  bodyClassList.add(`theme-${theme.id}`, 'antialiased');
+
+  const markdownDarkTheme = doc.getElementById('markdown-dark-theme') as HTMLLinkElement;
+  const markdownLightTheme = doc.getElementById('markdown-light-theme') as HTMLLinkElement;
+  const hljsDarkTheme = doc.getElementById('hljs-dark-theme') as HTMLLinkElement;
+  const hljsLightTheme = doc.getElementById('hljs-light-theme') as HTMLLinkElement;
+
+  const isDark = theme.id === 'onyx';
+
+  if (markdownDarkTheme) markdownDarkTheme.disabled = !isDark;
+  if (markdownLightTheme) markdownLightTheme.disabled = isDark;
+  if (hljsDarkTheme) hljsDarkTheme.disabled = !isDark;
+  if (hljsLightTheme) hljsLightTheme.disabled = isDark;
+
+  doc.body.style.fontSize = `${settings.baseFontSize}px`;
 };
 
 export function pcmBase64ToWavUrl(
