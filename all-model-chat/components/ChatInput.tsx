@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../types';
@@ -405,7 +406,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   // Conditional styles for fullscreen
   const wrapperClass = isFullscreen 
-    ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] p-4 sm:p-6 flex flex-col animate-in fade-in duration-200" 
+    ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation" 
     : `bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`;
 
   const innerContainerClass = isFullscreen

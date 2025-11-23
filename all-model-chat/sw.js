@@ -1,21 +1,10 @@
 
-// Use a specific version to ensure stability, matching the one in the app's import map.
-try {
-  self.importScripts('https://esm.sh/@google/genai@1.2.0');
-} catch (e) {
-  console.error('[SW] Failed to import @google/genai SDK:', e);
-}
-
 const CACHE_NAME = 'all-model-chat-cache-v1.7.2';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
 const TARGET_URL_PREFIX = 'https://generativelanguage.googleapis.com/v1beta';
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 
 let proxyUrl = null;
-
-// Map to track active streaming requests and allow them to be aborted.
-// Key: generationId, Value: { controller: AbortController }
-const activeStreams = new Map();
 
 /**
  * Fetches and parses the main HTML file to dynamically discover all critical resources.
@@ -47,85 +36,11 @@ const getDynamicAppShellUrls = async () => {
     }
 };
 
-/**
- * Handles a streaming request from the client by calling the Gemini API.
- * @param {string} generationId - A unique ID for this specific generation request.
- * @param {object} payload - Data needed for the API call (apiKey, modelId, etc.).
- * @param {string} clientId - The ID of the client window that made the request.
- */
-async function handleStreamRequest(generationId, payload, clientId) {
-    if (!self.GoogleGenAI) {
-        const client = await self.clients.get(clientId);
-        if (client) {
-            client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { message: 'Service Worker could not load the Gemini SDK.' } });
-        }
-        return;
-    }
-
-    const { apiKey, modelId, contents, config } = payload;
-    const controller = new AbortController();
-    activeStreams.set(generationId, { controller });
-    let hasError = false;
-
-    try {
-        // 如果设置了代理 URL，我们应该让 fetch 事件处理器来处理请求
-        // 而不是在这里直接使用 GoogleGenAI
-        const ai = new self.GoogleGenAI({ apiKey });
-        const result = await ai.models.generateContentStream({ model: modelId, contents, config });
-
-        for await (const chunk of result) {
-            if (controller.signal.aborted) {
-                console.log(`[SW] Stream ${generationId} aborted.`);
-                break;
-            }
-            const client = await self.clients.get(clientId);
-            if (client) {
-                client.postMessage({ type: 'GEMINI_STREAM_CHUNK', generationId, payload: chunk });
-            } else {
-                console.warn(`[SW] Client ${clientId} not found for stream ${generationId}. Aborting.`);
-                controller.abort();
-                break;
-            }
-        }
-    } catch (error) {
-        hasError = true;
-        console.error(`[SW] Error during Gemini stream for ${generationId}:`, error);
-        const client = await self.clients.get(clientId);
-        if (client) {
-            client.postMessage({ type: 'GEMINI_STREAM_ERROR', generationId, payload: { name: error.name, message: error.message } });
-        }
-    } finally {
-        if (!hasError) {
-            const client = await self.clients.get(clientId);
-            if (client) {
-                client.postMessage({ type: 'GEMINI_STREAM_COMPLETE', generationId });
-            }
-        }
-        activeStreams.delete(generationId);
-    }
-}
-
-/**
- * Aborts an ongoing stream request.
- * @param {string} generationId - The ID of the stream to abort.
- */
-function handleStreamAbort(generationId) {
-    if (activeStreams.has(generationId)) {
-        activeStreams.get(generationId).controller.abort();
-    }
-}
-
 self.addEventListener('message', (event) => {
     if (!event.data || !event.data.type) return;
-    const { type, generationId, payload } = event.data;
+    const { type } = event.data;
 
     switch (type) {
-        case 'GEMINI_STREAM_REQUEST':
-            handleStreamRequest(generationId, payload, event.source.id);
-            break;
-        case 'GEMINI_STREAM_ABORT':
-            handleStreamAbort(generationId);
-            break;
         case 'SKIP_WAITING':
             self.skipWaiting();
             break;

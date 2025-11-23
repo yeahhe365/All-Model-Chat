@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage, MessageListProps, UploadedFile } from '../types';
 import { Message } from './message/Message';
@@ -128,6 +129,10 @@ export const MessageList: React.FC<MessageListProps> = ({
       (suggestionPage * suggestionsPerPage) + suggestionsPerPage
   );
 
+  const borderClass = themeId === 'onyx' 
+    ? 'border border-white/5' 
+    : 'border border-[var(--theme-border-secondary)]/50';
+
   return (
     <>
     <div 
@@ -186,17 +191,17 @@ export const MessageList: React.FC<MessageListProps> = ({
                           onSuggestionClick(text);
                       }
                   }}
-                  className="
+                  className={`
                     relative flex flex-col text-left
                     h-32 sm:h-40 p-3 sm:p-5 rounded-xl sm:rounded-2xl
-                    bg-[var(--theme-bg-tertiary)]/40 
-                    border border-[var(--theme-border-secondary)]/50
+                    bg-[var(--theme-bg-tertiary)]/30 
+                    ${borderClass}
                     hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)]
                     hover:shadow-lg hover:-translate-y-1
                     transition-all duration-300 ease-out group
                     focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]
                     overflow-hidden
-                  "
+                  `}
                   style={{ animation: `fadeInUp 0.5s ${0.1 + i * 0.1}s ease-out both` }}
                 >
                   <div className="relative z-10">
