@@ -10,7 +10,7 @@
     <a href="https://all-model-chat.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
     </a>
-    <a href="https://ai.studio/apps/drive/1flPV7sNJCnH5gE7dRtNW9C6hZVzI3eh3?fullscreenApplet=true" target="_blank">
+    <a href="https://ai.studio/apps/drive/1QTVIPSUjPTWHBzCFRBDG0aiGO6GLNwcD?fullscreenApplet=true" target="_blank">
       <img src="https://img.shields.io/badge/Google_AI_Studio-Try_Now-4285F4?style=for-the-badge&logo=google" alt="Try in AI Studio">
     </a>
   </p>
