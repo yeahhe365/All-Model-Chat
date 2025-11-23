@@ -1,3 +1,4 @@
+
 import { Chat, Part, File as GeminiFile, UsageMetadata, ChatHistoryItem } from "@google/genai";
 import { Theme, ThemeColors } from './constants/themeConstants'; 
 import { translations } from "./utils/appUtils";
@@ -64,12 +65,6 @@ export interface ContentPart {
     fileUri: string;
   };
 }
-
-// This is now defined in the @google/genai types, but we keep it here for reference and potential extension.
-// export interface ChatHistoryItem {
-//   role: 'user' | 'model';
-//   parts: ContentPart[]; 
-// }
 
 export interface ChatSettings {
   modelId: string;

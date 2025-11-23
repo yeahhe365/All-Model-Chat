@@ -65,54 +65,54 @@ export interface Theme {
 
 export const ONYX_THEME_COLORS: ThemeColors = {
   // Backgrounds
-  bgPrimary: '#09090b', // Zinc 950
-  bgSecondary: '#18181b', // Zinc 900
-  bgTertiary: '#27272a', // Zinc 800
-  bgAccent: '#2563eb', // Blue 600
-  bgAccentHover: '#3b82f6', // Blue 500
-  bgDanger: '#ef4444',
-  bgDangerHover: '#dc2626',
-  bgInput: '#27272a', // Zinc 800
-  bgCodeBlock: '#18181b', // Zinc 900 (inset effect)
-  bgCodeBlockHeader: '#27272a', // Zinc 800
-  bgUserMessage: '#2563eb', // Blue 600
+  bgPrimary: '#09090b', // Zinc 950 - Main Content
+  bgSecondary: '#000000', // True Black - Sidebar/Header (Framing effect)
+  bgTertiary: '#18181b', // Zinc 900 - Hover states
+  bgAccent: '#3b82f6', // Blue 500 - Vibrant Accent
+  bgAccentHover: '#2563eb', // Blue 600
+  bgDanger: '#7f1d1d', // Red 900
+  bgDangerHover: '#991b1b',
+  bgInput: '#121214', // Zinc 925 - Very deep input area
+  bgCodeBlock: '#121214', // Deep subtle grey for code
+  bgCodeBlockHeader: '#1a1a1c', // Slightly lighter header
+  bgUserMessage: '#2563eb', // Blue 600 - Classic user bubble
   bgModelMessage: 'transparent',
-  bgErrorMessage: 'rgba(127, 29, 29, 0.2)',
-  bgSuccess: 'rgba(20, 83, 45, 0.2)',
+  bgErrorMessage: 'rgba(127, 29, 29, 0.25)',
+  bgSuccess: 'rgba(6, 78, 59, 0.25)',
   textSuccess: '#4ade80',
-  bgInfo: 'rgba(30, 58, 138, 0.2)',
+  bgInfo: 'rgba(30, 58, 138, 0.25)',
   textInfo: '#60a5fa',
-  bgWarning: 'rgba(120, 53, 15, 0.2)',
+  bgWarning: 'rgba(120, 53, 15, 0.25)',
   textWarning: '#fbbf24',
 
   // Text
-  textPrimary: '#fafafa', // Zinc 50
+  textPrimary: '#f4f4f5', // Zinc 100 - High contrast text
   textSecondary: '#a1a1aa', // Zinc 400
-  textTertiary: '#71717a', // Zinc 500
+  textTertiary: '#52525b', // Zinc 600
   textAccent: '#ffffff',
-  textDanger: '#ffffff',
+  textDanger: '#fca5a5', // Light Red
   textLink: '#38bdf8', // Sky 400
   textCode: '#e4e4e7', // Zinc 200
   bgUserMessageText: '#ffffff',
-  bgModelMessageText: '#e4e4e7', // Zinc 200
+  bgModelMessageText: '#e4e4e7',
   bgErrorMessageText: '#fca5a5',
 
-  // Borders
-  borderPrimary: '#27272a', // Zinc 800
-  borderSecondary: '#3f3f46', // Zinc 700
+  // Borders - Significantly darkened to avoid white outlines
+  borderPrimary: '#18181b', // Zinc 900 - blending more with tertiary
+  borderSecondary: '#18181b', // Zinc 900 - blending more with tertiary
   borderFocus: '#3b82f6', // Blue 500
 
   // Scrollbar
-  scrollbarThumb: '#3f3f46', // Zinc 700
+  scrollbarThumb: '#27272a',
   scrollbarTrack: 'transparent',
 
   // Icons
   iconUser: '#ffffff',
-  iconModel: '#3b82f6', // Brand Blue
+  iconModel: '#38bdf8', // Sky 400
   iconError: '#ef4444',
   iconThought: '#71717a',
   iconSettings: '#a1a1aa',
-  iconClearChat: '#fafafa',
+  iconClearChat: '#f4f4f5',
   iconSend: '#ffffff',
   iconAttach: '#a1a1aa',
   iconStop: '#ffffff',

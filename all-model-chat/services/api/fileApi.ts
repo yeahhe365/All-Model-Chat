@@ -1,5 +1,6 @@
+
 import { File as GeminiFile, UploadFileConfig } from "@google/genai";
-import { getApiClient, POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from './baseApi';
+import { getApiClient } from './baseApi';
 import { logService } from "../logService";
 import { dbService } from "../../utils/db";
 

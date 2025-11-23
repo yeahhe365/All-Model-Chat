@@ -1,14 +1,12 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Loader2, ChevronDown, Sigma, Zap, Sparkles } from 'lucide-react';
+import { Loader2, ChevronDown, Sigma, Zap, Brain } from 'lucide-react';
 
 import { ChatMessage, UploadedFile, AppSettings } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { translations } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
-
-const GEMINI_ICON_URL = "https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg";
 
 const MessageTimer: React.FC<{ startTime?: Date; endTime?: Date; isLoading?: boolean }> = ({ startTime, endTime, isLoading }) => {
   const [elapsedTime, setElapsedTime] = useState<string>('');
@@ -25,7 +23,7 @@ const MessageTimer: React.FC<{ startTime?: Date; endTime?: Date; isLoading?: boo
   }, [startTime, endTime, isLoading]);
 
   if (!elapsedTime && !(isLoading && startTime)) return null;
-  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center">{isLoading && startTime && <Loader2 size={10} className="animate-spin mr-1" strokeWidth={1.5} />} {elapsedTime || "0.0s"}</span>;
+  return <span className="text-xs text-[var(--theme-text-tertiary)] font-light tabular-nums pt-0.5 flex items-center">{elapsedTime || "0.0s"}</span>;
 };
 
 const TokenDisplay: React.FC<{ message: ChatMessage; t: (key: keyof typeof translations) => string }> = ({ message, t }) => {
@@ -165,13 +163,11 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         <summary className="list-none flex select-none items-center justify-between px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none">
                             <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                                 {/* Icon Area */}
-                                <div className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors duration-300 ${isLoading ? 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)]' : ''}`}>
-                                    {isLoading ? (
+                                {isLoading && (
+                                    <div className={`flex items-center justify-center w-6 h-6 rounded-md transition-colors duration-300 bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)]`}>
                                         <Loader2 size={14} className="animate-spin" strokeWidth={2} />
-                                    ) : (
-                                        <img src={GEMINI_ICON_URL} alt="Gemini" className="w-4 h-4" />
-                                    )}
-                                </div>
+                                    </div>
+                                )}
 
                                 {/* Text Area */}
                                 <div className="flex flex-col min-w-0 justify-center">
@@ -275,22 +271,29 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
 
             {(suggestions && suggestions.length > 0) && (
-                <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)] border-opacity-30 flex flex-wrap gap-2">
+                <div className="mt-2.5 flex flex-wrap gap-2">
                     {suggestions.map((suggestion, index) => (
                         <button
                             key={index}
                             onClick={() => onSuggestionClick && onSuggestionClick(suggestion)}
-                            className="suggestion-bubble group"
+                            className="
+                                text-xs px-3 py-1.5 rounded-xl
+                                border border-[var(--theme-border-secondary)]/50
+                                bg-[var(--theme-bg-primary)]/30
+                                hover:bg-[var(--theme-bg-tertiary)]
+                                text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
+                                transition-colors duration-200
+                                text-left
+                            "
                         >
-                            <Sparkles size={13} className="opacity-50 group-hover:opacity-100 group-hover:text-[var(--theme-text-link)] transition-opacity duration-200 flex-shrink-0 mt-[3px]" strokeWidth={1.5} />
-                            <span>{suggestion}</span>
+                            {suggestion}
                         </button>
                     ))}
                 </div>
             )}
             { isGeneratingSuggestions && (
-                <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)] border-opacity-30 flex items-center gap-2 text-sm text-[var(--theme-text-tertiary)] animate-pulse">
-                    <Loader2 size={14} className="animate-spin" strokeWidth={1.5} />
+                <div className="mt-2.5 flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)] animate-pulse opacity-70">
+                    <Loader2 size={12} className="animate-spin" strokeWidth={1.5} />
                     <span>Generating suggestions...</span>
                 </div>
             )}

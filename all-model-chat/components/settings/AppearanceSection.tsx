@@ -82,13 +82,22 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
 
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
 
+  // Reverted to Tooltip based ToggleItem for cleaner layout
   const ToggleItem = ({ label, checked, onChange, tooltip }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string }) => (
       <div className="flex items-center justify-between py-3 transition-colors">
-          <span className="text-sm text-[var(--theme-text-primary)] flex items-center gap-2">
-              {label}
-              {tooltip && <Tooltip text={tooltip}><Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} /></Tooltip>}
-          </span>
-          <Toggle id={label} checked={checked} onChange={onChange} />
+          <div className="flex items-center pr-4 flex-1 min-w-0">
+              <span className="text-sm font-medium text-[var(--theme-text-primary)]">
+                  {label}
+              </span>
+              {tooltip && (
+                  <Tooltip text={tooltip}>
+                      <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
+                  </Tooltip>
+              )}
+          </div>
+          <div className="flex-shrink-0">
+            <Toggle id={label} checked={checked} onChange={onChange} />
+          </div>
       </div>
   );
 
