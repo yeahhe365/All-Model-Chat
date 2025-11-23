@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
 import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
-import { translations, getResponsiveValue } from '../../utils/appUtils';
+import { translations } from '../../utils/appUtils';
 import { Modal } from './Modal';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 interface ImageZoomModalProps {
   file: UploadedFile | null;
@@ -20,6 +21,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
   const [isCopied, setIsCopied] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const closeIconSize = useResponsiveValue(20, 24);
 
   const MIN_SCALE = 0.2;
   const MAX_SCALE = 10;
@@ -244,7 +246,7 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
           aria-label={t('imageZoom_close_aria')}
           title={t('imageZoom_close_title')}
         >
-          <X size={getResponsiveValue(20, 24)} strokeWidth={1.5} />
+          <X size={closeIconSize} strokeWidth={1.5} />
         </button>
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 rounded-lg shadow-lg backdrop-blur-sm border border-white/10" onClick={(e) => e.stopPropagation()}>
           <button onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} strokeWidth={1.5} /></button>

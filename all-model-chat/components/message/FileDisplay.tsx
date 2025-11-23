@@ -8,7 +8,6 @@ import {
     SUPPORTED_VIDEO_MIME_TYPES, 
 } from '../../constants/fileConstants';
 import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy, Download, Youtube } from 'lucide-react'; 
-import { getResponsiveValue } from '../../utils/appUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;

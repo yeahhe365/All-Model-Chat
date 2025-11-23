@@ -1,14 +1,25 @@
-
 import React from 'react';
 import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2 } from 'lucide-react';
 import { ChatMessage, ThemeColors } from '../../types';
-import { translations, getResponsiveValue } from '../../utils/appUtils';
+import { translations } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
-const UserIcon: React.FC = () => <User size={getResponsiveValue(24, 29)} className="text-[var(--theme-icon-user)] flex-shrink-0" strokeWidth={2} />;
-const BotIcon: React.FC = () => <Bot size={getResponsiveValue(24, 29)} className="text-[var(--theme-icon-model)] flex-shrink-0" strokeWidth={2} />;
-const ErrorMsgIcon: React.FC = () => <AlertTriangle size={getResponsiveValue(24, 29)} className="text-[var(--theme-icon-error)] flex-shrink-0" strokeWidth={2} />;
+const UserIcon: React.FC = () => {
+    const size = useResponsiveValue(24, 29);
+    return <User size={size} className="text-[var(--theme-icon-user)] flex-shrink-0" strokeWidth={2} />;
+};
+
+const BotIcon: React.FC = () => {
+    const size = useResponsiveValue(24, 29);
+    return <Bot size={size} className="text-[var(--theme-icon-model)] flex-shrink-0" strokeWidth={2} />;
+};
+
+const ErrorMsgIcon: React.FC = () => {
+    const size = useResponsiveValue(24, 29);
+    return <AlertTriangle size={size} className="text-[var(--theme-icon-error)] flex-shrink-0" strokeWidth={2} />;
+};
 
 interface MessageActionsProps {
     message: ChatMessage;
@@ -35,7 +46,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     themeId,
     t
 }) => {
-    const actionIconSize = getResponsiveValue(15, 16); 
+    const actionIconSize = useResponsiveValue(15, 16); 
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     const isThisMessageLoadingTts = ttsMessageId === message.id;
     
