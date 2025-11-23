@@ -1,3 +1,4 @@
+
 <div align="center">
 
   <h1>🤖 All Model Chat</h1>
@@ -10,7 +11,7 @@
     <a href="https://all-model-chat.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=vercel&logoColor=white" alt="Online Demo">
     </a>
-    <a href="https://ai.studio/apps/drive/1QTVIPSUjPTWHBzCFRBDG0aiGO6GLNwcD" target="_blank">
+    <a href="https://ai.studio/apps/drive/1flPV7sNJCnH5gE7dRtNW9C6hZVzI3eh3?fullscreenApplet=true" target="_blank">
       <img src="https://img.shields.io/badge/Google_AI_Studio-Try_Now-4285F4?style=for-the-badge&logo=google" alt="Try in AI Studio">
     </a>
   </p>
@@ -24,9 +25,11 @@
 
   <br/>
   
-  <a href="https://all-model-chat.pages.dev/" target="_blank">
-    <img width="800" src="https://github.com/user-attachments/assets/bb9094cf-abea-4b4b-9514-93978877349c" alt="All Model Chat Screenshot" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
-  </a>
+  <p>这是浅色主题</p>
+  <img width="960" height="804" alt="Light Theme Screenshot" src="https://github.com/user-attachments/assets/cfcb2857-d9dd-43aa-bdec-92f60b3650e9" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 20px;" />
+  
+  <p>这是暗色主题</p>
+  <img width="960" height="804" alt="Dark Theme Screenshot" src="https://github.com/user-attachments/assets/6d09b9ed-040f-4a81-905b-83f0f662af3f" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
 
   <br/><br/>
 
@@ -117,3 +120,4 @@ All-Model-Chat/
 │   ├── utils/              # 工具函数
 │   └── App.tsx             # 入口组件
 └── index.html
+```
