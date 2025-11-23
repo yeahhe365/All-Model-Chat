@@ -1,7 +1,7 @@
 
 <div align="center">
 
-  <h1>🤖 All Model Chat</h1>
+  <h1> All Model Chat</h1>
 
   <p>
     <strong>专为 Google Gemini API 家族打造的现代化全能 AI 助手</strong>
@@ -25,11 +25,18 @@
 
   <br/>
   
-  <p>这是浅色主题</p>
-  <img width="960" height="804" alt="Light Theme Screenshot" src="https://github.com/user-attachments/assets/cfcb2857-d9dd-43aa-bdec-92f60b3650e9" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 20px;" />
-  
-  <p>这是暗色主题</p>
-  <img width="960" height="804" alt="Dark Theme Screenshot" src="https://github.com/user-attachments/assets/6d09b9ed-040f-4a81-905b-83f0f662af3f" style="border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);"/>
+  <table>
+    <tr>
+      <td align="center" width="50%">
+        <p><strong>Light Theme</strong></p>
+        <img src="https://github.com/user-attachments/assets/cfcb2857-d9dd-43aa-bdec-92f60b3650e9" alt="Light Theme" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" />
+      </td>
+      <td align="center" width="50%">
+        <p><strong>Dark Theme</strong></p>
+        <img src="https://github.com/user-attachments/assets/6d09b9ed-040f-4a81-905b-83f0f662af3f" alt="Dark Theme" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" />
+      </td>
+    </tr>
+  </table>
 
   <br/><br/>
 
