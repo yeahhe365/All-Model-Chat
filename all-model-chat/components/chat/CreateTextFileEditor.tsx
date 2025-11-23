@@ -1,12 +1,14 @@
+
 import React, { useRef, useState, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+import { Save, X, FilePlus } from 'lucide-react';
+import { Modal } from '../shared/Modal';
 
 interface CreateTextFileEditorProps {
   onConfirm: (content: string, filename: string) => void;
   onCancel: () => void;
   isProcessing: boolean;
   isLoading: boolean;
-  isHistorySidebarOpen?: boolean;
+  t: (key: string) => string;
 }
 
 export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
@@ -14,33 +16,17 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
   onCancel,
   isProcessing,
   isLoading,
-  isHistorySidebarOpen,
+  t,
 }) => {
-  const [createTextContent, setCreateTextContent] = React.useState('');
-  const [customFilename, setCustomFilename] = React.useState('');
-  const createTextEditorTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const [leftOffset, setLeftOffset] = useState('0px');
-
-  React.useEffect(() => {
-    // Focus the textarea when the editor becomes visible
-    setTimeout(() => createTextEditorTextareaRef.current?.focus(), 0);
-  }, []);
+  const [createTextContent, setCreateTextContent] = useState('');
+  const [customFilename, setCustomFilename] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const calculateOffset = () => {
-      // The sidebar is 18rem (288px) wide on screens >= 768px (md breakpoint).
-      // On smaller screens, it's an overlay, so the editor should be fullscreen.
-      if (isHistorySidebarOpen && window.innerWidth >= 768) {
-        setLeftOffset('18rem');
-      } else {
-        setLeftOffset('0px');
-      }
-    };
-
-    calculateOffset();
-    window.addEventListener('resize', calculateOffset);
-    return () => window.removeEventListener('resize', calculateOffset);
-  }, [isHistorySidebarOpen]);
+    // Focus the textarea when the editor becomes visible
+    const timer = setTimeout(() => textareaRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleConfirm = () => {
     if (!createTextContent.trim() || isProcessing || isLoading) return;
@@ -48,61 +34,70 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
   };
 
   return (
-    <div 
-      className="fixed top-0 right-0 bottom-0 bg-[var(--theme-bg-primary)] z-[2100] flex flex-col p-3 sm:p-4 md:p-6"
-      style={{ left: leftOffset, transition: 'left 0.3s ease-in-out' }}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="create-text-file-title"
+    <Modal
+      isOpen={true}
+      onClose={onCancel}
+      noPadding
+      contentClassName="w-full h-full sm:h-[85vh] sm:w-[90vw] md:max-w-4xl bg-[var(--theme-bg-primary)] sm:rounded-xl shadow-2xl flex flex-col overflow-hidden border-0 sm:border border-[var(--theme-border-primary)] animate-in fade-in zoom-in-95 duration-200"
     >
-      <div className="flex justify-between items-center mb-3 sm:mb-4">
-        <h2 id="create-text-file-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)]">
-          Create New Text File
+      {/* Header */}
+      <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/50">
+        <h2 id="create-text-file-title" className="text-lg font-semibold text-[var(--theme-text-primary)] tracking-tight">
+          {t('createText_title')}
         </h2>
         <button
           onClick={onCancel}
-          className="p-1.5 sm:p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] rounded-md"
-          aria-label="Close text file editor"
+          className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors"
+          aria-label={t('close')}
         >
           <X size={20} />
         </button>
       </div>
 
-      <input
-        type="text"
-        value={customFilename}
-        onChange={(e) => setCustomFilename(e.target.value)}
-        placeholder="Optional: Enter filename (e.g., my_notes.txt)"
-        className="w-full p-2 sm:p-2.5 mb-2 sm:mb-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm"
-        aria-label="Custom filename for text file"
-      />
-      <textarea
-        ref={createTextEditorTextareaRef}
-        value={createTextContent}
-        onChange={(e) => setCreateTextContent(e.target.value)}
-        className="flex-grow w-full p-2 sm:p-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-base resize-none custom-scrollbar"
-        placeholder="Type or paste your text content here..."
-        aria-label="Text content for new file"
-      />
-      <div className="mt-3 sm:mt-4 flex justify-end gap-2 sm:gap-3">
+      {/* Body */}
+      <div className="flex-grow flex flex-col p-4 sm:p-6 gap-4 min-h-0 bg-[var(--theme-bg-primary)]">
+        <div>
+          <input
+            type="text"
+            value={customFilename}
+            onChange={(e) => setCustomFilename(e.target.value)}
+            placeholder={t('createText_filename_placeholder')}
+            className="w-full p-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none transition-all text-sm"
+            aria-label="Filename"
+            autoComplete="off"
+          />
+        </div>
+        <div className="flex-grow relative rounded-lg border border-[var(--theme-border-secondary)] overflow-hidden focus-within:ring-2 focus-within:ring-[var(--theme-border-focus)] focus-within:border-transparent transition-all bg-[var(--theme-bg-input)]">
+          <textarea
+            ref={textareaRef}
+            value={createTextContent}
+            onChange={(e) => setCreateTextContent(e.target.value)}
+            className="absolute inset-0 w-full h-full p-4 bg-transparent border-none text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-none custom-scrollbar outline-none font-mono text-sm leading-relaxed"
+            placeholder={t('createText_content_placeholder')}
+            aria-label="File content"
+            spellCheck={false}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="p-4 sm:px-6 py-4 border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/30 flex justify-end gap-3">
         <button
           type="button"
           onClick={onCancel}
-          className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors flex items-center gap-1 sm:gap-1.5"
-          aria-label="Cancel creating text file"
+          className="px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors flex items-center gap-2"
         >
-          <X size={14} /> Cancel
+          <X size={16} /> {t('cancel')}
         </button>
         <button
           type="button"
           onClick={handleConfirm}
           disabled={!createTextContent.trim() || isProcessing || isLoading}
-          className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)] transition-colors flex items-center gap-1 sm:gap-1.5"
-          aria-label="Create text file from content"
+          className="px-5 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95"
         >
-          <Save size={14} /> Create File
+          <FilePlus size={16} strokeWidth={2} /> {t('createText_create_button')}
         </button>
       </div>
-    </div>
+    </Modal>
   );
 };

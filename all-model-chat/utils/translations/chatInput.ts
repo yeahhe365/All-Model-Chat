@@ -1,3 +1,4 @@
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -42,6 +43,12 @@ export const chatInputTranslations = {
     translating_button_title: { en: 'Translating...', zh: '翻译中...' },
     fullscreen_tooltip_expand: { en: 'Expand Input', zh: '展开输入框' },
     fullscreen_tooltip_collapse: { en: 'Collapse Input', zh: '收起输入框' },
+
+    // Create Text File Modal
+    createText_title: { en: 'Create New Text File', zh: '创建新文本文件' },
+    createText_filename_placeholder: { en: 'Optional: Enter filename (e.g., my_notes.txt)', zh: '可选：输入文件名 (例如 my_notes.txt)' },
+    createText_content_placeholder: { en: 'Type or paste your text content here...', zh: '在此输入或粘贴文本内容...' },
+    createText_create_button: { en: 'Create File', zh: '创建文件' },
 
     // Command descriptions for help modal
     help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },
