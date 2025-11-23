@@ -1,7 +1,9 @@
+
 import React, { useMemo } from 'react';
 import DOMPurify from 'dompurify';
 import { UploadedFile } from '../../types';
 import { MarkdownRenderer } from '../shared/MarkdownRenderer';
+import { translations } from '../../utils/appUtils';
 
 interface GroundedResponseProps {
   text: string;
@@ -12,9 +14,10 @@ interface GroundedResponseProps {
   onImageClick: (file: UploadedFile) => void;
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
+  t: (key: keyof typeof translations) => string;
 }
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled }) => {
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t }) => {
   const content = useMemo(() => {
     if (!metadata || !metadata.groundingSupports) {
       return text;
@@ -112,6 +115,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
           isMermaidRenderingEnabled={isMermaidRenderingEnabled}
           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
           allowHtml={true}
+          t={t}
         />
       </div>
       {sources.length > 0 && (

@@ -1,8 +1,10 @@
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Minimize, Expand } from 'lucide-react';
+import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Expand } from 'lucide-react';
 import { getResponsiveValue } from '../utils/appUtils';
 import { sanitizeFilename, exportElementAsPng } from '../utils/exportUtils';
+import { useWindowContext } from '../contexts/WindowContext';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -12,8 +14,8 @@ interface HtmlPreviewModalProps {
 }
 
 const ZOOM_STEP = 0.1;
-const MIN_ZOOM = 0.2;
-const MAX_ZOOM = 5;
+const MIN_ZOOM = 0.25;
+const MAX_ZOOM = 3.0;
 
 export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   isOpen,
@@ -23,47 +25,52 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
-  const iconSize = getResponsiveValue(18, 20);
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const [scale, setScale] = useState(1);
   const [isScreenshotting, setIsScreenshotting] = useState(false);
+  
+  // Track if we are in the process of a direct launch to prevent UI flash
+  const [isDirectFullscreenLaunch, setIsDirectFullscreenLaunch] = useState(initialTrueFullscreenRequest);
+  
+  const { document: targetDocument } = useWindowContext();
 
   const handleZoomIn = () => setScale(s => Math.min(MAX_ZOOM, s + ZOOM_STEP));
   const handleZoomOut = () => setScale(s => Math.max(MIN_ZOOM, s - ZOOM_STEP));
 
   const enterTrueFullscreen = useCallback(async () => {
-    if (iframeRef.current && document.fullscreenEnabled) {
-      try {
-        await iframeRef.current.requestFullscreen();
-      } catch (err) {
-        console.error("Error attempting to enable full-screen mode:", err);
+    const element = iframeRef.current;
+    if (!element) return;
+
+    try {
+      if (element.requestFullscreen) {
+        await element.requestFullscreen();
+      } else if ((element as any).webkitRequestFullscreen) { // Safari
+        (element as any).webkitRequestFullscreen();
       }
-    } else if (iframeRef.current && (iframeRef.current as any).webkitRequestFullscreen) { // Safari
-        try {
-            (iframeRef.current as any).webkitRequestFullscreen();
-        } catch (err) {
-            console.error("Error attempting to enable webkit full-screen mode:", err);
-        }
+    } catch (err) {
+      console.error("Error attempting to enable full-screen mode:", err);
+      // If fullscreen fails, show the modal UI so the user isn't stuck with an invisible overlay
+      setIsDirectFullscreenLaunch(false);
     }
   }, []);
 
   const exitTrueFullscreen = useCallback(async () => {
-    if (document.fullscreenElement || (document as any).webkitFullscreenElement) {
-        if (document.exitFullscreen) {
+    if (targetDocument.fullscreenElement || (targetDocument as any).webkitFullscreenElement) {
+        if (targetDocument.exitFullscreen) {
             try {
-                await document.exitFullscreen();
+                await targetDocument.exitFullscreen();
             } catch (err) {
                 console.error("Error attempting to disable full-screen mode:", err);
             }
-        } else if ((document as any).webkitExitFullscreen) { // Safari
+        } else if ((targetDocument as any).webkitExitFullscreen) { // Safari
             try {
-                await (document as any).webkitExitFullscreen();
+                await (targetDocument as any).webkitExitFullscreen();
             } catch (err) {
                 console.error("Error attempting to disable webkit full-screen mode:", err);
             }
         }
     }
-  }, []);
+  }, [targetDocument]);
 
   const handleClose = useCallback(() => {
     if (isOpen) {
@@ -73,41 +80,46 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const newlyFullscreenElement = document.fullscreenElement || (document as any).webkitFullscreenElement;
+      const newlyFullscreenElement = targetDocument.fullscreenElement || (targetDocument as any).webkitFullscreenElement;
       const isNowInTrueFullscreenForIframe = newlyFullscreenElement === iframeRef.current;
 
       if (isTrueFullscreen && !isNowInTrueFullscreenForIframe) {
         // We were in true fullscreen for *this iframe*, and now we are not.
-        handleClose(); // Close the modal.
+        
+        // If we launched directly to fullscreen, exiting fullscreen should close the modal completely.
+        if (initialTrueFullscreenRequest) {
+            onClose();
+            return;
+        }
       }
       setIsTrueFullscreen(isNowInTrueFullscreenForIframe);
     };
   
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+    targetDocument.addEventListener('fullscreenchange', handleFullscreenChange);
+    targetDocument.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
   
     return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      targetDocument.removeEventListener('fullscreenchange', handleFullscreenChange);
+      targetDocument.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
     };
-  }, [isTrueFullscreen, handleClose, iframeRef]);
+  }, [isTrueFullscreen, handleClose, iframeRef, initialTrueFullscreenRequest, onClose, targetDocument]);
 
   useEffect(() => {
     if (isOpen) {
       setIsActuallyOpen(true);
       setScale(1); // Reset scale on open
+      setIsDirectFullscreenLaunch(initialTrueFullscreenRequest);
     } else {
       const timer = setTimeout(() => setIsActuallyOpen(false), 300); // Match animation duration
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, initialTrueFullscreenRequest]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         if (isTrueFullscreen) {
           // Browser will handle exiting true fullscreen.
-          // The 'fullscreenchange' event listener above will then call onClose().
         } else {
           handleClose(); // Not in true fullscreen, so close the modal directly.
         }
@@ -115,21 +127,16 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     };
 
     if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
+      targetDocument.addEventListener('keydown', handleKeyDown);
       if (initialTrueFullscreenRequest && iframeRef.current) {
-        const timer = setTimeout(() => {
-            enterTrueFullscreen();
-        }, 150); // Delay slightly for modal animations and iframe readiness
-        return () => {
-            clearTimeout(timer);
-            document.removeEventListener('keydown', handleKeyDown);
-        }
+        // Attempt immediate fullscreen entrance. 
+        enterTrueFullscreen();
       }
     }
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      targetDocument.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, handleClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen]);
+  }, [isOpen, handleClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen, targetDocument]);
 
 
   if (!isActuallyOpen || !htmlContent) {
@@ -149,12 +156,12 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     const filename = `${sanitizeFilename(previewTitle)}.html`;
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = targetDocument.createElement('a');
     link.href = url;
     link.download = filename;
-    document.body.appendChild(link);
+    targetDocument.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    targetDocument.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -164,8 +171,10 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     try {
         const iframeBody = iframeRef.current.contentDocument.body;
         const filename = `${sanitizeFilename(previewTitle)}-screenshot.png`;
-        iframeRef.current.contentWindow?.scrollTo(0, 0);
-        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Temporarily reset scale for screenshot to ensure high quality capture
+        // Note: Capturing cross-origin iframes isn't possible, but this is srcDoc so it's same-origin effectively.
+        
         await exportElementAsPng(iframeBody, filename, {
             backgroundColor: iframeRef.current.contentDocument.body.style.backgroundColor || getComputedStyle(iframeRef.current.contentDocument.body).backgroundColor || '#ffffff',
             scale: 2,
@@ -180,130 +189,131 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
 
   const handleRefresh = useCallback(() => {
     if (iframeRef.current && htmlContent) {
-      // Temporarily clear srcdoc to force a full reload if the content is identical
-      // Some browsers might optimize if srcdoc is set to the exact same string.
       iframeRef.current.srcdoc = ' '; 
       requestAnimationFrame(() => {
-        if (iframeRef.current) { // Check if still mounted
+        if (iframeRef.current) { 
           iframeRef.current.srcdoc = htmlContent;
         }
       });
     }
   }, [htmlContent]);
   
-  const buttonClasses = "p-1 sm:p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)] disabled:opacity-50 disabled:cursor-not-allowed";
-
-  const FullscreenToggleButton: React.FC = () => (
-    <button
-      onClick={isTrueFullscreen ? exitTrueFullscreen : enterTrueFullscreen}
-      className={buttonClasses}
-      aria-label={isTrueFullscreen ? "Exit true fullscreen" : "Enter true fullscreen"}
-      title={isTrueFullscreen ? "Exit Fullscreen" : "Enter Fullscreen (Browser)"}
-    >
-      {isTrueFullscreen ? <Minimize size={iconSize} strokeWidth={1.5} /> : <Expand size={iconSize} strokeWidth={1.5} />}
-    </button>
-  );
+  const iconBtnClass = "p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed";
 
   const handleIframeError = (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
     console.error("Iframe loading error:", event);
-    // You could potentially display a message to the user here
   };
+
+  // Skip animation if immediate fullscreen is requested to make it feel instant
+  const animationClass = isOpen 
+    ? (initialTrueFullscreenRequest ? '' : 'modal-enter-animation') 
+    : 'modal-exit-animation';
+
+  // If direct fullscreen launch is active, hide the modal chrome to prevent flash,
+  // but keep it in the DOM so the iframe can be fullscreened.
+  const containerClass = isDirectFullscreenLaunch 
+    ? 'fixed inset-0 z-[2100] opacity-0 pointer-events-none' 
+    : 'fixed inset-0 bg-black/80 flex items-center justify-center z-[2100] backdrop-blur-sm';
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/70 flex items-center justify-center z-[2100] backdrop-blur-sm"
+      className={containerClass}
       role="dialog"
       aria-modal="true"
       aria-labelledby="html-preview-modal-title"
-      onClick={isTrueFullscreen ? undefined : handleClose} // Prevent closing by backdrop click when in true fullscreen
+      onClick={isTrueFullscreen ? undefined : handleClose} 
     >
       <div
-        className={`bg-[var(--theme-bg-primary)] w-full h-full shadow-2xl flex flex-col overflow-hidden ${isOpen ? 'modal-enter-animation' : 'modal-exit-animation'}`}
+        className={`bg-[var(--theme-bg-secondary)] w-full h-full flex flex-col overflow-hidden ${animationClass}`}
         onClick={(e) => e.stopPropagation()} 
       >
-        <header className="py-1 px-2 sm:py-1.5 sm:px-3 border-b border-[var(--theme-border-secondary)] flex justify-between items-center flex-shrink-0 bg-[var(--theme-bg-secondary)]">
-          <h2 id="html-preview-modal-title" className="text-sm sm:text-base font-semibold text-[var(--theme-text-link)] truncate pr-2" title={previewTitle}>
-            {previewTitle}
-          </h2>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button
-                onClick={handleZoomOut}
-                disabled={scale <= MIN_ZOOM}
-                className={buttonClasses}
-                aria-label="Zoom out"
-                title="Zoom Out"
-            >
-                <ZoomOut size={iconSize} strokeWidth={1.5} />
-            </button>
-            <span className="text-xs w-12 text-center text-[var(--theme-text-tertiary)] font-mono tabular-nums select-none">
-                {(scale * 100).toFixed(0)}%
-            </span>
-            <button
-                onClick={handleZoomIn}
-                disabled={scale >= MAX_ZOOM}
-                className={buttonClasses}
-                aria-label="Zoom in"
-                title="Zoom In"
-            >
-                <ZoomIn size={iconSize} strokeWidth={1.5} />
-            </button>
-            <span className="w-px h-4 bg-[var(--theme-border-secondary)] mx-1"></span>
-            <FullscreenToggleButton />
-            <button
-                onClick={handleDownload}
-                className={buttonClasses}
-                aria-label="Download HTML content"
-                title="Download HTML"
-            >
-                <Download size={iconSize} strokeWidth={1.5} /> 
-            </button>
-            <button
-                onClick={handleScreenshot}
-                disabled={isScreenshotting}
-                className={buttonClasses}
-                aria-label="Take screenshot of content"
-                title="Screenshot"
-            >
-                {isScreenshotting ? <Loader2 size={iconSize} className="animate-spin" strokeWidth={1.5} /> : <ImageIcon size={iconSize} strokeWidth={1.5} />}
-            </button>
-            <button
-              onClick={handleRefresh}
-              className={buttonClasses}
-              aria-label="Refresh preview content"
-              title="Refresh Preview"
-            >
-              <RotateCw size={iconSize} strokeWidth={1.5} />
-            </button>
-            {!isTrueFullscreen && (
-                <button
-                onClick={handleClose}
-                className={buttonClasses}
-                aria-label="Close HTML preview"
-                title="Close Preview (Esc)"
-                >
-                <X size={iconSize + 2} strokeWidth={1.5} />
+        {/* Refined Header - Simplified */}
+        <header className="h-14 px-4 flex items-center justify-between gap-4 bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-secondary)] z-10 select-none">
+            <div className="flex items-center gap-3 min-w-0 overflow-hidden">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
+                    <FileCode2 size={18} strokeWidth={1.5} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <h2 id="html-preview-modal-title" className="text-sm font-semibold text-[var(--theme-text-primary)] truncate" title={previewTitle}>
+                        {previewTitle}
+                    </h2>
+                    <span className="text-[10px] text-[var(--theme-text-tertiary)] truncate">
+                        HTML Preview
+                    </span>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+                {/* Zoom Controls */}
+                <div className="hidden sm:flex items-center">
+                    <button onClick={handleZoomOut} className={iconBtnClass} disabled={scale <= MIN_ZOOM} title="Zoom Out">
+                        <ZoomOut size={18} strokeWidth={1.5} />
+                    </button>
+                    <span className="text-xs font-mono font-medium text-[var(--theme-text-secondary)] w-10 text-center select-none tabular-nums">
+                        {Math.round(scale * 100)}%
+                    </span>
+                    <button onClick={handleZoomIn} className={iconBtnClass} disabled={scale >= MAX_ZOOM} title="Zoom In">
+                        <ZoomIn size={18} strokeWidth={1.5} />
+                    </button>
+                </div>
+
+                <div className="hidden sm:block w-px h-4 bg-[var(--theme-border-secondary)] mx-2" />
+
+                {/* Action Controls */}
+                <button onClick={handleRefresh} className={iconBtnClass} title="Reload">
+                    <RotateCw size={18} strokeWidth={1.5} />
                 </button>
-            )}
-          </div>
+                <button onClick={handleDownload} className={iconBtnClass} title="Download HTML">
+                    <Download size={18} strokeWidth={1.5} />
+                </button>
+                <button onClick={handleScreenshot} className={iconBtnClass} disabled={isScreenshotting} title="Screenshot">
+                    {isScreenshotting ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5} /> : <ImageIcon size={18} strokeWidth={1.5} />}
+                </button>
+
+                <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-2" />
+
+                {/* Screen Mode Controls */}
+                <button 
+                    onClick={isTrueFullscreen ? exitTrueFullscreen : enterTrueFullscreen} 
+                    className={iconBtnClass}
+                    title={isTrueFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                    {isTrueFullscreen ? <Minimize size={18} strokeWidth={1.5} /> : <Expand size={18} strokeWidth={1.5} />}
+                </button>
+                
+                {!isTrueFullscreen && (
+                    <button onClick={handleClose} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-danger)]/10 hover:text-[var(--theme-text-danger)] rounded-lg transition-colors ml-1" title="Close">
+                        <X size={20} strokeWidth={1.5} />
+                    </button>
+                )}
+            </div>
         </header>
-        <div className="flex-grow relative bg-[var(--theme-bg-secondary)] overflow-auto custom-scrollbar">
-          <iframe
-            ref={iframeRef}
-            srcDoc={htmlContent}
-            title="HTML Content Preview"
-            className="border-none bg-white" 
-            style={{
-                width: `${100 / scale}%`,
-                height: `${100 / scale}%`,
-                transform: `scale(${scale})`,
-                transformOrigin: '0 0',
-            }}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
-            onError={handleIframeError}
-          />
+
+        <div className="flex-grow relative overflow-auto custom-scrollbar bg-[var(--theme-bg-tertiary)]">
+            {/* Subtle Grid Pattern Background */}
+            <div className="absolute inset-0 pointer-events-none opacity-[0.05]" 
+                 style={{ 
+                     backgroundImage: `radial-gradient(var(--theme-text-tertiary) 1px, transparent 1px)`, 
+                     backgroundSize: '20px 20px',
+                 }} 
+            />
+            
+            <iframe
+                ref={iframeRef}
+                srcDoc={htmlContent}
+                title="HTML Content Preview"
+                className="border-none bg-white shadow-sm origin-top-left" 
+                style={{
+                    width: `${100 / scale}%`,
+                    height: `${100 / scale}%`,
+                    transform: `scale(${scale})`,
+                }}
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+                onError={handleIframeError}
+            />
         </div>
       </div>
     </div>,
-    document.body
+    targetDocument.body
   );
 };

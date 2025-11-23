@@ -1,11 +1,9 @@
 
-
-
-
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon } from 'lucide-react';
 import { exportSvgAsPng, exportSvgStringAsFile } from '../../utils/exportUtils';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 declare var Viz: any;
 declare var Panzoom: any;
@@ -28,6 +26,8 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
   const vizInstanceRef = useRef<any>(null);
   const panzoomInstanceRef = useRef<any>(null);
   const wheelListenerRef = useRef<((e: WheelEvent) => void) | null>(null);
+  
+  const { document: targetDocument } = useWindowContext();
 
   const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
     if (!vizInstanceRef.current) return;
@@ -178,16 +178,16 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') handleCloseModal(); };
     if (isModalOpen) {
-        document.body.style.overflow = 'hidden';
-        document.addEventListener('keydown', handleKeyDown);
+        targetDocument.body.style.overflow = 'hidden';
+        targetDocument.addEventListener('keydown', handleKeyDown);
     } else {
-        document.body.style.overflow = '';
+        targetDocument.body.style.overflow = '';
     }
     return () => {
-        document.body.style.overflow = '';
-        document.removeEventListener('keydown', handleKeyDown);
+        targetDocument.body.style.overflow = '';
+        targetDocument.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isModalOpen, handleCloseModal]);
+  }, [isModalOpen, handleCloseModal, targetDocument]);
 
 
   const containerClasses = "p-4 my-2 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px]";
@@ -252,7 +252,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, isLoading: i
         <button onClick={handleOpenModal} className="code-block-utility-button rounded-md" title="Expand View"><Maximize size={14} /></button>
       </div>
 
-      {isModalOpen && createPortal(modalJsx, document.body)}
+      {isModalOpen && createPortal(modalJsx, targetDocument.body)}
     </div>
   );
 };

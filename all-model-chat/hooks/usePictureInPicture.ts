@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { logService } from '../utils/appUtils';
 
@@ -98,5 +99,6 @@ export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | (
         isPipActive: !!pipWindow,
         togglePip,
         pipContainer,
+        pipWindow,
     };
 };

@@ -187,3 +187,10 @@ export const IconFileEdit: React.FC<IconProps> = ({ size = defaultSize, strokeWi
     <path d="M10.4 12.6a2 2 0 1 1 3 3L8 21l-4 1 1-4Z" />
   </svg>
 );
+
+// 10. Stop Generation
+export const IconStop: React.FC<IconProps> = ({ size = defaultSize, className, color = defaultColor }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="4" width="16" height="16" rx="2" fill={color} />
+  </svg>
+);

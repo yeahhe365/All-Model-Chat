@@ -15,6 +15,7 @@ import mermaid from 'mermaid';
 import { ChatArea } from './components/layout/ChatArea';
 import { AppModals } from './components/modals/AppModals';
 import { PictureInPicture2 } from 'lucide-react';
+import { WindowProvider } from './contexts/WindowContext';
 
 
 const App: React.FC = () => {
@@ -108,7 +109,7 @@ const App: React.FC = () => {
     handleTouchEnd,
   } = useAppUI();
   
-  const { isPipSupported, isPipActive, togglePip, pipContainer } = usePictureInPicture(setIsHistorySidebarOpen);
+  const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture(setIsHistorySidebarOpen);
 
   const {
     installPromptEvent,
@@ -439,16 +440,18 @@ const App: React.FC = () => {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {isPipActive && pipContainer ? (
+      {isPipActive && pipContainer && pipWindow ? (
           <>
               {createPortal(
-                  <div 
-                    className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
-                    onTouchStart={handleTouchStart}
-                    onTouchEnd={handleTouchEnd}
-                  >
-                      {fullAppComponent}
-                  </div>,
+                  <WindowProvider window={pipWindow} document={pipWindow.document}>
+                    <div 
+                        className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
+                        onTouchStart={handleTouchStart}
+                        onTouchEnd={handleTouchEnd}
+                    >
+                        {fullAppComponent}
+                    </div>
+                  </WindowProvider>,
                   pipContainer
               )}
               <div className="flex-grow flex flex-col items-center justify-center text-center p-4 bg-[var(--theme-bg-secondary)]">
@@ -464,7 +467,9 @@ const App: React.FC = () => {
               </div>
           </>
       ) : (
-          fullAppComponent
+          <WindowProvider>
+            {fullAppComponent}
+          </WindowProvider>
       )}
     </div>
   );

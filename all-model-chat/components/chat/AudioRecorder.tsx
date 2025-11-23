@@ -1,6 +1,8 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Mic, StopCircle, Check, X, Trash2, Loader2 } from 'lucide-react';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 interface AudioRecorderProps {
   onRecord: (file: File) => Promise<void>;
@@ -26,10 +28,12 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
     const analyserRef = useRef<AnalyserNode | null>(null);
     const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const animationFrameIdRef = useRef<number | null>(null);
+    
+    const { document: targetDocument, window: targetWindow } = useWindowContext();
 
     const stopAudioAnalysis = useCallback(() => {
         if (animationFrameIdRef.current) {
-            cancelAnimationFrame(animationFrameIdRef.current);
+            targetWindow.cancelAnimationFrame(animationFrameIdRef.current);
             animationFrameIdRef.current = null;
         }
         if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
@@ -40,7 +44,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
         analyserRef.current = null;
         sourceRef.current = null;
         setVolume(0);
-    }, []);
+    }, [targetWindow]);
 
     const cleanupStream = useCallback((stream: MediaStream | null) => {
         stream?.getTracks().forEach(track => track.stop());
@@ -77,9 +81,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             setIsRecording(true);
             setRecordingTime(0);
 
-            timerIntervalRef.current = window.setInterval(() => setRecordingTime(prev => prev + 1), 1000);
+            timerIntervalRef.current = targetWindow.setInterval(() => setRecordingTime(prev => prev + 1), 1000);
 
-            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext;
+            const audioContext = new AudioContextConstructor();
             const analyser = audioContext.createAnalyser();
             analyser.fftSize = 512;
             const source = audioContext.createMediaStreamSource(stream);
@@ -100,7 +105,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                 }
                 const rms = Math.sqrt(sumSquares / dataArray.length);
                 setVolume(rms * 150); // Scale RMS for better visualization
-                animationFrameIdRef.current = requestAnimationFrame(draw);
+                animationFrameIdRef.current = targetWindow.requestAnimationFrame(draw);
             };
             draw();
 
@@ -108,7 +113,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             console.error("Error accessing microphone:", err);
             setError("Could not access microphone. Please check permissions.");
         }
-    }, [cleanupStream]);
+    }, [cleanupStream, targetWindow]);
 
     useEffect(() => {
         setIsInitializing(true);
@@ -124,31 +129,31 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             });
             
         return () => {
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+            if (timerIntervalRef.current) targetWindow.clearInterval(timerIntervalRef.current);
             if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
             mediaRecorderRef.current?.stream?.getTracks().forEach(track => track.stop());
             stopAudioAnalysis();
         };
-    }, [cleanupStream, stopAudioAnalysis]);
+    }, [cleanupStream, stopAudioAnalysis, targetWindow]);
 
     const stopRecording = useCallback(() => {
         if (mediaRecorderRef.current && isRecording) {
             recordingCancelledRef.current = false;
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+            if (timerIntervalRef.current) targetWindow.clearInterval(timerIntervalRef.current);
         }
-    }, [isRecording]);
+    }, [isRecording, targetWindow]);
 
     const handleCancel = useCallback(() => {
         if (isRecording) {
             recordingCancelledRef.current = true;
             mediaRecorderRef.current?.stop();
             setIsRecording(false);
-            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+            if (timerIntervalRef.current) targetWindow.clearInterval(timerIntervalRef.current);
         }
         onCancel();
-    }, [isRecording, onCancel]);
+    }, [isRecording, onCancel, targetWindow]);
 
     const handleSave = async () => {
         if (audioBlob && !isSaving) {
@@ -246,6 +251,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                 )}
             </div>
         </div>,
-        document.body
+        targetDocument.body
     );
 };

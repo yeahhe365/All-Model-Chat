@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { ArrowUp, Square, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
 import { ChatInputActionsProps } from '../../../types';
+import { IconStop } from '../../icons/CustomIcons';
 
 export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onAttachmentAction,
@@ -117,7 +118,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             </button>
 
             {isLoading ? ( 
-                <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><Square size={14} fill="currentColor" strokeWidth={2} /></button>
+                <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><IconStop size={12} /></button>
             ) : isEditing ? (
                 <>
                     <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={2} /></button>
