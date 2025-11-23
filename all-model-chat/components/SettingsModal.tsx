@@ -1,10 +1,11 @@
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AppSettings, ModelOption } from '../types';
 import { X } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
 import { Theme } from '../constants/themeConstants';
-import { translations, getResponsiveValue } from '../utils/appUtils';
+import { translations, getResponsiveValue, logService } from '../utils/appUtils';
 import { ApiConfigSection } from './settings/ApiConfigSection';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
@@ -79,6 +80,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
   
+  const handleClearLogs = async () => {
+      if (window.confirm(t('settingsClearLogs_confirm'))) {
+          await logService.clearLogs();
+      }
+  };
+  
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     onSave({ ...currentSettings, [key]: value });
   };
@@ -109,10 +116,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   ], []);
 
   const renderTabContent = () => {
+      const animClass = "animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both";
+      
       return (
         <div className="max-w-3xl mx-auto w-full">
             {activeTab === 'interface' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className={animClass}>
                     <AppearanceSection
                     themeId={currentSettings.themeId}
                     setThemeId={(val) => updateSetting('themeId', val)}
@@ -140,12 +149,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     setIsAutoSendOnSuggestionClick={(v) => updateSetting('isAutoSendOnSuggestionClick', v)}
                     autoFullscreenHtml={currentSettings.autoFullscreenHtml ?? true}
                     setAutoFullscreenHtml={(v) => updateSetting('autoFullscreenHtml', v)}
+                    showWelcomeSuggestions={currentSettings.showWelcomeSuggestions ?? true}
+                    setShowWelcomeSuggestions={(v) => updateSetting('showWelcomeSuggestions', v)}
                     t={t}
                     />
                 </div>
             )}
             {activeTab === 'model' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-4xl mx-auto">
+                <div className={`${animClass} max-w-4xl mx-auto`}>
                 <ChatBehaviorSection
                     modelId={currentSettings.modelId} setModelId={handleModelChangeInSettings}
                     transcriptionModelId={currentSettings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
@@ -167,7 +178,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
             )}
             {activeTab === 'account' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className={animClass}>
                 <ApiConfigSection
                 useCustomApiConfig={currentSettings.useCustomApiConfig}
                 setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
@@ -182,11 +193,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
             )}
             {activeTab === 'data' && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className={animClass}>
                 <DataManagementSection
                     onClearHistory={onClearAllHistory}
                     onClearCache={onClearCache}
                     onOpenLogViewer={() => { onOpenLogViewer(); onClose(); }}
+                    onClearLogs={handleClearLogs}
                     onInstallPwa={onInstallPwa}
                     isInstallable={isInstallable}
                     onImportSettings={onImportSettings}
@@ -200,7 +212,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
                 </div>
             )}
-            {activeTab === 'about' && ( <div className="animate-in fade-in slide-in-from-bottom-2 duration-300"><AboutSection t={t} /></div> )}
+            {activeTab === 'about' && ( <div className={animClass}><AboutSection t={t} /></div> )}
         </div>
       );
   }

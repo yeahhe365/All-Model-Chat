@@ -1,4 +1,5 @@
 
+
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -32,13 +33,13 @@ export const settingsTranslations = {
     settingsShowThoughts_tooltip: { en: "Displays the model's step-by-step thinking process before the final answer. Requires Thinking Mode to be enabled.", zh: "在最终答案之前，显示模型的逐步思考过程。需要启用思考模式。" },
     settingsThinkingMode: { en: 'Thinking Mode', zh: '思考模式' },
     settingsThinkingMode_auto: { en: 'Auto', zh: '自动' },
-    settingsThinkingMode_preset: { en: 'Thinking Level', zh: '思考等级' },
+    settingsThinkingMode_preset: { en: 'Thinking Level', zh: '等级' },
     settingsThinkingMode_off: { en: 'Off', zh: '关闭' },
-    settingsThinkingMode_custom: { en: 'Thinking Budget', zh: '思考预算' },
+    settingsThinkingMode_custom: { en: 'Thinking Budget', zh: '预算' },
     settingsThinkingMode_tooltip: { en: "Controls the model's 'thinking' process. Auto is recommended for quality. Off prioritizes speed. Custom lets you set a specific token budget for thinking.", zh: '控制模型的“思考”过程。为保证质量建议设为“自动”。“关闭”则优先考虑速度。“自定义”允许您为思考设置特定的令牌预算。' },
     settingsThinkingCustom_placeholder: { en: 'Token budget', zh: '令牌预算' },
-    settingsThinkingBudget: { en: 'Thinking Budget', zh: '思考预算' },
-    settingsThinkingLevel: { en: 'Thinking Level', zh: '思考等级' },
+    settingsThinkingBudget: { en: 'Thinking Budget', zh: '预算' },
+    settingsThinkingLevel: { en: 'Thinking Level', zh: '等级' },
     settingsThinkingBudget_tooltip: { en: 'Set token budget for thinking. -1 for auto/unlimited, 0 to disable (like toggle off), >0 for specific token limit.', zh: '设置思考的令牌预算。-1 为自动/无限制，0 为禁用（与关闭开关效果相同），大于 0 为指定的令牌限制。' },
     settingsThinkingBudget_placeholder: { en: 'e.g., -1 for auto', zh: '例如：-1 代表自动' },
     settingsTranscriptionThinking: { en: 'Enable Thinking for Voice Input', zh: '启用语音输入思考功能' },
@@ -96,12 +97,16 @@ export const settingsTranslations = {
     settings_enableCompletionNotification_tooltip: { en: 'Show a browser notification when a response is finished generating while the tab is in the background.', zh: '当标签页在后台时，在响应生成完毕后显示浏览器通知。' },
     settings_enableSuggestions_label: { en: 'Enable Smart Replies', zh: '回复建议' },
     settings_enableSuggestions_tooltip: { en: 'Automatically generate smart replies after the model responds. Uses a fast, separate model call.', zh: '在模型回应后自动生成回复建议。此功能会使用一个快速、独立的模型调用。' },
+    settings_showWelcomeSuggestions_label: { en: 'Show Welcome Suggestions', zh: '显示欢迎页建议' },
+    settings_showWelcomeSuggestions_tooltip: { en: 'Show suggestion cards on the new chat screen.', zh: '在新对话屏幕上显示建议卡片。' },
     settings_autoSendOnSuggestionClick_label: { en: 'Auto-send on Suggestion Click', zh: '点击建议后自动发送' },
     settings_autoSendOnSuggestionClick_tooltip: { en: 'When enabled, clicking a smart reply suggestion will send it immediately. When disabled, it will only populate the input field.', zh: '启用后，点击智能回复建议将立即发送。禁用后，仅会填充输入框。' },
     settings_autoScrollOnSend_label: { en: 'Auto-scroll on Send', zh: '发送时自动滚动' },
     settingsViewLogs: { en: 'View Logs', zh: '查看日志' },
     settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
+    settingsClearLogs: { en: 'Clear Logs', zh: '清空日志' },
+    settingsClearLogs_confirm: { en: 'Are you sure you want to clear all system logs?', zh: '您确定要清空所有系统日志吗？' },
     
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },

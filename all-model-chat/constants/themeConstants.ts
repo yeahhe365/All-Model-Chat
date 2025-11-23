@@ -132,8 +132,8 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   bgInput: '#FFFFFF',
   bgCodeBlock: '#F7F7F8',
   bgCodeBlockHeader: 'rgba(236, 236, 241, 0.9)',
-  bgUserMessage: '#f3f4f6', // Updated: Light Gray
-  bgModelMessage: '#FFFFFF', // Updated: White
+  bgUserMessage: '#f3f4f6', // Light Gray
+  bgModelMessage: '#FFFFFF', // White
   bgErrorMessage: '#FEE',
   bgSuccess: 'rgba(22, 163, 74, 0.1)',
   textSuccess: '#16a34a',
@@ -142,16 +142,16 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   bgWarning: 'rgba(212, 167, 44, 0.1)',
   textWarning: '#825F0A',
 
-  // Text
-  textPrimary: '#202123',
-  textSecondary: '#565869',
-  textTertiary: '#8E8E8E',
+  // Text - Darkened significantly for high contrast
+  textPrimary: '#000000', // Pure Black
+  textSecondary: '#000000', // Pure Black (was #333333)
+  textTertiary: '#666666', // Dark Gray (was #333333, lightened slightly for placeholder distinction)
   textAccent: '#FFFFFF',
-  textDanger: '#FFFFFF',
-  textLink: '#565869',
-  textCode: '#40414f',
-  bgUserMessageText: '#1f2937', // Updated: Dark Gray
-  bgModelMessageText: '#1f2937', // Updated: Dark Gray
+  textDanger: '#DF3434', // Red (was #FFFFFF, which is invisible on light backgrounds)
+  textLink: '#000000', // Black (was #333333)
+  textCode: '#000000', // Black (was #40414f)
+  bgUserMessageText: '#000000', 
+  bgModelMessageText: '#000000', 
   bgErrorMessageText: '#DF3434',
 
   // Borders
@@ -168,13 +168,13 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   iconModel: '#10a37f',
   iconError: '#DF3434',
   iconThought: '#323232',
-  iconSettings: '#323232',
+  iconSettings: '#000000', // Pure Black (was #323232)
   iconClearChat: '#FFFFFF',
   iconSend: '#FFFFFF',
   iconAttach: '#323232',
   iconStop: '#FFFFFF',
   iconEdit: '#323232',
-  iconHistory: '#323232',
+  iconHistory: '#000000', // Pure Black (was #323232)
 };
 
 export const AVAILABLE_THEMES: Theme[] = [

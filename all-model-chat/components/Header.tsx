@@ -224,14 +224,14 @@ export const Header: React.FC<HeaderProps> = ({
       return <Box size={15} className="text-[var(--theme-text-tertiary)] opacity-70 flex-shrink-0" strokeWidth={1.5} />;
   };
 
-  // Enhanced button styles for better tactile feedback
-  // Uses a bouncy ease-out curve for hover and a quick snap for active clicks
-  const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] hover:scale-110 active:scale-90 active:duration-75";
+  // Enhanced button styles with nicer cubic-bezier and slightly less aggressive scale
+  // ease-out-expo for smoothness
+  const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)] focus:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95";
   
-  // Default state (Inactive) - Transparent background, maintains background on active press
+  // Default state (Inactive)
   const headerButtonInactive = "bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] active:bg-[var(--theme-bg-tertiary)] active:text-[var(--theme-text-primary)]";
   
-  // Active State (e.g. Canvas active) - Deep press effect without shadow
+  // Active State (e.g. Canvas active)
   const headerButtonActive = "bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] shadow-premium hover:bg-[var(--theme-bg-accent-hover)] hover:shadow-lg active:shadow-none active:opacity-90";
 
   const canvasPromptAriaLabel = isCanvasPromptActive 

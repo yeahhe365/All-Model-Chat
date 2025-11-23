@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Check, Info, Globe, Type } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
@@ -32,6 +33,8 @@ interface AppearanceSectionProps {
   setIsAutoSendOnSuggestionClick: (value: boolean) => void;
   autoFullscreenHtml: boolean;
   setAutoFullscreenHtml: (value: boolean) => void;
+  showWelcomeSuggestions: boolean;
+  setShowWelcomeSuggestions: (value: boolean) => void;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -49,6 +52,7 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   isSuggestionsEnabled, setIsSuggestionsEnabled,
   isAutoSendOnSuggestionClick, setIsAutoSendOnSuggestionClick,
   autoFullscreenHtml, setAutoFullscreenHtml,
+  showWelcomeSuggestions, setShowWelcomeSuggestions,
   t,
 }) => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -193,6 +197,8 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
               <ToggleItem label={t('headerStream')} checked={isStreamingEnabled} onChange={setIsStreamingEnabled} />
               <ToggleItem label={t('isAutoTitleEnabled')} checked={isAutoTitleEnabled} onChange={setIsAutoTitleEnabled} />
               
+              <ToggleItem label={t('settings_showWelcomeSuggestions_label')} checked={showWelcomeSuggestions} onChange={setShowWelcomeSuggestions} tooltip={t('settings_showWelcomeSuggestions_tooltip')} />
+
               <ToggleItem label={t('settings_enableSuggestions_label')} checked={isSuggestionsEnabled} onChange={setIsSuggestionsEnabled} tooltip={t('settings_enableSuggestions_tooltip')} />
               
               {isSuggestionsEnabled && (

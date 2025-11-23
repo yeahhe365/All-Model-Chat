@@ -1,8 +1,7 @@
+
 import React from 'react';
-import { UploadedFile, ChatInputToolbarProps } from '../../../types';
-import { translations } from '../../../utils/appUtils';
+import { ChatInputToolbarProps } from '../../../types';
 import { ImagenAspectRatioSelector } from './ImagenAspectRatioSelector';
-import { SelectedFileDisplay } from '../SelectedFileDisplay';
 import { AddFileByIdInput } from './AddFileByIdInput';
 import { AddUrlInput } from './AddUrlInput';
 
@@ -11,9 +10,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   aspectRatio,
   setAspectRatio,
   fileError,
-  selectedFiles,
-  onRemoveFile,
-  onCancelUpload,
   showAddByIdInput,
   fileIdInput,
   setFileIdInput,
@@ -30,20 +26,11 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   t,
 }) => {
   return (
-    <div>
+    <div className="flex flex-col gap-2">
       {isImagenModel && setAspectRatio && aspectRatio && (
         <ImagenAspectRatioSelector aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} t={t as (key: string) => string} />
       )}
-      {fileError && <div className="mb-2 p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
-      {selectedFiles.length > 0 && (
-        <div className="mb-2 p-2 bg-[var(--theme-bg-secondary)] rounded-lg border border-[var(--theme-border-secondary)] overflow-x-auto custom-scrollbar">
-          <div className="flex gap-3">
-            {selectedFiles.map(file => (
-              <SelectedFileDisplay key={file.id} file={file} onRemove={onRemoveFile} onCancelUpload={onCancelUpload} />
-            ))}
-          </div>
-        </div>
-      )}
+      {fileError && <div className="p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
       {showAddByIdInput && (
         <AddFileByIdInput
           fileIdInput={fileIdInput}

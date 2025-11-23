@@ -122,6 +122,7 @@ export interface AppSettings extends ChatSettings {
  isAutoSendOnSuggestionClick?: boolean;
  generateQuadImages?: boolean;
  autoFullscreenHtml?: boolean;
+ showWelcomeSuggestions?: boolean;
 }
 
 
@@ -258,9 +259,6 @@ export interface ChatInputToolbarProps {
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
   fileError: string | null;
-  selectedFiles: UploadedFile[];
-  onRemoveFile: (fileId: string) => void;
-  onCancelUpload: (fileId: string) => void;
   showAddByIdInput: boolean;
   fileIdInput: string;
   setFileIdInput: (value: string) => void;
