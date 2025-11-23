@@ -107,3 +107,17 @@
 .markdown-body pre {
   background-color: var(--theme-bg-code-block) !important;
 }
+
+/* Global Layout Reset for Full Height */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent body scroll, let React app handle scrolling */
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
