@@ -1,26 +1,76 @@
 
 /* Animations */
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes modalEnter { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-@keyframes modalExit { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.98); } }
-@keyframes fullscreenEnter { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-@keyframes micPulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-@keyframes newTitlePulse { 0% { background-color: var(--theme-bg-accent-hover); } 100% { background-color: inherit; } }
-@keyframes formSendPulse { 0% { transform: scale(1); } 50% { transform: scale(0.995); } 100% { transform: scale(1); } }
-@keyframes fileSuccessRing { from { box-shadow: 0 0 0 0px var(--theme-text-success); } to { box-shadow: 0 0 0 8px transparent; } }
-@keyframes loading-dots-pulse { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+:root {
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out-circ: cubic-bezier(0.075, 0.82, 0.165, 1);
+}
 
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Enhanced fadeInUp with slight blur for a modern feel */
+@keyframes fadeInUp { 
+  from { opacity: 0; transform: translateY(12px); filter: blur(2px); } 
+  to { opacity: 1; transform: translateY(0); filter: blur(0); } 
+}
+
+/* Smoother modal entry with scale and slight vertical slide */
+@keyframes modalEnter { 
+  from { opacity: 0; transform: scale(0.96) translateY(8px); } 
+  to { opacity: 1; transform: scale(1) translateY(0); } 
+}
+
+@keyframes modalExit { 
+  from { opacity: 1; transform: scale(1); } 
+  to { opacity: 0; transform: scale(0.98); } 
+}
+
+@keyframes fullscreenEnter { 
+  from { opacity: 0; transform: scale(0.98); } 
+  to { opacity: 1; transform: scale(1); } 
+}
+
+@keyframes micPulse { 
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } 
+}
+
+@keyframes newTitlePulse { 
+  0% { background-color: var(--theme-bg-accent-hover); } 
+  100% { background-color: inherit; } 
+}
+
+@keyframes formSendPulse { 
+  0% { transform: scale(1); } 
+  50% { transform: scale(0.995); } 
+  100% { transform: scale(1); } 
+}
+
+@keyframes fileSuccessRing { 
+  from { box-shadow: 0 0 0 0px var(--theme-text-success); } 
+  to { box-shadow: 0 0 0 8px transparent; } 
+}
+
+@keyframes loading-dots-pulse { 
+  0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 
+  40% { transform: scale(1.0); opacity: 1; } 
+}
+
+/* Utility Classes */
 .mic-recording-animate { animation: micPulse 2s infinite; background-color: var(--theme-bg-danger); color: var(--theme-icon-stop); }
 .title-update-animate { animation: newTitlePulse 1.5s ease-out; }
-.message-container-animate { animation: fadeInUp 0.4s ease-out both; }
-.welcome-message-animate { animation: fadeInUp 0.6s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.drag-overlay-animate { animation: fadeIn 0.3s ease-out both; }
-.modal-enter-animation { animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.modal-exit-animation { animation: modalExit 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.fullscreen-enter-animation { animation: fullscreenEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.form-send-animate { animation: formSendPulse 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
-.newly-active-file-animate .file-preview-box { animation: fileSuccessRing 0.8s ease-out; border-color: var(--theme-text-success); transition: border-color 0.3s; }
+
+/* Message animation uses improved cubic-bezier */
+.message-container-animate { animation: fadeInUp 0.5s var(--ease-out-expo) both; }
+.welcome-message-animate { animation: fadeInUp 0.7s 0.1s var(--ease-out-expo) both; }
+
+.drag-overlay-animate { animation: fadeIn 0.2s ease-out both; }
+.modal-enter-animation { animation: modalEnter 0.3s var(--ease-out-expo) both; }
+.modal-exit-animation { animation: modalExit 0.2s ease-in both; }
+.fullscreen-enter-animation { animation: fullscreenEnter 0.4s var(--ease-out-expo) both; }
+.form-send-animate { animation: formSendPulse 0.3s cubic-bezier(0.2, 0, 0, 1); }
+.newly-active-file-animate .file-preview-box { animation: fileSuccessRing 0.6s ease-out; border-color: var(--theme-text-success); transition: border-color 0.3s; }
 
 /* Tooltip Styles */
 .tooltip-container {
@@ -36,27 +86,29 @@
   background-color: var(--theme-bg-tertiary);
   color: var(--theme-text-primary);
   text-align: center;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
   position: absolute;
   z-index: 50;
-  bottom: 125%;
+  bottom: 135%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(0.95);
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: all 0.2s var(--ease-out-expo);
   border: 1px solid var(--theme-border-secondary);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
   font-size: 0.75rem;
-  font-weight: 400;
+  font-weight: 500;
   white-space: normal;
   pointer-events: none;
   line-height: 1.4;
+  transform-origin: bottom center;
 }
 
 .tooltip-container:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
+  transform: translateX(-50%) scale(1);
 }
 
 /* Custom Scrollbar */
@@ -77,6 +129,7 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background-color: var(--theme-scrollbar-thumb);
   border-radius: 10px;
+  transition: background-color 0.2s;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -120,4 +173,15 @@ html, body, #root {
 #root {
   display: flex;
   flex-direction: column;
+}
+
+/* Custom Selection Color (Yellow Note Style) */
+::selection {
+  background-color: #fde047; /* Yellow-300 */
+  color: #1f2937; /* Gray-800 for readability */
+}
+
+::-moz-selection {
+  background-color: #fde047;
+  color: #1f2937;
 }

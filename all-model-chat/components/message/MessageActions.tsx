@@ -35,14 +35,16 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     themeId,
     t
 }) => {
-    const actionIconSize = getResponsiveValue(17, 19);
+    const actionIconSize = getResponsiveValue(15, 16); 
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     const isThisMessageLoadingTts = ttsMessageId === message.id;
-    const actionButtonClasses = "p-1.5 rounded-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]";
+    
+    // Enhanced button styling: lighter default, distinct hover, rounded corners
+    const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100 hover:scale-105 active:scale-95";
 
     return (
-        <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
-            <div className="h-7 sm:h-8">
+        <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10 h-full">
+            <div className="h-7 sm:h-8 flex items-center justify-center">
                 {!isGrouped && (
                     <>
                         {message.role === 'user' && <UserIcon />}
@@ -51,23 +53,86 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                     </>
                 )}
             </div>
+            
+            {/* Container for actions - Fades in on group hover with a subtle slide effect */}
             <div
-                className="message-actions flex flex-col items-center gap-0.5 mt-1 sm:mt-1.5"
-                style={{ '--actions-translate-x': message.role === 'user' ? '8px' : '-8px' } as React.CSSProperties}
+                className="message-actions flex flex-col items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-300 ease-in-out translate-y-1 group-hover:translate-y-0"
             >
-                {message.role === 'user' && !message.isLoading && <button onClick={() => onEditMessage(message.id)} title={t('edit')} aria-label={t('edit')} className={`${actionButtonClasses} text-[var(--theme-icon-edit)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><Edit3 size={actionIconSize} strokeWidth={2} /></button>}
-                {showRetryButton && <button onClick={() => onRetryMessage(message.id)} title={message.isLoading ? t('retry_and_stop_button_title') : t('retry_button_title')} aria-label={message.isLoading ? t('retry_and_stop_button_title') : t('retry_button_title')} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`}><RotateCw size={actionIconSize} strokeWidth={2} /></button>}
-                {(message.content || message.thoughts) && !message.isLoading && <MessageCopyButton textToCopy={message.content} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} iconSize={actionIconSize} />}
+                {message.role === 'user' && !message.isLoading && (
+                    <button 
+                        onClick={() => onEditMessage(message.id)} 
+                        title={t('edit')} 
+                        aria-label={t('edit')} 
+                        className={actionButtonClasses}
+                    >
+                        <Edit3 size={actionIconSize} strokeWidth={2} />
+                    </button>
+                )}
+                
+                {showRetryButton && (
+                    <button 
+                        onClick={() => onRetryMessage(message.id)} 
+                        title={message.isLoading ? t('retry_and_stop_button_title') : t('retry_button_title')} 
+                        aria-label={message.isLoading ? t('retry_and_stop_button_title') : t('retry_button_title')} 
+                        className={actionButtonClasses}
+                    >
+                        <RotateCw size={actionIconSize} strokeWidth={2} />
+                    </button>
+                )}
+                
+                {(message.content || message.thoughts) && !message.isLoading && (
+                    <MessageCopyButton 
+                        textToCopy={message.content} 
+                        t={t} 
+                        className={actionButtonClasses} 
+                        iconSize={actionIconSize} 
+                    />
+                )}
+                
                 {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
                     <>
-                        <button onClick={() => onTextToSpeech(message.id, message.content)} disabled={!!ttsMessageId} title="Read aloud" aria-label="Read message aloud" className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed`}>
-                            {isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" strokeWidth={1.5} /> : <Volume2 size={actionIconSize} strokeWidth={1.5} />}
+                        <button 
+                            onClick={() => onTextToSpeech(message.id, message.content)} 
+                            disabled={!!ttsMessageId} 
+                            title="Read aloud" 
+                            aria-label="Read message aloud" 
+                            className={`${actionButtonClasses} disabled:opacity-30 disabled:cursor-not-allowed`}
+                        >
+                            {isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" strokeWidth={2} /> : <Volume2 size={actionIconSize} strokeWidth={2} />}
                         </button>
-                        <ExportMessageButton type="png" markdownContent={message.content} messageId={message.id} themeColors={themeColors} themeId={themeId} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} iconSize={actionIconSize} />
-                        <ExportMessageButton type="html" markdownContent={message.content} messageId={message.id} themeColors={themeColors} themeId={themeId} t={t} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)]`} iconSize={actionIconSize} />
+                        <ExportMessageButton 
+                            type="png" 
+                            markdownContent={message.content} 
+                            messageId={message.id} 
+                            themeColors={themeColors} 
+                            themeId={themeId} 
+                            t={t} 
+                            className={actionButtonClasses} 
+                            iconSize={actionIconSize} 
+                        />
+                        <ExportMessageButton 
+                            type="html" 
+                            markdownContent={message.content} 
+                            messageId={message.id} 
+                            themeColors={themeColors} 
+                            themeId={themeId} 
+                            t={t} 
+                            className={actionButtonClasses} 
+                            iconSize={actionIconSize} 
+                        />
                     </>
                 )}
-                {!message.isLoading && <button onClick={() => onDeleteMessage(message.id)} title={t('delete')} aria-label={t('delete')} className={`${actionButtonClasses} text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-tertiary)]`}><Trash2 size={actionIconSize} strokeWidth={2} /></button>}
+                
+                {!message.isLoading && (
+                    <button 
+                        onClick={() => onDeleteMessage(message.id)} 
+                        title={t('delete')} 
+                        aria-label={t('delete')} 
+                        className={`${actionButtonClasses} hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10`}
+                    >
+                        <Trash2 size={actionIconSize} strokeWidth={2} />
+                    </button>
+                )}
             </div>
         </div>
     );

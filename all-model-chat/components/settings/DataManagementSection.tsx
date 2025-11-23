@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { translations } from '../../utils/appUtils';
 import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database, RefreshCw } from 'lucide-react';
@@ -6,6 +7,7 @@ interface DataManagementSectionProps {
   onClearHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: () => void;
+  onClearLogs: () => void;
   isInstallable: boolean;
   onInstallPwa: () => void;
   onImportSettings: (file: File) => void;
@@ -54,6 +56,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onClearHistory,
   onClearCache,
   onOpenLogViewer,
+  onClearLogs,
   isInstallable,
   onInstallPwa,
   onImportSettings,
@@ -97,6 +100,9 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
           <DataCard title="System & Logs" icon={<Settings size={14} strokeWidth={1.5} />}>
               <ActionRow label={t('settingsViewLogs')}>
                 <button onClick={onOpenLogViewer} className={outlineBtnClass}>{t('settingsViewLogs')}</button>
+                <button onClick={onClearLogs} className={`${outlineBtnClass} text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 hover:text-[var(--theme-text-danger)] border-[var(--theme-bg-danger)]/30`}>
+                    <Trash2 size={12} strokeWidth={1.5} /> {t('settingsClearLogs')}
+                </button>
               </ActionRow>
               <ActionRow label={t('settingsInstallApp')} description={!isInstallable ? t('settingsInstallApp_unavailable_title') : undefined}>
                 <button onClick={onInstallPwa} disabled={!isInstallable} className={`${outlineBtnClass} disabled:opacity-50 disabled:cursor-not-allowed`}>{t('settingsInstallApp')}</button>

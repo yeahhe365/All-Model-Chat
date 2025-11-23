@@ -256,7 +256,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   return (
     <aside
       className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} flex-shrink-0
-                 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+                 transition-all duration-300 ease-[cubic-bezier(0.19,1,0.22,1)]
                  absolute md:static top-0 left-0 z-50
                  overflow-hidden
                  ${isOpen ? 'w-64 md:w-72 translate-x-0' : 'w-64 md:w-[68px] -translate-x-full md:translate-x-0'}

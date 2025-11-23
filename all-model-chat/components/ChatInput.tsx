@@ -3,7 +3,7 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
-import { translations, getResponsiveValue, getKeyForRequest } from '../utils/appUtils';
+import { translations, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { SlashCommandMenu } from './chat/input/SlashCommandMenu';
 import { ChatInputToolbar } from './chat/input/ChatInputToolbar';
@@ -13,6 +13,7 @@ import { useChatInputModals } from '../hooks/useChatInputModals';
 import { useVoiceInput } from '../hooks/useVoiceInput';
 import { useSlashCommands } from '../hooks/useSlashCommands';
 import { useIsMobile, useIsDesktop } from '../hooks/useDevice';
+import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
 
 interface ChatInputProps {
   appSettings: AppSettings;
@@ -411,15 +412,15 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
 
   const innerContainerClass = isFullscreen
     ? "w-full max-w-6xl mx-auto flex flex-col h-full"
-    : `mx-auto w-full ${!isPipActive ? 'max-w-6xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
+    : `mx-auto w-full ${!isPipActive ? 'max-w-4xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
 
   const formClass = isFullscreen
     ? "flex-grow flex flex-col relative min-h-0"
     : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
 
   const inputContainerClass = isFullscreen
-    ? "flex flex-col gap-1 rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-3 shadow-none h-full transition-all duration-200"
-    : "flex flex-col gap-1 rounded-2xl border border-[color:var(--theme-border-secondary)/0.5] bg-[var(--theme-bg-input)] px-2 py-1 shadow-lg focus-within:border-transparent focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-[var(--theme-bg-secondary)] focus-within:ring-[var(--theme-border-focus)] transition-all duration-200";
+    ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200"
+    : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)]";
 
   const chatInputContent = (
       <div
@@ -432,9 +433,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
               aspectRatio={aspectRatio}
               setAspectRatio={setAspectRatio}
               fileError={fileError}
-              selectedFiles={selectedFiles}
-              onRemoveFile={removeSelectedFile}
-              onCancelUpload={onCancelUpload}
               showAddByIdInput={showAddByIdInput}
               fileIdInput={fileIdInput}
               setFileIdInput={setFileIdInput}
@@ -460,19 +458,27 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                     className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
                 />
                 <div className={inputContainerClass}>
+                    {selectedFiles.length > 0 && (
+                      <div className="flex gap-2 overflow-x-auto pb-2 mb-1 custom-scrollbar px-1">
+                        {selectedFiles.map(file => (
+                          <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} />
+                        ))}
+                      </div>
+                    )}
+                    
                     <textarea
                         ref={textareaRef} value={inputText} onChange={handleInputChange}
                         onKeyDown={handleKeyDown} onPaste={handlePaste}
                         onCompositionStart={() => isComposingRef.current = true}
                         onCompositionEnd={() => isComposingRef.current = false}
                         placeholder={t('chatInputPlaceholder')}
-                        className="w-full bg-transparent border-0 resize-none px-1.5 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow"
+                        className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px]"
                         style={{ height: isFullscreen ? '100%' : `${isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
                         aria-label="Chat message input"
                         onFocus={() => adjustTextareaHeight()} disabled={isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording}
                         rows={1}
                     />
-                    <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-2">
+                    <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1">
                         <ChatInputActions
                             onAttachmentAction={handleAttachmentAction}
                             disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}

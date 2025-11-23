@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { Check, ClipboardCopy, Maximize, ExternalLink, ChevronDown, ChevronUp, FileCode2 } from 'lucide-react';
+import { Check, Copy, Maximize2, ExternalLink, ChevronDown, ChevronUp, Download } from 'lucide-react';
 
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
@@ -9,42 +9,11 @@ const isLikelyHtml = (textContent: string): boolean => {
 };
 
 const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
-    const lang = language.toLowerCase();
-
-    const colorMap: { [key: string]: string } = {
-        'html': '#E34F26',
-        'css': '#1572B6',
-        'js': '#F0DB4F',
-        'javascript': '#F0DB4F',
-        'ts': '#3178C6',
-        'typescript': '#3178C6',
-        'python': '#3776AB',
-        'py': '#3776AB',
-        'bash': '#4EAA25',
-        'shell': '#4EAA25',
-        'sh': '#4EAA25',
-        'json': '#F16C2E',
-        'md': '#087ea4',
-        'markdown': '#087ea4',
-        'txt': '#858585',
-        'jsx': '#61DAFB',
-        'tsx': '#3178C6',
-        'sql': '#e38c00',
-        'java': '#b07219',
-        'c': '#555555',
-        'cpp': '#f34b7d',
-        'go': '#00ADD8',
-        'rust': '#dea584',
-    };
-
-    const color = colorMap[lang] || '#858585';
-
+    const lang = language ? language.toLowerCase() : 'text';
     return (
-        <div className="flex items-center gap-2 select-none">
-            <span className="text-xs font-bold tracking-wide uppercase text-[var(--theme-text-secondary)] font-mono">
-                {lang}
-            </span>
-        </div>
+        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] select-none uppercase tracking-wider font-sans opacity-90">
+            {lang}
+        </span>
     );
 };
 
@@ -56,7 +25,7 @@ interface CodeBlockProps {
   expandCodeBlocksByDefault: boolean;
 }
 
-const COLLAPSE_THRESHOLD_PX = 150;
+const COLLAPSE_THRESHOLD_PX = 320;
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault }) => {
     const preRef = useRef<HTMLPreElement>(null);
@@ -92,15 +61,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
 
         // Apply style directly to prevent flicker.
         const shouldBeCollapsed = isCurrentlyOverflowing && !isExpanded;
-        const newMaxHeight = shouldBeCollapsed ? `${COLLAPSE_THRESHOLD_PX}px` : '';
-
-        if (preElement.style.maxHeight !== newMaxHeight) {
-            preElement.style.maxHeight = newMaxHeight;
-        }
-
-        if (shouldBeCollapsed) {
-            preElement.scrollTop = preElement.scrollHeight;
-        }
+        
+        // We control max-height via style prop in render now for smoother transitions
     }, [children, isExpanded, isOverflowing]);
 
     const handleToggleExpand = () => {
@@ -137,23 +99,28 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (likelyHTML ? 'text/html' : 'text/plain');
     const finalLanguage = language === 'txt' && likelyHTML ? 'html' : (language === 'xml' && likelyHTML ? 'html' : language);
 
+    const buttonClass = "p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all duration-200 focus:outline-none opacity-70 hover:opacity-100";
 
     return (
-        <div className="code-block-container group relative border border-[var(--theme-border-primary)] rounded-lg overflow-hidden bg-[var(--markdown-pre-bg)] my-3 shadow-sm transition-all duration-200 hover:border-[var(--theme-border-secondary)]">
-            <div className='code-block-header flex items-center justify-between h-9 px-3 bg-[var(--theme-bg-code-block-header)] border-b border-[var(--theme-border-secondary)]'>
+        <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--theme-border-secondary)]/30 bg-[var(--theme-bg-code-block)]/50 backdrop-blur-sm">
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pl-1">
                     <LanguageIcon language={finalLanguage} />
                 </div>
                 
-                <div className='flex items-center gap-1'>
+                <div className="flex items-center gap-0.5">
                     {likelyHTML && (
                         <>
-                            <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title="True Fullscreen Preview" onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> <ExternalLink size={14} strokeWidth={1.5} /> </button>
-                            <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title="Modal Preview" onClick={() => onOpenHtmlPreview(codeText.current)}> <Maximize size={14} strokeWidth={1.5} /> </button>
+                            <button className={buttonClass} title="Open Fullscreen" onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
+                                <ExternalLink size={14} strokeWidth={2} /> 
+                            </button>
+                            <button className={buttonClass} title="Preview" onClick={() => onOpenHtmlPreview(codeText.current)}> 
+                                <Maximize2 size={14} strokeWidth={2} /> 
+                            </button>
                         </>
                     )}
-                    <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
+                    <button className={buttonClass} title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
                         let filename = `snippet.${finalLanguage}`;
                         if (downloadMimeType === 'text/html') {
                             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
@@ -172,40 +139,48 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                         a.click();
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
-                    }}> <FileCode2 size={14} strokeWidth={1.5} /> </button>
-                     <button className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" title={copied ? "Copied!" : "Copy code"} onClick={handleCopy}>
-                        {copied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <ClipboardCopy size={14} strokeWidth={1.5} />}
+                    }}> 
+                        <Download size={14} strokeWidth={2} /> 
+                    </button>
+                     <button className={buttonClass} title={copied ? "Copied!" : "Copy code"} onClick={handleCopy}>
+                        {copied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                     </button>
                     {isOverflowing && (
-                        <button onClick={handleToggleExpand} className="code-block-utility-button rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]" aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
-                            {isExpanded ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />}
+                        <button onClick={handleToggleExpand} className={buttonClass} aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
+                            {isExpanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
                         </button>
                     )}
                 </div>
             </div>
-            <pre 
-                ref={preRef} 
-                className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar`}
-                style={{
-                    transition: 'max-height 0.3s ease-in-out',
-                    overflowY: 'auto',
-                }}
-            >
-                {codeElement ? (
-                    React.cloneElement(codeElement, {
-                        // This is a bit of a hack to ensure the inner `code` gets padding
-                        // since we removed it from the `pre` tag.
-                        className: `${codeElement.props.className || ''} !p-3 sm:!p-4 !block`,
-                    })
-                ) : (
-                    children
+            <div className="relative">
+                <pre 
+                    ref={preRef} 
+                    className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar scroll-smooth`}
+                    style={{
+                        transition: 'max-height 0.3s ease-out',
+                        overflowY: 'auto',
+                        maxHeight: isExpanded || !isOverflowing ? 'none' : `${COLLAPSE_THRESHOLD_PX}px`,
+                    }}
+                >
+                    {codeElement ? (
+                        React.cloneElement(codeElement, {
+                            className: `${codeElement.props.className || ''} !p-4 !block font-mono text-[13px] sm:text-sm leading-relaxed`,
+                        })
+                    ) : (
+                        children
+                    )}
+                </pre>
+                {isOverflowing && !isExpanded && (
+                    <div 
+                        className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--theme-bg-code-block)] to-transparent cursor-pointer flex items-end justify-center pb-2 group/expand"
+                        onClick={handleToggleExpand}
+                    >
+                        <span className="text-xs font-medium text-[var(--theme-text-tertiary)] group-hover/expand:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)]/80 px-3 py-1 rounded-full shadow-sm border border-[var(--theme-border-secondary)] backdrop-blur-md transition-all transform group-hover/expand:scale-105">
+                            <ChevronDown size={12} /> Show more
+                        </span>
+                    </div>
                 )}
-            </pre>
-            {isOverflowing && !isExpanded && (
-                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[var(--markdown-pre-bg)] to-transparent pointer-events-none flex items-end justify-center pb-2">
-                    <span className="text-[10px] uppercase tracking-widest font-bold text-[var(--theme-text-tertiary)] opacity-50 bg-[var(--markdown-pre-bg)] px-2 py-0.5 rounded-full mb-1 shadow-sm border border-[var(--theme-border-secondary)]/50">Expand to see more</span>
-                </div>
-            )}
+            </div>
         </div>
     );
 };
