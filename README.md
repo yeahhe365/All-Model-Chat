@@ -10,7 +10,7 @@
     <a href="https://all-model-chat.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
     </a>
-    <a href="https://ai.studio/apps/drive/1flPV7sNJCnH5gE7dRtNW9C6hZVzI3eh3?fullscreenApplet=true" target="_blank">
+    <a href="https://ai.studio/apps/drive/1QTVIPSUjPTWHBzCFRBDG0aiGO6GLNwcD?fullscreenApplet=true" target="_blank">
       <img src="https://img.shields.io/badge/Google_AI_Studio-Try_Now-4285F4?style=for-the-badge&logo=google" alt="Try in AI Studio">
     </a>
   </p>
@@ -26,13 +26,17 @@
   
   <table>
     <tr>
-      <td align="center" width="50%">
+      <td align="center" width="33%">
         <p><strong>Light Theme</strong></p>
         <img src="https://github.com/user-attachments/assets/cfcb2857-d9dd-43aa-bdec-92f60b3650e9" alt="Light Theme" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" />
       </td>
-      <td align="center" width="50%">
+      <td align="center" width="33%">
         <p><strong>Dark Theme</strong></p>
         <img src="https://github.com/user-attachments/assets/6d09b9ed-040f-4a81-905b-83f0f662af3f" alt="Dark Theme" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" />
+      </td>
+      <td align="center" width="33%">
+        <p><strong>Mobile UI</strong></p>
+        <img src="https://github.com/user-attachments/assets/57624e98-d4c3-4670-94d2-03ab2470a6a0" alt="Mobile UI" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" />
       </td>
     </tr>
   </table>
