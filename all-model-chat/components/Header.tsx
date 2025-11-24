@@ -269,11 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
             aria-expanded={isModelSelectorOpen}
           >
             {isModelsLoading && !currentModelName && <Loader2 size={16} className="animate-spin text-[var(--theme-text-link)]" />}
-            {!isModelsLoading && selectedModelId && (
-               <div className="hidden lg:flex items-center opacity-70">
-                  {getModelIcon(availableModels.find(m => m.id === selectedModelId) || { id: selectedModelId, name: selectedModelId, isPinned: false })}
-               </div>
-            )}
+            
             <span className="truncate max-w-[120px] sm:max-w-[240px] lg:hidden">{abbreviatedModelName}</span>
             <span className="hidden lg:block truncate max-w-[400px]">{displayModelName}</span>
             <ChevronDown size={16} className="opacity-50 flex-shrink-0" />
