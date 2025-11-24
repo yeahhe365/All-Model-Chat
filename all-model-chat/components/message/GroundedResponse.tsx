@@ -15,9 +15,10 @@ interface GroundedResponseProps {
   isMermaidRenderingEnabled: boolean;
   isGraphvizRenderingEnabled: boolean;
   t: (key: keyof typeof translations) => string;
+  themeId: string;
 }
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t }) => {
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t, themeId }) => {
   const content = useMemo(() => {
     if (!metadata || !metadata.groundingSupports) {
       return text;
@@ -116,6 +117,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
           isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
           allowHtml={true}
           t={t}
+          themeId={themeId}
         />
       </div>
       {sources.length > 0 && (

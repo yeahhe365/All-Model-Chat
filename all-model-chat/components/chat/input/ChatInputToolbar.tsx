@@ -30,7 +30,7 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
       {isImagenModel && setAspectRatio && aspectRatio && (
         <ImagenAspectRatioSelector aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} t={t as (key: string) => string} />
       )}
-      {fileError && <div className="p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
+      {fileError && <div className="p-2 text-sm text-[var(--theme-text-danger)] bg-[var(--theme-bg-error-message)] border border-[var(--theme-bg-danger)] rounded-md">{fileError}</div>}
       {showAddByIdInput && (
         <AddFileByIdInput
           fileIdInput={fileIdInput}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ModelOption } from '../../types';
 import { Loader2, Info, Mic, Bot, Brain, Box, Volume2, Image as ImageIcon, Sparkles, Search, X, Check, ChevronDown } from 'lucide-react';
@@ -173,7 +174,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = ({
                     <span>{t('loading')}</span>
                 </div>
                 ) : modelsLoadingError ? (
-                    <div className="text-sm text-[var(--theme-text-danger)] p-2 bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md">{modelsLoadingError}</div>
+                    <div className="text-sm text-[var(--theme-text-danger)] p-2 bg-[var(--theme-bg-error-message)] border border-[var(--theme-bg-danger)] rounded-md">{modelsLoadingError}</div>
                 ) : (
                 <div className="relative" ref={modelSelectorRef}>
                     <button

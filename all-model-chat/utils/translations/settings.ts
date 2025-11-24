@@ -1,5 +1,6 @@
 
 
+
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -8,6 +9,7 @@ export const settingsTranslations = {
     settingsTabAccount: { en: 'API Key', zh: '密钥' },
     settingsTabData: { en: 'Data', zh: '数据' },
     settingsTabAbout: { en: 'About', zh: '关于' },
+    settingsTabShortcuts: { en: 'Shortcuts', zh: '快捷键' },
     settingsDataManagement: { en: 'Data Management', zh: '数据管理' },
     settingsApiConfig: { en: 'API Configuration', zh: 'API 配置' },
     settingsUseCustomApi: { en: 'Use Custom API Configuration', zh: '使用自定义 API 配置' },
@@ -108,6 +110,20 @@ export const settingsTranslations = {
     settingsClearLogs: { en: 'Clear Logs', zh: '清空日志' },
     settingsClearLogs_confirm: { en: 'Are you sure you want to clear all system logs?', zh: '您确定要清空所有系统日志吗？' },
     
+    // Shortcuts Section
+    shortcuts_general_title: { en: 'General', zh: '通用' },
+    shortcuts_new_chat: { en: 'New Chat', zh: '新建对话' },
+    shortcuts_open_settings: { en: 'Open Settings', zh: '打开设置' },
+    shortcuts_open_logs: { en: 'Open Logs', zh: '打开日志' },
+    shortcuts_toggle_pip: { en: 'Toggle PiP', zh: '切换画中画' },
+    shortcuts_chat_input_title: { en: 'Chat Input', zh: '输入框' },
+    shortcuts_send_message: { en: 'Send Message', zh: '发送消息' },
+    shortcuts_new_line: { en: 'New Line', zh: '换行' },
+    shortcuts_cycle_models: { en: 'Cycle Models', zh: '切换模型' },
+    shortcuts_clear_chat: { en: 'Clear Chat', zh: '清空对话' },
+    shortcuts_slash_commands: { en: 'Slash Commands', zh: '斜杠命令' },
+    shortcuts_focus_input: { en: 'Focus Input', zh: '聚焦输入框' },
+
     // About Section
     about_title: { en: 'All Model Chat', zh: 'All Model Chat' },
     about_version: { en: 'Version', zh: '版本' },

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from './types';
 import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from './constants/appConstants';
@@ -20,7 +20,7 @@ import { WindowProvider } from './contexts/WindowContext';
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
-  const t = getTranslator(language);
+  const t = useMemo(() => getTranslator(language), [language]);
   
   const chatState = useChat(appSettings, setAppSettings, language);
   const {

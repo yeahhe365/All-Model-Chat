@@ -87,9 +87,10 @@ interface MessageContentProps {
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
+    themeId: string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId }) => {
     const { content, files, isLoading, thoughts, generationStartTime, audioSrc, groundingMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -238,6 +239,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                     isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                                     allowHtml={true}
                                     t={t}
+                                    themeId={themeId}
                                 />
                             </div>
                         </div>
@@ -253,7 +255,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
 
             {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} t={t} />
+              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} t={t} themeId={themeId} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer
@@ -266,6 +268,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                         allowHtml={true}
                         t={t}
+                        themeId={themeId}
                     />
                 </div>
             )}
