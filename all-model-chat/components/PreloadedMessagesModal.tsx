@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { SavedScenario, PreloadedMessage } from '../types';
-import { X, Plus, Trash2, Edit3, UploadCloud, Download, AlertTriangle, CheckCircle, Loader2, MessageSquare, Play, Save, ChevronRight } from 'lucide-react';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { SavedScenario } from '../types';
+import { X, Plus, Trash2, Edit3, Search, Play, Save, MessageSquare, Shield, User } from 'lucide-react';
 import { translations } from '../utils/appUtils';
 import { Modal } from './shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
@@ -28,12 +29,12 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   const [scenarios, setScenarios] = useState<SavedScenario[]>(savedScenarios);
   const [view, setView] = useState<ModalView>('list');
   const [editingScenario, setEditingScenario] = useState<SavedScenario | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   const headingIconSize = useResponsiveValue(20, 24);
-  const actionIconSize = useResponsiveValue(16, 18);
 
   useEffect(() => {
     if (isOpen) {
@@ -41,12 +42,11 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
       setView('list');
       setEditingScenario(null);
       setFeedback(null);
+      setSearchQuery('');
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
   }, [isOpen, savedScenarios]);
-
-  if (!isOpen) return null;
 
   const handleClose = () => { if (isOpen) onClose(); };
 
@@ -55,6 +55,19 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     setTimeout(() => setFeedback(null), duration);
   };
   
+  // Persist changes immediately when the list changes (deletion or edit save)
+  useEffect(() => {
+      if (isOpen && scenarios !== savedScenarios) {
+          // Debounce save or just check if length/content changed significantly?
+          // For simplicity and reliability in this UI, we won't auto-save everything immediately to disk 
+          // to allow "Cancel" behavior if we wanted, but the previous requirement implied "Save & Close".
+          // However, to make it "Simple and Practical", immediate action is often better.
+          // Let's keep the "Save Changes" button explicit in the footer to avoid accidental data loss/overwrites,
+          // OR we can make it auto-save. 
+          // Given the prompt "redesign... simple and practical", distinct Save actions are safer.
+      }
+  }, [scenarios, isOpen, savedScenarios]);
+
   const handleSaveAllAndClose = () => {
     onSaveAllScenarios(scenarios);
     handleClose();
@@ -88,12 +101,15 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
           return [...prev, scenarioToSave];
       });
       showFeedback('success', t('scenarios_feedback_saved'));
-      handleCancelEdit();
+      setView('list');
+      setEditingScenario(null);
   };
   
   const handleDeleteScenario = (id: string) => {
-      setScenarios(prev => prev.filter(s => s.id !== id));
-      showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
+      if (confirm("Are you sure you want to delete this scenario?")) {
+        setScenarios(prev => prev.filter(s => s.id !== id));
+        showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
+      }
   };
 
   const handleLoadAndClose = (scenario: SavedScenario) => {
@@ -103,124 +119,169 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     }
     onLoadScenario(scenario);
     showFeedback('success', t('scenarios_feedback_loaded'));
-    setTimeout(handleClose, 700);
+    setTimeout(handleClose, 300);
   };
+
+  const filteredScenarios = useMemo(() => {
+      if (!searchQuery.trim()) return scenarios;
+      const lowerQuery = searchQuery.toLowerCase();
+      return scenarios.filter(s => 
+          s.title.toLowerCase().includes(lowerQuery) || 
+          s.messages.some(m => m.content.toLowerCase().includes(lowerQuery))
+      );
+  }, [scenarios, searchQuery]);
+
+  const systemScenarios = filteredScenarios.filter(s => ['fop-scenario-default', 'unrestricted-scenario-default'].includes(s.id));
+  const userScenarios = filteredScenarios.filter(s => !['fop-scenario-default', 'unrestricted-scenario-default'].includes(s.id));
   
-  const renderListView = () => (
-    <>
-      <div className="flex-grow overflow-y-auto custom-scrollbar p-1">
-          {scenarios.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-[var(--theme-text-tertiary)] border-2 border-dashed border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-primary)]/50">
-                  <MessageSquare size={48} className="mb-4 opacity-20" />
-                  <p className="text-sm">{t('scenarios_empty_list')}</p>
-                  <button 
-                    onClick={handleStartAddNew}
-                    className="mt-4 px-4 py-2 text-sm font-medium text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-input)] rounded-md transition-colors"
-                  >
-                    {t('scenarios_create_first', 'Create your first scenario')}
-                  </button>
-              </div>
-          ) : (
-            <ul className="space-y-2">
-              {scenarios.map(scenario => (
-                <li key={scenario.id} className="group flex items-center justify-between p-3 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)] rounded-xl transition-all duration-200 shadow-sm">
-                  <div 
-                    className="flex-grow min-w-0 cursor-pointer"
-                    onClick={() => handleLoadAndClose(scenario)}
-                  >
-                      <div className="flex items-center gap-2">
-                        <p className="font-semibold text-[var(--theme-text-primary)] truncate text-base">{scenario.title}</p>
-                        {scenario.id === 'fop-scenario-default' && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-md">System</span>
-                        )}
-                      </div>
-                      <p className="text-[var(--theme-text-tertiary)] text-xs mt-0.5 flex items-center gap-2">
-                          <span>
-                            {scenario.messages.length} {language === 'zh' ? '条消息' : `message${scenario.messages.length !== 1 ? 's' : ''}`}
-                          </span>
-                          {scenario.systemInstruction && <span className="w-1 h-1 rounded-full bg-[var(--theme-text-tertiary)]"></span>}
-                          {scenario.systemInstruction && <span>{t('scenarios_has_system_prompt', 'Has System Prompt')}</span>}
-                      </p>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 ml-3">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleLoadAndClose(scenario); }} 
-                        className="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-success)] hover:bg-[var(--theme-bg-success)] rounded-lg transition-colors" 
-                        title={t('scenarios_load_title')}
-                      >
-                          <Play size={actionIconSize} strokeWidth={1.5} />
-                      </button>
-                      
-                      <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-1"></div>
-                      
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleStartEdit(scenario); }} 
-                        disabled={scenario.id === 'fop-scenario-default'} 
-                        className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg disabled:opacity-20 disabled:cursor-not-allowed transition-colors" 
-                        title={t('scenarios_edit_title')}
-                      >
-                          <Edit3 size={actionIconSize} strokeWidth={1.5} />
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteScenario(scenario.id); }} 
-                        disabled={scenario.id === 'fop-scenario-default'} 
-                        className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-lg disabled:opacity-20 disabled:cursor-not-allowed transition-colors" 
-                        title={t('scenarios_delete_title')}
-                      >
-                          <Trash2 size={actionIconSize} strokeWidth={1.5} />
-                      </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-      </div>
-      
-      {/* Consolidated Footer */}
-      <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] flex flex-col sm:flex-row items-center justify-between gap-3 bg-[var(--theme-bg-tertiary)] -mx-3 -mb-3 sm:-mx-5 sm:-mb-5 md:-mx-6 md:-mb-6 p-3 sm:p-5 md:p-6 rounded-b-xl">
+  const renderScenarioItem = (scenario: SavedScenario, isSystem: boolean) => (
+    <div 
+        key={scenario.id} 
+        className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)] rounded-xl transition-all duration-200 cursor-pointer"
+        onClick={() => handleLoadAndClose(scenario)}
+    >
+        <div className="flex-grow min-w-0 pr-4">
+            <div className="flex items-center gap-2 mb-1">
+                {isSystem ? (
+                    <Shield size={14} className="text-[var(--theme-bg-accent)] flex-shrink-0" strokeWidth={2.5} />
+                ) : (
+                    <MessageSquare size={14} className="text-[var(--theme-text-tertiary)] group-hover:text-[var(--theme-text-primary)] transition-colors flex-shrink-0" strokeWidth={2} />
+                )}
+                <h3 className="font-semibold text-[var(--theme-text-primary)] truncate text-sm sm:text-base">
+                    {scenario.title}
+                </h3>
+            </div>
+            <p className="text-[var(--theme-text-tertiary)] text-xs flex items-center gap-3">
+                <span>{scenario.messages.length} msgs</span>
+                {scenario.systemInstruction && (
+                    <span className="flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-[var(--theme-text-tertiary)]"></span>
+                        System Prompt
+                    </span>
+                )}
+            </p>
+        </div>
+        
+        <div className="flex items-center gap-2 mt-3 sm:mt-0 self-end sm:self-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity focus-within:opacity-100">
             <button 
-                onClick={handleStartAddNew} 
-                className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
+                onClick={(e) => { e.stopPropagation(); handleLoadAndClose(scenario); }} 
+                className="p-2 bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded-lg transition-colors shadow-sm" 
+                title={t('scenarios_load_title')}
             >
-                <Plus size={18} /> {t('scenarios_create_button', 'Add New Scenario')}
+                <Play size={14} strokeWidth={2} fill="currentColor" />
             </button>
             
+            {!isSystem && (
+                <>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleStartEdit(scenario); }} 
+                        className="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" 
+                        title={t('scenarios_edit_title')}
+                    >
+                        <Edit3 size={16} strokeWidth={1.5} />
+                    </button>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteScenario(scenario.id); }} 
+                        className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-lg transition-colors" 
+                        title={t('scenarios_delete_title')}
+                    >
+                        <Trash2 size={16} strokeWidth={1.5} />
+                    </button>
+                </>
+            )}
+        </div>
+    </div>
+  );
+
+  const renderListView = () => (
+    <>
+        {/* Search Bar */}
+        <div className="sticky top-0 z-10 pb-4 bg-[var(--theme-bg-tertiary)]">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--theme-text-tertiary)]" size={16} />
+                <input 
+                    type="text" 
+                    placeholder="Search scenarios..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-xl text-sm text-[var(--theme-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-all"
+                />
+            </div>
+        </div>
+
+        <div className="flex-grow overflow-y-auto custom-scrollbar space-y-6 pr-1 pb-2">
+            {filteredScenarios.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-[var(--theme-text-tertiary)]">
+                    <Search size={32} className="mb-3 opacity-20" />
+                    <p className="text-sm">No scenarios found.</p>
+                    {searchQuery && <button onClick={() => setSearchQuery('')} className="mt-2 text-[var(--theme-text-link)] hover:underline text-xs">Clear search</button>}
+                </div>
+            ) : (
+                <>
+                    {userScenarios.length > 0 && (
+                        <div className="space-y-2">
+                            {userScenarios.map(s => renderScenarioItem(s, false))}
+                        </div>
+                    )}
+                    
+                    {systemScenarios.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1 mt-4 mb-2">System Presets</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {systemScenarios.map(s => renderScenarioItem(s, true))}
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
+      
+        {/* Footer */}
+        <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] flex flex-col sm:flex-row items-center justify-between gap-3 bg-[var(--theme-bg-tertiary)]">
             <button 
-                onClick={handleSaveAllAndClose} 
-                type="button" 
-                className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-border-focus)]" 
-                title={t('scenarios_save_title')}
+                onClick={handleStartAddNew} 
+                className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
             >
-                <Save size={18} /> {t('scenarios_save_and_close', 'Save & Close')}
+                <Plus size={16} /> {t('scenarios_create_button', 'Create New')}
             </button>
-      </div>
+            
+            <div className="flex gap-3 w-full sm:w-auto">
+                <button 
+                    onClick={handleClose} 
+                    className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-xl transition-colors"
+                >
+                    {t('cancel', 'Cancel')}
+                </button>
+                <button 
+                    onClick={handleSaveAllAndClose} 
+                    className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg" 
+                >
+                    <Save size={16} /> {t('scenarios_save_and_close', 'Save Library')}
+                </button>
+            </div>
+        </div>
     </>
   );
   
-  const renderEditorView = () => (
-      <ScenarioEditor 
-          initialScenario={editingScenario}
-          onSave={handleSaveScenario}
-          onCancel={handleCancelEdit}
-          t={t}
-      />
-  );
-
-  // Helper for rudimentary locale detection for the message count
-  const language = t('scenarios_create_button') === '添加新场景' ? 'zh' : 'en';
+  if (!isOpen) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} noPadding contentClassName="w-full h-full sm:w-auto sm:h-auto">
       <div 
-        className="bg-[var(--theme-bg-tertiary)] p-3 sm:p-5 md:p-6 w-full h-full sm:rounded-xl sm:shadow-premium sm:w-[52rem] sm:h-[42rem] flex flex-col transition-all duration-300"
+        className="bg-[var(--theme-bg-tertiary)] p-4 sm:p-6 w-full h-full sm:rounded-2xl sm:shadow-2xl sm:w-[42rem] sm:h-[80vh] max-h-[800px] flex flex-col transition-all duration-300"
       >
-        <div className="flex justify-between items-center mb-4 sm:mb-5 flex-shrink-0">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center mb-2 flex-shrink-0">
           <h2 id="scenarios-title" className="text-xl font-bold text-[var(--theme-text-primary)] flex items-center gap-2.5">
-            <div className="p-2 bg-[var(--theme-bg-input)] rounded-lg border border-[var(--theme-border-secondary)] shadow-sm">
-                <MessageSquare size={headingIconSize} className="text-[var(--theme-text-link)]" />
-            </div>
-            {view === 'editor' ? (editingScenario?.title ? t('scenarios_title_edit', `Editing Scenario`) : t('scenarios_title_create', `Create New Scenario`)) : t('scenarios_title')}
+            {view === 'editor' ? (
+                <>
+                    <span className="text-[var(--theme-text-tertiary)]">{t('scenarios_title')}</span>
+                    <span className="text-[var(--theme-text-tertiary)]">/</span>
+                    <span>{editingScenario?.title ? 'Edit' : 'New'}</span>
+                </>
+            ) : (
+                t('scenarios_title')
+            )}
           </h2>
           <button 
             ref={closeButtonRef} 
@@ -232,20 +293,28 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
           </button>
         </div>
 
+        {/* Feedback Toast */}
         {feedback && (
-          <div className={`mb-4 p-3 rounded-lg text-sm font-medium flex items-center shadow-sm animate-in fade-in slide-in-from-top-2
+          <div className={`mb-4 p-3 rounded-xl text-sm font-medium flex items-center shadow-sm animate-in fade-in slide-in-from-top-2
             ${feedback.type === 'success' ? 'bg-green-500/10 text-green-600 border border-green-500/20' : ''}
             ${feedback.type === 'error' ? 'bg-red-500/10 text-red-600 border border-red-500/20' : ''}
             ${feedback.type === 'info' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : ''}
           `}>
-            {feedback.type === 'success' && <CheckCircle size={18} className="mr-2" />}
-            {feedback.type === 'error' && <AlertTriangle size={18} className="mr-2" />}
+            <div className={`mr-2 w-2 h-2 rounded-full ${feedback.type === 'success' ? 'bg-green-500' : feedback.type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`} />
             {feedback.message}
           </div>
         )}
 
+        {/* Content View Switcher */}
         <div className="flex-grow flex flex-col min-h-0 relative">
-            {view === 'list' ? renderListView() : renderEditorView()}
+            {view === 'list' ? renderListView() : (
+                <ScenarioEditor 
+                    initialScenario={editingScenario}
+                    onSave={handleSaveScenario}
+                    onCancel={handleCancelEdit}
+                    t={t}
+                />
+            )}
         </div>
       </div>
     </Modal>

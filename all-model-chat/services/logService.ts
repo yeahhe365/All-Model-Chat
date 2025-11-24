@@ -13,10 +13,17 @@ export interface LogEntry {
   data?: any;
 }
 
+export interface TokenUsageStats {
+    prompt: number;
+    completion: number;
+}
+
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
+type TokenUsageListener = (usage: Map<string, TokenUsageStats>) => void;
 
 const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
+const TOKEN_USAGE_STORAGE_KEY = 'chatTokenUsageData';
 const LOG_RETENTION_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 const FLUSH_INTERVAL_MS = 2000; // 2 seconds
 const FLUSH_THRESHOLD = 50; // Flush if 50 items accumulate
@@ -26,12 +33,16 @@ class LogServiceImpl {
   private apiKeyUsage: Map<string, number> = new Map();
   private apiKeyListeners: Set<ApiKeyListener> = new Set();
   
+  private tokenUsage: Map<string, TokenUsageStats> = new Map();
+  private tokenUsageListeners: Set<TokenUsageListener> = new Set();
+  
   // Batching Buffer
   private logBuffer: LogEntry[] = [];
   private flushTimer: any = null;
 
   constructor() {
     this.loadApiKeyUsage();
+    this.loadTokenUsage();
     this.pruneOldLogs();
     this.info('Log service initialized (IndexedDB Batched Mode).', { category: 'SYSTEM' });
   }
@@ -147,6 +158,47 @@ class LogServiceImpl {
     }
   }
 
+  // --- Token Usage Tracking ---
+
+  private loadTokenUsage() {
+      try {
+          const storedUsage = localStorage.getItem(TOKEN_USAGE_STORAGE_KEY);
+          if (storedUsage) {
+              const parsed = JSON.parse(storedUsage);
+              if (Array.isArray(parsed)) {
+                  this.tokenUsage = new Map(parsed);
+              }
+          }
+      } catch (e) {
+          console.error("Failed to load token usage:", e);
+      }
+  }
+
+  private saveTokenUsage() {
+      try {
+          const usageArray = Array.from(this.tokenUsage.entries());
+          localStorage.setItem(TOKEN_USAGE_STORAGE_KEY, JSON.stringify(usageArray));
+      } catch (e) { console.error(e); }
+  }
+
+  private notifyTokenUsageListeners() {
+    const listenersToNotify = Array.from(this.tokenUsageListeners);
+    for (const listener of listenersToNotify) {
+      listener(new Map(this.tokenUsage));
+    }
+  }
+
+  public recordTokenUsage(modelId: string, prompt: number, completion: number) {
+    if (!modelId) return;
+    const current = this.tokenUsage.get(modelId) || { prompt: 0, completion: 0 };
+    this.tokenUsage.set(modelId, {
+        prompt: current.prompt + prompt,
+        completion: current.completion + completion
+    });
+    this.saveTokenUsage();
+    this.notifyTokenUsageListeners();
+  }
+
   // --- Public Interface ---
 
   /**
@@ -220,6 +272,12 @@ class LogServiceImpl {
     return () => this.apiKeyListeners.delete(listener);
   }
 
+  public subscribeToTokenUsage(listener: TokenUsageListener): () => void {
+    this.tokenUsageListeners.add(listener);
+    listener(new Map(this.tokenUsage));
+    return () => this.tokenUsageListeners.delete(listener);
+  }
+
   /**
    * Async fetch logs from DB with pagination.
    */
@@ -233,10 +291,13 @@ class LogServiceImpl {
     this.logBuffer = [];
     await dbService.clearLogs();
     this.apiKeyUsage.clear();
+    this.tokenUsage.clear(); // Clear token usage
     this.saveApiKeyUsage();
+    this.saveTokenUsage();
     // Notify listeners of clear by sending empty or a system event (optional)
-    this.info('Logs cleared by user.', { category: 'USER' });
+    this.info('Logs and stats cleared by user.', { category: 'USER' });
     this.notifyApiKeyListeners();
+    this.notifyTokenUsageListeners();
   }
 }
 

@@ -1,3 +1,4 @@
+
 import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata, Chat } from '@google/genai';
@@ -67,6 +68,15 @@ export const useChatStreamHandler = ({
 
             if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
                 firstContentPartTimeRef.current = new Date();
+            }
+
+            // Record Token Usage Statistics
+            if (usageMetadata) {
+                logService.recordTokenUsage(
+                    currentChatSettings.modelId,
+                    usageMetadata.promptTokenCount || 0,
+                    usageMetadata.candidatesTokenCount || 0
+                );
             }
 
             updateAndPersistSessions(prev => prev.map(s => {

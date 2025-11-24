@@ -107,9 +107,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 </div>
             )}
         </div>
-        {isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_label')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
-        {isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_label')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
-        {isUrlContextEnabled && <ActiveToolBadge label={t('url_context_label')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
+        {isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
+        {isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
+        {isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
       </div>
     );
 };

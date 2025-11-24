@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { PreloadedMessage, SavedScenario } from '../types';
-import { User, Bot, PlusCircle, Trash2, Edit3, FileUp, FileDown, MessageSquare, Save, X, CornerDownLeft } from 'lucide-react';
-import { getResponsiveValue, translations } from '../utils/appUtils';
+import { User, Bot, Trash2, Edit3, ArrowUp, Save, Plus } from 'lucide-react';
+import { translations } from '../utils/appUtils';
 
 interface ScenarioEditorProps {
     initialScenario: SavedScenario | null;
@@ -12,197 +13,202 @@ interface ScenarioEditorProps {
 
 export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave, onCancel, t }) => {
     const [scenario, setScenario] = useState<SavedScenario>(initialScenario || { id: Date.now().toString(), title: '', messages: [], systemInstruction: '' });
-    const [editingMessage, setEditingMessage] = useState<PreloadedMessage | null>(null);
+    const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');
-    const messageListRef = useRef<HTMLDivElement>(null);
     
-    const listItemIconSize = getResponsiveValue(16, 18);
+    const messageListRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    // Scroll to bottom when a message is added
     useEffect(() => {
-        if (messageListRef.current && !editingMessage) {
+        if (messageListRef.current && !editingMessageId) {
             messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
         }
-    }, [scenario.messages.length, editingMessage]);
+    }, [scenario.messages.length, editingMessageId]);
 
-    const handleMessageChange = (messages: PreloadedMessage[]) => {
-        setScenario(prev => ({...prev, messages}));
-    }
-
-    const handleAddOrUpdateMessage = () => {
+    const handleAddMessage = () => {
         if (!newMessageContent.trim()) return;
-        if (editingMessage) {
-            handleMessageChange(scenario.messages.map(msg => msg.id === editingMessage.id ? { ...msg, role: newMessageRole, content: newMessageContent } : msg));
-            setEditingMessage(null);
-        } else {
-            handleMessageChange([...scenario.messages, { id: Date.now().toString(), role: newMessageRole, content: newMessageContent }]);
-        }
+        setScenario(prev => ({
+            ...prev,
+            messages: [...prev.messages, { id: Date.now().toString(), role: newMessageRole, content: newMessageContent }]
+        }));
         setNewMessageContent('');
-        setNewMessageRole(newMessageRole === 'user' ? 'model' : 'user'); // Toggle role for next message automatically
+        setNewMessageRole(newMessageRole === 'user' ? 'model' : 'user');
     };
 
-    const handleEditMessage = (message: PreloadedMessage) => {
-        setEditingMessage(message);
-        setNewMessageRole(message.role);
-        setNewMessageContent(message.content);
-        document.getElementById('new-message-content')?.focus();
+    const handleUpdateMessage = (id: string, content: string) => {
+        setScenario(prev => ({
+            ...prev,
+            messages: prev.messages.map(m => m.id === id ? { ...m, content } : m)
+        }));
+        setEditingMessageId(null);
     };
 
     const handleDeleteMessage = (id: string) => {
-        handleMessageChange(scenario.messages.filter((msg) => msg.id !== id));
-        if (editingMessage?.id === id) {
-            setEditingMessage(null);
-            setNewMessageContent('');
-        }
-    };
-    
-    const moveMessage = (index: number, direction: 'up' | 'down') => {
-        if ((direction === 'up' && index === 0) || (direction === 'down' && index === scenario.messages.length - 1)) return;
-        const newMessages = [...scenario.messages];
-        const item = newMessages.splice(index, 1)[0];
-        newMessages.splice(index + (direction === 'down' ? 1 : -1), 0, item);
-        handleMessageChange(newMessages);
+        setScenario(prev => ({
+            ...prev,
+            messages: prev.messages.filter(m => m.id !== id)
+        }));
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-            handleAddOrUpdateMessage();
+            handleAddMessage();
         }
     };
 
     return (
-        <>
-        <div className="flex-grow flex flex-col min-h-0 space-y-4 overflow-y-auto custom-scrollbar pr-2 -mr-2" ref={messageListRef}>
-             {/* Title & System Prompt Card */}
-             <div className="bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl p-4 shadow-sm space-y-4 flex-shrink-0">
-                <div>
-                    <label htmlFor="scenario-title" className="block text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-1.5">{t('scenarios_editor_title_label')}</label>
-                    <input
-                        id="scenario-title"
-                        type="text"
-                        value={scenario.title}
-                        onChange={(e) => setScenario(prev => ({...prev, title: e.target.value}))}
-                        placeholder={t('scenarios_editor_title_placeholder')}
-                        className="w-full p-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm transition-all"
-                    />
-                </div>
-                <div>
-                    <label htmlFor="scenario-system-prompt" className="block text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-1.5">{t('scenarios_system_prompt_label')} <span className="font-normal text-[var(--theme-text-tertiary)] opacity-70">{t('scenarios_optional')}</span></label>
-                    <textarea
-                        id="scenario-system-prompt"
-                        rows={2}
-                        value={scenario.systemInstruction || ''}
-                        onChange={(e) => setScenario(prev => ({...prev, systemInstruction: e.target.value}))}
-                        placeholder={t('scenarios_system_prompt_placeholder', "Define the persona or rules for the model...")}
-                        className="w-full p-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm resize-y custom-scrollbar transition-all"
-                    />
-                </div>
+        <div className="flex flex-col h-full">
+            {/* Top Settings Area */}
+            <div className="flex-shrink-0 mb-4 space-y-3">
+                <input
+                    type="text"
+                    value={scenario.title}
+                    onChange={(e) => setScenario(prev => ({...prev, title: e.target.value}))}
+                    placeholder={t('scenarios_editor_title_placeholder', 'Scenario Title')}
+                    className="w-full bg-transparent text-2xl font-bold text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none border-b border-transparent hover:border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] transition-colors py-1"
+                    autoFocus={!initialScenario}
+                />
+                
+                <details className="group bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl open:ring-1 open:ring-[var(--theme-border-focus)]">
+                    <summary className="px-4 py-2.5 cursor-pointer text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors flex justify-between items-center select-none">
+                        <span>{t('scenarios_system_prompt_label')}</span>
+                        <span className="text-[var(--theme-text-tertiary)] text-[10px] font-normal normal-case group-open:hidden">
+                            {scenario.systemInstruction ? 'Content Hidden' : 'Optional'}
+                        </span>
+                    </summary>
+                    <div className="p-3 pt-0">
+                        <textarea
+                            rows={3}
+                            value={scenario.systemInstruction || ''}
+                            onChange={(e) => setScenario(prev => ({...prev, systemInstruction: e.target.value}))}
+                            placeholder={t('scenarios_system_prompt_placeholder', "Define the persona or rules for the model...")}
+                            className="w-full p-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm resize-y custom-scrollbar"
+                        />
+                    </div>
+                </details>
             </div>
 
-            {/* Messages List */}
-            <div className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">{t('scenarios_conversation_flow', "Conversation Flow")}</h3>
+            {/* Chat Preview Area */}
+            <div 
+                ref={messageListRef}
+                className="flex-grow overflow-y-auto custom-scrollbar space-y-4 p-2 -mx-2 relative"
+            >
                 {scenario.messages.length === 0 ? (
-                    <div className="text-center py-8 text-sm text-[var(--theme-text-tertiary)] border-2 border-dashed border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-secondary)]/50">
-                        <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
-                        <p>{t('scenarios_empty_list')}</p>
+                    <div className="h-full flex flex-col items-center justify-center text-[var(--theme-text-tertiary)] opacity-60">
+                        <div className="p-4 border-2 border-dashed border-[var(--theme-border-secondary)] rounded-xl mb-2">
+                            <Plus size={24} />
+                        </div>
+                        <p className="text-sm">Add messages below to build the conversation flow.</p>
                     </div>
                 ) : (
-                    <ul className="space-y-3">
-                        {scenario.messages.map((msg, index) => (
-                            <li key={msg.id} className={`group flex gap-3 p-3 rounded-xl border transition-all hover:shadow-md ${msg.role === 'user' ? 'bg-[var(--theme-bg-primary)] border-[var(--theme-border-secondary)]' : 'bg-[var(--theme-bg-secondary)] border-transparent'}`}>
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]'}`}>
-                                    {msg.role === 'user' ? <User size={listItemIconSize} strokeWidth={1.5} /> : <Bot size={listItemIconSize} strokeWidth={1.5} />}
-                                </div>
-                                <div className="flex-grow min-w-0 pt-1">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs font-bold uppercase text-[var(--theme-text-tertiary)]">{msg.role === 'user' ? t('scenarios_role_user', 'User') : t('scenarios_role_model', 'Model')}</span>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => moveMessage(index, 'up')} disabled={index === 0} className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded" title={t('scenarios_moveUp_title')}><FileUp size={14} strokeWidth={1.5} /></button>
-                                            <button onClick={() => moveMessage(index, 'down')} disabled={index === scenario.messages.length - 1} className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded" title={t('scenarios_moveDown_title')}><FileDown size={14} strokeWidth={1.5} /></button>
-                                            <div className="w-px h-3 bg-[var(--theme-border-secondary)] mx-1"></div>
-                                            <button onClick={() => handleEditMessage(msg)} className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded" title={t('scenarios_edit_title')}><Edit3 size={14} strokeWidth={1.5} /></button>
-                                            <button onClick={() => handleDeleteMessage(msg.id)} className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded" title={t('scenarios_delete_title')}><Trash2 size={14} strokeWidth={1.5} /></button>
+                    scenario.messages.map((msg) => {
+                        const isEditing = editingMessageId === msg.id;
+                        return (
+                            <div 
+                                key={msg.id} 
+                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
+                            >
+                                <div className={`
+                                    relative max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 text-sm
+                                    ${msg.role === 'user' 
+                                        ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-tr-sm' 
+                                        : 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-tl-sm'}
+                                `}>
+                                    {isEditing ? (
+                                        <div className="flex flex-col gap-2 min-w-[280px]">
+                                            <textarea
+                                                className="w-full bg-black/10 dark:bg-white/10 rounded-md p-2 text-inherit outline-none resize-y"
+                                                defaultValue={msg.content}
+                                                autoFocus
+                                                rows={3}
+                                                onBlur={(e) => handleUpdateMessage(msg.id, e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        handleUpdateMessage(msg.id, e.currentTarget.value);
+                                                    }
+                                                }}
+                                            />
+                                            <div className="text-[10px] opacity-70 text-right">Press Enter to save</div>
                                         </div>
-                                    </div>
-                                    <p className="text-[var(--theme-text-primary)] whitespace-pre-wrap break-words text-sm leading-relaxed">{msg.content}</p>
+                                    ) : (
+                                        <div className="whitespace-pre-wrap break-words">{msg.content}</div>
+                                    )}
+
+                                    {/* Inline Controls */}
+                                    {!isEditing && (
+                                        <div className={`absolute ${msg.role === 'user' ? 'right-0 translate-x-[110%]' : 'left-0 -translate-x-[110%]'} top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
+                                            <button 
+                                                onClick={() => setEditingMessageId(msg.id)} 
+                                                className="p-1.5 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full shadow-sm"
+                                            >
+                                                <Edit3 size={12} />
+                                            </button>
+                                            <button 
+                                                onClick={() => handleDeleteMessage(msg.id)} 
+                                                className="p-1.5 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] rounded-full shadow-sm"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                            </li>
-                        ))}
-                    </ul>
+                            </div>
+                        );
+                    })
                 )}
             </div>
-            
-            {/* Spacer to push editor up if needed */}
-            <div className="h-2"></div>
-        </div>
 
-        {/* Message Input Area - Fixed at bottom relative to content flow */}
-        <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-tertiary)] -mx-3 -mb-3 sm:-mx-5 sm:-mb-5 md:-mx-6 md:-mb-6 p-3 sm:p-5 md:p-6 rounded-b-xl sticky bottom-0 z-10">
-            <div className="flex flex-col gap-3 bg-[var(--theme-bg-primary)] p-3 rounded-xl border border-[var(--theme-border-focus)] shadow-md">
-                <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
-                        {editingMessage ? t('scenarios_editor_edit_title') : t('scenarios_editor_add_title')}
-                    </span>
-                    <div className="flex bg-[var(--theme-bg-secondary)] rounded-lg p-0.5">
-                        <button
-                            type="button"
-                            onClick={() => setNewMessageRole('user')}
-                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${newMessageRole === 'user' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
-                        >
-                            {t('scenarios_role_user', 'User')}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setNewMessageRole('model')}
-                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${newMessageRole === 'model' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
-                        >
-                            {t('scenarios_role_model', 'Model')}
-                        </button>
-                    </div>
-                </div>
-                <div className="relative">
-                    <textarea 
-                        id="new-message-content" 
-                        value={newMessageContent} 
-                        onChange={(e) => setNewMessageContent(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        rows={3} 
-                        className="w-full p-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] text-sm resize-none custom-scrollbar" 
-                        placeholder={t('scenarios_editor_content_placeholder')} 
-                    />
-                    <div className="absolute bottom-2 right-2 flex gap-2">
-                        {editingMessage && (
-                            <button 
-                                onClick={() => { setEditingMessage(null); setNewMessageContent(''); setNewMessageRole('user'); }} 
-                                className="p-1.5 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors text-xs"
-                                title={t('scenarios_editor_cancel_button')}
+            {/* Message Input Area */}
+            <div className="mt-4 pt-4 border-t border-[var(--theme-border-primary)] flex-shrink-0">
+                <div className="bg-[var(--theme-bg-primary)] rounded-2xl border border-[var(--theme-border-secondary)] focus-within:border-[var(--theme-border-focus)] focus-within:ring-1 focus-within:ring-[var(--theme-border-focus)] transition-all shadow-sm p-1.5 flex flex-col gap-1.5">
+                    <div className="flex items-center gap-2 px-2 pt-1">
+                        <div className="flex bg-[var(--theme-bg-tertiary)]/50 p-0.5 rounded-lg">
+                            <button
+                                onClick={() => setNewMessageRole('user')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${newMessageRole === 'user' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
                             >
-                                <X size={16} strokeWidth={1.5} />
+                                <User size={12} /> User
                             </button>
-                        )}
-                        <button 
-                            onClick={handleAddOrUpdateMessage} 
+                            <button
+                                onClick={() => setNewMessageRole('model')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1.5 ${newMessageRole === 'model' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
+                            >
+                                <Bot size={12} /> Model
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex items-end gap-2 px-1 pb-1">
+                        <textarea
+                            ref={inputRef}
+                            value={newMessageContent}
+                            onChange={(e) => setNewMessageContent(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder={t('scenarios_editor_content_placeholder')}
+                            className="w-full bg-transparent border-none outline-none text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-none max-h-32 p-2"
+                            rows={1}
+                            style={{ minHeight: '40px' }}
+                        />
+                        <button
+                            onClick={handleAddMessage}
                             disabled={!newMessageContent.trim()}
-                            className="p-1.5 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-md transition-colors disabled:opacity-50 shadow-sm"
-                            title={editingMessage ? t('scenarios_editor_update_button') : t('scenarios_editor_add_button')}
+                            className="p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md active:scale-95 mb-0.5 mr-0.5"
                         >
-                            {editingMessage ? <Save size={16} strokeWidth={1.5} /> : <CornerDownLeft size={16} strokeWidth={1.5} />}
+                            <ArrowUp size={18} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div className="flex justify-end gap-3 mt-4">
-                 <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] border border-transparent rounded-lg transition-colors">
-                    {t('cancel', 'Cancel')}
-                 </button>
-                 <button onClick={() => onSave(scenario)} disabled={!scenario.title.trim()} className="px-6 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                    <Save size={16} strokeWidth={1.5} /> {t('scenarios_save_button', 'Save Scenario')}
-                 </button>
+                <div className="flex justify-end gap-3 mt-4">
+                    <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-xl transition-colors">
+                        {t('cancel', 'Cancel')}
+                    </button>
+                    <button onClick={() => onSave(scenario)} disabled={!scenario.title.trim()} className="px-6 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                        <Save size={16} /> {t('scenarios_save_button', 'Save Scenario')}
+                    </button>
+                </div>
             </div>
         </div>
-        </>
     );
 };
