@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Check, ClipboardCopy } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
+import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 
 interface MessageCopyButtonProps {
     textToCopy?: string;
@@ -10,14 +12,11 @@ interface MessageCopyButtonProps {
 }
 
 export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy, className, t, iconSize = 14 }) => {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = async () => {
-    if (!textToCopy || copied) return;
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) { console.error('Failed to copy', err); }
+  const { isCopied, copyToClipboard } = useCopyToClipboard();
+  
+  const handleCopy = () => {
+    if (textToCopy) copyToClipboard(textToCopy);
   };
-  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={copied ? t('copied_button_title') : t('copy_button_title')} title={copied ? t('copied_button_title') : t('copy_button_title')}>{copied ? <Check size={iconSize} className="text-[var(--theme-text-success)]" strokeWidth={1.5} /> : <ClipboardCopy size={iconSize} strokeWidth={1.5} />}</button>;
+
+  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={isCopied ? t('copied_button_title') : t('copy_button_title')} title={isCopied ? t('copied_button_title') : t('copy_button_title')}>{isCopied ? <Check size={iconSize} className="text-[var(--theme-text-success)]" strokeWidth={1.5} /> : <ClipboardCopy size={iconSize} strokeWidth={1.5} />}</button>;
 };

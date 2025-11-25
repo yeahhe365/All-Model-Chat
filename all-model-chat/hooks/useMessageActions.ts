@@ -1,3 +1,4 @@
+
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession } from '../types';
 import { logService } from '../utils/appUtils';
@@ -60,7 +61,7 @@ export const useMessageActions = ({
                         return {
                             ...s,
                             messages: s.messages.map(msg =>
-                                msg.id === generationId ? { ...msg, isLoading: false, generationEndTime: new Date() } : msg
+                                msg.id === generationId ? { ...msg, isLoading: false, generationEndTime: new Date(), stoppedByUser: true } : msg
                             )
                         };
                     }));

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Info, Sliders } from 'lucide-react';
-import { Tooltip } from './shared/Tooltip';
+import { Tooltip } from '../shared/Tooltip';
 
 interface GenerationSettingsProps {
   temperature: number;

@@ -190,9 +190,28 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
     const storedSettings = await dbService.getAppSettings();
     const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
     const ai = getApiClient(apiKey, apiProxyUrl);
+    
     const prompt = language === 'zh'
-        ? `基于以下最近的对话交流，为用户生成三条可以发送给语言模型的建议回复。这些回复应该是简短、相关且多样化的，旨在继续对话。\n\n用户: "${userContent}"\n助手: "${modelContent}"`
-        : `Based on the last conversation turn below, generate three short, relevant, and diverse suggested replies or follow-up questions that a user might click to continue the conversation.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"`;
+        ? `作为对话专家，请基于以下上下文，预测用户接下来最可能发送的 3 条简短回复。
+
+规则：
+1. 如果助手最后在提问，建议必须是针对该问题的回答。
+2. 建议应简练（20字以内），涵盖不同角度（如：追问细节、请求示例、或提出质疑）。
+3. 语气自然，符合人类对话习惯。
+
+对话上下文：
+用户: "${userContent}"
+助手: "${modelContent}"`
+        : `As a conversation expert, predict the 3 most likely short follow-up messages the USER would send based on the context below.
+
+Rules:
+1. If the Assistant ended with a question, suggestions MUST answer it.
+2. Suggestions should be concise (under 15 words) and diverse (e.g., one drill-down question, one request for examples, one pivot).
+3. Natural, conversational tone.
+
+Context:
+USER: "${userContent}"
+ASSISTANT: "${modelContent}"`;
 
     try {
         const response = await ai.models.generateContent({

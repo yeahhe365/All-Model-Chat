@@ -1,8 +1,8 @@
-
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Check } from 'lucide-react';
-import { useWindowContext } from '../../../contexts/WindowContext';
+import { useWindowContext } from '../../contexts/WindowContext';
+import { useClickOutside } from '../../hooks/useClickOutside';
 
 export const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
   <div className="tooltip-container ml-1.5">
@@ -26,6 +26,13 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
     
     const { document: targetDocument, window: targetWindow } = useWindowContext();
 
+    useClickOutside(dropdownRef, (e) => {
+        if (buttonRef.current && buttonRef.current.contains(e.target as Node)) {
+            return;
+        }
+        setIsOpen(false);
+    }, isOpen);
+
     const options = useMemo(() => {
         return React.Children.toArray(children).map((child) => {
             if (React.isValidElement(child) && child.type === 'option') {
@@ -44,8 +51,6 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
     const updatePosition = useCallback(() => {
         if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
-            // For fixed positioning, we use viewport coordinates directly (rect.bottom/left)
-            // We do NOT add window.scrollY/X because 'fixed' is relative to the window, not the document.
             setPosition({
                 top: rect.bottom + 4,
                 left: rect.left,
@@ -54,34 +59,20 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
         }
     }, []);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                buttonRef.current && !buttonRef.current.contains(event.target as Node) &&
-                dropdownRef.current && !dropdownRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-        
+    React.useEffect(() => {
         const handleScroll = (event: Event) => {
-            // If scrolling happens inside the dropdown menu itself, don't recalculate/close
             if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
                 return;
             }
-            // If the page or a parent container (like the modal) scrolls, update position to stay attached
             updatePosition();
         };
 
         if (isOpen) {
-            targetDocument.addEventListener('mousedown', handleClickOutside);
             targetWindow.addEventListener('resize', updatePosition);
-            // Use capture=true to detect scrolling of any parent container (like the modal content div)
             targetDocument.addEventListener('scroll', handleScroll, true); 
         }
 
         return () => {
-            targetDocument.removeEventListener('mousedown', handleClickOutside);
             targetWindow.removeEventListener('resize', updatePosition);
             targetDocument.removeEventListener('scroll', handleScroll, true);
         };

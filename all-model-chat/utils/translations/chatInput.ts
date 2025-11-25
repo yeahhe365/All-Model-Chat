@@ -1,4 +1,5 @@
 
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -38,6 +39,8 @@ export const chatInputTranslations = {
     tools_button: { en: 'Tools', zh: '工具' },
     web_search_label: { en: 'Web Search', zh: '联网' },
     web_search_short: { en: 'Search', zh: '联网' },
+    deep_search_label: { en: 'Deep Search', zh: '深度搜索' },
+    deep_search_short: { en: 'Deep', zh: '深度' },
     code_execution_label: { en: 'Code Execution', zh: '代码执行' },
     code_execution_short: { en: 'Code', zh: '代码' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
@@ -61,6 +64,7 @@ export const chatInputTranslations = {
     help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
     help_cmd_stop: { en: 'Stop the current generation.', zh: '停止当前生成。' },
     help_cmd_search: { en: 'Toggle web search', zh: '切换联网' },
+    help_cmd_deep: { en: 'Toggle Deep Search', zh: '切换深度搜索' },
     help_cmd_code: { en: 'Toggle code execution', zh: '切换代码执行' },
     help_cmd_url: { en: 'Toggle URL context', zh: '切换 URL 上下文' },
     help_cmd_file: { en: 'Attach a file', zh: '附加文件' },
@@ -69,6 +73,7 @@ export const chatInputTranslations = {
     help_cmd_settings: { en: 'Open settings', zh: '打开设置' },
     help_cmd_canvas: { en: 'Toggle Canvas prompt', zh: '切换 Canvas 提示' },
     help_cmd_pip: { en: 'Toggle Picture-in-Picture mode', zh: '切换画中画模式' },
+    help_cmd_setdefault: { en: 'Set current model as default', zh: '将当前模型设为默认' },
     
     // Help Modal
     helpModal_title: { en: 'Command Help', zh: '命令帮助' },

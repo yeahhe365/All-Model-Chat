@@ -60,6 +60,19 @@ export const IconAbout: React.FC<IconProps> = ({ size = defaultSize, strokeWidth
   </svg>
 );
 
+// Shortcuts Icon (Keyboard)
+export const IconKeyboard: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect width="20" height="12" x="2" y="6" rx="2" />
+    <path d="M6 10h2" />
+    <path d="M10 10h2" />
+    <path d="M14 10h2" />
+    <path d="M12 14h.01" />
+    <path d="M16 14h.01" />
+    <path d="M8 14h.01" />
+  </svg>
+);
+
 // New Chat Icon
 export const IconNewChat: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>

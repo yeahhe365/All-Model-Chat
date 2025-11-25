@@ -1,7 +1,10 @@
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { Check, Copy, Maximize2, ExternalLink, ChevronDown, ChevronUp, Download, Expand } from 'lucide-react';
+import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
+import { triggerDownload } from '../../utils/exportUtils';
+import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../constants/appConstants';
 
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
@@ -36,6 +39,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     
     const hasUserInteracted = useRef(false);
     const [isExpanded, setIsExpanded] = useState(expandCodeBlocksByDefault);
+    
+    const { isCopied, copyToClipboard } = useCopyToClipboard();
 
     // Effect to sync with global prop if user has not interacted
     useEffect(() => {
@@ -44,8 +49,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         }
     }, [expandCodeBlocksByDefault]);
     
-    const [copied, setCopied] = useState(false);
-
     useLayoutEffect(() => {
         const preElement = preRef.current;
         if (!preElement) return;
@@ -62,8 +65,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         }
 
         // Apply style directly to prevent flicker.
-        const shouldBeCollapsed = isCurrentlyOverflowing && !isExpanded;
-        
         // We control max-height via style prop in render now for smoother transitions
     }, [children, isExpanded, isOverflowing]);
 
@@ -72,19 +73,15 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         setIsExpanded(prev => !prev);
     };
     
-    const handleCopy = async () => {
-        if (!codeText.current || copied) return;
-        try {
-            await navigator.clipboard.writeText(codeText.current);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy', err);
+    const handleCopy = () => {
+        if (codeText.current && !isCopied) {
+            copyToClipboard(codeText.current);
         }
     };
 
+    // Find the code element. It might be an InlineCode component instance now.
     const codeElement = React.Children.toArray(children).find(
-        (child): child is React.ReactElement => React.isValidElement(child) && child.type === 'code'
+        (child): child is React.ReactElement => React.isValidElement(child)
     );
     
     const langMatch = className?.match(/language-(\S+)/);
@@ -101,8 +98,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (likelyHTML ? 'text/html' : 'text/plain');
     const finalLanguage = language === 'txt' && likelyHTML ? 'html' : (language === 'xml' && likelyHTML ? 'html' : language);
 
-    const buttonClass = "p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all duration-200 focus:outline-none opacity-70 hover:opacity-100";
-
     return (
         <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] overflow-hidden shadow-sm">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--theme-border-secondary)]/30 bg-[var(--theme-bg-code-block)]/50 backdrop-blur-sm">
@@ -114,15 +109,15 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 <div className="flex items-center gap-0.5">
                     {likelyHTML && (
                         <>
-                            <button className={buttonClass} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
+                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
                                 <Expand size={14} strokeWidth={2} /> 
                             </button>
-                            <button className={buttonClass} title={t('code_fullscreen_modal')} onClick={() => onOpenHtmlPreview(codeText.current)}> 
+                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_modal')} onClick={() => onOpenHtmlPreview(codeText.current)}> 
                                 <Maximize2 size={14} strokeWidth={2} /> 
                             </button>
                         </>
                     )}
-                    <button className={buttonClass} title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
+                    <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
                         let filename = `snippet.${finalLanguage}`;
                         if (downloadMimeType === 'text/html') {
                             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
@@ -134,21 +129,15 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                         }
                         const blob = new Blob([codeText.current], { type: downloadMimeType });
                         const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = filename;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
+                        triggerDownload(url, filename);
                     }}> 
                         <Download size={14} strokeWidth={2} /> 
                     </button>
-                     <button className={buttonClass} title={copied ? t('copied_button_title') : t('copy_button_title')} onClick={handleCopy}>
-                        {copied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
+                     <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={isCopied ? t('copied_button_title') : t('copy_button_title')} onClick={handleCopy}>
+                        {isCopied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                     </button>
                     {isOverflowing && (
-                        <button onClick={handleToggleExpand} className={buttonClass} aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
+                        <button onClick={handleToggleExpand} className={MESSAGE_BLOCK_BUTTON_CLASS} aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
                             {isExpanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
                         </button>
                     )}
@@ -166,7 +155,12 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 >
                     {codeElement ? (
                         React.cloneElement(codeElement, {
-                            className: `${codeElement.props.className || ''} !p-4 !block font-mono text-[13px] sm:text-sm leading-relaxed`,
+                            // Add !cursor-text to override the pointer cursor from InlineCode
+                            className: `${codeElement.props.className || ''} !p-4 !block font-mono text-[13px] sm:text-sm leading-relaxed !cursor-text`,
+                            // Disable the click-to-copy behavior for code blocks
+                            onClick: undefined,
+                            // Remove the "Click to copy" tooltip
+                            title: undefined,
                         })
                     ) : (
                         children

@@ -1,4 +1,14 @@
 
+
+
+
+
+
+
+
+
+
+
 /* Animations */
 :root {
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -55,6 +65,46 @@
 @keyframes loading-dots-pulse { 
   0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 
   40% { transform: scale(1.0); opacity: 1; } 
+}
+
+/* Google Spinner Animation */
+.google-spinner {
+  animation: google-rotator 1.4s linear infinite;
+}
+
+.google-path-anim {
+  stroke-dasharray: 187;
+  stroke-dashoffset: 0;
+  transform-origin: center;
+  animation: google-dash 1.4s ease-in-out infinite;
+}
+
+.google-color-ring {
+  stroke-width: 10;
+  fill: none;
+  stroke-dasharray: 47.1 141.4;
+}
+
+.google-c-red { stroke: #EA4335; stroke-dashoffset: 0; }
+.google-c-blue { stroke: #4285F4; stroke-dashoffset: -47.1; }
+.google-c-green { stroke: #34A853; stroke-dashoffset: -94.2; }
+.google-c-yellow { stroke: #FBBC05; stroke-dashoffset: -141.3; }
+
+@keyframes google-rotator {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(270deg); }
+}
+
+@keyframes google-dash {
+  0% { stroke-dashoffset: 187; }
+  50% {
+    stroke-dashoffset: 46.75;
+    transform: rotate(135deg);
+  }
+  100% {
+    stroke-dashoffset: 187;
+    transform: rotate(450deg);
+  }
 }
 
 /* Utility Classes */
@@ -159,6 +209,100 @@
 
 .markdown-body pre {
   background-color: var(--theme-bg-code-block) !important;
+}
+
+/* Inline Code Styling - Emphasis */
+.markdown-body code:not(pre code) {
+  color: var(--theme-text-link) !important;
+  background-color: var(--theme-bg-info) !important;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.2em 0.4em;
+  border: 1px solid var(--theme-bg-info);
+  font-size: 0.9em;
+  /* Cursor handled by React component (InlineCode) via utility class */
+}
+
+/* Table Styles - Clean Transparent Style with NO Black Backgrounds */
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0; /* Handled by TableBlock wrapper */
+  background-color: transparent !important;
+}
+
+.markdown-body thead {
+  background-color: transparent !important;
+}
+
+/* Explicitly target thead tr to remove any black background on the first row */
+.markdown-body thead tr {
+  background-color: transparent !important;
+}
+
+.markdown-body thead th {
+  background-color: transparent !important; /* Removed solid background */
+  color: var(--theme-text-primary) !important; /* Ensure header text is visible */
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: 1px solid var(--theme-border-secondary) !important;
+  border-bottom: 2px solid var(--theme-border-secondary) !important; /* Distinct separation */
+  white-space: nowrap;
+}
+
+.markdown-body tbody {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody td {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--theme-border-secondary) !important;
+  color: var(--theme-text-secondary) !important;
+  vertical-align: middle;
+  background-color: transparent !important;
+}
+
+/* Removed zebra striping to avoid "black effect" on dark themes */
+.markdown-body tbody tr {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody tr:nth-child(2n) {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody tr:nth-child(odd) {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody tr:hover {
+  background-color: var(--theme-bg-tertiary) !important;
+}
+
+/* Highlight the last row typically used for Totals */
+.markdown-body tbody tr:last-child td {
+  font-weight: 600;
+  color: var(--theme-text-primary) !important;
+}
+
+/* Citation Styles */
+.citation-ref {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: bold;
+  color: var(--theme-text-link) !important;
+  text-decoration: none !important;
+  vertical-align: super;
+  line-height: 1;
+  margin: 0 1px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.citation-ref:hover {
+  color: var(--theme-text-accent) !important;
+  text-decoration: underline !important;
 }
 
 /* Global Layout Reset for Full Height */

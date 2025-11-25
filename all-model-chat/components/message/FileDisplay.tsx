@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
 import { 
@@ -7,7 +9,8 @@ import {
     SUPPORTED_PDF_MIME_TYPES,
     SUPPORTED_VIDEO_MIME_TYPES, 
 } from '../../constants/fileConstants';
-import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, ClipboardCopy, Download, Youtube } from 'lucide-react'; 
+import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, Copy, Download, Youtube } from 'lucide-react'; 
+import { triggerDownload } from '../../utils/exportUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -30,7 +33,6 @@ const formatFileSize = (sizeInBytes: number): string => {
 
 export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList, isGridView }) => {
   const [idCopied, setIdCopied] = useState(false);
-  const iconSize = 20;
 
   const isClickableImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error && onImageClick;
 
@@ -49,12 +51,9 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
     event.stopPropagation();
     if (!file.dataUrl) return;
     
-    const link = document.createElement('a');
-    link.href = file.dataUrl;
-    link.download = file.name || 'generated-image.jpeg';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = file.name || 'generated-image.jpeg';
+    // Do NOT revoke the blob as it is used for display
+    triggerDownload(file.dataUrl, filename, false);
   };
 
   // Render Image Content
@@ -85,7 +84,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
                             title={idCopied ? "ID Copied!" : "Copy File ID"}
                             className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${idCopied ? 'text-green-400' : 'text-white'}`}
                         >
-                            {idCopied ? <Check size={14} strokeWidth={2} /> : <ClipboardCopy size={14} strokeWidth={2} />}
+                            {idCopied ? <Check size={14} strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                         </button>
                     )}
                 </div>
@@ -97,26 +96,38 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
   // Render File Card
   let Icon = FileText;
   let iconColorClass = "text-[var(--theme-text-tertiary)]";
+  let iconBgClass = "bg-[var(--theme-bg-tertiary)]";
   
   if (SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) {
       Icon = FileAudio;
+      iconColorClass = "text-purple-500 dark:text-purple-400";
+      iconBgClass = "bg-purple-500/10 dark:bg-purple-400/10";
   } else if (file.type === 'video/youtube-link') {
       Icon = Youtube;
-      iconColorClass = "text-red-500";
+      iconColorClass = "text-red-600 dark:text-red-500";
+      iconBgClass = "bg-red-600/10 dark:bg-red-500/10";
   } else if (SUPPORTED_VIDEO_MIME_TYPES.includes(file.type)) {
       Icon = FileVideo;
-      iconColorClass = "text-purple-500";
+      iconColorClass = "text-pink-500 dark:text-pink-400";
+      iconBgClass = "bg-pink-500/10 dark:bg-pink-400/10";
   } else if (SUPPORTED_PDF_MIME_TYPES.includes(file.type)) {
       Icon = FileText;
-      iconColorClass = "text-red-500";
+      iconColorClass = "text-orange-500 dark:text-orange-400";
+      iconBgClass = "bg-orange-500/10 dark:bg-orange-400/10";
   } else if (file.error) {
       Icon = AlertCircle;
       iconColorClass = "text-[var(--theme-text-danger)]";
+      iconBgClass = "bg-[var(--theme-bg-danger)]/10";
+  } else {
+      // Text / Code / Other
+      Icon = FileCode2; // Text/Code fallback
+      iconColorClass = "text-emerald-500 dark:text-emerald-400";
+      iconBgClass = "bg-emerald-500/10 dark:bg-emerald-400/10";
   }
 
   return (
     <div className={`flex items-center gap-3 p-2.5 rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all shadow-sm hover:shadow max-w-xs sm:max-w-sm relative group ${file.error ? 'border-[var(--theme-bg-danger)]/50' : ''}`}>
-        <div className="w-10 h-10 rounded-lg bg-[var(--theme-bg-tertiary)] flex items-center justify-center flex-shrink-0">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
             <Icon size={20} className={iconColorClass} strokeWidth={1.5} />
         </div>
         
@@ -142,7 +153,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
                 title={idCopied ? "Copied!" : "Copy File ID"}
                 className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}
             >
-                {idCopied ? <Check size={16} strokeWidth={2} /> : <ClipboardCopy size={16} strokeWidth={2} />}
+                {idCopied ? <Check size={16} strokeWidth={2} /> : <Copy size={16} strokeWidth={2} />}
             </button>
         )}
     </div>

@@ -1,10 +1,125 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Paperclip } from 'lucide-react';
-import { Header } from '../Header';
-import { MessageList } from '../MessageList';
-import { ChatInput } from '../ChatInput';
-import { ChatAreaProps } from '../../types';
+import { Header } from '../header/Header';
+import { MessageList } from '../chat/MessageList';
+import { ChatInput } from '../chat/ChatInput';
 import { useResponsiveValue } from '../../hooks/useDevice';
+import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption } from '../../types';
+import { ThemeColors } from '../../constants/themeConstants';
+import { translations } from '../../utils/appUtils';
+
+export interface ChatAreaProps {
+  activeSessionId: string | null;
+  currentChatSettings: ChatSettings;
+  setAppFileError: (error: string | null) => void;
+  // Drag & Drop
+  isAppDraggingOver: boolean;
+  handleAppDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleAppDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleAppDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleAppDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+
+  // Header Props
+  onNewChat: () => void;
+  onOpenSettingsModal: () => void;
+  onOpenScenariosModal: () => void;
+  onToggleHistorySidebar: () => void;
+  isLoading: boolean;
+  currentModelName: string;
+  availableModels: ModelOption[];
+  selectedModelId: string;
+  onSelectModel: (modelId: string) => void;
+  isModelsLoading: boolean;
+  isSwitchingModel: boolean;
+  isHistorySidebarOpen: boolean;
+  onLoadCanvasPrompt: () => void;
+  isCanvasPromptActive: boolean;
+  isKeyLocked: boolean;
+  defaultModelId: string;
+  onSetDefaultModel: (modelId: string) => void;
+  themeId: string;
+
+  // Models Error
+  modelsLoadingError: string | null;
+
+  // MessageList Props
+  messages: ChatMessage[];
+  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  onScrollContainerScroll: () => void;
+  onEditMessage: (messageId: string) => void;
+  onDeleteMessage: (messageId: string) => void;
+  onRetryMessage: (messageId: string) => void;
+  showThoughts: boolean;
+  themeColors: ThemeColors;
+  baseFontSize: number;
+  expandCodeBlocksByDefault: boolean;
+  isMermaidRenderingEnabled: boolean;
+  isGraphvizRenderingEnabled: boolean;
+  onSuggestionClick: (suggestion: string) => void;
+  onOrganizeInfoClick: (suggestion: string) => void;
+  onFollowUpSuggestionClick: (suggestion: string) => void;
+  onTextToSpeech: (messageId: string, text: string) => void;
+  ttsMessageId: string | null;
+  language: 'en' | 'zh';
+  scrollNavVisibility: { up: boolean; down: boolean };
+  onScrollToPrevTurn: () => void;
+  onScrollToNextTurn: () => void;
+  
+  // Edit Content
+  onEditMessageContent: (message: ChatMessage) => void;
+
+  // ChatInput Props
+  appSettings: AppSettings;
+  commandedInput: { text: string; id: number } | null;
+  setCommandedInput: (command: { text: string; id: number } | null) => void;
+  onMessageSent: () => void;
+  selectedFiles: UploadedFile[];
+  setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
+  onSendMessage: (text: string) => void;
+  isEditing: boolean;
+  onStopGenerating: () => void;
+  onCancelEdit: () => void;
+  onProcessFiles: (files: FileList | File[]) => Promise<void>;
+  onAddFileById: (fileId: string) => Promise<void>;
+  onCancelUpload: (fileId: string) => void;
+  onTranscribeAudio: (file: File) => Promise<string | null>;
+  isProcessingFile: boolean;
+  fileError: string | null;
+  isImagenModel?: boolean;
+  isImageEditModel?: boolean;
+  aspectRatio?: string;
+  setAspectRatio?: (ratio: string) => void;
+  imageSize?: string;
+  setImageSize?: (size: string) => void;
+  isGoogleSearchEnabled: boolean;
+  onToggleGoogleSearch: () => void;
+  isCodeExecutionEnabled: boolean;
+  onToggleCodeExecution: () => void;
+  isUrlContextEnabled: boolean;
+  onToggleUrlContext: () => void;
+  isDeepSearchEnabled: boolean;
+  onToggleDeepSearch: () => void;
+  onClearChat: () => void;
+  onOpenSettings: () => void;
+  onToggleCanvasPrompt: () => void;
+  onTogglePinCurrentSession: () => void;
+  onRetryLastTurn: () => void;
+  onEditLastUserMessage: () => void;
+  onOpenLogViewer: () => void;
+  onClearAllHistory: () => void;
+
+  // PiP Props
+  isPipSupported: boolean;
+  isPipActive: boolean;
+  onTogglePip: () => void;
+
+  // Image Generation
+  generateQuadImages: boolean;
+  onToggleQuadImages: () => void;
+
+  t: (key: keyof typeof translations, fallback?: string) => string;
+}
 
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
@@ -18,15 +133,18 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
-    onScrollToPrevTurn, onScrollToNextTurn, appSettings, commandedInput, setCommandedInput, onMessageSent,
+    onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent,
+    appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
-    isProcessingFile, fileError, isImageEditModel, aspectRatio, setAspectRatio,
+    isProcessingFile, fileError, isImageEditModel, aspectRatio, setAspectRatio, imageSize, setImageSize,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
-    isUrlContextEnabled, onToggleUrlContext, onClearChat, onOpenSettings, onToggleCanvasPrompt,
+    isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch,
+    onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
     onOpenLogViewer, onClearAllHistory,
     isPipSupported, isPipActive, onTogglePip,
+    generateQuadImages, onToggleQuadImages,
     t
   } = props;
 
@@ -95,7 +213,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         themeId={themeId}
       />
       {modelsLoadingError && (
-        <div className="mx-2 my-1 p-2 text-sm text-center text-[var(--theme-text-danger)] bg-[var(--theme-bg-danger)] bg-opacity-20 border border-[var(--theme-bg-danger)] rounded-md flex-shrink-0">{modelsLoadingError}</div>
+        <div className="mx-2 my-1 p-2 text-sm text-center text-[var(--theme-text-danger)] bg-[var(--theme-bg-error-message)] border border-[var(--theme-bg-danger)] rounded-md flex-shrink-0">{modelsLoadingError}</div>
       )}
       <MessageList
         messages={messages}
@@ -104,6 +222,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onEditMessage={onEditMessage}
         onDeleteMessage={onDeleteMessage}
         onRetryMessage={onRetryMessage}
+        onEditMessageContent={onEditMessageContent}
         showThoughts={showThoughts}
         themeColors={themeColors}
         themeId={themeId}
@@ -150,6 +269,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             isImageEditModel={isImageEditModel}
             aspectRatio={aspectRatio}
             setAspectRatio={setAspectRatio}
+            imageSize={imageSize}
+            setImageSize={setImageSize}
             t={t}
             isGoogleSearchEnabled={isGoogleSearchEnabled}
             onToggleGoogleSearch={onToggleGoogleSearch}
@@ -157,6 +278,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onToggleCodeExecution={onToggleCodeExecution}
             isUrlContextEnabled={isUrlContextEnabled}
             onToggleUrlContext={onToggleUrlContext}
+            isDeepSearchEnabled={isDeepSearchEnabled}
+            onToggleDeepSearch={onToggleDeepSearch}
             onClearChat={onClearChat}
             onNewChat={onNewChat}
             onOpenSettings={onOpenSettings}
@@ -169,6 +292,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onTogglePip={onTogglePip}
             isPipActive={isPipActive}
             isHistorySidebarOpen={isHistorySidebarOpen}
+            onSetDefaultModel={onSetDefaultModel}
+            generateQuadImages={generateQuadImages}
+            onToggleQuadImages={onToggleQuadImages}
           />
         </div>
       </div>

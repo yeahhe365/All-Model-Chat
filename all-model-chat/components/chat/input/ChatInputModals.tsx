@@ -1,11 +1,29 @@
-
 import React from 'react';
 import { CameraCapture } from '../CameraCapture';
 import { AudioRecorder } from '../AudioRecorder';
 import { CreateTextFileEditor } from '../CreateTextFileEditor';
 import { HelpModal } from './HelpModal';
 import { translations } from '../../../utils/appUtils';
-import { ChatInputModalsProps } from '../../../types';
+import { CommandInfo } from '../../../types';
+
+export interface ChatInputModalsProps {
+  showCamera: boolean;
+  onPhotoCapture: (file: File) => void;
+  onCameraCancel: () => void;
+  showRecorder: boolean;
+  onAudioRecord: (file: File) => Promise<void>;
+  onRecorderCancel: () => void;
+  showCreateTextFileEditor: boolean;
+  onConfirmCreateTextFile: (content: string, filename: string) => Promise<void>;
+  onCreateTextFileCancel: () => void;
+  isHelpModalOpen: boolean;
+  onHelpModalClose: () => void;
+  allCommandsForHelp: CommandInfo[];
+  isProcessingFile: boolean;
+  isLoading: boolean;
+  t: (key: keyof typeof translations) => string;
+  isHistorySidebarOpen?: boolean;
+}
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   showCamera,

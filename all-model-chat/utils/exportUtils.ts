@@ -4,15 +4,16 @@
  * Triggers a file download in the browser.
  * @param href The URL or data URI of the file to download.
  * @param filename The desired name of the file.
+ * @param revokeBlob Whether to revoke the object URL after download (if it is a blob URL). Defaults to true.
  */
-export const triggerDownload = (href: string, filename: string): void => {
+export const triggerDownload = (href: string, filename: string, revokeBlob: boolean = true): void => {
     const link = document.createElement('a');
     link.href = href;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    if (href.startsWith('blob:')) {
+    if (revokeBlob && href.startsWith('blob:')) {
         URL.revokeObjectURL(href);
     }
 };

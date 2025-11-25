@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { X, ImageIcon, FileCode2, Loader2, Download, FileText } from 'lucide-react';
-import { Modal } from './shared/Modal';
-import { translations } from '../utils/appUtils';
-import { useResponsiveValue } from '../hooks/useDevice';
+import { Modal } from '../shared/Modal';
+import { translations } from '../../utils/appUtils';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 interface ExportChatModalProps {
   isOpen: boolean;

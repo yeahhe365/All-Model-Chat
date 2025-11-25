@@ -1,14 +1,14 @@
+
 import { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../types';
-import { getKeyForRequest, logService } from '../utils/appUtils';
+import { getKeyForRequest, logService, generateSessionTitle } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 interface AutoTitlingProps {
     appSettings: AppSettings;
-    activeChat: SavedChatSession | undefined;
-    isLoading: boolean;
+    savedSessions: SavedChatSession[];
     updateAndPersistSessions: SessionsUpdater;
     language: 'en' | 'zh';
     generatingTitleSessionIds: Set<string>;
@@ -17,8 +17,7 @@ interface AutoTitlingProps {
 
 export const useAutoTitling = ({
     appSettings,
-    activeChat,
-    isLoading,
+    savedSessions,
     updateAndPersistSessions,
     language,
     generatingTitleSessionIds,
@@ -66,6 +65,13 @@ export const useAutoTitling = ({
 
         } catch (error) {
             logService.error(`Failed to auto-generate title for session ${sessionId}`, { error });
+            // Fallback to local generation to prevent infinite retry loops on "New Chat"
+            const localTitle = generateSessionTitle(messages);
+            if (localTitle && localTitle !== 'New Chat') {
+                updateAndPersistSessions(prev =>
+                    prev.map(s => (s.id === sessionId ? { ...s, title: localTitle } : s))
+                );
+            }
         } finally {
             setGeneratingTitleSessionIds(prev => {
                 const next = new Set(prev);
@@ -76,19 +82,34 @@ export const useAutoTitling = ({
     }, [appSettings, updateAndPersistSessions, language, setGeneratingTitleSessionIds]);
 
     useEffect(() => {
-        if (
-            appSettings.isAutoTitleEnabled &&
-            activeChat &&
-            activeChat.messages.length === 2 &&
-            !isLoading &&
-            activeChat.title === 'New Chat' &&
-            !generatingTitleSessionIds.has(activeChat.id)
-        ) {
-            const [userMessage, modelMessage] = activeChat.messages;
-            if (userMessage.role === 'user' && modelMessage.role === 'model' && !modelMessage.isLoading) {
-                generateTitleForSession(activeChat);
-            }
-        }
-    }, [activeChat, isLoading, appSettings.isAutoTitleEnabled, generateTitleForSession, generatingTitleSessionIds]);
+        if (!appSettings.isAutoTitleEnabled) return;
+
+        const candidates = savedSessions.filter(session => {
+            // Only title "New Chat" sessions
+            if (session.title !== 'New Chat') return false;
+            
+            // Skip if already generating
+            if (generatingTitleSessionIds.has(session.id)) return false;
+            
+            // Need at least user prompt and model response
+            if (session.messages.length < 2) return false;
+            
+            const firstMsg = session.messages[0];
+            const secondMsg = session.messages[1];
+
+            // Basic structure check
+            if (firstMsg.role !== 'user' || secondMsg.role !== 'model') return false;
+
+            // Wait for the first model message to be complete
+            if (secondMsg.isLoading || secondMsg.stoppedByUser) return false;
+
+            return true;
+        });
+
+        candidates.forEach(session => {
+            generateTitleForSession(session);
+        });
+
+    }, [savedSessions, appSettings.isAutoTitleEnabled, generatingTitleSessionIds, generateTitleForSession]);
 
 };

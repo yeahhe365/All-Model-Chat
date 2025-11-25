@@ -1,4 +1,5 @@
-import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession } from '../types';
+
+import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession, ModelOption } from '../types';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { logService } from '../services/logService';
 
@@ -72,9 +73,6 @@ export const buildContentParts = async (
     const newFile = { ...file };
     let part: ContentPart | null = null;
     
-    // Explicitly remove potentially large fields from the object that will be stored in state.
-    delete newFile.base64Data;
-    
     if (file.isProcessing || file.error || file.uploadState !== 'active') {
       return { file: newFile, part };
     }
@@ -139,4 +137,32 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
       });
       
     return Promise.all(historyItemsPromises);
-  };
+};
+
+export const sortModels = (models: ModelOption[]): ModelOption[] => {
+    const getCategoryWeight = (id: string) => {
+        const lower = id.toLowerCase();
+        if (lower.includes('tts')) return 4;
+        if (lower.includes('imagen')) return 3;
+        if (lower.includes('image')) return 2;
+        return 1;
+    };
+
+    return [...models].sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        
+        if (a.isPinned && b.isPinned) {
+            const weightA = getCategoryWeight(a.id);
+            const weightB = getCategoryWeight(b.id);
+            if (weightA !== weightB) return weightA - weightB;
+
+            const isA3 = a.id.includes('gemini-3');
+            const isB3 = b.id.includes('gemini-3');
+            if (isA3 && !isB3) return -1;
+            if (!isA3 && isB3) return 1;
+        }
+
+        return a.name.localeCompare(b.name);
+    });
+};

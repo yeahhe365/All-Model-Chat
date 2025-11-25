@@ -148,7 +148,7 @@ export const PEARL_THEME_COLORS: ThemeColors = {
   textTertiary: '#666666', // Dark Gray (was #333333, lightened slightly for placeholder distinction)
   textAccent: '#FFFFFF',
   textDanger: '#DF3434', // Red (was #FFFFFF, which is invisible on light backgrounds)
-  textLink: '#000000', // Black (was #333333)
+  textLink: '#2563eb', // Blue 600 (was #000000)
   textCode: '#000000', // Black (was #40414f)
   bgUserMessageText: '#000000', 
   bgModelMessageText: '#000000', 

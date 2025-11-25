@@ -1,79 +1,15 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Loader2, ChevronDown, Zap, Sparkles } from 'lucide-react';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { Loader2, ChevronDown, Sparkles } from 'lucide-react';
 
 import { ChatMessage, UploadedFile, AppSettings } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { translations } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
-import { MarkdownRenderer } from '../shared/MarkdownRenderer';
-
-const PerformanceMetrics: React.FC<{ message: ChatMessage; t: (key: keyof typeof translations) => string }> = ({ message, t }) => {
-    const { 
-        promptTokens, 
-        completionTokens, 
-        totalTokens, 
-        generationStartTime, 
-        generationEndTime, 
-        isLoading 
-    } = message;
-
-    const [elapsedTime, setElapsedTime] = useState<number>(0);
-
-    useEffect(() => {
-        if (!generationStartTime) return;
-        const startTime = new Date(generationStartTime).getTime();
-        
-        if (isLoading) {
-            const updateTimer = () => setElapsedTime((Date.now() - startTime) / 1000);
-            updateTimer();
-            const intervalId = setInterval(updateTimer, 100);
-            return () => clearInterval(intervalId);
-        } else if (generationEndTime) {
-            const endTime = new Date(generationEndTime).getTime();
-            setElapsedTime((endTime - startTime) / 1000);
-        }
-    }, [generationStartTime, generationEndTime, isLoading]);
-
-    // Calculate tokens per second
-    const tokensPerSecond = (completionTokens && elapsedTime > 0) 
-        ? completionTokens / elapsedTime 
-        : 0;
-
-    const showTokens = typeof promptTokens === 'number' || typeof completionTokens === 'number' || typeof totalTokens === 'number';
-    const showTimer = isLoading || (generationStartTime && generationEndTime);
-
-    if (!showTokens && !showTimer) return null;
-
-    return (
-        <div className="mt-2 flex justify-end items-center flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-[var(--theme-text-tertiary)] font-mono select-none opacity-80">
-            {showTokens && (
-                <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title="Token Usage">
-                    <span className="flex items-center gap-2">
-                        <span>Input: {promptTokens ?? 0}</span>
-                        <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
-                        <span>Output: {completionTokens ?? 0}</span>
-                        <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
-                        <span className="font-semibold text-[var(--theme-text-secondary)]">Total: {totalTokens ?? ((promptTokens||0) + (completionTokens||0))}</span>
-                    </span>
-                </div>
-            )}
-
-            {tokensPerSecond > 0 && (
-                <div className="flex items-center gap-1 text-[var(--theme-text-secondary)]/90" title="Generation Speed">
-                    <Zap size={11} className="text-amber-400 fill-amber-400/20" strokeWidth={2} />
-                    <span>{tokensPerSecond.toFixed(1)} t/s</span>
-                </div>
-            )}
-
-            {showTimer && (
-                <div className="tabular-nums opacity-80" title="Generation Time">
-                    {elapsedTime.toFixed(1)}s
-                </div>
-            )}
-        </div>
-    );
-};
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { GoogleSpinner } from '../icons/GoogleSpinner';
+import { PerformanceMetrics } from './PerformanceMetrics';
+import { ThinkingTimer } from './ThinkingTimer';
 
 interface MessageContentProps {
     message: ChatMessage;
@@ -87,9 +23,10 @@ interface MessageContentProps {
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
+    themeId: string;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId }) => {
     const { content, files, isLoading, thoughts, generationStartTime, audioSrc, groundingMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -176,8 +113,8 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                             <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                                 {/* Icon Area */}
                                 {isLoading && (
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300 bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)]`}>
-                                        <Loader2 size={20} className="animate-spin" strokeWidth={2} />
+                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300 bg-[var(--theme-bg-accent)]/10`}>
+                                        <GoogleSpinner size={20} />
                                     </div>
                                 )}
 
@@ -185,21 +122,21 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                 <div className="flex flex-col min-w-0 justify-center">
                                     {isLoading ? (
                                         <>
-                                            <span className="text-sm font-bold uppercase tracking-wider text-[var(--theme-text-secondary)] truncate opacity-90">
+                                            <span className="text-base font-bold uppercase tracking-wider text-[var(--theme-text-secondary)] truncate opacity-90">
                                                 {lastThought && !lastThought.isFallback ? lastThought.title : t('thinking_text')}
                                             </span>
                                             <span className="text-xs text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
                                                 {message.thinkingTimeMs !== undefined ? (
+                                                    // If thinking time is locked in, display it
                                                     t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
                                                 ) : (
-                                                    message.generationEndTime && message.generationStartTime 
-                                                    ? t('thinking_took_time').replace('{seconds}', Math.round((new Date(message.generationEndTime).getTime() - new Date(message.generationStartTime).getTime()) / 1000).toString()) 
-                                                    : 'Processing...'
+                                                    // Otherwise show a live timer
+                                                    message.generationStartTime ? <ThinkingTimer startTime={message.generationStartTime} t={t} /> : 'Processing...'
                                                 )}
                                             </span>
                                         </>
                                     ) : (
-                                        <span className="text-sm text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
+                                        <span className="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
                                             {message.thinkingTimeMs !== undefined 
                                                 ? t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString()) 
                                                 : 'Thought Process'}
@@ -219,7 +156,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                             {/* Live preview of current step when loading and open */}
                             {isLoading && lastThought && message.thinkingTimeMs === undefined && (
                                 <div className="mb-2 p-2 rounded-md bg-[var(--theme-bg-input)]/50 border border-[var(--theme-border-secondary)]/50 flex items-start gap-2">
-                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-[var(--theme-text-link)] animate-pulse flex-shrink-0 shadow-[0_0_8px_currentColor]" />
+                                    <div className="mt-1 w-1.5 h-1.5 rounded-full bg-[var(--theme-text-success)] text-[var(--theme-text-success)] animate-pulse flex-shrink-0 shadow-[0_0_8px_currentColor]" />
                                     <div className="min-w-0">
                                         <span className="block text-xs font-semibold text-[var(--theme-text-primary)] mb-0.5">{lastThought.title}</span>
                                         <span className="block text-[11px] text-[var(--theme-text-tertiary)] line-clamp-2 leading-normal">{lastThought.content}</span>
@@ -238,6 +175,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                     isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                                     allowHtml={true}
                                     t={t}
+                                    themeId={themeId}
                                 />
                             </div>
                         </div>
@@ -247,13 +185,15 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
             {showPrimaryThinkingIndicator && (
                 <div className="flex items-center text-sm text-[var(--theme-bg-model-message-text)] py-1 px-1 opacity-80 animate-pulse">
-                    <Loader2 size={14} className="animate-spin mr-2.5 flex-shrink-0" strokeWidth={2} />
+                    <div className="mr-2.5 flex-shrink-0">
+                        <GoogleSpinner size={14} />
+                    </div>
                     <span className="font-medium">{t('thinking_text')}</span>
                 </div>
             )}
 
             {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} t={t} />
+              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} t={t} themeId={themeId} />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer
@@ -266,6 +206,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                         allowHtml={true}
                         t={t}
+                        themeId={themeId}
                     />
                 </div>
             )}

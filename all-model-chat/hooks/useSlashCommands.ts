@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Command } from '../components/chat/input/SlashCommandMenu';
 import { translations } from '../utils/appUtils';
@@ -6,6 +8,7 @@ import { ModelOption } from '../types';
 interface UseSlashCommandsProps {
   t: (key: keyof typeof translations) => string;
   onToggleGoogleSearch: () => void;
+  onToggleDeepSearch: () => void;
   onToggleCodeExecution: () => void;
   onToggleUrlContext: () => void;
   onClearChat: () => void;
@@ -24,15 +27,18 @@ interface UseSlashCommandsProps {
   onEditLastUserMessage: () => void;
   onTogglePip: () => void;
   setInputText: Dispatch<SetStateAction<string>>;
+  onSetDefaultModel: (modelId: string) => void;
+  currentModelId: string;
 }
 
 export const useSlashCommands = ({
   t,
-  onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext,
+  onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext,
   onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
   onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction,
   availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
-  textareaRef, onEditLastUserMessage, onTogglePip, setInputText
+  textareaRef, onEditLastUserMessage, onTogglePip, setInputText,
+  onSetDefaultModel, currentModelId
 }: UseSlashCommandsProps) => {
   
   const [slashCommandState, setSlashCommandState] = useState<{
@@ -64,7 +70,8 @@ export const useSlashCommands = ({
     { name: 'pin', description: t('help_cmd_pin'), icon: 'pin', action: onTogglePinCurrentSession },
     { name: 'retry', description: t('help_cmd_retry'), icon: 'retry', action: onRetryLastTurn },
     { name: 'stop', description: t('help_cmd_stop'), icon: 'stop', action: onStopGenerating },
-    { name: 'search', description: t('help_cmd_search'), icon: 'search', action: onToggleGoogleSearch },
+    { name: 'online', description: t('help_cmd_search'), icon: 'search', action: onToggleGoogleSearch },
+    { name: 'deep', description: t('help_cmd_deep'), icon: 'deep', action: onToggleDeepSearch },
     { name: 'code', description: t('help_cmd_code'), icon: 'code', action: onToggleCodeExecution },
     { name: 'url', description: t('help_cmd_url'), icon: 'url', action: onToggleUrlContext },
     { name: 'file', description: t('help_cmd_file'), icon: 'file', action: () => onAttachmentAction('upload') },
@@ -73,10 +80,11 @@ export const useSlashCommands = ({
     { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
     { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
     { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
-  ], [t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip]);
+    { name: 'default', description: t('help_cmd_setdefault'), icon: 'default', action: () => onSetDefaultModel(currentModelId) },
+  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetDefaultModel, currentModelId]);
   
   const allCommandsForHelp = useMemo(() => [
-    ...commands.map(c => ({ name: `/${c.name}`, description: c.description })),
+    ...commands.map(c => ({ name: `/${c.name}`, description: c.description, icon: c.icon })),
   ], [commands]);
 
   const handleCommandSelect = useCallback((command: Command) => {

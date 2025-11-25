@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SavedScenario } from '../types';
+import { SavedScenario } from '../../types';
 import { X, Plus, Trash2, Edit3, Search, Play, Save, MessageSquare, Shield, User } from 'lucide-react';
-import { translations } from '../utils/appUtils';
-import { Modal } from './shared/Modal';
+import { translations } from '../../utils/appUtils';
+import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
-import { useResponsiveValue } from '../hooks/useDevice';
+import { useResponsiveValue } from '../../hooks/useDevice';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PreloadedMessage, SavedScenario } from '../types';
+import { SavedScenario } from '../../types';
 import { User, Bot, Trash2, Edit3, ArrowUp, Save, Plus } from 'lucide-react';
-import { translations } from '../utils/appUtils';
+import { translations } from '../../utils/appUtils';
 
 interface ScenarioEditorProps {
     initialScenario: SavedScenario | null;
