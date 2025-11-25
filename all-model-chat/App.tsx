@@ -1,8 +1,9 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AppSettings, ChatGroup, SavedChatSession, ChatMessage } from './types';
+import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from './types';
 import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from './constants/appConstants';
+import { HistorySidebar } from './components/HistorySidebar';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
 import { useAppUI } from './hooks/useAppUI';
@@ -11,50 +12,101 @@ import { usePictureInPicture } from './hooks/usePictureInPicture';
 import { useDataManagement } from './hooks/useDataManagement';
 import { getTranslator, logService, applyThemeToDocument } from './utils/appUtils';
 import mermaid from 'mermaid';
+import { ChatArea } from './components/layout/ChatArea';
+import { AppModals } from './components/modals/AppModals';
+import { PictureInPicture2 } from 'lucide-react';
 import { WindowProvider } from './contexts/WindowContext';
-import { MainContent } from './components/layout/MainContent';
-import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
-import { EditMessageModal } from './components/modals/EditMessageModal';
+
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
-  const t = useMemo(() => getTranslator(language), [language]);
+  const t = getTranslator(language);
   
   const chatState = useChat(appSettings, setAppSettings, language);
   const {
-      messages, isLoading, loadingSessionIds, generatingTitleSessionIds,
-      currentChatSettings, commandedInput, setCommandedInput,
-      selectedFiles, setSelectedFiles, editingMessageId,
-      appFileError, setAppFileError, isAppProcessingFile,
-      savedSessions, savedGroups, activeSessionId,
-      apiModels, isModelsLoading, modelsLoadingError, isSwitchingModel,
-      scrollContainerRef, savedScenarios, isAppDraggingOver,
-      aspectRatio, setAspectRatio, ttsMessageId,
-      loadChatSession, startNewChat, handleClearCurrentChat,
-      handleSelectModelInHeader, handleProcessAndAddFiles, handleSendMessage,
-      handleStopGenerating, handleEditMessage, handleCancelEdit,
-      handleDeleteMessage, handleRetryMessage, handleRetryLastTurn,
-      handleEditLastUserMessage, handleDeleteChatHistorySession, handleRenameSession,
-      handleTogglePinSession, handleTogglePinCurrentSession, handleAddNewGroup,
-      handleDeleteGroup, handleRenameGroup, handleMoveSessionToGroup,
-      handleToggleGroupExpansion, clearCacheAndReload, clearAllHistory,
-      handleSaveAllScenarios, handleLoadPreloadedScenario,
-      onScrollContainerScroll: handleScroll, handleAppDragEnter,
-      handleAppDragOver, handleAppDragLeave, handleAppDrop,
-      handleCancelFileUpload, handleAddFileById, handleTextToSpeech,
-      handleTranscribeAudio, setCurrentChatSettings, scrollNavVisibility,
-      scrollToPrevTurn, scrollToNextTurn, toggleGoogleSearch,
-      toggleCodeExecution, toggleUrlContext, toggleDeepSearch,
-      updateAndPersistSessions, updateAndPersistGroups,
-      imageSize, setImageSize, handleUpdateMessageContent
+      messages,
+      isLoading,
+      loadingSessionIds,
+      generatingTitleSessionIds,
+      currentChatSettings,
+      commandedInput,
+      setCommandedInput,
+      selectedFiles,
+      setSelectedFiles,
+      editingMessageId,
+      appFileError,
+      setAppFileError,
+      isAppProcessingFile,
+      savedSessions,
+      savedGroups,
+      activeSessionId,
+      apiModels,
+      isModelsLoading,
+      modelsLoadingError,
+      isSwitchingModel,
+      scrollContainerRef,
+      savedScenarios,
+      isAppDraggingOver,
+      aspectRatio,
+      setAspectRatio,
+      ttsMessageId,
+      loadChatSession,
+      startNewChat,
+      handleClearCurrentChat,
+      handleSelectModelInHeader,
+      handleProcessAndAddFiles,
+      handleSendMessage,
+      handleStopGenerating,
+      handleEditMessage,
+      handleCancelEdit,
+      handleDeleteMessage,
+      handleRetryMessage,
+      handleRetryLastTurn,
+      handleEditLastUserMessage,
+      handleDeleteChatHistorySession,
+      handleRenameSession,
+      handleTogglePinSession,
+      handleTogglePinCurrentSession,
+      handleAddNewGroup,
+      handleDeleteGroup,
+      handleRenameGroup,
+      handleMoveSessionToGroup,
+      handleToggleGroupExpansion,
+      clearCacheAndReload,
+      clearAllHistory,
+      handleSaveAllScenarios,
+      handleLoadPreloadedScenario,
+      onScrollContainerScroll: handleScroll,
+      handleAppDragEnter,
+      handleAppDragOver,
+      handleAppDragLeave,
+      handleAppDrop,
+      handleCancelFileUpload,
+      handleAddFileById,
+      handleTextToSpeech,
+      handleTranscribeAudio,
+      setCurrentChatSettings,
+      scrollNavVisibility,
+      scrollToPrevTurn,
+      scrollToNextTurn,
+      toggleGoogleSearch,
+      toggleCodeExecution,
+      toggleUrlContext,
+      updateAndPersistSessions,
+      updateAndPersistGroups,
   } = chatState;
 
   const {
-    isSettingsModalOpen, setIsSettingsModalOpen,
-    isPreloadedMessagesModalOpen, setIsPreloadedMessagesModalOpen,
-    isHistorySidebarOpen, setIsHistorySidebarOpen,
-    isLogViewerOpen, setIsLogViewerOpen,
-    handleTouchStart, handleTouchEnd,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
+    isPreloadedMessagesModalOpen,
+    setIsPreloadedMessagesModalOpen,
+    isHistorySidebarOpen,
+    setIsHistorySidebarOpen,
+    isLogViewerOpen,
+    setIsLogViewerOpen,
+    handleTouchStart,
+    handleTouchEnd,
   } = useAppUI();
   
   const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture(setIsHistorySidebarOpen);
@@ -66,32 +118,52 @@ const App: React.FC = () => {
     }
   }, [pipWindow, currentTheme, appSettings]);
 
-  const { installPromptEvent, isStandalone, handleInstallPwa } = useAppEvents({
-    appSettings, startNewChat, handleClearCurrentChat,
-    currentChatSettings, handleSelectModelInHeader,
-    isSettingsModalOpen, isPreloadedMessagesModalOpen,
-    setIsLogViewerOpen, onTogglePip: togglePip, isPipSupported,
+  const {
+    installPromptEvent,
+    isStandalone,
+    handleInstallPwa,
+  } = useAppEvents({
+    appSettings,
+    startNewChat,
+    handleClearCurrentChat,
+    currentChatSettings,
+    handleSelectModelInHeader,
+    isSettingsModalOpen,
+    isPreloadedMessagesModalOpen,
+    setIsLogViewerOpen,
+    onTogglePip: togglePip,
+    isPipSupported,
   });
 
-  const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
-  const [exportStatus, setExportStatus] = React.useState<'idle' | 'exporting'>('idle');
-  
-  // Message Editing State
-  const [editingContentMessage, setEditingContentMessage] = useState<ChatMessage | null>(null);
-
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
   const activeChat = savedSessions.find(s => s.id === activeSessionId);
 
   const {
-    handleExportSettings, handleExportHistory, handleExportAllScenarios,
-    handleImportSettings, handleImportHistory, handleImportAllScenarios,
+    handleExportSettings,
+    handleExportHistory,
+    handleExportAllScenarios,
+    handleImportSettings,
+    handleImportHistory,
+    handleImportAllScenarios,
     exportChatLogic,
   } = useDataManagement({
-    appSettings, setAppSettings, savedSessions, updateAndPersistSessions,
-    savedGroups, updateAndPersistGroups, savedScenarios, handleSaveAllScenarios,
-    t, activeChat, scrollContainerRef, currentTheme, language,
+    appSettings,
+    setAppSettings,
+    savedSessions,
+    updateAndPersistSessions,
+    savedGroups,
+    updateAndPersistGroups,
+    savedScenarios,
+    handleSaveAllScenarios,
+    t,
+    activeChat,
+    scrollContainerRef,
+    currentTheme,
+    language,
   });
 
-  const handleExportChat = React.useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
+  const handleExportChat = useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
     if (!activeChat) return;
     setExportStatus('exporting');
     try {
@@ -105,17 +177,19 @@ const App: React.FC = () => {
     }
   }, [activeChat, exportChatLogic]);
 
+
   useEffect(() => {
     logService.info('App initialized.');
     mermaid.initialize({
         startOnLoad: false,
-        theme: 'default',
+        theme: 'default', // Always use a light theme for diagrams for readability, rendered on a white background.
         fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     });
   }, []);
   
   const handleSaveSettings = (newSettings: AppSettings) => {
     setAppSettings(newSettings);
+  
     if (activeSessionId && setCurrentChatSettings) {
       setCurrentChatSettings(prevChatSettings => ({
         ...prevChatSettings,
@@ -125,9 +199,15 @@ const App: React.FC = () => {
         showThoughts: newSettings.showThoughts,
         ttsVoice: newSettings.ttsVoice,
         thinkingBudget: newSettings.thinkingBudget,
+        // When settings are saved, especially API settings, we must clear any
+        // locked API key on the current session. This ensures the next request
+        // uses the new global settings instead of an old, potentially invalid, locked key.
         lockedApiKey: null,
       }));
     }
+    
+    // Live update: Do not close modal automatically
+    // setIsSettingsModalOpen(false);
   };
 
   const handleSetDefaultModel = (modelId: string) => {
@@ -135,28 +215,43 @@ const App: React.FC = () => {
     const newThinkingBudget = THINKING_BUDGET_RANGES[modelId]
       ? THINKING_BUDGET_RANGES[modelId].max
       : DEFAULT_APP_SETTINGS.thinkingBudget;
+
     setAppSettings(prev => ({ ...prev, modelId, thinkingBudget: newThinkingBudget }));
   };
 
   const handleLoadCanvasPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT;
     const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_SYSTEM_PROMPT;
+    
     setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
+
     if (activeSessionId && setCurrentChatSettings) {
-      setCurrentChatSettings(prevSettings => ({ ...prevSettings, systemInstruction: newSystemInstruction }));
+      setCurrentChatSettings(prevSettings => ({
+        ...prevSettings,
+        systemInstruction: newSystemInstruction,
+      }));
     }
   };
   
-  const handleSuggestionClick = (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
+  type SuggestionType = 'homepage' | 'organize' | 'follow-up';
+
+  const handleSuggestionClick = (type: SuggestionType, text: string) => {
     if (type === 'organize') {
+        // Ensure Canvas Helper is active
         if (currentChatSettings.systemInstruction !== CANVAS_SYSTEM_PROMPT) {
             const newSystemInstruction = CANVAS_SYSTEM_PROMPT;
+            
             setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
+
             if (activeSessionId && setCurrentChatSettings) {
-              setCurrentChatSettings(prevSettings => ({ ...prevSettings, systemInstruction: newSystemInstruction }));
+              setCurrentChatSettings(prevSettings => ({
+                ...prevSettings,
+                systemInstruction: newSystemInstruction,
+              }));
             }
         }
     }
+    
     if (type === 'follow-up' && (appSettings.isAutoSendOnSuggestionClick ?? true)) {
         handleSendMessage({ text });
     } else {
@@ -175,10 +270,7 @@ const App: React.FC = () => {
     if (isSwitchingModel) return t('appSwitchingModel');
     const model = apiModels.find(m => m.id === modelIdToDisplay);
     if (model) return model.name;
-    if (modelIdToDisplay) { 
-        let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; 
-        return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');
-    }
+    if (modelIdToDisplay) { let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');}
     return apiModels.length === 0 && !isModelsLoading ? t('appNoModelsAvailable') : t('appNoModelSelected');
   };
 
@@ -186,163 +278,168 @@ const App: React.FC = () => {
   const isImagenModel = currentChatSettings.modelId?.includes('imagen');
   const isImageEditModel = currentChatSettings.modelId?.includes('image-preview');
 
-  // Construct props for sub-components
-  const sidebarProps = {
-    isOpen: isHistorySidebarOpen,
-    onToggle: () => setIsHistorySidebarOpen(prev => !prev),
-    sessions: savedSessions,
-    groups: savedGroups,
-    activeSessionId,
-    loadingSessionIds,
-    generatingTitleSessionIds,
-    onSelectSession: (id: string) => loadChatSession(id, savedSessions),
-    onNewChat: () => startNewChat(),
-    onDeleteSession: handleDeleteChatHistorySession,
-    onRenameSession: handleRenameSession,
-    onTogglePinSession: handleTogglePinSession,
-    onOpenExportModal: () => setIsExportModalOpen(true),
-    onAddNewGroup: handleAddNewGroup,
-    onDeleteGroup: handleDeleteGroup,
-    onRenameGroup: handleRenameGroup,
-    onMoveSessionToGroup: handleMoveSessionToGroup,
-    onToggleGroupExpansion: handleToggleGroupExpansion,
-    onOpenSettingsModal: () => setIsSettingsModalOpen(true),
-    onOpenScenariosModal: () => setIsPreloadedMessagesModalOpen(true),
-    themeColors: currentTheme.colors,
-    t,
-    themeId: currentTheme.id,
-    language,
-  };
-
-  const chatAreaProps = {
-    activeSessionId,
-    currentChatSettings,
-    setAppFileError,
-    isAppDraggingOver,
-    handleAppDragEnter,
-    handleAppDragOver,
-    handleAppDragLeave,
-    handleAppDrop,
-    onNewChat: () => startNewChat(),
-    onOpenSettingsModal: () => setIsSettingsModalOpen(true),
-    onOpenScenariosModal: () => setIsPreloadedMessagesModalOpen(true),
-    onToggleHistorySidebar: () => setIsHistorySidebarOpen(prev => !prev),
-    isLoading,
-    currentModelName: getCurrentModelDisplayName(),
-    availableModels: apiModels,
-    selectedModelId: currentChatSettings.modelId || appSettings.modelId,
-    onSelectModel: handleSelectModelInHeader,
-    isModelsLoading,
-    isSwitchingModel,
-    isHistorySidebarOpen,
-    onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
-    isCanvasPromptActive,
-    isKeyLocked: !!currentChatSettings.lockedApiKey,
-    defaultModelId: appSettings.modelId,
-    onSetDefaultModel: handleSetDefaultModel,
-    themeId: currentTheme.id,
-    modelsLoadingError,
-    messages,
-    scrollContainerRef,
-    onScrollContainerScroll: handleScroll,
-    onEditMessage: handleEditMessage,
-    onDeleteMessage: handleDeleteMessage,
-    onRetryMessage: handleRetryMessage,
-    onEditMessageContent: setEditingContentMessage,
-    showThoughts: currentChatSettings.showThoughts,
-    themeColors: currentTheme.colors,
-    baseFontSize: appSettings.baseFontSize,
-    expandCodeBlocksByDefault: appSettings.expandCodeBlocksByDefault,
-    isMermaidRenderingEnabled: appSettings.isMermaidRenderingEnabled,
-    isGraphvizRenderingEnabled: appSettings.isGraphvizRenderingEnabled ?? true,
-    onSuggestionClick: (text: string) => handleSuggestionClick('homepage', text),
-    onOrganizeInfoClick: (text: string) => handleSuggestionClick('organize', text),
-    onFollowUpSuggestionClick: (text: string) => handleSuggestionClick('follow-up', text),
-    onTextToSpeech: handleTextToSpeech,
-    ttsMessageId,
-    language,
-    scrollNavVisibility,
-    onScrollToPrevTurn: scrollToPrevTurn,
-    onScrollToNextTurn: scrollToNextTurn,
-    appSettings,
-    commandedInput,
-    setCommandedInput,
-    onMessageSent: () => setCommandedInput(null),
-    selectedFiles,
-    setSelectedFiles,
-    onSendMessage: (text: string) => handleSendMessage({ text }),
-    isEditing: !!editingMessageId,
-    onStopGenerating: handleStopGenerating,
-    onCancelEdit: handleCancelEdit,
-    onProcessFiles: handleProcessAndAddFiles,
-    onAddFileById: handleAddFileById,
-    onCancelUpload: handleCancelFileUpload,
-    onTranscribeAudio: handleTranscribeAudio,
-    isProcessingFile: isAppProcessingFile,
-    fileError: appFileError,
-    isImagenModel,
-    isImageEditModel,
-    aspectRatio,
-    setAspectRatio,
-    imageSize,
-    setImageSize,
-    isGoogleSearchEnabled: !!currentChatSettings.isGoogleSearchEnabled,
-    onToggleGoogleSearch: toggleGoogleSearch,
-    isCodeExecutionEnabled: !!currentChatSettings.isCodeExecutionEnabled,
-    onToggleCodeExecution: toggleCodeExecution,
-    isUrlContextEnabled: !!currentChatSettings.isUrlContextEnabled,
-    onToggleUrlContext: toggleUrlContext,
-    isDeepSearchEnabled: !!currentChatSettings.isDeepSearchEnabled,
-    onToggleDeepSearch: toggleDeepSearch,
-    onClearChat: handleClearCurrentChat,
-    onOpenSettings: () => setIsSettingsModalOpen(true),
-    onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
-    onTogglePinCurrentSession: handleTogglePinCurrentSession,
-    onRetryLastTurn: handleRetryLastTurn,
-    onEditLastUserMessage: handleEditLastUserMessage,
-    onOpenLogViewer: () => setIsLogViewerOpen(true),
-    onClearAllHistory: clearAllHistory,
-    isPipSupported,
-    isPipActive,
-    onTogglePip: togglePip,
-    generateQuadImages: appSettings.generateQuadImages ?? false,
-    onToggleQuadImages: () => setAppSettings(prev => ({ ...prev, generateQuadImages: !prev.generateQuadImages })),
-    t,
-  };
-
-  const appModalsProps = {
-    isSettingsModalOpen,
-    setIsSettingsModalOpen,
-    appSettings,
-    availableModels: apiModels,
-    handleSaveSettings,
-    isModelsLoading,
-    modelsLoadingError,
-    clearCacheAndReload,
-    clearAllHistory,
-    handleInstallPwa,
-    installPromptEvent,
-    isStandalone,
-    handleImportSettings,
-    handleExportSettings,
-    handleImportHistory,
-    handleExportHistory,
-    handleImportAllScenarios,
-    handleExportAllScenarios,
-    isPreloadedMessagesModalOpen,
-    setIsPreloadedMessagesModalOpen,
-    savedScenarios,
-    handleSaveAllScenarios,
-    handleLoadPreloadedScenario,
-    isExportModalOpen,
-    setIsExportModalOpen,
-    handleExportChat,
-    exportStatus,
-    isLogViewerOpen,
-    setIsLogViewerOpen,
-    currentChatSettings,
-    t,
-  };
+  const chatAreaComponent = (
+    <ChatArea
+        isAppDraggingOver={isAppDraggingOver}
+        handleAppDragEnter={handleAppDragEnter}
+        handleAppDragOver={handleAppDragOver}
+        handleAppDragLeave={handleAppDragLeave}
+        handleAppDrop={handleAppDrop}
+        onNewChat={() => startNewChat()}
+        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
+        onToggleHistorySidebar={() => setIsHistorySidebarOpen(prev => !prev)}
+        isLoading={isLoading}
+        currentModelName={getCurrentModelDisplayName()}
+        availableModels={apiModels}
+        selectedModelId={currentChatSettings.modelId || appSettings.modelId}
+        onSelectModel={handleSelectModelInHeader}
+        isModelsLoading={isModelsLoading}
+        isSwitchingModel={isSwitchingModel}
+        isHistorySidebarOpen={isHistorySidebarOpen}
+        onLoadCanvasPrompt={handleLoadCanvasPromptAndSave}
+        isCanvasPromptActive={isCanvasPromptActive}
+        isKeyLocked={!!currentChatSettings.lockedApiKey}
+        defaultModelId={appSettings.modelId}
+        onSetDefaultModel={handleSetDefaultModel}
+        themeId={currentTheme.id}
+        modelsLoadingError={modelsLoadingError}
+        messages={messages}
+        scrollContainerRef={scrollContainerRef}
+        onScrollContainerScroll={handleScroll}
+        onEditMessage={handleEditMessage}
+        onDeleteMessage={handleDeleteMessage}
+        onRetryMessage={handleRetryMessage}
+        showThoughts={currentChatSettings.showThoughts}
+        themeColors={currentTheme.colors}
+        baseFontSize={appSettings.baseFontSize}
+        expandCodeBlocksByDefault={appSettings.expandCodeBlocksByDefault}
+        isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
+        isGraphvizRenderingEnabled={appSettings.isGraphvizRenderingEnabled ?? true}
+        onSuggestionClick={(text: string) => handleSuggestionClick('homepage', text)}
+        onOrganizeInfoClick={(text: string) => handleSuggestionClick('organize', text)}
+        onFollowUpSuggestionClick={(text: string) => handleSuggestionClick('follow-up', text)}
+        onTextToSpeech={handleTextToSpeech}
+        ttsMessageId={ttsMessageId}
+        language={language}
+        scrollNavVisibility={scrollNavVisibility}
+        onScrollToPrevTurn={scrollToPrevTurn}
+        onScrollToNextTurn={scrollToNextTurn}
+        appSettings={appSettings}
+        currentChatSettings={currentChatSettings}
+        setAppFileError={setAppFileError}
+        activeSessionId={activeSessionId}
+        commandedInput={commandedInput}
+        setCommandedInput={setCommandedInput}
+        onMessageSent={() => setCommandedInput(null)}
+        selectedFiles={selectedFiles}
+        setSelectedFiles={setSelectedFiles}
+        onSendMessage={(text) => handleSendMessage({ text })}
+        isEditing={!!editingMessageId}
+        onStopGenerating={handleStopGenerating}
+        onCancelEdit={handleCancelEdit}
+        onProcessFiles={handleProcessAndAddFiles}
+        onAddFileById={handleAddFileById}
+        onCancelUpload={handleCancelFileUpload}
+        onTranscribeAudio={handleTranscribeAudio}
+        isProcessingFile={isAppProcessingFile}
+        fileError={appFileError}
+        isImagenModel={isImagenModel}
+        isImageEditModel={isImageEditModel}
+        aspectRatio={aspectRatio}
+        setAspectRatio={setAspectRatio}
+        isGoogleSearchEnabled={!!currentChatSettings.isGoogleSearchEnabled}
+        onToggleGoogleSearch={toggleGoogleSearch}
+        isCodeExecutionEnabled={!!currentChatSettings.isCodeExecutionEnabled}
+        onToggleCodeExecution={toggleCodeExecution}
+        isUrlContextEnabled={!!currentChatSettings.isUrlContextEnabled}
+        onToggleUrlContext={toggleUrlContext}
+        onClearChat={handleClearCurrentChat}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        onToggleCanvasPrompt={handleLoadCanvasPromptAndSave}
+        onTogglePinCurrentSession={handleTogglePinCurrentSession}
+        onRetryLastTurn={handleRetryLastTurn}
+        onEditLastUserMessage={handleEditLastUserMessage}
+        onOpenLogViewer={() => setIsLogViewerOpen(true)}
+        onClearAllHistory={clearAllHistory}
+        isPipSupported={isPipSupported}
+        isPipActive={isPipActive}
+        onTogglePip={togglePip}
+        t={t}
+      />
+  );
+  
+  const fullAppComponent = (
+    <>
+      {isHistorySidebarOpen && (
+        <div 
+          onClick={() => setIsHistorySidebarOpen(false)} 
+          className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 md:hidden"
+          aria-hidden="true"
+        />
+      )}
+      <HistorySidebar
+        isOpen={isHistorySidebarOpen}
+        onToggle={() => setIsHistorySidebarOpen(prev => !prev)}
+        sessions={savedSessions}
+        groups={savedGroups}
+        activeSessionId={activeSessionId}
+        loadingSessionIds={loadingSessionIds}
+        generatingTitleSessionIds={generatingTitleSessionIds}
+        onSelectSession={(id) => loadChatSession(id, savedSessions)}
+        onNewChat={() => startNewChat()}
+        onDeleteSession={handleDeleteChatHistorySession}
+        onRenameSession={handleRenameSession}
+        onTogglePinSession={handleTogglePinSession}
+        onOpenExportModal={() => setIsExportModalOpen(true)}
+        onAddNewGroup={handleAddNewGroup}
+        onDeleteGroup={handleDeleteGroup}
+        onRenameGroup={handleRenameGroup}
+        onMoveSessionToGroup={handleMoveSessionToGroup}
+        onToggleGroupExpansion={handleToggleGroupExpansion}
+        onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
+        onOpenScenariosModal={() => setIsPreloadedMessagesModalOpen(true)}
+        themeColors={currentTheme.colors}
+        t={t}
+        themeId={currentTheme.id}
+        language={language}
+      />
+      {chatAreaComponent}
+      <AppModals
+        isSettingsModalOpen={isSettingsModalOpen}
+        setIsSettingsModalOpen={setIsSettingsModalOpen}
+        appSettings={appSettings}
+        availableModels={apiModels}
+        handleSaveSettings={handleSaveSettings}
+        isModelsLoading={isModelsLoading}
+        modelsLoadingError={modelsLoadingError}
+        clearCacheAndReload={clearCacheAndReload}
+        clearAllHistory={clearAllHistory}
+        handleInstallPwa={handleInstallPwa}
+        installPromptEvent={installPromptEvent}
+        isStandalone={isStandalone}
+        handleImportSettings={handleImportSettings}
+        handleExportSettings={handleExportSettings}
+        handleImportHistory={handleImportHistory}
+        handleExportHistory={handleExportHistory}
+        handleImportAllScenarios={handleImportAllScenarios}
+        handleExportAllScenarios={handleExportAllScenarios}
+        isPreloadedMessagesModalOpen={isPreloadedMessagesModalOpen}
+        setIsPreloadedMessagesModalOpen={setIsPreloadedMessagesModalOpen}
+        savedScenarios={savedScenarios}
+        handleSaveAllScenarios={handleSaveAllScenarios}
+        handleLoadPreloadedScenario={handleLoadPreloadedScenario}
+        isExportModalOpen={isExportModalOpen}
+        setIsExportModalOpen={setIsExportModalOpen}
+        handleExportChat={handleExportChat}
+        exportStatus={exportStatus}
+        isLogViewerOpen={isLogViewerOpen}
+        setIsLogViewerOpen={setIsLogViewerOpen}
+        currentChatSettings={currentChatSettings}
+        t={t}
+      />
+    </>
+  );
 
   return (
     <div 
@@ -359,42 +456,26 @@ const App: React.FC = () => {
                         onTouchStart={handleTouchStart}
                         onTouchEnd={handleTouchEnd}
                     >
-                        <MainContent
-                            sidebarProps={sidebarProps}
-                            chatAreaProps={chatAreaProps}
-                            appModalsProps={appModalsProps}
-                            isHistorySidebarOpen={isHistorySidebarOpen}
-                            setIsHistorySidebarOpen={setIsHistorySidebarOpen}
-                        />
-                        <EditMessageModal
-                            isOpen={!!editingContentMessage}
-                            onClose={() => setEditingContentMessage(null)}
-                            message={editingContentMessage}
-                            onSave={handleUpdateMessageContent}
-                            t={t}
-                        />
+                        {fullAppComponent}
                     </div>
                   </WindowProvider>,
                   pipContainer
               )}
-              <PiPPlaceholder onClosePip={togglePip} />
+              <div className="flex-grow flex flex-col items-center justify-center text-center p-4 bg-[var(--theme-bg-secondary)]">
+                  <PictureInPicture2 size={48} className="text-[var(--theme-text-link)] mb-4" />
+                  <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">Chat in Picture-in-Picture</h2>
+                  <p className="text-sm text-[var(--theme-text-secondary)] mt-2 max-w-xs">The chat is running in a separate window. Close it to bring the conversation back here.</p>
+                  <button 
+                      onClick={togglePip} 
+                      className="mt-6 px-4 py-2 bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-lg font-medium hover:bg-[var(--theme-bg-accent-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] focus:ring-[var(--theme-border-focus)]"
+                  >
+                      Close PiP Window
+                  </button>
+              </div>
           </>
       ) : (
           <WindowProvider>
-            <MainContent
-                sidebarProps={sidebarProps}
-                chatAreaProps={chatAreaProps}
-                appModalsProps={appModalsProps}
-                isHistorySidebarOpen={isHistorySidebarOpen}
-                setIsHistorySidebarOpen={setIsHistorySidebarOpen}
-            />
-            <EditMessageModal
-                isOpen={!!editingContentMessage}
-                onClose={() => setEditingContentMessage(null)}
-                message={editingContentMessage}
-                onSave={handleUpdateMessageContent}
-                t={t}
-            />
+            {fullAppComponent}
           </WindowProvider>
       )}
     </div>

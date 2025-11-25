@@ -1,12 +1,9 @@
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
-import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check, Download } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCw, ImageIcon, FileCode2, Loader2, ClipboardCopy, Check } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Modal } from './Modal';
 import { useResponsiveValue } from '../../hooks/useDevice';
-import { triggerDownload } from '../../utils/exportUtils';
 
 interface ImageZoomModalProps {
   file: UploadedFile | null;
@@ -14,14 +11,6 @@ interface ImageZoomModalProps {
   themeColors: ThemeColors;
   t: (key: keyof typeof translations) => string;
 }
-
-const formatFileSize = (sizeInBytes: number): string => {
-  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
-  const sizeInKb = sizeInBytes / 1024;
-  if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
-  const sizeInMb = sizeInKb / 1024;
-  return `${sizeInMb.toFixed(2)} MB`;
-};
 
 export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t }) => {
   const [scale, setScale] = useState(1);
@@ -103,11 +92,17 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
         setIsDownloading(true);
         try {
             const base64Content = file.dataUrl.split(',')[1];
+            // This is the correct way to decode base64 that might contain UTF-8 characters
             const svgContent = decodeURIComponent(escape(atob(base64Content)));
             const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(blob);
-            const filename = `${file.name.split('.')[0] || 'diagram'}.svg`;
-            triggerDownload(url, filename, true);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${file.name.split('.')[0] || 'diagram'}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         } catch (e) {
             console.error("Failed to download SVG:", e);
         } finally {
@@ -116,10 +111,15 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
         return;
     }
 
+    // Direct download for all other image types to preserve original size and format
     setIsDownloading(true);
     try {
-      // Don't revoke for PNG/JPEG as it's the source view
-      triggerDownload(file.dataUrl, file.name, false);
+      const link = document.createElement('a');
+      link.href = file.dataUrl;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (e) {
       console.error("Failed to initiate download:", e);
     } finally {
@@ -184,13 +184,6 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
     }
   };
 
-  const handleDoubleClick = (event: React.MouseEvent<HTMLImageElement>) => {
-      if (!file) return;
-      event.preventDefault();
-      event.stopPropagation();
-      handleReset();
-  }
-
   useEffect(() => {
     const vpRef = viewportRef.current;
     if (vpRef && file) {
@@ -206,67 +199,26 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
   if (!file) return null;
 
   const isMermaidDiagram = file.type === 'image/svg+xml';
-  
-  // UI Component Classes
-  const floatingBarBase = "bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200";
-  const actionButtonClass = "p-2.5 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-40 disabled:cursor-not-allowed";
-  const pillButtonClass = "p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-40 disabled:cursor-not-allowed";
+  const controlButtonClasses = "p-2 bg-black/50 hover:bg-black/70 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed backdrop-blur-sm";
 
   return (
     <Modal
       isOpen={!!file}
       onClose={onClose}
       noPadding
-      backdropClassName="bg-black/95 backdrop-blur-sm"
+      backdropClassName="bg-black/80 backdrop-blur-sm"
       contentClassName="w-full h-full"
     >
       <div 
-        className="w-full h-full relative select-none"
+        className="w-full h-full"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave} 
       >
         <h2 id="image-zoom-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', file.name)}</h2>
-        
-        {/* Top Bar */}
-        <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4 z-50 pointer-events-none">
-            {/* File Info */}
-            <div className={`pointer-events-auto ${floatingBarBase} rounded-2xl px-4 py-2.5 flex items-center gap-3 max-w-[80%] sm:max-w-md`}>
-                <div className="bg-white/10 p-1.5 rounded-lg text-white">
-                    {isMermaidDiagram ? <FileCode2 size={18} strokeWidth={1.5} /> : <ImageIcon size={18} strokeWidth={1.5} />}
-                </div>
-                <div className="min-w-0 flex flex-col">
-                    <span className="text-sm font-medium text-white truncate" title={file.name}>{file.name}</span>
-                    <span className="text-[10px] font-mono text-white/60 tracking-wide">
-                        {file.type.split('/').pop()?.toUpperCase()} • {formatFileSize(file.size)}
-                    </span>
-                </div>
-            </div>
-
-            {/* Top Actions */}
-            <div className={`pointer-events-auto ${floatingBarBase} rounded-full p-1 flex items-center gap-1 self-end sm:self-auto`}>
-                <button onClick={handleCopy} disabled={isCopied} className={actionButtonClass} title={isCopied ? "Copied!" : "Copy Image"}>
-                    {isCopied ? <Check size={20} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={20} strokeWidth={1.5} />}
-                </button>
-                <button onClick={() => handleDownload(isMermaidDiagram ? 'svg' : 'png')} disabled={isDownloading} className={actionButtonClass} title={isMermaidDiagram ? "Download SVG" : "Download Image"}>
-                    {isDownloading ? <Loader2 size={20} className="animate-spin" strokeWidth={1.5}/> : <Download size={20} strokeWidth={1.5} />}
-                </button>
-                <div className="w-px h-5 bg-white/10 mx-1"></div>
-                <button
-                    onClick={onClose}
-                    className={`${actionButtonClass} hover:bg-red-500/20 hover:text-red-400`}
-                    aria-label={t('imageZoom_close_aria')}
-                    title={t('imageZoom_close_title')}
-                >
-                    <X size={20} strokeWidth={1.5} />
-                </button>
-            </div>
-        </div>
-
-        {/* Main Viewport */}
         <div 
             ref={viewportRef} 
-            className="w-full h-full flex items-center justify-center overflow-hidden"
+            className="w-full h-full flex items-center justify-center overflow-hidden relative"
         >
           <img
             ref={imageRef}
@@ -275,43 +227,53 @@ export const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ file, onClose, t
             style={{
               transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
               transformOrigin: '0 0', 
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+              transition: isDragging ? 'none' : 'transform 0.05s ease-out',
               maxWidth: '100%',
               maxHeight: '100%',
               objectFit: 'contain',
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none', 
               backgroundColor: isMermaidDiagram ? 'white' : 'transparent',
-              borderRadius: isMermaidDiagram ? '4px' : '0',
-              boxShadow: isMermaidDiagram ? '0 0 0 1px rgba(255,255,255,0.1)' : 'none',
+              borderRadius: isMermaidDiagram ? '0.375rem' : '0',
             }}
             onMouseDown={handleMouseDown}
-            onDoubleClick={handleDoubleClick}
             draggable="false" 
           />
         </div>
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 p-1.5 sm:p-2 bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] rounded-full shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+          aria-label={t('imageZoom_close_aria')}
+          title={t('imageZoom_close_title')}
+        >
+          <X size={closeIconSize} strokeWidth={1.5} />
+        </button>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 bg-black/40 rounded-lg shadow-lg backdrop-blur-sm border border-white/10" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} className={controlButtonClasses} title="Zoom Out"><ZoomOut size={18} strokeWidth={1.5} /></button>
+          <div className="text-xs text-white font-mono tabular-nums select-none w-16 text-center">
+            {(scale * 100).toFixed(0)}%
+          </div>
+          <button onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} className={controlButtonClasses} title="Zoom In"><ZoomIn size={18} strokeWidth={1.5} /></button>
+          
+          <div className="w-px h-6 bg-white/20 mx-1"></div>
 
-        {/* Bottom Controls */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-            <div className={`${floatingBarBase} rounded-full p-1.5 flex items-center gap-1`}>
-                <button onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} className={pillButtonClass} title="Zoom Out">
-                    <ZoomOut size={20} strokeWidth={1.5} />
-                </button>
-                
-                <div className="min-w-[60px] text-center px-2 font-mono text-sm font-medium text-white/90">
-                    {(scale * 100).toFixed(0)}%
-                </div>
+          <button onClick={handleReset} className={controlButtonClasses} title="Reset View"><RotateCw size={18} strokeWidth={1.5} /></button>
 
-                <button onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} className={pillButtonClass} title="Zoom In">
-                    <ZoomIn size={20} strokeWidth={1.5} />
-                </button>
-
-                <div className="w-px h-5 bg-white/10 mx-1"></div>
-
-                <button onClick={handleReset} className={pillButtonClass} title="Reset View">
-                    <RotateCw size={20} strokeWidth={1.5} />
-                </button>
-            </div>
+          <button onClick={handleCopy} disabled={isCopied} className={controlButtonClasses} title={isCopied ? "Copied!" : "Copy Image"}>
+              {isCopied ? <Check size={18} className="text-green-400" strokeWidth={1.5} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
+          </button>
+          
+          <div className="w-px h-6 bg-white/20 mx-1"></div>
+          
+          <button onClick={() => handleDownload('png')} disabled={isDownloading} className={controlButtonClasses} title="Download Image">
+            {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <ImageIcon size={18} strokeWidth={1.5} />}
+          </button>
+          
+          {isMermaidDiagram && (
+            <button onClick={() => handleDownload('svg')} disabled={isDownloading} className={controlButtonClasses} title="Download as SVG">
+                {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <FileCode2 size={18} strokeWidth={1.5} />}
+            </button>
+          )}
         </div>
       </div>
     </Modal>
