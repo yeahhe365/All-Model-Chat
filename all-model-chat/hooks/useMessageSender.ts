@@ -1,4 +1,5 @@
-import { useCallback, useRef, Dispatch, SetStateAction } from 'react';
+
+import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
@@ -6,7 +7,7 @@ import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './useChatStreamHandler';
 import { useTtsImagenSender } from './useTtsImagenSender';
 import { useImageEditSender } from './useImageEditSender';
-import { Chat, ChatHistoryItem } from '@google/genai';
+import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -21,6 +22,7 @@ interface MessageSenderProps {
     setEditingMessageId: (id: string | null) => void;
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
+    imageSize?: string;
     userScrolledUp: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
@@ -42,6 +44,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setEditingMessageId,
         setAppFileError,
         aspectRatio,
+        imageSize,
         userScrolledUp,
         activeSessionId,
         setActiveSessionId,
@@ -52,7 +55,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
         chat,
     } = props;
 
-    const generationStartTimeRef = useRef<Date | null>(null);
     const { getStreamHandlers } = useChatStreamHandler(props);
     const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
     const { handleImageEditMessage } = useImageEditSender({
@@ -71,7 +73,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
-        const isImageEditModel = activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image');
+        // Exclude gemini-3-pro-image-preview from isImageEditModel to force standard chat flow
+        const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro');
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId });
 
@@ -108,7 +111,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         const newAbortController = new AbortController();
         const generationId = generateUniqueId();
-        generationStartTimeRef.current = new Date();
+        const generationStartTime = new Date();
         
         if (appSettings.isAutoScrollOnSendEnabled) {
             userScrolledUp.current = false;
@@ -139,7 +142,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         let finalSessionId = activeSessionId;
         
         const userMessageContent: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles : undefined, timestamp: new Date() };
-        const modelMessageContent: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
+        const modelMessageContent: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTime };
 
         // Perform a single, atomic state update for adding messages and creating a new session if necessary.
         if (!finalSessionId) { // New Chat
@@ -185,7 +188,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
              return; 
         }
         
-        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(finalSessionId!, generationId, newAbortController, generationStartTimeRef, sessionToUpdate);
+        // Pass generationStartTime by value to create a closure-safe handler
+        const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(finalSessionId!, generationId, newAbortController, generationStartTime, sessionToUpdate);
         
         setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
         activeJobs.current.set(generationId, newAbortController);
@@ -208,7 +212,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
                     sessionToUpdate.showThoughts, sessionToUpdate.thinkingBudget,
                     !!sessionToUpdate.isGoogleSearchEnabled, !!sessionToUpdate.isCodeExecutionEnabled, !!sessionToUpdate.isUrlContextEnabled,
                     sessionToUpdate.thinkingLevel,
-                    aspectRatio // Add this
+                    aspectRatio,
+                    sessionToUpdate.isDeepSearchEnabled,
+                    imageSize 
                 ),
             });
         }
@@ -230,7 +236,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
     }, [
         appSettings, currentChatSettings, messages, selectedFiles, setSelectedFiles,
-        editingMessageId, setEditingMessageId, setAppFileError, aspectRatio,
+        editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, imageSize,
         userScrolledUp, activeSessionId, setActiveSessionId, activeJobs,
         setLoadingSessionIds, updateAndPersistSessions, getStreamHandlers,
         handleTtsImagenMessage, scrollContainerRef, chat, handleImageEditMessage

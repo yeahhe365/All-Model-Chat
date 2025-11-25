@@ -1,13 +1,41 @@
 
-
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { ChatMessage, MessageListProps, UploadedFile } from '../types';
-import { Message } from './message/Message';
-import { X, Bot, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { translations } from '../utils/appUtils';
-import { HtmlPreviewModal } from './HtmlPreviewModal';
-import { ImageZoomModal } from './shared/ImageZoomModal';
+import { ChatMessage, UploadedFile, AppSettings } from '../../types';
+import { Message } from '../message/Message';
+import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { translations } from '../../utils/appUtils';
+import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
+import { ImageZoomModal } from '../shared/ImageZoomModal';
+import { ThemeColors } from '../../constants/themeConstants';
+
+export interface MessageListProps {
+  messages: ChatMessage[];
+  scrollContainerRef: React.RefObject<HTMLDivElement>;
+  onScrollContainerScroll: () => void;
+  onEditMessage: (messageId: string) => void;
+  onDeleteMessage: (messageId: string) => void;
+  onRetryMessage: (messageId: string) => void;
+  onEditMessageContent: (message: ChatMessage) => void;
+  showThoughts: boolean;
+  themeColors: ThemeColors;
+  themeId: string;
+  baseFontSize: number;
+  expandCodeBlocksByDefault: boolean;
+  isMermaidRenderingEnabled: boolean;
+  isGraphvizRenderingEnabled: boolean;
+  onSuggestionClick?: (suggestion: string) => void;
+  onOrganizeInfoClick?: (suggestion: string) => void;
+  onFollowUpSuggestionClick?: (suggestion: string) => void;
+  onTextToSpeech: (messageId: string, text: string) => void;
+  ttsMessageId: string | null;
+  t: (key: keyof typeof translations, fallback?: string) => string;
+  language: 'en' | 'zh';
+  scrollNavVisibility: { up: boolean, down: boolean };
+  onScrollToPrevTurn: () => void;
+  onScrollToNextTurn: () => void;
+  chatInputHeight: number;
+  appSettings: AppSettings;
+}
 
 const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_organize_title', descKey: 'suggestion_organize_desc', shortKey: 'suggestion_organize_short', specialAction: 'organize' },
@@ -23,14 +51,13 @@ const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ heig
     useEffect(() => {
         const observer = new IntersectionObserver(
             ([entry]) => {
-                // When the placeholder comes into view (or close to it), trigger the onVisible callback.
                 if (entry.isIntersecting) {
                     onVisible();
                 }
             },
             {
-                root: null, // observe against the viewport
-                rootMargin: '500px 0px', // Start loading messages 500px before they become visible
+                root: null,
+                rootMargin: '500px 0px',
                 threshold: 0.01
             }
         );
@@ -50,10 +77,9 @@ const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ heig
     return <div ref={ref} style={{ height: `${height}px` }} aria-hidden="true" />;
 };
 
-
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, scrollContainerRef, onScrollContainerScroll, 
-    onEditMessage, onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
+    onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight, appSettings
@@ -66,8 +92,6 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [suggestionPage, setSuggestionPage] = useState(0);
   
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(() => {
-    // Initially, make the last 15 messages visible to prevent a blank screen on load
-    // and ensure the user sees the latest part of the conversation.
     const initialVisible = new Set<string>();
     const lastN = 15;
     for (let i = Math.max(0, messages.length - lastN); i < messages.length; i++) {
@@ -77,19 +101,19 @@ export const MessageList: React.FC<MessageListProps> = ({
   });
 
   const estimateMessageHeight = useCallback((message: ChatMessage) => {
-    if (!message) return 150; // A fallback estimate
-    let height = 80; // Base height for padding, avatar space, actions
+    if (!message) return 150;
+    let height = 80;
     if (message.content) {
         const lines = message.content.length / 80;
-        height += lines * 24; // ~24px per line estimate
+        height += lines * 24;
     }
     if (message.files && message.files.length > 0) {
-        height += message.files.length * 120; // Estimate for files
+        height += message.files.length * 120;
     }
     if (message.thoughts && showThoughts) {
-        height += 100; // Estimate for thoughts block
+        height += 100;
     }
-    return Math.min(height, 1200); // Cap estimate
+    return Math.min(height, 1200);
   }, [showThoughts]);
 
   const handleBecameVisible = useCallback((messageId: string) => {
@@ -202,7 +226,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         h-28 sm:h-36 p-3 sm:p-5 rounded-xl sm:rounded-2xl
                         bg-[var(--theme-bg-tertiary)]/30 
                         ${borderClass}
-                        hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)]
+                        hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-text-tertiary)]
                         hover:shadow-lg hover:-translate-y-1
                         transition-all duration-300 ease-out group
                         focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]
@@ -211,7 +235,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                       style={{ animation: `fadeInUp 0.5s ${0.1 + i * 0.1}s ease-out both` }}
                     >
                       <div className="relative z-10">
-                        <h3 className="font-bold text-sm sm:text-base text-[var(--theme-text-primary)] mb-1 sm:mb-2 group-hover:text-[var(--theme-text-link)] transition-colors duration-300">
+                        <h3 className="font-bold text-sm sm:text-base text-[var(--theme-text-primary)] mb-1 sm:mb-2 transition-colors duration-300">
                             {t(s.titleKey as any)}
                         </h3>
                         <p className="text-xs sm:text-sm text-[var(--theme-text-secondary)] leading-relaxed line-clamp-2 opacity-80 group-hover:opacity-100">
@@ -227,7 +251,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                             w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full 
                             bg-[var(--theme-bg-primary)] text-[var(--theme-text-tertiary)]
                             shadow-sm
-                            group-hover:bg-[var(--theme-bg-accent)] group-hover:text-[var(--theme-text-accent)]
+                            group-hover:bg-[var(--theme-text-primary)] group-hover:text-[var(--theme-bg-primary)]
                             transition-all duration-300 transform group-hover:scale-110
                         ">
                             <ArrowUp size={14} strokeWidth={1.5} />
@@ -235,7 +259,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                       </div>
                       
                       {/* Subtle decoration */}
-                      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[var(--theme-bg-accent)]/5 to-transparent rounded-bl-3xl rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[var(--theme-text-primary)]/5 to-transparent rounded-bl-3xl rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     </button>
                   ))}
                   
@@ -261,6 +285,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onEditMessage={onEditMessage}
                         onDeleteMessage={onDeleteMessage}
                         onRetryMessage={onRetryMessage}
+                        onEditMessageContent={onEditMessageContent}
                         onImageClick={handleImageClick}
                         onOpenHtmlPreview={handleOpenHtmlPreview}
                         showThoughts={showThoughts}

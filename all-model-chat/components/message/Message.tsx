@@ -1,11 +1,9 @@
 
-import React, { useState, useMemo, useRef } from 'react';
-import { ClipboardCopy, Check, Trash2 } from 'lucide-react';
+import React, { useMemo } from 'react';
 import { ChatMessage, UploadedFile, ThemeColors, AppSettings } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
 import { MessageActions } from './MessageActions';
-import { useIsTouch } from '../../hooks/useDevice';
 
 interface MessageProps {
     message: ChatMessage;
@@ -14,8 +12,9 @@ interface MessageProps {
     onEditMessage: (messageId: string) => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void; 
+    onEditMessageContent: (message: ChatMessage) => void;
     onImageClick: (file: UploadedFile) => void;
-    onOpenHtmlPreview: (html: string, options?: { initialTruefullscreen?: boolean }) => void;
+    onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
     themeColors: ThemeColors; 
     themeId: string;
@@ -31,7 +30,7 @@ interface MessageProps {
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
-    const { message, prevMessage, messageIndex, onDeleteMessage, t } = props;
+    const { message, prevMessage, messageIndex, t } = props;
     
     const isGrouped = prevMessage &&
         prevMessage.role === message.role &&
@@ -52,69 +51,6 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-2xl border border-transparent',
     };
 
-    const [deltaX, setDeltaX] = useState(0);
-    const [isSwiping, setIsSwiping] = useState(false);
-    const [copied, setCopied] = useState(false);
-    const touchStartRef = useRef({ x: 0, y: 0 });
-    const isSwipeGesture = useRef<boolean | null>(null);
-    
-    // Use the robust hook for detecting touch capability
-    const isTouchDevice = useIsTouch();
-
-    const SWIPE_THRESHOLD = 80;
-
-    const handleTouchStart = (e: React.TouchEvent) => {
-        if (!isTouchDevice || message.isLoading) return;
-        touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-        isSwipeGesture.current = null;
-        setIsSwiping(true);
-        setCopied(false);
-    };
-
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!isTouchDevice || !isSwiping || message.isLoading) return;
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const dx = currentX - touchStartRef.current.x;
-        const dy = currentY - touchStartRef.current.y;
-
-        if (isSwipeGesture.current === null) {
-            if (Math.abs(dx) > Math.abs(dy) + 5) {
-                isSwipeGesture.current = true; // Horizontal
-            } else {
-                isSwipeGesture.current = false; // Vertical
-            }
-        }
-        
-        if (isSwipeGesture.current) {
-            e.preventDefault();
-            const limitedDx = Math.max(-150, Math.min(150, dx));
-            setDeltaX(limitedDx);
-        } else {
-            setIsSwiping(false);
-        }
-    };
-
-    const handleTouchEnd = () => {
-        if (!isTouchDevice || message.isLoading) return;
-        
-        if (isSwipeGesture.current) {
-            if (deltaX > SWIPE_THRESHOLD) {
-                onDeleteMessage(message.id);
-            } else if (deltaX < -SWIPE_THRESHOLD) {
-                if (message.content) {
-                    navigator.clipboard.writeText(message.content);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                }
-            }
-        }
-        
-        setIsSwiping(false);
-        setDeltaX(0);
-        isSwipeGesture.current = null;
-    };
-
     return (
         <div 
             className="relative message-container-animate"
@@ -122,41 +58,9 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             data-message-id={message.id} 
             data-message-role={message.role}
         >
-             {isTouchDevice && (
-                <div 
-                    className={`absolute inset-0 rounded-2xl ${isGrouped ? 'mt-1.5' : 'mt-6'}`}
-                    aria-hidden="true"
-                >
-                    <div className="absolute inset-y-0 left-0 w-full flex items-center justify-start pl-6 bg-red-500 text-white rounded-2xl"
-                        style={{ 
-                            clipPath: `inset(0 ${-deltaX > 0 ? '100%' : `calc(100% - ${deltaX}px)`} 0 0)`,
-                            opacity: Math.min(1, Math.abs(deltaX) / SWIPE_THRESHOLD),
-                        }}>
-                        <Trash2 size={20} />
-                    </div>
-                    <div className="absolute inset-y-0 right-0 w-full flex items-center justify-end pr-6 bg-blue-500 text-white rounded-2xl"
-                        style={{ 
-                            clipPath: `inset(0 0 0 ${deltaX < 0 ? `calc(100% - ${-deltaX}px)` : '100%'})`,
-                            opacity: Math.min(1, Math.abs(deltaX) / SWIPE_THRESHOLD),
-                        }}>
-                        {copied ? <Check size={20} /> : <ClipboardCopy size={20} />}
-                    </div>
-                </div>
-            )}
-            <div
-                className={`${messageContainerClasses}`} 
-                style={{ 
-                    transform: `translateX(${deltaX}px)`,
-                    transition: isSwiping ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                }}
-            >
+            <div className={`${messageContainerClasses}`}>
                 {message.role !== 'user' && <MessageActions {...props} isGrouped={isGrouped} />}
-                <div 
-                    className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                >
+                <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
                     <MessageContent {...props} />
                 </div>
                 {message.role === 'user' && <MessageActions {...props} isGrouped={isGrouped} />}

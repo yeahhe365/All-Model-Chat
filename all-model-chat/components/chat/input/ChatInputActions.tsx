@@ -1,11 +1,40 @@
-
 import React from 'react';
 import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
-import { ChatInputActionsProps } from '../../../types';
 import { IconStop } from '../../icons/CustomIcons';
+import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
+
+export interface ChatInputActionsProps {
+  onAttachmentAction: (action: AttachmentAction) => void;
+  disabled: boolean;
+  isGoogleSearchEnabled: boolean;
+  onToggleGoogleSearch: () => void;
+  isCodeExecutionEnabled: boolean;
+  onToggleCodeExecution: () => void;
+  isUrlContextEnabled: boolean;
+  onToggleUrlContext: () => void;
+  isDeepSearchEnabled: boolean;
+  onToggleDeepSearch: () => void;
+  onRecordButtonClick: () => void;
+  isRecording?: boolean;
+  isMicInitializing?: boolean;
+  isTranscribing: boolean;
+  isLoading: boolean;
+  onStopGenerating: () => void;
+  isEditing: boolean;
+  onCancelEdit: () => void;
+  canSend: boolean;
+  isWaitingForUpload: boolean;
+  t: (key: keyof typeof translations) => string;
+  onCancelRecording: () => void;
+  onTranslate: () => void;
+  isTranslating: boolean;
+  inputText: string;
+  onToggleFullscreen?: () => void;
+  isFullscreen?: boolean;
+}
 
 export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onAttachmentAction,
@@ -16,6 +45,8 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onToggleCodeExecution,
   isUrlContextEnabled,
   onToggleUrlContext,
+  isDeepSearchEnabled,
+  onToggleDeepSearch,
   onRecordButtonClick,
   isRecording,
   isMicInitializing,
@@ -36,7 +67,6 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
 }) => {
   const micIconSize = 18;
   const sendIconSize = 18;
-  const buttonBaseClass = "h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
 
   return (
     <div className="flex items-center justify-between w-full">
@@ -49,6 +79,8 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 onToggleCodeExecution={onToggleCodeExecution}
                 isUrlContextEnabled={isUrlContextEnabled}
                 onToggleUrlContext={onToggleUrlContext}
+                isDeepSearchEnabled={isDeepSearchEnabled}
+                onToggleDeepSearch={onToggleDeepSearch}
                 disabled={disabled}
                 t={t}
             />
@@ -72,7 +104,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                     type="button"
                     onClick={onToggleFullscreen}
                     disabled={disabled}
-                    className={`${buttonBaseClass} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+                    className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
                     aria-label={isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand')}
                     title={isFullscreen ? t('fullscreen_tooltip_collapse') : t('fullscreen_tooltip_expand')}
                 >
@@ -84,7 +116,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 type="button"
                 onClick={onTranslate}
                 disabled={!inputText.trim() || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
-                className={`${buttonBaseClass} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
                 aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
                 title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
             >
@@ -98,7 +130,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 type="button"
                 onClick={onRecordButtonClick}
                 disabled={disabled || isTranscribing || isMicInitializing}
-                className={`${buttonBaseClass} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} ${isRecording ? 'mic-recording-animate' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
                 aria-label={
                     isRecording ? t('voiceInput_stop_aria') :
                     isTranscribing ? t('voiceInput_transcribing_aria') : 
@@ -118,17 +150,17 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             </button>
 
             {isLoading ? ( 
-                <button type="button" onClick={onStopGenerating} className={`${buttonBaseClass} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><IconStop size={12} /></button>
+                <button type="button" onClick={onStopGenerating} className={`${CHAT_INPUT_BUTTON_CLASS} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><IconStop size={12} /></button>
             ) : isEditing ? (
                 <>
-                    <button type="button" onClick={onCancelEdit} className={`${buttonBaseClass} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={2} /></button>
-                    <button type="submit" disabled={!canSend} className={`${buttonBaseClass} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} strokeWidth={2} /></button>
+                    <button type="button" onClick={onCancelEdit} className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={2} /></button>
+                    <button type="submit" disabled={!canSend} className={`${CHAT_INPUT_BUTTON_CLASS} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} strokeWidth={2} /></button>
                 </>
             ) : (
                 <button 
                     type="submit" 
                     disabled={!canSend || isWaitingForUpload} 
-                    className={`${buttonBaseClass} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} 
+                    className={`${CHAT_INPUT_BUTTON_CLASS} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} 
                     aria-label={isWaitingForUpload ? "Waiting for upload..." : t('sendMessage_aria')} 
                     title={isWaitingForUpload ? "Waiting for upload to complete before sending" : t('sendMessage_title')}
                 >

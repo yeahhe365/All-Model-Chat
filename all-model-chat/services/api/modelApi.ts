@@ -28,14 +28,12 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
         const modelPager = await ai.models.list();
         const availableModels: ModelOption[] = [];
         for await (const model of modelPager) {
-            const supported = model.supportedActions;
-            if (!supported || supported.includes('generateContent') || supported.includes('generateImages')) {
-                availableModels.push({
-                    id: model.name,
-                    name: model.displayName || model.name.split('/').pop() || model.name,
-                    isPinned: false,
-                });
-            }
+            // Filter removed per request: allow all models regardless of supportedActions
+            availableModels.push({
+                id: model.name,
+                name: model.displayName || model.name.split('/').pop() || model.name,
+                isPinned: false,
+            });
         }
 
         if (availableModels.length > 0) {

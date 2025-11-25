@@ -14,8 +14,8 @@ export const messagesTranslations = {
     suggestion_summarize_short: { en: 'Quickly extract the core theme.', zh: '快速提炼核心主旨。' },
     suggestion_organize_title: { en: 'Organize Information', zh: '信息整理' },
     suggestion_organize_desc: { 
-        en: 'As an information organization expert, please de-duplicate, categorize, and structure the following content. Use Markdown format, extract key points, ignore irrelevant details, and make the logic clear and readable:', 
-        zh: '作为信息整理专家，请对以下内容进行去重、分类和结构化整理。请使用Markdown格式，提取关键点，忽略无关细节，使逻辑清晰易读：' 
+        en: 'As an information organization expert, please de-duplicate, categorize, and structure the following content. Extract key points, ignore irrelevant details, and make the logic clear and readable:', 
+        zh: '作为信息整理专家，请对以下内容进行去重、分类和结构化整理。请提取关键点，忽略无关细节，使逻辑清晰易读：' 
     },
     suggestion_organize_short: { en: 'Structure and categorize messy info.', zh: '结构化整理杂乱信息。' },
     suggestion_translate_title: { en: 'Bilingual Translation', zh: '中英互译' },

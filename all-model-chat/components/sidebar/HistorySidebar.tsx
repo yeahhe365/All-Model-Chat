@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SavedChatSession, ChatGroup } from '../types';
-import { translations } from '../utils/appUtils';
-import { SidebarHeader } from './sidebar/SidebarHeader';
-import { SidebarActions } from './sidebar/SidebarActions';
-import { SessionItem } from './sidebar/SessionItem';
-import { GroupItem } from './sidebar/GroupItem';
-import { PanelLeft, SquarePen, Search, MessageSquareText, Settings, MessageSquare } from 'lucide-react';
-import { IconNewChat, IconSidebarToggle } from './icons/CustomIcons';
+import { SavedChatSession, ChatGroup } from '../../types';
+import { translations } from '../../utils/appUtils';
+import { SidebarHeader } from './SidebarHeader';
+import { SidebarActions } from './SidebarActions';
+import { SessionItem } from './SessionItem';
+import { GroupItem } from './GroupItem';
+import { Search, Settings } from 'lucide-react';
+import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
 
-interface HistorySidebarProps {
+export interface HistorySidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   sessions: SavedChatSession[];
@@ -245,7 +244,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
             e.stopPropagation();
             onClick();
           }}
-          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
           title={title}
           aria-label={title}
       >

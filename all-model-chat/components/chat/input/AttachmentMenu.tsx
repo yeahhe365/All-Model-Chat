@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { 
@@ -14,6 +14,8 @@ import {
   IconFileEdit 
 } from '../../icons/CustomIcons';
 import { useWindowContext } from '../../../contexts/WindowContext';
+import { useClickOutside } from '../../../hooks/useClickOutside';
+import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 
 export type AttachmentAction = 'upload' | 'gallery' | 'video' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot';
 
@@ -25,35 +27,22 @@ interface AttachmentMenuProps {
 
 const attachIconSize = 18;
 const menuIconSize = 18; // Consistent icon size for menu items
-const buttonBaseClass = "h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-input)]";
 
 export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
-    const menuRef = useRef<HTMLDivElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
     
     const { window: targetWindow } = useWindowContext();
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                menuRef.current && !menuRef.current.contains(event.target as Node) &&
-                buttonRef.current && !buttonRef.current.contains(event.target as Node)
-            ) {
-                setIsOpen(false);
-            }
-        };
-        if (isOpen) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [isOpen]);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
     // Dynamic positioning to handle PiP/Small windows
     useLayoutEffect(() => {
         if (isOpen && buttonRef.current && targetWindow) {
             const buttonRect = buttonRef.current.getBoundingClientRect();
             const viewportWidth = targetWindow.innerWidth;
-            const viewportHeight = targetWindow.innerHeight;
             
             const MENU_WIDTH = 240; // w-60 equivalent approx
             const BUTTON_MARGIN = 10; // Safety margin
@@ -101,13 +90,13 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
     ];
 
     return (
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
             <button
                 ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={disabled}
-                className={`${buttonBaseClass} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`}
                 aria-label={t('attachMenu_aria')}
                 title={t('attachMenu_title')}
                 aria-haspopup="true"
@@ -117,7 +106,6 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
             </button>
             {isOpen && (
                 <div 
-                    ref={menuRef} 
                     className="absolute bottom-full mb-2 w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium z-20 py-1.5 custom-scrollbar animate-in fade-in zoom-in-95 duration-100" 
                     style={menuStyle}
                     role="menu"

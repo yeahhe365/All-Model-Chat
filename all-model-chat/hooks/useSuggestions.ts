@@ -1,3 +1,4 @@
+
 // hooks/useSuggestions.ts
 import { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../types';
@@ -75,6 +76,7 @@ export const useSuggestions = ({
             if (
                 lastMessage.role === 'model' &&
                 !lastMessage.isLoading &&
+                !lastMessage.stoppedByUser && // Check if stopped by user
                 secondLastMessage.role === 'user' &&
                 !lastMessage.suggestions &&
                 lastMessage.isGeneratingSuggestions === undefined // Check undefined to prevent re-triggering

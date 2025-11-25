@@ -1,3 +1,4 @@
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup } from '../types';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -76,6 +77,7 @@ export const useChatHistory = ({
                 isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
                 isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
                 isUrlContextEnabled: activeChat.settings.isUrlContextEnabled,
+                isDeepSearchEnabled: activeChat.settings.isDeepSearchEnabled,
             };
         }
 

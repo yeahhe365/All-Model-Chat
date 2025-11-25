@@ -1,10 +1,22 @@
+
 import React from 'react';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2 } from 'lucide-react';
+import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil } from 'lucide-react';
 import { ChatMessage, ThemeColors } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
 import { useResponsiveValue } from '../../hooks/useDevice';
+
+const AvatarWrapper: React.FC<{ children: React.ReactNode; onClick: () => void; showEditOverlay: boolean }> = ({ children, onClick, showEditOverlay }) => (
+    <div className="relative group/avatar cursor-pointer" onClick={onClick}>
+        {children}
+        {showEditOverlay && (
+            <div className="absolute inset-0 bg-black/60 dark:bg-black/50 rounded-full hidden group-hover/avatar:flex items-center justify-center backdrop-blur-[1px] transition-all animate-in fade-in duration-200">
+                <Pencil size={12} className="text-white" strokeWidth={2.5} />
+            </div>
+        )}
+    </div>
+);
 
 const UserIcon: React.FC = () => {
     const size = useResponsiveValue(24, 29);
@@ -27,6 +39,7 @@ interface MessageActionsProps {
     onEditMessage: (messageId: string) => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void;
+    onEditMessageContent: (message: ChatMessage) => void;
     onTextToSpeech: (messageId: string, text: string) => void;
     ttsMessageId: string | null;
     themeColors: ThemeColors;
@@ -40,6 +53,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
+    onEditMessageContent,
     onTextToSpeech,
     ttsMessageId,
     themeColors,
@@ -51,15 +65,23 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     const isThisMessageLoadingTts = ttsMessageId === message.id;
     
     // Enhanced button styling: lighter default, distinct hover, rounded corners
-    const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100 hover:scale-105 active:scale-95";
+    const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100 hover:scale-105 active:scale-95";
 
     return (
         <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10 h-full">
             <div className="h-7 sm:h-8 flex items-center justify-center">
                 {!isGrouped && (
                     <>
-                        {message.role === 'user' && <UserIcon />}
-                        {message.role === 'model' && <BotIcon />}
+                        {message.role === 'user' && (
+                            <AvatarWrapper onClick={() => onEditMessageContent(message)} showEditOverlay={true}>
+                                <UserIcon />
+                            </AvatarWrapper>
+                        )}
+                        {message.role === 'model' && (
+                            <AvatarWrapper onClick={() => onEditMessageContent(message)} showEditOverlay={true}>
+                                <BotIcon />
+                            </AvatarWrapper>
+                        )}
                         {message.role === 'error' && <ErrorMsgIcon />}
                     </>
                 )}
@@ -112,19 +134,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                             {isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" strokeWidth={2} /> : <Volume2 size={actionIconSize} strokeWidth={2} />}
                         </button>
                         <ExportMessageButton 
-                            type="png" 
-                            markdownContent={message.content} 
-                            messageId={message.id} 
-                            themeColors={themeColors} 
-                            themeId={themeId} 
-                            t={t} 
-                            className={actionButtonClasses} 
-                            iconSize={actionIconSize} 
-                        />
-                        <ExportMessageButton 
-                            type="html" 
-                            markdownContent={message.content} 
-                            messageId={message.id} 
+                            message={message}
                             themeColors={themeColors} 
                             themeId={themeId} 
                             t={t} 

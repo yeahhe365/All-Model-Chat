@@ -1,10 +1,10 @@
 
-
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, Info, Globe, Type } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ChevronDown, Check, Info, Type } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
-import { Toggle, Tooltip } from './shared/Tooltip';
+import { Toggle, Tooltip } from '../shared/Tooltip';
 import { IconThemeSystem, IconThemeDark, IconThemeLight } from '../icons/CustomIcons';
+import { useClickOutside } from '../../hooks/useClickOutside';
 
 interface AppearanceSectionProps {
   themeId: 'system' | 'onyx' | 'pearl';
@@ -58,19 +58,7 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const languageDropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
-        setIsLanguageDropdownOpen(false);
-      }
-    };
-    if (isLanguageDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isLanguageDropdownOpen]);
+  useClickOutside(languageDropdownRef, () => setIsLanguageDropdownOpen(false), isLanguageDropdownOpen);
 
   const themeOptions: { id: 'system' | 'onyx' | 'pearl'; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
     { id: 'system', labelKey: 'settingsThemeSystem', icon: <IconThemeSystem size={16} strokeWidth={1.5} /> },
@@ -86,7 +74,6 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
 
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
 
-  // Reverted to Tooltip based ToggleItem for cleaner layout
   const ToggleItem = ({ label, checked, onChange, tooltip }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string }) => (
       <div className="flex items-center justify-between py-3 transition-colors">
           <div className="flex items-center pr-4 flex-1 min-w-0">
@@ -115,14 +102,14 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
               <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2">
                   {t('settingsTheme')}
               </span>
-              <div className="flex p-1 bg-[var(--theme-bg-input)]/50 rounded-lg border border-[var(--theme-border-secondary)]">
+              <div className="flex p-1 bg-[var(--theme-bg-tertiary)]/50 rounded-lg border border-[var(--theme-border-secondary)]">
                   {themeOptions.map(option => (
                     <button
                         key={option.id}
                         onClick={() => setThemeId(option.id)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
                             themeId === option.id
-                            ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm'
+                            ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] shadow-sm'
                             : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
                         }`}
                     >
@@ -164,8 +151,6 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
           </div>
       </div>
 
-      <hr className="border-[var(--theme-border-primary)]/50" />
-
       {/* Font Size */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -185,8 +170,6 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
             <span>24px</span>
         </div>
       </div>
-
-      <hr className="border-[var(--theme-border-primary)]/50" />
 
       {/* Interface Toggles Grid */}
       <div>

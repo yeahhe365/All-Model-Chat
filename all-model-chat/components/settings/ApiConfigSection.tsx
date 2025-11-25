@@ -1,7 +1,9 @@
+
 import React, { useState } from 'react';
 import { KeyRound, Info, Check, AlertCircle } from 'lucide-react';
-import { Toggle } from './shared/Tooltip';
+import { Toggle } from '../shared/Tooltip';
 import { useResponsiveValue } from '../../hooks/useDevice';
+import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -29,8 +31,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [isApiKeyFocused, setIsApiKeyFocused] = useState(false);
 
   const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
-  const enabledInputClasses = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]";
-  
   const iconSize = useResponsiveValue(18, 20);
 
   // Visual blur effect for API key when not focused
@@ -85,7 +85,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                           onChange={(e) => setApiKey(e.target.value || null)}
                           onFocus={() => setIsApiKeyFocused(true)}
                           onBlur={() => setIsApiKeyFocused(false)}
-                          className={`${inputBaseClasses} ${enabledInputClasses} resize-y min-h-[80px] ${apiKeyBlurClass}`}
+                          className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] ${apiKeyBlurClass}`}
                           placeholder={t('apiConfig_key_placeholder')}
                           spellCheck={false}
                         />
@@ -102,7 +102,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 </div>
 
                 {/* Proxy Settings */}
-                <div className="space-y-3 pt-2 border-t border-[var(--theme-border-primary)]/50">
+                <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between py-2">
                         <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer flex items-center gap-2" onClick={() => setUseApiProxy(!useApiProxy)}>
                             API Proxy
@@ -120,7 +120,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                             type="text"
                             value={apiProxyUrl || ''}
                             onChange={(e) => setApiProxyUrl(e.target.value || null)}
-                            className={`${inputBaseClasses} ${enabledInputClasses}`}
+                            className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
                             placeholder={getProxyPlaceholder()}
                             aria-label="API Proxy URL"
                         />

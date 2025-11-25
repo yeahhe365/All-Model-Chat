@@ -1,7 +1,10 @@
+
+
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import { GEMINI_3_RO_MODELS } from "../../constants/modelConstants";
+import { DEEP_SEARCH_SYSTEM_PROMPT } from "../../constants/promptConstants";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -60,7 +63,9 @@ export const buildGenerationConfig = (
     isCodeExecutionEnabled?: boolean,
     isUrlContextEnabled?: boolean,
     thinkingLevel?: 'LOW' | 'HIGH',
-    aspectRatio?: string
+    aspectRatio?: string,
+    isDeepSearchEnabled?: boolean,
+    imageSize?: string
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         // This model has specific requirements and doesn't support other configs.
@@ -71,10 +76,36 @@ export const buildGenerationConfig = (
             }
         };
     }
+
+    if (modelId === 'gemini-3-pro-image-preview') {
+         const config: any = {
+            responseModalities: ['IMAGE', 'TEXT'],
+            imageConfig: {
+                aspectRatio: aspectRatio || '1:1',
+                imageSize: imageSize || '1K',
+            }
+         };
+         
+         // Add tools if enabled
+         const tools = [];
+         if (isGoogleSearchEnabled || isDeepSearchEnabled) tools.push({ googleSearch: {} });
+         if (tools.length > 0) config.tools = tools;
+         
+         if (systemInstruction) config.systemInstruction = systemInstruction;
+         
+         return config;
+    }
     
+    let finalSystemInstruction = systemInstruction;
+    if (isDeepSearchEnabled) {
+        finalSystemInstruction = finalSystemInstruction 
+            ? `${finalSystemInstruction}\n\n${DEEP_SEARCH_SYSTEM_PROMPT}`
+            : DEEP_SEARCH_SYSTEM_PROMPT;
+    }
+
     const generationConfig: any = {
         ...config,
-        systemInstruction: systemInstruction || undefined,
+        systemInstruction: finalSystemInstruction || undefined,
     };
     if (!generationConfig.systemInstruction) {
         delete generationConfig.systemInstruction;
@@ -112,7 +143,8 @@ export const buildGenerationConfig = (
     }
 
     const tools = [];
-    if (isGoogleSearchEnabled) {
+    // Deep Search requires Google Search tool
+    if (isGoogleSearchEnabled || isDeepSearchEnabled) {
         tools.push({ googleSearch: {} });
     }
     if (isCodeExecutionEnabled) {

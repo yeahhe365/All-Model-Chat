@@ -2,9 +2,9 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Expand } from 'lucide-react';
-import { getResponsiveValue } from '../utils/appUtils';
-import { sanitizeFilename, exportElementAsPng } from '../utils/exportUtils';
-import { useWindowContext } from '../contexts/WindowContext';
+import { getResponsiveValue } from '../../utils/appUtils';
+import { sanitizeFilename, exportElementAsPng, triggerDownload } from '../../utils/exportUtils';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -156,13 +156,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     const filename = `${sanitizeFilename(previewTitle)}.html`;
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const link = targetDocument.createElement('a');
-    link.href = url;
-    link.download = filename;
-    targetDocument.body.appendChild(link);
-    link.click();
-    targetDocument.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    triggerDownload(url, filename);
   };
 
   const handleScreenshot = async () => {

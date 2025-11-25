@@ -1,22 +1,20 @@
 
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
-import { translations, getKeyForRequest } from '../utils/appUtils';
-import { geminiServiceInstance } from '../services/geminiService';
-import { SlashCommandMenu } from './chat/input/SlashCommandMenu';
-import { ChatInputToolbar } from './chat/input/ChatInputToolbar';
-import { ChatInputActions } from './chat/input/ChatInputActions';
-import { ChatInputModals } from './chat/input/ChatInputModals';
-import { useChatInputModals } from '../hooks/useChatInputModals';
-import { useVoiceInput } from '../hooks/useVoiceInput';
-import { useSlashCommands } from '../hooks/useSlashCommands';
-import { useIsMobile, useIsDesktop } from '../hooks/useDevice';
-import { SelectedFileDisplay } from './chat/SelectedFileDisplay';
-import { useWindowContext } from '../contexts/WindowContext';
+import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../../types';
+import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
+import { translations, getKeyForRequest } from '../../utils/appUtils';
+import { geminiServiceInstance } from '../../services/geminiService';
+import { ChatInputModals } from './input/ChatInputModals';
+import { ChatInputArea } from './input/ChatInputArea';
+import { useChatInputModals } from '../../hooks/useChatInputModals';
+import { useVoiceInput } from '../../hooks/useVoiceInput';
+import { useSlashCommands } from '../../hooks/useSlashCommands';
+import { useIsDesktop } from '../../hooks/useDevice';
+import { useWindowContext } from '../../contexts/WindowContext';
+import { useChatInputState, INITIAL_TEXTAREA_HEIGHT_PX } from '../../hooks/useChatInputState';
 
-interface ChatInputProps {
+export interface ChatInputProps {
   appSettings: AppSettings;
   currentChatSettings: IndividualChatSettings;
   setAppFileError: (error: string | null) => void;
@@ -41,12 +39,16 @@ interface ChatInputProps {
   isImageEditModel?: boolean;
   aspectRatio?: string;
   setAspectRatio?: (ratio: string) => void;
+  imageSize?: string;
+  setImageSize?: (size: string) => void;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
   onToggleCodeExecution: () => void;
   isUrlContextEnabled: boolean;
   onToggleUrlContext: () => void;
+  isDeepSearchEnabled: boolean;
+  onToggleDeepSearch: () => void;
   onClearChat: () => void;
   onNewChat: () => void;
   onOpenSettings: () => void;
@@ -59,55 +61,48 @@ interface ChatInputProps {
   onTogglePip: () => void;
   isPipActive?: boolean;
   isHistorySidebarOpen?: boolean;
+  onSetDefaultModel: (modelId: string) => void;
+  generateQuadImages: boolean;
+  onToggleQuadImages: () => void;
 }
-
-const INITIAL_TEXTAREA_HEIGHT_PX = 28;
-const MAX_TEXTAREA_HEIGHT_PX = 150; 
 
 export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const {
     appSettings, currentChatSettings, setAppFileError, activeSessionId, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
     isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
     onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
-    isImagenModel, isImageEditModel, aspectRatio, setAspectRatio, onTranscribeAudio,
+    isImagenModel, isImageEditModel, aspectRatio, setAspectRatio, imageSize, setImageSize, onTranscribeAudio,
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
+    isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
-    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen,
+    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen, onSetDefaultModel,
+    generateQuadImages, onToggleQuadImages
   } = props;
 
-  const [inputText, setInputText] = useState('');
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [isAnimatingSend, setIsAnimatingSend] = useState(false);
-  const [fileIdInput, setFileIdInput] = useState('');
-  const [isAddingById, setIsAddingById] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
-  const [isAddingByUrl, setIsAddingByUrl] = useState(false);
-  const [isWaitingForUpload, setIsWaitingForUpload] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const {
+    inputText, setInputText,
+    isTranslating, setIsTranslating,
+    isAnimatingSend, setIsAnimatingSend,
+    fileIdInput, setFileIdInput,
+    isAddingById, setIsAddingById,
+    urlInput, setUrlInput,
+    isAddingByUrl, setIsAddingByUrl,
+    isWaitingForUpload, setIsWaitingForUpload,
+    isFullscreen, setIsFullscreen,
+    textareaRef,
+    justInitiatedFileOpRef,
+    prevIsProcessingFileRef,
+    isComposingRef,
+    adjustTextareaHeight,
+    clearCurrentDraft,
+    handleToggleFullscreen,
+    isMobile
+  } = useChatInputState(activeSessionId, isEditing);
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const justInitiatedFileOpRef = useRef(false);
-  const prevIsProcessingFileRef = useRef(isProcessingFile);
-  const isComposingRef = useRef(false);
-  
-  const isMobile = useIsMobile();
   const isDesktop = useIsDesktop();
-  
   const { document: targetDocument } = useWindowContext();
-
-  const adjustTextareaHeight = useCallback(() => {
-    if (isFullscreen) return; // Do not adjust height in fullscreen mode
-    const target = textareaRef.current;
-    if (!target) return;
-    // Use isMobile hook for reactive resizing instead of one-off calculation
-    const currentInitialHeight = isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX;
-    target.style.height = 'auto';
-    const scrollHeight = target.scrollHeight;
-    const newHeight = Math.max(currentInitialHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
-    target.style.height = `${newHeight}px`;
-  }, [isMobile, isFullscreen]);
 
   const {
     showCamera, showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -132,18 +127,11 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     slashCommandState, setSlashCommandState, allCommandsForHelp,
     handleCommandSelect, handleInputChange: handleSlashInputChange, handleSlashCommandExecution,
   } = useSlashCommands({
-    t, onToggleGoogleSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
+    t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
     onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction: handleAttachmentAction,
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
-    onTogglePip,
+    onTogglePip, onSetDefaultModel, currentModelId: currentChatSettings.modelId,
   });
-  
-  const clearCurrentDraft = useCallback(() => {
-    if (activeSessionId) {
-        const draftKey = `chatDraft_${activeSessionId}`;
-        localStorage.removeItem(draftKey);
-    }
-  }, [activeSessionId]);
   
   useEffect(() => {
     if (commandedInput) {
@@ -160,8 +148,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
       }
     }
   }, [commandedInput]);
-
-  useEffect(() => { adjustTextareaHeight(); }, [inputText, adjustTextareaHeight]);
 
   useEffect(() => {
     if (prevIsProcessingFileRef.current && !isProcessingFile && !isAddingById && justInitiatedFileOpRef.current) {
@@ -188,29 +174,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         }
     }
   }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft, isFullscreen]);
-
-  // Load draft from localStorage when session changes
-  useEffect(() => {
-      if (activeSessionId && !isEditing) {
-          const draftKey = `chatDraft_${activeSessionId}`;
-          const savedDraft = localStorage.getItem(draftKey);
-          setInputText(savedDraft || '');
-      }
-  }, [activeSessionId, isEditing]);
-
-  // Save draft to localStorage on input change (debounced)
-  useEffect(() => {
-      if (!activeSessionId) return;
-      const handler = setTimeout(() => {
-          const draftKey = `chatDraft_${activeSessionId}`;
-          if (inputText.trim()) {
-              localStorage.setItem(draftKey, inputText);
-          } else {
-              localStorage.removeItem(draftKey);
-          }
-      }, 500);
-      return () => clearTimeout(handler);
-  }, [inputText, activeSessionId]);
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
@@ -246,7 +209,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
 
   const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-    if (isProcessingFile || isAddingById || isModalOpen) return;
+    if (isAddingById || isModalOpen) return;
 
     const pastedText = event.clipboardData?.getData('text');
     const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
@@ -351,8 +314,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
 
     // On mobile (small screens), Enter usually creates a new line.
     // On desktop, Enter sends message, Shift+Enter creates a new line.
-    // Optimization: If it is a desktop device (pointer: fine), we always want Enter to send,
-    // even if the window is small (responsive mobile layout).
     if (e.key === 'Enter' && !e.shiftKey && (!isMobile || isDesktop)) {
         const trimmedInput = inputText.trim();
         if (trimmedInput.startsWith('/')) {
@@ -393,131 +354,106 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     toggleFunc();
     setTimeout(() => textareaRef.current?.focus(), 0);
   };
-
-  const handleToggleFullscreen = () => {
-      setIsFullscreen(prev => {
-          const newState = !prev;
-          if (newState) {
-              // Entering fullscreen, we want to focus. Height is handled by CSS.
-              setTimeout(() => textareaRef.current?.focus(), 50);
-          } else {
-              // Exiting fullscreen, need to reset height calculation
-              setTimeout(() => adjustTextareaHeight(), 0);
-          }
-          return newState;
-      });
-  };
   
-  // Conditional styles for fullscreen
-  const wrapperClass = isFullscreen 
-    ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation" 
-    : `bg-transparent ${isAnyModalOpen ? 'opacity-30 pointer-events-none' : ''}`;
-
-  const innerContainerClass = isFullscreen
-    ? "w-full max-w-6xl mx-auto flex flex-col h-full"
-    : `mx-auto w-full ${!isPipActive ? 'max-w-4xl' : ''} px-2 sm:px-3 pt-1 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
-
-  const formClass = isFullscreen
-    ? "flex-grow flex flex-col relative min-h-0"
-    : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
-
-  const inputContainerClass = isFullscreen
-    ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200"
-    : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)]";
+  const isGemini3ImageModel = currentChatSettings.modelId === 'gemini-3-pro-image-preview';
 
   const chatInputContent = (
-      <div
-        className={wrapperClass}
-        aria-hidden={isAnyModalOpen}
-      >
-        <div className={innerContainerClass}>
-            <ChatInputToolbar
-              isImagenModel={isImagenModel || false}
-              aspectRatio={aspectRatio}
-              setAspectRatio={setAspectRatio}
-              fileError={fileError}
-              showAddByIdInput={showAddByIdInput}
-              fileIdInput={fileIdInput}
-              setFileIdInput={setFileIdInput}
-              onAddFileByIdSubmit={handleAddFileByIdSubmit}
-              onCancelAddById={() => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); }}
-              isAddingById={isAddingById}
-              showAddByUrlInput={showAddByUrlInput}
-              urlInput={urlInput}
-              setUrlInput={setUrlInput}
-              onAddUrlSubmit={() => handleAddUrl(urlInput)}
-              onCancelAddUrl={() => { setShowAddByUrlInput(false); setUrlInput(''); textareaRef.current?.focus(); }}
-              isAddingByUrl={isAddingByUrl}
-              isLoading={isLoading}
-              t={t}
-            />
-            
-            <form onSubmit={handleSubmit} className={formClass}>
-                <SlashCommandMenu
-                    isOpen={slashCommandState.isOpen}
-                    commands={slashCommandState.filteredCommands}
-                    onSelect={handleCommandSelect}
-                    selectedIndex={slashCommandState.selectedIndex}
-                    className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
-                />
-                <div className={inputContainerClass}>
-                    {selectedFiles.length > 0 && (
-                      <div className="flex gap-2 overflow-x-auto pb-2 mb-1 custom-scrollbar px-1">
-                        {selectedFiles.map(file => (
-                          <SelectedFileDisplay key={file.id} file={file} onRemove={removeSelectedFile} onCancelUpload={onCancelUpload} />
-                        ))}
-                      </div>
-                    )}
-                    
-                    <textarea
-                        ref={textareaRef} value={inputText} onChange={handleInputChange}
-                        onKeyDown={handleKeyDown} onPaste={handlePaste}
-                        onCompositionStart={() => isComposingRef.current = true}
-                        onCompositionEnd={() => isComposingRef.current = false}
-                        placeholder={t('chatInputPlaceholder')}
-                        className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px]"
-                        style={{ height: isFullscreen ? '100%' : `${isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX}px` }}
-                        aria-label="Chat message input"
-                        onFocus={() => adjustTextareaHeight()} disabled={isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording}
-                        rows={1}
-                    />
-                    <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1">
-                        <ChatInputActions
-                            onAttachmentAction={handleAttachmentAction}
-                            disabled={isProcessingFile || isAddingById || isModalOpen || isWaitingForUpload}
-                            isGoogleSearchEnabled={isGoogleSearchEnabled}
-                            onToggleGoogleSearch={() => handleToggleToolAndFocus(onToggleGoogleSearch)}
-                            isCodeExecutionEnabled={isCodeExecutionEnabled}
-                            onToggleCodeExecution={() => handleToggleToolAndFocus(onToggleCodeExecution)}
-                            isUrlContextEnabled={isUrlContextEnabled}
-                            onToggleUrlContext={() => handleToggleToolAndFocus(onToggleUrlContext)}
-                            onRecordButtonClick={handleVoiceInputClick}
-                            onCancelRecording={handleCancelRecording}
-                            isRecording={isRecording}
-                            isMicInitializing={isMicInitializing}
-                            isTranscribing={isTranscribing}
-                            isLoading={isLoading}
-                            onStopGenerating={onStopGenerating}
-                            isEditing={isEditing}
-                            onCancelEdit={onCancelEdit}
-                            canSend={canSend}
-                            isWaitingForUpload={isWaitingForUpload}
-                            t={t}
-                            onTranslate={handleTranslate}
-                            isTranslating={isTranslating}
-                            inputText={inputText}
-                            onToggleFullscreen={handleToggleFullscreen}
-                            isFullscreen={isFullscreen}
-                        />
-                         {/* Hidden inputs for file selection, triggered by AttachmentMenu */}
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                        <input type="file" ref={imageInputRef} onChange={handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                        <input type="file" ref={videoInputRef} onChange={handleFileChange} accept={SUPPORTED_VIDEO_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                    </div>
-                </div>
-            </form>
-        </div>
-      </div>
+      <ChatInputArea 
+        toolbarProps={{
+            isImagenModel: isImagenModel || false,
+            isGemini3ImageModel,
+            aspectRatio,
+            setAspectRatio,
+            imageSize,
+            setImageSize,
+            fileError,
+            showAddByIdInput,
+            fileIdInput,
+            setFileIdInput,
+            onAddFileByIdSubmit: handleAddFileByIdSubmit,
+            onCancelAddById: () => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); },
+            isAddingById,
+            showAddByUrlInput,
+            urlInput,
+            setUrlInput,
+            onAddUrlSubmit: () => handleAddUrl(urlInput),
+            onCancelAddUrl: () => { setShowAddByUrlInput(false); setUrlInput(''); textareaRef.current?.focus(); },
+            isAddingByUrl,
+            isLoading,
+            t,
+            generateQuadImages,
+            onToggleQuadImages,
+        }}
+        actionsProps={{
+            onAttachmentAction: handleAttachmentAction,
+            disabled: isAddingById || isModalOpen || isWaitingForUpload,
+            isGoogleSearchEnabled,
+            onToggleGoogleSearch: () => handleToggleToolAndFocus(onToggleGoogleSearch),
+            isCodeExecutionEnabled,
+            onToggleCodeExecution: () => handleToggleToolAndFocus(onToggleCodeExecution),
+            isUrlContextEnabled,
+            onToggleUrlContext: () => handleToggleToolAndFocus(onToggleUrlContext),
+            isDeepSearchEnabled,
+            onToggleDeepSearch: () => handleToggleToolAndFocus(onToggleDeepSearch),
+            onRecordButtonClick: handleVoiceInputClick,
+            onCancelRecording: handleCancelRecording,
+            isRecording,
+            isMicInitializing,
+            isTranscribing,
+            isLoading,
+            onStopGenerating,
+            isEditing,
+            onCancelEdit,
+            canSend,
+            isWaitingForUpload,
+            t,
+            onTranslate: handleTranslate,
+            isTranslating,
+            inputText,
+            onToggleFullscreen: handleToggleFullscreen,
+            isFullscreen,
+        }}
+        slashCommandProps={{
+            isOpen: slashCommandState.isOpen,
+            commands: slashCommandState.filteredCommands,
+            onSelect: handleCommandSelect,
+            selectedIndex: slashCommandState.selectedIndex,
+        }}
+        fileDisplayProps={{
+            selectedFiles,
+            onRemove: removeSelectedFile,
+            onCancelUpload,
+        }}
+        inputProps={{
+            value: inputText,
+            onChange: handleInputChange,
+            onKeyDown: handleKeyDown,
+            onPaste: handlePaste,
+            textareaRef,
+            placeholder: t('chatInputPlaceholder'),
+            disabled: isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording,
+            onCompositionStart: () => isComposingRef.current = true,
+            onCompositionEnd: () => isComposingRef.current = false,
+            onFocus: adjustTextareaHeight,
+        }}
+        layoutProps={{
+            isFullscreen,
+            isPipActive,
+            isAnimatingSend,
+            isMobile,
+            initialTextareaHeight: isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX,
+        }}
+        fileInputRefs={{
+            fileInputRef,
+            imageInputRef,
+            videoInputRef,
+            handleFileChange,
+        }}
+        formProps={{
+            onSubmit: handleSubmit,
+        }}
+        t={t}
+      />
   );
 
   return (

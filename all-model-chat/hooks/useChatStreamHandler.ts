@@ -1,10 +1,10 @@
 
-import { Dispatch, SetStateAction, useCallback, useRef } from 'react';
-import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
+import { Dispatch, SetStateAction, useCallback } from 'react';
+import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualChatSettings } from '../types';
 import { Part, UsageMetadata, Chat } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService, showNotification, getTranslator, base64ToBlobUrl } from '../utils/appUtils';
-import { APP_LOGO_SVG_DATA_URI, APP_SETTINGS_KEY } from '../constants/appConstants';
+import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -33,16 +33,18 @@ export const useChatStreamHandler = ({
     activeJobs
 }: ChatStreamHandlerProps) => {
     const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
-    const firstContentPartTimeRef = useRef<Date | null>(null);
 
     const getStreamHandlers = useCallback((
         currentSessionId: string,
         generationId: string,
         abortController: AbortController,
-        generationStartTimeRef: React.MutableRefObject<Date | null>,
+        generationStartTime: Date,
         currentChatSettings: IndividualChatSettings,
     ) => {
         const newModelMessageIds = new Set<string>([generationId]);
+        // Local state for this specific generation stream instance
+        // This ensures concurrent streams don't overwrite each other's timing
+        let firstContentPartTime: Date | null = null;
 
         const streamOnError = (error: Error) => {
             handleApiError(error, currentSessionId, generationId);
@@ -51,23 +53,15 @@ export const useChatStreamHandler = ({
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any) => {
-            const getLang = () => {
-                try {
-                    const stored = localStorage.getItem(APP_SETTINGS_KEY);
-                    const settings = stored ? JSON.parse(stored) : {};
-                    const langSetting = settings.language || 'system';
-                    if (langSetting === 'system') {
-                        return navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en';
-                    }
-                    return langSetting;
-                } catch {
-                    return 'en';
-                }
-            };
-            const t = getTranslator(getLang());
+            // Use correct language from state, falling back to system logic if needed
+            const lang = appSettings.language === 'system' 
+                ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
+                : appSettings.language;
+            
+            const t = getTranslator(lang);
 
-            if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
-                firstContentPartTimeRef.current = new Date();
+            if (appSettings.isStreamingEnabled && !firstContentPartTime) {
+                firstContentPartTime = new Date();
             }
 
             // Record Token Usage Statistics
@@ -81,16 +75,18 @@ export const useChatStreamHandler = ({
 
             updateAndPersistSessions(prev => prev.map(s => {
                 if (s.id !== currentSessionId) return s;
-                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTimeRef.current)?.cumulativeTotalTokens || 0;
+                let cumulativeTotal = [...s.messages].reverse().find(m => m.cumulativeTotalTokens !== undefined && m.generationStartTime !== generationStartTime)?.cumulativeTotalTokens || 0;
                 
                 let completedMessageForNotification: ChatMessage | null = null;
                 
                 let finalMessages = s.messages
                     .map(m => {
-                        if (m.generationStartTime === generationStartTimeRef.current && m.isLoading) {
+                        // Identify message by exact object match on timestamp to ensure we update the correct one in concurrent scenarios
+                        // Note: comparing Date objects requires .getTime()
+                        if (m.generationStartTime && m.generationStartTime.getTime() === generationStartTime.getTime() && m.isLoading) {
                             let thinkingTime = m.thinkingTimeMs;
-                            if (thinkingTime === undefined && firstContentPartTimeRef.current && generationStartTimeRef.current) {
-                                thinkingTime = firstContentPartTimeRef.current.getTime() - generationStartTimeRef.current.getTime();
+                            if (thinkingTime === undefined && firstContentPartTime) {
+                                thinkingTime = firstContentPartTime.getTime() - generationStartTime.getTime();
                             }
                             const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
                             const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
@@ -101,7 +97,7 @@ export const useChatStreamHandler = ({
                             const completedMessage = {
                                 ...m,
                                 isLoading: false,
-                                content: m.content, // Do not append "[Stopped by user]"
+                                content: m.content,
                                 thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
                                 generationEndTime: new Date(),
                                 thinkingTimeMs: thinkingTime,
@@ -127,8 +123,6 @@ export const useChatStreamHandler = ({
                         return m;
                     });
                 
-                // If the generation was stopped by the user, we keep the message bubble even if it's empty.
-                // Otherwise, we filter out any empty model messages that might have been created (e.g., for tool calls).
                 if (!abortController.signal.aborted) {
                     finalMessages = finalMessages.filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc || (m.thoughts && m.thoughts.trim() !== ''));
                 }
@@ -145,24 +139,30 @@ export const useChatStreamHandler = ({
                 }
 
                 return {...s, messages: finalMessages, settings: s.settings};
-            }), { persist: true }); // Explicitly persist on complete.
+            }), { persist: true });
             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
 
         const streamOnPart = (part: Part) => {
+            const anyPart = part as any;
             let isFirstContentPart = false;
-            if (appSettings.isStreamingEnabled && !firstContentPartTimeRef.current) {
-                firstContentPartTimeRef.current = new Date();
+            
+            const hasMeaningfulContent = 
+                (anyPart.text && anyPart.text.trim().length > 0) || 
+                anyPart.executableCode || 
+                anyPart.codeExecutionResult || 
+                anyPart.inlineData;
+
+            if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
+                firstContentPartTime = new Date();
                 isFirstContentPart = true;
             }
         
             updateAndPersistSessions(prev => {
-                // Use findIndex for performance instead of mapping the whole array
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
                 if (sessionIndex === -1) return prev;
         
-                // Create copies only for the path that is changing
                 const newSessions = [...prev];
                 const sessionToUpdate = { ...newSessions[sessionIndex] };
                 newSessions[sessionIndex] = sessionToUpdate;
@@ -172,10 +172,10 @@ export const useChatStreamHandler = ({
         
                 // Update thinking time on the first content part
                 if (isFirstContentPart) {
-                    const thinkingTime = generationStartTimeRef.current ? (firstContentPartTimeRef.current!.getTime() - generationStartTimeRef.current.getTime()) : null;
+                    const thinkingTime = (firstContentPartTime!.getTime() - generationStartTime.getTime());
                     for (let i = messages.length - 1; i >= 0; i--) {
                         const msg = messages[i];
-                        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime === generationStartTimeRef.current) {
+                        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
                             messages[i] = { ...msg, thinkingTimeMs: thinkingTime ?? msg.thinkingTimeMs };
                             break;
                         }
@@ -184,12 +184,11 @@ export const useChatStreamHandler = ({
         
                 let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
                 const lastMessageIndex = messages.length - 1;
-                const anyPart = part as any;
         
                 const createNewMessage = (content: string): ChatMessage => {
                     const id = generateUniqueId();
                     newModelMessageIds.add(id);
-                    return { id, role: 'model', content, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTimeRef.current! };
+                    return { id, role: 'model', content, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTime };
                 };
         
                 if (anyPart.text) {
@@ -247,7 +246,6 @@ export const useChatStreamHandler = ({
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
                 if (sessionIndex === -1) return prev;
         
-                // Create copies only for the updated path
                 const newSessions = [...prev];
                 const sessionToUpdate = { ...newSessions[sessionIndex] };
                 newSessions[sessionIndex] = sessionToUpdate;
@@ -258,7 +256,8 @@ export const useChatStreamHandler = ({
                 const lastMessageIndex = messages.length - 1;
                 if (lastMessageIndex >= 0) {
                     const lastMessage = messages[lastMessageIndex];
-                    if (lastMessage.role === 'model' && lastMessage.isLoading) {
+                    // Identify message by matching start time
+                    if (lastMessage.role === 'model' && lastMessage.isLoading && lastMessage.generationStartTime && lastMessage.generationStartTime.getTime() === generationStartTime.getTime()) {
                         const updatedMessage = {
                             ...lastMessage,
                             thoughts: (lastMessage.thoughts || '') + thoughtChunk,
@@ -271,10 +270,9 @@ export const useChatStreamHandler = ({
             }, { persist: false });
         };
         
-        firstContentPartTimeRef.current = null;
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
     
     return { getStreamHandlers };
 };

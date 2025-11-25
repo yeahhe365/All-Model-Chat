@@ -1,18 +1,18 @@
 
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { AppSettings, ModelOption } from '../types';
+import { AppSettings, ModelOption } from '../../types';
 import { X } from 'lucide-react';
-import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
-import { Theme } from '../constants/themeConstants';
-import { translations, getResponsiveValue, logService } from '../utils/appUtils';
-import { ApiConfigSection } from './settings/ApiConfigSection';
-import { AppearanceSection } from './settings/AppearanceSection';
-import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
-import { DataManagementSection } from './settings/DataManagementSection';
-import { AboutSection } from './settings/AboutSection';
-import { Modal } from './shared/Modal';
-import { IconInterface, IconModel, IconApiKey, IconData, IconAbout } from './icons/CustomIcons';
+import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../../constants/appConstants';
+import { Theme } from '../../constants/themeConstants';
+import { translations, getResponsiveValue, logService } from '../../utils/appUtils';
+import { ApiConfigSection } from './ApiConfigSection';
+import { AppearanceSection } from './AppearanceSection';
+import { ChatBehaviorSection } from './ChatBehaviorSection';
+import { DataManagementSection } from './DataManagementSection';
+import { ShortcutsSection } from './ShortcutsSection';
+import { AboutSection } from './AboutSection';
+import { Modal } from '../shared/Modal';
+import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../icons/CustomIcons';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ interface SettingsModalProps {
   t: (key: keyof typeof translations) => string;
 }
 
-type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'about';
+type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'shortcuts' | 'about';
 
 const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 
@@ -52,7 +52,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
     try {
       const saved = localStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
-      const validTabs: SettingsTab[] = ['interface', 'model', 'account', 'data', 'about'];
+      const validTabs: SettingsTab[] = ['interface', 'model', 'account', 'data', 'shortcuts', 'about'];
       if (saved && validTabs.includes(saved as SettingsTab)) {
         return saved as SettingsTab;
       }
@@ -112,6 +112,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: 'model' as SettingsTab, labelKey: 'settingsTabModel', icon: IconModel },
     { id: 'account' as SettingsTab, labelKey: 'settingsTabAccount', icon: IconApiKey },
     { id: 'data' as SettingsTab, labelKey: 'settingsTabData', icon: IconData },
+    { id: 'shortcuts' as SettingsTab, labelKey: 'settingsTabShortcuts', icon: IconKeyboard },
     { id: 'about' as SettingsTab, labelKey: 'settingsTabAbout', icon: IconAbout },
   ], []);
 
@@ -212,6 +213,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
                 </div>
             )}
+            {activeTab === 'shortcuts' && ( <div className={animClass}><ShortcutsSection t={t} /></div> )}
             {activeTab === 'about' && ( <div className={animClass}><AboutSection t={t} /></div> )}
         </div>
       );
@@ -231,7 +233,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
              <button 
                 ref={closeButtonRef}
                 onClick={handleClose} 
-                className="p-2 rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                className="p-2 rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
                 aria-label={t('close')}
             >
                 <X size={20} strokeWidth={2} />

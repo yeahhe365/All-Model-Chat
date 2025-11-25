@@ -1,10 +1,50 @@
 import React from 'react';
-import { SettingsModal } from '../SettingsModal';
-import { LogViewer } from '../LogViewer';
-import { PreloadedMessagesModal } from '../PreloadedMessagesModal';
-import { ExportChatModal } from '../ExportChatModal';
-import { AppModalsProps } from '../../types';
+import { SettingsModal } from '../settings/SettingsModal';
+import { LogViewer } from '../log-viewer/LogViewer';
+import { PreloadedMessagesModal } from '../scenarios/PreloadedMessagesModal';
+import { ExportChatModal } from './ExportChatModal';
 import { AVAILABLE_THEMES } from '../../constants/themeConstants';
+import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
+import { translations } from '../../utils/appUtils';
+
+export interface AppModalsProps {
+  isSettingsModalOpen: boolean;
+  setIsSettingsModalOpen: (isOpen: boolean) => void;
+  appSettings: AppSettings;
+  availableModels: ModelOption[];
+  handleSaveSettings: (newSettings: AppSettings) => void;
+  isModelsLoading: boolean;
+  modelsLoadingError: string | null;
+  clearCacheAndReload: () => void;
+  clearAllHistory: () => void;
+  handleInstallPwa: () => void;
+  installPromptEvent: any;
+  isStandalone: boolean;
+
+  handleImportSettings: (file: File) => void;
+  handleExportSettings: () => void;
+  handleImportHistory: (file: File) => void;
+  handleExportHistory: () => void;
+  handleImportAllScenarios: (file: File) => void;
+  handleExportAllScenarios: () => void;
+
+  isPreloadedMessagesModalOpen: boolean;
+  setIsPreloadedMessagesModalOpen: (isOpen: boolean) => void;
+  savedScenarios: SavedScenario[];
+  handleSaveAllScenarios: (scenarios: SavedScenario[]) => void;
+  handleLoadPreloadedScenario: (scenario: SavedScenario) => void;
+
+  isExportModalOpen: boolean;
+  setIsExportModalOpen: (isOpen: boolean) => void;
+  handleExportChat: (format: 'png' | 'html' | 'txt' | 'json') => Promise<void>;
+  exportStatus: 'idle' | 'exporting';
+
+  isLogViewerOpen: boolean;
+  setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
+  currentChatSettings: ChatSettings;
+
+  t: (key: keyof typeof translations, fallback?: string) => string;
+}
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
     const {
