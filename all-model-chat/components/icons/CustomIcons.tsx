@@ -4,6 +4,10 @@
 
 
 
+
+
+
+
 import React from 'react';
 
 interface IconProps {
@@ -37,6 +41,13 @@ export const IconModel: React.FC<IconProps> = ({ size = defaultSize, strokeWidth
     <path d="M12 7v4" />
     <line x1="8" x2="8" y1="16" y2="16" />
     <line x1="16" x2="16" y1="16" y2="16" />
+  </svg>
+);
+
+// Safety Icon (Shield)
+export const IconSafety: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
   </svg>
 );
 

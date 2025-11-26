@@ -214,7 +214,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
                     sessionToUpdate.thinkingLevel,
                     aspectRatio,
                     sessionToUpdate.isDeepSearchEnabled,
-                    imageSize 
+                    imageSize,
+                    sessionToUpdate.safetySettings
                 ),
             });
         }

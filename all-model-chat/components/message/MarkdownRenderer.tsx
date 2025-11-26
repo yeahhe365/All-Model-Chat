@@ -56,6 +56,15 @@ const InlineCode = ({ className, children, inline, ...props }: any) => {
     );
 };
 
+// Helper to recursively extract text from React children
+const extractTextFromNode = (node: React.ReactNode): string => {
+    if (!node) return '';
+    if (typeof node === 'string' || typeof node === 'number') return String(node);
+    if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
+    if (React.isValidElement(node)) return extractTextFromNode(node.props.children);
+    return '';
+};
+
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   content,
   isLoading,
@@ -135,7 +144,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
       const codeClassName = codeElement?.props?.className || '';
       const codeContent = codeElement?.props?.children;
-      const rawCode = Array.isArray(codeContent) ? codeContent.join('') : codeContent;
+      
+      // Extract text reliably from potential React Element tree (from highlighting)
+      const rawCode = extractTextFromNode(codeContent);
       
       const langMatch = codeClassName.match(/language-(\S+)/);
       const language = langMatch ? langMatch[1] : '';
@@ -192,3 +203,4 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     </ReactMarkdown>
   );
 });
+    

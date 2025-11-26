@@ -1,10 +1,10 @@
 
-
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import { GEMINI_3_RO_MODELS } from "../../constants/modelConstants";
 import { DEEP_SEARCH_SYSTEM_PROMPT } from "../../constants/promptConstants";
+import { SafetySetting } from "../../types/settings";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -65,7 +65,8 @@ export const buildGenerationConfig = (
     thinkingLevel?: 'LOW' | 'HIGH',
     aspectRatio?: string,
     isDeepSearchEnabled?: boolean,
-    imageSize?: string
+    imageSize?: string,
+    safetySettings?: SafetySetting[]
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         // This model has specific requirements and doesn't support other configs.
@@ -106,6 +107,7 @@ export const buildGenerationConfig = (
     const generationConfig: any = {
         ...config,
         systemInstruction: finalSystemInstruction || undefined,
+        safetySettings: safetySettings || undefined,
     };
     if (!generationConfig.systemInstruction) {
         delete generationConfig.systemInstruction;

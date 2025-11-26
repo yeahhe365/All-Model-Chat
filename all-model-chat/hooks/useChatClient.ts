@@ -43,6 +43,7 @@ export const useChatClient = ({
         isUrlContextEnabled,
         isDeepSearchEnabled,
         lockedApiKey,
+        safetySettings,
     } = currentChatSettings;
 
     useEffect(() => {
@@ -86,7 +87,8 @@ export const useChatClient = ({
                     activeSession.settings.thinkingLevel,
                     aspectRatio, 
                     activeSession.settings.isDeepSearchEnabled,
-                    imageSize 
+                    imageSize,
+                    activeSession.settings.safetySettings
                 )
             });
             setChat(newChat);
@@ -112,6 +114,7 @@ export const useChatClient = ({
         lockedApiKey,
         aspectRatio,
         imageSize,
+        safetySettings,
         // savedSessions is purposely omitted to avoid cycles, activeSession lookup inside effect handles it
     ]);
 
