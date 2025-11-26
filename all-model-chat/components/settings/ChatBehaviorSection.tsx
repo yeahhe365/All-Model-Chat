@@ -1,6 +1,8 @@
+
 import React from 'react';
-import { ModelOption } from '../../types';
+import { ModelOption, SafetySetting } from '../../types';
 import { ModelVoiceSettings } from './ModelVoiceSettings';
+import { SafetySection } from './SafetySection';
 
 interface ChatBehaviorSectionProps {
   modelId: string;
@@ -30,6 +32,8 @@ interface ChatBehaviorSectionProps {
   setThinkingLevel?: (value: 'LOW' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
+  safetySettings?: SafetySetting[];
+  setSafetySettings: (settings: SafetySetting[]) => void;
   t: (key: string) => string;
 }
 
@@ -37,7 +41,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
   const { t } = props;
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-10">
         <ModelVoiceSettings
             modelId={props.modelId}
             setModelId={props.setModelId}
@@ -68,6 +72,14 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
             setTopP={props.setTopP}
             t={t}
         />
+        
+        <div className="pt-6 border-t border-[var(--theme-border-secondary)]">
+            <SafetySection 
+                safetySettings={props.safetySettings}
+                setSafetySettings={props.setSafetySettings}
+                t={t}
+            />
+        </div>
     </div>
   );
 };

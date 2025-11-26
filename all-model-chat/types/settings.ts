@@ -7,6 +7,27 @@ export interface ModelOption {
   isPinned?: boolean;
 }
 
+export enum HarmCategory {
+  HARM_CATEGORY_HARASSMENT = 'HARM_CATEGORY_HARASSMENT',
+  HARM_CATEGORY_HATE_SPEECH = 'HARM_CATEGORY_HATE_SPEECH',
+  HARM_CATEGORY_SEXUALLY_EXPLICIT = 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+  HARM_CATEGORY_DANGEROUS_CONTENT = 'HARM_CATEGORY_DANGEROUS_CONTENT',
+  HARM_CATEGORY_CIVIC_INTEGRITY = 'HARM_CATEGORY_CIVIC_INTEGRITY',
+}
+
+export enum HarmBlockThreshold {
+  OFF = 'OFF',
+  BLOCK_NONE = 'BLOCK_NONE',
+  BLOCK_ONLY_HIGH = 'BLOCK_ONLY_HIGH',
+  BLOCK_MEDIUM_AND_ABOVE = 'BLOCK_MEDIUM_AND_ABOVE',
+  BLOCK_LOW_AND_ABOVE = 'BLOCK_LOW_AND_ABOVE',
+}
+
+export interface SafetySetting {
+    category: HarmCategory;
+    threshold: HarmBlockThreshold;
+}
+
 export interface ChatSettings {
   modelId: string;
   temperature: number;
@@ -15,12 +36,13 @@ export interface ChatSettings {
   systemInstruction: string;
   ttsVoice: string;
   thinkingBudget: number;
-  thinkingLevel?: 'LOW' | 'HIGH'; // New for Gemini 3.0
+  thinkingLevel?: 'LOW' | 'HIGH';
   lockedApiKey?: string | null;
   isGoogleSearchEnabled?: boolean;
   isCodeExecutionEnabled?: boolean;
   isUrlContextEnabled?: boolean;
   isDeepSearchEnabled?: boolean;
+  safetySettings?: SafetySetting[];
 }
 
 export interface AppSettings extends ChatSettings {

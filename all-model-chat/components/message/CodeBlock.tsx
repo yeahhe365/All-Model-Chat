@@ -21,6 +21,14 @@ const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
     );
 };
 
+// Helper to recursively extract text from React children (handles string, array, elements)
+const extractTextFromNode = (node: React.ReactNode): string => {
+    if (!node) return '';
+    if (typeof node === 'string' || typeof node === 'number') return String(node);
+    if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
+    if (React.isValidElement(node)) return extractTextFromNode(node.props.children);
+    return '';
+};
 
 interface CodeBlockProps {
   children: React.ReactNode;
@@ -47,15 +55,15 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         (child): child is React.ReactElement => React.isValidElement(child)
     );
 
-    // Synchronously resolve content string to prevent button flicker or disappearance
+    // Synchronously resolve content string using robust extraction
     let currentContent = '';
-    if (codeElement && codeElement.props && codeElement.props.children) {
-        if (typeof codeElement.props.children === 'string') {
-            currentContent = codeElement.props.children;
-        } else if (Array.isArray(codeElement.props.children)) {
-            currentContent = codeElement.props.children.join('');
-        }
+    if (codeElement) {
+        currentContent = extractTextFromNode(codeElement.props.children);
+    } else {
+        // Fallback if no code element found (direct pre content)
+        currentContent = extractTextFromNode(children);
     }
+
     // Update ref for handlers
     if (currentContent) {
         codeText.current = currentContent;
@@ -72,11 +80,14 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         const preElement = preRef.current;
         if (!preElement) return;
 
-        // Fallback extraction if props failed (rare)
+        // Fallback extraction if props extraction yielded nothing (e.g. purely dangerous HTML prop)
+        // We verify against innerText to ensure we have the visible text
         if (!currentContent) {
             const domCodeEl = preElement.querySelector('code');
             if (domCodeEl) {
                 codeText.current = domCodeEl.textContent || '';
+            } else {
+                codeText.current = preElement.textContent || '';
             }
         }
 
@@ -201,3 +212,4 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         </div>
     );
 };
+    

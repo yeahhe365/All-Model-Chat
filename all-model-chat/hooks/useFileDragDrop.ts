@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from 'react';
+import { generateFolderContext } from '../utils/folderImportUtils';
 
 interface UseFileDragDropProps {
     onFilesDropped: (files: FileList | File[]) => Promise<void>;
@@ -37,13 +38,94 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
         setIsAppDraggingOver(false);
     }, []);
 
+    // Helper to recursively read entries from a dropped directory
+    const scanEntry = async (entry: any, path: string = ''): Promise<File[]> => {
+        if (entry.isFile) {
+            return new Promise((resolve) => {
+                entry.file((file: File) => {
+                    // Inject webkitRelativePath for structure preservation in generateFolderContext
+                    // This mimics the behavior of <input type="file" webkitdirectory>
+                    const relativePath = path + file.name;
+                    Object.defineProperty(file, 'webkitRelativePath', {
+                        value: relativePath,
+                        writable: true
+                    });
+                    resolve([file]);
+                });
+            });
+        } else if (entry.isDirectory) {
+            const dirReader = entry.createReader();
+            const allEntries: any[] = [];
+            
+            const readEntries = async (): Promise<any[]> => {
+                return new Promise((resolve, reject) => {
+                    dirReader.readEntries((entries: any[]) => {
+                        resolve(entries);
+                    }, reject);
+                });
+            };
+
+            try {
+                let entries = await readEntries();
+                // readEntries might not return all at once, loop until empty array is returned
+                while (entries.length > 0) {
+                    allEntries.push(...entries);
+                    entries = await readEntries();
+                }
+            } catch (e) {
+                console.warn('Error reading directory entries during drop', e);
+            }
+            
+            const filesArrays = await Promise.all(allEntries.map(child => scanEntry(child, path + entry.name + '/')));
+            return filesArrays.flat();
+        }
+        return [];
+    };
+
     const handleAppDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         setIsAppDraggingOver(false);
-        const files = e.dataTransfer.files;
-        if (files?.length) {
-            await onFilesDropped(files);
+
+        const items = e.dataTransfer.items;
+        let hasDirectory = false;
+
+        // Check if any dropped item is a directory
+        if (items) {
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                // webkitGetAsEntry is non-standard but widely supported
+                if (item.kind === 'file' && typeof item.webkitGetAsEntry === 'function') {
+                    const entry = item.webkitGetAsEntry();
+                    if (entry && entry.isDirectory) {
+                        hasDirectory = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (hasDirectory) {
+            // Handle directory drop: recursive scan and convert to text context
+            const entries = Array.from(items)
+                .filter(item => item.kind === 'file')
+                .map(item => item.webkitGetAsEntry())
+                .filter(Boolean);
+            
+            const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));
+            const flatFiles = filesArrays.flat();
+            
+            if (flatFiles.length > 0) {
+                // Convert list of files to a single text context file (same as Import Folder button)
+                const contextFile = await generateFolderContext(flatFiles as unknown as FileList);
+                await onFilesDropped([contextFile]);
+            }
+        } else {
+            // Standard file drop
+            const files = e.dataTransfer.files;
+            if (files?.length) {
+                await onFilesDropped(files);
+            }
         }
     }, [onFilesDropped]);
 

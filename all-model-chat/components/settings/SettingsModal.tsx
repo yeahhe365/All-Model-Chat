@@ -171,6 +171,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     showThoughts={currentSettings.showThoughts} setShowThoughts={(v) => updateSetting('showThoughts', v)}
                     thinkingBudget={currentSettings.thinkingBudget} setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
                     thinkingLevel={currentSettings.thinkingLevel} setThinkingLevel={(v) => updateSetting('thinkingLevel', v)}
+                    safetySettings={currentSettings.safetySettings} setSafetySettings={(v) => updateSetting('safetySettings', v)}
                     isModelsLoading={isModelsLoading}
                     modelsLoadingError={modelsLoadingError}
                     availableModels={availableModels}
