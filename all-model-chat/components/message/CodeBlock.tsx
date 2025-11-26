@@ -42,6 +42,25 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     
     const { isCopied, copyToClipboard } = useCopyToClipboard();
 
+    // Find the code element (InlineCode or standard code tag)
+    const codeElement = React.Children.toArray(children).find(
+        (child): child is React.ReactElement => React.isValidElement(child)
+    );
+
+    // Synchronously resolve content string to prevent button flicker or disappearance
+    let currentContent = '';
+    if (codeElement && codeElement.props && codeElement.props.children) {
+        if (typeof codeElement.props.children === 'string') {
+            currentContent = codeElement.props.children;
+        } else if (Array.isArray(codeElement.props.children)) {
+            currentContent = codeElement.props.children.join('');
+        }
+    }
+    // Update ref for handlers
+    if (currentContent) {
+        codeText.current = currentContent;
+    }
+
     // Effect to sync with global prop if user has not interacted
     useEffect(() => {
         if (!hasUserInteracted.current) {
@@ -53,9 +72,12 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         const preElement = preRef.current;
         if (!preElement) return;
 
-        const codeElement = preElement.querySelector('code');
-        if (codeElement) {
-            codeText.current = codeElement.innerText;
+        // Fallback extraction if props failed (rare)
+        if (!currentContent) {
+            const domCodeEl = preElement.querySelector('code');
+            if (domCodeEl) {
+                codeText.current = domCodeEl.textContent || '';
+            }
         }
 
         const isCurrentlyOverflowing = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
@@ -63,10 +85,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
         if (isCurrentlyOverflowing !== isOverflowing) {
             setIsOverflowing(isCurrentlyOverflowing);
         }
-
-        // Apply style directly to prevent flicker.
-        // We control max-height via style prop in render now for smoother transitions
-    }, [children, isExpanded, isOverflowing]);
+    }, [children, isExpanded, isOverflowing, currentContent]);
 
     const handleToggleExpand = () => {
         hasUserInteracted.current = true;
@@ -78,11 +97,6 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
             copyToClipboard(codeText.current);
         }
     };
-
-    // Find the code element. It might be an InlineCode component instance now.
-    const codeElement = React.Children.toArray(children).find(
-        (child): child is React.ReactElement => React.isValidElement(child)
-    );
     
     const langMatch = className?.match(/language-(\S+)/);
     let language = langMatch ? langMatch[1] : 'txt';
@@ -94,20 +108,27 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     else if (language === 'json') mimeType = 'application/json';
     else if (language === 'markdown' || language === 'md') mimeType = 'text/markdown';
 
-    const likelyHTML = isLikelyHtml(codeText.current);
-    const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (likelyHTML ? 'text/html' : 'text/plain');
-    const finalLanguage = language === 'txt' && likelyHTML ? 'html' : (language === 'xml' && likelyHTML ? 'html' : language);
+    // Determine if HTML features should be active based on current content OR language tag
+    const contentLooksLikeHtml = isLikelyHtml(codeText.current);
+    const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language.toLowerCase());
+    
+    // Show preview if content looks like HTML OR if the block is explicitly tagged as html/xml/svg
+    const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
+
+    const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (showPreview ? 'text/html' : 'text/plain');
+    // Adjust final language display if content looks like HTML but was typed as txt
+    const finalLanguage = language === 'txt' && contentLooksLikeHtml ? 'html' : (language === 'xml' && contentLooksLikeHtml ? 'html' : language);
 
     return (
         <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] overflow-hidden shadow-sm">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--theme-border-secondary)]/30 bg-[var(--theme-bg-code-block)]/50 backdrop-blur-sm">
                 
-                <div className="flex items-center gap-2 pl-1">
+                <div className="flex items-center gap-2 pl-1 min-w-0">
                     <LanguageIcon language={finalLanguage} />
                 </div>
                 
-                <div className="flex items-center gap-0.5">
-                    {likelyHTML && (
+                <div className="flex items-center gap-0.5 flex-shrink-0">
+                    {showPreview && (
                         <>
                             <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
                                 <Expand size={14} strokeWidth={2} /> 
@@ -146,7 +167,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
             <div className="relative">
                 <pre 
                     ref={preRef} 
-                    className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar scroll-smooth`}
+                    className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar scroll-smooth !overflow-x-auto`}
                     style={{
                         transition: 'max-height 0.3s ease-out',
                         overflowY: 'auto',

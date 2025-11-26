@@ -1,3 +1,4 @@
+
 import { useRef, useCallback, useState, useLayoutEffect } from 'react';
 import { ChatMessage } from '../types';
 
@@ -7,8 +8,21 @@ interface ChatScrollProps {
 }
 
 export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => {
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const [scrollNavVisibility, setScrollNavVisibility] = useState({ up: false, down: false });
+    
+    const savedScrollTop = useRef<number>(0);
+    
+    // Callback ref to handle node mounting/unmounting and restore scroll
+    const setScrollContainerRef = useCallback((node: HTMLDivElement | null) => {
+        scrollContainerRef.current = node;
+        if (node) {
+            // Restore scroll position if we have a saved value
+            if (savedScrollTop.current > 0) {
+                node.scrollTop = savedScrollTop.current;
+            }
+        }
+    }, []);
     
     // This ref stores the scroll state *before* new messages are rendered.
     const scrollStateBeforeUpdate = useRef<{ scrollHeight: number; scrollTop: number; } | null>(null);
@@ -36,15 +50,12 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
             }
             
             // After using the captured state, reset it to null.
-            // This prevents this effect from running with stale data on subsequent re-renders
-            // that are not triggered by a message change, which could interfere with user scrolling.
             scrollStateBeforeUpdate.current = null;
         }
-    }); // No dependency array, runs after every render to apply the adjustment once.
+    });
 
 
     // Capture scroll state *before* the DOM updates with new messages.
-    // This runs after React calculates the DOM changes but before it commits them to the screen.
     useLayoutEffect(() => {
         const container = scrollContainerRef.current;
         if (container) {
@@ -53,7 +64,7 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
                 scrollTop: container.scrollTop,
             };
         }
-    }, [messages]); // This effect runs only when `messages` change.
+    }, [messages]);
 
     const scrollToNextTurn = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -114,18 +125,21 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
             const { scrollTop, scrollHeight, clientHeight } = container;
             const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
             const isAtTop = scrollTop < 100;
+            
+            // Save position for restoration
+            savedScrollTop.current = scrollTop;
 
             setScrollNavVisibility({
                 up: !isAtTop && scrollHeight > clientHeight,
                 down: !isAtBottom,
             });
-            // This ref is still useful for other parts of the app (like nav buttons)
             userScrolledUp.current = !isAtBottom;
         }
     }, [userScrolledUp]);
     
     return {
-        scrollContainerRef,
+        scrollContainerRef, // The RefObject (for external imperative access)
+        setScrollContainerRef, // The callback ref (for the DOM element)
         scrollNavVisibility,
         handleScroll,
         scrollToNextTurn,

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedChatSession, ChatGroup } from '../../types';
 import { translations } from '../../utils/appUtils';
@@ -7,6 +8,7 @@ import { SessionItem } from './SessionItem';
 import { GroupItem } from './GroupItem';
 import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 export interface HistorySidebarProps {
   isOpen: boolean;
@@ -64,14 +66,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const editInputRef = useRef<HTMLInputElement>(null);
   const [newlyTitledSessionId, setNewlyTitledSessionId] = useState<string | null>(null);
   const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
+  
+  const { document: targetDocument } = useWindowContext();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) setActiveMenu(null);
     };
-    if (activeMenu) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activeMenu]);
+    if (activeMenu) targetDocument.addEventListener('mousedown', handleClickOutside);
+    return () => targetDocument.removeEventListener('mousedown', handleClickOutside);
+  }, [activeMenu, targetDocument]);
 
   useEffect(() => {
     if (editingItem) editInputRef.current?.focus();

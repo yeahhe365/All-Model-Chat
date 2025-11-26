@@ -28,7 +28,7 @@ const App: React.FC = () => {
       appFileError, setAppFileError, isAppProcessingFile,
       savedSessions, savedGroups, activeSessionId,
       apiModels, isModelsLoading, modelsLoadingError, isSwitchingModel,
-      scrollContainerRef, savedScenarios, isAppDraggingOver,
+      scrollContainerRef, setScrollContainerRef, savedScenarios, isAppDraggingOver,
       aspectRatio, setAspectRatio, ttsMessageId,
       loadChatSession, startNewChat, handleClearCurrentChat,
       handleSelectModelInHeader, handleProcessAndAddFiles, handleSendMessage,
@@ -71,6 +71,7 @@ const App: React.FC = () => {
     currentChatSettings, handleSelectModelInHeader,
     isSettingsModalOpen, isPreloadedMessagesModalOpen,
     setIsLogViewerOpen, onTogglePip: togglePip, isPipSupported,
+    pipWindow // Pass the PiP window to attach shortcut listeners
   });
 
   const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
@@ -244,6 +245,7 @@ const App: React.FC = () => {
     modelsLoadingError,
     messages,
     scrollContainerRef,
+    setScrollContainerRef, // Pass the new ref callback
     onScrollContainerScroll: handleScroll,
     onEditMessage: handleEditMessage,
     onDeleteMessage: handleDeleteMessage,

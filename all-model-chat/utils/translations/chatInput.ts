@@ -1,5 +1,8 @@
 
 
+
+
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -15,6 +18,8 @@ export const chatInputTranslations = {
     attachMenu_title: { en: 'Attach file', zh: '附加文件' },
     attachMenu_aria: { en: 'Attach file menu', zh: '附加文件菜单' },
     attachMenu_upload: { en: 'Upload from Device', zh: '从设备上传' },
+    attachMenu_importFolder: { en: 'Import Folder (as Text)', zh: '导入文件夹 (转为文本)' },
+    attachMenu_importZip: { en: 'Import Zip (as Text)', zh: '导入 Zip (转为文本)' },
     attachMenu_gallery: { en: 'Gallery', zh: '图库' },
     attachMenu_uploadVideo: { en: 'Upload Video', zh: '上传视频' },
     attachMenu_takePhoto: { en: 'Take Photo', zh: '拍照' },
@@ -41,6 +46,7 @@ export const chatInputTranslations = {
     web_search_short: { en: 'Search', zh: '联网' },
     deep_search_label: { en: 'Deep Search', zh: '深度搜索' },
     deep_search_short: { en: 'Deep', zh: '深度' },
+    deep_research_label: { en: 'Deep Research', zh: '深度研究' },
     code_execution_label: { en: 'Code Execution', zh: '代码执行' },
     code_execution_short: { en: 'Code', zh: '代码' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
@@ -55,6 +61,15 @@ export const chatInputTranslations = {
     createText_filename_placeholder: { en: 'Optional: Enter filename (e.g., my_notes.txt)', zh: '可选：输入文件名 (例如 my_notes.txt)' },
     createText_content_placeholder: { en: 'Type or paste your text content here...', zh: '在此输入或粘贴文本内容...' },
     createText_create_button: { en: 'Create File', zh: '创建文件' },
+
+    // Video Settings Modal
+    videoSettings_title: { en: 'Video Processing Options', zh: '视频处理选项' },
+    videoSettings_clip_title: { en: 'Clip Video (Optional)', zh: '裁剪视频 (可选)' },
+    videoSettings_start: { en: 'Start Time', zh: '开始时间' },
+    videoSettings_end: { en: 'End Time', zh: '结束时间' },
+    videoSettings_placeholder: { en: 'e.g., 10s or 00:10', zh: '例如: 10s 或 00:10' },
+    videoSettings_help: { en: 'Specify start and end offsets to analyze only a segment of the video.', zh: '指定开始和结束偏移量以仅分析视频的片段。' },
+    videoSettings_save: { en: 'Save Settings', zh: '保存设置' },
 
     // Command descriptions for help modal
     help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },

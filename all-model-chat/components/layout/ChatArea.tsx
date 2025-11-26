@@ -46,6 +46,7 @@ export interface ChatAreaProps {
   // MessageList Props
   messages: ChatMessage[];
   scrollContainerRef: React.RefObject<HTMLDivElement>;
+  setScrollContainerRef: (node: HTMLDivElement | null) => void; // New prop
   onScrollContainerScroll: () => void;
   onEditMessage: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
@@ -129,7 +130,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     currentModelName, availableModels, selectedModelId, onSelectModel, isModelsLoading,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
     isKeyLocked, defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
-    messages, scrollContainerRef, onScrollContainerScroll, onEditMessage,
+    messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
@@ -218,6 +219,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       <MessageList
         messages={messages}
         scrollContainerRef={scrollContainerRef}
+        setScrollContainerRef={setScrollContainerRef}
         onScrollContainerScroll={onScrollContainerScroll}
         onEditMessage={onEditMessage}
         onDeleteMessage={onDeleteMessage}

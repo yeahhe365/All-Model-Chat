@@ -27,7 +27,7 @@ interface MessageContentProps {
 }
 
 export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId }) => {
-    const { content, files, isLoading, thoughts, generationStartTime, audioSrc, groundingMetadata, suggestions, isGeneratingSuggestions } = message;
+    const { content, files, isLoading, thoughts, generationStartTime, audioSrc, groundingMetadata, urlContextMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
     const areThoughtsVisible = message.role === 'model' && thoughts && showThoughts;
@@ -72,22 +72,18 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
     const prevIsLoadingRef = useRef(isLoading);
 
     useEffect(() => {
-        // Trigger condition: message just finished loading
         if (prevIsLoadingRef.current && !isLoading) {
             if (appSettings.autoFullscreenHtml && message.role === 'model' && message.content) {
                 const regex = /```html\s*([\s\S]*?)\s*```/m;
                 const match = message.content.match(regex);
                 if (match && match[1]) {
                     const htmlContent = match[1].trim();
-                    // Small delay to ensure the modal doesn't fight with other UI updates
                     setTimeout(() => {
-                        // Auto-preview defaults to Modal (Page Fullscreen) to avoid browser blocking
                         onOpenHtmlPreview(htmlContent, { initialTrueFullscreen: false });
                     }, 100);
                 }
             }
         }
-        // Update the ref for the next render
         prevIsLoadingRef.current = isLoading;
     }, [isLoading, appSettings.autoFullscreenHtml, message.content, message.role, onOpenHtmlPreview]);
 
@@ -97,11 +93,11 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             {files && files.length > 0 && (
                 isQuadImageView ? (
                     <div className={`grid grid-cols-2 gap-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
-                        {files.map((file) => <FileDisplay key={file.id} file={file} onImageClick={onImageClick} isFromMessageList={true} isGridView={true} />)}
+                        {files.map((file) => <FileDisplay key={file.id} file={file} onFileClick={onImageClick} isFromMessageList={true} isGridView={true} />)}
                     </div>
                 ) : (
                     <div className={`space-y-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
-                        {files.map((file) => <FileDisplay key={file.id} file={file} onImageClick={onImageClick} isFromMessageList={true} />)}
+                        {files.map((file) => <FileDisplay key={file.id} file={file} onFileClick={onImageClick} isFromMessageList={true} />)}
                     </div>
                 )
             )}
@@ -127,10 +123,8 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                             </span>
                                             <span className="text-xs text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
                                                 {message.thinkingTimeMs !== undefined ? (
-                                                    // If thinking time is locked in, display it
                                                     t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
                                                 ) : (
-                                                    // Otherwise show a live timer
                                                     message.generationStartTime ? <ThinkingTimer startTime={message.generationStartTime} t={t} /> : 'Processing...'
                                                 )}
                                             </span>
@@ -153,7 +147,6 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
                         {/* Expanded Content */}
                         <div className="px-3 pb-3 pt-2 border-t border-[var(--theme-border-secondary)]/50 animate-in fade-in slide-in-from-top-2 duration-300 text-xs">
-                            {/* Live preview of current step when loading and open */}
                             {isLoading && lastThought && message.thinkingTimeMs === undefined && (
                                 <div className="mb-2 p-2 rounded-md bg-[var(--theme-bg-input)]/50 border border-[var(--theme-border-secondary)]/50 flex items-start gap-2">
                                     <div className="mt-1 w-1.5 h-1.5 rounded-full bg-[var(--theme-text-success)] text-[var(--theme-text-success)] animate-pulse flex-shrink-0 shadow-[0_0_8px_currentColor]" />
@@ -192,8 +185,20 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                 </div>
             )}
 
-            {content && groundingMetadata ? (
-              <GroundedResponse text={content} metadata={groundingMetadata} isLoading={isLoading} onOpenHtmlPreview={onOpenHtmlPreview} expandCodeBlocksByDefault={expandCodeBlocksByDefault} onImageClick={onImageClick} isMermaidRenderingEnabled={isMermaidRenderingEnabled} isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} t={t} themeId={themeId} />
+            {(content && (groundingMetadata || urlContextMetadata)) ? (
+              <GroundedResponse 
+                text={content} 
+                metadata={groundingMetadata} 
+                urlContextMetadata={urlContextMetadata}
+                isLoading={isLoading} 
+                onOpenHtmlPreview={onOpenHtmlPreview} 
+                expandCodeBlocksByDefault={expandCodeBlocksByDefault} 
+                onImageClick={onImageClick} 
+                isMermaidRenderingEnabled={isMermaidRenderingEnabled} 
+                isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} 
+                t={t} 
+                themeId={themeId} 
+              />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer

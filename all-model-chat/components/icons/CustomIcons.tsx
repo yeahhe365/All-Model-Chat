@@ -1,4 +1,9 @@
 
+
+
+
+
+
 import React from 'react';
 
 interface IconProps {
@@ -120,12 +125,13 @@ export const IconThemeLight: React.FC<IconProps> = ({ size = defaultSize, stroke
 
 // --- Attachment Menu Icons (Optimized) ---
 
-// 1. Upload from Device (Cloud Upload)
+// 1. Upload from Device (File Up)
 export const IconUpload: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-    <path d="M12 12v9" />
-    <path d="m16 16-4-4-4 4" />
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+    <path d="M12 12v6" />
+    <path d="m15 15-3-3-3 3" />
   </svg>
 );
 
@@ -205,5 +211,24 @@ export const IconFileEdit: React.FC<IconProps> = ({ size = defaultSize, strokeWi
 export const IconStop: React.FC<IconProps> = ({ size = defaultSize, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     <rect x="4" y="4" width="16" height="16" rx="2" fill={color} />
+  </svg>
+);
+
+// 11. Import Folder (Folder Search)
+export const IconFolderInput: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M11 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v5" />
+    <circle cx="18" cy="18" r="3" />
+    <path d="m22 22-1.5-1.5" />
+  </svg>
+);
+
+// 12. Import Zip (Package / Archive)
+export const IconZip: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m7.5 4.27 9 5.15" />
+    <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+    <path d="m3.3 7 8.7 5 8.7-5" />
+    <path d="M12 22V12" />
   </svg>
 );

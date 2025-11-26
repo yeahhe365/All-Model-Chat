@@ -43,7 +43,12 @@ export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | (
 
             // Copy all head elements from the main document to the PiP window.
             // This ensures styles, scripts (like Tailwind), and other configurations are available.
-            document.head.childNodes.forEach(node => {
+            // IMPORTANT: Filter out the main application script to prevent it from re-executing 
+            // and trying to mount to #root in the PiP window, which causes errors.
+            Array.from(document.head.childNodes).forEach(node => {
+                if (node.nodeName === 'SCRIPT' && (node as HTMLScriptElement).src && (node as HTMLScriptElement).src.includes('index.tsx')) {
+                    return;
+                }
                 pipWin.document.head.appendChild(node.cloneNode(true));
             });
             

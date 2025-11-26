@@ -52,7 +52,7 @@ export const useChatStreamHandler = ({
             activeJobs.current.delete(generationId);
         };
 
-        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any) => {
+        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => {
             // Use correct language from state, falling back to system logic if needed
             const lang = appSettings.language === 'system' 
                 ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
@@ -102,6 +102,7 @@ export const useChatStreamHandler = ({
                                 generationEndTime: new Date(),
                                 thinkingTimeMs: thinkingTime,
                                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
+                                urlContextMetadata: isLastMessageOfRun ? urlContextMetadata : undefined,
                                 promptTokens,
                                 completionTokens,
                                 totalTokens: turnTokens,
@@ -209,7 +210,7 @@ export const useChatStreamHandler = ({
                     };
                     let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
                     if (resultPart.output) {
-                        toolContent += `<pre><code>${escapeHtml(resultPart.output)}</code></pre>`;
+                        toolContent += `<pre><code class="language-text">${escapeHtml(resultPart.output)}</code></pre>`;
                     }
                     toolContent += '</div>';
                     messages.push(createNewMessage(toolContent));

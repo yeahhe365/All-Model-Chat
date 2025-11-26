@@ -1,8 +1,9 @@
 
 import React, { useState, useRef } from 'react';
-import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope } from 'lucide-react';
+import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, GraduationCap } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
+import { IconYoutube } from '../../icons/CustomIcons';
 
 interface ToolsMenuProps {
     isGoogleSearchEnabled: boolean;
@@ -13,6 +14,7 @@ interface ToolsMenuProps {
     onToggleUrlContext: () => void;
     isDeepSearchEnabled: boolean;
     onToggleDeepSearch: () => void;
+    onAddYouTubeVideo: () => void;
     disabled: boolean;
     t: (key: keyof typeof translations) => string;
 }
@@ -47,6 +49,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
+    onAddYouTubeVideo,
     disabled, t
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -61,11 +64,15 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         setIsOpen(false);
     };
     
+    const menuIconSize = 18;
+    
     const menuItems = [
-      { labelKey: 'deep_search_label', icon: <Telescope size={16} strokeWidth={2} />, isEnabled: isDeepSearchEnabled, action: () => handleToggle(onToggleDeepSearch) },
-      { labelKey: 'web_search_label', icon: <Globe size={16} strokeWidth={2} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
-      { labelKey: 'code_execution_label', icon: <Terminal size={16} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
-      { labelKey: 'url_context_label', icon: <Link size={16} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) }
+      { labelKey: 'deep_search_label', icon: <Telescope size={menuIconSize} strokeWidth={2} />, isEnabled: isDeepSearchEnabled, action: () => handleToggle(onToggleDeepSearch) },
+      { labelKey: 'deep_research_label', icon: <GraduationCap size={menuIconSize} strokeWidth={2} />, isEnabled: false, action: () => setIsOpen(false) },
+      { labelKey: 'web_search_label', icon: <Globe size={menuIconSize} strokeWidth={2} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
+      { labelKey: 'code_execution_label', icon: <Terminal size={menuIconSize} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
+      { labelKey: 'url_context_label', icon: <Link size={menuIconSize} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) },
+      { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={menuIconSize} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } }
     ];
     
     return (
@@ -89,10 +96,16 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 {!hasActiveTools && <span className="text-sm font-medium">{t('tools_button')}</span>}
             </button>
             {isOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-56 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-premium z-20 py-1" role="menu">
+                <div 
+                    className="absolute bottom-full left-0 mb-2 w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium z-20 py-1.5 animate-in fade-in zoom-in-95 duration-100" 
+                    role="menu"
+                >
                     {menuItems.map(item => (
-                      <button key={item.labelKey} onClick={item.action} className="w-full text-left px-3 py-2 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between" role="menuitem">
-                        <span className="flex items-center gap-3">{item.icon} {t(item.labelKey as any)}</span>
+                      <button key={item.labelKey} onClick={item.action} className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors" role="menuitem">
+                        <div className="flex items-center gap-3.5">
+                            <span className="text-[var(--theme-text-secondary)]">{item.icon}</span>
+                            <span className="font-medium">{t(item.labelKey as any)}</span>
+                        </div>
                         {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
                       </button>
                     ))}

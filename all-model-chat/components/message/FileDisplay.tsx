@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
 import { 
@@ -14,7 +13,7 @@ import { triggerDownload } from '../../utils/exportUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;
-  onImageClick?: (file: UploadedFile) => void;
+  onFileClick?: (file: UploadedFile) => void;
   isFromMessageList?: boolean;
   isGridView?: boolean;
 }
@@ -31,10 +30,10 @@ const formatFileSize = (sizeInBytes: number): string => {
   return `${sizeInMb.toFixed(2)} MB`;
 };
 
-export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, isFromMessageList, isGridView }) => {
+export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isFromMessageList, isGridView }) => {
   const [idCopied, setIdCopied] = useState(false);
 
-  const isClickableImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error && onImageClick;
+  const isClickable = file.uploadState === 'active' && !file.error && onFileClick && file.dataUrl;
 
   const handleCopyId = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -52,8 +51,14 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
     if (!file.dataUrl) return;
     
     const filename = file.name || 'generated-image.jpeg';
-    // Do NOT revoke the blob as it is used for display
     triggerDownload(file.dataUrl, filename, false);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+      if (isClickable) {
+          e.stopPropagation();
+          onFileClick(file);
+      }
   };
 
   // Render Image Content
@@ -63,14 +68,15 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
             <img 
                 src={file.dataUrl} 
                 alt={file.name} 
-                className={`block ${isGridView ? 'w-full h-full object-cover aspect-square' : 'w-auto h-auto max-w-full max-h-[60vh] object-contain'} ${isClickableImage ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''}`}
+                className={`block ${isGridView ? 'w-full h-full object-cover aspect-square' : 'w-auto h-auto max-w-full max-h-[60vh] object-contain'} ${isClickable ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''}`}
                 aria-label={`Uploaded image: ${file.name}`}
-                onClick={isClickableImage ? () => onImageClick && onImageClick(file) : undefined}
+                onClick={handleClick}
             />
             {isFromMessageList && (
                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     {(file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && (
                         <button
+                            type="button"
                             onClick={handleDownloadImage}
                             title="Download Image"
                             className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-colors"
@@ -80,6 +86,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
                     )}
                     {file.fileApiName && file.uploadState === 'active' && (
                         <button
+                            type="button"
                             onClick={handleCopyId}
                             title={idCopied ? "ID Copied!" : "Copy File ID"}
                             className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${idCopied ? 'text-green-400' : 'text-white'}`}
@@ -119,14 +126,16 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
       iconColorClass = "text-[var(--theme-text-danger)]";
       iconBgClass = "bg-[var(--theme-bg-danger)]/10";
   } else {
-      // Text / Code / Other
-      Icon = FileCode2; // Text/Code fallback
+      Icon = FileCode2;
       iconColorClass = "text-emerald-500 dark:text-emerald-400";
       iconBgClass = "bg-emerald-500/10 dark:bg-emerald-400/10";
   }
 
   return (
-    <div className={`flex items-center gap-3 p-2.5 rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all shadow-sm hover:shadow max-w-xs sm:max-w-sm relative group ${file.error ? 'border-[var(--theme-bg-danger)]/50' : ''}`}>
+    <div 
+        onClick={handleClick}
+        className={`flex items-center gap-3 p-2.5 rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all shadow-sm hover:shadow max-w-xs sm:max-w-sm relative group ${file.error ? 'border-[var(--theme-bg-danger)]/50' : ''} ${isClickable ? 'cursor-pointer' : ''}`}
+    >
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
             <Icon size={20} className={iconColorClass} strokeWidth={1.5} />
         </div>
@@ -149,6 +158,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onImageClick, is
 
         {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
             <button
+                type="button"
                 onClick={handleCopyId}
                 title={idCopied ? "Copied!" : "Copy File ID"}
                 className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}

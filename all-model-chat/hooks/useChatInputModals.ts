@@ -1,5 +1,11 @@
+
+
+
+
+
 import { useState, useRef } from 'react';
 import { AttachmentAction } from '../components/chat/input/AttachmentMenu';
+import { generateFolderContext, generateZipContext } from '../utils/folderImportUtils';
 
 interface UseChatInputModalsProps {
   onProcessFiles: (files: File[]) => Promise<void>;
@@ -21,7 +27,8 @@ export const useChatInputModals = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const zipInputRef = useRef<HTMLInputElement>(null);
 
   const handleScreenshot = async () => {
     if (!('getDisplayMedia' in navigator.mediaDevices)) {
@@ -102,7 +109,8 @@ export const useChatInputModals = ({
     switch (action) {
       case 'upload': fileInputRef.current?.click(); break;
       case 'gallery': imageInputRef.current?.click(); break;
-      case 'video': videoInputRef.current?.click(); break;
+      case 'folder': folderInputRef.current?.click(); break;
+      case 'zip': zipInputRef.current?.click(); break;
       case 'camera': setShowCamera(true); break;
       case 'recorder': setShowRecorder(true); break;
       case 'id': setShowAddByIdInput(true); break;
@@ -154,7 +162,8 @@ export const useChatInputModals = ({
     setIsHelpModalOpen,
     fileInputRef,
     imageInputRef,
-    videoInputRef,
+    folderInputRef,
+    zipInputRef,
     handleAttachmentAction,
     handleConfirmCreateTextFile,
     handlePhotoCapture,

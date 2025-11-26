@@ -5,12 +5,13 @@ import { Message } from '../message/Message';
 import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
-import { ImageZoomModal } from '../shared/ImageZoomModal';
+import { FilePreviewModal } from '../shared/ImageZoomModal'; // Importing our universal viewer
 import { ThemeColors } from '../../constants/themeConstants';
 
 export interface MessageListProps {
   messages: ChatMessage[];
   scrollContainerRef: React.RefObject<HTMLDivElement>;
+  setScrollContainerRef: (node: HTMLDivElement | null) => void;
   onScrollContainerScroll: () => void;
   onEditMessage: (messageId: string) => void;
   onDeleteMessage: (messageId: string) => void;
@@ -78,13 +79,13 @@ const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ heig
 };
 
 export const MessageList: React.FC<MessageListProps> = ({ 
-    messages, scrollContainerRef, onScrollContainerScroll, 
+    messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight, appSettings
 }) => {
-  const [zoomedFile, setZoomedFile] = useState<UploadedFile | null>(null);
+  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
@@ -125,12 +126,12 @@ export const MessageList: React.FC<MessageListProps> = ({
     });
   }, []);
 
-  const handleImageClick = useCallback((file: UploadedFile) => {
-    setZoomedFile(file);
+  const handleFileClick = useCallback((file: UploadedFile) => {
+    setPreviewFile(file);
   }, []);
 
-  const closeImageZoomModal = useCallback(() => {
-    setZoomedFile(null);
+  const closeFilePreviewModal = useCallback(() => {
+    setPreviewFile(null);
   }, []);
 
   const handleOpenHtmlPreview = useCallback((
@@ -164,7 +165,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   return (
     <>
     <div 
-      ref={scrollContainerRef}
+      ref={setScrollContainerRef}
       onScroll={onScrollContainerScroll}
       className={`relative flex-grow overflow-y-auto px-1.5 sm:px-2 md:px-3 py-3 sm:py-4 md:py-6 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
       style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
@@ -179,7 +180,6 @@ export const MessageList: React.FC<MessageListProps> = ({
             
             {showWelcomeSuggestions && (
               <>
-                {/* Header for Suggestions */}
                 <div className="flex items-center justify-end mb-4 px-1">
                     {totalSuggestionPages > 1 && (
                         <div className="flex items-center bg-[var(--theme-bg-tertiary)]/50 rounded-full p-1 pl-3">
@@ -208,7 +208,6 @@ export const MessageList: React.FC<MessageListProps> = ({
                     )}
                 </div>
 
-                {/* Suggestions Grid */}
                 <div className="grid grid-cols-2 gap-2 sm:gap-4">
                   {paginatedSuggestions.map((s, i) => (
                     <button
@@ -258,12 +257,10 @@ export const MessageList: React.FC<MessageListProps> = ({
                         </div>
                       </div>
                       
-                      {/* Subtle decoration */}
                       <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[var(--theme-text-primary)]/5 to-transparent rounded-bl-3xl rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     </button>
                   ))}
                   
-                  {/* Placeholders to keep grid structure if last page is not full */}
                   {Array.from({ length: Math.max(0, suggestionsPerPage - paginatedSuggestions.length) }).map((_, i) => (
                     <div key={`placeholder-${i}`} className="h-28 sm:h-36 rounded-xl sm:rounded-2xl border border-dashed border-[var(--theme-border-secondary)]/30" />
                   ))}
@@ -286,7 +283,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onDeleteMessage={onDeleteMessage}
                         onRetryMessage={onRetryMessage}
                         onEditMessageContent={onEditMessageContent}
-                        onImageClick={handleImageClick}
+                        onImageClick={handleFileClick} // Renaming logic: generic handler for all files
                         onOpenHtmlPreview={handleOpenHtmlPreview}
                         showThoughts={showThoughts}
                         themeColors={themeColors}
@@ -342,12 +339,14 @@ export const MessageList: React.FC<MessageListProps> = ({
           </div>
         )}
     </div>
-    <ImageZoomModal 
-        file={zoomedFile} 
-        onClose={closeImageZoomModal}
+    
+    <FilePreviewModal 
+        file={previewFile} 
+        onClose={closeFilePreviewModal}
         themeColors={themeColors}
         t={t}
     />
+
     {isHtmlPreviewModalOpen && htmlToPreview !== null && (
       <HtmlPreviewModal
         isOpen={isHtmlPreviewModalOpen}

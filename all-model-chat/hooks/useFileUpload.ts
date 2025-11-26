@@ -5,6 +5,7 @@ import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MI
 import { generateUniqueId, getKeyForRequest, fileToBlobUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
+import { generateZipContext } from '../utils/folderImportUtils';
 
 interface UseFileUploadProps {
     appSettings: AppSettings;
@@ -35,7 +36,25 @@ export const useFileUpload = ({
         setAppFileError(null);
         logService.info(`Processing ${files.length} files.`);
 
-        const filesArray = Array.isArray(files) ? files : Array.from(files);
+        const rawFilesArray = Array.isArray(files) ? files : Array.from(files);
+        const filesArray: File[] = [];
+
+        // Pre-process ZIP files: Auto-convert to text context
+        for (const file of rawFilesArray) {
+            if (file.name.toLowerCase().endsWith('.zip')) {
+                try {
+                    logService.info(`Auto-converting ZIP file: ${file.name}`);
+                    const contextFile = await generateZipContext(file);
+                    filesArray.push(contextFile);
+                } catch (error) {
+                    logService.error(`Failed to auto-convert zip file ${file.name}`, { error });
+                    // Fallback to original file (will likely fail validation below, but keeps behavior consistent)
+                    filesArray.push(file);
+                }
+            } else {
+                filesArray.push(file);
+            }
+        }
 
         const needsApiKeyForUpload = filesArray.some(file => {
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
@@ -85,6 +104,9 @@ export const useFileUpload = ({
             }
 
             const shouldUploadFile = !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) || appSettings.useFilesApiForImages;
+            
+            // Generate a blob URL immediately for local preview, regardless of upload method
+            const dataUrl = fileToBlobUrl(file);
 
             if (shouldUploadFile) {
                 if (!keyToUse) {
@@ -96,7 +118,18 @@ export const useFileUpload = ({
                 const controller = new AbortController();
 
                 // Initialize with 'uploading' state to show progress UI immediately
-                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, rawFile: file, uploadState: 'uploading', abortController: controller };
+                const initialFileState: UploadedFile = { 
+                    id: fileId, 
+                    name: file.name, 
+                    type: effectiveMimeType, 
+                    size: file.size, 
+                    isProcessing: true, 
+                    progress: 0, 
+                    rawFile: file, 
+                    dataUrl: dataUrl, // Add local preview URL
+                    uploadState: 'uploading', 
+                    abortController: controller 
+                };
                 setSelectedFiles(prev => [...prev, initialFileState]);
 
                 // Simulate progress for better UX since we don't have real progress callback from SDK yet
@@ -136,7 +169,7 @@ export const useFileUpload = ({
                         progress: 100,
                         fileUri: uploadedFileInfo.uri,
                         fileApiName: uploadedFileInfo.name,
-                        rawFile: undefined,
+                        rawFile: file, // Preserve local file reference for preview
                         uploadState: uploadState,
                         error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined),
                         abortController: undefined,
@@ -156,16 +189,11 @@ export const useFileUpload = ({
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, uploadSpeed: undefined } : f));
                 }
             } else {
-                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file };
+                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file, dataUrl: dataUrl };
                 setSelectedFiles(prev => [...prev, initialFileState]);
 
-                try {
-                    const dataUrl = fileToBlobUrl(file);
-                    setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, dataUrl, isProcessing: false, progress: 100, uploadState: 'active' } : f));
-                } catch(error) {
-                    logService.error('Error creating blob URL for image', { error });
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: 'Failed to create image preview.', uploadState: 'failed' } : f));
-                }
+                // For images sent inline, we already have the dataUrl, just mark active
+                setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
             }
         });
         await Promise.allSettled(uploadPromises);

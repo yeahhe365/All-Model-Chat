@@ -1,23 +1,23 @@
 
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, FolderUp } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { 
   IconUpload, 
   IconGallery, 
-  IconFileVideo, 
   IconCamera, 
   IconScreenshot, 
   IconMicrophone, 
   IconLink, 
   IconYoutube, 
-  IconFileEdit 
+  IconFileEdit,
+  IconZip
 } from '../../icons/CustomIcons';
 import { useWindowContext } from '../../../contexts/WindowContext';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 
-export type AttachmentAction = 'upload' | 'gallery' | 'video' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot';
+export type AttachmentAction = 'upload' | 'gallery' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot' | 'folder' | 'zip';
 
 interface AttachmentMenuProps {
     onAction: (action: AttachmentAction) => void;
@@ -79,13 +79,13 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
     
     const menuItems: { labelKey: keyof typeof translations, icon: React.ReactNode, action: AttachmentAction }[] = [
         { labelKey: 'attachMenu_upload', icon: <IconUpload size={menuIconSize} />, action: 'upload' },
+        { labelKey: 'attachMenu_importFolder', icon: <FolderUp size={menuIconSize} />, action: 'folder' },
+        { labelKey: 'attachMenu_importZip', icon: <IconZip size={menuIconSize} />, action: 'zip' },
         { labelKey: 'attachMenu_gallery', icon: <IconGallery size={menuIconSize} />, action: 'gallery' },
-        { labelKey: 'attachMenu_uploadVideo', icon: <IconFileVideo size={menuIconSize} />, action: 'video' },
         { labelKey: 'attachMenu_takePhoto', icon: <IconCamera size={menuIconSize} />, action: 'camera' },
         { labelKey: 'attachMenu_screenshot', icon: <IconScreenshot size={menuIconSize} />, action: 'screenshot' },
         { labelKey: 'attachMenu_recordAudio', icon: <IconMicrophone size={menuIconSize} />, action: 'recorder' },
         { labelKey: 'attachMenu_addById', icon: <IconLink size={menuIconSize} />, action: 'id' },
-        { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={menuIconSize} />, action: 'url' },
         { labelKey: 'attachMenu_createText', icon: <IconFileEdit size={menuIconSize} />, action: 'text' }
     ];
 

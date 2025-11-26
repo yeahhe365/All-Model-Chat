@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Github, Star, Heart } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
@@ -10,7 +11,7 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = useResponsiveValue(18, 20);
-  const version = "1.7.5"; 
+  const version = "1.7.6"; 
   const [stars, setStars] = useState<number | null>(null);
 
   useEffect(() => {

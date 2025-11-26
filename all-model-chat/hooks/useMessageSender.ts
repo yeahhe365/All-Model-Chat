@@ -228,10 +228,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
         if (appSettings.isStreamingEnabled) {
             await geminiServiceInstance.sendMessageStream(chatToUse, promptParts, newAbortController.signal, streamOnPart, onThoughtChunk, streamOnError, streamOnComplete);
         } else { 
-            await geminiServiceInstance.sendMessageNonStream(chatToUse, promptParts, newAbortController.signal, streamOnError, (parts, thoughts, usage, grounding) => {
+            await geminiServiceInstance.sendMessageNonStream(chatToUse, promptParts, newAbortController.signal, streamOnError, (parts, thoughts, usage, grounding, urlContext) => {
                 for(const part of parts) streamOnPart(part);
                 if(thoughts) onThoughtChunk(thoughts);
-                streamOnComplete(usage, grounding);
+                streamOnComplete(usage, grounding, urlContext);
             });
         }
     }, [
