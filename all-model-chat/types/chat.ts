@@ -1,6 +1,11 @@
 
 import { ChatSettings } from './settings';
 
+export interface VideoMetadata {
+  startOffset?: string;
+  endOffset?: string;
+}
+
 export interface UploadedFile {
   id: string;
   name: string; // Original filename
@@ -19,6 +24,7 @@ export interface UploadedFile {
   uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled'; // State of the file on Gemini API
   abortController?: AbortController; // Added for cancelling uploads
   uploadSpeed?: string; // Added for upload speed display
+  videoMetadata?: VideoMetadata; // Added for video clipping
 }
 
 export interface ChatMessage {
@@ -38,6 +44,7 @@ export interface ChatMessage {
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
   groundingMetadata?: any;
+  urlContextMetadata?: any;
   suggestions?: string[];
   isGeneratingSuggestions?: boolean;
   stoppedByUser?: boolean;
@@ -54,6 +61,7 @@ export interface ContentPart {
     mimeType: string;
     fileUri: string;
   };
+  videoMetadata?: VideoMetadata;
 }
 
 export interface ChatGroup {
@@ -131,6 +139,7 @@ export interface ChatInputActionsProps {
   onToggleUrlContext: () => void;
   isDeepSearchEnabled: boolean;
   onToggleDeepSearch: () => void;
+  onAddYouTubeVideo: () => void;
   onRecordButtonClick: () => void;
   isRecording?: boolean;
   isMicInitializing?: boolean;

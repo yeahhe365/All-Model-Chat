@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { AppSettings, ChatSettings } from '../types';
 import { TAB_CYCLE_MODELS } from '../constants/appConstants';
@@ -14,6 +15,7 @@ interface AppEventsProps {
     setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
     onTogglePip: () => void;
     isPipSupported: boolean;
+    pipWindow?: Window | null;
 }
 
 export const useAppEvents = ({
@@ -27,6 +29,7 @@ export const useAppEvents = ({
     setIsLogViewerOpen,
     onTogglePip,
     isPipSupported,
+    pipWindow,
 }: AppEventsProps) => {
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
@@ -63,8 +66,16 @@ export const useAppEvents = ({
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
-            const activeElement = document.activeElement as HTMLElement;
-            const isGenerallyInputFocused = activeElement && (activeElement.tagName.toLowerCase() === 'input' || activeElement.tagName.toLowerCase() === 'textarea' || activeElement.tagName.toLowerCase() === 'select' || activeElement.isContentEditable);
+            // Check active element in the document where the event occurred
+            const targetDoc = event.view?.document || document;
+            const activeElement = targetDoc.activeElement as HTMLElement;
+            
+            const isGenerallyInputFocused = activeElement && (
+                activeElement.tagName.toLowerCase() === 'input' || 
+                activeElement.tagName.toLowerCase() === 'textarea' || 
+                activeElement.tagName.toLowerCase() === 'select' || 
+                activeElement.isContentEditable
+            );
             
             if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'n') {
                 event.preventDefault();
@@ -105,9 +116,19 @@ export const useAppEvents = ({
                 }
             }
         };
+
         document.addEventListener('keydown', handleKeyDown);
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip]);
+        if (pipWindow && pipWindow.document) {
+            pipWindow.document.addEventListener('keydown', handleKeyDown);
+        }
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            if (pipWindow && pipWindow.document) {
+                pipWindow.document.removeEventListener('keydown', handleKeyDown);
+            }
+        };
+    }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow]);
 
     return {
         installPromptEvent,

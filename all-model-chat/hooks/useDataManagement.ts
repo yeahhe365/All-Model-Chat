@@ -1,8 +1,19 @@
+
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup, Theme } from '../types';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { logService } from '../utils/appUtils';
-import { sanitizeFilename, exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles, triggerDownload } from '../utils/exportUtils';
+import { 
+    sanitizeFilename, 
+    exportElementAsPng, 
+    exportHtmlStringAsFile, 
+    exportTextStringAsFile, 
+    gatherPageStyles, 
+    triggerDownload,
+    generateExportHtmlTemplate,
+    generateExportTxtTemplate,
+    embedImagesInClone
+} from '../utils/exportUtils';
 import DOMPurify from 'dompurify';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -159,8 +170,10 @@ export const useDataManagement = ({
         if (!activeChat) return;
         
         const safeTitle = sanitizeFilename(activeChat.title);
-        const date = new Date().toISOString().slice(0, 10);
-        const filename = `chat-${safeTitle}-${date}.${format}`;
+        const dateObj = new Date();
+        const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
+        const isoDate = dateObj.toISOString().slice(0, 10);
+        const filename = `chat-${safeTitle}-${isoDate}.${format}`;
         const scrollContainer = scrollContainerRef.current;
 
         if (format === 'png') {
@@ -170,32 +183,56 @@ export const useDataManagement = ({
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
             tempContainer.style.top = '0px';
-            tempContainer.style.width = '1024px';
+            // 800px width simulates a standard document/tablet view, good for readability
+            tempContainer.style.width = '800px'; 
             tempContainer.style.padding = '0';
+            tempContainer.style.zIndex = '-1';
 
             try {
                 const allStyles = await gatherPageStyles();
+                
+                // Clone the chat container
                 const chatClone = scrollContainer.cloneNode(true) as HTMLElement;
                 
+                // Pre-process the clone: Open details, remove functional UI elements
                 chatClone.querySelectorAll('details').forEach(details => {
                     details.setAttribute('open', '');
                 });
-
-                chatClone.querySelectorAll('[aria-label*="Scroll to"]').forEach(el => el.remove());
+                
+                // Remove sticky nav elements (like scroll to bottom buttons)
+                chatClone.querySelectorAll('.sticky').forEach(el => el.remove());
+                
+                // Force animation state to final for cleaner capture
                 chatClone.querySelectorAll('[data-message-id]').forEach(el => {
-                    el.classList.add('message-container-animate');
+                    (el as HTMLElement).style.animation = 'none';
+                    (el as HTMLElement).style.opacity = '1';
+                    (el as HTMLElement).style.transform = 'none';
                 });
 
                 const bodyClasses = document.body.className;
                 const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-                const exportBgColor = currentTheme.id === 'pearl' ? currentTheme.colors.bgPrimary : currentTheme.colors.bgSecondary;
+                
+                // Create a header for the export document
+                const headerHtml = `
+                    <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
+                        <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">${activeChat.title}</h1>
+                        <div style="font-size: 0.875rem; color: var(--theme-text-tertiary); display: flex; gap: 1rem;">
+                            <span>${dateStr}</span>
+                            <span>•</span>
+                            <span>${activeChat.settings.modelId}</span>
+                        </div>
+                    </div>
+                `;
 
                 tempContainer.innerHTML = `
                     ${allStyles}
-                    <div class="theme-${currentTheme.id} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor};">
-                        <div style="background-color: ${exportBgColor}; padding: 1rem;">
-                            <div class="exported-chat-container w-full max-w-7xl mx-auto">
-                                ${chatClone.innerHTML}
+                    <div class="theme-${currentTheme.id} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; min-height: 100vh;">
+                        <div style="background-color: ${rootBgColor}; padding: 0;">
+                            <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
+                                ${headerHtml}
+                                <div style="padding: 0 2rem 2rem 2rem;">
+                                    ${chatClone.innerHTML}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -205,11 +242,12 @@ export const useDataManagement = ({
                 const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
                 if (!captureTarget) throw new Error("Could not find capture target for PNG export.");
                 
-                await new Promise(resolve => setTimeout(resolve, 500)); 
+                // Longer wait to ensure fonts and any lazy images in the clone are rendered
+                await new Promise(resolve => setTimeout(resolve, 800)); 
 
                 await exportElementAsPng(captureTarget, filename, {
-                    backgroundColor: null,
-                    scale: 2,
+                    backgroundColor: rootBgColor, // Ensure background is opaque
+                    scale: 2, // Retina quality
                 });
 
             } finally {
@@ -223,57 +261,61 @@ export const useDataManagement = ({
         if (format === 'html') {
             if (!scrollContainer) return;
 
-            const headContent = await gatherPageStyles();
+            // 1. Clone the container to avoid modifying the live UI
+            const chatClone = scrollContainer.cloneNode(true) as HTMLElement;
+
+            // 2. Clean UI elements that shouldn't be in the export
+            const selectorsToRemove = [
+                'button', 
+                '.message-actions', 
+                '.sticky', 
+                'input', 
+                'textarea', 
+                '.code-block-utility-button',
+                '[role="tooltip"]',
+                '.loading-dots-container'
+            ];
+            chatClone.querySelectorAll(selectorsToRemove.join(',')).forEach(el => el.remove());
+            
+            // 3. Expand all details elements (thoughts) so they are visible in export
+            chatClone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
+
+            // 4. Embed Images: Convert blob/url images to Base64 for self-contained HTML
+            await embedImagesInClone(chatClone);
+
+            // 5. Gather Styles & Generate Template
+            const styles = await gatherPageStyles();
             const bodyClasses = document.body.className;
             const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-            const chatHtml = scrollContainer.innerHTML;
+            const chatHtml = chatClone.innerHTML;
 
-            const fullHtml = `
-                <!DOCTYPE html>
-                <html lang="${language}">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Chat Export: ${DOMPurify.sanitize(activeChat.title)}</title>
-                    ${headContent}
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-                            document.querySelectorAll('pre code').forEach((el) => {
-                                if (window.hljs) {
-                                    window.hljs.highlightElement(el);
-                                }
-                            });
-                        });
-                    </script>
-                    <style>
-                        body { background-color: ${rootBgColor}; padding: 1rem; box-sizing: border-box; }
-                        .message-actions, .code-block-utility-button { display: none !important; }
-                        .sticky[aria-label*="Scroll to"] { display: none !important; }
-                    </style>
-                </head>
-                <body class="${bodyClasses}">
-                    <div class="exported-chat-container w-full max-w-7xl mx-auto">
-                        ${chatHtml}
-                    </div>
-                </body>
-                </html>
-            `;
+            const fullHtml = generateExportHtmlTemplate({
+                title: DOMPurify.sanitize(activeChat.title),
+                date: dateStr,
+                model: activeChat.settings.modelId,
+                contentHtml: chatHtml,
+                styles,
+                themeId: currentTheme.id,
+                language,
+                rootBgColor,
+                bodyClasses
+            });
+            
             exportHtmlStringAsFile(fullHtml, filename);
         } else if (format === 'txt') {
-            const textContent = activeChat.messages.map(message => {
-                const role = message.role === 'user' ? 'USER' : 'ASSISTANT';
-                let content = `### ${role}\n`;
-                if (message.files && message.files.length > 0) {
-                    message.files.forEach(file => {
-                        content += `[File attached: ${file.name}]\n`;
-                    });
-                }
-                content += message.content;
-                return content;
-            }).join('\n\n');
+            const txtContent = generateExportTxtTemplate({
+                title: activeChat.title,
+                date: dateStr,
+                model: activeChat.settings.modelId,
+                messages: activeChat.messages.map(m => ({
+                    role: m.role === 'user' ? 'USER' : 'ASSISTANT',
+                    timestamp: m.timestamp,
+                    content: m.content,
+                    files: m.files?.map(f => ({ name: f.name }))
+                }))
+            });
 
-            exportTextStringAsFile(textContent, filename);
+            exportTextStringAsFile(txtContent, filename);
         } else if (format === 'json') {
             logService.info(`Exporting chat ${activeChat.id} as JSON.`);
             try {

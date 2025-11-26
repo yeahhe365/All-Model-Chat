@@ -1,12 +1,15 @@
 
+
+
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
 import { SlashCommandMenu, Command } from './SlashCommandMenu';
 import { SelectedFileDisplay } from '../SelectedFileDisplay';
 import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../../../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { translations } from '../../../utils/appUtils';
+import { generateZipContext } from '../../../utils/folderImportUtils';
 
 export interface ChatInputAreaProps {
     toolbarProps: ChatInputToolbarProps;
@@ -21,6 +24,8 @@ export interface ChatInputAreaProps {
         selectedFiles: UploadedFile[];
         onRemove: (id: string) => void;
         onCancelUpload: (id: string) => void;
+        onConfigure: (file: UploadedFile) => void;
+        onPreview: (file: UploadedFile) => void;
     };
     inputProps: {
         value: string;
@@ -44,8 +49,11 @@ export interface ChatInputAreaProps {
     fileInputRefs: {
         fileInputRef: React.RefObject<HTMLInputElement>;
         imageInputRef: React.RefObject<HTMLInputElement>;
-        videoInputRef: React.RefObject<HTMLInputElement>;
+        folderInputRef: React.RefObject<HTMLInputElement>;
+        zipInputRef: React.RefObject<HTMLInputElement>;
         handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        handleFolderChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        handleZipChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     };
     formProps: {
         onSubmit: (e: React.FormEvent) => void;
@@ -103,7 +111,9 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                         key={file.id} 
                                         file={file} 
                                         onRemove={fileDisplayProps.onRemove} 
-                                        onCancelUpload={fileDisplayProps.onCancelUpload} 
+                                        onCancelUpload={fileDisplayProps.onCancelUpload}
+                                        onConfigure={fileDisplayProps.onConfigure}
+                                        onPreview={fileDisplayProps.onPreview}
                                     />
                                 ))}
                             </div>
@@ -147,14 +157,22 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                 aria-hidden="true" 
                                 multiple 
                             />
-                            <input 
-                                type="file" 
-                                ref={fileInputRefs.videoInputRef} 
-                                onChange={fileInputRefs.handleFileChange} 
-                                accept={SUPPORTED_VIDEO_MIME_TYPES.join(',')} 
-                                className="hidden" 
-                                aria-hidden="true" 
-                                multiple 
+                            <input
+                                type="file"
+                                ref={fileInputRefs.folderInputRef}
+                                onChange={fileInputRefs.handleFolderChange}
+                                className="hidden"
+                                aria-hidden="true"
+                                {...({ webkitdirectory: "", directory: "" } as any)}
+                                multiple
+                            />
+                            <input
+                                type="file"
+                                ref={fileInputRefs.zipInputRef}
+                                onChange={fileInputRefs.handleZipChange}
+                                accept=".zip"
+                                className="hidden"
+                                aria-hidden="true"
                             />
                         </div>
                     </div>

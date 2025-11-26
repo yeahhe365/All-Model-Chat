@@ -1,5 +1,4 @@
 
-
 /**
  * Triggers a file download in the browser.
  * @param href The URL or data URI of the file to download.
@@ -68,6 +67,42 @@ export const gatherPageStyles = async (): Promise<string> => {
 };
 
 /**
+ * Embeds images in a cloned DOM element by converting their sources to Base64 data URIs.
+ * This allows the HTML to be self-contained (offline-capable).
+ * @param clone The cloned HTMLElement to process.
+ */
+export const embedImagesInClone = async (clone: HTMLElement): Promise<void> => {
+    const images = Array.from(clone.querySelectorAll('img'));
+    await Promise.all(images.map(async (img) => {
+        try {
+            const src = img.getAttribute('src');
+            // Skip if no src or already a data URI
+            if (!src || src.startsWith('data:')) return;
+
+            // Fetch the image content
+            const response = await fetch(img.src);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            await new Promise<void>((resolve) => {
+                reader.onloadend = () => {
+                    if (typeof reader.result === 'string') {
+                        img.src = reader.result;
+                        // Remove attributes that might interfere with the data URI source
+                        img.removeAttribute('srcset');
+                        img.removeAttribute('loading');
+                    }
+                    resolve();
+                };
+                reader.onerror = () => resolve(); // Resolve to continue even on error
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.warn('Failed to embed image for export:', e);
+        }
+    }));
+};
+
+/**
  * Exports a given HTML element as a PNG image.
  * @param element The HTML element to capture.
  * @param filename The desired filename for the downloaded PNG.
@@ -80,23 +115,42 @@ export const exportElementAsPng = async (
 ) => {
     const html2canvas = (await import('html2canvas')).default;
 
-    // Wait for images inside the element to load before capturing
-    const images = element.querySelectorAll('img');
-    const imageLoadPromises = Array.from(images).map(img => {
+    // Pre-load images to ensure they render
+    const images = Array.from(element.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
         if (img.complete) return Promise.resolve();
-        return new Promise(resolve => { img.onload = img.onerror = resolve; });
-    });
-    await Promise.all(imageLoadPromises);
-    await new Promise(resolve => setTimeout(resolve, 250)); // Small delay for rendering final styles
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve; // Don't block export on broken image
+        });
+    }));
+
+    // Force a small layout recalc/paint wait
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     const canvas = await html2canvas(element, {
         height: element.scrollHeight,
         width: element.scrollWidth,
-        useCORS: true,
-        backgroundColor: options?.backgroundColor,
-        scale: options?.scale ?? 2,
+        useCORS: true, // Important for cross-origin images
+        allowTaint: true,
+        logging: false,
+        backgroundColor: options?.backgroundColor ?? null,
+        scale: options?.scale ?? 2, // Default to 2x for Retina sharpness
+        ignoreElements: (el) => {
+            // Fallback check for ignoring elements if CSS fails
+            return el.classList.contains('no-export'); 
+        }
     });
-    triggerDownload(canvas.toDataURL('image/png'), filename);
+    
+    // Convert to Blob to handle larger images better than data URI
+    canvas.toBlob((blob) => {
+        if (blob) {
+            const url = URL.createObjectURL(blob);
+            triggerDownload(url, filename);
+        } else {
+            console.error("Canvas to Blob conversion failed");
+        }
+    }, 'image/png');
 };
 
 
@@ -169,4 +223,178 @@ export const exportSvgAsPng = async (svgString: string, filename: string, scale:
 export const exportSvgStringAsFile = (svgContent: string, filename: string) => {
     const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
     triggerDownload(URL.createObjectURL(blob), filename);
+};
+
+// --- Shared Template Generators ---
+
+export const generateExportHtmlTemplate = ({
+    title,
+    date,
+    model,
+    contentHtml,
+    styles,
+    themeId,
+    language,
+    rootBgColor,
+    bodyClasses
+}: {
+    title: string,
+    date: string,
+    model: string,
+    contentHtml: string,
+    styles: string,
+    themeId: string,
+    language: string,
+    rootBgColor: string,
+    bodyClasses: string
+}) => {
+    return `
+        <!DOCTYPE html>
+        <html lang="${language}">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Chat Export: ${title}</title>
+            ${styles}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.querySelectorAll('pre code').forEach((el) => {
+                        if (window.hljs) {
+                            window.hljs.highlightElement(el);
+                        }
+                    });
+                });
+            </script>
+            <style>
+                /* Reset & Layout */
+                html, body { height: auto !important; overflow: auto !important; min-height: 100vh; }
+                body { 
+                    background-color: ${rootBgColor}; 
+                    padding: 2rem; 
+                    box-sizing: border-box; 
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    color: var(--theme-text-primary, #333);
+                }
+                
+                /* Container */
+                .exported-chat-container {
+                    width: 100%;
+                    max-width: 900px;
+                    margin: 0 auto;
+                    background-color: transparent;
+                }
+
+                /* Header Styles */
+                .exported-chat-header { 
+                    padding-bottom: 1.5rem; 
+                    border-bottom: 1px solid var(--theme-border-secondary, #e5e7eb); 
+                    margin-bottom: 2rem; 
+                }
+                .exported-chat-title { 
+                    font-size: 1.75rem; 
+                    font-weight: 700; 
+                    color: var(--theme-text-primary, inherit); 
+                    margin: 0 0 0.5rem 0; 
+                    line-height: 1.2;
+                }
+                .exported-chat-meta { 
+                    font-size: 0.875rem; 
+                    color: var(--theme-text-tertiary, #6b7280); 
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+
+                /* UI Cleanup - Hide interactive elements */
+                .message-actions, 
+                .code-block-utility-button, 
+                button, 
+                .sticky,
+                [role="tooltip"],
+                input,
+                textarea { 
+                    display: none !important; 
+                }
+
+                /* Message Styling Fixes */
+                .group.relative.message-container-animate { 
+                    animation: none !important; 
+                    opacity: 1 !important; 
+                    transform: none !important; 
+                    margin-bottom: 1.5rem;
+                }
+                
+                /* Links */
+                a { color: var(--theme-text-link, #2563eb); text-decoration: none; }
+                a:hover { text-decoration: underline; }
+
+                /* Tables */
+                table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+                th, td { 
+                    border: 1px solid var(--theme-border-secondary, #e5e5e5); 
+                    padding: 0.5rem 0.75rem; 
+                    text-align: left; 
+                }
+                th { background-color: var(--theme-bg-tertiary, #f3f4f6); font-weight: 600; }
+
+                /* Code Blocks */
+                pre { 
+                    background-color: var(--theme-bg-code-block, #f3f4f6); 
+                    border-radius: 0.5rem; 
+                    padding: 1rem; 
+                    overflow-x: auto; 
+                }
+            </style>
+        </head>
+        <body class="${bodyClasses} theme-${themeId} is-exporting-png">
+            <div class="exported-chat-container">
+                <div class="exported-chat-header">
+                    <h1 class="exported-chat-title">${title}</h1>
+                    <div class="exported-chat-meta">
+                        <span>${date}</span> • <span>${model}</span>
+                    </div>
+                </div>
+                ${contentHtml}
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+export const generateExportTxtTemplate = ({
+    title,
+    date,
+    model,
+    messages
+}: {
+    title: string,
+    date: string,
+    model: string,
+    messages: Array<{ role: string, timestamp: Date, content: string, files?: Array<{name: string}> }>
+}) => {
+    const separator = '-'.repeat(40);
+    
+    const header = [
+        `Chat: ${title}`,
+        `Date: ${date}`,
+        `Model: ${model}`,
+        '='.repeat(40),
+        ''
+    ].join('\n');
+
+    const body = messages.map(msg => {
+        const roleTitle = msg.role.toUpperCase();
+        const timeStr = new Date(msg.timestamp).toLocaleString();
+        let text = `### ${roleTitle} [${timeStr}]\n`;
+        
+        if (msg.files && msg.files.length > 0) {
+            msg.files.forEach(f => {
+                text += `[Attachment: ${f.name}]\n`;
+            });
+        }
+        
+        text += msg.content;
+        return text;
+    }).join(`\n\n${separator}\n\n`);
+
+    return header + body;
 };

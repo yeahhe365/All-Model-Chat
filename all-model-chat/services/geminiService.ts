@@ -92,7 +92,7 @@ class GeminiServiceImpl implements GeminiService {
         onPart: (part: Part) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
-        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
     ): Promise<void> {
         return sendMessageStreamApi(
             chat, parts, abortSignal, onPart, onThoughtChunk, onError, onComplete
@@ -104,7 +104,7 @@ class GeminiServiceImpl implements GeminiService {
         parts: Part[],
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
-        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
     ): Promise<void> {
         return sendMessageNonStreamApi(
             chat, parts, abortSignal, onError, onComplete
@@ -119,7 +119,7 @@ class GeminiServiceImpl implements GeminiService {
         config: any,
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
-        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
     ): Promise<void> {
         return sendStatelessMessageNonStreamApi(
             apiKey, modelId, history, parts, config, abortSignal, onError, onComplete

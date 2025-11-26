@@ -6,7 +6,16 @@ import hljs from 'highlight.js';
 import { Loader2, Download, ImageIcon, FileCode2, FileText, FileJson, X } from 'lucide-react';
 import { ThemeColors, ChatMessage } from '../../../types';
 import { translations } from '../../../utils/appUtils';
-import { exportElementAsPng, exportHtmlStringAsFile, exportTextStringAsFile, gatherPageStyles, triggerDownload, sanitizeFilename } from '../../../utils/exportUtils';
+import { 
+    exportElementAsPng, 
+    exportHtmlStringAsFile, 
+    exportTextStringAsFile, 
+    gatherPageStyles, 
+    triggerDownload, 
+    sanitizeFilename,
+    generateExportHtmlTemplate,
+    generateExportTxtTemplate
+} from '../../../utils/exportUtils';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { Modal } from '../../shared/Modal';
 
@@ -42,8 +51,11 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
         const contentSnippet = markdownContent.replace(/[^\w\s]/gi, '').split(' ').slice(0, 5).join('_');
         const safeSnippet = sanitizeFilename(contentSnippet) || 'message';
         const filenameBase = `${safeSnippet}-${shortId}`;
+        
+        const dateObj = new Date(message.timestamp);
+        const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
 
-        // Simulate a small delay for better UX on fast operations (like text export) to show the loading state briefly
+        // Simulate a small delay for better UX on fast operations
         if (type !== 'png') {
              await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -56,25 +68,37 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
             tempContainer.style.position = 'absolute';
             tempContainer.style.left = '-9999px';
             tempContainer.style.top = '0px';
-            tempContainer.style.width = '840px'; 
-            tempContainer.style.padding = '20px';
+            tempContainer.style.width = '800px'; // Standard width
+            tempContainer.style.padding = '0';
             tempContainer.style.boxSizing = 'border-box';
             
             const allStyles = await gatherPageStyles();
+            const bodyClasses = document.body.className;
+            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
             
+            // Create a header for the PNG that matches the full chat export style
+            const headerHtml = `
+                <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
+                    <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">Exported Message</h1>
+                    <div style="font-size: 0.875rem; color: var(--theme-text-tertiary); display: flex; gap: 1rem;">
+                        <span>${dateStr}</span>
+                        <span>•</span>
+                        <span>ID: ${shortId}</span>
+                    </div>
+                </div>
+            `;
+
             tempContainer.innerHTML = `
                 ${allStyles}
-                <div class="export-wrapper p-4" style="background-color: ${themeColors.bgPrimary}; background-image: radial-gradient(ellipse at 50% 100%, ${themeId === 'pearl' ? 'rgba(0, 0, 0, 0.02)' : 'rgba(255, 255, 255, 0.025)'}, transparent 70%);">
-                    <div class="flex items-start gap-2 sm:gap-3 group justify-start">
-                        <div class="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
-                           <div class="h-6 sm:h-7">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${themeColors.iconModel}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v-2"/><path d="M9 13v-2"/></svg>
-                           </div>
-                       </div>
-                       <div class="w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg">
-                           <div class="markdown-body">${sanitizedHtml}</div>
-                       </div>
-                   </div>
+                <div class="theme-${themeId} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; min-height: 100vh;">
+                    <div style="background-color: ${rootBgColor}; padding: 0;">
+                        <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
+                            ${headerHtml}
+                            <div style="padding: 0 2rem 2rem 2rem;">
+                                <div class="markdown-body">${sanitizedHtml}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
             
@@ -84,57 +108,46 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
                 hljs.highlightElement(block as HTMLElement);
             });
             
-            await exportElementAsPng(tempContainer, `${filenameBase}.png`, { backgroundColor: null, scale: 2.5 });
+            const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
+            if (!captureTarget) throw new Error("Capture target not found");
+
+            await exportElementAsPng(captureTarget, `${filenameBase}.png`, { backgroundColor: rootBgColor, scale: 2.5 });
             document.body.removeChild(tempContainer);
 
         } else if (type === 'html') {
             const rawHtml = marked.parse(markdownContent);
             const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
-            const headContent = await gatherPageStyles();
-            const scripts = `
-              <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-              <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                  document.body.classList.add('theme-${themeId === 'pearl' ? 'light' : 'dark'}');
-                  document.querySelectorAll('pre code').forEach((el) => {
-                    hljs.highlightElement(el);
-                  });
-                });
-              </script>
-            `;
+            const styles = await gatherPageStyles();
+            const bodyClasses = document.body.className;
+            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
 
-            const fullHtmlDoc = `<!DOCTYPE html><html lang="en">
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Export - ${shortId}</title>
-              ${headContent}
-              <style>
-                body { padding: 20px; }
-                .code-block-utility-button { display: none !important; }
-              </style>
-            </head>
-            <body>
-              <div class="exported-message-container">
-                  <div class="flex items-start gap-2 sm:gap-3 group justify-start">
-                       <div class="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10">
-                          <div class="h-6 sm:h-7">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${themeColors.iconModel}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v-2"/><path d="M9 13v-2"/></svg>
-                          </div>
-                      </div>
-                      <div class="w-fit max-w-full sm:max-w-xl lg:max-w-2xl xl:max-w-3xl p-2.5 sm:p-3 rounded-2xl shadow-md flex flex-col min-w-0 bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-lg">
-                          <div class="markdown-body">${sanitizedHtml}</div>
-                      </div>
-                  </div>
-              </div>
-              ${scripts}
-            </body>
-            </html>`;
+            const fullHtml = generateExportHtmlTemplate({
+                title: `Message ${shortId}`,
+                date: dateStr,
+                model: `ID: ${shortId}`,
+                contentHtml: `<div class="markdown-body">${sanitizedHtml}</div>`,
+                styles,
+                themeId,
+                language: 'en',
+                rootBgColor,
+                bodyClasses
+            });
             
-            exportHtmlStringAsFile(fullHtmlDoc, `${filenameBase}.html`);
+            exportHtmlStringAsFile(fullHtml, `${filenameBase}.html`);
 
         } else if (type === 'txt') {
-            exportTextStringAsFile(markdownContent, `${filenameBase}.txt`);
+            const txtContent = generateExportTxtTemplate({
+                title: `Message Export ${shortId}`,
+                date: dateStr,
+                model: 'N/A',
+                messages: [{
+                    role: message.role === 'user' ? 'USER' : 'ASSISTANT',
+                    timestamp: new Date(message.timestamp),
+                    content: markdownContent,
+                    files: message.files?.map(f => ({ name: f.name }))
+                }]
+            });
+            exportTextStringAsFile(txtContent, `${filenameBase}.txt`);
         } else if (type === 'json') {
             const blob = new Blob([JSON.stringify(message, null, 2)], { type: 'application/json' });
             triggerDownload(URL.createObjectURL(blob), `${filenameBase}.json`);

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
@@ -17,6 +18,7 @@ export interface ChatInputActionsProps {
   onToggleUrlContext: () => void;
   isDeepSearchEnabled: boolean;
   onToggleDeepSearch: () => void;
+  onAddYouTubeVideo: () => void;
   onRecordButtonClick: () => void;
   isRecording?: boolean;
   isMicInitializing?: boolean;
@@ -47,6 +49,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onToggleUrlContext,
   isDeepSearchEnabled,
   onToggleDeepSearch,
+  onAddYouTubeVideo,
   onRecordButtonClick,
   isRecording,
   isMicInitializing,
@@ -81,6 +84,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 onToggleUrlContext={onToggleUrlContext}
                 isDeepSearchEnabled={isDeepSearchEnabled}
                 onToggleDeepSearch={onToggleDeepSearch}
+                onAddYouTubeVideo={onAddYouTubeVideo}
                 disabled={disabled}
                 t={t}
             />

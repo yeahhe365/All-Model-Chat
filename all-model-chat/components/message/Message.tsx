@@ -13,7 +13,7 @@ interface MessageProps {
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void; 
     onEditMessageContent: (message: ChatMessage) => void;
-    onImageClick: (file: UploadedFile) => void;
+    onImageClick: (file: UploadedFile) => void; // Renamed to onFileClick in logic, kept name for props compat
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
     themeColors: ThemeColors; 
@@ -42,7 +42,6 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     
     const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
     
-    // refined bubble classes: slightly more padding, distinct border radius logic
     const bubbleClasses = `w-fit max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 py-3 sm:px-5 sm:py-4 shadow-sm flex flex-col min-w-0 transition-all duration-200 ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
 
     const roleSpecificBubbleClasses = {

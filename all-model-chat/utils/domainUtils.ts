@@ -77,6 +77,8 @@ export const buildContentParts = async (
       return { file: newFile, part };
     }
     
+    const isVideo = file.type.startsWith('video/');
+
     if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.fileUri) {
       // Base64 data is generated on-the-fly for the API call,
       // but NOT stored back into the `newFile` object that goes into React state.
@@ -109,6 +111,14 @@ export const buildContentParts = async (
         part = { fileData: { mimeType: 'video/youtube', fileUri: file.fileUri } };
     } else if (file.fileUri) {
       part = { fileData: { mimeType: file.type, fileUri: file.fileUri } };
+    }
+    
+    // Inject video metadata if present and it's a video
+    if (part && isVideo && file.videoMetadata) {
+        part.videoMetadata = {
+            startOffset: file.videoMetadata.startOffset,
+            endOffset: file.videoMetadata.endOffset,
+        };
     }
     
     return { file: newFile, part };

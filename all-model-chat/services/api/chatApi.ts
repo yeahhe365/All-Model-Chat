@@ -12,11 +12,12 @@ export const sendMessageStreamApi = async (
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via chat object (stream)`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
+    let finalUrlContextMetadata: any = null;
 
     try {
         const result = await chat.sendMessageStream({ message: parts });
@@ -29,36 +30,47 @@ export const sendMessageStreamApi = async (
             if (chunkResponse.usageMetadata) {
                 finalUsageMetadata = chunkResponse.usageMetadata;
             }
-            const metadataFromChunk = chunkResponse.candidates?.[0]?.groundingMetadata;
-            if (metadataFromChunk) {
-                finalGroundingMetadata = metadataFromChunk;
-            }
+            const candidate = chunkResponse.candidates?.[0];
             
-            const toolCalls = chunkResponse.candidates?.[0]?.toolCalls;
-            if (toolCalls) {
-                for (const toolCall of toolCalls) {
-                    if (toolCall.functionCall?.args?.urlContextMetadata) {
-                        if (!finalGroundingMetadata) finalGroundingMetadata = {};
-                        if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
-                        const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
-                        for (const newCitation of newCitations) {
-                            if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                                finalGroundingMetadata.citations.push(newCitation);
+            if (candidate) {
+                const metadataFromChunk = candidate.groundingMetadata;
+                if (metadataFromChunk) {
+                    finalGroundingMetadata = metadataFromChunk;
+                }
+                
+                // Check for URL context metadata (handling potential SDK property names)
+                // @ts-ignore - SDK might not have strict types for this yet
+                const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
+                if (urlMetadata) {
+                    finalUrlContextMetadata = urlMetadata;
+                }
+
+                const toolCalls = candidate.toolCalls;
+                if (toolCalls) {
+                    for (const toolCall of toolCalls) {
+                        if (toolCall.functionCall?.args?.urlContextMetadata) {
+                            if (!finalGroundingMetadata) finalGroundingMetadata = {};
+                            if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
+                            const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
+                            for (const newCitation of newCitations) {
+                                if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
+                                    finalGroundingMetadata.citations.push(newCitation);
+                                }
                             }
                         }
                     }
                 }
-            }
+                
+                // ALWAYS iterate through parts. The .text property is a shortcut and can be misleading for multimodal responses.
+                if (candidate.content?.parts?.length) {
+                    for (const part of candidate.content.parts) {
+                        const pAsThoughtSupporting = part as ThoughtSupportingPart;
 
-            // ALWAYS iterate through parts. The .text property is a shortcut and can be misleading for multimodal responses.
-            if (chunkResponse.candidates && chunkResponse.candidates[0]?.content?.parts?.length > 0) {
-                for (const part of chunkResponse.candidates[0].content.parts) {
-                    const pAsThoughtSupporting = part as ThoughtSupportingPart;
-
-                    if (pAsThoughtSupporting.thought) {
-                        onThoughtChunk(part.text);
-                    } else {
-                        onPart(part);
+                        if (pAsThoughtSupporting.thought) {
+                            onThoughtChunk(part.text || '');
+                        } else {
+                            onPart(part);
+                        }
                     }
                 }
             }
@@ -67,8 +79,8 @@ export const sendMessageStreamApi = async (
         logService.error("Error sending message to Gemini chat (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        logService.info("Streaming complete via chat object.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
-        onComplete(finalUsageMetadata, finalGroundingMetadata);
+        logService.info("Streaming complete via chat object.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata, hasUrlContext: !!finalUrlContextMetadata });
+        onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata);
     }
 };
 
@@ -77,20 +89,20 @@ export const sendMessageNonStreamApi = async (
     parts: Part[],
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via chat object (non-stream)`);
     
     try {
         if (abortSignal.aborted) {
             logService.warn("Non-streaming call prevented by abort signal before starting.");
-            onComplete([], "", undefined, undefined);
+            onComplete([], "", undefined, undefined, undefined);
             return;
         }
         const response: GenerateContentResponse = await chat.sendMessage({ message: parts });
         if (abortSignal.aborted) {
             logService.warn("Non-streaming call completed, but aborted by signal before processing response.");
-            onComplete([], "", undefined, undefined);
+            onComplete([], "", undefined, undefined, undefined);
             return;
         }
         
@@ -112,10 +124,14 @@ export const sendMessageNonStreamApi = async (
             responseParts.push({ text: response.text });
         }
         
-        const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+        const candidate = response.candidates?.[0];
+        const groundingMetadata = candidate?.groundingMetadata;
         let finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
+        
+        // @ts-ignore
+        const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
     
-        const toolCalls = response.candidates?.[0]?.toolCalls;
+        const toolCalls = candidate?.toolCalls;
         if (toolCalls) {
             for (const toolCall of toolCalls) {
                 if (toolCall.functionCall?.args?.urlContextMetadata) {
@@ -130,8 +146,8 @@ export const sendMessageNonStreamApi = async (
             }
         }
 
-        logService.info("Non-stream chat call complete.", { usage: response.usageMetadata, hasGrounding: !!finalMetadata });
-        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined);
+        logService.info("Non-stream chat call complete.", { usage: response.usageMetadata, hasGrounding: !!finalMetadata, hasUrlContext: !!urlContextMetadata });
+        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined, urlContextMetadata);
     } catch (error) {
         logService.error("Error sending message to Gemini chat (non-stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));
@@ -146,7 +162,7 @@ export const sendStatelessMessageNonStreamApi = async (
     config: any,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any) => void
+    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
     const storedSettings = await dbService.getAppSettings();
@@ -154,7 +170,7 @@ export const sendStatelessMessageNonStreamApi = async (
     const ai = getApiClient(apiKey, apiProxyUrl);
 
     try {
-        if (abortSignal.aborted) { onComplete([], "", undefined, undefined); return; }
+        if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
         const response = await ai.models.generateContent({
             model: modelId,
@@ -162,7 +178,7 @@ export const sendStatelessMessageNonStreamApi = async (
             config: config
         });
 
-        if (abortSignal.aborted) { onComplete([], "", undefined, undefined); return; }
+        if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
         let thoughtsText = "";
         const responseParts: Part[] = [];
@@ -175,9 +191,13 @@ export const sendStatelessMessageNonStreamApi = async (
         }
         if (responseParts.length === 0 && response.text) responseParts.push({ text: response.text });
         
-        const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
-        logService.info(`Stateless non-stream complete for ${modelId}.`, { usage: response.usageMetadata, hasGrounding: !!groundingMetadata });
-        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, groundingMetadata);
+        const candidate = response.candidates?.[0];
+        const groundingMetadata = candidate?.groundingMetadata;
+        // @ts-ignore
+        const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
+
+        logService.info(`Stateless non-stream complete for ${modelId}.`, { usage: response.usageMetadata, hasGrounding: !!groundingMetadata, hasUrlContext: !!urlContextMetadata });
+        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, groundingMetadata, urlContextMetadata);
     } catch (error) {
         logService.error(`Error in stateless non-stream for ${modelId}:`, error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during stateless non-streaming call."));

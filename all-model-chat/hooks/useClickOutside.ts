@@ -1,5 +1,6 @@
 
 import { useEffect, RefObject } from 'react';
+import { useWindowContext } from '../contexts/WindowContext';
 
 type Handler = (event: MouseEvent | TouchEvent) => void;
 
@@ -8,6 +9,8 @@ export const useClickOutside = <T extends HTMLElement = HTMLElement>(
   handler: Handler,
   enabled: boolean = true
 ) => {
+  const { document: targetDocument } = useWindowContext();
+
   useEffect(() => {
     if (!enabled) return;
 
@@ -20,12 +23,12 @@ export const useClickOutside = <T extends HTMLElement = HTMLElement>(
       handler(event);
     };
 
-    document.addEventListener('mousedown', listener);
-    document.addEventListener('touchstart', listener);
+    targetDocument.addEventListener('mousedown', listener);
+    targetDocument.addEventListener('touchstart', listener);
 
     return () => {
-      document.removeEventListener('mousedown', listener);
-      document.removeEventListener('touchstart', listener);
+      targetDocument.removeEventListener('mousedown', listener);
+      targetDocument.removeEventListener('touchstart', listener);
     };
-  }, [ref, handler, enabled]);
+  }, [ref, handler, enabled, targetDocument]);
 };

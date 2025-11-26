@@ -1,14 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
 /* Animations */
 :root {
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -211,6 +201,14 @@
   background-color: var(--theme-bg-code-block) !important;
 }
 
+/* Highlight.js Overrides for seamless integration */
+/* We strip the default background so the React component's container style prevails. */
+/* IMPORTANT: We do NOT strip padding here anymore, so that utility classes like !p-4 in components can take effect. */
+.markdown-body pre code.hljs,
+code.hljs {
+  background-color: transparent !important;
+}
+
 /* Inline Code Styling - Emphasis */
 .markdown-body code:not(pre code) {
   color: var(--theme-text-link) !important;
@@ -328,4 +326,81 @@ html, body, #root {
 ::-moz-selection {
   background-color: #fde047;
   color: #1f2937;
+}
+
+/* Gemini Code Execution Result Styles */
+.tool-result {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  background-color: var(--theme-bg-code-block);
+  border-left: 3px solid var(--theme-border-secondary);
+  overflow-x: auto;
+  color: var(--theme-text-primary); /* Ensure default text is readable */
+}
+
+.tool-result.outcome-ok {
+  border-left-color: var(--theme-text-success);
+  background-color: rgba(22, 163, 74, 0.05);
+}
+
+.tool-result.outcome-failed, .tool-result.outcome-dead {
+  border-left-color: var(--theme-icon-error);
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+.tool-result strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+/* Ensure pre/code blocks inside tool results are readable and handle overflow */
+.tool-result pre {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--theme-text-primary) !important; /* Force primary text color */
+  font-family: inherit;
+}
+
+/* Target the specific structure from CodeBlock if it's used inside tool-result */
+.tool-result .group.relative.rounded-lg {
+    border: 1px solid var(--theme-border-secondary);
+    background-color: var(--theme-bg-primary); /* Slightly elevate the code block */
+}
+
+/* 
+   EXPORT STYLES 
+   Target specific elements to hide during PNG export
+*/
+.is-exporting-png .message-actions,
+.is-exporting-png button:not(.code-block-dummy-btn), /* Keep code buttons structure but hide logic below */
+.is-exporting-png .code-block-utility-button,
+.is-exporting-png [aria-label*="Scroll to"], 
+.is-exporting-png .sticky {
+  display: none !important;
+}
+
+/* Hide suggestion chips in export */
+.is-exporting-png button[class*="rounded-xl"] {
+    display: none !important;
+}
+
+/* Hide scrollbars in export */
+.is-exporting-png * {
+    scrollbar-width: none !important;
+}
+.is-exporting-png *::-webkit-scrollbar {
+    display: none !important;
 }

@@ -87,10 +87,10 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       ],
       attributes: {
         ...defaultSchema.attributes,
-        '*': ['className', 'style', 'ariaHidden', 'ariaLabel', 'role', 'title', 'id', 'width', 'height', 'viewBox', 'preserveAspectRatio', 'xmlns', 'd', 'fill', 'stroke', 'strokeWidth', 'opacity'],
+        '*': ['className', 'class', 'style', 'ariaHidden', 'ariaLabel', 'role', 'title', 'id', 'width', 'height', 'viewBox', 'preserveAspectRatio', 'xmlns', 'd', 'fill', 'stroke', 'strokeWidth', 'opacity'],
         code: [...(defaultSchema.attributes?.code || []), 'className', 'inline'],
         span: [...(defaultSchema.attributes?.span || []), 'className', 'style'],
-        div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
+        div: [...(defaultSchema.attributes?.div || []), 'className', 'class', 'style'],
         math: ['xmlns', 'display', 'alttext'],
         mtext: ['mathvariant'],
         mstyle: ['mathvariant', 'mathcolor', 'mathbackground', 'scriptlevel', 'displaystyle'],
@@ -109,7 +109,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
     plugins.push([rehypeSanitize, sanitizeSchema]);
     plugins.push([rehypeKatex, { throwOnError: false, strict: false }]);
-    plugins.push([rehypeHighlight, { ignoreMissing: true }]);
+    // Explicitly enabling detect: true for better fallback detection of code blocks without language tags
+    plugins.push([rehypeHighlight, { ignoreMissing: true, detect: true }]);
 
     return plugins;
   }, [allowHtml]);
