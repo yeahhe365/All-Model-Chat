@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { KeyRound, Info, Check, AlertCircle } from 'lucide-react';
+import { KeyRound, Info, Check, AlertCircle, ShieldCheck } from 'lucide-react';
 import { Toggle } from '../shared/Tooltip';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
@@ -42,6 +42,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     return 'e.g., https://my-proxy.com/v1beta';
   };
 
+  const hasEnvKey = !!process.env.API_KEY;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,11 +57,19 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         {/* Header Toggle */}
         <div className="flex items-center justify-between py-2 cursor-pointer" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
             <div className="flex flex-col">
-                <span className="text-sm font-medium text-[var(--theme-text-primary)]">
+                <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2">
                   {t('settingsUseCustomApi')}
+                  {hasEnvKey && !useCustomApiConfig && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-600 border border-green-500/20">
+                          <ShieldCheck size={10} /> Env Key Active
+                      </span>
+                  )}
                 </span>
                 <span className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">
-                    {useCustomApiConfig ? 'Using your own API keys' : t('apiConfig_default_info')}
+                    {useCustomApiConfig 
+                        ? (hasEnvKey ? 'Overriding environment API key' : 'Using your own API keys')
+                        : (hasEnvKey ? t('apiConfig_default_info') : 'No API key found in environment. Enable custom key to proceed.')
+                    }
                 </span>
             </div>
             <Toggle

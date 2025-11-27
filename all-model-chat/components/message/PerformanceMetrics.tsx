@@ -13,7 +13,8 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
     const { 
         promptTokens, 
         completionTokens, 
-        totalTokens, 
+        totalTokens,
+        thoughtTokens,
         generationStartTime, 
         generationEndTime, 
         isLoading 
@@ -37,8 +38,10 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
     }, [generationStartTime, generationEndTime, isLoading]);
 
     // Calculate tokens per second
-    const tokensPerSecond = (completionTokens && elapsedTime > 0) 
-        ? completionTokens / elapsedTime 
+    // Include thought tokens in speed calculation as they are generated content
+    const generatedTokens = (completionTokens || 0) + (thoughtTokens || 0);
+    const tokensPerSecond = (generatedTokens > 0 && elapsedTime > 0) 
+        ? generatedTokens / elapsedTime 
         : 0;
 
     const showTokens = typeof promptTokens === 'number' || typeof completionTokens === 'number' || typeof totalTokens === 'number';
@@ -51,11 +54,19 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
             {showTokens && (
                 <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title="Token Usage">
                     <span className="flex items-center gap-2">
-                        <span>Input: {promptTokens ?? 0}</span>
+                        <span>I: {promptTokens ?? 0}</span>
                         <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
-                        <span>Output: {completionTokens ?? 0}</span>
+                        {thoughtTokens !== undefined && thoughtTokens > 0 && (
+                            <>
+                                <span className="flex items-center gap-1 text-[var(--theme-text-secondary)]">
+                                    R: {thoughtTokens}
+                                </span>
+                                <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
+                            </>
+                        )}
+                        <span>O: {completionTokens ?? 0}</span>
                         <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
-                        <span className="font-semibold text-[var(--theme-text-secondary)]">Total: {totalTokens ?? ((promptTokens||0) + (completionTokens||0))}</span>
+                        <span className="font-semibold text-[var(--theme-text-secondary)]">Σ: {totalTokens ?? ((promptTokens||0) + (completionTokens||0))}</span>
                     </span>
                 </div>
             )}

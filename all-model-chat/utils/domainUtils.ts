@@ -1,6 +1,6 @@
 
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession, ModelOption } from '../types';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
+import { SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
 import { logService } from '../services/logService';
 
 export const fileToBase64 = (file: File): Promise<string> => {
@@ -20,6 +20,14 @@ export const fileToBase64 = (file: File): Promise<string> => {
     });
 };
 
+export const fileToString = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+        reader.readAsText(file);
+    });
+};
 
 export const fileToBlobUrl = (file: File): string => {
     return URL.createObjectURL(file);
@@ -68,8 +76,6 @@ export const buildContentParts = async (
   const filesToProcess = files || [];
   
   const processedResults = await Promise.all(filesToProcess.map(async (file) => {
-    // Create a shallow copy to avoid direct mutation of state objects.
-    // We will be careful not to add large data to this object.
     const newFile = { ...file };
     let part: ContentPart | null = null;
     
@@ -78,47 +84,73 @@ export const buildContentParts = async (
     }
     
     const isVideo = file.type.startsWith('video/');
+    const isYoutube = file.type === 'video/youtube-link';
+    // Check if file should be treated as text content (not base64 inlineData)
+    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    const isTextLike = SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension) || file.type === 'text/plain';
 
-    if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && !file.fileUri) {
-      // Base64 data is generated on-the-fly for the API call,
-      // but NOT stored back into the `newFile` object that goes into React state.
-      let base64DataForApi: string | undefined;
-      
-      const fileSource = file.rawFile;
-      const urlSource = file.dataUrl?.startsWith('blob:') ? file.dataUrl : undefined;
-
-      if (fileSource && fileSource instanceof File) {
-        try {
-          base64DataForApi = await fileToBase64(fileSource);
-        } catch (error) {
-          logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
+    if (file.fileUri) {
+        // 1. Files uploaded via API (or YouTube links)
+        if (isYoutube) {
+            part = { fileData: { mimeType: 'video/youtube', fileUri: file.fileUri } };
+        } else {
+            part = { fileData: { mimeType: file.type, fileUri: file.fileUri } };
         }
-      } else if (urlSource) {
-        try {
-          const response = await fetch(urlSource);
-          const blob = await response.blob();
-          const tempFile = new File([blob], file.name, { type: file.type });
-          base64DataForApi = await fileToBase64(tempFile);
-        } catch (error) {
-          logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
+    } else {
+        // 2. Files NOT uploaded via API (Inline handling)
+        const fileSource = file.rawFile;
+        const urlSource = file.dataUrl?.startsWith('blob:') ? file.dataUrl : undefined;
+        
+        if (isTextLike) {
+            // Special handling for text/code: Read content and wrap in text part
+            let textContent = '';
+            if (fileSource && fileSource instanceof File) {
+                textContent = await fileToString(fileSource);
+            } else if (urlSource) {
+                const response = await fetch(urlSource);
+                textContent = await response.text();
+            }
+            if (textContent) {
+                // Format as a pseudo-file block for the model
+                part = { text: `\n--- START OF FILE ${file.name} ---\n${textContent}\n--- END OF FILE ${file.name} ---\n` };
+            }
+        } else {
+            // Standard Inline Data (Images, PDFs, Audio, Video if small enough)
+            let base64DataForApi: string | undefined;
+            
+            if (fileSource && fileSource instanceof File) {
+                try {
+                    base64DataForApi = await fileToBase64(fileSource);
+                } catch (error) {
+                    logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
+                }
+            } else if (urlSource) {
+                try {
+                    const response = await fetch(urlSource);
+                    const blob = await response.blob();
+                    const tempFile = new File([blob], file.name, { type: file.type });
+                    base64DataForApi = await fileToBase64(tempFile);
+                } catch (error) {
+                    logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
+                }
+            }
+            
+            if (base64DataForApi) {
+                part = { inlineData: { mimeType: file.type, data: base64DataForApi } };
+            }
         }
-      }
-      
-      if (base64DataForApi) {
-        part = { inlineData: { mimeType: file.type, data: base64DataForApi } };
-      }
-    } else if (file.fileUri && file.type === 'video/youtube-link') {
-        part = { fileData: { mimeType: 'video/youtube', fileUri: file.fileUri } };
-    } else if (file.fileUri) {
-      part = { fileData: { mimeType: file.type, fileUri: file.fileUri } };
     }
     
-    // Inject video metadata if present and it's a video
-    if (part && isVideo && file.videoMetadata) {
+    // Inject video metadata if present and it's a video (works for both inline and fileUri video/youtube)
+    if (part && (isVideo || isYoutube) && file.videoMetadata) {
         part.videoMetadata = {
             startOffset: file.videoMetadata.startOffset,
             endOffset: file.videoMetadata.endOffset,
         };
+        if (file.videoMetadata.fps) {
+            // @ts-ignore
+            (part.videoMetadata as any).fps = file.videoMetadata.fps;
+        }
     }
     
     return { file: newFile, part };
@@ -129,10 +161,13 @@ export const buildContentParts = async (
 
   const userTypedText = text.trim();
   const contentPartsResult: ContentPart[] = [];
+  
+  // Optimize: Place media parts first as recommended by Gemini documentation for better multimodal performance
+  contentPartsResult.push(...dataParts);
+
   if (userTypedText) {
     contentPartsResult.push({ text: userTypedText });
   }
-  contentPartsResult.push(...dataParts);
 
   return { contentParts: contentPartsResult, enrichedFiles };
 };
@@ -143,6 +178,18 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
       .map(async (msg) => {
         // Use buildContentParts for both user and model messages to handle text and files consistently.
         const { contentParts } = await buildContentParts(msg.content, msg.files);
+        
+        // Attach Thought Signatures if present (Crucial for Gemini 3 Pro)
+        if (msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0) {
+            if (contentParts.length > 0) {
+                // Strategy: Attach the last thought signature to the last part.
+                // Since we reconstruct parts from text/files (flattened), we may not have a 1:1 mapping to original parts.
+                // However, ensuring the signature accompanies the text response typically preserves the thought context.
+                const lastPart = contentParts[contentParts.length - 1];
+                lastPart.thoughtSignature = msg.thoughtSignatures[msg.thoughtSignatures.length - 1];
+            }
+        }
+
         return { role: msg.role as 'user' | 'model', parts: contentParts };
       });
       

@@ -28,6 +28,14 @@ export interface SafetySetting {
     threshold: HarmBlockThreshold;
 }
 
+export interface FilesApiConfig {
+    images: boolean;
+    pdfs: boolean;
+    audio: boolean;
+    video: boolean;
+    text: boolean;
+}
+
 export interface ChatSettings {
   modelId: string;
   temperature: number;
@@ -56,7 +64,7 @@ export interface AppSettings extends ChatSettings {
  isStreamingEnabled: boolean;
  transcriptionModelId: string;
  isTranscriptionThinkingEnabled: boolean;
- useFilesApiForImages: boolean;
+ filesApiConfig: FilesApiConfig;
  expandCodeBlocksByDefault: boolean;
  isAutoTitleEnabled: boolean;
  isMermaidRenderingEnabled: boolean;
@@ -68,4 +76,6 @@ export interface AppSettings extends ChatSettings {
  generateQuadImages?: boolean;
  autoFullscreenHtml?: boolean;
  showWelcomeSuggestions?: boolean;
+ // Deprecated but kept for type safety during migration if needed, though removed from interface for cleanliness
+ // useFilesApiForImages?: boolean; 
 }

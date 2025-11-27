@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedScenario } from '../../types';
-import { X, Plus, Trash2, Edit3, Search, Play, Save, MessageSquare, Shield, User } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { X, Plus, Trash2, Edit3, Search, Play, Save, MessageSquare, Shield, User, Bot, Upload, Download } from 'lucide-react';
+import { translations, generateUniqueId } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { useResponsiveValue } from '../../hooks/useDevice';
+import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;
@@ -15,6 +16,8 @@ interface PreloadedMessagesModalProps {
   onLoadScenario: (scenario: SavedScenario) => void;
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
+
+const SYSTEM_SCENARIO_IDS = ['fop-scenario-default', 'unrestricted-scenario-default', 'pyrite-scenario-default'];
 
 export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   isOpen,
@@ -33,6 +36,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const headingIconSize = useResponsiveValue(20, 24);
 
@@ -55,19 +59,6 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     setTimeout(() => setFeedback(null), duration);
   };
   
-  // Persist changes immediately when the list changes (deletion or edit save)
-  useEffect(() => {
-      if (isOpen && scenarios !== savedScenarios) {
-          // Debounce save or just check if length/content changed significantly?
-          // For simplicity and reliability in this UI, we won't auto-save everything immediately to disk 
-          // to allow "Cancel" behavior if we wanted, but the previous requirement implied "Save & Close".
-          // However, to make it "Simple and Practical", immediate action is often better.
-          // Let's keep the "Save Changes" button explicit in the footer to avoid accidental data loss/overwrites,
-          // OR we can make it auto-save. 
-          // Given the prompt "redesign... simple and practical", distinct Save actions are safer.
-      }
-  }, [scenarios, isOpen, savedScenarios]);
-
   const handleSaveAllAndClose = () => {
     onSaveAllScenarios(scenarios);
     handleClose();
@@ -106,10 +97,75 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
   };
   
   const handleDeleteScenario = (id: string) => {
-      if (confirm("Are you sure you want to delete this scenario?")) {
-        setScenarios(prev => prev.filter(s => s.id !== id));
-        showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
+      setScenarios(prev => prev.filter(s => s.id !== id));
+      showFeedback('info', t('scenarios_feedback_cleared', 'Scenario deleted.'));
+  };
+
+  const handleExportScenarios = () => {
+      // Only export user scenarios, excluding system ones
+      const scenariosToExport = scenarios.filter(s => !SYSTEM_SCENARIO_IDS.includes(s.id));
+      
+      if (scenariosToExport.length === 0) {
+          showFeedback('info', t('scenarios_feedback_emptyExport'));
+          return;
       }
+
+      const dataToExport = { 
+          type: 'AllModelChat-Scenarios', 
+          version: 1, 
+          scenarios: scenariosToExport 
+      };
+      const jsonString = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const date = new Date().toISOString().slice(0, 10);
+      triggerDownload(URL.createObjectURL(blob), `scenarios-export-${date}.json`);
+      showFeedback('success', t('scenarios_feedback_exported'));
+  };
+
+  const handleExportSingleScenario = (scenario: SavedScenario) => {
+      const dataToExport = {
+          type: 'AllModelChat-Scenarios',
+          version: 1,
+          scenarios: [scenario]
+      };
+      const safeTitle = sanitizeFilename(scenario.title);
+      const jsonString = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      triggerDownload(URL.createObjectURL(blob), `scenario-${safeTitle}.json`);
+      showFeedback('success', t('scenarios_feedback_exported'));
+  };
+
+  const handleImportScenarios = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+          try {
+              const text = event.target?.result as string;
+              const data = JSON.parse(text);
+              
+              if (data && data.type === 'AllModelChat-Scenarios' && Array.isArray(data.scenarios)) {
+                  const importedScenarios = data.scenarios as SavedScenario[];
+                  // Re-generate IDs to avoid collision
+                  const sanitizedImport = importedScenarios.map(s => ({
+                      ...s,
+                      id: generateUniqueId()
+                  }));
+                  
+                  setScenarios(prev => [...prev, ...sanitizedImport]);
+                  showFeedback('success', t('scenarios_feedback_imported'));
+              } else {
+                  throw new Error("Invalid format");
+              }
+          } catch (error) {
+              console.error("Import failed", error);
+              showFeedback('error', t('scenarios_feedback_importFailed'));
+          } finally {
+              if (importInputRef.current) importInputRef.current.value = '';
+          }
+      };
+      reader.readAsText(file);
   };
 
   const handleLoadAndClose = (scenario: SavedScenario) => {
@@ -131,8 +187,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
       );
   }, [scenarios, searchQuery]);
 
-  const systemScenarios = filteredScenarios.filter(s => ['fop-scenario-default', 'unrestricted-scenario-default'].includes(s.id));
-  const userScenarios = filteredScenarios.filter(s => !['fop-scenario-default', 'unrestricted-scenario-default'].includes(s.id));
+  const systemScenarios = filteredScenarios.filter(s => SYSTEM_SCENARIO_IDS.includes(s.id));
+  const userScenarios = filteredScenarios.filter(s => !SYSTEM_SCENARIO_IDS.includes(s.id));
   
   const renderScenarioItem = (scenario: SavedScenario, isSystem: boolean) => (
     <div 
@@ -169,6 +225,14 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                 title={t('scenarios_load_title')}
             >
                 <Play size={14} strokeWidth={2} fill="currentColor" />
+            </button>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); handleExportSingleScenario(scenario); }}
+                className="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors"
+                title={t('scenarios_export_single_title', 'Export scenario')}
+            >
+                <Download size={16} strokeWidth={1.5} />
             </button>
             
             {!isSystem && (
@@ -237,27 +301,53 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
         </div>
       
         {/* Footer */}
-        <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] flex flex-col sm:flex-row items-center justify-between gap-3 bg-[var(--theme-bg-tertiary)]">
-            <button 
-                onClick={handleStartAddNew} 
-                className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm hover:shadow"
-            >
-                <Plus size={16} /> {t('scenarios_create_button', 'Create New')}
-            </button>
-            
-            <div className="flex gap-3 w-full sm:w-auto">
-                <button 
-                    onClick={handleClose} 
-                    className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-xl transition-colors"
-                >
-                    {t('cancel', 'Cancel')}
-                </button>
-                <button 
-                    onClick={handleSaveAllAndClose} 
-                    className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg" 
-                >
-                    <Save size={16} /> {t('scenarios_save_and_close', 'Save Library')}
-                </button>
+        <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-tertiary)]">
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+                
+                {/* Left Group: Action Buttons */}
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">
+                    <button 
+                        onClick={handleStartAddNew} 
+                        className="px-4 py-2.5 text-sm font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm"
+                    >
+                        <Plus size={16} /> {t('scenarios_create_button', 'Add')}
+                    </button>
+                    
+                    <div className="h-6 w-px bg-[var(--theme-border-secondary)] mx-1 hidden sm:block"></div>
+                    
+                    <button 
+                        onClick={() => importInputRef.current?.click()} 
+                        className="p-2.5 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-xl transition-colors border border-transparent hover:border-[var(--theme-border-secondary)]"
+                        title={t('scenarios_import_button', 'Import')}
+                    >
+                        <Upload size={18} strokeWidth={1.5} />
+                    </button>
+                    <input type="file" ref={importInputRef} onChange={handleImportScenarios} accept=".json" className="hidden" />
+                    
+                    <button 
+                        onClick={handleExportScenarios}
+                        className="p-2.5 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-xl transition-colors border border-transparent hover:border-[var(--theme-border-secondary)]"
+                        title={t('scenarios_export_button', 'Export')}
+                    >
+                        <Download size={18} strokeWidth={1.5} />
+                    </button>
+                </div>
+                
+                {/* Right Group: Close/Save */}
+                <div className="flex gap-3 w-full sm:w-auto">
+                    <button 
+                        onClick={handleClose} 
+                        className="flex-1 sm:flex-none px-4 py-2.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-input)] rounded-xl transition-colors"
+                    >
+                        {t('cancel', 'Cancel')}
+                    </button>
+                    <button 
+                        onClick={handleSaveAllAndClose} 
+                        className="flex-1 sm:flex-none px-6 py-2.5 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg" 
+                    >
+                        <Save size={16} /> {t('scenarios_save_and_close', 'Save')}
+                    </button>
+                </div>
             </div>
         </div>
     </>

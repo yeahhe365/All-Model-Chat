@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario } from '../../types';
-import { User, Bot, Trash2, Edit3, ArrowUp, Save, Plus } from 'lucide-react';
+import { User, Bot, Trash2, Edit3, ArrowUp, ArrowDown, Save, Plus } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 
 interface ScenarioEditorProps {
@@ -51,6 +51,15 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
         }));
     };
 
+    const handleMoveMessage = (index: number, direction: -1 | 1) => {
+        if (index + direction < 0 || index + direction >= scenario.messages.length) return;
+        const newMessages = [...scenario.messages];
+        const temp = newMessages[index];
+        newMessages[index] = newMessages[index + direction];
+        newMessages[index + direction] = temp;
+        setScenario(prev => ({ ...prev, messages: newMessages }));
+    };
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
             handleAddMessage();
@@ -92,7 +101,8 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
             {/* Chat Preview Area */}
             <div 
                 ref={messageListRef}
-                className="flex-grow overflow-y-auto custom-scrollbar space-y-4 p-2 -mx-2 relative"
+                // Added pt-10 to ensure top message's toolbar is visible and not clipped
+                className="flex-grow overflow-y-auto custom-scrollbar px-2 -mx-2 relative pt-10 pb-4 scroll-smooth"
             >
                 {scenario.messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-[var(--theme-text-tertiary)] opacity-60">
@@ -102,61 +112,100 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                         <p className="text-sm">Add messages below to build the conversation flow.</p>
                     </div>
                 ) : (
-                    scenario.messages.map((msg) => {
-                        const isEditing = editingMessageId === msg.id;
-                        return (
-                            <div 
-                                key={msg.id} 
-                                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group`}
-                            >
-                                <div className={`
-                                    relative max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 text-sm
-                                    ${msg.role === 'user' 
-                                        ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-tr-sm' 
-                                        : 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-tl-sm'}
-                                `}>
-                                    {isEditing ? (
-                                        <div className="flex flex-col gap-2 min-w-[280px]">
-                                            <textarea
-                                                className="w-full bg-black/10 dark:bg-white/10 rounded-md p-2 text-inherit outline-none resize-y"
-                                                defaultValue={msg.content}
-                                                autoFocus
-                                                rows={3}
-                                                onBlur={(e) => handleUpdateMessage(msg.id, e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                        e.preventDefault();
-                                                        handleUpdateMessage(msg.id, e.currentTarget.value);
-                                                    }
-                                                }}
-                                            />
-                                            <div className="text-[10px] opacity-70 text-right">Press Enter to save</div>
-                                        </div>
-                                    ) : (
-                                        <div className="whitespace-pre-wrap break-words">{msg.content}</div>
-                                    )}
+                    <div className="space-y-6 py-2">
+                        {scenario.messages.map((msg, index) => {
+                            const isEditing = editingMessageId === msg.id;
+                            return (
+                                <div 
+                                    key={msg.id} 
+                                    className={`group flex items-end gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                                >
+                                    {/* Avatar */}
+                                    <div className={`
+                                        flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center shadow-sm mb-1
+                                        ${msg.role === 'user' ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]'}
+                                    `}>
+                                        {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+                                    </div>
 
-                                    {/* Inline Controls */}
-                                    {!isEditing && (
-                                        <div className={`absolute ${msg.role === 'user' ? 'right-0 translate-x-[110%]' : 'left-0 -translate-x-[110%]'} top-0 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity`}>
-                                            <button 
-                                                onClick={() => setEditingMessageId(msg.id)} 
-                                                className="p-1.5 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full shadow-sm"
-                                            >
-                                                <Edit3 size={12} />
-                                            </button>
-                                            <button 
-                                                onClick={() => handleDeleteMessage(msg.id)} 
-                                                className="p-1.5 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] rounded-full shadow-sm"
-                                            >
-                                                <Trash2 size={12} />
-                                            </button>
+                                    {/* Message Bubble */}
+                                    <div className={`relative max-w-[80%] sm:max-w-[85%]`}>
+                                        <div className={`
+                                            rounded-2xl px-4 py-3 text-sm shadow-sm whitespace-pre-wrap break-words transition-all
+                                            ${msg.role === 'user' 
+                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rounded-br-sm' 
+                                                : 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-bl-sm'}
+                                        `}>
+                                            {isEditing ? (
+                                                <div className="flex flex-col gap-2 min-w-[260px]">
+                                                    <textarea
+                                                        className="w-full bg-black/10 dark:bg-white/10 rounded-md p-2 text-inherit outline-none resize-y"
+                                                        defaultValue={msg.content}
+                                                        autoFocus
+                                                        rows={3}
+                                                        onBlur={(e) => handleUpdateMessage(msg.id, e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleUpdateMessage(msg.id, e.currentTarget.value);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="text-[10px] opacity-70 text-right">Press Enter to save</div>
+                                                </div>
+                                            ) : (
+                                                msg.content
+                                            )}
                                         </div>
-                                    )}
+
+                                        {/* Floating Toolbar (Above Bubble) */}
+                                        {!isEditing && (
+                                            <div className={`
+                                                absolute bottom-full mb-2 ${msg.role === 'user' ? 'right-0' : 'left-0'}
+                                                flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-200
+                                                bg-[var(--theme-bg-primary)]/90 border border-[var(--theme-border-secondary)] shadow-xl rounded-full px-2 py-1.5 backdrop-blur-md z-20 
+                                                transform translate-y-2 group-hover:translate-y-0 scale-95 group-hover:scale-100 origin-bottom
+                                            `}>
+                                                <button 
+                                                    onClick={() => handleMoveMessage(index, -1)}
+                                                    disabled={index === 0}
+                                                    className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                                                    title={t('scenarios_moveUp_title')}
+                                                >
+                                                    <ArrowUp size={14} strokeWidth={2} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleMoveMessage(index, 1)}
+                                                    disabled={index === scenario.messages.length - 1}
+                                                    className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                                                    title={t('scenarios_moveDown_title')}
+                                                >
+                                                    <ArrowDown size={14} strokeWidth={2} />
+                                                </button>
+                                                
+                                                <div className="w-px h-3 bg-[var(--theme-border-secondary)] mx-1" />
+
+                                                <button 
+                                                    onClick={() => setEditingMessageId(msg.id)} 
+                                                    className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors"
+                                                    title={t('scenarios_edit_title')}
+                                                >
+                                                    <Edit3 size={14} strokeWidth={2} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteMessage(msg.id)} 
+                                                    className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-full transition-colors"
+                                                    title={t('scenarios_delete_title')}
+                                                >
+                                                    <Trash2 size={14} strokeWidth={2} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })
+                            );
+                        })}
+                    </div>
                 )}
             </div>
 

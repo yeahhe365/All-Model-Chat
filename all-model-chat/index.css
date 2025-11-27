@@ -201,6 +201,21 @@
   background-color: var(--theme-bg-code-block) !important;
 }
 
+/* Ensure lists are visible */
+.markdown-body ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+}
+
+.markdown-body ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+}
+
+.markdown-body li {
+  display: list-item !important;
+}
+
 /* Highlight.js Overrides for seamless integration */
 /* We strip the default background so the React component's container style prevails. */
 /* IMPORTANT: We do NOT strip padding here anymore, so that utility classes like !p-4 in components can take effect. */

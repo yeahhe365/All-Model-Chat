@@ -28,18 +28,21 @@ const ActiveToolBadge: React.FC<{
     <>
         <div className="h-4 w-px bg-[var(--theme-border-secondary)] mx-1.5"></div>
         <div
-            className="flex items-center gap-1.5 bg-[var(--theme-bg-info)] text-[var(--theme-text-info)] text-sm px-2.5 py-1 rounded-full transition-all"
+            className="group flex items-center gap-1.5 bg-blue-500/10 text-[var(--theme-text-link)] text-sm px-2.5 py-1 rounded-full transition-all select-none hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] cursor-pointer"
             style={{ animation: `fadeInUp 0.3s ease-out both` }}
+            onClick={onRemove}
+            role="button"
+            aria-label={removeAriaLabel}
         >
-            {icon}
+            <div className="relative flex items-center justify-center w-3.5 h-3.5">
+                <span className="absolute inset-0 flex items-center justify-center transition-all duration-200 opacity-100 scale-100 group-hover:opacity-0 group-hover:scale-75 rotate-0 group-hover:-rotate-90">
+                    {icon}
+                </span>
+                <span className="absolute inset-0 flex items-center justify-center transition-all duration-200 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100 rotate-90 group-hover:rotate-0 text-[var(--theme-icon-error)]">
+                    <X size={14} strokeWidth={2.5} />
+                </span>
+            </div>
             <span className="font-medium">{label}</span>
-            <button
-                onClick={onRemove}
-                className="text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] p-0.5 rounded-full hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-                aria-label={removeAriaLabel}
-            >
-                <X size={14} strokeWidth={2} />
-            </button>
         </div>
     </>
 );
@@ -101,9 +104,14 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     role="menu"
                 >
                     {menuItems.map(item => (
-                      <button key={item.labelKey} onClick={item.action} className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors" role="menuitem">
+                      <button 
+                        key={item.labelKey} 
+                        onClick={item.action} 
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors ${item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`} 
+                        role="menuitem"
+                      >
                         <div className="flex items-center gap-3.5">
-                            <span className="text-[var(--theme-text-secondary)]">{item.icon}</span>
+                            <span className={item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}>{item.icon}</span>
                             <span className="font-medium">{t(item.labelKey as any)}</span>
                         </div>
                         {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}

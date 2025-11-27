@@ -4,6 +4,7 @@ import { ChatSettings } from './settings';
 export interface VideoMetadata {
   startOffset?: string;
   endOffset?: string;
+  fps?: number;
 }
 
 export interface UploadedFile {
@@ -41,6 +42,7 @@ export interface ChatMessage {
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;
+  thoughtTokens?: number; // Added for tracking thinking tokens
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
   groundingMetadata?: any;
@@ -48,6 +50,7 @@ export interface ChatMessage {
   suggestions?: string[];
   isGeneratingSuggestions?: boolean;
   stoppedByUser?: boolean;
+  thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
 }
 
 // Defines the structure for a part of a content message
@@ -62,6 +65,7 @@ export interface ContentPart {
     fileUri: string;
   };
   videoMetadata?: VideoMetadata;
+  thoughtSignature?: string; // Added to pass back to API
 }
 
 export interface ChatGroup {

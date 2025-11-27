@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { getKeyForRequest, logService, pcmBase64ToWavUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
+import { DEFAULT_TTS_MODEL_ID } from '../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -34,7 +35,7 @@ export const useTextToSpeechHandler = ({
         
         setTtsMessageId(messageId);
         logService.info("Requesting TTS for message", { messageId });
-        const modelId = 'models/gemini-2.5-flash-preview-tts';
+        const modelId = DEFAULT_TTS_MODEL_ID;
         const voice = appSettings.ttsVoice;
         const abortController = new AbortController();
 

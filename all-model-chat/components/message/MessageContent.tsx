@@ -10,6 +10,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { ThinkingTimer } from './ThinkingTimer';
+import { AudioPlayer } from '../shared/AudioPlayer';
 
 interface MessageContentProps {
     message: ChatMessage;
@@ -217,8 +218,8 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {audioSrc && (
-                <div className="mt-2">
-                    <audio src={audioSrc} controls autoPlay className="w-full h-10" />
+                <div className="mt-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
+                    <AudioPlayer src={audioSrc} autoPlay={true} />
                 </div>
             )}
             

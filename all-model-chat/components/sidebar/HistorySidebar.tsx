@@ -230,6 +230,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
       setIsSearching(true);
   };
 
+  const handleEmptySpaceClick = (e: React.MouseEvent) => {
+      if (e.target === e.currentTarget) {
+          onToggle();
+      }
+  };
+
   const ungroupedSessions = sessionsByGroupId.get(null) || [];
   const pinnedUngrouped = ungroupedSessions.filter(s => s.isPinned);
   const { categories, categoryOrder } = categorizedUngroupedSessions;
@@ -248,7 +254,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
             e.stopPropagation();
             onClick();
           }}
-          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
+          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
           title={title}
           aria-label={title}
       >
@@ -279,7 +285,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                 setSearchQuery={setSearchQuery}
                 t={t}
             />
-            <div className="flex-grow overflow-y-auto custom-scrollbar p-2">
+            <div 
+                className="flex-grow overflow-y-auto custom-scrollbar p-2"
+                onClick={handleEmptySpaceClick}
+            >
                 {sessions.length === 0 && !searchQuery ? (
                 <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
                 ) : (

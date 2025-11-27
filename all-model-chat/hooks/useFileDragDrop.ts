@@ -1,4 +1,6 @@
 
+
+
 import { useState, useCallback } from 'react';
 import { generateFolderContext } from '../utils/folderImportUtils';
 
@@ -8,6 +10,7 @@ interface UseFileDragDropProps {
 
 export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
     const [isAppDraggingOver, setIsAppDraggingOver] = useState<boolean>(false);
+    const [isProcessingDrop, setIsProcessingDrop] = useState<boolean>(false);
 
     const handleAppDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -86,51 +89,59 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
         e.preventDefault();
         e.stopPropagation();
         setIsAppDraggingOver(false);
+        setIsProcessingDrop(true);
 
-        const items = e.dataTransfer.items;
-        let hasDirectory = false;
+        try {
+            const items = e.dataTransfer.items;
+            let hasDirectory = false;
 
-        // Check if any dropped item is a directory
-        if (items) {
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                // webkitGetAsEntry is non-standard but widely supported
-                if (item.kind === 'file' && typeof item.webkitGetAsEntry === 'function') {
-                    const entry = item.webkitGetAsEntry();
-                    if (entry && entry.isDirectory) {
-                        hasDirectory = true;
-                        break;
+            // Check if any dropped item is a directory
+            if (items) {
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    // webkitGetAsEntry is non-standard but widely supported
+                    if (item.kind === 'file' && typeof item.webkitGetAsEntry === 'function') {
+                        const entry = item.webkitGetAsEntry();
+                        if (entry && entry.isDirectory) {
+                            hasDirectory = true;
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        if (hasDirectory) {
-            // Handle directory drop: recursive scan and convert to text context
-            const entries = Array.from(items)
-                .filter(item => item.kind === 'file')
-                .map(item => item.webkitGetAsEntry())
-                .filter(Boolean);
-            
-            const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));
-            const flatFiles = filesArrays.flat();
-            
-            if (flatFiles.length > 0) {
-                // Convert list of files to a single text context file (same as Import Folder button)
-                const contextFile = await generateFolderContext(flatFiles as unknown as FileList);
-                await onFilesDropped([contextFile]);
+            if (hasDirectory) {
+                // Handle directory drop: recursive scan and convert to text context
+                const entries = Array.from(items)
+                    .filter(item => item.kind === 'file')
+                    .map(item => item.webkitGetAsEntry())
+                    .filter(Boolean);
+                
+                const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));
+                const flatFiles = filesArrays.flat();
+                
+                if (flatFiles.length > 0) {
+                    // Convert list of files to a single text context file (same as Import Folder button)
+                    const contextFile = await generateFolderContext(flatFiles as unknown as FileList);
+                    await onFilesDropped([contextFile]);
+                }
+            } else {
+                // Standard file drop
+                const files = e.dataTransfer.files;
+                if (files?.length) {
+                    await onFilesDropped(files);
+                }
             }
-        } else {
-            // Standard file drop
-            const files = e.dataTransfer.files;
-            if (files?.length) {
-                await onFilesDropped(files);
-            }
+        } catch (error) {
+            console.error("Error processing dropped files:", error);
+        } finally {
+            setIsProcessingDrop(false);
         }
     }, [onFilesDropped]);
 
     return {
         isAppDraggingOver,
+        isProcessingDrop,
         handleAppDragEnter,
         handleAppDragOver,
         handleAppDragLeave,

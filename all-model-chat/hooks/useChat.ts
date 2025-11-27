@@ -1,4 +1,6 @@
 
+
+
 import { useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
 import { useModels } from './useModels';
@@ -226,6 +228,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         
         // Files & DragDrop
         isAppDraggingOver: dragDropHandler.isAppDraggingOver,
+        isProcessingDrop: dragDropHandler.isProcessingDrop,
         handleProcessAndAddFiles: fileHandler.handleProcessAndAddFiles,
         handleAppDragEnter: dragDropHandler.handleAppDragEnter,
         handleAppDragOver: dragDropHandler.handleAppDragOver,

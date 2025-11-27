@@ -1,7 +1,7 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_PDF_MIME_TYPES, SUPPORTED_AUDIO_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, fileToBlobUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
@@ -21,6 +21,8 @@ const formatSpeed = (bytesPerSecond: number): string => {
     if (bytesPerSecond < 1024 * 1024) return `${(bytesPerSecond / 1024).toFixed(1)} KB/s`;
     return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
 };
+
+const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
 
 export const useFileUpload = ({
     appSettings,
@@ -56,19 +58,25 @@ export const useFileUpload = ({
             }
         }
 
+        // Calculate if ANY file requires API upload to handle key rotation logic first
         const needsApiKeyForUpload = filesArray.some(file => {
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             let effectiveMimeType = file.type;
+            // Identify text/code files correctly
             if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                  effectiveMimeType = 'text/plain';
             }
-            if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
-                return false;
-            }
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) {
-                return appSettings.useFilesApiForImages;
-            }
-            return true;
+            if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
+
+            // Check specific category setting
+            let userPrefersFileApi = false;
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.images;
+            else if (SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.pdfs;
+            else if (SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.audio;
+            else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
+            else userPrefersFileApi = appSettings.filesApiConfig.text; // Fallback for text/code
+
+            return userPrefersFileApi || file.size > LARGE_FILE_THRESHOLD;
         });
 
         let keyToUse: string | null = null;
@@ -91,7 +99,7 @@ export const useFileUpload = ({
             let effectiveMimeType = file.type;
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
-            // Per user request, force all text and code formats to be treated as text/plain for the model.
+            // Force text/plain for code/text extensions
             if (SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
                 effectiveMimeType = 'text/plain';
                 logService.debug(`Forcing mimeType to 'text/plain' for text/code file ${file.name}`);
@@ -103,14 +111,21 @@ export const useFileUpload = ({
                 return;
             }
 
-            const shouldUploadFile = !SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) || appSettings.useFilesApiForImages;
+            let userPrefersFileApi = false;
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.images;
+            else if (SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.pdfs;
+            else if (SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.audio;
+            else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
+            else userPrefersFileApi = appSettings.filesApiConfig.text;
+
+            const shouldUploadFile = userPrefersFileApi || file.size > LARGE_FILE_THRESHOLD;
             
             // Generate a blob URL immediately for local preview, regardless of upload method
             const dataUrl = fileToBlobUrl(file);
 
             if (shouldUploadFile) {
                 if (!keyToUse) {
-                    const errorMsg = 'API key was not available for non-image file upload.';
+                    const errorMsg = 'API key was not available for file upload.';
                     logService.error(errorMsg);
                     setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: false, progress: 0, error: errorMsg, uploadState: 'failed' }]);
                     return;
@@ -189,15 +204,19 @@ export const useFileUpload = ({
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, uploadSpeed: undefined } : f));
                 }
             } else {
+                // Inline processing (Base64 or Text content)
                 const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file, dataUrl: dataUrl };
                 setSelectedFiles(prev => [...prev, initialFileState]);
 
-                // For images sent inline, we already have the dataUrl, just mark active
+                // For text files being sent inline, we need to read the content now or during payload construction.
+                // Since buildContentParts handles reading text/code files if !fileUri, we just mark active here.
+                // However, for Image/Audio/Video inline, we rely on dataUrl (blob) or re-reading base64 later.
+                // Simply marking active is sufficient as buildContentParts will do the heavy lifting.
                 setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
             }
         });
         await Promise.allSettled(uploadPromises);
-    }, [setSelectedFiles, setAppFileError, appSettings, currentChatSettings, setCurrentChatSettings, selectedFiles]);
+    }, [setSelectedFiles, setAppFileError, appSettings, currentChatSettings, setCurrentChatSettings]);
 
     const handleCancelFileUpload = useCallback((fileIdToCancel: string) => {
         logService.warn(`User cancelled file upload: ${fileIdToCancel}`);

@@ -81,8 +81,14 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
             return audioData;
         }
         
+        const candidate = response.candidates?.[0];
+        if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+             throw new Error(`TTS generation failed with reason: ${candidate.finishReason}`);
+        }
+        
         logService.error("TTS response did not contain expected audio data structure:", { response });
 
+        // Fallback to checking text error if any, though unlikely with AUDIO modality
         const textError = response.text;
         if (textError) {
             throw new Error(`TTS generation failed: ${textError}`);

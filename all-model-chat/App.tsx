@@ -1,4 +1,6 @@
 
+
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, ChatGroup, SavedChatSession, ChatMessage } from './types';
@@ -28,7 +30,7 @@ const App: React.FC = () => {
       appFileError, setAppFileError, isAppProcessingFile,
       savedSessions, savedGroups, activeSessionId,
       apiModels, isModelsLoading, modelsLoadingError, isSwitchingModel,
-      scrollContainerRef, setScrollContainerRef, savedScenarios, isAppDraggingOver,
+      scrollContainerRef, setScrollContainerRef, savedScenarios, isAppDraggingOver, isProcessingDrop,
       aspectRatio, setAspectRatio, ttsMessageId,
       loadChatSession, startNewChat, handleClearCurrentChat,
       handleSelectModelInHeader, handleProcessAndAddFiles, handleSendMessage,
@@ -220,6 +222,7 @@ const App: React.FC = () => {
     currentChatSettings,
     setAppFileError,
     isAppDraggingOver,
+    isProcessingDrop,
     handleAppDragEnter,
     handleAppDragOver,
     handleAppDragLeave,

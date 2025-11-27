@@ -1,3 +1,4 @@
+
 export const SUPPORTED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif'];
 export const SUPPORTED_TEXT_MIME_TYPES = [
   'text/html',
@@ -40,7 +41,9 @@ export const SUPPORTED_AUDIO_MIME_TYPES = [
   'audio/aac',
   'audio/webm', 
   'audio/flac',
-  'audio/mp4', 
+  'audio/mp4',
+  'audio/aiff',
+  'audio/x-aiff',
 ];
 export const SUPPORTED_PDF_MIME_TYPES = ['application/pdf'];
 

@@ -1,7 +1,7 @@
 {
   "name": "all-model-chat",
   "private": true,
-  "version": "1.7.6",
+  "version": "1.7.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
