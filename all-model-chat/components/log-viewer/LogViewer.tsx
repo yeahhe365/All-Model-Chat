@@ -7,6 +7,7 @@ import { Modal } from '../shared/Modal';
 import { ConsoleTab } from './ConsoleTab';
 import { TokenUsageTab } from './TokenUsageTab';
 import { ApiUsageTab } from './ApiUsageTab';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 
 interface LogViewerProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   const [hasMore, setHasMore] = useState(true);
   
   const [activeTab, setActiveTab] = useState<'console' | 'api' | 'tokens'>('console');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const fetchLogs = useCallback(async (reset = false) => {
       if (isLoading && !reset) return;
@@ -76,15 +78,14 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   }, [isOpen]);
 
   const handleClear = async () => {
-      if(confirm("Clear all logs and usage statistics from database?")) {
-          await logService.clearLogs();
-          setLogs([]);
-      }
+      await logService.clearLogs();
+      setLogs([]);
   };
 
   if (!isOpen) return null;
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} backdropClassName="bg-black/70 backdrop-blur-md">
       <div className="bg-[var(--theme-bg-primary)] w-full h-[95vh] max-w-6xl shadow-2xl flex flex-col overflow-hidden rounded-xl border border-[var(--theme-border-primary)]">
         {/* Header */}
@@ -120,7 +121,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
                 isLoading={isLoading} 
                 hasMore={hasMore} 
                 onFetchMore={() => fetchLogs(false)} 
-                onClear={handleClear} 
+                onClear={() => setIsConfirmOpen(true)} 
             />
           )}
 
@@ -134,5 +135,16 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         </div>
       </div>
     </Modal>
+
+    <ConfirmationModal 
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleClear}
+        title="Clear Logs"
+        message="Are you sure you want to clear all logs and usage statistics from the database?"
+        confirmLabel="Clear"
+        isDanger
+    />
+    </>
   );
 };

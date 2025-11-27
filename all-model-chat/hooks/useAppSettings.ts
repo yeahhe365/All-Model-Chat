@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { AppSettings } from '../types';
-import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
+import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
 import { applyThemeToDocument, logService } from '../utils/appUtils';
 import { dbService } from '../utils/db';
@@ -15,7 +15,23 @@ export const useAppSettings = () => {
             try {
                 const storedSettings = await dbService.getAppSettings();
                 if (storedSettings) {
-                    setAppSettings(prev => ({...prev, ...storedSettings}));
+                    const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
+                    
+                    // Migration: Handle legacy useFilesApiForImages
+                    if (storedSettings.useFilesApiForImages !== undefined && !storedSettings.filesApiConfig) {
+                        newSettings.filesApiConfig = {
+                            ...DEFAULT_FILES_API_CONFIG,
+                            images: storedSettings.useFilesApiForImages
+                        };
+                        // Cleanup deprecated key
+                        delete newSettings.useFilesApiForImages;
+                        logService.info('Migrated legacy useFilesApiForImages to filesApiConfig');
+                    } else if (storedSettings.filesApiConfig) {
+                        // Ensure new keys are present if structure updated
+                        newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
+                    }
+
+                    setAppSettings(newSettings);
                 }
             } catch (error) {
                 logService.error("Failed to load settings from IndexedDB", { error });

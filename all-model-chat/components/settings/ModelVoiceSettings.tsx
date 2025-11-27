@@ -18,8 +18,6 @@ interface ModelVoiceSettingsProps {
   setTranscriptionModelId: (value: string) => void;
   isTranscriptionThinkingEnabled: boolean;
   setIsTranscriptionThinkingEnabled: (value: boolean) => void;
-  useFilesApiForImages: boolean;
-  setUseFilesApiForImages: (value: boolean) => void;
   generateQuadImages: boolean;
   setGenerateQuadImages: (value: boolean) => void;
   ttsVoice: string;
@@ -43,7 +41,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const {
     modelId, setModelId, isModelsLoading, modelsLoadingError, availableModels,
     transcriptionModelId, setTranscriptionModelId, isTranscriptionThinkingEnabled, setIsTranscriptionThinkingEnabled,
-    useFilesApiForImages, setUseFilesApiForImages,
     ttsVoice, setTtsVoice, 
     systemInstruction, setSystemInstruction,
     thinkingBudget, setThinkingBudget,
@@ -124,18 +121,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     <input id="top-p-slider" type="range" min="0" max="1" step="0.05" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))}
                     className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]" />
                 </div>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-2 pt-2">
-                 <label htmlFor="use-files-api-toggle" className="flex items-center justify-between py-2 rounded-lg hover:bg-[var(--theme-bg-tertiary)]/50 transition-colors cursor-pointer px-1">
-                    <span className="text-sm text-[var(--theme-text-secondary)] flex items-center">
-                    {t('settings_useFilesApiForImages_label')}
-                    <Tooltip text={t('settings_useFilesApiForImages_tooltip')}>
-                        <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
-                    </Tooltip>
-                    </span>
-                    <Toggle id="use-files-api-toggle" checked={useFilesApiForImages} onChange={setUseFilesApiForImages} />
-                </label>
             </div>
       </div>
 

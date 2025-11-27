@@ -1,3 +1,4 @@
+
 export const headerTranslations = {
     // Header.tsx
     historySidebarClose: { en: 'Close history sidebar', zh: '关闭历史记录侧边栏' },
@@ -9,8 +10,8 @@ export const headerTranslations = {
     canvasHelperInactive_aria: { en: 'Load Canvas prompt and save settings', zh: '加载 Canvas 提示并保存设置' },
     canvasHelperActive_title: { en: 'Canvas prompt is active. Click to remove.', zh: 'Canvas 提示已激活。点击移除。' },
     canvasHelperInactive_title: { en: 'Load Canvas Prompt and save', zh: '加载 Canvas 提示并保存' },
-    scenariosManage_aria: { en: 'Manage Preloaded Scenarios', zh: '管理预加载场景' },
-    scenariosManage_title: { en: 'Manage Scenarios', zh: '管理场景' },
+    scenariosManage_aria: { en: 'Scenario Presets', zh: '场景预设' },
+    scenariosManage_title: { en: 'Scenario Presets', zh: '场景预设' },
     settingsOpen_aria: { en: 'Open Chat Settings', zh: '打开聊天设置' },
     settingsOpen_title: { en: 'Chat Settings', zh: '聊天设置' },
     headerNewChat_aria: { en: 'Start a new chat session', zh: '开始新聊天会话' },

@@ -1,5 +1,5 @@
 
-import { AppSettings } from '../types';
+import { AppSettings, FilesApiConfig } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting } from '../types/settings';
 
 // Re-exporting from new modules
@@ -47,6 +47,14 @@ export const DEFAULT_SAFETY_SETTINGS: SafetySetting[] = [
     { category: HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
+export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
+    images: false,
+    pdfs: true,
+    audio: true,
+    video: true,
+    text: false,
+};
+
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
   modelId: DEFAULT_MODEL_ID,
@@ -77,7 +85,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
   isTranscriptionThinkingEnabled: DEFAULT_TRANSCRIPTION_THINKING_ENABLED,
-  useFilesApiForImages: false,
+  filesApiConfig: DEFAULT_FILES_API_CONFIG,
   expandCodeBlocksByDefault: false,
   isAutoTitleEnabled: true,
   isMermaidRenderingEnabled: true,
@@ -89,4 +97,5 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   generateQuadImages: false,
   autoFullscreenHtml: true,
   showWelcomeSuggestions: true,
+  useFilesApiForImages: false, // Deprecated compatibility
 };

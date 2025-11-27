@@ -217,7 +217,7 @@ export const useChatHistory = ({
     }, [updateAndPersistGroups]);
 
     const clearAllHistory = useCallback(() => {
-        if (!window.confirm(t('settingsClearHistory_confirm'))) return;
+        // Confirm dialog moved to UI component
         logService.warn('User clearing all chat history.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
@@ -225,16 +225,16 @@ export const useChatHistory = ({
         setSavedSessions([]);
         setSavedGroups([]);
         startNewChat();
-    }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs, t]);
+    }, [setSavedSessions, setSavedGroups, startNewChat, activeJobs]);
     
     const clearCacheAndReload = useCallback(() => {
-        if (!window.confirm(t('settingsClearCache_confirm'))) return;
+        // Confirm dialog moved to UI component
         logService.warn('User clearing all application cache and settings.');
         activeJobs.current.forEach(controller => controller.abort());
         activeJobs.current.clear();
         dbService.clearAllData();
         setTimeout(() => window.location.reload(), 50);
-    }, [activeJobs, t]);
+    }, [activeJobs]);
 
     return {
         loadInitialData,

@@ -3,6 +3,8 @@
 
 
 
+
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -67,8 +69,12 @@ export const chatInputTranslations = {
     videoSettings_clip_title: { en: 'Clip Video (Optional)', zh: '裁剪视频 (可选)' },
     videoSettings_start: { en: 'Start Time', zh: '开始时间' },
     videoSettings_end: { en: 'End Time', zh: '结束时间' },
+    videoSettings_fps: { en: 'Frame Rate (FPS)', zh: '采样率 (FPS)' },
+    videoSettings_fps_placeholder: { en: 'e.g., 1 (Default)', zh: '例如：1 (默认)' },
     videoSettings_placeholder: { en: 'e.g., 10s or 00:10', zh: '例如: 10s 或 00:10' },
-    videoSettings_help: { en: 'Specify start and end offsets to analyze only a segment of the video.', zh: '指定开始和结束偏移量以仅分析视频的片段。' },
+    videoSettings_help: { en: 'Configure how the model sees this video.', zh: '配置模型如何处理此视频。' },
+    videoSettings_tip_fps: { en: 'Use lower FPS (<1) for static videos like lectures. Use higher FPS for fast action.', zh: '静态视频（如讲座）可使用低 FPS (<1)。快速动作视频请使用较高 FPS。' },
+    videoSettings_tip_timestamp: { en: 'You can ask questions about specific moments using timestamps (e.g., "What happens at 01:15?").', zh: '您可以使用时间戳询问特定时刻的问题（例如：“01:15 发生了什么？”）。' },
     videoSettings_save: { en: 'Save Settings', zh: '保存设置' },
 
     // Command descriptions for help modal

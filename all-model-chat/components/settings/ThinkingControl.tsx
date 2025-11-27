@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Info, Brain, Zap, Settings2, Ban, Gauge, Calculator } from 'lucide-react';
-import { THINKING_BUDGET_RANGES, GEMINI_3_RO_MODELS, SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
+import { THINKING_BUDGET_RANGES, GEMINI_3_RO_MODELS, SETTINGS_INPUT_CLASS, MODELS_MANDATORY_THINKING } from '../../constants/appConstants';
 import { Tooltip } from '../shared/Tooltip';
 
 interface ThinkingControlProps {
@@ -28,6 +28,8 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   const isGemini3 = GEMINI_3_RO_MODELS.includes(modelId) || modelId.includes('gemini-3-pro');
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
   
+  const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
+
   const [customBudgetValue, setCustomBudgetValue] = useState(
     thinkingBudget > 0 ? String(thinkingBudget) : '1024'
   );
@@ -41,6 +43,13 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
         setCustomBudgetValue(String(thinkingBudget));
     }
   }, [thinkingBudget]);
+
+  // Force auto mode if mandatory thinking model is selected and budget is 0 (off)
+  useEffect(() => {
+    if (isMandatoryThinking && thinkingBudget === 0) {
+        setThinkingBudget(-1);
+    }
+  }, [modelId, isMandatoryThinking, thinkingBudget, setThinkingBudget]);
 
   const handleModeChange = (newMode: 'auto' | 'off' | 'custom') => {
       if (newMode === 'auto') {
@@ -96,7 +105,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             </div>
             
             {/* Segmented Control (Tabs) */}
-            <div className="grid grid-cols-3 gap-1 bg-[var(--theme-bg-tertiary)] p-1 rounded-lg mt-3 select-none">
+            <div className={`grid ${isMandatoryThinking ? 'grid-cols-2' : 'grid-cols-3'} gap-1 bg-[var(--theme-bg-tertiary)] p-1 rounded-lg mt-3 select-none`}>
                 <button
                     onClick={() => handleModeChange('auto')}
                     className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
@@ -121,17 +130,19 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                     {t('settingsThinkingMode_custom')}
                 </button>
 
-                <button
-                    onClick={() => handleModeChange('off')}
-                    className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
-                        mode === 'off'
-                        ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm ring-1 ring-[var(--theme-border-secondary)]'
-                        : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-primary)]/50'
-                    }`}
-                >
-                    <Ban size={14} strokeWidth={2} className={mode === 'off' ? 'text-red-500' : 'opacity-70'} />
-                    {t('settingsThinkingMode_off')}
-                </button>
+                {!isMandatoryThinking && (
+                    <button
+                        onClick={() => handleModeChange('off')}
+                        className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
+                            mode === 'off'
+                            ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm ring-1 ring-[var(--theme-border-secondary)]'
+                            : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-primary)]/50'
+                        }`}
+                    >
+                        <Ban size={14} strokeWidth={2} className={mode === 'off' ? 'text-red-500' : 'opacity-70'} />
+                        {t('settingsThinkingMode_off')}
+                    </button>
+                )}
             </div>
 
             {/* Content Area */}

@@ -1,10 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { ChevronDown, Check, Info, Type } from 'lucide-react';
+import { ChevronDown, Check, Info, Type, CloudUpload } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Toggle, Tooltip } from '../shared/Tooltip';
 import { IconThemeSystem, IconThemeDark, IconThemeLight } from '../icons/CustomIcons';
 import { useClickOutside } from '../../hooks/useClickOutside';
+import { FilesApiConfig } from '../../types';
 
 interface AppearanceSectionProps {
   themeId: 'system' | 'onyx' | 'pearl';
@@ -35,6 +36,9 @@ interface AppearanceSectionProps {
   setAutoFullscreenHtml: (value: boolean) => void;
   showWelcomeSuggestions: boolean;
   setShowWelcomeSuggestions: (value: boolean) => void;
+  // Updated prop for file strategy
+  filesApiConfig: FilesApiConfig;
+  setFilesApiConfig: (value: FilesApiConfig) => void;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -53,6 +57,7 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   isAutoSendOnSuggestionClick, setIsAutoSendOnSuggestionClick,
   autoFullscreenHtml, setAutoFullscreenHtml,
   showWelcomeSuggestions, setShowWelcomeSuggestions,
+  filesApiConfig, setFilesApiConfig,
   t,
 }) => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -74,10 +79,10 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
 
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
 
-  const ToggleItem = ({ label, checked, onChange, tooltip }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string }) => (
-      <div className="flex items-center justify-between py-3 transition-colors">
+  const ToggleItem = ({ label, checked, onChange, tooltip, small = false }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string, small?: boolean }) => (
+      <div className={`flex items-center justify-between py-${small ? '2' : '3'} transition-colors`}>
           <div className="flex items-center pr-4 flex-1 min-w-0">
-              <span className="text-sm font-medium text-[var(--theme-text-primary)]">
+              <span className={`${small ? 'text-xs text-[var(--theme-text-secondary)]' : 'text-sm font-medium text-[var(--theme-text-primary)]'}`}>
                   {label}
               </span>
               {tooltip && (
@@ -91,6 +96,10 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
           </div>
       </div>
   );
+
+  const updateFileConfig = (key: keyof FilesApiConfig, val: boolean) => {
+      setFilesApiConfig({ ...filesApiConfig, [key]: val });
+  };
 
   return (
     <div className="space-y-6">
@@ -169,6 +178,29 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
             <span>18px</span>
             <span>24px</span>
         </div>
+      </div>
+
+      {/* File Strategy Section */}
+      <div className="bg-[var(--theme-bg-tertiary)]/20 p-3 rounded-xl border border-[var(--theme-border-secondary)]/50">
+          <div className="flex items-start justify-between mb-3">
+              <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
+                  <CloudUpload size={14} strokeWidth={1.5} />
+                  {t('settings_filesApi_title')}
+              </label>
+              <Tooltip text={t('settings_filesApi_tooltip')}>
+                  <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
+              </Tooltip>
+          </div>
+          <p className="text-xs text-[var(--theme-text-secondary)] mb-3 leading-relaxed opacity-80">
+              {t('settings_filesApi_desc')}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-0">
+              <ToggleItem label={t('settings_filesApi_images')} checked={filesApiConfig.images} onChange={(v) => updateFileConfig('images', v)} small />
+              <ToggleItem label={t('settings_filesApi_pdfs')} checked={filesApiConfig.pdfs} onChange={(v) => updateFileConfig('pdfs', v)} small />
+              <ToggleItem label={t('settings_filesApi_audio')} checked={filesApiConfig.audio} onChange={(v) => updateFileConfig('audio', v)} small />
+              <ToggleItem label={t('settings_filesApi_video')} checked={filesApiConfig.video} onChange={(v) => updateFileConfig('video', v)} small />
+              <ToggleItem label={t('settings_filesApi_text')} checked={filesApiConfig.text} onChange={(v) => updateFileConfig('text', v)} small />
+          </div>
       </div>
 
       {/* Interface Toggles Grid */}

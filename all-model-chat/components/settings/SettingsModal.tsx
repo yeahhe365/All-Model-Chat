@@ -12,6 +12,7 @@ import { DataManagementSection } from './DataManagementSection';
 import { ShortcutsSection } from './ShortcutsSection';
 import { AboutSection } from './AboutSection';
 import { Modal } from '../shared/Modal';
+import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../icons/CustomIcons';
 
 interface SettingsModalProps {
@@ -62,6 +63,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     return 'interface';
   });
   
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    isDanger?: boolean;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
   const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -75,15 +84,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleClose = () => { onClose(); };
   
   const handleResetToDefaults = () => { 
-    if (window.confirm(t('settingsReset_confirm'))) {
-      onSave(DEFAULT_APP_SETTINGS); 
-    }
+    setConfirmConfig({
+        isOpen: true,
+        title: t('settingsReset'),
+        message: t('settingsReset_confirm'),
+        onConfirm: () => onSave(DEFAULT_APP_SETTINGS),
+        isDanger: true
+    });
   };
   
   const handleClearLogs = async () => {
-      if (window.confirm(t('settingsClearLogs_confirm'))) {
-          await logService.clearLogs();
-      }
+      setConfirmConfig({
+          isOpen: true,
+          title: t('settingsClearLogs'),
+          message: t('settingsClearLogs_confirm'),
+          onConfirm: async () => { await logService.clearLogs(); },
+          isDanger: true
+      });
+  };
+  
+  const handleRequestClearHistory = () => {
+      setConfirmConfig({
+          isOpen: true,
+          title: t('settingsClearHistory'),
+          message: t('settingsClearHistory_confirm'),
+          onConfirm: onClearAllHistory,
+          isDanger: true
+      });
+  };
+
+  const handleRequestClearCache = () => {
+      setConfirmConfig({
+          isOpen: true,
+          title: t('settingsClearCache'),
+          message: t('settingsClearCache_confirm'),
+          onConfirm: onClearCache,
+          isDanger: true
+      });
+  };
+
+  const handleRequestImportHistory = (file: File) => {
+      setConfirmConfig({
+          isOpen: true,
+          title: t('settingsImportHistory'),
+          message: t('settingsImportHistory_confirm'),
+          onConfirm: () => onImportHistory(file),
+          isDanger: true
+      });
   };
   
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
@@ -152,6 +199,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     setAutoFullscreenHtml={(v) => updateSetting('autoFullscreenHtml', v)}
                     showWelcomeSuggestions={currentSettings.showWelcomeSuggestions ?? true}
                     setShowWelcomeSuggestions={(v) => updateSetting('showWelcomeSuggestions', v)}
+                    filesApiConfig={currentSettings.filesApiConfig}
+                    setFilesApiConfig={(v) => updateSetting('filesApiConfig', v)}
                     t={t}
                     />
                 </div>
@@ -162,7 +211,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     modelId={currentSettings.modelId} setModelId={handleModelChangeInSettings}
                     transcriptionModelId={currentSettings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
                     isTranscriptionThinkingEnabled={currentSettings.isTranscriptionThinkingEnabled} setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
-                    useFilesApiForImages={currentSettings.useFilesApiForImages} setUseFilesApiForImages={(v) => updateSetting('useFilesApiForImages', v)}
                     generateQuadImages={currentSettings.generateQuadImages ?? false} setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
                     ttsVoice={currentSettings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
                     systemInstruction={currentSettings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
@@ -197,15 +245,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             {activeTab === 'data' && (
                 <div className={animClass}>
                 <DataManagementSection
-                    onClearHistory={onClearAllHistory}
-                    onClearCache={onClearCache}
+                    onClearHistory={handleRequestClearHistory}
+                    onClearCache={handleRequestClearCache}
                     onOpenLogViewer={() => { onOpenLogViewer(); onClose(); }}
                     onClearLogs={handleClearLogs}
                     onInstallPwa={onInstallPwa}
                     isInstallable={isInstallable}
                     onImportSettings={onImportSettings}
                     onExportSettings={onExportSettings}
-                    onImportHistory={onImportHistory}
+                    onImportHistory={handleRequestImportHistory}
                     onExportHistory={onExportHistory}
                     onImportScenarios={onImportScenarios}
                     onExportScenarios={onExportScenarios}
@@ -221,70 +269,84 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   }
 
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={handleClose} 
-      noPadding 
-      contentClassName="w-full h-[100dvh] sm:h-[85vh] max-h-[800px] sm:w-[90vw] max-w-6xl sm:rounded-xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-[var(--theme-bg-primary)] transition-all"
-    >
-      {/* Sidebar */}
-      <aside className="flex-shrink-0 w-full md:w-64 bg-[var(--theme-bg-secondary)] border-b md:border-b-0 md:border-r border-[var(--theme-border-primary)] flex flex-col">
-        {/* Sidebar Header */}
-        <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-5 flex-shrink-0">
-             <button 
-                ref={closeButtonRef}
-                onClick={handleClose} 
-                className="p-2 rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
-                aria-label={t('close')}
-            >
-                <X size={20} strokeWidth={2} />
-            </button>
-            {/* Mobile Title */}
-            <span className="md:hidden font-semibold text-[var(--theme-text-primary)]">{t('settingsTitle')}</span>
-            <div className="w-8 md:hidden"></div>
-        </div>
+    <>
+        <Modal 
+        isOpen={isOpen} 
+        onClose={handleClose} 
+        noPadding 
+        contentClassName="w-full h-[100dvh] sm:h-[85vh] max-h-[800px] sm:w-[90vw] max-w-6xl sm:rounded-xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-[var(--theme-bg-primary)] transition-all"
+        >
+        {/* Sidebar */}
+        <aside className="flex-shrink-0 w-full md:w-64 bg-[var(--theme-bg-secondary)] border-b md:border-b-0 md:border-r border-[var(--theme-border-primary)] flex flex-col">
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between px-4 py-3 md:px-5 md:py-5 flex-shrink-0">
+                <button 
+                    ref={closeButtonRef}
+                    onClick={handleClose} 
+                    className="p-2 rounded-md hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                    aria-label={t('close')}
+                >
+                    <X size={20} strokeWidth={2} />
+                </button>
+                {/* Mobile Title */}
+                <span className="md:hidden font-semibold text-[var(--theme-text-primary)]">{t('settingsTitle')}</span>
+                <div className="w-8 md:hidden"></div>
+            </div>
 
-        {/* Navigation List */}
-        <nav className="flex-1 overflow-x-auto md:overflow-y-auto md:overflow-x-hidden custom-scrollbar px-2 pb-2 md:px-3 md:pb-3 flex md:flex-col gap-1 md:gap-1.5" role="tablist">
-            {tabs.map(tab => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex-shrink-0 flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 text-sm font-medium rounded-lg transition-all outline-none select-none w-auto md:w-full text-left
-                        ${isActive
-                            ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' 
-                            : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]/50 hover:text-[var(--theme-text-primary)]'
-                        }
-                        focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]
-                        `}
-                        role="tab"
-                        aria-selected={isActive}
-                    >
-                        <Icon size={18} strokeWidth={isActive ? 2 : 1.5} className={isActive ? "text-[var(--theme-text-primary)]" : "text-[var(--theme-text-tertiary)]"} />
-                        <span>{t(tab.labelKey as any)}</span>
-                    </button>
-                );
-            })}
-        </nav>
-      </aside>
+            {/* Navigation List */}
+            <nav className="flex-1 overflow-x-auto md:overflow-y-auto md:overflow-x-hidden custom-scrollbar px-2 pb-2 md:px-3 md:pb-3 flex md:flex-col gap-1 md:gap-1.5" role="tablist">
+                {tabs.map(tab => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex-shrink-0 flex items-center gap-3 px-3 py-2.5 md:px-4 md:py-3 text-sm font-medium rounded-lg transition-all outline-none select-none w-auto md:w-full text-left
+                            ${isActive
+                                ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' 
+                                : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]/50 hover:text-[var(--theme-text-primary)]'
+                            }
+                            focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]
+                            `}
+                            role="tab"
+                            aria-selected={isActive}
+                        >
+                            <Icon size={18} strokeWidth={isActive ? 2 : 1.5} className={isActive ? "text-[var(--theme-text-primary)]" : "text-[var(--theme-text-tertiary)]"} />
+                            <span>{t(tab.labelKey as any)}</span>
+                        </button>
+                    );
+                })}
+            </nav>
+        </aside>
 
-      {/* Content Area */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[var(--theme-bg-primary)] relative overflow-hidden">
-        {/* Desktop Header */}
-        <header className="hidden md:flex items-center px-8 py-6 border-b border-[var(--theme-border-secondary)]/50 flex-shrink-0">
-            <h2 className="text-2xl font-bold text-[var(--theme-text-primary)] tracking-tight">
-                {t(tabs.find(t => t.id === activeTab)?.labelKey as any)}
-            </h2>
-        </header>
+        {/* Content Area */}
+        <main className="flex-1 flex flex-col min-w-0 bg-[var(--theme-bg-primary)] relative overflow-hidden">
+            {/* Desktop Header */}
+            <header className="hidden md:flex items-center px-8 py-6 border-b border-[var(--theme-border-secondary)]/50 flex-shrink-0">
+                <h2 className="text-2xl font-bold text-[var(--theme-text-primary)] tracking-tight">
+                    {t(tabs.find(t => t.id === activeTab)?.labelKey as any)}
+                </h2>
+            </header>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8">
-            {renderTabContent()}
-        </div>
-      </main>
-    </Modal>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8">
+                {renderTabContent()}
+            </div>
+        </main>
+        </Modal>
+
+        {confirmConfig.isOpen && (
+            <ConfirmationModal
+                isOpen={confirmConfig.isOpen}
+                onClose={() => setConfirmConfig({ ...confirmConfig, isOpen: false })}
+                onConfirm={confirmConfig.onConfirm}
+                title={confirmConfig.title}
+                message={confirmConfig.message}
+                isDanger={confirmConfig.isDanger}
+                confirmLabel={t('delete') === 'Delete' ? 'Confirm' : t('delete')} // Fallback label handling
+            />
+        )}
+    </>
   );
 };

@@ -3,6 +3,8 @@
 
 
 
+
+
 import { useState, useRef } from 'react';
 import { AttachmentAction } from '../components/chat/input/AttachmentMenu';
 import { generateFolderContext, generateZipContext } from '../utils/folderImportUtils';
@@ -129,8 +131,9 @@ export const useChatInputModals = ({
     };
     const finalFilename = filename.trim() ? sanitizeFilename(filename) : `custom-text-${Date.now()}.txt`;
     const newFile = new File([content], finalFilename, { type: "text/plain" });
-    await onProcessFiles([newFile]);
+    
     setShowCreateTextFileEditor(false);
+    await onProcessFiles([newFile]);
   };
 
   const handlePhotoCapture = (file: File) => {

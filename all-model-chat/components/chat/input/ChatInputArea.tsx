@@ -10,6 +10,7 @@ import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../.
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { translations } from '../../../utils/appUtils';
 import { generateZipContext } from '../../../utils/folderImportUtils';
+import { Loader2 } from 'lucide-react';
 
 export interface ChatInputAreaProps {
     toolbarProps: ChatInputToolbarProps;
@@ -45,6 +46,7 @@ export interface ChatInputAreaProps {
         isAnimatingSend: boolean;
         isMobile: boolean;
         initialTextareaHeight: number;
+        isConverting: boolean;
     };
     fileInputRefs: {
         fileInputRef: React.RefObject<HTMLInputElement>;
@@ -72,7 +74,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     formProps,
     t,
 }) => {
-    const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight } = layoutProps;
+    const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
 
     const wrapperClass = isFullscreen 
         ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation" 
@@ -87,8 +89,8 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         : `relative ${isAnimatingSend ? 'form-send-animate' : ''}`;
 
     const inputContainerClass = isFullscreen
-        ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200"
-        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)]";
+        ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200 relative"
+        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
 
     return (
         <div className={wrapperClass} aria-hidden={inputProps.disabled && !isAnimatingSend}>
@@ -104,6 +106,15 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                         className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
                     />
                     <div className={inputContainerClass}>
+                        {isConverting && (
+                            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[var(--theme-bg-input)]/80 backdrop-blur-[1px] rounded-[20px] sm:rounded-[26px] transition-all duration-300">
+                                <div className="flex items-center gap-3 px-4 py-2 bg-[var(--theme-bg-secondary)] rounded-full shadow-lg border border-[var(--theme-border-secondary)] animate-in fade-in zoom-in-95 duration-200">
+                                    <Loader2 size={18} className="animate-spin text-[var(--theme-text-link)]" />
+                                    <span className="text-sm font-medium text-[var(--theme-text-primary)]">Processing files...</span>
+                                </div>
+                            </div>
+                        )}
+
                         {fileDisplayProps.selectedFiles.length > 0 && (
                             <div className="flex gap-2 overflow-x-auto pb-2 mb-1 custom-scrollbar px-1">
                                 {fileDisplayProps.selectedFiles.map(file => (
@@ -132,7 +143,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                             style={{ height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px` }}
                             aria-label="Chat message input"
                             onFocus={inputProps.onFocus}
-                            disabled={inputProps.disabled}
+                            disabled={inputProps.disabled || isConverting}
                             rows={1}
                         />
                         <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1">

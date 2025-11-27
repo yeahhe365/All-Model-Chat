@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { useEffect, useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings, VideoMetadata } from '../../types';
@@ -112,6 +114,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   const [configuringFile, setConfiguringFile] = useState<UploadedFile | null>(null);
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
 
   const {
     showCamera, showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -195,9 +198,17 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
 
   const handleFolderChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.length) {
-        justInitiatedFileOpRef.current = true;
-        const contextFile = await generateFolderContext(event.target.files);
-        await onProcessFiles([contextFile]);
+        setIsConverting(true);
+        try {
+            justInitiatedFileOpRef.current = true;
+            const contextFile = await generateFolderContext(event.target.files);
+            await onProcessFiles([contextFile]);
+        } catch (e) {
+            console.error(e);
+            setAppFileError("Failed to process folder structure.");
+        } finally {
+            setIsConverting(false);
+        }
     }
     if (folderInputRef.current) folderInputRef.current.value = "";
   };
@@ -206,9 +217,17 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     if (event.target.files?.length) {
         const file = event.target.files[0];
         if (file.name.toLowerCase().endsWith('.zip')) {
-            justInitiatedFileOpRef.current = true;
-            const contextFile = await generateZipContext(file);
-            await onProcessFiles([contextFile]);
+            setIsConverting(true);
+            try {
+                justInitiatedFileOpRef.current = true;
+                const contextFile = await generateZipContext(file);
+                await onProcessFiles([contextFile]);
+            } catch (e) {
+                console.error(e);
+                setAppFileError("Failed to process zip file.");
+            } finally {
+                setIsConverting(false);
+            }
         } else {
             setAppFileError("Please select a valid .zip file.");
         }
@@ -273,7 +292,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   const canSend = (
     (inputText.trim() !== '' || selectedFiles.length > 0)
-    && !isLoading && !isAddingById && !isModalOpen
+    && !isLoading && !isAddingById && !isModalOpen && !isConverting
   );
 
 
@@ -418,7 +437,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         }}
         actionsProps={{
             onAttachmentAction: handleAttachmentAction,
-            disabled: isAddingById || isModalOpen || isWaitingForUpload,
+            disabled: isAddingById || isModalOpen || isWaitingForUpload || isConverting,
             isGoogleSearchEnabled,
             onToggleGoogleSearch: () => handleToggleToolAndFocus(onToggleGoogleSearch),
             isCodeExecutionEnabled,
@@ -466,7 +485,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             onPaste: handlePaste,
             textareaRef,
             placeholder: t('chatInputPlaceholder'),
-            disabled: isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording,
+            disabled: isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording || isConverting,
             onCompositionStart: () => isComposingRef.current = true,
             onCompositionEnd: () => isComposingRef.current = false,
             onFocus: adjustTextareaHeight,
@@ -477,6 +496,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             isAnimatingSend,
             isMobile,
             initialTextareaHeight: isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX,
+            isConverting,
         }}
         fileInputRefs={{
             fileInputRef,

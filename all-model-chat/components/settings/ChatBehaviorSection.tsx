@@ -12,8 +12,6 @@ interface ChatBehaviorSectionProps {
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
-  useFilesApiForImages: boolean;
-  setUseFilesApiForImages: (value: boolean) => void;
   generateQuadImages: boolean;
   setGenerateQuadImages: (value: boolean) => void;
   ttsVoice: string;
@@ -52,8 +50,6 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
             setTranscriptionModelId={props.setTranscriptionModelId}
             isTranscriptionThinkingEnabled={props.isTranscriptionThinkingEnabled}
             setIsTranscriptionThinkingEnabled={props.setIsTranscriptionThinkingEnabled}
-            useFilesApiForImages={props.useFilesApiForImages}
-            setUseFilesApiForImages={props.setUseFilesApiForImages}
             generateQuadImages={props.generateQuadImages}
             setGenerateQuadImages={props.setGenerateQuadImages}
             ttsVoice={props.ttsVoice}

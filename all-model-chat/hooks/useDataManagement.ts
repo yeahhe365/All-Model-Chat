@@ -138,7 +138,7 @@ export const useDataManagement = ({
     }, [handleImportFile, setAppSettings, t]);
 
     const handleImportHistory = useCallback((file: File) => {
-        if (!window.confirm(t('settingsImportHistory_confirm'))) return;
+        // Confirm dialog moved to UI component
         handleImportFile(file, 'AllModelChat-History', (data) => {
             if (data.history && Array.isArray(data.history)) {
                 updateAndPersistSessions(() => data.history);

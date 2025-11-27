@@ -89,10 +89,23 @@ export const useChatStreamHandler = ({
                                 thinkingTime = firstContentPartTime.getTime() - generationStartTime.getTime();
                             }
                             const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
-                            const turnTokens = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
+                            
+                            // Token Extraction Logic
+                            const totalTokenCount = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
                             const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
-                            const completionTokens = (promptTokens !== undefined && turnTokens > 0) ? turnTokens - promptTokens : undefined;
-                            cumulativeTotal += turnTokens;
+                            
+                            // Prioritize explicit candidatesTokenCount (Output) if available
+                            let completionTokens = isLastMessageOfRun ? usageMetadata?.candidatesTokenCount : undefined;
+                            
+                            // Fallback: If candidatesTokenCount is missing but we have total and prompt, calculate it
+                            if (completionTokens === undefined && promptTokens !== undefined && totalTokenCount > 0) {
+                                completionTokens = totalTokenCount - promptTokens;
+                            }
+
+                            // @ts-ignore - SDK types might be partial depending on version, but runtime provides it
+                            const thoughtTokens = usageMetadata?.thoughtsTokenCount;
+                            
+                            cumulativeTotal += totalTokenCount;
                             
                             const completedMessage = {
                                 ...m,
@@ -105,7 +118,8 @@ export const useChatStreamHandler = ({
                                 urlContextMetadata: isLastMessageOfRun ? urlContextMetadata : undefined,
                                 promptTokens,
                                 completionTokens,
-                                totalTokens: turnTokens,
+                                totalTokens: totalTokenCount,
+                                thoughtTokens, // Store thought token count
                                 cumulativeTotalTokens: cumulativeTotal,
                             };
                             
@@ -154,6 +168,9 @@ export const useChatStreamHandler = ({
                 anyPart.executableCode || 
                 anyPart.codeExecutionResult || 
                 anyPart.inlineData;
+
+            // Check for thoughtSignature in the part (Gemini 3 Pro feature)
+            const thoughtSignature = anyPart.thoughtSignature || anyPart.thought_signature;
 
             if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
                 firstContentPartTime = new Date();
@@ -233,6 +250,20 @@ export const useChatStreamHandler = ({
                             const newMessage = createNewMessage('');
                             newMessage.files = [newFile];
                             messages.push(newMessage);
+                        }
+                    }
+                }
+
+                // Capture thought signatures and append to the latest message
+                if (thoughtSignature) {
+                    // Re-fetch latest message reference as it might have been newly created above
+                    const currentLastMsg = messages[messages.length - 1];
+                    if (currentLastMsg && currentLastMsg.role === 'model' && currentLastMsg.isLoading) {
+                        const newSignatures = [...(currentLastMsg.thoughtSignatures || [])];
+                        // Avoid duplicates if streams overlap or send same sig (unlikely but safe)
+                        if (!newSignatures.includes(thoughtSignature)) {
+                            newSignatures.push(thoughtSignature);
+                            messages[messages.length - 1] = { ...currentLastMsg, thoughtSignatures: newSignatures };
                         }
                     }
                 }
