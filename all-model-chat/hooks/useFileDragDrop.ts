@@ -1,14 +1,16 @@
 
-
-
 import { useState, useCallback } from 'react';
 import { generateFolderContext } from '../utils/folderImportUtils';
+import { UploadedFile } from '../types';
+import { generateUniqueId } from '../utils/appUtils';
 
 interface UseFileDragDropProps {
     onFilesDropped: (files: FileList | File[]) => Promise<void>;
+    onAddTempFile: (file: UploadedFile) => void;
+    onRemoveTempFile: (id: string) => void;
 }
 
-export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
+export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFile }: UseFileDragDropProps) => {
     const [isAppDraggingOver, setIsAppDraggingOver] = useState<boolean>(false);
     const [isProcessingDrop, setIsProcessingDrop] = useState<boolean>(false);
 
@@ -47,7 +49,6 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
             return new Promise((resolve) => {
                 entry.file((file: File) => {
                     // Inject webkitRelativePath for structure preservation in generateFolderContext
-                    // This mimics the behavior of <input type="file" webkitdirectory>
                     const relativePath = path + file.name;
                     Object.defineProperty(file, 'webkitRelativePath', {
                         value: relativePath,
@@ -70,7 +71,6 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
 
             try {
                 let entries = await readEntries();
-                // readEntries might not return all at once, loop until empty array is returned
                 while (entries.length > 0) {
                     allEntries.push(...entries);
                     entries = await readEntries();
@@ -99,7 +99,6 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
             if (items) {
                 for (let i = 0; i < items.length; i++) {
                     const item = items[i];
-                    // webkitGetAsEntry is non-standard but widely supported
                     if (item.kind === 'file' && typeof item.webkitGetAsEntry === 'function') {
                         const entry = item.webkitGetAsEntry();
                         if (entry && entry.isDirectory) {
@@ -111,6 +110,16 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
             }
 
             if (hasDirectory) {
+                const tempId = generateUniqueId();
+                onAddTempFile({
+                    id: tempId,
+                    name: "Processing dropped files...",
+                    type: "application/x-directory", // Dummy type for icon
+                    size: 0,
+                    isProcessing: true,
+                    uploadState: 'pending'
+                });
+
                 // Handle directory drop: recursive scan and convert to text context
                 const entries = Array.from(items)
                     .filter(item => item.kind === 'file')
@@ -121,10 +130,12 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
                 const flatFiles = filesArrays.flat();
                 
                 if (flatFiles.length > 0) {
-                    // Convert list of files to a single text context file (same as Import Folder button)
+                    // Convert list of files to a single text context file
                     const contextFile = await generateFolderContext(flatFiles as unknown as FileList);
                     await onFilesDropped([contextFile]);
                 }
+                
+                onRemoveTempFile(tempId);
             } else {
                 // Standard file drop
                 const files = e.dataTransfer.files;
@@ -137,7 +148,7 @@ export const useFileDragDrop = ({ onFilesDropped }: UseFileDragDropProps) => {
         } finally {
             setIsProcessingDrop(false);
         }
-    }, [onFilesDropped]);
+    }, [onFilesDropped, onAddTempFile, onRemoveTempFile]);
 
     return {
         isAppDraggingOver,

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useWindowContext } from '../contexts/WindowContext';
 
@@ -26,36 +27,6 @@ export const useIsMobile = () => {
   }, [targetWindow]);
 
   return isMobile;
-};
-
-export const useIsTouch = () => {
-  const { window: targetWindow } = useWindowContext();
-  const [isTouch, setIsTouch] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof targetWindow === 'undefined') return;
-
-    // (pointer: coarse) is the standard way to detect accurate touch screens (smartphones/tablets)
-    // vs mouse/trackpad users who might happen to have a touchscreen laptop.
-    const mediaQuery = targetWindow.matchMedia('(pointer: coarse)');
-    
-    const handleChange = (e: MediaQueryListEvent) => {
-        setIsTouch(e.matches);
-    };
-
-    // Initial check
-    const hasCoarsePointer = mediaQuery.matches;
-    // Fallback for older browsers or specific devices relying on maxTouchPoints
-    const hasTouchPoints = typeof navigator !== 'undefined' && (navigator.maxTouchPoints > 0 || ('ontouchstart' in targetWindow));
-    
-    // We prefer the media query result, but fallback if media query isn't supported or is 'not all'
-    setIsTouch(hasCoarsePointer || (mediaQuery.media === 'not all' && hasTouchPoints));
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [targetWindow]);
-
-  return isTouch;
 };
 
 export const useIsDesktop = () => {

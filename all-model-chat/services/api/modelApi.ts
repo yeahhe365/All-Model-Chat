@@ -1,3 +1,4 @@
+
 import { getClient } from './baseApi';
 import { ModelOption } from '../../types';
 import { logService } from "../logService";
@@ -15,8 +16,6 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     logService.info(`🔑 [ModelAPI] Using API key: ${randomKey.substring(0, 10)}...`);
     
-    // The logic now relies on the globally patched fetch provided by proxyInterceptor.ts
-    // if the proxy settings are enabled.
     try {
         // Get proxy URL from localStorage if available
         const settings = await dbService.getAppSettings();

@@ -1,6 +1,4 @@
 
-
-
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, ChatGroup, SavedChatSession, ChatMessage } from './types';
@@ -12,7 +10,6 @@ import { useAppEvents } from './hooks/useAppEvents';
 import { usePictureInPicture } from './hooks/usePictureInPicture';
 import { useDataManagement } from './hooks/useDataManagement';
 import { getTranslator, logService, applyThemeToDocument } from './utils/appUtils';
-import mermaid from 'mermaid';
 import { WindowProvider } from './contexts/WindowContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
@@ -110,11 +107,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     logService.info('App initialized.');
-    mermaid.initialize({
-        startOnLoad: false,
-        theme: 'default',
-        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    });
   }, []);
   
   const handleSaveSettings = (newSettings: AppSettings) => {

@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Paperclip, Loader2 } from 'lucide-react';
 import { Header } from '../header/Header';
@@ -183,24 +181,15 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       onDragLeave={handleAppDragLeave}
       onDrop={handleAppDrop}
     >
-      {(isAppDraggingOver || isProcessingDrop) && (
+      {isAppDraggingOver && (
         <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate backdrop-blur-sm">
-          {isProcessingDrop ? (
-              <div className="flex flex-col items-center gap-4">
-                  <Loader2 size={dragIconSize} className="text-[var(--theme-bg-accent)] animate-spin" />
-                  <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
-                      Processing dropped files...
-                  </p>
-              </div>
-          ) : (
-              <div className="flex flex-col items-center gap-2">
-                  <Paperclip size={dragIconSize} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
-                  <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
-                    {t('appDragDropRelease')}
-                  </p>
-                  <p className="text-sm text-[var(--theme-text-primary)] opacity-80 mt-2">{t('appDragDropHelpText')}</p>
-              </div>
-          )}
+            <div className="flex flex-col items-center gap-2">
+                <Paperclip size={dragIconSize} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
+                <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
+                {t('appDragDropRelease')}
+                </p>
+                <p className="text-sm text-[var(--theme-text-primary)] opacity-80 mt-2">{t('appDragDropHelpText')}</p>
+            </div>
         </div>
       )}
       <Header

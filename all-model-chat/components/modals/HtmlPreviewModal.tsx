@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Expand } from 'lucide-react';
-import { getResponsiveValue } from '../../utils/appUtils';
 import { sanitizeFilename, exportElementAsPng, triggerDownload } from '../../utils/exportUtils';
 import { useWindowContext } from '../../contexts/WindowContext';
 

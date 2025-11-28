@@ -10,11 +10,12 @@ import {
     exportElementAsPng, 
     exportHtmlStringAsFile, 
     exportTextStringAsFile, 
-    gatherPageStyles, 
     triggerDownload, 
     sanitizeFilename,
     generateExportHtmlTemplate,
-    generateExportTxtTemplate
+    generateExportTxtTemplate,
+    gatherPageStyles,
+    createSnapshotContainer
 } from '../../../utils/exportUtils';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { Modal } from '../../shared/Modal';
@@ -45,9 +46,7 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
     try {
         const markdownContent = message.content || '';
         const messageId = message.id;
-        // Shorten message ID for filename
         const shortId = messageId.slice(-6);
-        // Extract a safe title from the first few words
         const contentSnippet = markdownContent.replace(/[^\w\s]/gi, '').split(' ').slice(0, 5).join('_');
         const safeSnippet = sanitizeFilename(contentSnippet) || 'message';
         const filenameBase = `${safeSnippet}-${shortId}`;
@@ -55,7 +54,6 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
         const dateObj = new Date(message.timestamp);
         const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
 
-        // Simulate a small delay for better UX on fast operations
         if (type !== 'png') {
              await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -64,55 +62,40 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
             const rawHtml = marked.parse(markdownContent);
             const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
             
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '0px';
-            tempContainer.style.width = '800px'; // Standard width
-            tempContainer.style.padding = '0';
-            tempContainer.style.boxSizing = 'border-box';
-            
-            const allStyles = await gatherPageStyles();
-            const bodyClasses = document.body.className;
-            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-            
-            // Create a header for the PNG that matches the full chat export style
-            const headerHtml = `
-                <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
-                    <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">Exported Message</h1>
-                    <div style="font-size: 0.875rem; color: var(--theme-text-tertiary); display: flex; gap: 1rem;">
-                        <span>${dateStr}</span>
-                        <span>•</span>
-                        <span>ID: ${shortId}</span>
-                    </div>
-                </div>
-            `;
+            let cleanup = () => {};
+            try {
+                const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
+                    themeId,
+                    '800px'
+                );
+                cleanup = remove;
 
-            tempContainer.innerHTML = `
-                ${allStyles}
-                <div class="theme-${themeId} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; min-height: 100vh;">
-                    <div style="background-color: ${rootBgColor}; padding: 0;">
-                        <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
-                            ${headerHtml}
-                            <div style="padding: 0 2rem 2rem 2rem;">
-                                <div class="markdown-body">${sanitizedHtml}</div>
-                            </div>
+                const headerHtml = `
+                    <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
+                        <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">Exported Message</h1>
+                        <div style="font-size: 0.875rem; color: var(--theme-text-tertiary); display: flex; gap: 1rem;">
+                            <span>${dateStr}</span>
+                            <span>•</span>
+                            <span>ID: ${shortId}</span>
                         </div>
                     </div>
-                </div>
-            `;
-            
-            document.body.appendChild(tempContainer);
-            
-            tempContainer.querySelectorAll('pre code').forEach((block) => {
-                hljs.highlightElement(block as HTMLElement);
-            });
-            
-            const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
-            if (!captureTarget) throw new Error("Capture target not found");
+                `;
 
-            await exportElementAsPng(captureTarget, `${filenameBase}.png`, { backgroundColor: rootBgColor, scale: 2.5 });
-            document.body.removeChild(tempContainer);
+                innerContent.innerHTML = `
+                    ${headerHtml}
+                    <div style="padding: 0 2rem 2rem 2rem;">
+                        <div class="markdown-body">${sanitizedHtml}</div>
+                    </div>
+                `;
+                
+                innerContent.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block as HTMLElement);
+                });
+                
+                await exportElementAsPng(container, `${filenameBase}.png`, { backgroundColor: rootBgColor, scale: 2.5 });
+            } finally {
+                cleanup();
+            }
 
         } else if (type === 'html') {
             const rawHtml = marked.parse(markdownContent);

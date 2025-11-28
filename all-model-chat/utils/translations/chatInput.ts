@@ -5,6 +5,8 @@
 
 
 
+
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -48,7 +50,6 @@ export const chatInputTranslations = {
     web_search_short: { en: 'Search', zh: '联网' },
     deep_search_label: { en: 'Deep Search', zh: '深度搜索' },
     deep_search_short: { en: 'Deep', zh: '深度' },
-    deep_research_label: { en: 'Deep Research', zh: '深度研究' },
     code_execution_label: { en: 'Code Execution', zh: '代码执行' },
     code_execution_short: { en: 'Code', zh: '代码' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },

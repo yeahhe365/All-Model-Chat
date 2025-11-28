@@ -3,13 +3,6 @@ import { ThemeColors } from '../constants/themeConstants';
 import { AppSettings } from '../types';
 import { Theme, AVAILABLE_THEMES } from '../constants/themeConstants';
 
-export const getResponsiveValue = <T>(mobileValue: T, desktopValue: T, breakpoint: number = 640): T => {
-    if (typeof window !== 'undefined' && window.innerWidth < breakpoint) {
-        return mobileValue;
-    }
-    return desktopValue;
-};
-
 export const generateThemeCssVariables = (colors: ThemeColors): string => {
   let css = ':root {\n';
   for (const [key, value] of Object.entries(colors)) {

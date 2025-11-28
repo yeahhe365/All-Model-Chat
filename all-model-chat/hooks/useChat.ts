@@ -1,8 +1,6 @@
 
-
-
-import { useEffect, useRef } from 'react';
-import { AppSettings } from '../types';
+import { useEffect, useRef, useCallback } from 'react';
+import { AppSettings, UploadedFile } from '../types';
 import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from './useFileHandling';
@@ -58,7 +56,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const historyHandler = useChatHistory({ 
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, 
-        updateAndPersistSessions, activeChat, language, updateAndPersistGroups 
+        updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
+        userScrolledUp
     });
     
     const fileHandler = useFileHandling({ 
@@ -67,7 +66,19 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setCurrentChatSettings 
     });
     
-    const dragDropHandler = useFileDragDrop({ onFilesDropped: fileHandler.handleProcessAndAddFiles });
+    const handleAddTempFile = useCallback((file: UploadedFile) => {
+        setSelectedFiles(prev => [...prev, file]);
+    }, [setSelectedFiles]);
+
+    const handleRemoveTempFile = useCallback((id: string) => {
+        setSelectedFiles(prev => prev.filter(f => f.id !== id));
+    }, [setSelectedFiles]);
+    
+    const dragDropHandler = useFileDragDrop({ 
+        onFilesDropped: fileHandler.handleProcessAndAddFiles,
+        onAddTempFile: handleAddTempFile,
+        onRemoveTempFile: handleRemoveTempFile
+    });
 
     const scenarioHandler = usePreloadedScenarios({
         appSettings,

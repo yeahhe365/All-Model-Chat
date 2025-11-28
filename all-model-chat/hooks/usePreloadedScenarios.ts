@@ -108,7 +108,80 @@ Remember format - injection rebuke excitement, userStyle steps into prefix into 
 </project_instructions>`,
 };
 
-const SYSTEM_SCENARIO_IDS = [fopScenario.id, unrestrictedScenario.id, pyriteScenario.id];
+const demoScenario: SavedScenario = {
+    id: 'demo-scenario-showcase',
+    title: '✨ Feature Showcase',
+    messages: [
+        {
+            id: 'demo-msg-1',
+            role: 'user',
+            content: 'Show me a demo of what this app can do.'
+        },
+        {
+            id: 'demo-msg-2',
+            role: 'model',
+            content: `I'd be happy to demonstrate the full capabilities of **All Model Chat**! 🚀
+
+### 1. 🎨 Visualizations & Diagrams
+I can render complex diagrams directly using **Mermaid** and **Graphviz**.
+
+**Mermaid Flowchart:**
+\`\`\`mermaid
+graph TD
+    A[User Input] -->|Processing| B(AI Model)
+    B --> C{Response Type}
+    C -->|Text| D[Markdown]
+    C -->|Code| E[Syntax Highlighting]
+    C -->|Visuals| F[Diagrams/Plots]
+\`\`\`
+
+**Graphviz Network:**
+\`\`\`graphviz
+digraph G {
+  rankdir=LR;
+  node [style=filled, fillcolor="#e0f2fe", fontname="Arial"];
+  Client -> Load_Balancer [label="HTTPS"];
+  Load_Balancer -> Server_A;
+  Load_Balancer -> Server_B;
+  Server_A -> Database [color="red"];
+}
+\`\`\`
+
+### 2. 🧮 Math & Data Tables
+Mathematical expressions are rendered beautifully with KaTeX, and data is organized in clean tables.
+
+$$ E = mc^2 + \\int_0^\\infty e^{-x} dx $$
+
+| Feature | Support | Engine |
+| :--- | :---: | :--- |
+| **Math** | ✅ | KaTeX |
+| **Tables** | ✅ | GFM |
+| **Diagrams** | ✅ | Mermaid/Viz.js |
+
+### 3. 🛠️ Powerful Tools
+Enable **Tools** in the input bar to unlock:
+*   **Google Search**: Real-time information with grounded citations.
+*   **Code Execution**: Run Python code to solve math problems or generate charts.
+*   **Deep Search**: Perform multi-step research on complex topics.
+
+### 4. 📁 Multimodal File Analysis
+You can drag & drop **Folders**, **ZIPs**, **PDFs**, **Audio**, and **Images**.
+*   *Project Analysis*: I can understand entire codebases by importing a folder.
+*   *Video Understanding*: Upload a video or paste a YouTube URL to ask specific questions about timestamps.
+
+### 5. 🎨 Image Generation & Editing
+Switch to an **Imagen** model to create visuals, or use **Gemini 2.5/3.0** to edit uploaded images using text instructions.
+
+### 6. 🧠 Advanced Reasoning
+Enable **Thinking Mode** (Gemini 2.5/3.0) to see my internal thought process before I give you the final answer. This helps with logic puzzles and complex coding tasks.
+
+How would you like to proceed?`
+        }
+    ],
+    systemInstruction: 'You are a helpful AI assistant demonstrating the features of this application. Be concise and use rich formatting.',
+};
+
+const SYSTEM_SCENARIO_IDS = [fopScenario.id, unrestrictedScenario.id, pyriteScenario.id, demoScenario.id];
 
 export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPersistSessions, setActiveSessionId }: PreloadedScenariosProps) => {
     const [userSavedScenarios, setUserSavedScenarios] = useState<SavedScenario[]>([]);
@@ -128,7 +201,7 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
     const savedScenarios = useMemo(() => {
         // Ensure user-saved scenarios don't conflict with the default IDs
         const filteredUserScenarios = userSavedScenarios.filter(s => !SYSTEM_SCENARIO_IDS.includes(s.id));
-        return [fopScenario, unrestrictedScenario, pyriteScenario, ...filteredUserScenarios];
+        return [demoScenario, fopScenario, unrestrictedScenario, pyriteScenario, ...filteredUserScenarios];
     }, [userSavedScenarios]);
 
     const handleSaveAllScenarios = (updatedScenarios: SavedScenario[]) => { 
