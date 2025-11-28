@@ -23,6 +23,7 @@ interface ChatHistoryProps {
     updateAndPersistGroups: GroupsUpdater;
     activeChat: SavedChatSession | undefined;
     language: 'en' | 'zh';
+    userScrolledUp: React.MutableRefObject<boolean>;
 }
 
 const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSession => {
@@ -64,11 +65,13 @@ export const useChatHistory = ({
     updateAndPersistGroups,
     activeChat,
     language,
+    userScrolledUp,
 }: ChatHistoryProps) => {
     const t = getTranslator(language);
 
     const startNewChat = useCallback(() => {
         logService.info('Starting new chat session.');
+        userScrolledUp.current = false;
         
         let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
         if (activeChat) {
@@ -102,10 +105,12 @@ export const useChatHistory = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp]);
 
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
+        userScrolledUp.current = false;
+        
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
         if (sessionToLoad) {
             setActiveSessionId(sessionToLoad.id);
@@ -120,7 +125,7 @@ export const useChatHistory = ({
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat();
         }
-    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat]);
+    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp]);
 
     const loadInitialData = useCallback(async () => {
         try {

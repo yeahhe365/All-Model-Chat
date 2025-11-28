@@ -1,6 +1,4 @@
 
-
-
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
@@ -75,10 +73,15 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     t,
 }) => {
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
+    const { isRecording } = actionsProps;
+
+    // Prevent blocking UI interactions (clicks) during recording so the user can stop it.
+    // We only apply opacity/pointer-events-none if disabled AND NOT recording.
+    const isUIBlocked = inputProps.disabled && !isAnimatingSend && !isRecording;
 
     const wrapperClass = isFullscreen 
         ? "fixed inset-0 z-[2000] bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] p-4 sm:p-6 flex flex-col fullscreen-enter-animation" 
-        : `bg-transparent ${inputProps.disabled && !isAnimatingSend ? 'opacity-30 pointer-events-none' : ''}`;
+        : `bg-transparent ${isUIBlocked ? 'opacity-30 pointer-events-none' : ''}`;
 
     const innerContainerClass = isFullscreen
         ? "w-full max-w-6xl mx-auto flex flex-col h-full"
@@ -93,7 +96,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
 
     return (
-        <div className={wrapperClass} aria-hidden={inputProps.disabled && !isAnimatingSend}>
+        <div className={wrapperClass} aria-hidden={isUIBlocked}>
             <div className={innerContainerClass}>
                 <ChatInputToolbar {...toolbarProps} />
                 
@@ -106,15 +109,6 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                         className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
                     />
                     <div className={inputContainerClass}>
-                        {isConverting && (
-                            <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[var(--theme-bg-input)]/80 backdrop-blur-[1px] rounded-[20px] sm:rounded-[26px] transition-all duration-300">
-                                <div className="flex items-center gap-3 px-4 py-2 bg-[var(--theme-bg-secondary)] rounded-full shadow-lg border border-[var(--theme-border-secondary)] animate-in fade-in zoom-in-95 duration-200">
-                                    <Loader2 size={18} className="animate-spin text-[var(--theme-text-link)]" />
-                                    <span className="text-sm font-medium text-[var(--theme-text-primary)]">Processing files...</span>
-                                </div>
-                            </div>
-                        )}
-
                         {fileDisplayProps.selectedFiles.length > 0 && (
                             <div className="flex gap-2 overflow-x-auto pb-2 mb-1 custom-scrollbar px-1">
                                 {fileDisplayProps.selectedFiles.map(file => (

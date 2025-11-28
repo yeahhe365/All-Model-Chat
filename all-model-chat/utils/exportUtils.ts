@@ -103,6 +103,62 @@ export const embedImagesInClone = async (clone: HTMLElement): Promise<void> => {
 };
 
 /**
+ * Creates an isolated DOM container for exporting, injecting current styles and theme.
+ */
+export const createSnapshotContainer = async (
+    themeId: string,
+    width: string = '800px'
+): Promise<{ container: HTMLElement, innerContent: HTMLElement, remove: () => void, rootBgColor: string }> => {
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0px';
+    tempContainer.style.width = width;
+    tempContainer.style.padding = '0';
+    tempContainer.style.zIndex = '-1';
+    tempContainer.style.boxSizing = 'border-box';
+
+    const allStyles = await gatherPageStyles();
+    const bodyClasses = document.body.className;
+    const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
+
+    tempContainer.innerHTML = `
+        ${allStyles}
+        <div class="theme-${themeId} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; min-height: 100vh;">
+            <div style="background-color: ${rootBgColor}; padding: 0;">
+                <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(tempContainer);
+    
+    // Force highlight.js to re-run if needed on the cloned content later
+    // but the container setup is done.
+    
+    const innerContent = tempContainer.querySelector('.exported-chat-container') as HTMLElement;
+    const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
+
+    if (!innerContent || !captureTarget) {
+        document.body.removeChild(tempContainer);
+        throw new Error("Failed to create snapshot container structure");
+    }
+
+    return {
+        container: captureTarget, // The element to pass to html2canvas
+        innerContent,             // The element to append content to
+        remove: () => {
+            if (document.body.contains(tempContainer)) {
+                document.body.removeChild(tempContainer);
+            }
+        },
+        rootBgColor
+    };
+};
+
+/**
  * Exports a given HTML element as a PNG image.
  * @param element The HTML element to capture.
  * @param filename The desired filename for the downloaded PNG.
@@ -213,16 +269,6 @@ export const exportSvgAsPng = async (svgString: string, filename: string, scale:
 
         img.src = svgDataUrl;
     });
-};
-
-/**
- * Exports a string of SVG content as an .svg file.
- * @param svgContent The SVG content to save.
- * @param filename The desired filename.
- */
-export const exportSvgStringAsFile = (svgContent: string, filename: string) => {
-    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-    triggerDownload(URL.createObjectURL(blob), filename);
 };
 
 // --- Shared Template Generators ---

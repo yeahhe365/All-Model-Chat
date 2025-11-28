@@ -1,14 +1,9 @@
 
-
-
-
-
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings, VideoMetadata } from '../../types';
-import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
-import { translations, getKeyForRequest } from '../../utils/appUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../../types';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import { translations } from '../../utils/appUtils';
 import { ChatInputModals } from './input/ChatInputModals';
 import { ChatInputArea } from './input/ChatInputArea';
 import { useChatInputModals } from '../../hooks/useChatInputModals';
@@ -18,9 +13,9 @@ import { useIsDesktop } from '../../hooks/useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { useChatInputState, INITIAL_TEXTAREA_HEIGHT_PX } from '../../hooks/useChatInputState';
 import { VideoSettingsModal } from '../modals/VideoSettingsModal';
-import { generateFolderContext, generateZipContext } from '../../utils/folderImportUtils';
 import { FilePreviewModal } from '../shared/ImageZoomModal';
 import { ThemeColors } from '../../constants/themeConstants';
+import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
 
 export interface ChatInputProps {
   appSettings: AppSettings;
@@ -72,6 +67,7 @@ export interface ChatInputProps {
   onSetDefaultModel: (modelId: string) => void;
   generateQuadImages: boolean;
   onToggleQuadImages: () => void;
+  setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = (props) => {
@@ -86,7 +82,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
     onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen, onSetDefaultModel,
-    generateQuadImages, onToggleQuadImages
+    generateQuadImages, onToggleQuadImages, setCurrentChatSettings
   } = props;
 
   const {
@@ -144,6 +140,30 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
     onTogglePip, onSetDefaultModel, currentModelId: currentChatSettings.modelId,
   });
+
+  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder || !!configuringFile || !!previewFile;
+  const isAnyModalOpen = isModalOpen || isHelpModalOpen;
+  
+  const canSend = (
+    (inputText.trim() !== '' || selectedFiles.length > 0)
+    && !isLoading && !isAddingById && !isModalOpen && !isConverting
+  );
+
+  const handlers = useChatInputHandlers({
+    inputText, setInputText, fileIdInput, setFileIdInput, urlInput, setUrlInput,
+    selectedFiles, setSelectedFiles, previewFile, setPreviewFile,
+    isAddingById, setIsAddingById, isAddingByUrl, setIsAddingByUrl,
+    isTranslating, setIsTranslating, isConverting, setIsConverting,
+    isLoading, isFullscreen, setIsFullscreen, setIsAnimatingSend, setIsWaitingForUpload,
+    showCreateTextFileEditor, showCamera, showRecorder, setShowAddByUrlInput, setShowAddByIdInput,
+    textareaRef, fileInputRef, imageInputRef, folderInputRef, zipInputRef,
+    justInitiatedFileOpRef, isComposingRef,
+    appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError,
+    slashCommandState, setSlashCommandState, handleCommandSelect, handleSlashCommandExecution, handleSlashInputChange,
+    onProcessFiles, onAddFileById, onSendMessage, onMessageSent,
+    adjustTextareaHeight, clearCurrentDraft, handleToggleFullscreen,
+    isMobile, isDesktop, canSend
+  });
   
   useEffect(() => {
     if (commandedInput) {
@@ -187,225 +207,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     }
   }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft, isFullscreen]);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files?.length) {
-      justInitiatedFileOpRef.current = true;
-      await onProcessFiles(event.target.files);
-    }
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    if (imageInputRef.current) imageInputRef.current.value = "";
-  };
-
-  const handleFolderChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files?.length) {
-        setIsConverting(true);
-        try {
-            justInitiatedFileOpRef.current = true;
-            const contextFile = await generateFolderContext(event.target.files);
-            await onProcessFiles([contextFile]);
-        } catch (e) {
-            console.error(e);
-            setAppFileError("Failed to process folder structure.");
-        } finally {
-            setIsConverting(false);
-        }
-    }
-    if (folderInputRef.current) folderInputRef.current.value = "";
-  };
-
-  const handleZipChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files?.length) {
-        const file = event.target.files[0];
-        if (file.name.toLowerCase().endsWith('.zip')) {
-            setIsConverting(true);
-            try {
-                justInitiatedFileOpRef.current = true;
-                const contextFile = await generateZipContext(file);
-                await onProcessFiles([contextFile]);
-            } catch (e) {
-                console.error(e);
-                setAppFileError("Failed to process zip file.");
-            } finally {
-                setIsConverting(false);
-            }
-        } else {
-            setAppFileError("Please select a valid .zip file.");
-        }
-    }
-    if (zipInputRef.current) zipInputRef.current.value = "";
-  };
-  
-  const handleAddUrl = useCallback(async (url: string) => {
-    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
-    if (!youtubeRegex.test(url)) {
-        setAppFileError("Invalid YouTube URL provided.");
-        return;
-    }
-    justInitiatedFileOpRef.current = true;
-    const newUrlFile: UploadedFile = {
-      id: `url-${Date.now()}`,
-      name: url.length > 30 ? `${url.substring(0, 27)}...` : url,
-      type: 'video/youtube-link',
-      size: 0,
-      fileUri: url,
-      uploadState: 'active',
-      isProcessing: false,
-    };
-    setSelectedFiles(prev => [...prev, newUrlFile]);
-    setUrlInput('');
-    setShowAddByUrlInput(false);
-    textareaRef.current?.focus();
-  }, [setSelectedFiles, setShowAddByUrlInput, setAppFileError]);
-
-  const handlePaste = async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-    if (isAddingById || isModalOpen) return;
-
-    const pastedText = event.clipboardData?.getData('text');
-    const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
-    if (pastedText && youtubeRegex.test(pastedText)) {
-      event.preventDefault();
-      await handleAddUrl(pastedText.trim());
-      return;
-    }
-
-    const items = event.clipboardData?.items;
-    if (!items) return;
-
-    const filesToProcess = Array.from(items)
-      .filter(item => item.kind === 'file' && ALL_SUPPORTED_MIME_TYPES.includes(item.type))
-      .map(item => item.getAsFile()).filter((f): f is File => f !== null);
-
-    if (filesToProcess.length > 0) {
-      event.preventDefault();
-      justInitiatedFileOpRef.current = true;
-      await onProcessFiles(filesToProcess);
-    }
-  };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleSlashInputChange(e.target.value);
-  };
-
-  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder || !!configuringFile || !!previewFile;
-  const isAnyModalOpen = isModalOpen || isHelpModalOpen;
-  
-  const canSend = (
-    (inputText.trim() !== '' || selectedFiles.length > 0)
-    && !isLoading && !isAddingById && !isModalOpen && !isConverting
-  );
-
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (canSend) {
-        const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
-        if (filesAreStillProcessing) {
-            setIsWaitingForUpload(true);
-        } else {
-            clearCurrentDraft();
-            onSendMessage(inputText);
-            setInputText('');
-            onMessageSent();
-            setIsAnimatingSend(true);
-            setTimeout(() => setIsAnimatingSend(false), 400);
-            if (isFullscreen) {
-                setIsFullscreen(false);
-            }
-        }
-    }
-  };
-  
-  const handleTranslate = async () => {
-    if (!inputText.trim() || isTranslating) return;
-
-    setIsTranslating(true);
-    setAppFileError(null);
-
-    const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
-    if ('error' in keyResult) {
-        setAppFileError(keyResult.error);
-        setIsTranslating(false);
-        return;
-    }
-
-    try {
-        const translatedText = await geminiServiceInstance.translateText(keyResult.key, inputText);
-        setInputText(translatedText);
-        setTimeout(() => adjustTextareaHeight(), 0);
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Translation failed.";
-        setAppFileError(errorMessage);
-    } finally {
-        setIsTranslating(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (isComposingRef.current) return;
-
-    if (slashCommandState.isOpen) {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setSlashCommandState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % prev.filteredCommands.length, }));
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setSlashCommandState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + prev.filteredCommands.length) % prev.filteredCommands.length, }));
-      } else if (e.key === 'Enter' || e.key === 'Tab') {
-        e.preventDefault();
-        handleCommandSelect(slashCommandState.filteredCommands[slashCommandState.selectedIndex]);
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        setSlashCommandState(prev => ({ ...prev, isOpen: false }));
-      }
-      return;
-    }
-
-    if (e.key === 'Enter' && !e.shiftKey && (!isMobile || isDesktop)) {
-        const trimmedInput = inputText.trim();
-        if (trimmedInput.startsWith('/')) {
-            e.preventDefault();
-            handleSlashCommandExecution(trimmedInput);
-            return;
-        }
-        if (canSend) {
-            e.preventDefault();
-            handleSubmit(e as unknown as React.FormEvent);
-        }
-    } else if (e.key === 'Escape' && isFullscreen) {
-        e.preventDefault();
-        handleToggleFullscreen();
-    }
-  };
-
-  const removeSelectedFile = (fileIdToRemove: string) => {
-    setSelectedFiles(prev => {
-        const fileToRemove = prev.find(f => f.id === fileIdToRemove);
-        if (fileToRemove && fileToRemove.dataUrl && fileToRemove.dataUrl.startsWith('blob:')) {
-            URL.revokeObjectURL(fileToRemove.dataUrl);
-        }
-        return prev.filter(f => f.id !== fileIdToRemove);
-    });
-  };
-
-  const handleAddFileByIdSubmit = async () => {
-    if (!fileIdInput.trim() || isAddingById || isLoading) return;
-    setIsAddingById(true);
-    justInitiatedFileOpRef.current = true;
-    await onAddFileById(fileIdInput.trim());
-    setIsAddingById(false);
-    setFileIdInput('');
-  };
-
-  const handleToggleToolAndFocus = (toggleFunc: () => void) => {
-    toggleFunc();
-    setTimeout(() => textareaRef.current?.focus(), 0);
-  };
-  
-  const handleSaveVideoMetadata = (fileId: string, metadata: VideoMetadata) => {
-      setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, videoMetadata: metadata } : f));
-  };
-  
   const isGemini3ImageModel = currentChatSettings.modelId === 'gemini-3-pro-image-preview';
 
   const chatInputContent = (
@@ -421,13 +222,13 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             showAddByIdInput,
             fileIdInput,
             setFileIdInput,
-            onAddFileByIdSubmit: handleAddFileByIdSubmit,
+            onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
             onCancelAddById: () => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); },
             isAddingById,
             showAddByUrlInput,
             urlInput,
             setUrlInput,
-            onAddUrlSubmit: () => handleAddUrl(urlInput),
+            onAddUrlSubmit: () => handlers.handleAddUrl(urlInput),
             onCancelAddUrl: () => { setShowAddByUrlInput(false); setUrlInput(''); textareaRef.current?.focus(); },
             isAddingByUrl,
             isLoading,
@@ -439,13 +240,13 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             onAttachmentAction: handleAttachmentAction,
             disabled: isAddingById || isModalOpen || isWaitingForUpload || isConverting,
             isGoogleSearchEnabled,
-            onToggleGoogleSearch: () => handleToggleToolAndFocus(onToggleGoogleSearch),
+            onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(onToggleGoogleSearch),
             isCodeExecutionEnabled,
-            onToggleCodeExecution: () => handleToggleToolAndFocus(onToggleCodeExecution),
+            onToggleCodeExecution: () => handlers.handleToggleToolAndFocus(onToggleCodeExecution),
             isUrlContextEnabled,
-            onToggleUrlContext: () => handleToggleToolAndFocus(onToggleUrlContext),
+            onToggleUrlContext: () => handlers.handleToggleToolAndFocus(onToggleUrlContext),
             isDeepSearchEnabled,
-            onToggleDeepSearch: () => handleToggleToolAndFocus(onToggleDeepSearch),
+            onToggleDeepSearch: () => handlers.handleToggleToolAndFocus(onToggleDeepSearch),
             onAddYouTubeVideo: () => { setShowAddByUrlInput(true); textareaRef.current?.focus(); },
             onRecordButtonClick: handleVoiceInputClick,
             onCancelRecording: handleCancelRecording,
@@ -459,7 +260,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             canSend,
             isWaitingForUpload,
             t,
-            onTranslate: handleTranslate,
+            onTranslate: handlers.handleTranslate,
             isTranslating,
             inputText,
             onToggleFullscreen: handleToggleFullscreen,
@@ -473,16 +274,16 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         }}
         fileDisplayProps={{
             selectedFiles,
-            onRemove: removeSelectedFile,
+            onRemove: handlers.removeSelectedFile,
             onCancelUpload,
             onConfigure: setConfiguringFile,
             onPreview: setPreviewFile,
         }}
         inputProps={{
             value: inputText,
-            onChange: handleInputChange,
-            onKeyDown: handleKeyDown,
-            onPaste: handlePaste,
+            onChange: handlers.handleInputChange,
+            onKeyDown: handlers.handleKeyDown,
+            onPaste: handlers.handlePaste,
             textareaRef,
             placeholder: t('chatInputPlaceholder'),
             disabled: isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording || isConverting,
@@ -503,12 +304,12 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             imageInputRef,
             folderInputRef,
             zipInputRef,
-            handleFileChange,
-            handleFolderChange,
-            handleZipChange,
+            handleFileChange: handlers.handleFileChange,
+            handleFolderChange: handlers.handleFolderChange,
+            handleZipChange: handlers.handleZipChange,
         }}
         formProps={{
-            onSubmit: handleSubmit,
+            onSubmit: handlers.handleSubmit,
         }}
         t={t}
       />
@@ -539,15 +340,19 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isOpen={!!configuringFile} 
         onClose={() => setConfiguringFile(null)} 
         file={configuringFile}
-        onSave={handleSaveVideoMetadata}
+        onSave={handlers.handleSaveVideoMetadata}
         t={t}
       />
 
       <FilePreviewModal
         file={previewFile}
         onClose={() => setPreviewFile(null)}
-        themeColors={{} as ThemeColors} // Mock theme colors or retrieve from context if needed, modal handles styles internally
+        themeColors={{} as ThemeColors}
         t={t}
+        onPrev={handlers.handlePrevImage}
+        onNext={handlers.handleNextImage}
+        hasPrev={handlers.currentImageIndex > 0}
+        hasNext={handlers.currentImageIndex !== -1 && handlers.currentImageIndex < handlers.inputImages.length - 1}
       />
 
       {isFullscreen ? createPortal(chatInputContent, targetDocument.body) : chatInputContent}

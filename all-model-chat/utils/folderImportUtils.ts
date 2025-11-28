@@ -1,7 +1,6 @@
 
-
-
 import { UploadedFile } from '../types';
+import { fileToString } from './domainUtils';
 import JSZip from 'jszip';
 
 const IGNORED_EXTENSIONS = new Set([
@@ -45,15 +44,6 @@ function buildASCIITree(treeData: FileNode[], rootName: string = 'root'): string
     generateLines(treeData, '');
     return structure;
 }
-
-const readFileContent = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsText(file);
-    });
-};
 
 export const generateFolderContext = async (files: FileList): Promise<File> => {
     const fileList = Array.from(files);
@@ -108,7 +98,7 @@ export const generateFolderContext = async (files: FileList): Promise<File> => {
         // Read Content (only for files, skip large files > 2MB to be safe for text context)
         if (file.size < 2 * 1024 * 1024) {
             try {
-                const content = await readFileContent(file);
+                const content = await fileToString(file);
                 processedFiles.push({ path, content });
             } catch (e) {
                 console.warn(`Failed to read file ${path}`, e);

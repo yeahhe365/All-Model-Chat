@@ -44,14 +44,28 @@ export const useFileUpload = ({
         // Pre-process ZIP files: Auto-convert to text context
         for (const file of rawFilesArray) {
             if (file.name.toLowerCase().endsWith('.zip')) {
+                const tempId = generateUniqueId();
+                // Add temp feedback
+                setSelectedFiles(prev => [...prev, {
+                    id: tempId,
+                    name: `Processing ${file.name}...`,
+                    type: 'application/zip',
+                    size: file.size,
+                    isProcessing: true,
+                    uploadState: 'pending'
+                }]);
+
                 try {
                     logService.info(`Auto-converting ZIP file: ${file.name}`);
                     const contextFile = await generateZipContext(file);
                     filesArray.push(contextFile);
                 } catch (error) {
                     logService.error(`Failed to auto-convert zip file ${file.name}`, { error });
-                    // Fallback to original file (will likely fail validation below, but keeps behavior consistent)
+                    // Fallback to original file
                     filesArray.push(file);
+                } finally {
+                    // Remove temp feedback
+                    setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
                 }
             } else {
                 filesArray.push(file);

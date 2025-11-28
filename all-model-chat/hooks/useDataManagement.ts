@@ -12,7 +12,8 @@ import {
     triggerDownload,
     generateExportHtmlTemplate,
     generateExportTxtTemplate,
-    embedImagesInClone
+    embedImagesInClone,
+    createSnapshotContainer
 } from '../utils/exportUtils';
 import DOMPurify from 'dompurify';
 
@@ -179,40 +180,29 @@ export const useDataManagement = ({
         if (format === 'png') {
             if (!scrollContainer) return;
 
-            const tempContainer = document.createElement('div');
-            tempContainer.style.position = 'absolute';
-            tempContainer.style.left = '-9999px';
-            tempContainer.style.top = '0px';
-            // 800px width simulates a standard document/tablet view, good for readability
-            tempContainer.style.width = '800px'; 
-            tempContainer.style.padding = '0';
-            tempContainer.style.zIndex = '-1';
-
+            let cleanup = () => {};
             try {
-                const allStyles = await gatherPageStyles();
-                
+                const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
+                    currentTheme.id,
+                    '800px'
+                );
+                cleanup = remove;
+
                 // Clone the chat container
                 const chatClone = scrollContainer.cloneNode(true) as HTMLElement;
                 
-                // Pre-process the clone: Open details, remove functional UI elements
+                // Pre-process the clone
                 chatClone.querySelectorAll('details').forEach(details => {
                     details.setAttribute('open', '');
                 });
-                
-                // Remove sticky nav elements (like scroll to bottom buttons)
                 chatClone.querySelectorAll('.sticky').forEach(el => el.remove());
-                
-                // Force animation state to final for cleaner capture
                 chatClone.querySelectorAll('[data-message-id]').forEach(el => {
                     (el as HTMLElement).style.animation = 'none';
                     (el as HTMLElement).style.opacity = '1';
                     (el as HTMLElement).style.transform = 'none';
                 });
 
-                const bodyClasses = document.body.className;
-                const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-                
-                // Create a header for the export document
+                // Create header
                 const headerHtml = `
                     <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
                         <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">${activeChat.title}</h1>
@@ -224,36 +214,23 @@ export const useDataManagement = ({
                     </div>
                 `;
 
-                tempContainer.innerHTML = `
-                    ${allStyles}
-                    <div class="theme-${currentTheme.id} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; min-height: 100vh;">
-                        <div style="background-color: ${rootBgColor}; padding: 0;">
-                            <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
-                                ${headerHtml}
-                                <div style="padding: 0 2rem 2rem 2rem;">
-                                    ${chatClone.innerHTML}
-                                </div>
-                            </div>
-                        </div>
+                innerContent.innerHTML = `
+                    ${headerHtml}
+                    <div style="padding: 0 2rem 2rem 2rem;">
+                        ${chatClone.innerHTML}
                     </div>
                 `;
-
-                document.body.appendChild(tempContainer);
-                const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
-                if (!captureTarget) throw new Error("Could not find capture target for PNG export.");
                 
-                // Longer wait to ensure fonts and any lazy images in the clone are rendered
+                // Wait for rendering
                 await new Promise(resolve => setTimeout(resolve, 800)); 
 
-                await exportElementAsPng(captureTarget, filename, {
-                    backgroundColor: rootBgColor, // Ensure background is opaque
-                    scale: 2, // Retina quality
+                await exportElementAsPng(container, filename, {
+                    backgroundColor: rootBgColor,
+                    scale: 2, 
                 });
 
             } finally {
-                if (document.body.contains(tempContainer)) {
-                    document.body.removeChild(tempContainer);
-                }
+                cleanup();
             }
             return;
         }

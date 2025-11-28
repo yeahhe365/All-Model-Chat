@@ -4,7 +4,7 @@ import { AppSettings, ModelOption } from '../../types';
 import { X } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../../constants/appConstants';
 import { Theme } from '../../constants/themeConstants';
-import { translations, getResponsiveValue, logService } from '../../utils/appUtils';
+import { translations, logService } from '../../utils/appUtils';
 import { ApiConfigSection } from './ApiConfigSection';
 import { AppearanceSection } from './AppearanceSection';
 import { ChatBehaviorSection } from './ChatBehaviorSection';
@@ -344,7 +344,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 title={confirmConfig.title}
                 message={confirmConfig.message}
                 isDanger={confirmConfig.isDanger}
-                confirmLabel={t('delete') === 'Delete' ? 'Confirm' : t('delete')} // Fallback label handling
+                confirmLabel={t('delete') === 'Delete' ? 'Confirm' : t('delete')}
             />
         )}
     </>

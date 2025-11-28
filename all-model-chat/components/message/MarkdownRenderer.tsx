@@ -163,7 +163,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       if (isGraphvizRenderingEnabled && isGraphviz && typeof rawCode === 'string') {
         return (
           <div>
-            <GraphvizBlock code={rawCode} isLoading={isLoading} themeId={themeId} />
+            <GraphvizBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} />
           </div>
         );
       }
@@ -203,4 +203,3 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     </ReactMarkdown>
   );
 });
-    

@@ -1,13 +1,4 @@
 
-
-
-
-
-
-
-
-
-
 import React from 'react';
 
 interface IconProps {
@@ -155,16 +146,7 @@ export const IconGallery: React.FC<IconProps> = ({ size = defaultSize, strokeWid
   </svg>
 );
 
-// 3. Upload Video (File with Play)
-export const IconFileVideo: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-    <polyline points="14 2 14 8 20 8" />
-    <path d="m10 15 5-3-5-3v6z" fill={color} fillOpacity={0.1} />
-  </svg>
-);
-
-// 4. Take Photo (Camera)
+// 3. Take Photo (Camera)
 export const IconCamera: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
@@ -172,7 +154,7 @@ export const IconCamera: React.FC<IconProps> = ({ size = defaultSize, strokeWidt
   </svg>
 );
 
-// 5. Screenshot (Viewfinder / Scan)
+// 4. Screenshot (Viewfinder / Scan)
 export const IconScreenshot: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M3 7V5a2 2 0 0 1 2-2h2" />
@@ -183,7 +165,7 @@ export const IconScreenshot: React.FC<IconProps> = ({ size = defaultSize, stroke
   </svg>
 );
 
-// 6. Record Audio (Microphone)
+// 5. Record Audio (Microphone)
 export const IconMicrophone: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
@@ -193,7 +175,7 @@ export const IconMicrophone: React.FC<IconProps> = ({ size = defaultSize, stroke
   </svg>
 );
 
-// 7. Add by File ID (Link)
+// 6. Add by File ID (Link)
 export const IconLink: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
@@ -201,7 +183,7 @@ export const IconLink: React.FC<IconProps> = ({ size = defaultSize, strokeWidth 
   </svg>
 );
 
-// 8. Add YouTube Video
+// 7. Add YouTube Video
 export const IconYoutube: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
@@ -209,7 +191,7 @@ export const IconYoutube: React.FC<IconProps> = ({ size = defaultSize, strokeWid
   </svg>
 );
 
-// 9. Create Text File (File Edit)
+// 8. Create Text File (File Edit)
 export const IconFileEdit: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="M4 13.5V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2h-5.5" />
@@ -218,23 +200,14 @@ export const IconFileEdit: React.FC<IconProps> = ({ size = defaultSize, strokeWi
   </svg>
 );
 
-// 10. Stop Generation
+// 9. Stop Generation
 export const IconStop: React.FC<IconProps> = ({ size = defaultSize, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     <rect x="4" y="4" width="16" height="16" rx="2" fill={color} />
   </svg>
 );
 
-// 11. Import Folder (Folder Search)
-export const IconFolderInput: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M11 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v5" />
-    <circle cx="18" cy="18" r="3" />
-    <path d="m22 22-1.5-1.5" />
-  </svg>
-);
-
-// 12. Import Zip (Package / Archive)
+// 10. Import Zip (Package / Archive)
 export const IconZip: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="m7.5 4.27 9 5.15" />

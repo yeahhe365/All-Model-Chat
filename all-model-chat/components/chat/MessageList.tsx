@@ -1,11 +1,14 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { ChatMessage, UploadedFile, AppSettings } from '../../types';
 import { Message } from '../message/Message';
-import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
-import { FilePreviewModal } from '../shared/ImageZoomModal'; // Importing our universal viewer
+import { FilePreviewModal } from '../shared/ImageZoomModal';
 import { ThemeColors } from '../../constants/themeConstants';
+import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import { WelcomeScreen } from './message-list/WelcomeScreen';
+import { MessageListPlaceholder } from './message-list/MessageListPlaceholder';
+import { ScrollNavigation } from './message-list/ScrollNavigation';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -37,46 +40,6 @@ export interface MessageListProps {
   appSettings: AppSettings;
 }
 
-const SUGGESTIONS_KEYS = [
-  { titleKey: 'suggestion_organize_title', descKey: 'suggestion_organize_desc', shortKey: 'suggestion_organize_short', specialAction: 'organize' },
-  { titleKey: 'suggestion_translate_title', descKey: 'suggestion_translate_desc', shortKey: 'suggestion_translate_short' },
-  { titleKey: 'suggestion_ocr_title', descKey: 'suggestion_ocr_desc', shortKey: 'suggestion_ocr_short' },
-  { titleKey: 'suggestion_explain_title', descKey: 'suggestion_explain_desc', shortKey: 'suggestion_explain_short' },
-  { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc', shortKey: 'suggestion_summarize_short' },
-];
-
-const Placeholder: React.FC<{ height: number, onVisible: () => void }> = ({ height, onVisible }) => {
-    const ref = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    onVisible();
-                }
-            },
-            {
-                root: null,
-                rootMargin: '500px 0px',
-                threshold: 0.01
-            }
-        );
-
-        const currentRef = ref.current;
-        if (currentRef) {
-            observer.observe(currentRef);
-        }
-
-        return () => {
-            if (currentRef) {
-                observer.unobserve(currentRef);
-            }
-        };
-    }, [onVisible]);
-
-    return <div ref={ref} style={{ height: `${height}px` }} aria-hidden="true" />;
-};
-
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, showThoughts, themeColors, baseFontSize,
@@ -89,8 +52,8 @@ export const MessageList: React.FC<MessageListProps> = ({
   const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
   const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
   const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
-  const [suggestionPage, setSuggestionPage] = useState(0);
   
+  // Virtualization state
   const [visibleMessages, setVisibleMessages] = useState<Set<string>>(() => {
     const initialVisible = new Set<string>();
     const lastN = 15;
@@ -133,10 +96,31 @@ export const MessageList: React.FC<MessageListProps> = ({
     setPreviewFile(null);
   }, []);
 
-  const handleOpenHtmlPreview = useCallback((
-      htmlContent: string, 
-      options?: { initialTrueFullscreen?: boolean }
-    ) => {
+  const allImages = useMemo(() => {
+      if (!previewFile) return [];
+      return messages.flatMap(m => m.files || []).filter(f => 
+          (SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml') && !f.error
+      );
+  }, [messages, previewFile]);
+
+  const currentImageIndex = useMemo(() => {
+      if (!previewFile) return -1;
+      return allImages.findIndex(f => f.id === previewFile.id);
+  }, [allImages, previewFile]);
+
+  const handlePrevImage = useCallback(() => {
+      if (currentImageIndex > 0) {
+          setPreviewFile(allImages[currentImageIndex - 1]);
+      }
+  }, [currentImageIndex, allImages]);
+
+  const handleNextImage = useCallback(() => {
+      if (currentImageIndex < allImages.length - 1) {
+          setPreviewFile(allImages[currentImageIndex + 1]);
+      }
+  }, [currentImageIndex, allImages]);
+
+  const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
     setHtmlToPreview(htmlContent);
     setInitialTrueFullscreenRequest(options?.initialTrueFullscreen ?? false);
     setIsHtmlPreviewModalOpen(true);
@@ -148,19 +132,6 @@ export const MessageList: React.FC<MessageListProps> = ({
     setInitialTrueFullscreenRequest(false);
   }, []);
 
-  const suggestionsPerPage = 4;
-  const totalSuggestionPages = Math.ceil(SUGGESTIONS_KEYS.length / suggestionsPerPage);
-  const paginatedSuggestions = SUGGESTIONS_KEYS.slice(
-      suggestionPage * suggestionsPerPage, 
-      (suggestionPage * suggestionsPerPage) + suggestionsPerPage
-  );
-
-  const borderClass = themeId === 'onyx' 
-    ? 'border border-white/5' 
-    : 'border border-[var(--theme-border-secondary)]/50';
-
-  const showWelcomeSuggestions = appSettings.showWelcomeSuggestions ?? true;
-
   return (
     <>
     <div 
@@ -171,103 +142,13 @@ export const MessageList: React.FC<MessageListProps> = ({
       aria-live="polite" 
     >
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl mx-auto px-4 pb-16">
-          <div className="w-full">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-medium text-center text-[var(--theme-text-primary)] mb-6 sm:mb-12 welcome-message-animate tracking-tight">
-              {t('welcome_greeting')}
-            </h1>
-            
-            {showWelcomeSuggestions && (
-              <>
-                <div className="flex items-center justify-end mb-4 px-1">
-                    {totalSuggestionPages > 1 && (
-                        <div className="flex items-center bg-[var(--theme-bg-tertiary)]/50 rounded-full p-1 pl-3">
-                            <span className="text-xs font-medium tabular-nums mr-2 text-[var(--theme-text-secondary)]">
-                                {suggestionPage + 1} / {totalSuggestionPages}
-                            </span>
-                            <div className="flex gap-1">
-                                <button
-                                    onClick={() => setSuggestionPage(p => Math.max(0, p - 1))}
-                                    disabled={suggestionPage === 0}
-                                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[var(--theme-bg-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all text-[var(--theme-text-primary)]"
-                                    aria-label="Previous suggestions"
-                                >
-                                    <ChevronLeft size={14} strokeWidth={1.5} />
-                                </button>
-                                <button
-                                    onClick={() => setSuggestionPage(p => Math.min(totalSuggestionPages - 1, p + 1))}
-                                    disabled={suggestionPage >= totalSuggestionPages - 1}
-                                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[var(--theme-bg-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all text-[var(--theme-text-primary)]"
-                                    aria-label="Next suggestions"
-                                >
-                                    <ChevronRight size={14} strokeWidth={1.5} />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                  {paginatedSuggestions.map((s, i) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                          const text = t(s.descKey as any);
-                          if ((s as any).specialAction === 'organize' && onOrganizeInfoClick) {
-                              onOrganizeInfoClick(text);
-                          } else if (onSuggestionClick) {
-                              onSuggestionClick(text);
-                          }
-                      }}
-                      className={`
-                        relative flex flex-col text-left
-                        h-28 sm:h-36 p-3 sm:p-5 rounded-xl sm:rounded-2xl
-                        bg-[var(--theme-bg-tertiary)]/30 
-                        ${borderClass}
-                        hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-text-tertiary)]
-                        hover:shadow-lg hover:-translate-y-1
-                        transition-all duration-300 ease-out group
-                        focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]
-                        overflow-hidden
-                      `}
-                      style={{ animation: `fadeInUp 0.5s ${0.1 + i * 0.1}s ease-out both` }}
-                    >
-                      <div className="relative z-10">
-                        <h3 className="font-bold text-sm sm:text-base text-[var(--theme-text-primary)] mb-1 sm:mb-2 transition-colors duration-300">
-                            {t(s.titleKey as any)}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-[var(--theme-text-secondary)] leading-relaxed line-clamp-2 opacity-80 group-hover:opacity-100">
-                            {t((s as any).shortKey)}
-                        </p>
-                      </div>
-                      
-                      <div className="flex justify-between items-end mt-auto relative z-10">
-                        <span className="text-[9px] sm:text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 delay-75">
-                          {t('suggestion_prompt_label')}
-                        </span>
-                        <div className="
-                            w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full 
-                            bg-[var(--theme-bg-primary)] text-[var(--theme-text-tertiary)]
-                            shadow-sm
-                            group-hover:bg-[var(--theme-text-primary)] group-hover:text-[var(--theme-bg-primary)]
-                            transition-all duration-300 transform group-hover:scale-110
-                        ">
-                            <ArrowUp size={14} strokeWidth={1.5} />
-                        </div>
-                      </div>
-                      
-                      <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-[var(--theme-text-primary)]/5 to-transparent rounded-bl-3xl rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                    </button>
-                  ))}
-                  
-                  {Array.from({ length: Math.max(0, suggestionsPerPage - paginatedSuggestions.length) }).map((_, i) => (
-                    <div key={`placeholder-${i}`} className="h-28 sm:h-36 rounded-xl sm:rounded-2xl border border-dashed border-[var(--theme-border-secondary)]/30" />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        <WelcomeScreen 
+            t={t}
+            onSuggestionClick={onFollowUpSuggestionClick || onSuggestionClick}
+            onOrganizeInfoClick={onOrganizeInfoClick}
+            showSuggestions={appSettings.showWelcomeSuggestions ?? true}
+            themeId={themeId}
+        />
       ) : (
         <div className="w-full max-w-7xl mx-auto">
           {messages.map((msg: ChatMessage, index: number) => {
@@ -282,7 +163,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onDeleteMessage={onDeleteMessage}
                         onRetryMessage={onRetryMessage}
                         onEditMessageContent={onEditMessageContent}
-                        onImageClick={handleFileClick} // Renaming logic: generic handler for all files
+                        onImageClick={handleFileClick} 
                         onOpenHtmlPreview={handleOpenHtmlPreview}
                         showThoughts={showThoughts}
                         themeColors={themeColors}
@@ -300,7 +181,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 );
             } else {
                 return (
-                    <Placeholder
+                    <MessageListPlaceholder
                         key={`${msg.id}-placeholder`}
                         height={estimateMessageHeight(msg)}
                         onVisible={() => handleBecameVisible(msg.id)}
@@ -310,51 +191,13 @@ export const MessageList: React.FC<MessageListProps> = ({
           })}
         </div>
       )}
-       { (scrollNavVisibility.up || scrollNavVisibility.down) && (
-          <div
-            className="sticky z-20 bottom-4 w-full flex flex-col items-end gap-3 pointer-events-none pr-1"
-            style={{ animation: 'fadeIn 0.3s ease-out both' }}
-          >
-            {scrollNavVisibility.up && (
-                <button
-                    onClick={onScrollToPrevTurn}
-                    className="
-                        p-2.5 rounded-full 
-                        bg-[var(--theme-bg-secondary)] 
-                        border border-[var(--theme-border-secondary)] 
-                        text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] 
-                        hover:bg-[var(--theme-bg-primary)] hover:border-[var(--theme-border-focus)]
-                        transition-colors duration-200
-                        focus:outline-none
-                        pointer-events-auto
-                    "
-                    aria-label="Scroll to previous turn"
-                    title="Scroll to previous turn"
-                >
-                    <ArrowUp size={18} strokeWidth={2.5} />
-                </button>
-            )}
-            {scrollNavVisibility.down && (
-                <button
-                    onClick={onScrollToNextTurn}
-                    className="
-                        p-2.5 rounded-full 
-                        bg-[var(--theme-bg-secondary)] 
-                        border border-[var(--theme-border-secondary)] 
-                        text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] 
-                        hover:bg-[var(--theme-bg-primary)] hover:border-[var(--theme-border-focus)]
-                        transition-colors duration-200
-                        focus:outline-none
-                        pointer-events-auto
-                    "
-                    aria-label="Scroll to next turn or bottom"
-                    title="Scroll to next turn or bottom"
-                >
-                    <ArrowDown size={18} strokeWidth={2.5} />
-                </button>
-            )}
-          </div>
-        )}
+      
+      <ScrollNavigation 
+        showUp={scrollNavVisibility.up}
+        showDown={scrollNavVisibility.down}
+        onScrollToPrev={onScrollToPrevTurn}
+        onScrollToNext={onScrollToNextTurn}
+      />
     </div>
     
     <FilePreviewModal 
@@ -362,6 +205,10 @@ export const MessageList: React.FC<MessageListProps> = ({
         onClose={closeFilePreviewModal}
         themeColors={themeColors}
         t={t}
+        onPrev={handlePrevImage}
+        onNext={handleNextImage}
+        hasPrev={currentImageIndex > 0}
+        hasNext={currentImageIndex !== -1 && currentImageIndex < allImages.length - 1}
     />
 
     {isHtmlPreviewModalOpen && htmlToPreview !== null && (

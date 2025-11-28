@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, GraduationCap } from 'lucide-react';
+import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { IconYoutube } from '../../icons/CustomIcons';
@@ -71,7 +71,6 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     
     const menuItems = [
       { labelKey: 'deep_search_label', icon: <Telescope size={menuIconSize} strokeWidth={2} />, isEnabled: isDeepSearchEnabled, action: () => handleToggle(onToggleDeepSearch) },
-      { labelKey: 'deep_research_label', icon: <GraduationCap size={menuIconSize} strokeWidth={2} />, isEnabled: false, action: () => setIsOpen(false) },
       { labelKey: 'web_search_label', icon: <Globe size={menuIconSize} strokeWidth={2} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
       { labelKey: 'code_execution_label', icon: <Terminal size={menuIconSize} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
       { labelKey: 'url_context_label', icon: <Link size={menuIconSize} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) },
@@ -88,7 +87,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 className={
                     hasActiveTools
                         ? `h-7 sm:h-8 w-7 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
-                        : `h-7 sm:h-8 px-2.5 rounded-full flex items-center justify-center gap-1.5 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] hover:text-[var(--theme-text-primary)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
+                        : `h-7 sm:h-8 px-2.5 rounded-full flex items-center justify-center gap-1.5 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] hover:text-[var(--theme-text-primary)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
                 }
                 aria-label={t('tools_button')}
                 title={t('tools_button')}
