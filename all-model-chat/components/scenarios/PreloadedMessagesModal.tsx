@@ -68,7 +68,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
 
   const renderFooter = () => (
     <div className="mt-auto pt-4 border-t border-[var(--theme-border-primary)] bg-[var(--theme-bg-tertiary)]">
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             
             {/* Left Group: Action Buttons */}
             <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start">

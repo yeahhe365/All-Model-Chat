@@ -1,42 +1,11 @@
 
 import React from 'react';
 import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
-import { AttachmentAction, AttachmentMenu } from './AttachmentMenu';
+import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
 import { IconStop } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
-
-export interface ChatInputActionsProps {
-  onAttachmentAction: (action: AttachmentAction) => void;
-  disabled: boolean;
-  isGoogleSearchEnabled: boolean;
-  onToggleGoogleSearch: () => void;
-  isCodeExecutionEnabled: boolean;
-  onToggleCodeExecution: () => void;
-  isUrlContextEnabled: boolean;
-  onToggleUrlContext: () => void;
-  isDeepSearchEnabled: boolean;
-  onToggleDeepSearch: () => void;
-  onAddYouTubeVideo: () => void;
-  onRecordButtonClick: () => void;
-  isRecording?: boolean;
-  isMicInitializing?: boolean;
-  isTranscribing: boolean;
-  isLoading: boolean;
-  onStopGenerating: () => void;
-  isEditing: boolean;
-  onCancelEdit: () => void;
-  canSend: boolean;
-  isWaitingForUpload: boolean;
-  t: (key: keyof typeof translations) => string;
-  onCancelRecording: () => void;
-  onTranslate: () => void;
-  isTranslating: boolean;
-  inputText: string;
-  onToggleFullscreen?: () => void;
-  isFullscreen?: boolean;
-}
+import { ChatInputActionsProps } from '../../../types';
 
 export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onAttachmentAction,
@@ -74,7 +43,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   return (
     <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-1">
-            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t} />
+            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t as any} />
             <ToolsMenu
                 isGoogleSearchEnabled={isGoogleSearchEnabled}
                 onToggleGoogleSearch={onToggleGoogleSearch}
@@ -86,7 +55,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 onToggleDeepSearch={onToggleDeepSearch}
                 onAddYouTubeVideo={onAddYouTubeVideo}
                 disabled={disabled}
-                t={t}
+                t={t as any}
             />
         </div>
 

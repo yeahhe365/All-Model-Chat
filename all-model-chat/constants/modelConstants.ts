@@ -1,5 +1,5 @@
 
-
+import { ModelOption } from '../types';
 
 export const DEFAULT_MODEL_ID = 'gemini-3-pro-preview'; 
 
@@ -42,6 +42,19 @@ export const DEFAULT_TTS_VOICE = 'Zephyr';
 export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'models/gemini-flash-latest';
 export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
 export const DEFAULT_TTS_MODEL_ID = 'models/gemini-2.5-flash-preview-tts';
+
+export const STATIC_TTS_MODELS: ModelOption[] = [
+    { id: 'models/gemini-2.5-pro-preview-tts', name: 'Gemini 2.5 Pro (TTS)', isPinned: true },
+    { id: 'models/gemini-2.5-flash-preview-tts', name: 'Gemini 2.5 Flash (TTS)', isPinned: true },
+];
+
+export const STATIC_IMAGEN_MODELS: ModelOption[] = [
+    { id: 'gemini-2.5-flash-image-preview', name: 'Nano Banana', isPinned: true },
+    { id: 'gemini-3-pro-image-preview', name: 'Nano Banana Pro', isPinned: true },
+    { id: 'models/imagen-4.0-fast-generate-001', name: 'Imagen 4.0 Fast', isPinned: true },
+    { id: 'models/imagen-4.0-generate-001', name: 'Imagen 4.0', isPinned: true },
+    { id: 'models/imagen-4.0-ultra-generate-001', name: 'Imagen 4.0 Ultra', isPinned: true },
+];
 
 export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
     { id: 'models/gemini-flash-latest', name: 'Gemini 2.5 Flash (Default)' },

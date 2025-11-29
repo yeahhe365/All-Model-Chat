@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { SavedChatSession, ChatGroup } from '../../types';
+import { SavedChatSession, ChatGroup, ThemeColors } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
@@ -31,18 +31,7 @@ export interface HistorySidebarProps {
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
-  themeColors: {
-    bgPrimary: string;
-    bgSecondary: string;
-    bgTertiary: string;
-    textPrimary: string;
-    textSecondary: string;
-    textTertiary: string;
-    textLink: string;
-    borderPrimary: string;
-    borderSecondary: string;
-    iconHistory: string;
-  };
+  themeColors: ThemeColors;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
   themeId: string;

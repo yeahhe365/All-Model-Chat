@@ -61,7 +61,7 @@ export interface ContentPart {
     data: string;
   };
   fileData?: { // Added for referencing uploaded files like PDFs
-    mimeType: string;
+    mimeType?: string; // Optional for YouTube URLs
     fileUri: string;
   };
   videoMetadata?: VideoMetadata;
@@ -154,7 +154,7 @@ export interface ChatInputActionsProps {
   onCancelEdit: () => void;
   canSend: boolean;
   isWaitingForUpload: boolean;
-  t: (key: any) => string;
+  t: (key: string) => string;
   onCancelRecording: () => void;
   onTranslate: () => void;
   isTranslating: boolean;

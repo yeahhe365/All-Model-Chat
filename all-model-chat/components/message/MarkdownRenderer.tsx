@@ -15,6 +15,7 @@ import { TableBlock } from './TableBlock';
 import { UploadedFile } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import { extractTextFromNode } from '../../utils/uiUtils';
 
 interface MarkdownRendererProps {
   content: string;
@@ -54,15 +55,6 @@ const InlineCode = ({ className, children, inline, ...props }: any) => {
             )}
         </code>
     );
-};
-
-// Helper to recursively extract text from React children
-const extractTextFromNode = (node: React.ReactNode): string => {
-    if (!node) return '';
-    if (typeof node === 'string' || typeof node === 'number') return String(node);
-    if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
-    if (React.isValidElement(node)) return extractTextFromNode(node.props.children);
-    return '';
 };
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({

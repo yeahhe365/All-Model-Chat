@@ -1,32 +1,7 @@
 
 import React from 'react';
 import { ImagenAspectRatioSelector, AddFileByIdInput, AddUrlInput, ImageSizeSelector, QuadImageToggle } from './ChatInputToolbarControls';
-
-export interface ChatInputToolbarProps {
-  isImagenModel: boolean;
-  isGemini3ImageModel?: boolean;
-  aspectRatio?: string;
-  setAspectRatio?: (ratio: string) => void;
-  imageSize?: string;
-  setImageSize?: (size: string) => void;
-  fileError: string | null;
-  showAddByIdInput: boolean;
-  fileIdInput: string;
-  setFileIdInput: (value: string) => void;
-  onAddFileByIdSubmit: () => void;
-  onCancelAddById: () => void;
-  isAddingById: boolean;
-  showAddByUrlInput: boolean;
-  urlInput: string;
-  setUrlInput: (value: string) => void;
-  onAddUrlSubmit: () => void;
-  onCancelAddUrl: () => void;
-  isAddingByUrl: boolean;
-  isLoading: boolean;
-  t: (key: string) => string;
-  generateQuadImages?: boolean;
-  onToggleQuadImages?: () => void;
-}
+import { ChatInputToolbarProps } from '../../../types';
 
 export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   isImagenModel,

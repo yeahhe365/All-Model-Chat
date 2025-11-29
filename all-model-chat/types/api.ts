@@ -4,7 +4,14 @@ import { ModelOption } from './settings';
 
 export interface GeminiService {
   getAvailableModels: (apiKeyString: string | null) => Promise<ModelOption[]>;
-  uploadFile: (apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal) => Promise<GeminiFile>;
+  uploadFile: (
+    apiKey: string, 
+    file: File, 
+    mimeType: string, 
+    displayName: string, 
+    signal: AbortSignal,
+    onProgress?: (loaded: number, total: number) => void
+  ) => Promise<GeminiFile>;
   getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
   sendMessageStream: (
     chat: Chat,

@@ -4,20 +4,13 @@ import { X, Check, Download, ClipboardCopy, Loader2, FileText, ImageIcon, FileVi
 import { UploadedFile } from '../../../types';
 import { triggerDownload } from '../../../utils/exportUtils';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
+import { formatFileSize } from '../../../utils/domainUtils';
 
 interface FilePreviewHeaderProps {
     file: UploadedFile;
     onClose: () => void;
     t: (key: string) => string;
 }
-
-const formatFileSize = (sizeInBytes: number): string => {
-    if (sizeInBytes < 1024) return `${sizeInBytes} B`;
-    const sizeInKb = sizeInBytes / 1024;
-    if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
-    const sizeInMb = sizeInKb / 1024;
-    return `${sizeInMb.toFixed(2)} MB`;
-};
 
 export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ file, onClose, t }) => {
     const [isDownloading, setIsDownloading] = useState(false);

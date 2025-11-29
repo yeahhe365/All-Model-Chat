@@ -1,5 +1,5 @@
 
-import { useCallback, Dispatch, SetStateAction } from 'react';
+import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_PDF_MIME_TYPES, SUPPORTED_AUDIO_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, fileToBlobUrl } from '../utils/appUtils';
@@ -17,12 +17,35 @@ interface UseFileUploadProps {
 }
 
 const formatSpeed = (bytesPerSecond: number): string => {
+    if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
     if (bytesPerSecond < 1024) return `${Math.round(bytesPerSecond)} B/s`;
     if (bytesPerSecond < 1024 * 1024) return `${(bytesPerSecond / 1024).toFixed(1)} KB/s`;
     return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
 };
 
 const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
+
+const EXTENSION_TO_MIME: Record<string, string> = {
+    '.mp4': 'video/mp4',
+    '.mov': 'video/quicktime',
+    '.avi': 'video/avi',
+    '.wmv': 'video/x-ms-wmv',
+    '.mpg': 'video/mpeg',
+    '.mpeg': 'video/mpeg',
+    '.webm': 'video/webm',
+    '.flv': 'video/x-flv',
+    '.3gp': 'video/3gpp',
+    '.pdf': 'application/pdf',
+    '.mp3': 'audio/mpeg',
+    '.wav': 'audio/wav',
+    '.aac': 'audio/aac',
+    '.ogg': 'audio/ogg',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.webp': 'image/webp',
+    '.gif': 'image/gif',
+};
 
 export const useFileUpload = ({
     appSettings,
@@ -32,6 +55,9 @@ export const useFileUpload = ({
     currentChatSettings,
     setCurrentChatSettings,
 }: UseFileUploadProps) => {
+
+    // Refs to track upload speed for each file ID
+    const uploadStatsRef = useRef<Map<string, { lastLoaded: number, lastTime: number }>>(new Map());
 
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
         if (!files || files.length === 0) return;
@@ -72,14 +98,28 @@ export const useFileUpload = ({
             }
         }
 
+        // --- Helper to get effective MIME type ---
+        const getEffectiveMimeType = (file: File) => {
+            let effectiveMimeType = file.type;
+            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+
+            // 1. Force text/plain for code/text extensions
+            if (TEXT_BASED_EXTENSIONS.includes(fileExtension) || SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) {
+                return 'text/plain';
+            }
+
+            // 2. Fallback for missing MIME types based on extension
+            if (!effectiveMimeType && EXTENSION_TO_MIME[fileExtension]) {
+                return EXTENSION_TO_MIME[fileExtension];
+            }
+
+            return effectiveMimeType;
+        };
+
         // Calculate if ANY file requires API upload to handle key rotation logic first
         const needsApiKeyForUpload = filesArray.some(file => {
-            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-            let effectiveMimeType = file.type;
-            // Identify text/code files correctly
-            if ((!effectiveMimeType || effectiveMimeType === 'application/octet-stream') && TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
-                 effectiveMimeType = 'text/plain';
-            }
+            const effectiveMimeType = getEffectiveMimeType(file);
+            
             if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
 
             // Check specific category setting
@@ -110,18 +150,11 @@ export const useFileUpload = ({
 
         const uploadPromises = filesArray.map(async (file) => {
             const fileId = generateUniqueId();
-            let effectiveMimeType = file.type;
-            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-
-            // Force text/plain for code/text extensions
-            if (SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension)) {
-                effectiveMimeType = 'text/plain';
-                logService.debug(`Forcing mimeType to 'text/plain' for text/code file ${file.name}`);
-            }
+            const effectiveMimeType = getEffectiveMimeType(file);
 
             if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
-                logService.warn(`Unsupported file type skipped: ${file.name}`, { type: file.type });
-                setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type, size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.type || 'unknown'}`, uploadState: 'failed' }]);
+                logService.warn(`Unsupported file type skipped: ${file.name}`, { type: file.type, effectiveType: effectiveMimeType });
+                setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type || 'unknown', size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.name}`, uploadState: 'failed' }]);
                 return;
             }
 
@@ -157,35 +190,57 @@ export const useFileUpload = ({
                     rawFile: file, 
                     dataUrl: dataUrl, // Add local preview URL
                     uploadState: 'uploading', 
-                    abortController: controller 
+                    abortController: controller,
+                    uploadSpeed: 'Starting...'
                 };
+                
+                // Initialize tracking for speed calculation
+                uploadStatsRef.current.set(fileId, { lastLoaded: 0, lastTime: Date.now() });
+                
                 setSelectedFiles(prev => [...prev, initialFileState]);
 
-                // Simulate progress for better UX since we don't have real progress callback from SDK yet
-                const minDuration = 2000;
-                // Assumed average speed for simulation: ~1MB/s range for realistic feel on broadband
-                const assumedSpeed = 1024 * 1024;
-                const calculatedDuration = (file.size / assumedSpeed) * 1000;
-                const duration = Math.min(Math.max(minDuration, calculatedDuration), 25000);
-                const updateFrequency = 250; // ms
-                const targetProgress = 95;
-                const step = targetProgress / (duration / updateFrequency); // completion step per tick
+                const handleProgress = (loaded: number, total: number) => {
+                    const now = Date.now();
+                    const stats = uploadStatsRef.current.get(fileId);
+                    
+                    let speedStr = '';
+                    if (stats) {
+                        const timeDiff = now - stats.lastTime;
+                        // Only update speed every ~500ms to prevent flickering
+                        if (timeDiff > 500) {
+                            const bytesDiff = loaded - stats.lastLoaded;
+                            const speed = bytesDiff / (timeDiff / 1000); // Bytes per second
+                            speedStr = formatSpeed(speed);
+                            
+                            // Update stored stats
+                            uploadStatsRef.current.set(fileId, { lastLoaded: loaded, lastTime: now });
+                        }
+                    }
 
-                let currentSimulatedProgress = 0;
-                const progressInterval = setInterval(() => {
-                    currentSimulatedProgress = Math.min(targetProgress, currentSimulatedProgress + step);
-
-                    // Vary speed slightly for realism (+- 10%)
-                    const variance = 0.9 + Math.random() * 0.2;
-                    const currentBytesPerSecond = ((step / 100 * file.size) / (updateFrequency / 1000)) * variance;
-                    const speedStr = formatSpeed(currentBytesPerSecond);
-
-                    setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, progress: currentSimulatedProgress, uploadSpeed: speedStr } : f));
-                }, updateFrequency);
+                    const percent = Math.round((loaded / total) * 100);
+                    
+                    setSelectedFiles(prev => prev.map(f => {
+                        if (f.id === fileId) {
+                            return { 
+                                ...f, 
+                                progress: percent, 
+                                uploadSpeed: speedStr || f.uploadSpeed // Keep old speed if not updated this tick
+                            };
+                        }
+                        return f;
+                    }));
+                };
 
                 try {
-                    const uploadedFileInfo = await geminiServiceInstance.uploadFile(keyToUse, file, effectiveMimeType, file.name, controller.signal);
-                    clearInterval(progressInterval);
+                    const uploadedFileInfo = await geminiServiceInstance.uploadFile(
+                        keyToUse, 
+                        file, 
+                        effectiveMimeType, 
+                        file.name, 
+                        controller.signal,
+                        handleProgress // Pass progress callback
+                    );
+                    
                     logService.info(`File uploaded, initial state: ${uploadedFileInfo.state}`, { fileInfo: uploadedFileInfo });
 
                     const uploadState = uploadedFileInfo.state === 'ACTIVE'
@@ -206,7 +261,6 @@ export const useFileUpload = ({
                     } : f));
 
                 } catch (uploadError) {
-                    clearInterval(progressInterval);
                     let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
                     let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
                     if (uploadError instanceof Error && uploadError.name === 'AbortError') {
@@ -216,6 +270,8 @@ export const useFileUpload = ({
                     }
                     logService.error(`File upload failed for ${file.name}`, { error: uploadError });
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, uploadSpeed: undefined } : f));
+                } finally {
+                    uploadStatsRef.current.delete(fileId);
                 }
             } else {
                 // Inline processing (Base64 or Text content)
@@ -243,6 +299,7 @@ export const useFileUpload = ({
                 return file;
             })
         );
+        uploadStatsRef.current.delete(fileIdToCancel);
     }, [setSelectedFiles]);
 
     const handleAddFileById = useCallback(async (fileApiId: string) => {
@@ -280,7 +337,13 @@ export const useFileUpload = ({
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
-                if (!ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType)) {
+                
+                // Allow known video types or generic octet-stream (often used for arbitrary files)
+                // But strictly validate if it is a supported type if it's not generic
+                const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType) || 
+                                    (fileMetadata.mimeType.startsWith('video/') && !fileMetadata.mimeType.includes('youtube'));
+
+                if (!isValidType) {
                     logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: fileMetadata.mimeType });
                     setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${fileMetadata.mimeType}`, uploadState: 'failed' } : f));
                     return;

@@ -7,7 +7,6 @@ import { SelectedFileDisplay } from '../SelectedFileDisplay';
 import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { translations } from '../../../utils/appUtils';
-import { generateZipContext } from '../../../utils/folderImportUtils';
 import { Loader2 } from 'lucide-react';
 
 export interface ChatInputAreaProps {

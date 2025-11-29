@@ -112,6 +112,12 @@
 .form-send-animate { animation: formSendPulse 0.3s cubic-bezier(0.2, 0, 0, 1); }
 .newly-active-file-animate .file-preview-box { animation: fileSuccessRing 0.6s ease-out; border-color: var(--theme-text-success); transition: border-color 0.3s; }
 
+/* Sidebar Loading Dots */
+.loading-dots-container { display: flex; gap: 3px; padding: 2px; }
+.loading-dot { width: 4px; height: 4px; background-color: var(--theme-text-secondary); border-radius: 50%; animation: loading-dots-pulse 1.4s infinite ease-in-out both; }
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
 /* Tooltip Styles */
 .tooltip-container {
   position: relative;

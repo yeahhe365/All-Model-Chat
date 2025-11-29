@@ -17,16 +17,7 @@ export const useAppSettings = () => {
                 if (storedSettings) {
                     const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
                     
-                    // Migration: Handle legacy useFilesApiForImages
-                    if (storedSettings.useFilesApiForImages !== undefined && !storedSettings.filesApiConfig) {
-                        newSettings.filesApiConfig = {
-                            ...DEFAULT_FILES_API_CONFIG,
-                            images: storedSettings.useFilesApiForImages
-                        };
-                        // Cleanup deprecated key
-                        delete newSettings.useFilesApiForImages;
-                        logService.info('Migrated legacy useFilesApiForImages to filesApiConfig');
-                    } else if (storedSettings.filesApiConfig) {
+                    if (storedSettings.filesApiConfig) {
                         // Ensure new keys are present if structure updated
                         newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
                     }

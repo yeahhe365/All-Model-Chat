@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ModelOption, AppSettings } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
-import { TAB_CYCLE_MODELS } from '../constants/appConstants';
+import { TAB_CYCLE_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS } from '../constants/appConstants';
 import { getActiveApiConfig, logService, sortModels } from '../utils/appUtils';
 
 const getPinnedModels = (): ModelOption[] => {
@@ -12,18 +12,7 @@ const getPinnedModels = (): ModelOption[] => {
             : `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')}`.replace(/\b\w/g, l => l.toUpperCase());
         return { id, name, isPinned: true };
     });
-     const ttsModels: ModelOption[] = [
-        { id: 'models/gemini-2.5-pro-preview-tts', name: 'Gemini 2.5 Pro (TTS)', isPinned: true },
-        { id: 'models/gemini-2.5-flash-preview-tts', name: 'Gemini 2.5 Flash (TTS)', isPinned: true },
-    ];
-    const imagenModels: ModelOption[] = [
-        { id: 'gemini-2.5-flash-image-preview', name: 'Nano Banana', isPinned: true },
-        { id: 'gemini-3-pro-image-preview', name: 'Nano Banana Pro', isPinned: true },
-        { id: 'models/imagen-4.0-fast-generate-001', name: 'Imagen 4.0 Fast', isPinned: true },
-        { id: 'models/imagen-4.0-generate-001', name: 'Imagen 4.0', isPinned: true },
-        { id: 'models/imagen-4.0-ultra-generate-001', name: 'Imagen 4.0 Ultra', isPinned: true },
-    ];
-    return [...pinnedInternalModels, ...ttsModels, ...imagenModels];
+    return [...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS];
 };
 
 export const useModels = (appSettings: AppSettings) => {

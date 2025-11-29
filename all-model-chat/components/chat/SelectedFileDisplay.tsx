@@ -2,13 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../types';
 import { Ban, X, AlertTriangleIcon, Loader2, CheckCircle, Copy, Check, FileVideo, FileAudio, FileText, ImageIcon, Youtube, FileCode2, Scissors } from 'lucide-react';
-import { 
-  SUPPORTED_IMAGE_MIME_TYPES, 
-  SUPPORTED_AUDIO_MIME_TYPES, 
-  SUPPORTED_PDF_MIME_TYPES,
-  SUPPORTED_VIDEO_MIME_TYPES
-} from '../../constants/fileConstants';
+import { getFileTypeCategory, FileCategory } from '../../utils/uiUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import { formatFileSize } from '../../utils/domainUtils';
 
 interface SelectedFileDisplayProps {
   file: UploadedFile;
@@ -18,13 +15,14 @@ interface SelectedFileDisplayProps {
   onPreview?: (file: UploadedFile) => void;
 }
 
-const formatFileSize = (sizeInBytes: number): string => {
-  if (!sizeInBytes) return '';
-  if (sizeInBytes < 1024) return `${sizeInBytes} B`;
-  const sizeInKb = sizeInBytes / 1024;
-  if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
-  const sizeInMb = sizeInKb / 1024;
-  return `${sizeInMb.toFixed(1)} MB`;
+const CATEGORY_STYLES: Record<FileCategory, { Icon: React.ElementType, colorClass: string, bgClass: string }> = {
+    image: { Icon: ImageIcon, colorClass: "text-blue-500 dark:text-blue-400", bgClass: "bg-blue-500/10 dark:bg-blue-400/10" },
+    audio: { Icon: FileAudio, colorClass: "text-purple-500 dark:text-purple-400", bgClass: "bg-purple-500/10 dark:bg-purple-400/10" },
+    video: { Icon: FileVideo, colorClass: "text-pink-500 dark:text-pink-400", bgClass: "bg-pink-500/10 dark:bg-pink-400/10" },
+    youtube: { Icon: Youtube, colorClass: "text-red-600 dark:text-red-500", bgClass: "bg-red-600/10 dark:bg-red-500/10" },
+    pdf: { Icon: FileText, colorClass: "text-orange-500 dark:text-orange-400", bgClass: "bg-orange-500/10 dark:bg-orange-400/10" },
+    code: { Icon: FileCode2, colorClass: "text-emerald-500 dark:text-emerald-400", bgClass: "bg-emerald-500/10 dark:bg-emerald-400/10" },
+    error: { Icon: AlertTriangleIcon, colorClass: "text-[var(--theme-text-danger)]", bgClass: "bg-[var(--theme-bg-danger)]/10" },
 };
 
 export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, onRemove, onCancelUpload, onConfigure, onPreview }) => {
@@ -55,38 +53,9 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
 
   const isCancellable = isUploading || (isProcessing && file.uploadState !== 'processing_api');
   
-  // Icon Selection Logic
-  let Icon = FileText;
-  let iconColorClass = "text-[var(--theme-text-tertiary)]";
-  let iconBgClass = "bg-[var(--theme-bg-tertiary)]/50";
-
-  const isVideo = SUPPORTED_VIDEO_MIME_TYPES.includes(file.type) || file.type === 'video/youtube-link';
-
-  if (SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) {
-      Icon = FileAudio;
-      iconColorClass = "text-purple-500 dark:text-purple-400";
-      iconBgClass = "bg-purple-500/10 dark:bg-purple-400/10";
-  } else if (file.type === 'video/youtube-link') {
-      Icon = Youtube;
-      iconColorClass = "text-red-600 dark:text-red-500";
-      iconBgClass = "bg-red-600/10 dark:bg-red-500/10";
-  } else if (SUPPORTED_VIDEO_MIME_TYPES.includes(file.type)) {
-      Icon = FileVideo;
-      iconColorClass = "text-pink-500 dark:text-pink-400";
-      iconBgClass = "bg-pink-500/10 dark:bg-pink-400/10";
-  } else if (SUPPORTED_PDF_MIME_TYPES.includes(file.type)) {
-      Icon = FileText;
-      iconColorClass = "text-orange-500 dark:text-orange-400";
-      iconBgClass = "bg-orange-500/10 dark:bg-orange-400/10";
-  } else if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
-      Icon = ImageIcon;
-      iconColorClass = "text-blue-500 dark:text-blue-400";
-      iconBgClass = "bg-blue-500/10 dark:bg-blue-400/10";
-  } else {
-      Icon = FileCode2;
-      iconColorClass = "text-emerald-500 dark:text-emerald-400";
-      iconBgClass = "bg-emerald-500/10 dark:bg-emerald-400/10";
-  }
+  const category = getFileTypeCategory(file.type, file.error);
+  const { Icon, colorClass, bgClass } = CATEGORY_STYLES[category];
+  const isVideo = category === 'video' || category === 'youtube';
 
   const progress = file.progress ?? 0;
 
@@ -116,8 +85,8 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
                     className="w-full h-full object-cover rounded-lg shadow-sm" 
                 />
             ) : (
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBgClass} transition-colors`}>
-                    <Icon size={24} className={iconColorClass} strokeWidth={1.5} />
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${bgClass} transition-colors`}>
+                    <Icon size={24} className={colorClass} strokeWidth={1.5} />
                 </div>
             )}
         </div>
@@ -186,7 +155,10 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
         <p className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight" title={file.name}>
             {file.name}
         </p>
-        <p className="text-[9px] text-[var(--theme-text-tertiary)] truncate leading-tight mt-0.5 flex items-center gap-1">
+        <p 
+            className={`text-[9px] truncate leading-tight mt-0.5 flex items-center gap-1 ${isFailed ? 'text-[var(--theme-text-danger)] font-medium' : 'text-[var(--theme-text-tertiary)]'}`}
+            title={isFailed ? file.error : undefined}
+        >
             {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
             {isFailed ? (file.error || 'Error') : 
              isUploading ? 'Uploading...' :

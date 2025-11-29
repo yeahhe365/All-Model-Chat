@@ -2,8 +2,61 @@
 import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } from "@google/genai";
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
-import { getApiClient } from "./baseApi";
-import { dbService } from '../../utils/db';
+import { getConfiguredApiClient } from "./baseApi";
+
+/**
+ * Shared helper to parse GenAI responses.
+ * Extracts parts, separates thoughts, and merges metadata/citations from tool calls.
+ */
+const processResponse = (response: GenerateContentResponse) => {
+    let thoughtsText = "";
+    const responseParts: Part[] = [];
+
+    if (response.candidates && response.candidates[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+            const pAsThoughtSupporting = part as ThoughtSupportingPart;
+            if (pAsThoughtSupporting.thought) {
+                thoughtsText += part.text;
+            } else {
+                responseParts.push(part);
+            }
+        }
+    }
+
+    if (responseParts.length === 0 && response.text) {
+        responseParts.push({ text: response.text });
+    }
+    
+    const candidate = response.candidates?.[0];
+    const groundingMetadata = candidate?.groundingMetadata;
+    const finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
+    
+    // @ts-ignore - Handle potential snake_case from raw API responses
+    const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
+
+    const toolCalls = candidate?.toolCalls;
+    if (toolCalls) {
+        for (const toolCall of toolCalls) {
+            if (toolCall.functionCall?.args?.urlContextMetadata) {
+                if (!finalMetadata.citations) finalMetadata.citations = [];
+                const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
+                for (const newCitation of newCitations) {
+                    if (!finalMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
+                        finalMetadata.citations.push(newCitation);
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        parts: responseParts,
+        thoughts: thoughtsText || undefined,
+        usage: response.usageMetadata,
+        grounding: Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined,
+        urlContext: urlContextMetadata
+    };
+};
 
 export const sendMessageStreamApi = async (
     chat: Chat,
@@ -106,48 +159,10 @@ export const sendMessageNonStreamApi = async (
             return;
         }
         
-        let thoughtsText = "";
-        const responseParts: Part[] = [];
+        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
 
-        if (response.candidates && response.candidates[0]?.content?.parts) {
-            for (const part of response.candidates[0].content.parts) {
-                const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                if (pAsThoughtSupporting.thought) {
-                    thoughtsText += part.text;
-                } else {
-                    responseParts.push(part);
-                }
-            }
-        }
-
-        if (responseParts.length === 0 && response.text) {
-            responseParts.push({ text: response.text });
-        }
-        
-        const candidate = response.candidates?.[0];
-        const groundingMetadata = candidate?.groundingMetadata;
-        let finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
-        
-        // @ts-ignore
-        const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
-    
-        const toolCalls = candidate?.toolCalls;
-        if (toolCalls) {
-            for (const toolCall of toolCalls) {
-                if (toolCall.functionCall?.args?.urlContextMetadata) {
-                    if (!finalMetadata.citations) finalMetadata.citations = [];
-                    const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
-                    for (const newCitation of newCitations) {
-                        if (!finalMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                            finalMetadata.citations.push(newCitation);
-                        }
-                    }
-                }
-            }
-        }
-
-        logService.info("Non-stream chat call complete.", { usage: response.usageMetadata, hasGrounding: !!finalMetadata, hasUrlContext: !!urlContextMetadata });
-        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined, urlContextMetadata);
+        logService.info("Non-stream chat call complete.", { usage, hasGrounding: !!grounding, hasUrlContext: !!urlContext });
+        onComplete(responseParts, thoughts, usage, grounding, urlContext);
     } catch (error) {
         logService.error("Error sending message to Gemini chat (non-stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));
@@ -165,11 +180,10 @@ export const sendStatelessMessageNonStreamApi = async (
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
-    const storedSettings = await dbService.getAppSettings();
-    const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
-    const ai = getApiClient(apiKey, apiProxyUrl);
-
+    
     try {
+        const ai = await getConfiguredApiClient(apiKey);
+
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
         const response = await ai.models.generateContent({
@@ -180,24 +194,10 @@ export const sendStatelessMessageNonStreamApi = async (
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
-        let thoughtsText = "";
-        const responseParts: Part[] = [];
-        if (response.candidates && response.candidates[0]?.content?.parts) {
-            for (const part of response.candidates[0].content.parts) {
-                const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                if (pAsThoughtSupporting.thought) thoughtsText += part.text;
-                else responseParts.push(part);
-            }
-        }
-        if (responseParts.length === 0 && response.text) responseParts.push({ text: response.text });
-        
-        const candidate = response.candidates?.[0];
-        const groundingMetadata = candidate?.groundingMetadata;
-        // @ts-ignore
-        const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
+        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
 
-        logService.info(`Stateless non-stream complete for ${modelId}.`, { usage: response.usageMetadata, hasGrounding: !!groundingMetadata, hasUrlContext: !!urlContextMetadata });
-        onComplete(responseParts, thoughtsText || undefined, response.usageMetadata, groundingMetadata, urlContextMetadata);
+        logService.info(`Stateless non-stream complete for ${modelId}.`, { usage, hasGrounding: !!grounding, hasUrlContext: !!urlContext });
+        onComplete(responseParts, thoughts, usage, grounding, urlContext);
     } catch (error) {
         logService.error(`Error in stateless non-stream for ${modelId}:`, error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during stateless non-streaming call."));

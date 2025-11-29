@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'all-model-chat-cache-v1.7.7';
+const CACHE_NAME = 'all-model-chat-cache-v1.7.8';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 
@@ -12,19 +12,12 @@ const getDynamicAppShellUrls = async () => {
         const response = await fetch('/index.html?sw-cache-bust=' + Date.now());
         if (!response.ok) throw new Error(`Failed to fetch index.html: ${response.statusText}`);
         const html = await response.text();
-        const importmapMatch = html.match(/<script type="importmap"[^>]*>([\s\S]*?)<\/script>/);
-        let importmapUrls = [];
-        if (importmapMatch && importmapMatch[1]) {
-            try {
-                const importmapJson = JSON.parse(importmapMatch[1]);
-                if (importmapJson.imports) importmapUrls = Object.values(importmapJson.imports);
-            } catch (e) { console.error('[SW] Failed to parse importmap:', e); }
-        }
+        
         const linkTagMatches = [...html.matchAll(/<link[^>]+>/gi)];
         const stylesheetUrls = linkTagMatches.map(match => match[0]).filter(tag => tag.includes('rel="stylesheet"')).map(tag => tag.match(/href="([^"]+)"/)?.[1]).filter(Boolean);
         const scriptMatches = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)];
         const scriptUrls = scriptMatches.map(match => match[1]);
-        const uniqueUrls = [...new Set([...STATIC_APP_SHELL_URLS, ...importmapUrls, ...stylesheetUrls, ...scriptUrls].filter(Boolean))];
+        const uniqueUrls = [...new Set([...STATIC_APP_SHELL_URLS, ...stylesheetUrls, ...scriptUrls].filter(Boolean))];
         console.log('[SW] Dynamic App Shell URLs to cache:', uniqueUrls);
         return uniqueUrls;
     } catch (error) {

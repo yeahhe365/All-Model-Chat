@@ -16,8 +16,15 @@ class GeminiServiceImpl implements GeminiService {
         return getAvailableModelsApi(apiKeysString);
     }
 
-    async uploadFile(apiKey: string, file: File, mimeType: string, displayName: string, signal: AbortSignal): Promise<GeminiFile> {
-        return uploadFileApi(apiKey, file, mimeType, displayName, signal);
+    async uploadFile(
+        apiKey: string, 
+        file: File, 
+        mimeType: string, 
+        displayName: string, 
+        signal: AbortSignal,
+        onProgress?: (loaded: number, total: number) => void
+    ): Promise<GeminiFile> {
+        return uploadFileApi(apiKey, file, mimeType, displayName, signal, onProgress);
     }
     
     async getFileMetadata(apiKey: string, fileApiName: string): Promise<GeminiFile | null> {

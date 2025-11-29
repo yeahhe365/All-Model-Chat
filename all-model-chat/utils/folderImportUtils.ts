@@ -45,6 +45,27 @@ function buildASCIITree(treeData: FileNode[], rootName: string = 'root'): string
     return structure;
 }
 
+const generateContextContent = (rootName: string, roots: FileNode[], processedFiles: { path: string, content: string }[]): string => {
+    const structureString = buildASCIITree(roots, rootName);
+    
+    let output = "File Structure:\n";
+    output += structureString;
+    output += "\n\nFile Contents:\n";
+
+    // Sort files by path for consistent output
+    processedFiles.sort((a, b) => a.path.localeCompare(b.path));
+
+    for (const file of processedFiles) {
+        output += `\n--- START OF FILE ${file.path} ---\n`;
+        output += file.content;
+        if (file.content && !file.content.endsWith('\n')) {
+            output += '\n';
+        }
+        output += `--- END OF FILE ${file.path} ---\n`;
+    }
+    return output;
+};
+
 export const generateFolderContext = async (files: FileList): Promise<File> => {
     const fileList = Array.from(files);
     const nodeMap = new Map<string, FileNode>();
@@ -111,27 +132,9 @@ export const generateFolderContext = async (files: FileList): Promise<File> => {
     if (roots.length === 1 && roots[0].isDirectory) {
         // If single root folder, use its name and process children for tree to avoid redundancy
         rootName = roots[0].name;
-        // For the tree visualization, we still use the calculated roots, buildASCIITree handles structure
     }
 
-    const structureString = buildASCIITree(roots, rootName);
-    
-    let output = "File Structure:\n";
-    output += structureString;
-    output += "\n\nFile Contents:\n";
-
-    // Sort files by path for consistent output
-    processedFiles.sort((a, b) => a.path.localeCompare(b.path));
-
-    for (const file of processedFiles) {
-        output += `\n--- START OF FILE ${file.path} ---\n`;
-        output += file.content;
-        if (file.content && !file.content.endsWith('\n')) {
-            output += '\n';
-        }
-        output += `--- END OF FILE ${file.path} ---\n`;
-    }
-
+    const output = generateContextContent(rootName, roots, processedFiles);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     return new File([output], `${rootName}-context-${timestamp}.txt`, { type: 'text/plain' });
 };
@@ -198,29 +201,7 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
 
     let rootName = zipFile.name.replace(/\.zip$/i, '');
     
-    // If the zip contains a single top-level directory, use that as root
-    // (Similar logic to folder import, but we keep the roots as they are for buildASCIITree to work recursively)
-    if (roots.length === 1 && roots[0].isDirectory) {
-        // rootName = roots[0].name; // Optional: change display name to inner folder
-    }
-
-    const structureString = buildASCIITree(roots, rootName);
-    
-    let output = "File Structure:\n";
-    output += structureString;
-    output += "\n\nFile Contents:\n";
-
-    processedFiles.sort((a, b) => a.path.localeCompare(b.path));
-
-    for (const file of processedFiles) {
-        output += `\n--- START OF FILE ${file.path} ---\n`;
-        output += file.content;
-        if (file.content && !file.content.endsWith('\n')) {
-            output += '\n';
-        }
-        output += `--- END OF FILE ${file.path} ---\n`;
-    }
-
+    const output = generateContextContent(rootName, roots, processedFiles);
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     return new File([output], `${rootName}-context-${timestamp}.txt`, { type: 'text/plain' });
 };

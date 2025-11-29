@@ -4,6 +4,7 @@ import { Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { SessionItemMenu } from './SessionItemMenu';
+import { LoadingDots } from '../shared/LoadingDots';
 
 interface SessionItemProps {
   session: SavedChatSession;
@@ -52,13 +53,13 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
             {session.isPinned && <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" strokeWidth={2} />}
             <span className="font-medium truncate" title={session.title}>
               {generatingTitleSessionIds.has(session.id) ? (
-                <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]"><div className="loading-dots-container"><div className="loading-dot"></div><div className="loading-dot"></div><div className="loading-dot"></div></div><span>{t('generatingTitle')}</span></div>
+                <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]"><LoadingDots /><span>{t('generatingTitle')}</span></div>
               ) : (session.title)}
             </span>
           </button>
         )}
         {loadingSessionIds.has(session.id) ? (
-          <div className="loading-dots-container"><div className="loading-dot"></div><div className="loading-dot"></div><div className="loading-dot"></div></div>
+          <LoadingDots />
         ) : !generatingTitleSessionIds.has(session.id) && (
           <button onClick={(e) => toggleMenu(e, session.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)]"><MoreHorizontal size={16} strokeWidth={2} /></button>
         )}
