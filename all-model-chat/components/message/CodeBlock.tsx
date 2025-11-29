@@ -5,6 +5,7 @@ import { translations } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/exportUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../constants/appConstants';
+import { extractTextFromNode } from '../../utils/uiUtils';
 
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
@@ -19,15 +20,6 @@ const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
             {lang}
         </span>
     );
-};
-
-// Helper to recursively extract text from React children (handles string, array, elements)
-const extractTextFromNode = (node: React.ReactNode): string => {
-    if (!node) return '';
-    if (typeof node === 'string' || typeof node === 'number') return String(node);
-    if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
-    if (React.isValidElement(node)) return extractTextFromNode(node.props.children);
-    return '';
 };
 
 interface CodeBlockProps {

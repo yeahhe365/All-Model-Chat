@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Wand2, MessageSquareText, PictureInPicture, PictureInPicture2 } from 'lucide-react'; 
+import { Wand2, PictureInPicture, PictureInPicture2 } from 'lucide-react'; 
 import { ModelOption } from '../../types';
 import { translations } from '../../utils/appUtils';
-import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
+import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
 
 interface HeaderProps {
@@ -121,14 +121,14 @@ export const Header: React.FC<HeaderProps> = ({
           <Wand2 size={iconSize} strokeWidth={strokeWidth} />
         </button>
 
-        {/* 2. Scenarios Button (Chat Bubbles) */}
+        {/* 2. Scenarios Button (Cards/Book) */}
         <button
           onClick={onOpenScenariosModal}
           className={`${headerButtonBase} ${headerButtonInactive}`}
           aria-label={t('scenariosManage_aria')}
           title={t('scenariosManage_title')}
         >
-          <MessageSquareText size={iconSize} strokeWidth={strokeWidth} />
+          <IconScenarios size={iconSize} strokeWidth={strokeWidth} />
         </button>
 
         {/* 3. PiP Button (Expand) */}

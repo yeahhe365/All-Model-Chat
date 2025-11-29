@@ -57,6 +57,7 @@ export const SUPPORTED_VIDEO_MIME_TYPES = [
     'video/mpegs',
     'video/webm',
     'video/wmv',
+    'video/x-ms-wmv',
     'video/3gpp',
 ];
 

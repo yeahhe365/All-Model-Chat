@@ -76,6 +76,4 @@ export interface AppSettings extends ChatSettings {
  generateQuadImages?: boolean;
  autoFullscreenHtml?: boolean;
  showWelcomeSuggestions?: boolean;
- // Deprecated but kept for type safety during migration if needed, though removed from interface for cleanliness
- // useFilesApiForImages?: boolean; 
 }

@@ -1,8 +1,7 @@
 
-import { getClient } from './baseApi';
+import { getConfiguredApiClient } from './baseApi';
 import { ModelOption } from '../../types';
 import { logService } from "../logService";
-import { dbService } from '../../utils/db';
 
 export const getAvailableModelsApi = async (apiKeysString: string | null): Promise<ModelOption[]> => {
     logService.info('🔄 [ModelAPI] Fetching available models...');
@@ -17,12 +16,7 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
     logService.info(`🔑 [ModelAPI] Using API key: ${randomKey.substring(0, 10)}...`);
     
     try {
-        // Get proxy URL from localStorage if available
-        const settings = await dbService.getAppSettings();
-        const useApiProxy = settings?.useCustomApiConfig && settings?.useApiProxy;
-        const apiProxyUrl = useApiProxy ? settings?.apiProxyUrl : null;
-        
-        const ai = getClient(randomKey, apiProxyUrl);
+        const ai = await getConfiguredApiClient(randomKey);
 
         const modelPager = await ai.models.list();
         const availableModels: ModelOption[] = [];

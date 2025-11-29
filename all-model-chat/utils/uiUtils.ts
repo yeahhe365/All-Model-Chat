@@ -1,7 +1,14 @@
 
+import React from 'react';
 import { ThemeColors } from '../constants/themeConstants';
 import { AppSettings } from '../types';
 import { Theme, AVAILABLE_THEMES } from '../constants/themeConstants';
+import { 
+  SUPPORTED_IMAGE_MIME_TYPES, 
+  SUPPORTED_AUDIO_MIME_TYPES, 
+  SUPPORTED_VIDEO_MIME_TYPES, 
+  SUPPORTED_PDF_MIME_TYPES 
+} from '../constants/fileConstants';
 
 export const generateThemeCssVariables = (colors: ThemeColors): string => {
   let css = ':root {\n';
@@ -9,14 +16,6 @@ export const generateThemeCssVariables = (colors: ThemeColors): string => {
     const cssVarName = `--theme-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
     css += `  ${cssVarName}: ${value};\n`;
   }
-  css += `  --markdown-code-bg: ${colors.bgCodeBlock || colors.bgInput };\n`;
-  css += `  --markdown-code-text: ${colors.textCode};\n`;
-  css += `  --markdown-pre-bg: ${colors.bgCodeBlock || colors.bgSecondary};\n`;
-  css += `  --markdown-link-text: ${colors.textLink};\n`;
-  css += `  --markdown-blockquote-text: ${colors.textTertiary};\n`;
-  css += `  --markdown-blockquote-border: ${colors.borderSecondary};\n`;
-  css += `  --markdown-hr-bg: ${colors.borderSecondary};\n`;
-  css += `  --markdown-table-border: ${colors.borderSecondary};\n`;
   css += '}';
   return css;
 };
@@ -108,4 +107,27 @@ export const showNotification = async (title: string, options?: NotificationOpti
       show();
     }
   }
+};
+
+export type FileCategory = 'image' | 'audio' | 'video' | 'pdf' | 'youtube' | 'code' | 'error';
+
+export const getFileTypeCategory = (mimeType: string, error?: string): FileCategory => {
+    if (error) return 'error';
+    if (mimeType === 'video/youtube-link') return 'youtube';
+    if (SUPPORTED_AUDIO_MIME_TYPES.includes(mimeType)) return 'audio';
+    if (SUPPORTED_VIDEO_MIME_TYPES.includes(mimeType)) return 'video';
+    if (SUPPORTED_PDF_MIME_TYPES.includes(mimeType)) return 'pdf';
+    if (SUPPORTED_IMAGE_MIME_TYPES.includes(mimeType) || mimeType === 'image/svg+xml') return 'image';
+    return 'code';
+};
+
+/**
+ * Helper to recursively extract text from React children (handles string, array, elements)
+ */
+export const extractTextFromNode = (node: React.ReactNode): string => {
+    if (!node) return '';
+    if (typeof node === 'string' || typeof node === 'number') return String(node);
+    if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
+    if (React.isValidElement(node)) return extractTextFromNode(node.props.children);
+    return '';
 };

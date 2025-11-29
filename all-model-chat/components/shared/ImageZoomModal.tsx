@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { UploadedFile, ThemeColors } from '../../types';
-import { ChevronLeft, ChevronRight, FileCode2, FileAudio, FileVideo, ExternalLink, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileCode2, FileAudio, FileVideo, ExternalLink, FileText, Youtube } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Modal } from './Modal';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
@@ -45,11 +45,19 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
 
   const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type === 'image/svg+xml';
   const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-  const isVideo = file.type.startsWith('video/');
+  const isVideo = file.type.startsWith('video/') && file.type !== 'video/youtube-link';
+  const isYoutube = file.type === 'video/youtube-link';
   const isAudio = file.type.startsWith('audio/');
   const isText = !isImage && (file.type.startsWith('text/') || file.type === 'application/json' || file.type.includes('javascript') || file.type.includes('xml'));
 
   const navButtonClass = "absolute top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/60 text-white/70 hover:text-white rounded-full backdrop-blur-md transition-all active:scale-95 z-50 focus:outline-none";
+
+  const getYoutubeEmbedUrl = (url: string) => {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+  };
 
   return (
     <Modal
@@ -114,6 +122,24 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                       playsInline
                   />
                 )}
+              </div>
+          ) : isYoutube ? (
+              <div className="w-full h-full flex items-center justify-center p-4 pt-20 pb-20">
+                  {file.fileUri && getYoutubeEmbedUrl(file.fileUri) ? (
+                      <iframe 
+                          src={getYoutubeEmbedUrl(file.fileUri)!} 
+                          title="YouTube video player" 
+                          frameBorder="0" 
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                          allowFullScreen
+                          className="w-full h-full max-w-5xl max-h-[80vh] rounded-xl shadow-2xl bg-black"
+                      />
+                  ) : (
+                      <div className="text-center text-white/50">
+                          <Youtube size={64} className="mx-auto mb-4 opacity-50" />
+                          <p>Invalid YouTube URL</p>
+                      </div>
+                  )}
               </div>
           ) : isAudio ? (
               <div className="w-full h-full flex items-center justify-center">

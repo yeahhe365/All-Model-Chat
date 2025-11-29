@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { ChatMessage, UploadedFile, AppSettings } from '../../types';
 import { Message } from '../message/Message';
@@ -144,7 +145,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       {messages.length === 0 ? (
         <WelcomeScreen 
             t={t}
-            onSuggestionClick={onFollowUpSuggestionClick || onSuggestionClick}
+            onSuggestionClick={onSuggestionClick}
             onOrganizeInfoClick={onOrganizeInfoClick}
             showSuggestions={appSettings.showWelcomeSuggestions ?? true}
             themeId={themeId}

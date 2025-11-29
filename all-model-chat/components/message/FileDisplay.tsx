@@ -1,15 +1,10 @@
 
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
-import { 
-    SUPPORTED_IMAGE_MIME_TYPES, 
-    SUPPORTED_TEXT_MIME_TYPES, 
-    SUPPORTED_AUDIO_MIME_TYPES, 
-    SUPPORTED_PDF_MIME_TYPES,
-    SUPPORTED_VIDEO_MIME_TYPES, 
-} from '../../constants/fileConstants';
-import { FileText, ImageIcon, AlertCircle, FileCode2, Trash2, FileVideo, FileAudio, X, Maximize, Minimize, RotateCw, ExternalLink, Expand, Sigma, Check, Copy, Download, Youtube } from 'lucide-react'; 
+import { FileText, ImageIcon, AlertCircle, FileCode2, FileVideo, FileAudio, Check, Copy, Download, Youtube } from 'lucide-react'; 
 import { triggerDownload } from '../../utils/exportUtils';
+import { getFileTypeCategory, FileCategory } from '../../utils/uiUtils';
+import { formatFileSize } from '../../utils/domainUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -18,22 +13,21 @@ interface FileDisplayProps {
   isGridView?: boolean;
 }
 
-const formatFileSize = (sizeInBytes: number): string => {
-  if (sizeInBytes < 1024) {
-      return `${sizeInBytes} B`;
-  }
-  const sizeInKb = sizeInBytes / 1024;
-  if (sizeInKb < 1024) {
-      return `${sizeInKb.toFixed(1)} KB`;
-  }
-  const sizeInMb = sizeInKb / 1024;
-  return `${sizeInMb.toFixed(2)} MB`;
+const CATEGORY_STYLES: Record<FileCategory, { Icon: React.ElementType, colorClass: string, bgClass: string }> = {
+    image: { Icon: ImageIcon, colorClass: "text-blue-500 dark:text-blue-400", bgClass: "bg-blue-500/10 dark:bg-blue-400/10" },
+    audio: { Icon: FileAudio, colorClass: "text-purple-500 dark:text-purple-400", bgClass: "bg-purple-500/10 dark:bg-purple-400/10" },
+    video: { Icon: FileVideo, colorClass: "text-pink-500 dark:text-pink-400", bgClass: "bg-pink-500/10 dark:bg-pink-400/10" },
+    youtube: { Icon: Youtube, colorClass: "text-red-600 dark:text-red-500", bgClass: "bg-red-600/10 dark:bg-red-500/10" },
+    pdf: { Icon: FileText, colorClass: "text-orange-500 dark:text-orange-400", bgClass: "bg-orange-500/10 dark:bg-orange-400/10" },
+    code: { Icon: FileCode2, colorClass: "text-emerald-500 dark:text-emerald-400", bgClass: "bg-emerald-500/10 dark:bg-emerald-400/10" },
+    error: { Icon: AlertCircle, colorClass: "text-[var(--theme-text-danger)]", bgClass: "bg-[var(--theme-bg-danger)]/10" },
 };
 
 export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isFromMessageList, isGridView }) => {
   const [idCopied, setIdCopied] = useState(false);
 
   const isClickable = file.uploadState === 'active' && !file.error && onFileClick && file.dataUrl;
+  const category = getFileTypeCategory(file.type, file.error);
 
   const handleCopyId = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -61,8 +55,8 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
       }
   };
 
-  // Render Image Content
-  if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.dataUrl && !file.error) {
+  // Render Image Content specifically
+  if (category === 'image' && file.dataUrl && !file.error) {
       return (
         <div className={`relative group rounded-xl overflow-hidden border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] shadow-sm transition-all hover:shadow-md ${isGridView ? '' : 'w-fit max-w-full sm:max-w-md'}`}>
             <img 
@@ -100,44 +94,16 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
       );
   }
 
-  // Render File Card
-  let Icon = FileText;
-  let iconColorClass = "text-[var(--theme-text-tertiary)]";
-  let iconBgClass = "bg-[var(--theme-bg-tertiary)]";
-  
-  if (SUPPORTED_AUDIO_MIME_TYPES.includes(file.type)) {
-      Icon = FileAudio;
-      iconColorClass = "text-purple-500 dark:text-purple-400";
-      iconBgClass = "bg-purple-500/10 dark:bg-purple-400/10";
-  } else if (file.type === 'video/youtube-link') {
-      Icon = Youtube;
-      iconColorClass = "text-red-600 dark:text-red-500";
-      iconBgClass = "bg-red-600/10 dark:bg-red-500/10";
-  } else if (SUPPORTED_VIDEO_MIME_TYPES.includes(file.type)) {
-      Icon = FileVideo;
-      iconColorClass = "text-pink-500 dark:text-pink-400";
-      iconBgClass = "bg-pink-500/10 dark:bg-pink-400/10";
-  } else if (SUPPORTED_PDF_MIME_TYPES.includes(file.type)) {
-      Icon = FileText;
-      iconColorClass = "text-orange-500 dark:text-orange-400";
-      iconBgClass = "bg-orange-500/10 dark:bg-orange-400/10";
-  } else if (file.error) {
-      Icon = AlertCircle;
-      iconColorClass = "text-[var(--theme-text-danger)]";
-      iconBgClass = "bg-[var(--theme-bg-danger)]/10";
-  } else {
-      Icon = FileCode2;
-      iconColorClass = "text-emerald-500 dark:text-emerald-400";
-      iconBgClass = "bg-emerald-500/10 dark:bg-emerald-400/10";
-  }
+  // Render File Card for other types (or error states)
+  const { Icon, colorClass, bgClass } = CATEGORY_STYLES[category];
 
   return (
     <div 
         onClick={handleClick}
         className={`flex items-center gap-3 p-2.5 rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all shadow-sm hover:shadow max-w-xs sm:max-w-sm relative group ${file.error ? 'border-[var(--theme-bg-danger)]/50' : ''} ${isClickable ? 'cursor-pointer' : ''}`}
     >
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
-            <Icon size={20} className={iconColorClass} strokeWidth={1.5} />
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${bgClass}`}>
+            <Icon size={20} className={colorClass} strokeWidth={1.5} />
         </div>
         
         <div className="flex-grow min-w-0">

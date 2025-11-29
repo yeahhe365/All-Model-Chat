@@ -26,101 +26,37 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js"></script>
   <script src="https://unpkg.com/@panzoom/panzoom@4.5.1/dist/panzoom.min.js"></script>
-  <style id="theme-variables">
-    /* Fallback theme variables - will be overwritten by JS */
-    :root {
-      --theme-bg-primary: #111827;
-      --theme-bg-secondary: #1f2937;
-      --theme-bg-tertiary: #374151;
-      --theme-bg-accent: #0ea5e9;
-      --theme-bg-accent-hover: #0284c7;
-      --theme-bg-danger: #dc2626;
-      --theme-bg-danger-hover: #b91c1c;
-      --theme-bg-input: #374151;
-      --theme-bg-code-block: rgba(0, 0, 0, 0.3);
-      --theme-bg-code-block-header: rgba(17, 24, 39, 0.7);
-      --theme-bg-user-message: #0ea5e9;
-      --theme-bg-model-message: #374151;
-      --theme-bg-error-message: #ef4444;
-      --theme-bg-success: rgba(22, 163, 74, 0.2);
-      --theme-text-success: #4ade80;
-      --theme-bg-info: rgba(14, 165, 233, 0.15);
-      --theme-text-info: #7dd3fc;
-      --theme-bg-warning: rgba(245, 158, 11, 0.15);
-      --theme-text-warning: #facc15;
-
-      --theme-text-primary: #f3f4f6;
-      --theme-text-secondary: #d1d5db;
-      --theme-text-tertiary: #9ca3af;
-      --theme-text-accent: #ffffff;
-      --theme-text-danger: #ffffff;
-      --theme-text-link: #38bdf8;
-      --theme-text-code: #86efac;
-      --theme-bg-user-message-text: #ffffff;
-      --theme-bg-model-message-text: #f3f4f6;
-      --theme-bg-error-message-text: #ffffff;
-
-      --theme-border-primary: #374151;
-      --theme-border-secondary: #4b5563;
-      --theme-border-focus: #0ea5e9;
-
-      --theme-scrollbar-thumb: #4b5563;
-      --theme-scrollbar-track: #1f2937;
-
-      --theme-icon-user: #38bdf8;
-      --theme-icon-model: #34d399;
-      --theme-icon-error: #f87171;
-      --theme-icon-thought: #7dd3fc;
-      --theme-icon-settings: #d1d5db;
-      --theme-icon-clear-chat: #ffffff;
-      --theme-icon-send: #ffffff;
-      --theme-icon-attach: #d1d5db;
-      --theme-icon-stop: #ffffff;
-      --theme-icon-edit: #d1d5db;
-
-      /* Markdown specific variables */
-      --markdown-code-bg: var(--theme-bg-input); /* For inline code */
-      /* For code blocks, highlight.js theme will typically control background. */
-      /* We can keep --markdown-pre-bg for the <pre> tag if highlight.js theme targets <code> or if we want to override. */
-      --markdown-pre-bg: var(--theme-bg-code-block);
-      --markdown-code-text: var(--theme-text-code); /* Fallback for inline code if not styled by hljs */
-      --markdown-link-text: var(--theme-text-link);
-      --markdown-blockquote-text: var(--theme-text-tertiary);
-      --markdown-blockquote-border: var(--theme-border-secondary);
-      --markdown-hr-bg: var(--theme-border-secondary);
-      --markdown-table-border: var(--theme-border-secondary);
-    }
-  </style>
+  <style id="theme-variables"></style>
+<link rel="stylesheet" href="/index.css">
 <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.2.0",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.0.0",
-    "dompurify": "https://esm.sh/dompurify@^3.1.6",
-    "highlight.js": "https://esm.sh/highlight.js@^11.9.0",
-    "html2canvas": "https://esm.sh/html2canvas@^1.4.1",
-    "lucide-react": "https://esm.sh/lucide-react@^0.417.0",
-    "marked": "https://esm.sh/marked@^13.0.2",
-    "mermaid": "https://esm.sh/mermaid@^10.9.1",
-    "path": "https://esm.sh/path@^0.12.7",
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom": "https://esm.sh/react-dom@^19.1.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
-    "react-markdown": "https://esm.sh/react-markdown@^9.0.1",
-    "rehype-highlight": "https://esm.sh/rehype-highlight@^7.0.0",
-    "rehype-katex": "https://esm.sh/rehype-katex@^7.0.0",
-    "rehype-raw": "https://esm.sh/rehype-raw@^7.0.0",
-    "rehype-sanitize": "https://esm.sh/rehype-sanitize@^6.0.0",
-    "remark-breaks": "https://esm.sh/remark-breaks@^4.0.0",
-    "remark-gfm": "https://esm.sh/remark-gfm@^4.0.0",
-    "remark-math": "https://esm.sh/remark-math@^6.0.0",
-    "vite": "https://esm.sh/vite@^7.1.1",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.1",
+    "remark-math": "https://aistudiocdn.com/remark-math@^6.0.0",
+    "rehype-raw": "https://aistudiocdn.com/rehype-raw@^7.0.0",
+    "marked": "https://aistudiocdn.com/marked@^17.0.1",
     "jszip": "https://aistudiocdn.com/jszip@^3.10.1",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
+    "mermaid": "https://aistudiocdn.com/mermaid@^11.12.1",
+    "dompurify": "https://aistudiocdn.com/dompurify@^3.3.0",
+    "rehype-katex": "https://aistudiocdn.com/rehype-katex@^7.0.1",
+    "rehype-highlight": "https://aistudiocdn.com/rehype-highlight@^7.0.2",
+    "highlight.js": "https://aistudiocdn.com/highlight.js@^11.11.1",
+    "rehype-sanitize": "https://aistudiocdn.com/rehype-sanitize@^6.0.0",
+    "remark-breaks": "https://aistudiocdn.com/remark-breaks@^4.0.0"
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="antialiased">
   <div id="root"></div>

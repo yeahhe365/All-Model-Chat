@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { translations } from '../../utils/appUtils';
 import { ChatInputModals } from './input/ChatInputModals';
 import { ChatInputArea } from './input/ChatInputArea';

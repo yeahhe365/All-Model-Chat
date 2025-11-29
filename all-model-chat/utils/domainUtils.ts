@@ -48,6 +48,15 @@ export const base64ToBlobUrl = (base64: string, mimeType: string): string => {
     return URL.createObjectURL(blob);
 };
 
+export const formatFileSize = (sizeInBytes: number): string => {
+    if (!sizeInBytes) return '';
+    if (sizeInBytes < 1024) return `${Math.round(sizeInBytes)} B`;
+    const sizeInKb = sizeInBytes / 1024;
+    if (sizeInKb < 1024) return `${sizeInKb.toFixed(1)} KB`;
+    const sizeInMb = sizeInKb / 1024;
+    return `${sizeInMb.toFixed(2)} MB`;
+};
+
 export const generateUniqueId = () => `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
 export const generateSessionTitle = (messages: ChatMessage[]): string => {
@@ -64,6 +73,42 @@ export const generateSessionTitle = (messages: ChatMessage[]): string => {
         return `Chat with ${firstFile.name}`;
     }
     return 'New Chat';
+};
+
+export const parseThoughtProcess = (thoughts: string | undefined) => {
+    if (!thoughts) return null;
+
+    const lines = thoughts.trim().split('\n');
+    let lastHeadingIndex = -1;
+    let lastHeading = '';
+
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i].trim();
+        // Check for ## or ### headings
+        if (line.startsWith('## ') || line.startsWith('### ')) {
+            lastHeadingIndex = i;
+            lastHeading = line.replace(/^[#]+\s*/, '').trim();
+            break;
+        }
+        // Check for lines that are entirely bolded (e.g., **Title**)
+        if ((line.startsWith('**') && line.endsWith('**') && !line.slice(2, -2).includes('**')) || 
+            (line.startsWith('__') && line.endsWith('__') && !line.slice(2, -2).includes('__'))) {
+            lastHeadingIndex = i;
+            // Remove the bold markers from the start and end
+            lastHeading = line.substring(2, line.length - 2).trim();
+            break;
+        }
+    }
+
+    if (lastHeadingIndex === -1) {
+            const content = lines.slice(-5).join('\n').trim();
+            return { title: 'Latest thought', content, isFallback: true };
+    }
+    
+    const contentLines = lines.slice(lastHeadingIndex + 1);
+    const content = contentLines.filter(l => l.trim() !== '').join('\n').trim();
+
+    return { title: lastHeading, content, isFallback: false };
 };
 
 export const buildContentParts = async (
@@ -92,7 +137,8 @@ export const buildContentParts = async (
     if (file.fileUri) {
         // 1. Files uploaded via API (or YouTube links)
         if (isYoutube) {
-            part = { fileData: { mimeType: 'video/youtube', fileUri: file.fileUri } };
+            // For YouTube URLs, do NOT send mimeType, just fileUri.
+            part = { fileData: { fileUri: file.fileUri } };
         } else {
             part = { fileData: { mimeType: file.type, fileUri: file.fileUri } };
         }
@@ -143,13 +189,16 @@ export const buildContentParts = async (
     
     // Inject video metadata if present and it's a video (works for both inline and fileUri video/youtube)
     if (part && (isVideo || isYoutube) && file.videoMetadata) {
-        part.videoMetadata = {
-            startOffset: file.videoMetadata.startOffset,
-            endOffset: file.videoMetadata.endOffset,
-        };
+        part.videoMetadata = { ...part.videoMetadata }; // Ensure object exists
+        
+        if (file.videoMetadata.startOffset) {
+            part.videoMetadata.startOffset = file.videoMetadata.startOffset;
+        }
+        if (file.videoMetadata.endOffset) {
+            part.videoMetadata.endOffset = file.videoMetadata.endOffset;
+        }
         if (file.videoMetadata.fps) {
-            // @ts-ignore
-            (part.videoMetadata as any).fps = file.videoMetadata.fps;
+            part.videoMetadata.fps = file.videoMetadata.fps;
         }
     }
     

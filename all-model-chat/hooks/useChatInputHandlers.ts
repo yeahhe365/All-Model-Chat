@@ -137,37 +137,12 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
 
     const handleZipChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files?.length) {
-            const file = event.target.files[0];
-            if (file.name.toLowerCase().endsWith('.zip')) {
-                const tempId = generateUniqueId();
-                setIsConverting(true);
-                setSelectedFiles(prev => [...prev, {
-                    id: tempId,
-                    name: 'Processing zip...',
-                    type: 'application/zip',
-                    size: 0,
-                    isProcessing: true,
-                    uploadState: 'pending'
-                }]);
-
-                try {
-                    justInitiatedFileOpRef.current = true;
-                    const contextFile = await generateZipContext(file);
-                    setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
-                    await onProcessFiles([contextFile]);
-                } catch (e) {
-                    console.error(e);
-                    setAppFileError("Failed to process zip file.");
-                    setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
-                } finally {
-                    setIsConverting(false);
-                }
-            } else {
-                setAppFileError("Please select a valid .zip file.");
-            }
+            justInitiatedFileOpRef.current = true;
+            // useFileUpload already has logic to auto-detect and convert .zip files
+            await onProcessFiles(event.target.files);
         }
         if (zipInputRef.current) zipInputRef.current.value = "";
-    }, [setIsConverting, setSelectedFiles, onProcessFiles, setAppFileError, justInitiatedFileOpRef, zipInputRef]);
+    }, [onProcessFiles, justInitiatedFileOpRef, zipInputRef]);
 
     const handleAddUrl = useCallback(async (url: string) => {
         const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
