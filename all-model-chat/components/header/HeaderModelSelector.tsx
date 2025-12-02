@@ -64,13 +64,13 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       t={t}
       defaultModelId={defaultModelId}
       onSetDefaultModel={onSetDefaultModel}
-      dropdownClassName="w-[calc(100vw-2rem)] max-w-[320px] sm:w-96 sm:max-w-none max-h-96"
+      dropdownClassName="w-[calc(100vw-2rem)] max-w-[240px] sm:w-[240px] sm:max-w-none max-h-96"
       renderTrigger={({ isOpen, setIsOpen }) => (
         <div className="relative flex items-center gap-1">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={isSelectorDisabled}
-                className={`h-10 flex items-center gap-2 rounded-xl px-2 sm:px-3 bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium text-lg transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed border border-transparent hover:border-[var(--theme-border-secondary)] hover:scale-[1.02] active:scale-95 active:bg-[var(--theme-bg-tertiary)] ${isSwitchingModel ? 'animate-pulse' : ''}`}
+                className={`h-10 flex items-center gap-2 rounded-xl px-2 sm:px-3 bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium text-base transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed border border-transparent hover:border-[var(--theme-border-secondary)] hover:scale-[1.02] active:scale-95 active:bg-[var(--theme-bg-tertiary)] ${isSwitchingModel ? 'animate-pulse' : ''}`}
                 title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
                 aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
                 aria-haspopup="listbox"
@@ -78,7 +78,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
             >
                 {isModelsLoading && !currentModelName && <div className="flex items-center justify-center"><GoogleSpinner size={16} /></div>}
                 
-                <span className="truncate max-w-[200px] sm:max-w-[300px]">{abbreviatedModelName}</span>
+                <span className="truncate max-w-[200px] sm:max-w-[240px]">{abbreviatedModelName}</span>
             </button>
 
             {/* Thinking Level Toggle */}
