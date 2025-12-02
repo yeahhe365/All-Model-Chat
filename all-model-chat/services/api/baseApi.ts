@@ -28,11 +28,13 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
       }
       
       const config: any = { apiKey: sanitizedApiKey };
-      if (baseUrl) {
+      
+      // Robustly check and clean the baseUrl
+      if (baseUrl && baseUrl.trim().length > 0) {
           // Remove trailing slash if present to avoid double slashes in constructed URLs
-          const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+          const cleanBaseUrl = baseUrl.trim().replace(/\/+$/, '');
           config.baseUrl = cleanBaseUrl;
-          logService.info(`Using custom base URL: ${cleanBaseUrl}`);
+          logService.info(`[API Client] Initialized with custom base URL: ${cleanBaseUrl}`);
       }
       
       return new GoogleGenAI(config);
@@ -60,8 +62,16 @@ export const getConfiguredApiClient = async (apiKey: string): Promise<GoogleGenA
     const settings = await dbService.getAppSettings();
     
     // Only use the proxy URL if Custom Config AND Use Proxy are both enabled
-    const shouldUseProxy = settings?.useCustomApiConfig && settings?.useApiProxy;
+    // Explicitly check for truthiness to handle undefined/null
+    const shouldUseProxy = !!(settings?.useCustomApiConfig && settings?.useApiProxy);
     const apiProxyUrl = shouldUseProxy ? settings?.apiProxyUrl : null;
+    
+    if (settings?.useCustomApiConfig && !shouldUseProxy) {
+        // Debugging aid: if user expects proxy but it's not active
+        if (settings?.apiProxyUrl && !settings?.useApiProxy) {
+             logService.debug("[API Config] Proxy URL present but 'Use API Proxy' toggle is OFF.");
+        }
+    }
     
     return getApiClient(apiKey, apiProxyUrl);
 };

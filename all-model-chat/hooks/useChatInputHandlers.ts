@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings, VideoMetadata } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, getBaseUrl } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 import { generateFolderContext, generateZipContext } from '../utils/folderImportUtils';
@@ -230,8 +230,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         }
 
         try {
-            const baseUrl = getBaseUrl(appSettings);
-            const translatedText = await geminiServiceInstance.translateText(keyResult.key, inputText, baseUrl);
+            const translatedText = await geminiServiceInstance.translateText(keyResult.key, inputText);
             setInputText(translatedText);
             setTimeout(() => adjustTextareaHeight(), 0);
         } catch (error) {

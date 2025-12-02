@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ModelOption, AppSettings } from '../types';
 import { geminiServiceInstance } from '../services/geminiService';
 import { TAB_CYCLE_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS } from '../constants/appConstants';
-import { getActiveApiConfig, logService, sortModels, getBaseUrl } from '../utils/appUtils';
+import { getActiveApiConfig, logService, sortModels } from '../utils/appUtils';
 
 const getPinnedModels = (): ModelOption[] => {
     const pinnedInternalModels: ModelOption[] = TAB_CYCLE_MODELS.map(id => {
@@ -27,13 +27,12 @@ export const useModels = (appSettings: AppSettings) => {
         setModelsLoadingError(null);
         
         const { apiKeysString } = getActiveApiConfig({ ...appSettings, apiKey, useCustomApiConfig });
-        const baseUrl = getBaseUrl(appSettings);
 
         const pinnedModels = getPinnedModels();
         
         let modelsFromApi: ModelOption[] = [];
         try {
-            modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString, baseUrl);
+            modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString);
         } catch (error) {
             // Log warning instead of setting UI error, allowing fallback to pinned models.
             logService.warn(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using pinned models as fallback.`);
@@ -61,7 +60,7 @@ export const useModels = (appSettings: AppSettings) => {
             setModelsLoadingError('No models available to select.');
         }
         setIsModelsLoading(false);
-    }, [appSettings, useCustomApiConfig, apiKey, modelsLoadingError]);
+    }, [useCustomApiConfig, apiKey, modelsLoadingError]);
 
     useEffect(() => {
         fetchAndSetModels();
