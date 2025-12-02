@@ -1,8 +1,9 @@
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService, getBaseUrl } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -39,6 +40,7 @@ export const useImageEditSender = ({
     ) => {
         const modelMessageId = generationId;
         const imageFiles = files.filter(f => f.type.startsWith('image/'));
+        const baseUrl = getBaseUrl(appSettings);
 
         let finalSessionId = activeSessionId;
         const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, files, timestamp: new Date() };
@@ -93,7 +95,7 @@ export const useImageEditSender = ({
             const { contentParts: promptParts } = await buildContentParts(text, imageFiles);
             const historyForApi = await createChatHistoryForApi(messages);
             
-            const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio);
+            const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, baseUrl);
 
             const apiCalls = appSettings.generateQuadImages ? [callApi(), callApi(), callApi(), callApi()] : [callApi()];
             const results = await Promise.allSettled(apiCalls);

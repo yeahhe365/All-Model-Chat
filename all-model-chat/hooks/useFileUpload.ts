@@ -2,7 +2,7 @@
 import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_PDF_MIME_TYPES, SUPPORTED_AUDIO_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, fileToBlobUrl } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, fileToBlobUrl, getBaseUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 import { generateZipContext } from '../utils/folderImportUtils';
@@ -231,6 +231,8 @@ export const useFileUpload = ({
                     }));
                 };
 
+                const baseUrl = getBaseUrl(appSettings);
+
                 try {
                     const uploadedFileInfo = await geminiServiceInstance.uploadFile(
                         keyToUse, 
@@ -238,6 +240,7 @@ export const useFileUpload = ({
                         effectiveMimeType, 
                         file.name, 
                         controller.signal,
+                        baseUrl,
                         handleProgress // Pass progress callback
                     );
                     
@@ -333,8 +336,10 @@ export const useFileUpload = ({
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
 
+        const baseUrl = getBaseUrl(appSettings);
+
         try {
-            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
+            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId, baseUrl);
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
                 

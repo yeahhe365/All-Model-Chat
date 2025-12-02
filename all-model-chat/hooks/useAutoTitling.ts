@@ -1,7 +1,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../types';
-import { getKeyForRequest, logService, generateSessionTitle } from '../utils/appUtils';
+import { getKeyForRequest, logService, generateSessionTitle, getBaseUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -46,13 +46,14 @@ export const useAutoTitling = ({
         try {
             const userContent = messages[0].content;
             const modelContent = messages[1].content;
+            const baseUrl = getBaseUrl(appSettings);
             
             if (!userContent.trim() && !modelContent.trim()) {
                 logService.info(`Skipping title generation for session ${sessionId} due to empty content.`);
                 return;
             }
             
-            const newTitle = await geminiServiceInstance.generateTitle(keyResult.key, userContent, modelContent, language);
+            const newTitle = await geminiServiceInstance.generateTitle(keyResult.key, userContent, modelContent, language, baseUrl);
             
             if (newTitle && newTitle.trim()) {
                 logService.info(`Generated new title for session ${sessionId}: "${newTitle}"`);
