@@ -12,8 +12,8 @@ class GeminiServiceImpl implements GeminiService {
         logService.info("GeminiService created.");
     }
 
-    async getAvailableModels(apiKeysString: string | null): Promise<ModelOption[]> {
-        return getAvailableModelsApi(apiKeysString);
+    async getAvailableModels(apiKeysString: string | null, baseUrl?: string): Promise<ModelOption[]> {
+        return getAvailableModelsApi(apiKeysString, baseUrl);
     }
 
     async uploadFile(
@@ -22,40 +22,41 @@ class GeminiServiceImpl implements GeminiService {
         mimeType: string, 
         displayName: string, 
         signal: AbortSignal,
+        baseUrl?: string,
         onProgress?: (loaded: number, total: number) => void
     ): Promise<GeminiFile> {
-        return uploadFileApi(apiKey, file, mimeType, displayName, signal, onProgress);
+        return uploadFileApi(apiKey, file, mimeType, displayName, signal, baseUrl, onProgress);
     }
     
-    async getFileMetadata(apiKey: string, fileApiName: string): Promise<GeminiFile | null> {
-        return getFileMetadataApi(apiKey, fileApiName);
+    async getFileMetadata(apiKey: string, fileApiName: string, baseUrl?: string): Promise<GeminiFile | null> {
+        return getFileMetadataApi(apiKey, fileApiName, baseUrl);
     }
 
-    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
-        return generateImagesApi(apiKey, modelId, prompt, aspectRatio, abortSignal);
+    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal, baseUrl?: string): Promise<string[]> {
+        return generateImagesApi(apiKey, modelId, prompt, aspectRatio, abortSignal, baseUrl);
     }
 
-    async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
-        return generateSpeechApi(apiKey, modelId, text, voice, abortSignal);
+    async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal, baseUrl?: string): Promise<string> {
+        return generateSpeechApi(apiKey, modelId, text, voice, abortSignal, baseUrl);
     }
 
-    async transcribeAudio(apiKey: string, audioFile: File, modelId: string): Promise<string> {
-        return transcribeAudioApi(apiKey, audioFile, modelId);
+    async transcribeAudio(apiKey: string, audioFile: File, modelId: string, baseUrl?: string): Promise<string> {
+        return transcribeAudioApi(apiKey, audioFile, modelId, baseUrl);
     }
 
-    async translateText(apiKey: string, text: string): Promise<string> {
-        return translateTextApi(apiKey, text);
+    async translateText(apiKey: string, text: string, baseUrl?: string): Promise<string> {
+        return translateTextApi(apiKey, text, baseUrl);
     }
 
-    async generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string> {
-        return generateTitleApi(apiKey, userContent, modelContent, language);
+    async generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh', baseUrl?: string): Promise<string> {
+        return generateTitleApi(apiKey, userContent, modelContent, language, baseUrl);
     }
 
-    async generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> {
-        return generateSuggestionsApi(apiKey, userContent, modelContent, language);
+    async generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh', baseUrl?: string): Promise<string[]> {
+        return generateSuggestionsApi(apiKey, userContent, modelContent, language, baseUrl);
     }
 
-    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string): Promise<Part[]> {
+    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, baseUrl?: string): Promise<Part[]> {
         return new Promise((resolve, reject) => {
             if (abortSignal.aborted) {
                 const abortError = new Error("aborted");
@@ -87,7 +88,8 @@ class GeminiServiceImpl implements GeminiService {
                 config,
                 abortSignal,
                 handleError,
-                (responseParts, thoughts, usage, grounding) => handleComplete(responseParts)
+                (responseParts, thoughts, usage, grounding) => handleComplete(responseParts),
+                baseUrl
             );
         });
     }
@@ -126,10 +128,11 @@ class GeminiServiceImpl implements GeminiService {
         config: any,
         abortSignal: AbortSignal,
         onError: (error: Error) => void,
-        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
+        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+        baseUrl?: string
     ): Promise<void> {
         return sendStatelessMessageNonStreamApi(
-            apiKey, modelId, history, parts, config, abortSignal, onError, onComplete
+            apiKey, modelId, history, parts, config, abortSignal, onError, onComplete, baseUrl
         );
     }
 }

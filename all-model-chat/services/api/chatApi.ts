@@ -2,12 +2,8 @@
 import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } from "@google/genai";
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
-import { getConfiguredApiClient } from "./baseApi";
+import { getApiClient } from "./baseApi";
 
-/**
- * Shared helper to parse GenAI responses.
- * Extracts parts, separates thoughts, and merges metadata/citations from tool calls.
- */
 const processResponse = (response: GenerateContentResponse) => {
     let thoughtsText = "";
     const responseParts: Part[] = [];
@@ -31,7 +27,7 @@ const processResponse = (response: GenerateContentResponse) => {
     const groundingMetadata = candidate?.groundingMetadata;
     const finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
     
-    // @ts-ignore - Handle potential snake_case from raw API responses
+    // @ts-ignore
     const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
 
     const toolCalls = candidate?.toolCalls;
@@ -91,8 +87,7 @@ export const sendMessageStreamApi = async (
                     finalGroundingMetadata = metadataFromChunk;
                 }
                 
-                // Check for URL context metadata (handling potential SDK property names)
-                // @ts-ignore - SDK might not have strict types for this yet
+                // @ts-ignore
                 const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
                 if (urlMetadata) {
                     finalUrlContextMetadata = urlMetadata;
@@ -114,7 +109,6 @@ export const sendMessageStreamApi = async (
                     }
                 }
                 
-                // ALWAYS iterate through parts. The .text property is a shortcut and can be misleading for multimodal responses.
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
@@ -177,12 +171,13 @@ export const sendStatelessMessageNonStreamApi = async (
     config: any,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
+    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+    baseUrl?: string
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
     
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 

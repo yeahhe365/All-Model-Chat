@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../types';
 import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
-import { getKeyForRequest, logService, generateUniqueId } from '../utils/appUtils';
+import { getKeyForRequest, logService, generateUniqueId, getActiveApiConfig } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface UseChatActionsProps {
@@ -86,7 +86,6 @@ export const useChatActions = ({
                             ...s,
                             messages: [],
                             title: "New Chat",
-                            // Resetting lockedApiKey is crucial to allow using new global settings
                             settings: { ...s.settings, lockedApiKey: null }
                           }
                         : s
@@ -116,13 +115,16 @@ export const useChatActions = ({
                 setCurrentChatSettings(prev => ({...prev, lockedApiKey: keyResult.key }));
             }
         }
+        
+        const { baseUrl } = getActiveApiConfig(appSettings);
     
         try {
             const modelToUse = appSettings.transcriptionModelId || 'models/gemini-flash-latest';
             const transcribedText = await geminiServiceInstance.transcribeAudio(
                 keyResult.key,
                 audioFile,
-                modelToUse
+                modelToUse,
+                baseUrl
             );
             return transcribedText;
         } catch (error) {
