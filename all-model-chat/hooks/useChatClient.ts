@@ -62,7 +62,11 @@ export const useChatClient = ({
             }
             
             const storedSettings = await dbService.getAppSettings();
-            const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
+            
+            // Fix: Respect the toggle switches. Only use proxy if Custom Config AND Use Proxy are enabled.
+            const shouldUseProxy = storedSettings?.useCustomApiConfig && storedSettings?.useApiProxy;
+            const apiProxyUrl = shouldUseProxy ? storedSettings?.apiProxyUrl : null;
+            
             const ai = getApiClient(keyResult.key, apiProxyUrl);
             
             // Use only non-loading messages for history when creating the object
