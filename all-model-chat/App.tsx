@@ -14,11 +14,23 @@ import { WindowProvider } from './contexts/WindowContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
 import { EditMessageModal } from './components/modals/EditMessageModal';
+import { networkInterceptor } from './services/networkInterceptor';
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = useMemo(() => getTranslator(language), [language]);
   
+  // Initialize Network Interceptor
+  useEffect(() => {
+      networkInterceptor.mount();
+  }, []);
+
+  // Update Interceptor Configuration when settings change
+  useEffect(() => {
+      const shouldUseProxy = appSettings.useCustomApiConfig && appSettings.useApiProxy;
+      networkInterceptor.configure(!!shouldUseProxy, appSettings.apiProxyUrl);
+  }, [appSettings.useCustomApiConfig, appSettings.useApiProxy, appSettings.apiProxyUrl]);
+
   const chatState = useChat(appSettings, setAppSettings, language);
   const {
       messages, isLoading, loadingSessionIds, generatingTitleSessionIds,

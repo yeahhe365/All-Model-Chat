@@ -29,13 +29,11 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
       
       const config: any = { apiKey: sanitizedApiKey };
       
-      // Robustly check and clean the baseUrl
-      if (baseUrl && baseUrl.trim().length > 0) {
-          // Remove trailing slash if present to avoid double slashes in constructed URLs
-          const cleanBaseUrl = baseUrl.trim().replace(/\/+$/, '');
-          config.baseUrl = cleanBaseUrl;
-          logService.info(`[API Client] Initialized with custom base URL: ${cleanBaseUrl}`);
-      }
+      // IMPORTANT: BaseURL logic is intentionally removed from here.
+      // We now use a global network interceptor (networkInterceptor.ts) to route requests.
+      // This ensures that ALL requests (including SDK internals) honor the proxy setting
+      // regardless of SDK support for baseUrl in specific methods.
+      // if (baseUrl && baseUrl.trim().length > 0) { ... }
       
       return new GoogleGenAI(config);
   } catch (error) {
@@ -73,7 +71,7 @@ export const getConfiguredApiClient = async (apiKey: string): Promise<GoogleGenA
         }
     }
     
-    return getApiClient(apiKey, apiProxyUrl);
+    return getClient(apiKey, apiProxyUrl);
 };
 
 export const buildGenerationConfig = (
