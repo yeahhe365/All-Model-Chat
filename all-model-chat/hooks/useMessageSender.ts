@@ -9,6 +9,7 @@ import { useTtsImagenSender } from './useTtsImagenSender';
 import { useImageEditSender } from './useImageEditSender';
 import { Chat } from '@google/genai';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
+import { dbService } from '../utils/db';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -201,8 +202,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
             logService.info("Handling message edit: creating temporary chat object for this turn.");
             const baseMessagesForApi = messages.slice(0, messages.findIndex(m => m.id === effectiveEditingId));
             const historyForChat = await createChatHistoryForApi(baseMessagesForApi);
-            const storedSettings = localStorage.getItem('app-settings');
-            const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+            
+            // Fix: Retrieve settings correctly from IndexedDB via dbService
+            const storedSettings = await dbService.getAppSettings();
+            const shouldUseProxy = storedSettings?.useCustomApiConfig && storedSettings?.useApiProxy;
+            const apiProxyUrl = shouldUseProxy ? storedSettings?.apiProxyUrl : null;
+            
             const ai = getApiClient(keyToUse, apiProxyUrl);
             chatToUse = ai.chats.create({
                 model: activeModelId,
