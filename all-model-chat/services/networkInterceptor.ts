@@ -3,7 +3,15 @@ import { logService } from './logService';
 
 const TARGET_HOST = 'generativelanguage.googleapis.com';
 
+// Capture the original fetch immediately when the module loads.
+// We handle potential HMR re-runs or pre-existing patches by checking the flag.
 let originalFetch: typeof window.fetch = window.fetch;
+
+// If the current window.fetch is already our patched version (e.g. after HMR),
+// we shouldn't treat it as the original. 
+// However, since we can't easily get the 'real' original if it's lost, 
+// we assume the first load captured it correctly or we rely on the mount check to prevent nesting.
+
 let currentProxyUrl: string | null = null;
 let isInterceptorEnabled = false;
 
@@ -29,7 +37,7 @@ export const networkInterceptor = {
         // Prevent double mounting
         if ((window.fetch as any).__isAllModelChatInterceptor) return;
 
-        // Save original fetch in case it wasn't saved correctly at module level
+        // Ensure we have the original fetch
         originalFetch = window.fetch;
 
         const patchedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -83,7 +91,21 @@ export const networkInterceptor = {
         // Mark function to prevent double-wrapping
         (patchedFetch as any).__isAllModelChatInterceptor = true;
         
-        window.fetch = patchedFetch;
+        try {
+            window.fetch = patchedFetch;
+        } catch (e) {
+            // Handle environments where window.fetch is a getter-only property (e.g., CodeSandbox, some strict environments)
+            try {
+                Object.defineProperty(window, 'fetch', {
+                    value: patchedFetch,
+                    writable: true,
+                    configurable: true
+                });
+            } catch (err) {
+                console.error("[NetworkInterceptor] Critical: Failed to mount fetch interceptor.", err);
+            }
+        }
+        
         logService.info("[NetworkInterceptor] Network interceptor mounted.", { category: 'SYSTEM' });
     }
 };
