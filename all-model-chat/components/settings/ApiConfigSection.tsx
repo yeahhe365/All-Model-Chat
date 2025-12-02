@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
-import { KeyRound, Info, Check, AlertCircle, ShieldCheck, ArrowRight } from 'lucide-react';
+import { KeyRound, Info, Check, AlertCircle, ShieldCheck, ArrowRight, Activity, Loader2, XCircle } from 'lucide-react';
 import { Toggle } from '../shared/Tooltip';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
+import { getClient } from '../../services/api/baseApi';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -29,6 +30,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   t,
 }) => {
   const [isApiKeyFocused, setIsApiKeyFocused] = useState(false);
+  
+  // Test connection state
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testMessage, setTestMessage] = useState<string | null>(null);
 
   const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
   const iconSize = useResponsiveValue(18, 20);
@@ -49,6 +54,52 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const currentBaseUrl = apiProxyUrl?.trim() || defaultBaseUrl;
   const cleanBaseUrl = currentBaseUrl.replace(/\/+$/, '');
   const previewUrl = `${cleanBaseUrl}/models/gemini-2.5-flash:generateContent`;
+
+  const handleTestConnection = async () => {
+      // Pick the key that would be used
+      let keyToTest = apiKey;
+      
+      // If custom config is OFF, or ON but no key provided, we might fall back to env key if available.
+      // But for explicit testing, if custom config is ON, we should test what's in the box.
+      if (!useCustomApiConfig && hasEnvKey) {
+          keyToTest = process.env.API_KEY || null;
+      }
+      
+      if (useCustomApiConfig && !keyToTest) {
+          setTestStatus('error');
+          setTestMessage("No API Key provided to test.");
+          return;
+      }
+
+      if (!keyToTest) {
+           setTestStatus('error');
+           setTestMessage("No API Key available.");
+           return;
+      }
+
+      // Handle multiple keys - pick first for test
+      const firstKey = keyToTest.split('\n')[0].trim().replace(/^["']|["']$/g, '');
+      const effectiveUrl = (useCustomApiConfig && useApiProxy && apiProxyUrl) ? apiProxyUrl : null;
+
+      setTestStatus('testing');
+      setTestMessage(null);
+
+      try {
+          // Use the base API helper to get a client with sanitation logic
+          const ai = getClient(firstKey, effectiveUrl);
+          
+          // Using gemini-2.5-flash for a quick, cheap test
+          await ai.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: 'Hello',
+          });
+
+          setTestStatus('success');
+      } catch (error) {
+          setTestStatus('error');
+          setTestMessage(error instanceof Error ? error.message : String(error));
+      }
+  };
 
   return (
     <div className="space-y-6">
@@ -86,7 +137,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         </div>
 
         {/* Content */}
-        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[500px] pt-4' : 'opacity-50 max-h-0 overflow-hidden'}`}>
+        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[600px] pt-4' : 'opacity-50 max-h-0 overflow-hidden'}`}>
             <div className="space-y-5">
                 {/* API Key Input */}
                 <div className="space-y-2">
@@ -98,7 +149,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                           id="api-key-input"
                           rows={3}
                           value={apiKey || ''}
-                          onChange={(e) => setApiKey(e.target.value || null)}
+                          onChange={(e) => {
+                              setApiKey(e.target.value || null);
+                              setTestStatus('idle'); // Reset test status on edit
+                          }}
                           onFocus={() => setIsApiKeyFocused(true)}
                           onBlur={() => setIsApiKeyFocused(false)}
                           className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] ${apiKeyBlurClass}`}
@@ -126,7 +180,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                         <Toggle
                           id="use-api-proxy-toggle"
                           checked={useApiProxy}
-                          onChange={setUseApiProxy}
+                          onChange={(val) => {
+                              setUseApiProxy(val);
+                              setTestStatus('idle');
+                          }}
                         />
                     </div>
                     
@@ -135,7 +192,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                             id="api-proxy-url-input"
                             type="text"
                             value={apiProxyUrl || ''}
-                            onChange={(e) => setApiProxyUrl(e.target.value || null)}
+                            onChange={(e) => {
+                                setApiProxyUrl(e.target.value || null);
+                                setTestStatus('idle');
+                            }}
                             className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
                             placeholder={getProxyPlaceholder()}
                             aria-label="API Proxy URL"
@@ -155,9 +215,54 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                         </div>
                     </div>
                 </div>
+
+                {/* Test Connection Button */}
+                <div className="pt-2 flex flex-col gap-2">
+                    <button
+                        type="button"
+                        onClick={handleTestConnection}
+                        disabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig)}
+                        className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition-all ${
+                            testStatus === 'testing' 
+                                ? 'bg-[var(--theme-bg-tertiary)] border-transparent cursor-wait'
+                                : 'bg-transparent border-[var(--theme-border-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                        {testStatus === 'testing' ? (
+                            <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                            <Activity size={16} strokeWidth={1.5} />
+                        )}
+                        <span>{testStatus === 'testing' ? t('apiConfig_testing') : t('apiConfig_testConnection')}</span>
+                    </button>
+
+                    {/* Test Results */}
+                    {testStatus === 'success' && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 text-sm animate-in fade-in slide-in-from-top-1">
+                            <CheckCircleIcon />
+                            <span>{t('apiConfig_testSuccess')}</span>
+                        </div>
+                    )}
+                    {testStatus === 'error' && (
+                        <div className="flex items-start gap-2 p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 text-sm animate-in fade-in slide-in-from-top-1">
+                            <XCircle size={16} className="flex-shrink-0 mt-0.5" />
+                            <div className="flex flex-col">
+                                <span className="font-medium">{t('apiConfig_testFailed')}</span>
+                                {testMessage && <span className="text-xs opacity-90 break-all">{testMessage}</span>}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
       </div>
     </div>
   );
 };
+
+const CheckCircleIcon = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+);
