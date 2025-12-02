@@ -2,7 +2,7 @@
 import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } from "@google/genai";
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
-import { getApiClient } from "./baseApi";
+import { getConfiguredApiClient } from "./baseApi";
 
 /**
  * Shared helper to parse GenAI responses.
@@ -177,13 +177,12 @@ export const sendStatelessMessageNonStreamApi = async (
     config: any,
     abortSignal: AbortSignal,
     onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
-    baseUrl?: string | null
+    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
     
     try {
-        const ai = getApiClient(apiKey, baseUrl);
+        const ai = await getConfiguredApiClient(apiKey);
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 

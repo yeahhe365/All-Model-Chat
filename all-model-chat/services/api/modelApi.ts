@@ -1,9 +1,9 @@
 
-import { getApiClient } from './baseApi';
+import { getConfiguredApiClient } from './baseApi';
 import { ModelOption } from '../../types';
 import { logService } from "../logService";
 
-export const getAvailableModelsApi = async (apiKeysString: string | null, baseUrl?: string | null): Promise<ModelOption[]> => {
+export const getAvailableModelsApi = async (apiKeysString: string | null): Promise<ModelOption[]> => {
     logService.info('🔄 [ModelAPI] Fetching available models...');
     const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
@@ -16,7 +16,7 @@ export const getAvailableModelsApi = async (apiKeysString: string | null, baseUr
     logService.info(`🔑 [ModelAPI] Using API key: ${randomKey.substring(0, 10)}...`);
     
     try {
-        const ai = getApiClient(randomKey, baseUrl);
+        const ai = await getConfiguredApiClient(randomKey);
 
         const modelPager = await ai.models.list();
         const availableModels: ModelOption[] = [];
