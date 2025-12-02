@@ -40,11 +40,11 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
       .catch(err => console.error("Failed to copy file ID:", err));
   };
   
-  const handleDownloadImage = (event: React.MouseEvent) => {
+  const handleDownloadFile = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!file.dataUrl) return;
     
-    const filename = file.name || 'generated-image.jpeg';
+    const filename = file.name || 'download';
     triggerDownload(file.dataUrl, filename, false);
   };
 
@@ -71,7 +71,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                     {(file.name.startsWith('generated-image-') || file.name.startsWith('edited-image-')) && (
                         <button
                             type="button"
-                            onClick={handleDownloadImage}
+                            onClick={handleDownloadFile}
                             title="Download Image"
                             className="p-1.5 rounded-full bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm transition-colors"
                         >
@@ -122,16 +122,30 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
             </div>
         </div>
 
-        {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
-            <button
-                type="button"
-                onClick={handleCopyId}
-                title={idCopied ? "Copied!" : "Copy File ID"}
-                className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}
-            >
-                {idCopied ? <Check size={16} strokeWidth={2} /> : <Copy size={16} strokeWidth={2} />}
-            </button>
-        )}
+        {/* Action Buttons for Card View */}
+        <div className="flex items-center gap-1">
+            {isFromMessageList && !file.fileApiName && file.dataUrl && !file.error && (
+                <button
+                    type="button"
+                    onClick={handleDownloadFile}
+                    title="Download"
+                    className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                >
+                    <Download size={16} strokeWidth={2} />
+                </button>
+            )}
+
+            {isFromMessageList && file.fileApiName && file.uploadState === 'active' && !file.error && (
+                <button
+                    type="button"
+                    onClick={handleCopyId}
+                    title={idCopied ? "Copied!" : "Copy File ID"}
+                    className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}
+                >
+                    {idCopied ? <Check size={16} strokeWidth={2} /> : <Copy size={16} strokeWidth={2} />}
+                </button>
+            )}
+        </div>
     </div>
   );
 };

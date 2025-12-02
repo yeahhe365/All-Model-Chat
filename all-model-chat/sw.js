@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'all-model-chat-cache-v1.7.9';
+const CACHE_NAME = 'all-model-chat-cache-v1.7.10';
 const API_HOSTS = ['generativelanguage.googleapis.com'];
 const STATIC_APP_SHELL_URLS = ['/', '/index.html', '/favicon.png', '/manifest.json'];
 

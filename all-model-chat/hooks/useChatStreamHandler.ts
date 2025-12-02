@@ -233,11 +233,19 @@ export const useChatStreamHandler = ({
                     messages.push(createNewMessage(toolContent));
                 } else if (anyPart.inlineData) {
                     const { mimeType, data } = anyPart.inlineData;
-                    if (mimeType.startsWith('image/')) {
+                    if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
                         const dataUrl = base64ToBlobUrl(data, mimeType);
+                        
+                        let fileName = 'Generated File';
+                        if (mimeType === 'application/pdf') {
+                            fileName = `generated_output_${generateUniqueId().slice(-4)}.pdf`;
+                        } else {
+                            fileName = 'Generated Image';
+                        }
+
                         const newFile: UploadedFile = {
                             id: generateUniqueId(),
-                            name: 'Generated Image',
+                            name: fileName,
                             type: mimeType,
                             size: data.length,
                             dataUrl: dataUrl,
