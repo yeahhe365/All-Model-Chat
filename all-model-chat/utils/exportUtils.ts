@@ -1,0 +1,451 @@
+
+/**
+ * Triggers a file download in the browser.
+ * @param href The URL or data URI of the file to download.
+ * @param filename The desired name of the file.
+ * @param revokeBlob Whether to revoke the object URL after download (if it is a blob URL). Defaults to true.
+ */
+export const triggerDownload = (href: string, filename: string, revokeBlob: boolean = true): void => {
+    const link = document.createElement('a');
+    link.href = href;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    if (revokeBlob && href.startsWith('blob:')) {
+        URL.revokeObjectURL(href);
+    }
+};
+
+/**
+ * Sanitizes a string to be used as a filename.
+ * @param name The original string to sanitize.
+ * @returns A filesystem-safe filename string.
+ */
+export const sanitizeFilename = (name: string): string => {
+  if (!name || typeof name !== 'string') {
+    return "export";
+  }
+  // Remove illegal characters for filenames and control characters
+  let saneName = name.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+  // Windows doesn't like filenames ending with a period or space.
+  saneName = saneName.replace(/[. ]+$/, '');
+  // Limit length to avoid issues with filesystems
+  if (saneName.length > 100) {
+    saneName = saneName.substring(0, 100);
+  }
+  return saneName || "export";
+};
+
+/**
+ * Gathers all style and link tags from the current document's head to be inlined.
+ * @returns A promise that resolves to a string of HTML style and link tags.
+ */
+export const gatherPageStyles = async (): Promise<string> => {
+    const stylePromises = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+        .map(el => {
+            if (el.tagName === 'STYLE') {
+                return Promise.resolve(`<style>${el.innerHTML}</style>`);
+            }
+            if (el.tagName === 'LINK' && (el as HTMLLinkElement).rel === 'stylesheet') {
+                // Fetch external stylesheets to inline them
+                return fetch((el as HTMLLinkElement).href)
+                    .then(res => {
+                        if (!res.ok) throw new Error(`Failed to fetch stylesheet: ${res.statusText}`);
+                        return res.text();
+                    })
+                    .then(css => `<style>${css}</style>`)
+                    .catch(err => {
+                        console.warn('Could not fetch stylesheet for export:', (el as HTMLLinkElement).href, err);
+                        return el.outerHTML; // Fallback to linking the stylesheet
+                    });
+            }
+            return Promise.resolve('');
+        });
+
+    return (await Promise.all(stylePromises)).join('\n');
+};
+
+/**
+ * Embeds images in a cloned DOM element by converting their sources to Base64 data URIs.
+ * This allows the HTML to be self-contained (offline-capable).
+ * @param clone The cloned HTMLElement to process.
+ */
+export const embedImagesInClone = async (clone: HTMLElement): Promise<void> => {
+    const images = Array.from(clone.querySelectorAll('img'));
+    await Promise.all(images.map(async (img) => {
+        try {
+            const src = img.getAttribute('src');
+            // Skip if no src or already a data URI
+            if (!src || src.startsWith('data:')) return;
+
+            // Fetch the image content
+            const response = await fetch(img.src);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            await new Promise<void>((resolve) => {
+                reader.onloadend = () => {
+                    if (typeof reader.result === 'string') {
+                        img.src = reader.result;
+                        // Remove attributes that might interfere with the data URI source
+                        img.removeAttribute('srcset');
+                        img.removeAttribute('loading');
+                    }
+                    resolve();
+                };
+                reader.onerror = () => resolve(); // Resolve to continue even on error
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.warn('Failed to embed image for export:', e);
+        }
+    }));
+};
+
+/**
+ * Creates an isolated DOM container for exporting, injecting current styles and theme.
+ */
+export const createSnapshotContainer = async (
+    themeId: string,
+    width: string = '800px'
+): Promise<{ container: HTMLElement, innerContent: HTMLElement, remove: () => void, rootBgColor: string }> => {
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0px';
+    tempContainer.style.width = width;
+    tempContainer.style.padding = '0';
+    tempContainer.style.zIndex = '-1';
+    tempContainer.style.boxSizing = 'border-box';
+
+    const allStyles = await gatherPageStyles();
+    const bodyClasses = document.body.className;
+    
+    // Explicitly get the background color. 
+    // We trim whitespace and provide a fallback to ensure html2canvas has a valid color.
+    // If we rely solely on transparency + CSS variables in the clone, html2canvas often defaults to white background
+    // but effectively transparent, which looks white in many viewers if the text is white.
+    let rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary').trim();
+    if (!rootBgColor) {
+        rootBgColor = themeId === 'onyx' ? '#09090b' : '#FFFFFF';
+    }
+
+    tempContainer.innerHTML = `
+        ${allStyles}
+        <div class="theme-${themeId} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; color: var(--theme-text-primary); min-height: 100vh;">
+            <div style="background-color: ${rootBgColor}; padding: 0;">
+                <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(tempContainer);
+    
+    const innerContent = tempContainer.querySelector('.exported-chat-container') as HTMLElement;
+    const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
+
+    if (!innerContent || !captureTarget) {
+        document.body.removeChild(tempContainer);
+        throw new Error("Failed to create snapshot container structure");
+    }
+
+    return {
+        container: captureTarget, // The element to pass to html2canvas
+        innerContent,             // The element to append content to
+        remove: () => {
+            if (document.body.contains(tempContainer)) {
+                document.body.removeChild(tempContainer);
+            }
+        },
+        rootBgColor
+    };
+};
+
+/**
+ * Exports a given HTML element as a PNG image.
+ * @param element The HTML element to capture.
+ * @param filename The desired filename for the downloaded PNG.
+ * @param options Configuration options for html2canvas.
+ */
+export const exportElementAsPng = async (
+    element: HTMLElement, 
+    filename: string,
+    options?: { backgroundColor?: string | null, scale?: number }
+) => {
+    const html2canvas = (await import('html2canvas')).default;
+
+    // Pre-load images to ensure they render
+    const images = Array.from(element.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve; // Don't block export on broken image
+        });
+    }));
+
+    // Force a layout recalc/paint wait to ensure styles are applied in the detached container
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const canvas = await html2canvas(element, {
+        height: element.scrollHeight,
+        width: element.scrollWidth,
+        useCORS: true, // Important for cross-origin images
+        allowTaint: true,
+        logging: false,
+        backgroundColor: options?.backgroundColor ?? null,
+        scale: options?.scale ?? 2, // Default to 2x for Retina sharpness
+        ignoreElements: (el) => {
+            // Fallback check for ignoring elements if CSS fails
+            return el.classList.contains('no-export'); 
+        }
+    });
+    
+    // Convert to Blob to handle larger images better than data URI
+    canvas.toBlob((blob) => {
+        if (blob) {
+            const url = URL.createObjectURL(blob);
+            triggerDownload(url, filename);
+        } else {
+            console.error("Canvas to Blob conversion failed");
+        }
+    }, 'image/png');
+};
+
+
+/**
+ * Exports a string of HTML content as an .html file.
+ * @param htmlContent The full HTML document string.
+ * @param filename The desired filename.
+ */
+export const exportHtmlStringAsFile = (htmlContent: string, filename:string) => {
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    triggerDownload(URL.createObjectURL(blob), filename);
+};
+
+/**
+ * Exports a string of text content as a .txt file.
+ * @param textContent The text content to save.
+ * @param filename The desired filename.
+ */
+export const exportTextStringAsFile = (textContent: string, filename: string) => {
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    triggerDownload(URL.createObjectURL(blob), filename);
+};
+
+/**
+ * Converts an SVG string to a PNG data URL and triggers a download.
+ * @param svgString The string content of the SVG.
+ * @param filename The desired filename for the downloaded PNG.
+ * @param scale The resolution scale factor for the output PNG.
+ */
+export const exportSvgAsPng = async (svgString: string, filename: string, scale: number = 3): Promise<void> => {
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    const img = new Image();
+
+    return new Promise((resolve, reject) => {
+        img.onload = () => {
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+
+            if (imgWidth === 0 || imgHeight === 0) {
+                return reject(new Error("Diagram has zero dimensions, cannot export."));
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = imgWidth * scale;
+            canvas.height = imgHeight * scale;
+            const ctx = canvas.getContext('2d');
+
+            if (ctx) {
+                ctx.drawImage(img, 0, 0, imgWidth * scale, imgHeight * scale);
+                const pngUrl = canvas.toDataURL('image/png');
+                triggerDownload(pngUrl, filename);
+                resolve();
+            } else {
+                reject(new Error("Could not get canvas context."));
+            }
+        };
+
+        img.onerror = () => {
+            reject(new Error("Failed to load SVG into an image element for conversion."));
+        };
+
+        img.src = svgDataUrl;
+    });
+};
+
+// --- Shared Template Generators ---
+
+export const generateExportHtmlTemplate = ({
+    title,
+    date,
+    model,
+    contentHtml,
+    styles,
+    themeId,
+    language,
+    rootBgColor,
+    bodyClasses
+}: {
+    title: string,
+    date: string,
+    model: string,
+    contentHtml: string,
+    styles: string,
+    themeId: string,
+    language: string,
+    rootBgColor: string,
+    bodyClasses: string
+}) => {
+    return `
+        <!DOCTYPE html>
+        <html lang="${language}">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Chat Export: ${title}</title>
+            ${styles}
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.querySelectorAll('pre code').forEach((el) => {
+                        if (window.hljs) {
+                            window.hljs.highlightElement(el);
+                        }
+                    });
+                });
+            </script>
+            <style>
+                /* Reset & Layout */
+                html, body { height: auto !important; overflow: auto !important; min-height: 100vh; }
+                body { 
+                    background-color: ${rootBgColor}; 
+                    padding: 2rem; 
+                    box-sizing: border-box; 
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    color: var(--theme-text-primary, #333);
+                }
+                
+                /* Container */
+                .exported-chat-container {
+                    width: 100%;
+                    max-width: 900px;
+                    margin: 0 auto;
+                    background-color: transparent;
+                }
+
+                /* Header Styles */
+                .exported-chat-header { 
+                    padding-bottom: 1.5rem; 
+                    border-bottom: 1px solid var(--theme-border-secondary, #e5e7eb); 
+                    margin-bottom: 2rem; 
+                }
+                .exported-chat-title { 
+                    font-size: 1.75rem; 
+                    font-weight: 700; 
+                    color: var(--theme-text-primary, inherit); 
+                    margin: 0 0 0.5rem 0; 
+                    line-height: 1.2;
+                }
+                .exported-chat-meta { 
+                    font-size: 0.875rem; 
+                    color: var(--theme-text-tertiary, #6b7280); 
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                }
+
+                /* UI Cleanup - Hide interactive elements */
+                .message-actions, 
+                .code-block-utility-button, 
+                button, 
+                .sticky,
+                [role="tooltip"],
+                input,
+                textarea { 
+                    display: none !important; 
+                }
+
+                /* Message Styling Fixes */
+                .group.relative.message-container-animate { 
+                    animation: none !important; 
+                    opacity: 1 !important; 
+                    transform: none !important; 
+                    margin-bottom: 1.5rem;
+                }
+                
+                /* Links */
+                a { color: var(--theme-text-link, #2563eb); text-decoration: none; }
+                a:hover { text-decoration: underline; }
+
+                /* Tables */
+                table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+                th, td { 
+                    border: 1px solid var(--theme-border-secondary, #e5e5e5); 
+                    padding: 0.5rem 0.75rem; 
+                    text-align: left; 
+                }
+                th { background-color: var(--theme-bg-tertiary, #f3f4f6); font-weight: 600; }
+
+                /* Code Blocks */
+                pre { 
+                    background-color: var(--theme-bg-code-block, #f3f4f6); 
+                    border-radius: 0.5rem; 
+                    padding: 1rem; 
+                    overflow-x: auto; 
+                }
+            </style>
+        </head>
+        <body class="${bodyClasses} theme-${themeId} is-exporting-png">
+            <div class="exported-chat-container">
+                <div class="exported-chat-header">
+                    <h1 class="exported-chat-title">${title}</h1>
+                    <div class="exported-chat-meta">
+                        <span>${date}</span> • <span>${model}</span>
+                    </div>
+                </div>
+                ${contentHtml}
+            </div>
+        </body>
+        </html>
+    `;
+};
+
+export const generateExportTxtTemplate = ({
+    title,
+    date,
+    model,
+    messages
+}: {
+    title: string,
+    date: string,
+    model: string,
+    messages: Array<{ role: string, timestamp: Date, content: string, files?: Array<{name: string}> }>
+}) => {
+    const separator = '-'.repeat(40);
+    
+    const header = [
+        `Chat: ${title}`,
+        `Date: ${date}`,
+        `Model: ${model}`,
+        '='.repeat(40),
+        ''
+    ].join('\n');
+
+    const body = messages.map(msg => {
+        const roleTitle = msg.role.toUpperCase();
+        const timeStr = new Date(msg.timestamp).toLocaleString();
+        let text = `### ${roleTitle} [${timeStr}]\n`;
+        
+        if (msg.files && msg.files.length > 0) {
+            msg.files.forEach(f => {
+                text += `[Attachment: ${f.name}]\n`;
+            });
+        }
+        
+        text += msg.content;
+        return text;
+    }).join(`\n\n${separator}\n\n`);
+
+    return header + body;
+};

@@ -1,0 +1,8 @@
+{
+  "name": "All Model Chat",
+  "description": "",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

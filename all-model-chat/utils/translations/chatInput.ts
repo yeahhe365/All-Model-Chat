@@ -1,0 +1,103 @@
+
+
+
+
+
+
+
+
+
+export const chatInputTranslations = {
+    // ChatInput.tsx and subcomponents
+    chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
+    aspectRatio_title: { en: 'Aspect Ratio', zh: '宽高比' },
+    addById_placeholder: { en: 'Paste File ID (e.g., files/xyz123)', zh: '粘贴文件 ID (例如 files/xyz123)' },
+    addById_aria: { en: 'File ID input', zh: '文件 ID 输入框' },
+    addById_button_aria: { en: 'Add file by ID', zh: '通过 ID 添加文件' },
+    cancelAddById_button_aria: { en: 'Cancel adding file by ID', zh: '取消通过 ID 添加文件' },
+    addByUrl_placeholder: { en: 'Paste YouTube URL...', zh: '粘贴 YouTube 链接...' },
+    addByUrl_aria: { en: 'YouTube URL input', zh: 'YouTube 链接输入框' },
+    addByUrl_button_aria: { en: 'Add YouTube URL as context', zh: '添加 YouTube 链接作为上下文' },
+    cancelAddByUrl_button_aria: { en: 'Cancel adding by URL', zh: '取消通过 URL 添加' },
+    attachMenu_title: { en: 'Attach file', zh: '附加文件' },
+    attachMenu_aria: { en: 'Attach file menu', zh: '附加文件菜单' },
+    attachMenu_upload: { en: 'Upload from Device', zh: '从设备上传' },
+    attachMenu_importFolder: { en: 'Import Folder (as Text)', zh: '导入文件夹 (转为文本)' },
+    attachMenu_importZip: { en: 'Import Zip (as Text)', zh: '导入 Zip (转为文本)' },
+    attachMenu_gallery: { en: 'Gallery', zh: '图库' },
+    attachMenu_uploadVideo: { en: 'Upload Video', zh: '上传视频' },
+    attachMenu_takePhoto: { en: 'Take Photo', zh: '拍照' },
+    attachMenu_screenshot: { en: 'Screenshot', zh: '屏幕截图' },
+    attachMenu_recordAudio: { en: 'Record Audio', zh: '录音' },
+    attachMenu_addById: { en: 'Add by File ID', zh: '通过文件 ID 添加' },
+    attachMenu_addByUrl: { en: 'Add YouTube Video', zh: '添加 YouTube 视频' },
+    attachMenu_createText: { en: 'Create Text File', zh: '创建文本文件' },
+    voiceInput_stop_aria: { en: 'Stop recording', zh: '停止录音' },
+    cancelRecording_aria: { en: 'Cancel recording', zh: '取消录音' },
+    voiceInput_transcribing_aria: { en: 'Transcribing...', zh: '转录中...' },
+    voiceInput_start_aria: { en: 'Start voice input', zh: '开始语音输入' },
+    mic_initializing: { en: 'Initializing microphone...', zh: '正在初始化麦克风...' },
+    stopGenerating_aria: { en: 'Stop generating response', zh: '停止生成回应' },
+    stopGenerating_title: { en: 'Stop Generating', zh: '停止生成' },
+    cancelEdit_aria: { en: 'Cancel editing', zh: '取消编辑' },
+    cancelEdit_title: { en: 'Cancel Edit', zh: '取消编辑' },
+    updateMessage_aria: { en: 'Update message', zh: '更新消息' },
+    updateMessage_title: { en: 'Update & Send', zh: '更新并发送' },
+    sendMessage_aria: { en: 'Send message', zh: '发送消息' },
+    sendMessage_title: { en: 'Send', zh: '发送' },
+    tools_button: { en: 'Tools', zh: '工具' },
+    web_search_label: { en: 'Web Search', zh: '联网' },
+    web_search_short: { en: 'Search', zh: '联网' },
+    deep_search_label: { en: 'Deep Search', zh: '深度搜索' },
+    deep_search_short: { en: 'Deep', zh: '深度' },
+    code_execution_label: { en: 'Code Execution', zh: '代码执行' },
+    code_execution_short: { en: 'Code', zh: '代码' },
+    url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
+    url_context_short: { en: 'URL', zh: 'URL' },
+    translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
+    translating_button_title: { en: 'Translating...', zh: '翻译中...' },
+    fullscreen_tooltip_expand: { en: 'Expand Input', zh: '展开输入框' },
+    fullscreen_tooltip_collapse: { en: 'Collapse Input', zh: '收起输入框' },
+
+    // Create Text File Modal
+    createText_title: { en: 'Create New Text File', zh: '创建新文本文件' },
+    createText_filename_placeholder: { en: 'Optional: Enter filename (e.g., my_notes.txt)', zh: '可选：输入文件名 (例如 my_notes.txt)' },
+    createText_content_placeholder: { en: 'Type or paste your text content here...', zh: '在此输入或粘贴文本内容...' },
+    createText_create_button: { en: 'Create File', zh: '创建文件' },
+
+    // Video Settings Modal
+    videoSettings_title: { en: 'Video Processing Options', zh: '视频处理选项' },
+    videoSettings_clip_title: { en: 'Clip Video (Optional)', zh: '裁剪视频 (可选)' },
+    videoSettings_start: { en: 'Start Time', zh: '开始时间' },
+    videoSettings_end: { en: 'End Time', zh: '结束时间' },
+    videoSettings_fps: { en: 'Frame Rate (FPS)', zh: '采样率 (FPS)' },
+    videoSettings_fps_placeholder: { en: 'e.g., 1 (Default)', zh: '例如：1 (默认)' },
+    videoSettings_placeholder: { en: 'e.g., 10s or 00:10', zh: '例如: 10s 或 00:10' },
+    videoSettings_help: { en: 'Configure how the model sees this video.', zh: '配置模型如何处理此视频。' },
+    videoSettings_tip_fps: { en: 'Use lower FPS (<1) for static videos like lectures. Use higher FPS for fast action.', zh: '静态视频（如讲座）可使用低 FPS (<1)。快速动作视频请使用较高 FPS。' },
+    videoSettings_tip_timestamp: { en: 'You can ask questions about specific moments using timestamps (e.g., "What happens at 01:15?").', zh: '您可以使用时间戳询问特定时刻的问题（例如：“01:15 发生了什么？”）。' },
+    videoSettings_save: { en: 'Save Settings', zh: '保存设置' },
+
+    // Command descriptions for help modal
+    help_cmd_model: { en: 'Interactively select a model to use.', zh: '交互式选择要使用的模型。' },
+    help_cmd_help: { en: 'Displays this help menu.', zh: '显示此帮助菜单。' },
+    help_cmd_edit: { en: 'Edit your last message.', zh: '编辑您的上一条消息。' },
+    help_cmd_pin: { en: 'Toggle pin for current chat', zh: '切换当前聊天的置顶状态' },
+    help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
+    help_cmd_stop: { en: 'Stop the current generation.', zh: '停止当前生成。' },
+    help_cmd_search: { en: 'Toggle web search', zh: '切换联网' },
+    help_cmd_deep: { en: 'Toggle Deep Search', zh: '切换深度搜索' },
+    help_cmd_code: { en: 'Toggle code execution', zh: '切换代码执行' },
+    help_cmd_url: { en: 'Toggle URL context', zh: '切换 URL 上下文' },
+    help_cmd_file: { en: 'Attach a file', zh: '附加文件' },
+    help_cmd_clear: { en: 'Clear current chat', zh: '清除当前聊天' },
+    help_cmd_new: { en: 'Start a new chat', zh: '开始新聊天' },
+    help_cmd_settings: { en: 'Open settings', zh: '打开设置' },
+    help_cmd_canvas: { en: 'Toggle Canvas prompt', zh: '切换 Canvas 提示' },
+    help_cmd_pip: { en: 'Toggle Picture-in-Picture mode', zh: '切换画中画模式' },
+    help_cmd_setdefault: { en: 'Set current model as default', zh: '将当前模型设为默认' },
+    
+    // Help Modal
+    helpModal_title: { en: 'Command Help', zh: '命令帮助' },
+    helpModal_close_aria: { en: 'Close help modal', zh: '关闭帮助模态框' },
+};
