@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { KeyRound, Info, Check, AlertCircle, ShieldCheck } from 'lucide-react';
+import { KeyRound, Info, Check, AlertCircle, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Toggle } from '../shared/Tooltip';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
@@ -44,6 +44,12 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   const hasEnvKey = !!process.env.API_KEY;
 
+  // Calculate preview URL
+  const defaultBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+  const currentBaseUrl = apiProxyUrl?.trim() || defaultBaseUrl;
+  const cleanBaseUrl = currentBaseUrl.replace(/\/+$/, '');
+  const previewUrl = `${cleanBaseUrl}/models/gemini-2.5-flash:generateContent`;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -55,8 +61,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
       <div className="overflow-hidden">
         {/* Header Toggle */}
-        <div className="flex items-center justify-between py-2 cursor-pointer" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
-            <div className="flex flex-col">
+        <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col flex-grow cursor-pointer" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
                 <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2">
                   {t('settingsUseCustomApi')}
                   {hasEnvKey && !useCustomApiConfig && (
@@ -114,7 +120,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 {/* Proxy Settings */}
                 <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between py-2">
-                        <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer flex items-center gap-2" onClick={() => setUseApiProxy(!useApiProxy)}>
+                        <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer flex items-center gap-2">
                             API Proxy
                         </label>
                         <Toggle
@@ -134,10 +140,19 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                             placeholder={getProxyPlaceholder()}
                             aria-label="API Proxy URL"
                         />
-                         <p className="text-xs text-[var(--theme-text-tertiary)] mt-2 flex gap-1.5">
-                            <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-                            <span>Overwrites <code>https://generativelanguage.googleapis.com/v1beta</code> base URL.</span>
-                        </p>
+                        
+                        <div className="mt-3 p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)]">
+                            <div className="flex gap-2 text-xs text-[var(--theme-text-tertiary)] mb-1.5">
+                                <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                                <span>Preview of actual request URL:</span>
+                            </div>
+                            <div className="flex items-start gap-2 pl-5">
+                                <ArrowRight size={12} className="mt-1 text-[var(--theme-text-tertiary)]" />
+                                <code className="font-mono text-[11px] text-[var(--theme-text-primary)] break-all leading-relaxed">
+                                    {previewUrl}
+                                </code>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
