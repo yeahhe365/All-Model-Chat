@@ -29,8 +29,10 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
       
       const config: any = { apiKey: sanitizedApiKey };
       if (baseUrl) {
-          config.baseUrl = baseUrl;
-          logService.info(`Using custom base URL: ${baseUrl}`);
+          // Remove trailing slash if present to avoid double slashes in constructed URLs
+          const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
+          config.baseUrl = cleanBaseUrl;
+          logService.info(`Using custom base URL: ${cleanBaseUrl}`);
       }
       
       return new GoogleGenAI(config);
