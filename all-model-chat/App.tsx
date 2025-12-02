@@ -38,7 +38,7 @@ const App: React.FC = () => {
       selectedFiles, setSelectedFiles, editingMessageId,
       appFileError, setAppFileError, isAppProcessingFile,
       savedSessions, savedGroups, activeSessionId,
-      apiModels, isModelsLoading, modelsLoadingError, isSwitchingModel,
+      apiModels, isModelsLoading, modelsLoadingError, isSwitchingModel, setApiModels,
       scrollContainerRef, setScrollContainerRef, savedScenarios, isAppDraggingOver, isProcessingDrop,
       aspectRatio, setAspectRatio, ttsMessageId,
       loadChatSession, startNewChat, handleClearCurrentChat,
@@ -365,6 +365,7 @@ const App: React.FC = () => {
     setIsLogViewerOpen,
     currentChatSettings,
     t,
+    setAvailableModels: setApiModels, // Added prop
   };
 
   return (

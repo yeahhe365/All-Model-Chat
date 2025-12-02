@@ -25,7 +25,7 @@ export const settingsTranslations = {
     settingsLanguageEn: { en: 'English', zh: 'English' },
     settingsLanguageZh: { en: 'Chinese', zh: '中文' },
     settingsModelParameters: { en: 'Model Parameters (for New Chats)', zh: '模型参数 (用于新对话)' },
-    settingsDefaultModel: { en: 'Default AI Model (for new chats)', zh: '默认 AI 模型 (用于新对话)' },
+    settingsDefaultModel: { en: 'Default AI Model (for new chats)', zh: '默认 AI 模型' },
     settingsTtsVoice: { en: 'TTS Voice', zh: 'TTS 语音' },
     settingsSystemPrompt: { en: 'System Prompt', zh: '系统提示' },
     settingsTemperature: { en: 'Temperature', zh: '温度' },

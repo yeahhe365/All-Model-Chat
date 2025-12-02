@@ -31,6 +31,7 @@ interface ChatBehaviorSectionProps {
   safetySettings?: SafetySetting[];
   setSafetySettings: (settings: SafetySetting[]) => void;
   t: (key: string) => string;
+  setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
@@ -44,6 +45,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
             isModelsLoading={props.isModelsLoading}
             modelsLoadingError={props.modelsLoadingError}
             availableModels={props.availableModels}
+            setAvailableModels={props.setAvailableModels}
             transcriptionModelId={props.transcriptionModelId}
             setTranscriptionModelId={props.setTranscriptionModelId}
             generateQuadImages={props.generateQuadImages}

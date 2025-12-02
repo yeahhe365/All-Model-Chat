@@ -36,6 +36,7 @@ interface SettingsModalProps {
   onImportScenarios: (file: File) => void;
   onExportScenarios: () => void;
   t: (key: keyof typeof translations) => string;
+  setAvailableModels: (models: ModelOption[]) => void;
 }
 
 type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'shortcuts' | 'about';
@@ -49,6 +50,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onImportSettings, onExportSettings,
   onImportHistory, onExportHistory,
   onImportScenarios, onExportScenarios,
+  setAvailableModels
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
     try {
@@ -223,6 +225,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     modelsLoadingError={modelsLoadingError}
                     availableModels={availableModels}
                     t={t}
+                    setAvailableModels={setAvailableModels}
                 />
                 </div>
             )}
