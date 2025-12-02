@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SettingsModal } from '../settings/SettingsModal';
 import { LogViewer } from '../log-viewer/LogViewer';
@@ -44,6 +45,7 @@ export interface AppModalsProps {
   currentChatSettings: ChatSettings;
 
   t: (key: keyof typeof translations, fallback?: string) => string;
+  setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
@@ -59,7 +61,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         handleSaveAllScenarios, handleLoadPreloadedScenario,
         isExportModalOpen, setIsExportModalOpen, handleExportChat, exportStatus,
         isLogViewerOpen, setIsLogViewerOpen, currentChatSettings,
-        t
+        t, setAvailableModels
     } = props;
     
     return (
@@ -94,6 +96,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
               onImportScenarios={handleImportAllScenarios}
               onExportScenarios={handleExportAllScenarios}
               t={t}
+              setAvailableModels={setAvailableModels}
             />
           )}
           {isPreloadedMessagesModalOpen && (

@@ -34,6 +34,7 @@ interface ModelVoiceSettingsProps {
   setTemperature: (value: number) => void;
   topP: number;
   setTopP: (value: number) => void;
+  setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => {
@@ -47,7 +48,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     showThoughts, setShowThoughts,
     temperature, setTemperature,
     topP, setTopP,
-    t
+    t,
+    setAvailableModels
   } = props;
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
@@ -65,6 +67,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
             isModelsLoading={isModelsLoading}
             modelsLoadingError={modelsLoadingError}
             availableModels={availableModels}
+            setAvailableModels={setAvailableModels}
             t={t}
           />
 

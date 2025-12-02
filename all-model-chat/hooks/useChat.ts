@@ -52,7 +52,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     });
 
     // 3. Feature Hooks
-    const { apiModels, isModelsLoading, modelsLoadingError } = useModels(appSettings);
+    const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels(appSettings);
     
     const historyHandler = useChatHistory({ 
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
@@ -204,6 +204,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         savedGroups,
         activeSessionId,
         apiModels,
+        setApiModels,
         isModelsLoading,
         modelsLoadingError,
         isSwitchingModel,

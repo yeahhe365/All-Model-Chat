@@ -1,8 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { ModelOption, AppSettings } from '../types';
 import { TAB_CYCLE_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS } from '../constants/appConstants';
 import { sortModels } from '../utils/appUtils';
+
+const CUSTOM_MODELS_KEY = 'custom_model_list_v1';
 
 const getPinnedModels = (): ModelOption[] => {
     const pinnedInternalModels: ModelOption[] = TAB_CYCLE_MODELS.map(id => {
@@ -20,9 +22,24 @@ const getPinnedModels = (): ModelOption[] => {
 };
 
 export const useModels = (appSettings: AppSettings) => {
-    // Initialize with static models only, sorted.
-    const [apiModels, setApiModels] = useState<ModelOption[]>(sortModels(getPinnedModels()));
+    // Initialize with persisted models or defaults
+    const [apiModels, setApiModelsState] = useState<ModelOption[]>(() => {
+        try {
+            const stored = localStorage.getItem(CUSTOM_MODELS_KEY);
+            if (stored) {
+                return JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Failed to load custom models', e);
+        }
+        return sortModels(getPinnedModels());
+    });
     
+    const setApiModels = useCallback((models: ModelOption[]) => {
+        setApiModelsState(models);
+        localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(models));
+    }, []);
+
     // Maintain state interface for compatibility, but defaulting to loaded/no error.
     const [modelsLoadingError] = useState<string | null>(null);
     const [isModelsLoading] = useState<boolean>(false);
