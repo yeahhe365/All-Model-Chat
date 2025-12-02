@@ -4,7 +4,6 @@ import { Chat } from '@google/genai';
 import { AppSettings, ChatSettings, SavedChatSession } from '../types';
 import { getKeyForRequest, logService, createChatHistoryForApi } from '../utils/appUtils';
 import { getApiClient, buildGenerationConfig } from '../services/api/baseApi';
-import { dbService } from '../utils/db';
 
 interface UseChatClientProps {
     activeSessionId: string | null;
@@ -61,8 +60,11 @@ export const useChatClient = ({
                 return;
             }
             
-            const storedSettings = await dbService.getAppSettings();
-            const apiProxyUrl = storedSettings ? storedSettings.apiProxyUrl : null;
+            // Fix: Use appSettings prop directly to ensure we have the latest state.
+            // Reading from DB here caused race conditions where DB was not yet updated after a setting change.
+            const shouldUseProxy = appSettings.useCustomApiConfig && appSettings.useApiProxy;
+            const apiProxyUrl = shouldUseProxy ? appSettings.apiProxyUrl : null;
+            
             const ai = getApiClient(keyResult.key, apiProxyUrl);
             
             // Use only non-loading messages for history when creating the object

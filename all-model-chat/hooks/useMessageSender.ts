@@ -201,8 +201,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
             logService.info("Handling message edit: creating temporary chat object for this turn.");
             const baseMessagesForApi = messages.slice(0, messages.findIndex(m => m.id === effectiveEditingId));
             const historyForChat = await createChatHistoryForApi(baseMessagesForApi);
-            const storedSettings = localStorage.getItem('app-settings');
-            const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
+            
+            // Fix: Use appSettings prop directly to avoid stale DB state race condition
+            const shouldUseProxy = appSettings.useCustomApiConfig && appSettings.useApiProxy;
+            const apiProxyUrl = shouldUseProxy ? appSettings.apiProxyUrl : null;
+            
             const ai = getApiClient(keyToUse, apiProxyUrl);
             chatToUse = ai.chats.create({
                 model: activeModelId,
