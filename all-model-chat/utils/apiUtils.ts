@@ -1,22 +1,15 @@
-
 import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
 
-export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null; baseUrl?: string } => {
-    let apiKeysString = process.env.API_KEY || null;
-    let baseUrl: string | undefined = undefined;
-
+export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
-        apiKeysString = appSettings.apiKey;
-        if (appSettings.useApiProxy && appSettings.apiProxyUrl) {
-            baseUrl = appSettings.apiProxyUrl;
-        }
+        return {
+            apiKeysString: appSettings.apiKey,
+        };
     }
-    
     return {
-        apiKeysString,
-        baseUrl
+        apiKeysString: process.env.API_KEY || null,
     };
 };
 
@@ -51,6 +44,9 @@ export const getKeyForRequest = (
     // 1. Locked Key Validation
     if (currentChatSettings.lockedApiKey) {
         // If we are using custom config, we must validate the locked key exists in the current pool.
+        // If the user deleted the key from settings, we shouldn't use it (unless it's environment provided).
+        // For environment keys, we assume they are valid if availableKeys contains them or if we just trust the lock.
+        // Here we check if the locked key is in the available list.
         if (availableKeys.includes(currentChatSettings.lockedApiKey)) {
             logUsage(currentChatSettings.lockedApiKey);
             return { key: currentChatSettings.lockedApiKey, isNewKey: false };

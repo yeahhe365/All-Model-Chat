@@ -1,15 +1,18 @@
 
 import { File as GeminiFile } from "@google/genai";
-import { getApiClient } from './baseApi';
+import { getConfiguredApiClient } from './baseApi';
 import { logService } from "../logService";
 
+/**
+ * Uploads a file using the official SDK.
+ * Reverted from XHR to SDK for stability.
+ */
 export const uploadFileApi = async (
     apiKey: string, 
     file: File, 
     mimeType: string, 
     displayName: string, 
     signal: AbortSignal,
-    baseUrl?: string,
     onProgress?: (loaded: number, total: number) => void
 ): Promise<GeminiFile> => {
     logService.info(`Uploading file (SDK): ${displayName}`, { mimeType, size: file.size });
@@ -21,7 +24,8 @@ export const uploadFileApi = async (
     }
 
     try {
-        const ai = getApiClient(apiKey, baseUrl);
+        // Get configured SDK client (handles proxy settings automatically)
+        const ai = await getConfiguredApiClient(apiKey);
 
         // Use official SDK for upload, which is more stable for Auth and CORS
         const uploadResult = await ai.files.upload({
@@ -42,6 +46,7 @@ export const uploadFileApi = async (
     } catch (error) {
         logService.error(`Failed to upload file "${displayName}" to Gemini API:`, error);
         
+        // If it's an abort, ensure we throw a specific error for UI handling
         if (signal.aborted) {
             const abortError = new Error("Upload cancelled by user.");
             abortError.name = "AbortError";
@@ -52,14 +57,14 @@ export const uploadFileApi = async (
     }
 };
 
-export const getFileMetadataApi = async (apiKey: string, fileApiName: string, baseUrl?: string): Promise<GeminiFile | null> => {
+export const getFileMetadataApi = async (apiKey: string, fileApiName: string): Promise<GeminiFile | null> => {
     if (!fileApiName || !fileApiName.startsWith('files/')) {
         logService.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
         throw new Error('Invalid file ID format. Expected "files/your_file_id".');
     }
     try {
         logService.info(`Fetching metadata for file: ${fileApiName}`);
-        const ai = getApiClient(apiKey, baseUrl);
+        const ai = await getConfiguredApiClient(apiKey);
         const file = await ai.files.get({ name: fileApiName });
         return file;
     } catch (error) {

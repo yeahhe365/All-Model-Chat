@@ -78,7 +78,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
   apiKey: null,
-  apiProxyUrl: "",
+  apiProxyUrl: "https://api-proxy.de/gemini/v1beta",
   useApiProxy: false,
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,

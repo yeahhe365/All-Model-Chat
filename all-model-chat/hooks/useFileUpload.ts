@@ -2,7 +2,7 @@
 import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_PDF_MIME_TYPES, SUPPORTED_AUDIO_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, fileToBlobUrl, getActiveApiConfig } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, fileToBlobUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 import { generateZipContext } from '../utils/folderImportUtils';
@@ -23,7 +23,7 @@ const formatSpeed = (bytesPerSecond: number): string => {
     return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
 };
 
-const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; 
+const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
 
 const EXTENSION_TO_MIME: Record<string, string> = {
     '.mp4': 'video/mp4',
@@ -56,6 +56,7 @@ export const useFileUpload = ({
     setCurrentChatSettings,
 }: UseFileUploadProps) => {
 
+    // Refs to track upload speed for each file ID
     const uploadStatsRef = useRef<Map<string, { lastLoaded: number, lastTime: number }>>(new Map());
 
     const handleProcessAndAddFiles = useCallback(async (files: FileList | File[]) => {
@@ -66,9 +67,11 @@ export const useFileUpload = ({
         const rawFilesArray = Array.isArray(files) ? files : Array.from(files);
         const filesArray: File[] = [];
 
+        // Pre-process ZIP files: Auto-convert to text context
         for (const file of rawFilesArray) {
             if (file.name.toLowerCase().endsWith('.zip')) {
                 const tempId = generateUniqueId();
+                // Add temp feedback
                 setSelectedFiles(prev => [...prev, {
                     id: tempId,
                     name: `Processing ${file.name}...`,
@@ -84,8 +87,10 @@ export const useFileUpload = ({
                     filesArray.push(contextFile);
                 } catch (error) {
                     logService.error(`Failed to auto-convert zip file ${file.name}`, { error });
+                    // Fallback to original file
                     filesArray.push(file);
                 } finally {
+                    // Remove temp feedback
                     setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
                 }
             } else {
@@ -93,14 +98,17 @@ export const useFileUpload = ({
             }
         }
 
+        // --- Helper to get effective MIME type ---
         const getEffectiveMimeType = (file: File) => {
             let effectiveMimeType = file.type;
             const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
+            // 1. Force text/plain for code/text extensions
             if (TEXT_BASED_EXTENSIONS.includes(fileExtension) || SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) {
                 return 'text/plain';
             }
 
+            // 2. Fallback for missing MIME types based on extension
             if (!effectiveMimeType && EXTENSION_TO_MIME[fileExtension]) {
                 return EXTENSION_TO_MIME[fileExtension];
             }
@@ -108,17 +116,19 @@ export const useFileUpload = ({
             return effectiveMimeType;
         };
 
+        // Calculate if ANY file requires API upload to handle key rotation logic first
         const needsApiKeyForUpload = filesArray.some(file => {
             const effectiveMimeType = getEffectiveMimeType(file);
             
             if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
 
+            // Check specific category setting
             let userPrefersFileApi = false;
             if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.images;
             else if (SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.pdfs;
             else if (SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.audio;
             else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
-            else userPrefersFileApi = appSettings.filesApiConfig.text;
+            else userPrefersFileApi = appSettings.filesApiConfig.text; // Fallback for text/code
 
             return userPrefersFileApi || file.size > LARGE_FILE_THRESHOLD;
         });
@@ -137,8 +147,6 @@ export const useFileUpload = ({
                 setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse! }));
             }
         }
-        
-        const { baseUrl } = getActiveApiConfig(appSettings);
 
         const uploadPromises = filesArray.map(async (file) => {
             const fileId = generateUniqueId();
@@ -159,6 +167,7 @@ export const useFileUpload = ({
 
             const shouldUploadFile = userPrefersFileApi || file.size > LARGE_FILE_THRESHOLD;
             
+            // Generate a blob URL immediately for local preview, regardless of upload method
             const dataUrl = fileToBlobUrl(file);
 
             if (shouldUploadFile) {
@@ -170,6 +179,7 @@ export const useFileUpload = ({
                 }
                 const controller = new AbortController();
 
+                // Initialize with 'uploading' state to show progress UI immediately
                 const initialFileState: UploadedFile = { 
                     id: fileId, 
                     name: file.name, 
@@ -178,12 +188,13 @@ export const useFileUpload = ({
                     isProcessing: true, 
                     progress: 0, 
                     rawFile: file, 
-                    dataUrl: dataUrl, 
+                    dataUrl: dataUrl, // Add local preview URL
                     uploadState: 'uploading', 
                     abortController: controller,
                     uploadSpeed: 'Starting...'
                 };
                 
+                // Initialize tracking for speed calculation
                 uploadStatsRef.current.set(fileId, { lastLoaded: 0, lastTime: Date.now() });
                 
                 setSelectedFiles(prev => [...prev, initialFileState]);
@@ -195,10 +206,13 @@ export const useFileUpload = ({
                     let speedStr = '';
                     if (stats) {
                         const timeDiff = now - stats.lastTime;
+                        // Only update speed every ~500ms to prevent flickering
                         if (timeDiff > 500) {
                             const bytesDiff = loaded - stats.lastLoaded;
-                            const speed = bytesDiff / (timeDiff / 1000); 
+                            const speed = bytesDiff / (timeDiff / 1000); // Bytes per second
                             speedStr = formatSpeed(speed);
+                            
+                            // Update stored stats
                             uploadStatsRef.current.set(fileId, { lastLoaded: loaded, lastTime: now });
                         }
                     }
@@ -210,7 +224,7 @@ export const useFileUpload = ({
                             return { 
                                 ...f, 
                                 progress: percent, 
-                                uploadSpeed: speedStr || f.uploadSpeed 
+                                uploadSpeed: speedStr || f.uploadSpeed // Keep old speed if not updated this tick
                             };
                         }
                         return f;
@@ -224,8 +238,7 @@ export const useFileUpload = ({
                         effectiveMimeType, 
                         file.name, 
                         controller.signal,
-                        baseUrl,
-                        handleProgress
+                        handleProgress // Pass progress callback
                     );
                     
                     logService.info(`File uploaded, initial state: ${uploadedFileInfo.state}`, { fileInfo: uploadedFileInfo });
@@ -236,15 +249,15 @@ export const useFileUpload = ({
 
                     setSelectedFiles(prev => prev.map(f => f.id === fileId ? {
                         ...f,
-                        isProcessing: uploadState === 'processing_api',
+                        isProcessing: uploadState === 'processing_api', // Only false if active or failed
                         progress: 100,
                         fileUri: uploadedFileInfo.uri,
                         fileApiName: uploadedFileInfo.name,
-                        rawFile: file,
+                        rawFile: file, // Preserve local file reference for preview
                         uploadState: uploadState,
                         error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined),
                         abortController: undefined,
-                        uploadSpeed: undefined,
+                        uploadSpeed: undefined, // Clear speed on complete
                     } : f));
 
                 } catch (uploadError) {
@@ -261,8 +274,14 @@ export const useFileUpload = ({
                     uploadStatsRef.current.delete(fileId);
                 }
             } else {
+                // Inline processing (Base64 or Text content)
                 const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file, dataUrl: dataUrl };
                 setSelectedFiles(prev => [...prev, initialFileState]);
+
+                // For text files being sent inline, we need to read the content now or during payload construction.
+                // Since buildContentParts handles reading text/code files if !fileUri, we just mark active here.
+                // However, for Image/Audio/Video inline, we rely on dataUrl (blob) or re-reading base64 later.
+                // Simply marking active is sufficient as buildContentParts will do the heavy lifting.
                 setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
             }
         });
@@ -297,6 +316,7 @@ export const useFileUpload = ({
             return;
         }
 
+        // Adding file by ID is an explicit user action, we rotate key to be safe/fair
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
             logService.error('Cannot add file by ID: API key not configured.');
@@ -309,17 +329,17 @@ export const useFileUpload = ({
             logService.info('New API key selected for this session due to adding file by ID.');
             setCurrentChatSettings(prev => ({ ...prev, lockedApiKey: keyToUse }));
         }
-        
-        const { baseUrl } = getActiveApiConfig(appSettings);
 
         const tempId = generateUniqueId();
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
 
         try {
-            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId, baseUrl);
+            const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
                 
+                // Allow known video types or generic octet-stream (often used for arbitrary files)
+                // But strictly validate if it is a supported type if it's not generic
                 const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType) || 
                                     (fileMetadata.mimeType.startsWith('video/') && !fileMetadata.mimeType.includes('youtube'));
 

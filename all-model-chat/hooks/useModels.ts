@@ -20,31 +20,34 @@ export const useModels = (appSettings: AppSettings) => {
     const [modelsLoadingError, setModelsLoadingError] = useState<string | null>(null);
     const [isModelsLoading, setIsModelsLoading] = useState<boolean>(false);
 
-    const { useCustomApiConfig, apiKey, useApiProxy, apiProxyUrl } = appSettings;
+    const { useCustomApiConfig, apiKey } = appSettings;
 
     const fetchAndSetModels = useCallback(async () => {
         setIsModelsLoading(true);
         setModelsLoadingError(null);
         
-        const { apiKeysString, baseUrl } = getActiveApiConfig({ ...appSettings, apiKey, useCustomApiConfig, useApiProxy, apiProxyUrl });
+        const { apiKeysString } = getActiveApiConfig({ ...appSettings, apiKey, useCustomApiConfig });
 
         const pinnedModels = getPinnedModels();
         
         let modelsFromApi: ModelOption[] = [];
         try {
-            modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString, baseUrl);
+            modelsFromApi = await geminiServiceInstance.getAvailableModels(apiKeysString);
         } catch (error) {
+            // Log warning instead of setting UI error, allowing fallback to pinned models.
             logService.warn(`API model fetch failed: ${error instanceof Error ? error.message : String(error)}. Using pinned models as fallback.`);
         }
 
         const modelMap = new Map<string, ModelOption>();
         
+        // Add API models first
         modelsFromApi.forEach(model => {
             if (!modelMap.has(model.id)) {
                 modelMap.set(model.id, { ...model, isPinned: false });
             }
         });
 
+        // Add pinned models, overwriting if they exist to ensure they are pinned
         pinnedModels.forEach(pinnedModel => {
             modelMap.set(pinnedModel.id, pinnedModel);
         });
@@ -57,7 +60,7 @@ export const useModels = (appSettings: AppSettings) => {
             setModelsLoadingError('No models available to select.');
         }
         setIsModelsLoading(false);
-    }, [useCustomApiConfig, apiKey, useApiProxy, apiProxyUrl, modelsLoadingError]);
+    }, [useCustomApiConfig, apiKey, modelsLoadingError]);
 
     useEffect(() => {
         fetchAndSetModels();

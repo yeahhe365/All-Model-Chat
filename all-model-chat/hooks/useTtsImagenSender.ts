@@ -1,9 +1,8 @@
-
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlob, getActiveApiConfig } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlob } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
@@ -40,10 +39,12 @@ export const useTtsImagenSender = ({
         
         let finalSessionId = activeSessionId;
 
+        // Create user and model message placeholders
         const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, timestamp: new Date() };
         const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
         
-        if (!finalSessionId) { 
+        // Handle session creation or update in a single atomic operation
+        if (!finalSessionId) { // New Chat
             const newSessionId = generateUniqueId();
             finalSessionId = newSessionId;
             let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
@@ -58,7 +59,7 @@ export const useTtsImagenSender = ({
             };
             updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSessionId);
-        } else {
+        } else { // Existing Chat
             updateAndPersistSessions(p => p.map(s => {
                 if (s.id !== finalSessionId) return s;
                 const newMessages = [...s.messages, userMessage, modelMessage];
@@ -81,12 +82,10 @@ export const useTtsImagenSender = ({
 
         setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
         activeJobs.current.set(generationId, newAbortController);
-        
-        const { baseUrl } = getActiveApiConfig(appSettings);
 
         try {
             if (isTtsModel) {
-                const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, currentChatSettings.modelId, text, currentChatSettings.ttsVoice, newAbortController.signal, baseUrl);
+                const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, currentChatSettings.modelId, text, currentChatSettings.ttsVoice, newAbortController.signal);
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const wavUrl = pcmBase64ToWavUrl(base64Pcm);
                 updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: text, audioSrc: wavUrl, generationEndTime: new Date() } : m) } : s));
@@ -95,15 +94,15 @@ export const useTtsImagenSender = ({
                     showNotification('Audio Ready', { body: 'Text-to-speech audio has been generated.', icon: APP_LOGO_SVG_DATA_URI });
                 }
 
-            } else { 
+            } else { // Imagen
                 const imageBase64Array = appSettings.generateQuadImages
                     ? (await Promise.all([
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal, baseUrl),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal, baseUrl),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal, baseUrl),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal, baseUrl),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
                     ])).flat()
-                    : await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal, baseUrl);
+                    : await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal);
 
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
