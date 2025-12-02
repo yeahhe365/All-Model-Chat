@@ -20,6 +20,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t }) => {
     
     const imageRef = useRef<HTMLImageElement>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
+    const lastDistRef = useRef<number | null>(null);
 
     // Reset view when file changes
     useEffect(() => {
@@ -103,6 +104,70 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t }) => {
         setIsDragging(false);
     };
 
+    // Touch Handlers
+    const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+        if (event.touches.length === 1) {
+            // Single touch - Pan
+            const touch = event.touches[0];
+            setDragStart({ 
+                x: touch.clientX - position.x, 
+                y: touch.clientY - position.y 
+            });
+            setIsDragging(true);
+        } else if (event.touches.length === 2) {
+            // Dual touch - Pinch
+            setIsDragging(false); // Stop panning
+            const t1 = event.touches[0];
+            const t2 = event.touches[1];
+            lastDistRef.current = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        }
+    };
+
+    const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+        // Prevent default handled by CSS touch-action: none mostly, but good practice if not scrolling
+        if (event.touches.length === 1 && isDragging) {
+            const touch = event.touches[0];
+            setPosition({
+                x: touch.clientX - dragStart.x,
+                y: touch.clientY - dragStart.y,
+            });
+        } else if (event.touches.length === 2 && lastDistRef.current && viewportRef.current && imageRef.current) {
+            const t1 = event.touches[0];
+            const t2 = event.touches[1];
+            const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            
+            // Calculate new scale based on distance ratio
+            const ratio = dist / lastDistRef.current;
+            const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * ratio));
+            
+            if (newScale !== scale) {
+                // Calculate center of pinch relative to viewport
+                const rect = viewportRef.current.getBoundingClientRect();
+                const midX = (t1.clientX + t2.clientX) / 2 - rect.left;
+                const midY = (t1.clientY + t2.clientY) / 2 - rect.top;
+                
+                const imageOffsetX = imageRef.current.offsetLeft;
+                const imageOffsetY = imageRef.current.offsetTop;
+                
+                // Effective ratio for position adjustment
+                const effectiveRatio = newScale / scale;
+
+                // Adjust position to zoom towards the pinch center
+                const newPositionX = (midX - imageOffsetX) * (1 - effectiveRatio) + position.x * effectiveRatio;
+                const newPositionY = (midY - imageOffsetY) * (1 - effectiveRatio) + position.y * effectiveRatio;
+
+                setPosition({ x: newPositionX, y: newPositionY });
+                setScale(newScale);
+                lastDistRef.current = dist;
+            }
+        }
+    };
+
+    const handleTouchEnd = () => {
+        setIsDragging(false);
+        lastDistRef.current = null;
+    };
+
     useEffect(() => {
         const vpRef = viewportRef.current;
         if (vpRef) {
@@ -121,10 +186,14 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t }) => {
 
     return (
         <div 
-            className="w-full h-full relative flex flex-col select-none"
+            className="w-full h-full relative flex flex-col select-none touch-none" // Added touch-none
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp} 
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
         >
             <div ref={viewportRef} className="flex-grow w-full h-full flex items-center justify-center overflow-hidden relative">
                 <img

@@ -16,9 +16,10 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   children: React.ReactNode;
   labelContent?: React.ReactNode;
   onChange: (e: { target: { value: string } }) => void;
+  layout?: 'vertical' | 'horizontal';
 }
 
-export const Select: React.FC<SelectProps> = ({ id, label, children, labelContent, value, onChange, disabled, className, ...rest }) => {
+export const Select: React.FC<SelectProps> = ({ id, label, children, labelContent, value, onChange, disabled, className, layout = 'vertical', ...rest }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -91,12 +92,24 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
         setIsOpen(!isOpen);
     };
 
+    const containerClasses = layout === 'horizontal' 
+        ? `flex items-center justify-between py-1 ${className || ''}`
+        : className;
+
+    const labelClasses = layout === 'horizontal'
+        ? "text-sm font-medium text-[var(--theme-text-primary)] mr-4 flex-shrink-0"
+        : "block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5";
+
+    const wrapperClasses = layout === 'horizontal' 
+        ? "relative w-full sm:w-64" 
+        : "relative";
+
     return (
-        <div className={className}>
-            <label htmlFor={id} className="block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5">
+        <div className={containerClasses}>
+            <label htmlFor={id} className={labelClasses}>
               {labelContent || label}
             </label>
-            <div className="relative">
+            <div className={wrapperClasses}>
                 <button
                     ref={buttonRef}
                     type="button"

@@ -11,6 +11,7 @@ import { translations } from '../../utils/appUtils';
 
 export interface ChatAreaProps {
   activeSessionId: string | null;
+  sessionTitle?: string;
   currentChatSettings: ChatSettings;
   setAppFileError: (error: string | null) => void;
   // Drag & Drop
@@ -40,6 +41,7 @@ export interface ChatAreaProps {
   defaultModelId: string;
   onSetDefaultModel: (modelId: string) => void;
   themeId: string;
+  onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
 
   // Models Error
   modelsLoadingError: string | null;
@@ -110,6 +112,7 @@ export interface ChatAreaProps {
   onEditLastUserMessage: () => void;
   onOpenLogViewer: () => void;
   onClearAllHistory: () => void;
+  setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
 
   // PiP Props
   isPipSupported: boolean;
@@ -125,7 +128,7 @@ export interface ChatAreaProps {
 
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
-    activeSessionId, currentChatSettings, setAppFileError,
+    activeSessionId, sessionTitle, currentChatSettings, setAppFileError,
     isAppDraggingOver, isProcessingDrop, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel, isModelsLoading,
@@ -147,6 +150,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onOpenLogViewer, onClearAllHistory,
     isPipSupported, isPipActive, onTogglePip,
     generateQuadImages, onToggleQuadImages,
+    onSetThinkingLevel, setCurrentChatSettings,
     t
   } = props;
 
@@ -215,12 +219,15 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         isPipActive={isPipActive}
         onTogglePip={onTogglePip}
         themeId={themeId}
+        thinkingLevel={currentChatSettings.thinkingLevel}
+        onSetThinkingLevel={onSetThinkingLevel}
       />
       {modelsLoadingError && (
         <div className="mx-2 my-1 p-2 text-sm text-center text-[var(--theme-text-danger)] bg-[var(--theme-bg-error-message)] border border-[var(--theme-bg-danger)] rounded-md flex-shrink-0">{modelsLoadingError}</div>
       )}
       <MessageList
         messages={messages}
+        sessionTitle={sessionTitle}
         scrollContainerRef={scrollContainerRef}
         setScrollContainerRef={setScrollContainerRef}
         onScrollContainerScroll={onScrollContainerScroll}
@@ -300,6 +307,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onSetDefaultModel={onSetDefaultModel}
             generateQuadImages={generateQuadImages}
             onToggleQuadImages={onToggleQuadImages}
+            setCurrentChatSettings={setCurrentChatSettings}
           />
         </div>
       </div>

@@ -120,11 +120,19 @@ export const createSnapshotContainer = async (
 
     const allStyles = await gatherPageStyles();
     const bodyClasses = document.body.className;
-    const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
+    
+    // Explicitly get the background color. 
+    // We trim whitespace and provide a fallback to ensure html2canvas has a valid color.
+    // If we rely solely on transparency + CSS variables in the clone, html2canvas often defaults to white background
+    // but effectively transparent, which looks white in many viewers if the text is white.
+    let rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary').trim();
+    if (!rootBgColor) {
+        rootBgColor = themeId === 'onyx' ? '#09090b' : '#FFFFFF';
+    }
 
     tempContainer.innerHTML = `
         ${allStyles}
-        <div class="theme-${themeId} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; min-height: 100vh;">
+        <div class="theme-${themeId} ${bodyClasses} is-exporting-png" style="background-color: ${rootBgColor}; color: var(--theme-text-primary); min-height: 100vh;">
             <div style="background-color: ${rootBgColor}; padding: 0;">
                 <div class="exported-chat-container" style="width: 100%; max-width: 100%; margin: 0 auto;">
                     <!-- Content will be injected here -->
@@ -134,9 +142,6 @@ export const createSnapshotContainer = async (
     `;
 
     document.body.appendChild(tempContainer);
-    
-    // Force highlight.js to re-run if needed on the cloned content later
-    // but the container setup is done.
     
     const innerContent = tempContainer.querySelector('.exported-chat-container') as HTMLElement;
     const captureTarget = tempContainer.querySelector<HTMLElement>(':scope > div');
@@ -181,8 +186,8 @@ export const exportElementAsPng = async (
         });
     }));
 
-    // Force a small layout recalc/paint wait
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Force a layout recalc/paint wait to ensure styles are applied in the detached container
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const canvas = await html2canvas(element, {
         height: element.scrollHeight,

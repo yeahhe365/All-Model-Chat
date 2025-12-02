@@ -63,7 +63,6 @@ export interface AppSettings extends ChatSettings {
  language: 'en' | 'zh' | 'system';
  isStreamingEnabled: boolean;
  transcriptionModelId: string;
- isTranscriptionThinkingEnabled: boolean;
  filesApiConfig: FilesApiConfig;
  expandCodeBlocksByDefault: boolean;
  isAutoTitleEnabled: boolean;

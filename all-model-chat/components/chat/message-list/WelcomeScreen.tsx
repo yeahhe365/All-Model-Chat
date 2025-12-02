@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, ArrowUp } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
@@ -14,6 +15,8 @@ const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_organize_title', descKey: 'suggestion_organize_desc', shortKey: 'suggestion_organize_short', specialAction: 'organize' },
   { titleKey: 'suggestion_translate_title', descKey: 'suggestion_translate_desc', shortKey: 'suggestion_translate_short' },
   { titleKey: 'suggestion_ocr_title', descKey: 'suggestion_ocr_desc', shortKey: 'suggestion_ocr_short' },
+  { titleKey: 'suggestion_asr_title', descKey: 'suggestion_asr_desc', shortKey: 'suggestion_asr_short' },
+  { titleKey: 'suggestion_srt_title', descKey: 'suggestion_srt_desc', shortKey: 'suggestion_srt_short' },
   { titleKey: 'suggestion_explain_title', descKey: 'suggestion_explain_desc', shortKey: 'suggestion_explain_short' },
   { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc', shortKey: 'suggestion_summarize_short' },
 ];

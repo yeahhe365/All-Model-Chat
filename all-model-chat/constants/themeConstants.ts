@@ -97,9 +97,9 @@ export const ONYX_THEME_COLORS: ThemeColors = {
   bgModelMessageText: '#e4e4e7',
   bgErrorMessageText: '#fca5a5',
 
-  // Borders - Significantly darkened to avoid white outlines
+  // Borders
   borderPrimary: '#18181b', // Zinc 900 - blending more with tertiary
-  borderSecondary: '#18181b', // Zinc 900 - blending more with tertiary
+  borderSecondary: '#27272a', // Zinc 800 - Slightly lighter for visible borders
   borderFocus: '#3b82f6', // Blue 500
 
   // Scrollbar

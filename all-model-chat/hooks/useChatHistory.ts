@@ -24,6 +24,9 @@ interface ChatHistoryProps {
     activeChat: SavedChatSession | undefined;
     language: 'en' | 'zh';
     userScrolledUp: React.MutableRefObject<boolean>;
+    selectedFiles: UploadedFile[];
+    fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
+    activeSessionId: string | null;
 }
 
 const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSession => {
@@ -66,6 +69,9 @@ export const useChatHistory = ({
     activeChat,
     language,
     userScrolledUp,
+    selectedFiles,
+    fileDraftsRef,
+    activeSessionId,
 }: ChatHistoryProps) => {
     const t = getTranslator(language);
 
@@ -73,6 +79,11 @@ export const useChatHistory = ({
         logService.info('Starting new chat session.');
         userScrolledUp.current = false;
         
+        // Save current files to draft before switching
+        if (activeSessionId) {
+            fileDraftsRef.current[activeSessionId] = selectedFiles;
+        }
+
         let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
         if (activeChat) {
             settingsForNewChat = {
@@ -98,25 +109,38 @@ export const useChatHistory = ({
         setActiveSessionId(newSessionId);
         dbService.setActiveSessionId(newSessionId);
 
-        setCommandedInput({ text: '', id: Date.now() });
+        // Don't force clear text (handled by localStorage draft for new ID)
+        // Clear files for new chat
         setSelectedFiles([]);
+        
         setEditingMessageId(null);
         
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
 
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUp.current = false;
         
+        // Save current files to draft before switching
+        if (activeSessionId) {
+            fileDraftsRef.current[activeSessionId] = selectedFiles;
+        }
+
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
         if (sessionToLoad) {
             setActiveSessionId(sessionToLoad.id);
             dbService.setActiveSessionId(sessionId);
-            setCommandedInput({ text: '', id: Date.now() });
-            setSelectedFiles([]);
+            
+            // Restore files from draft for the target session, or empty if none
+            const draftFiles = fileDraftsRef.current[sessionId] || [];
+            setSelectedFiles(draftFiles);
+            
+            // Don't force clear text command (handled by localStorage draft)
+            // setCommandedInput({ text: '', id: Date.now() });
+            
             setEditingMessageId(null);
             setTimeout(() => {
                 document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
@@ -125,7 +149,7 @@ export const useChatHistory = ({
             logService.warn(`Session ${sessionId} not found. Starting new chat.`);
             startNewChat();
         }
-    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp]);
+    }, [setActiveSessionId, setCommandedInput, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
 
     const loadInitialData = useCallback(async () => {
         try {

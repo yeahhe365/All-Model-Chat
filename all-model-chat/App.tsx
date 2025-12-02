@@ -80,6 +80,7 @@ const App: React.FC = () => {
   const [editingContentMessage, setEditingContentMessage] = useState<ChatMessage | null>(null);
 
   const activeChat = savedSessions.find(s => s.id === activeSessionId);
+  const sessionTitle = activeChat?.title || t('newChat');
 
   const {
     handleExportSettings, handleExportHistory, handleExportAllScenarios,
@@ -163,6 +164,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSetThinkingLevel = (level: 'LOW' | 'HIGH') => {
+    // 1. Update Global Settings (Persist)
+    setAppSettings(prev => ({ ...prev, thinkingLevel: level }));
+
+    // 2. Update Current Session Settings (Immediate)
+    if (activeSessionId && setCurrentChatSettings) {
+      setCurrentChatSettings(prev => ({ ...prev, thinkingLevel: level }));
+    }
+  };
+
   const getCurrentModelDisplayName = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
     if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return t('loading');
@@ -211,6 +222,7 @@ const App: React.FC = () => {
 
   const chatAreaProps = {
     activeSessionId,
+    sessionTitle,
     currentChatSettings,
     setAppFileError,
     isAppDraggingOver,
@@ -304,6 +316,8 @@ const App: React.FC = () => {
     onTogglePip: togglePip,
     generateQuadImages: appSettings.generateQuadImages ?? false,
     onToggleQuadImages: () => setAppSettings(prev => ({ ...prev, generateQuadImages: !prev.generateQuadImages })),
+    onSetThinkingLevel: handleSetThinkingLevel,
+    setCurrentChatSettings,
     t,
   };
 

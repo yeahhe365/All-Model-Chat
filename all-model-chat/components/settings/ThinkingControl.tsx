@@ -30,8 +30,12 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   
   const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
 
+  // Default ranges if config is missing (fallback for unknown models)
+  const minBudget = budgetConfig?.min ?? 1024;
+  const maxBudget = budgetConfig?.max ?? 32768;
+
   const [customBudgetValue, setCustomBudgetValue] = useState(
-    thinkingBudget > 0 ? String(thinkingBudget) : '1024'
+    thinkingBudget > 0 ? String(thinkingBudget) : String(minBudget)
   );
   
   // Determine current mode
@@ -51,6 +55,14 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
     }
   }, [modelId, isMandatoryThinking, thinkingBudget, setThinkingBudget]);
 
+  // Ensure custom budget doesn't exceed max when switching models
+  useEffect(() => {
+      if (thinkingBudget > maxBudget) {
+          setThinkingBudget(maxBudget);
+          setCustomBudgetValue(String(maxBudget));
+      }
+  }, [maxBudget, thinkingBudget, setThinkingBudget]);
+
   const handleModeChange = (newMode: 'auto' | 'off' | 'custom') => {
       if (newMode === 'auto') {
           setThinkingBudget(-1);
@@ -58,16 +70,16 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
           setThinkingBudget(0);
       } else {
           // Custom Mode
-          if (budgetConfig && !isGemini3) {
-              // For non-G3 models with budget, default to max or a reasonable value
-              setThinkingBudget(budgetConfig.max);
-          } else {
-              // Restore last custom value or default to 1024
-              const budget = parseInt(customBudgetValue, 10);
-              const newBudget = budget > 0 ? budget : 1024;
-              if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
-              setThinkingBudget(newBudget);
-          }
+          // Restore last custom value or default to max/reasonable
+          let newBudget = parseInt(customBudgetValue, 10);
+          if (isNaN(newBudget) || newBudget <= 0) newBudget = maxBudget;
+          
+          // Clamp to valid range for current model
+          if (newBudget > maxBudget) newBudget = maxBudget;
+          if (newBudget < minBudget) newBudget = minBudget;
+
+          if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
+          setThinkingBudget(newBudget);
       }
   };
 
@@ -191,8 +203,8 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                             <div className="flex items-center gap-4">
                                 <input
                                     type="range"
-                                    min="1024"
-                                    max="32768"
+                                    min={minBudget}
+                                    max={maxBudget}
                                     step="1024"
                                     value={customBudgetValue}
                                     onChange={(e) => handleCustomBudgetChange(e.target.value)}
@@ -204,12 +216,13 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                                         value={customBudgetValue}
                                         onChange={(e) => handleCustomBudgetChange(e.target.value)}
                                         className={`${SETTINGS_INPUT_CLASS} w-full py-1.5 pl-2 pr-1 text-sm rounded-lg text-center font-mono focus:ring-2 focus:ring-[var(--theme-border-focus)]`}
-                                        min="1"
+                                        min={minBudget}
+                                        max={maxBudget}
                                     />
                                 </div>
                             </div>
                             <p className="text-[10px] text-[var(--theme-text-tertiary)] text-center">
-                                Controls the maximum number of tokens the model can use for its internal thought process.
+                                Controls the maximum number of tokens the model can use for its internal thought process ({minBudget}-{maxBudget}).
                             </p>
                         </div>
                     )}

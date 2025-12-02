@@ -13,6 +13,7 @@ import { ScrollNavigation } from './message-list/ScrollNavigation';
 
 export interface MessageListProps {
   messages: ChatMessage[];
+  sessionTitle?: string;
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
   onScrollContainerScroll: () => void;
@@ -42,7 +43,7 @@ export interface MessageListProps {
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ 
-    messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
+    messages, sessionTitle, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
@@ -158,6 +159,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                     <Message
                         key={msg.id}
                         message={msg}
+                        sessionTitle={sessionTitle}
                         prevMessage={index > 0 ? messages[index - 1] : undefined}
                         messageIndex={index}
                         onEditMessage={onEditMessage}

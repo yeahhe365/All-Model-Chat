@@ -17,8 +17,7 @@ import {
     DEFAULT_TTS_VOICE,
     DEFAULT_THINKING_BUDGET,
     DEFAULT_THINKING_LEVEL,
-    DEFAULT_TRANSCRIPTION_MODEL_ID,
-    DEFAULT_TRANSCRIPTION_THINKING_ENABLED
+    DEFAULT_TRANSCRIPTION_MODEL_ID
 } from './modelConstants';
 import { DEFAULT_SYSTEM_INSTRUCTION } from './promptConstants';
 
@@ -36,7 +35,7 @@ export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
 
 // Shared UI Styles
 export const MESSAGE_BLOCK_BUTTON_CLASS = "p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all duration-200 focus:outline-none opacity-70 hover:opacity-100";
-export const CHAT_INPUT_BUTTON_CLASS = "h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)]";
+export const CHAT_INPUT_BUTTON_CLASS = "h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus:visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)]";
 export const SETTINGS_INPUT_CLASS = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]";
 
 export const DEFAULT_SAFETY_SETTINGS: SafetySetting[] = [
@@ -84,7 +83,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
-  isTranscriptionThinkingEnabled: DEFAULT_TRANSCRIPTION_THINKING_ENABLED,
   filesApiConfig: DEFAULT_FILES_API_CONFIG,
   expandCodeBlocksByDefault: false,
   isAutoTitleEnabled: true,

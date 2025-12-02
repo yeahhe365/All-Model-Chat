@@ -22,6 +22,7 @@ export const useChatState = (appSettings: AppSettings) => {
     const [ttsMessageId, setTtsMessageId] = useState<string | null>(null);
     const [isSwitchingModel, setIsSwitchingModel] = useState<boolean>(false);
     const userScrolledUp = useRef<boolean>(false);
+    const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
 
     const updateAndPersistSessions = useCallback(async (
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -86,6 +87,7 @@ export const useChatState = (appSettings: AppSettings) => {
         isLoading,
         setCurrentChatSettings,
         updateAndPersistSessions,
-        updateAndPersistGroups
+        updateAndPersistGroups,
+        fileDraftsRef,
     };
 };

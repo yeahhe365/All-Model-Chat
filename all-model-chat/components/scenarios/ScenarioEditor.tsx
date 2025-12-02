@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { SavedScenario } from '../../types';
-import { User, Bot, Trash2, Edit3, ArrowUp, ArrowDown, Save, Plus } from 'lucide-react';
+import { User, Bot, Trash2, Edit3, ArrowUp, ArrowDown, Save, Plus, Maximize2 } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
+import { TextEditorModal } from '../modals/TextEditorModal';
 
 interface ScenarioEditorProps {
     initialScenario: SavedScenario | null;
@@ -16,6 +17,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');
+    const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
     
     const messageListRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -87,6 +89,15 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                         </span>
                     </summary>
                     <div className="p-3 pt-0">
+                        <div className="flex justify-end mb-2">
+                             <button
+                                type="button"
+                                onClick={() => setIsSystemPromptExpanded(true)}
+                                className="flex items-center gap-1 text-[10px] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] bg-[var(--theme-bg-tertiary)] px-2 py-1 rounded border border-[var(--theme-border-secondary)]"
+                            >
+                                <Maximize2 size={12} /> Fullscreen
+                            </button>
+                        </div>
                         <textarea
                             rows={3}
                             value={scenario.systemInstruction || ''}
@@ -97,6 +108,16 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     </div>
                 </details>
             </div>
+
+            <TextEditorModal
+                isOpen={isSystemPromptExpanded}
+                onClose={() => setIsSystemPromptExpanded(false)}
+                title={t('scenarios_system_prompt_label')}
+                value={scenario.systemInstruction || ''}
+                onChange={(val) => setScenario(prev => ({...prev, systemInstruction: val}))}
+                placeholder={t('scenarios_system_prompt_placeholder', "Define the persona or rules for the model...")}
+                t={t}
+            />
 
             {/* Chat Preview Area */}
             <div 
