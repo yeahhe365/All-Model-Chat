@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
-import { getKeyForRequest } from '../utils/appUtils';
+import { getKeyForRequest, getBaseUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { logService } from '../services/logService';
 import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../services/api/baseApi';
@@ -46,6 +46,7 @@ export const useFilePolling = ({
 
                 const startTime = Date.now();
                 const fileApiName = fileToPoll.fileApiName;
+                const baseUrl = getBaseUrl(appSettings);
 
                 const poll = async () => {
                     if ((Date.now() - startTime) > MAX_POLLING_DURATION_MS) {
@@ -64,7 +65,7 @@ export const useFilePolling = ({
                     }
 
                     try {
-                        const metadata = await geminiServiceInstance.getFileMetadata(keyResult.key, fileApiName);
+                        const metadata = await geminiServiceInstance.getFileMetadata(keyResult.key, fileApiName, baseUrl);
                         if (metadata?.state === 'ACTIVE') {
                             logService.info(`File ${fileApiName} is now ACTIVE.`);
                             setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, uploadState: 'active', isProcessing: false } : f));

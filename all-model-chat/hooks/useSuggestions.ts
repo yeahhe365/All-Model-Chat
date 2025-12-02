@@ -2,7 +2,7 @@
 // hooks/useSuggestions.ts
 import { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../types';
-import { getKeyForRequest, logService } from '../utils/appUtils';
+import { getKeyForRequest, logService, getBaseUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -30,7 +30,7 @@ export const useSuggestions = ({
             ...s, messages: s.messages.map(m => m.id === messageId ? {...m, isGeneratingSuggestions: true} : m)
         } : s));
 
-        // Use skipIncrement: true to avoid rotating API keys for background suggestions
+        // Use skipIncrement: true to avoid rotating keys for background suggestions
         const keyResult = getKeyForRequest(appSettings, sessionSettings, { skipIncrement: true });
         if ('error' in keyResult) {
             logService.error('Cannot generate suggestions: API key not configured.');
@@ -42,7 +42,8 @@ export const useSuggestions = ({
         }
 
         try {
-            const suggestions = await geminiServiceInstance.generateSuggestions(keyResult.key, userContent, modelContent, language);
+            const baseUrl = getBaseUrl(appSettings);
+            const suggestions = await geminiServiceInstance.generateSuggestions(keyResult.key, userContent, modelContent, language, baseUrl);
             if (suggestions && suggestions.length > 0) {
                 updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? {
                     ...s, messages: s.messages.map(m => m.id === messageId ? {...m, suggestions, isGeneratingSuggestions: false} : m)

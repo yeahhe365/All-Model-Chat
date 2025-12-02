@@ -1,10 +1,10 @@
 
-import { getConfiguredApiClient } from './baseApi';
+import { getApiClient } from './baseApi';
 import { Part, Type } from "@google/genai";
 import { logService } from "../logService";
 import { fileToBase64 } from "../../utils/appUtils";
 
-export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> => {
+export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal, baseUrl?: string | null): Promise<string[]> => {
     logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio });
     
     if (!prompt.trim()) {
@@ -18,7 +18,7 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
     }
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
         const response = await ai.models.generateImages({
             model: modelId,
             prompt: prompt,
@@ -44,7 +44,7 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
     }
 };
 
-export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> => {
+export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal, baseUrl?: string | null): Promise<string> => {
     logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
     
     if (!text.trim()) {
@@ -52,7 +52,7 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
     }
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
         const response = await ai.models.generateContent({
             model: modelId,
             contents: text,
@@ -97,11 +97,11 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
     }
 };
 
-export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string): Promise<string> => {
+export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string, baseUrl?: string | null): Promise<string> => {
     logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size });
     
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
         const audioBase64 = await fileToBase64(audioFile);
 
         const audioPart: Part = {
@@ -162,12 +162,12 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     }
 };
 
-export const translateTextApi = async (apiKey: string, text: string): Promise<string> => {
+export const translateTextApi = async (apiKey: string, text: string, baseUrl?: string | null): Promise<string> => {
     logService.info(`Translating text...`);
     const prompt = `Translate the following text to English. Only return the translated text, without any additional explanation or formatting.\n\nText to translate:\n"""\n${text}\n"""`;
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-lite',
             contents: prompt,
@@ -189,7 +189,7 @@ export const translateTextApi = async (apiKey: string, text: string): Promise<st
     }
 };
 
-export const generateSuggestionsApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> => {
+export const generateSuggestionsApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh', baseUrl?: string | null): Promise<string[]> => {
     logService.info(`Generating suggestions in ${language}...`);
     
     const prompt = language === 'zh'
@@ -215,7 +215,7 @@ USER: "${userContent}"
 ASSISTANT: "${modelContent}"`;
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
@@ -251,7 +251,7 @@ ASSISTANT: "${modelContent}"`;
         logService.error("Error during suggestions generation:", error);
         // Fallback to a non-JSON approach in case the model struggles with the schema
         try {
-            const ai = await getConfiguredApiClient(apiKey); // Re-get client
+            const ai = getApiClient(apiKey, baseUrl); // Re-get client
             const fallbackPrompt = `${prompt}\n\nReturn the three suggestions as a numbered list, one per line. Do not include any other text or formatting.`;
              const fallbackResponse = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -272,14 +272,14 @@ ASSISTANT: "${modelContent}"`;
     }
 };
 
-export const generateTitleApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string> => {
+export const generateTitleApi = async (apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh', baseUrl?: string | null): Promise<string> => {
     logService.info(`Generating title in ${language}...`);
     const prompt = language === 'zh'
         ? `根据以下对话，创建一个非常简短、简洁的标题（最多4-6个词）。不要使用引号或任何其他格式。只返回标题的文本。\n\n用户: "${userContent}"\n助手: "${modelContent}"\n\n标题:`
         : `Based on this conversation, create a very short, concise title (4-6 words max). Do not use quotes or any other formatting. Just return the text of the title.\n\nUSER: "${userContent}"\nASSISTANT: "${modelContent}"\n\nTITLE:`;
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = getApiClient(apiKey, baseUrl);
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-lite',
             contents: prompt,

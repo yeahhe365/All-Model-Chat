@@ -1,3 +1,4 @@
+
 import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
@@ -11,6 +12,13 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
     return {
         apiKeysString: process.env.API_KEY || null,
     };
+};
+
+export const getBaseUrl = (appSettings: AppSettings): string | null => {
+    if (appSettings.useCustomApiConfig && appSettings.useApiProxy) {
+        return appSettings.apiProxyUrl;
+    }
+    return null;
 };
 
 export const getKeyForRequest = (

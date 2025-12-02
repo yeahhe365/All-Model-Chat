@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../types';
 import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
-import { getKeyForRequest, logService, generateUniqueId } from '../utils/appUtils';
+import { getKeyForRequest, logService, generateUniqueId, getBaseUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface UseChatActionsProps {
@@ -119,10 +119,12 @@ export const useChatActions = ({
     
         try {
             const modelToUse = appSettings.transcriptionModelId || 'models/gemini-flash-latest';
+            const baseUrl = getBaseUrl(appSettings);
             const transcribedText = await geminiServiceInstance.transcribeAudio(
                 keyResult.key,
                 audioFile,
-                modelToUse
+                modelToUse,
+                baseUrl
             );
             return transcribedText;
         } catch (error) {
