@@ -44,7 +44,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const getProxyPlaceholder = () => {
     if (!useCustomApiConfig) return 'Enable custom config first';
     if (!useApiProxy) return 'Enable proxy URL to set value';
-    return 'e.g., https://my-proxy.com/v1beta';
+    return 'e.g., https://api-proxy.de/gemini/v1beta';
   };
 
   const hasEnvKey = !!process.env.API_KEY;

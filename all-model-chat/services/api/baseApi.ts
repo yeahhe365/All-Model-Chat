@@ -1,6 +1,7 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
+import { dbService } from '../../utils/db';
 import { GEMINI_3_RO_MODELS } from "../../constants/modelConstants";
 import { DEEP_SEARCH_SYSTEM_PROMPT } from "../../constants/promptConstants";
 import { SafetySetting } from "../../types/settings";
@@ -13,12 +14,14 @@ export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
 export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI => {
   try {
-      // Sanitize the API key
+      // Sanitize the API key to replace common non-ASCII characters that might
+      // be introduced by copy-pasting from rich text editors. This prevents
+      // "Failed to execute 'append' on 'Headers': Invalid character" errors.
       const sanitizedApiKey = apiKey
-          .replace(/[\u2013\u2014]/g, '-')
-          .replace(/[\u2018\u2019]/g, "'")
-          .replace(/[\u201C\u201D]/g, '"')
-          .replace(/[\u00A0]/g, ' ');
+          .replace(/[\u2013\u2014]/g, '-') // en-dash, em-dash to hyphen
+          .replace(/[\u2018\u2019]/g, "'") // smart single quotes to apostrophe
+          .replace(/[\u201C\u201D]/g, '"') // smart double quotes to quote
+          .replace(/[\u00A0]/g, ' '); // non-breaking space to regular space
           
       if (apiKey !== sanitizedApiKey) {
           logService.warn("API key was sanitized. Non-ASCII characters were replaced.");
@@ -26,9 +29,8 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
       
       const config: any = { apiKey: sanitizedApiKey };
       if (baseUrl) {
-          // Robustly clean the URL: remove trailing slashes AND version suffixes (v1, v1beta)
-          // The SDK appends the version automatically, so doubling it causes 404s.
-          const cleanBaseUrl = baseUrl.replace(/\/+$/, '').replace(/\/v1(beta)?$/, '');
+          // Remove trailing slash if present to avoid double slashes in constructed URLs
+          const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
           config.baseUrl = cleanBaseUrl;
           logService.info(`Using custom base URL: ${cleanBaseUrl}`);
       }
@@ -36,6 +38,7 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
       return new GoogleGenAI(config);
   } catch (error) {
       logService.error("Failed to initialize GoogleGenAI client:", error);
+      // Re-throw to be caught by the calling function
       throw error;
   }
 };
@@ -47,6 +50,20 @@ export const getApiClient = (apiKey?: string | null, baseUrl?: string | null): G
         throw silentError;
     }
     return getClient(apiKey, baseUrl);
+};
+
+/**
+ * Async helper to get an API client with settings (proxy, etc) loaded from DB.
+ * Respects the `useApiProxy` toggle.
+ */
+export const getConfiguredApiClient = async (apiKey: string): Promise<GoogleGenAI> => {
+    const settings = await dbService.getAppSettings();
+    
+    // Only use the proxy URL if Custom Config AND Use Proxy are both enabled
+    const shouldUseProxy = settings?.useCustomApiConfig && settings?.useApiProxy;
+    const apiProxyUrl = shouldUseProxy ? settings?.apiProxyUrl : null;
+    
+    return getApiClient(apiKey, apiProxyUrl);
 };
 
 export const buildGenerationConfig = (
@@ -65,6 +82,7 @@ export const buildGenerationConfig = (
     safetySettings?: SafetySetting[]
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
+        // This model has specific requirements and doesn't support other configs.
         return {
             responseModalities: [Modality.IMAGE, Modality.TEXT],
             imageConfig: {
@@ -82,6 +100,7 @@ export const buildGenerationConfig = (
             }
          };
          
+         // Add tools if enabled
          const tools = [];
          if (isGoogleSearchEnabled || isDeepSearchEnabled) tools.push({ googleSearch: {} });
          if (tools.length > 0) config.tools = tools;
@@ -107,7 +126,10 @@ export const buildGenerationConfig = (
         delete generationConfig.systemInstruction;
     }
 
+    // Robust check for Gemini 3
     if (GEMINI_3_RO_MODELS.includes(modelId) || modelId.includes('gemini-3-pro')) {
+        // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
+        // We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {
             includeThoughts: showThoughts,
         };
@@ -125,6 +147,9 @@ export const buildGenerationConfig = (
         ].includes(modelId) || modelId.includes('gemini-2.5');
 
         if (modelSupportsThinking) {
+            // Decouple thinking budget from showing thoughts.
+            // `thinkingBudget` controls if and how much the model thinks.
+            // `showThoughts` controls if the `thought` field is returned in the stream.
             generationConfig.thinkingConfig = {
                 thinkingBudget: thinkingBudget,
                 includeThoughts: showThoughts,
@@ -133,6 +158,7 @@ export const buildGenerationConfig = (
     }
 
     const tools = [];
+    // Deep Search requires Google Search tool
     if (isGoogleSearchEnabled || isDeepSearchEnabled) {
         tools.push({ googleSearch: {} });
     }
@@ -145,6 +171,7 @@ export const buildGenerationConfig = (
 
     if (tools.length > 0) {
         generationConfig.tools = tools;
+        // When using tools, these should not be set
         delete generationConfig.responseMimeType;
         delete generationConfig.responseSchema;
     }
