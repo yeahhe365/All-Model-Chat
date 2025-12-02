@@ -29,11 +29,12 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
       
       const config: any = { apiKey: sanitizedApiKey };
       
-      // IMPORTANT: BaseURL logic is intentionally removed from here.
-      // We now use a global network interceptor (networkInterceptor.ts) to route requests.
-      // This ensures that ALL requests (including SDK internals) honor the proxy setting
-      // regardless of SDK support for baseUrl in specific methods.
-      // if (baseUrl && baseUrl.trim().length > 0) { ... }
+      // Use the SDK's native baseUrl support if provided.
+      // This is more robust than the network interceptor for SDK-generated requests.
+      if (baseUrl && baseUrl.trim().length > 0) {
+          // Remove trailing slash for consistency
+          config.baseUrl = baseUrl.trim().replace(/\/$/, '');
+      }
       
       return new GoogleGenAI(config);
   } catch (error) {
