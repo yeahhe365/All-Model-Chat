@@ -65,15 +65,28 @@ export const networkInterceptor = {
                     const targetOrigin = "https://generativelanguage.googleapis.com";
                     
                     // Rewrite the URL
-                    // Example: https://generativelanguage.googleapis.com/v1beta/... -> https://my-proxy.com/v1beta/...
-                    const newUrl = urlStr.replace(targetOrigin, currentProxyUrl);
+                    let newUrl = urlStr.replace(targetOrigin, currentProxyUrl);
                     
+                    // Heuristic fix: Double version duplication prevention
+                    // If the user's proxy URL ends in /v1beta and the SDK path also starts with /v1beta,
+                    // we might end up with .../v1beta/v1beta/... which causes 404s.
+                    // This is a common configuration error we can gracefully handle.
+                    if (newUrl.includes('/v1beta/v1beta')) {
+                        newUrl = newUrl.replace('/v1beta/v1beta', '/v1beta');
+                    }
+                    if (newUrl.includes('/v1/v1')) {
+                        newUrl = newUrl.replace('/v1/v1', '/v1');
+                    }
+                    
+                    // Handle double slashes (e.g., https://proxy.com//v1beta) that might occur from concatenation
+                    // Preserve the double slash in https://
+                    newUrl = newUrl.replace(/([^:]\/)\/+/g, "$1");
+
                     // logService.debug(`[NetworkInterceptor] Rerouting: ${urlStr} -> ${newUrl}`, { category: 'NETWORK' });
 
                     if (originalRequest) {
                         // Clone the original request with the new URL
-                        // We pass the original request as the second argument (init) to preserve body/headers
-                        // Note: We intentionally create a new Request object.
+                        // We pass the original request as the second argument to preserve body/headers/signals
                         const newReq = new Request(newUrl, originalRequest);
                         return originalFetch(newReq, init);
                     }
