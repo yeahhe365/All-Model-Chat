@@ -6,11 +6,6 @@
   --ease-out-circ: cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 
-/* Remove default tap highlight on mobile */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Enhanced fadeInUp with slight blur for a modern feel */
