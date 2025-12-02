@@ -1,8 +1,9 @@
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService, getActiveApiConfig } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -44,7 +45,7 @@ export const useImageEditSender = ({
         const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, files, timestamp: new Date() };
         const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
         
-        if (!finalSessionId) { // New Chat
+        if (!finalSessionId) { 
             const newSessionId = generateUniqueId();
             finalSessionId = newSessionId;
             let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
@@ -59,7 +60,7 @@ export const useImageEditSender = ({
             };
             updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSessionId);
-        } else { // Existing Chat or Edit
+        } else { 
             updateAndPersistSessions(p => p.map(s => {
                 const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
                 if (!isSessionToUpdate) return s;
@@ -88,12 +89,14 @@ export const useImageEditSender = ({
 
         setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
         activeJobs.current.set(generationId, newAbortController);
+        
+        const { baseUrl } = getActiveApiConfig(appSettings);
 
         try {
             const { contentParts: promptParts } = await buildContentParts(text, imageFiles);
             const historyForApi = await createChatHistoryForApi(messages);
             
-            const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio);
+            const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, baseUrl);
 
             const apiCalls = appSettings.generateQuadImages ? [callApi(), callApi(), callApi(), callApi()] : [callApi()];
             const results = await Promise.allSettled(apiCalls);
