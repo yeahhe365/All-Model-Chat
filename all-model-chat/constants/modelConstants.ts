@@ -26,7 +26,7 @@ export const THINKING_LEVELS = [
 export const DEFAULT_THINKING_LEVEL = 'HIGH';
 
 export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
-    'models/gemini-flash-latest': { min: 1024, max: 24576 }, // Effectively 0-24k, but custom starts at 1k
+    'models/gemini-flash-latest': { min: 0, max: 24576 },
     'gemini-2.5-pro': { min: 128, max: 32768 },
     'gemini-3-pro-preview': { min: 128, max: 32768 }, 
     'models/gemini-3-pro-preview': { min: 128, max: 32768 },
@@ -39,8 +39,7 @@ export const DEFAULT_SHOW_THOUGHTS = true;
 export const DEFAULT_THINKING_BUDGET = -1; // -1 for auto/unlimited budget
 export const DEFAULT_TTS_VOICE = 'Zephyr';
 
-export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'models/gemini-flash-latest';
-export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
+export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-3-pro-preview';
 export const DEFAULT_TTS_MODEL_ID = 'models/gemini-2.5-flash-preview-tts';
 
 export const STATIC_TTS_MODELS: ModelOption[] = [
@@ -57,10 +56,10 @@ export const STATIC_IMAGEN_MODELS: ModelOption[] = [
 ];
 
 export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
-    { id: 'models/gemini-flash-latest', name: 'Gemini 2.5 Flash (Default)' },
+    { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro (Default)' },
+    { id: 'models/gemini-flash-latest', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
     { id: 'models/gemini-flash-lite-latest', name: 'Gemini 2.5 Flash Lite (Fastest)' },
-    { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [

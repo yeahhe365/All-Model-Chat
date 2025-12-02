@@ -2,11 +2,10 @@
 import { File as GeminiFile } from "@google/genai";
 import { getConfiguredApiClient } from './baseApi';
 import { logService } from "../logService";
-import { dbService } from "../../utils/db";
 
 /**
- * Uploads a file using the Google Resumable Upload Protocol via XHR.
- * This allows for real-time progress tracking, unlike the SDK's abstraction.
+ * Uploads a file using the official SDK.
+ * Reverted from XHR to SDK for stability.
  */
 export const uploadFileApi = async (
     apiKey: string, 
@@ -16,7 +15,7 @@ export const uploadFileApi = async (
     signal: AbortSignal,
     onProgress?: (loaded: number, total: number) => void
 ): Promise<GeminiFile> => {
-    logService.info(`Uploading file (XHR): ${displayName}`, { mimeType, size: file.size });
+    logService.info(`Uploading file (SDK): ${displayName}`, { mimeType, size: file.size });
     
     if (signal.aborted) {
         const abortError = new Error("Upload cancelled by user.");
@@ -24,110 +23,38 @@ export const uploadFileApi = async (
         throw abortError;
     }
 
-    // 1. Determine Base URL (Respect Proxy Settings)
-    let baseUrl = 'https://generativelanguage.googleapis.com';
     try {
-        const settings = await dbService.getAppSettings();
-        if (settings?.useCustomApiConfig && settings?.useApiProxy && settings?.apiProxyUrl) {
-            baseUrl = settings.apiProxyUrl.replace(/\/+$/, ''); // Remove trailing slash
-            // If proxy url ends in /v1beta, strip it to append /upload/v1beta correctly if needed
-            // Or assume proxy serves as direct base. 
-            // Standard generic handling:
-            if (baseUrl.endsWith('/v1beta')) {
-                baseUrl = baseUrl.substring(0, baseUrl.length - 7);
-            }
-        }
-    } catch (e) {
-        // Fallback to default
-    }
+        // Get configured SDK client (handles proxy settings automatically)
+        const ai = await getConfiguredApiClient(apiKey);
 
-    const uploadUrl = `${baseUrl}/upload/v1beta/files?key=${apiKey}`;
-
-    // 2. Start Resumable Upload Session
-    return new Promise((resolve, reject) => {
-        const xhrStart = new XMLHttpRequest();
-        xhrStart.open('POST', uploadUrl, true);
-        
-        xhrStart.setRequestHeader('X-Goog-Upload-Protocol', 'resumable');
-        xhrStart.setRequestHeader('X-Goog-Upload-Command', 'start');
-        xhrStart.setRequestHeader('X-Goog-Upload-Header-Content-Length', file.size.toString());
-        xhrStart.setRequestHeader('X-Goog-Upload-Header-Content-Type', mimeType);
-        xhrStart.setRequestHeader('Content-Type', 'application/json');
-
-        // Handle cancellation
-        signal.addEventListener('abort', () => {
-            xhrStart.abort();
-            const err = new Error("Upload cancelled by user.");
-            err.name = "AbortError";
-            reject(err);
+        // Use official SDK for upload, which is more stable for Auth and CORS
+        const uploadResult = await ai.files.upload({
+            file: file,
+            config: {
+                displayName: displayName,
+                mimeType: mimeType,
+            },
         });
 
-        xhrStart.onload = () => {
-            if (xhrStart.status === 200) {
-                const sessionUri = xhrStart.getResponseHeader('x-goog-upload-url');
-                if (!sessionUri) {
-                    reject(new Error("Failed to retrieve upload session URL."));
-                    return;
-                }
-                
-                // 3. Perform Actual Upload
-                const xhrUpload = new XMLHttpRequest();
-                xhrUpload.open('PUT', sessionUri, true);
-                
-                // Headers for the chunk (whole file in one go here)
-                xhrUpload.setRequestHeader('Content-Length', file.size.toString());
-                xhrUpload.setRequestHeader('X-Goog-Upload-Offset', '0');
-                xhrUpload.setRequestHeader('X-Goog-Upload-Command', 'upload, finalize');
-                
-                // Track Progress
-                if (xhrUpload.upload && onProgress) {
-                    xhrUpload.upload.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            onProgress(e.loaded, e.total);
-                        }
-                    };
-                }
+        // Since SDK doesn't provide progress, call 100% on completion to satisfy UI
+        if (onProgress) {
+            onProgress(file.size, file.size);
+        }
 
-                // Handle cancellation for the data phase
-                signal.addEventListener('abort', () => {
-                    xhrUpload.abort();
-                    const err = new Error("Upload cancelled by user.");
-                    err.name = "AbortError";
-                    reject(err);
-                });
+        return uploadResult;
 
-                xhrUpload.onload = () => {
-                    if (xhrUpload.status === 200) {
-                        try {
-                            const responseData = JSON.parse(xhrUpload.responseText);
-                            const uploadedFile = responseData.file;
-                            if (uploadedFile) {
-                                resolve(uploadedFile as GeminiFile);
-                            } else {
-                                reject(new Error("Upload completed but returned invalid file metadata."));
-                            }
-                        } catch (e) {
-                            reject(new Error("Failed to parse upload response JSON."));
-                        }
-                    } else {
-                        reject(new Error(`Upload failed with status ${xhrUpload.status}: ${xhrUpload.responseText}`));
-                    }
-                };
-
-                xhrUpload.onerror = () => reject(new Error("Network error during file data transfer."));
-                
-                xhrUpload.send(file);
-
-            } else {
-                reject(new Error(`Failed to initiate upload session (Status ${xhrStart.status}): ${xhrStart.responseText}`));
-            }
-        };
-
-        xhrStart.onerror = () => reject(new Error("Network error during upload initialization."));
+    } catch (error) {
+        logService.error(`Failed to upload file "${displayName}" to Gemini API:`, error);
         
-        // Send metadata to start session
-        xhrStart.send(JSON.stringify({ file: { displayName: displayName } }));
-    });
+        // If it's an abort, ensure we throw a specific error for UI handling
+        if (signal.aborted) {
+            const abortError = new Error("Upload cancelled by user.");
+            abortError.name = "AbortError";
+            throw abortError;
+        }
+        
+        throw error;
+    }
 };
 
 export const getFileMetadataApi = async (apiKey: string, fileApiName: string): Promise<GeminiFile | null> => {

@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ModelOption } from '../../types';
-import { Info } from 'lucide-react';
-import { Tooltip, Toggle } from '../shared/Tooltip';
+import { Info, Maximize2 } from 'lucide-react';
+import { Tooltip } from '../shared/Tooltip';
 import { ModelSelector } from './ModelSelector';
 import { ThinkingControl } from './ThinkingControl';
 import { VoiceControl } from './VoiceControl';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
+import { TextEditorModal } from '../modals/TextEditorModal';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -16,8 +17,6 @@ interface ModelVoiceSettingsProps {
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
-  isTranscriptionThinkingEnabled: boolean;
-  setIsTranscriptionThinkingEnabled: (value: boolean) => void;
   generateQuadImages: boolean;
   setGenerateQuadImages: (value: boolean) => void;
   ttsVoice: string;
@@ -40,7 +39,7 @@ interface ModelVoiceSettingsProps {
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => {
   const {
     modelId, setModelId, isModelsLoading, modelsLoadingError, availableModels,
-    transcriptionModelId, setTranscriptionModelId, isTranscriptionThinkingEnabled, setIsTranscriptionThinkingEnabled,
+    transcriptionModelId, setTranscriptionModelId,
     ttsVoice, setTtsVoice, 
     systemInstruction, setSystemInstruction,
     thinkingBudget, setThinkingBudget,
@@ -50,6 +49,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     topP, setTopP,
     t
   } = props;
+
+  const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
 
   const inputBaseClasses = "w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm";
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
@@ -80,10 +81,20 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
           />
 
           <div className="pt-2">
-                <label htmlFor="system-prompt-input" className="block text-sm font-medium text-[var(--theme-text-primary)] mb-2 flex items-center justify-between">
-                    <span>{t('settingsSystemPrompt')}</span>
-                    {isSystemPromptSet && <span className="w-2 h-2 bg-[var(--theme-text-success)] rounded-full animate-pulse" title="Active" />}
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                    <label htmlFor="system-prompt-input" className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center">
+                        <span>{t('settingsSystemPrompt')}</span>
+                        {isSystemPromptSet && <span className="w-2 h-2 ml-2 bg-[var(--theme-text-success)] rounded-full animate-pulse" title="Active" />}
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => setIsSystemPromptExpanded(true)}
+                        className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
+                        title="Expand Editor"
+                    >
+                        <Maximize2 size={14} />
+                    </button>
+                </div>
                 <textarea
                   id="system-prompt-input" value={systemInstruction} onChange={(e) => setSystemInstruction(e.target.value)}
                   rows={3} className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] custom-scrollbar`}
@@ -91,6 +102,16 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                   aria-label="System prompt text area"
                 />
             </div>
+
+            <TextEditorModal
+                isOpen={isSystemPromptExpanded}
+                onClose={() => setIsSystemPromptExpanded(false)}
+                title={t('settingsSystemPrompt')}
+                value={systemInstruction}
+                onChange={setSystemInstruction}
+                placeholder={t('chatBehavior_systemPrompt_placeholder')}
+                t={t}
+            />
 
             {/* Parameters Sliders */}
             <div className="pt-4 space-y-5">
@@ -128,8 +149,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
       <VoiceControl
         transcriptionModelId={transcriptionModelId}
         setTranscriptionModelId={setTranscriptionModelId}
-        isTranscriptionThinkingEnabled={isTranscriptionThinkingEnabled}
-        setIsTranscriptionThinkingEnabled={setIsTranscriptionThinkingEnabled}
         ttsVoice={ttsVoice}
         setTtsVoice={setTtsVoice}
         t={t}

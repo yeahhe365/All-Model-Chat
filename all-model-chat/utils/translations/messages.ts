@@ -37,6 +37,21 @@ export const messagesTranslations = {
     },
     suggestion_explain_short: { en: 'Simplify complex concepts.', zh: '通俗易懂地解释复杂概念。' },
     suggestion_prompt_label: { en: 'Prompt', zh: '提示' },
+    
+    // New ASR and SRT Translations
+    suggestion_asr_title: { en: 'Audio to Text (ASR)', zh: '音频转文字 (ASR)' },
+    suggestion_asr_desc: { 
+        en: 'Please perform Automatic Speech Recognition (ASR) on the attached audio file. Transcribe the spoken content verbatim into text. Do not summarize, just output the exact words spoken:', 
+        zh: '请对附加的音频文件进行自动语音识别（ASR）。将语音内容逐字转录为文本。不要总结，请直接输出所说的确切文字：' 
+    },
+    suggestion_asr_short: { en: 'Transcribe audio files verbatim.', zh: '逐字转录音频文件内容。' },
+    suggestion_srt_title: { en: 'Video to Subtitles (SRT)', zh: '视频生成字幕 (SRT)' },
+    suggestion_srt_desc: { 
+        en: 'Please generate a standard SRT subtitle file for the attached video. Ensure accurate timestamps (format: 00:00:00,000 --> 00:00:00,000) and transcribe the dialogue. Output ONLY the SRT content inside a code block:', 
+        zh: '请为附加的视频文件生成标准的 SRT 字幕文件。确保时间戳准确（格式：00:00:00,000 --> 00:00:00,000）并转录对话。请仅在代码块中输出 SRT 内容：' 
+    },
+    suggestion_srt_short: { en: 'Generate SRT subtitles from video.', zh: '从视频生成 SRT 字幕文件。' },
+
     welcome_title: { en: 'Welcome to All Model Chat', zh: '欢迎使用 All Model Chat' },
     welcome_p1: { en: 'Start a conversation by typing below. You can also attach files, load scenarios via the', zh: '在下方输入文字开始对话。您也可以附加文件，或通过' },
     welcome_p2: { en: 'Manage Scenarios', zh: '管理场景' },

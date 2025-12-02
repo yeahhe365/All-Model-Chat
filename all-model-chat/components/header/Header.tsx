@@ -29,6 +29,8 @@ interface HeaderProps {
   isPipActive: boolean;
   onTogglePip: () => void;
   themeId: string;
+  thinkingLevel?: 'LOW' | 'HIGH';
+  onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -54,6 +56,8 @@ export const Header: React.FC<HeaderProps> = ({
   isPipActive,
   onTogglePip,
   themeId,
+  thinkingLevel,
+  onSetThinkingLevel,
 }) => {
   const [newChatShortcut, setNewChatShortcut] = useState('');
   const [pipShortcut, setPipShortcut] = useState('');
@@ -104,6 +108,8 @@ export const Header: React.FC<HeaderProps> = ({
             t={t}
             defaultModelId={defaultModelId}
             onSetDefaultModel={onSetDefaultModel}
+            thinkingLevel={thinkingLevel}
+            onSetThinkingLevel={onSetThinkingLevel}
         />
       </div>
 

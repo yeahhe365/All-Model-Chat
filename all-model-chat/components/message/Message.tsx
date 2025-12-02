@@ -7,6 +7,7 @@ import { MessageActions } from './MessageActions';
 
 interface MessageProps {
     message: ChatMessage;
+    sessionTitle?: string;
     prevMessage?: ChatMessage;
     messageIndex: number;
     onEditMessage: (messageId: string) => void;
@@ -46,7 +47,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     const roleSpecificBubbleClasses = {
         user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-2xl rounded-tr-sm border border-transparent',
-        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-2xl rounded-tl-sm border border-[var(--theme-border-secondary)]/30',
+        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-2xl rounded-tl-sm border border-[var(--theme-border-secondary)]',
         error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-2xl border border-transparent',
     };
 

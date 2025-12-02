@@ -210,7 +210,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <ChatBehaviorSection
                     modelId={currentSettings.modelId} setModelId={handleModelChangeInSettings}
                     transcriptionModelId={currentSettings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
-                    isTranscriptionThinkingEnabled={currentSettings.isTranscriptionThinkingEnabled} setIsTranscriptionThinkingEnabled={(v) => updateSetting('isTranscriptionThinkingEnabled', v)}
                     generateQuadImages={currentSettings.generateQuadImages ?? false} setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
                     ttsVoice={currentSettings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
                     systemInstruction={currentSettings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
@@ -323,7 +322,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Content Area */}
         <main className="flex-1 flex flex-col min-w-0 bg-[var(--theme-bg-primary)] relative overflow-hidden">
             {/* Desktop Header */}
-            <header className="hidden md:flex items-center px-8 py-6 border-b border-[var(--theme-border-secondary)]/50 flex-shrink-0">
+            <header className="hidden md:flex items-center px-8 py-6 flex-shrink-0">
                 <h2 className="text-2xl font-bold text-[var(--theme-text-primary)] tracking-tight">
                     {t(tabs.find(t => t.id === activeTab)?.labelKey as any)}
                 </h2>

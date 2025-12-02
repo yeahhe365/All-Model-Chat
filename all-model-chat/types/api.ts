@@ -41,7 +41,7 @@ export interface GeminiService {
   ) => Promise<void>;
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
-  transcribeAudio: (apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean }) => Promise<string>;
+  transcribeAudio: (apiKey: string, audioFile: File, modelId: string) => Promise<string>;
   translateText(apiKey: string, text: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;

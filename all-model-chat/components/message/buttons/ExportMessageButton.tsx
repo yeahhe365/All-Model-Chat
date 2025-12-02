@@ -22,6 +22,8 @@ import { Modal } from '../../shared/Modal';
 
 interface ExportMessageButtonProps {
     message: ChatMessage;
+    sessionTitle?: string;
+    messageIndex?: number;
     themeColors: ThemeColors;
     themeId: string;
     className?: string;
@@ -29,7 +31,7 @@ interface ExportMessageButtonProps {
     iconSize?: number;
 }
 
-export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ message, themeColors, themeId, className, t, iconSize: propIconSize }) => {
+export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ message, sessionTitle, messageIndex, themeColors, themeId, className, t, iconSize: propIconSize }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [exportingType, setExportingType] = useState<'png' | 'html' | 'txt' | 'json' | null>(null);
   const responsiveIconSize = useResponsiveValue(14, 16);
@@ -47,9 +49,18 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
         const markdownContent = message.content || '';
         const messageId = message.id;
         const shortId = messageId.slice(-6);
-        const contentSnippet = markdownContent.replace(/[^\w\s]/gi, '').split(' ').slice(0, 5).join('_');
-        const safeSnippet = sanitizeFilename(contentSnippet) || 'message';
-        const filenameBase = `${safeSnippet}-${shortId}`;
+        
+        let filenameBase = `message-${shortId}`;
+        
+        if (sessionTitle) {
+            const safeTitle = sanitizeFilename(sessionTitle);
+            const indexStr = messageIndex !== undefined ? `_msg_${messageIndex + 1}` : '';
+            filenameBase = `${safeTitle}${indexStr}`;
+        } else {
+             const contentSnippet = markdownContent.replace(/[^\w\s]/gi, '').split(' ').slice(0, 5).join('_');
+             const safeSnippet = sanitizeFilename(contentSnippet) || 'message';
+             filenameBase = `${safeSnippet}-${shortId}`;
+        }
         
         const dateObj = new Date(message.timestamp);
         const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();

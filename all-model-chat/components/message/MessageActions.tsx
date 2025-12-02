@@ -35,6 +35,8 @@ const ErrorMsgIcon: React.FC = () => {
 
 interface MessageActionsProps {
     message: ChatMessage;
+    sessionTitle?: string;
+    messageIndex?: number;
     isGrouped: boolean;
     onEditMessage: (messageId: string) => void;
     onDeleteMessage: (messageId: string) => void;
@@ -49,6 +51,8 @@ interface MessageActionsProps {
 
 export const MessageActions: React.FC<MessageActionsProps> = ({
     message,
+    sessionTitle,
+    messageIndex,
     isGrouped,
     onEditMessage,
     onDeleteMessage,
@@ -135,6 +139,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                         </button>
                         <ExportMessageButton 
                             message={message}
+                            sessionTitle={sessionTitle}
+                            messageIndex={messageIndex}
                             themeColors={themeColors} 
                             themeId={themeId} 
                             t={t} 

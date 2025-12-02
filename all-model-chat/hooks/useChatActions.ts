@@ -122,10 +122,7 @@ export const useChatActions = ({
             const transcribedText = await geminiServiceInstance.transcribeAudio(
                 keyResult.key,
                 audioFile,
-                modelToUse,
-                {
-                    isThinkingEnabled: appSettings.isTranscriptionThinkingEnabled,
-                }
+                modelToUse
             );
             return transcribedText;
         } catch (error) {

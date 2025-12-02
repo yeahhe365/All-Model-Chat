@@ -97,9 +97,8 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
     }
 };
 
-export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string, options: { isThinkingEnabled: boolean }): Promise<string> => {
-    const { isThinkingEnabled } = options;
-    logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size, thinking: isThinkingEnabled });
+export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string): Promise<string> => {
+    logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size });
     
     try {
         const ai = await getConfiguredApiClient(apiKey);
@@ -120,14 +119,25 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
           systemInstruction: "Transcribe the audio exactly as spoken. Use proper punctuation. Do not describe the audio, answer questions, or add conversational filler. Return ONLY the text.",
         };
 
-        if (modelId.includes('gemini-3')) {
+        // Apply specific defaults based on model
+        if (modelId.includes('gemini-3-pro')) {
             config.thinkingConfig = {
                 includeThoughts: false,
                 thinkingLevel: "LOW"
             };
-        } else {
+        } else if (modelId === 'gemini-2.5-pro') {
             config.thinkingConfig = {
-                thinkingBudget: isThinkingEnabled ? -1 : 0,
+                thinkingBudget: 128,
+            };
+        } else if (modelId.includes('flash')) {
+            // Both 2.5 Flash and Flash Lite
+            config.thinkingConfig = {
+                thinkingBudget: 512,
+            };
+        } else {
+            // Disable thinking for other models by default
+            config.thinkingConfig = {
+                thinkingBudget: 0,
             };
         }
 

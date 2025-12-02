@@ -50,36 +50,36 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
     if (!showTokens && !showTimer) return null;
 
     return (
-        <div className="mt-2 flex justify-end items-center flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-[var(--theme-text-tertiary)] font-mono select-none opacity-80">
+        <div className="mt-2 flex justify-end items-center flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-[var(--theme-text-primary)] font-mono select-none">
             {showTokens && (
                 <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title="Token Usage">
                     <span className="flex items-center gap-2">
                         <span>I: {promptTokens ?? 0}</span>
-                        <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
+                        <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
                         {thoughtTokens !== undefined && thoughtTokens > 0 && (
                             <>
-                                <span className="flex items-center gap-1 text-[var(--theme-text-secondary)]">
+                                <span className="flex items-center gap-1">
                                     R: {thoughtTokens}
                                 </span>
-                                <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
+                                <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
                             </>
                         )}
                         <span>O: {completionTokens ?? 0}</span>
-                        <span className="w-px h-3 bg-[var(--theme-text-tertiary)]/20"></span>
-                        <span className="font-semibold text-[var(--theme-text-secondary)]">Σ: {totalTokens ?? ((promptTokens||0) + (completionTokens||0))}</span>
+                        <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
+                        <span className="font-semibold">Σ: {totalTokens ?? ((promptTokens||0) + (completionTokens||0))}</span>
                     </span>
                 </div>
             )}
 
             {tokensPerSecond > 0 && (
-                <div className="flex items-center gap-1 text-[var(--theme-text-secondary)]/90" title="Generation Speed">
+                <div className="flex items-center gap-1" title="Generation Speed">
                     <Zap size={11} className="text-amber-400 fill-amber-400/20" strokeWidth={2} />
                     <span>{tokensPerSecond.toFixed(1)} t/s</span>
                 </div>
             )}
 
             {showTimer && (
-                <div className="tabular-nums opacity-80" title="Generation Time">
+                <div className="tabular-nums" title="Generation Time">
                     {elapsedTime.toFixed(1)}s
                 </div>
             )}
