@@ -86,15 +86,15 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 disabled={disabled}
                 className={
                     hasActiveTools
-                        ? `h-7 sm:h-8 w-7 sm:w-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
-                        : `h-7 sm:h-8 px-2.5 rounded-full flex items-center justify-center gap-1.5 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] hover:text-[var(--theme-text-primary)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
+                        ? `h-8 sm:h-9 w-8 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
+                        : `h-8 sm:h-9 px-3 rounded-full flex items-center justify-center gap-1.5 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] focus:visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] text-[var(--theme-icon-attach)] hover:text-[var(--theme-text-primary)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`
                 }
                 aria-label={t('tools_button')}
                 title={t('tools_button')}
                 aria-haspopup="true"
                 aria-expanded={isOpen}
             >
-                <SlidersHorizontal size={16} strokeWidth={2} />
+                <SlidersHorizontal size={18} strokeWidth={2} />
                 {!hasActiveTools && <span className="text-sm font-medium">{t('tools_button')}</span>}
             </button>
             {isOpen && (

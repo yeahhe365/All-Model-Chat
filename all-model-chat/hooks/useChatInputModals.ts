@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 import { useState, useRef } from 'react';
 import { AttachmentAction } from '../components/chat/input/AttachmentMenu';
 import { generateFolderContext, generateZipContext } from '../utils/folderImportUtils';
@@ -21,7 +15,6 @@ export const useChatInputModals = ({
   textareaRef,
 }: UseChatInputModalsProps) => {
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
   const [showRecorder, setShowRecorder] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
@@ -31,6 +24,7 @@ export const useChatInputModals = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const zipInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleScreenshot = async () => {
     if (!('getDisplayMedia' in navigator.mediaDevices)) {
@@ -113,7 +107,7 @@ export const useChatInputModals = ({
       case 'gallery': imageInputRef.current?.click(); break;
       case 'folder': folderInputRef.current?.click(); break;
       case 'zip': zipInputRef.current?.click(); break;
-      case 'camera': setShowCamera(true); break;
+      case 'camera': cameraInputRef.current?.click(); break;
       case 'recorder': setShowRecorder(true); break;
       case 'id': setShowAddByIdInput(true); break;
       case 'url': setShowAddByUrlInput(true); break;
@@ -136,13 +130,6 @@ export const useChatInputModals = ({
     await onProcessFiles([newFile]);
   };
 
-  const handlePhotoCapture = (file: File) => {
-    justInitiatedFileOpRef.current = true;
-    onProcessFiles([file]);
-    setShowCamera(false);
-    textareaRef.current?.focus();
-  };
-
   const handleAudioRecord = async (file: File) => {
     justInitiatedFileOpRef.current = true;
     await onProcessFiles([file]);
@@ -153,8 +140,6 @@ export const useChatInputModals = ({
   return {
     showCreateTextFileEditor,
     setShowCreateTextFileEditor,
-    showCamera,
-    setShowCamera,
     showRecorder,
     setShowRecorder,
     showAddByIdInput,
@@ -167,9 +152,9 @@ export const useChatInputModals = ({
     imageInputRef,
     folderInputRef,
     zipInputRef,
+    cameraInputRef,
     handleAttachmentAction,
     handleConfirmCreateTextFile,
-    handlePhotoCapture,
     handleAudioRecord,
   };
 };

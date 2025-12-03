@@ -1,5 +1,5 @@
+
 import React from 'react';
-import { CameraCapture } from '../CameraCapture';
 import { AudioRecorder } from '../AudioRecorder';
 import { CreateTextFileEditor } from '../CreateTextFileEditor';
 import { HelpModal } from './HelpModal';
@@ -26,9 +26,6 @@ export interface ChatInputModalsProps {
 }
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
-  showCamera,
-  onPhotoCapture,
-  onCameraCancel,
   showRecorder,
   onAudioRecord,
   onRecorderCancel,
@@ -43,13 +40,12 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   t,
   isHistorySidebarOpen,
 }) => {
-  if (!showCamera && !showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
+  if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
     return null;
   }
 
   return (
     <>
-      {showCamera && <CameraCapture onCapture={onPhotoCapture} onCancel={onCameraCancel} />}
       {showRecorder && <AudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />}
       {showCreateTextFileEditor && <CreateTextFileEditor onConfirm={onConfirmCreateTextFile} onCancel={onCreateTextFileCancel} isProcessing={isProcessingFile} isLoading={isLoading} t={t as (key: string) => string} />}
       {isHelpModalOpen && <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />}

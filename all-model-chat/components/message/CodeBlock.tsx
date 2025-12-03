@@ -131,7 +131,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 // Set flag to true so the scroll handler knows this is programmatic
                 isAutoScrolling.current = true;
                 
-                // Use scrollTop assignment which is instant/smooth based on CSS 'scroll-smooth'
+                // Use scrollTop assignment. Removed 'scroll-smooth' from CSS to ensure instant update.
                 preElement.scrollTop = preElement.scrollHeight;
                 
                 // Reset the flag after a short delay to allow the scroll event(s) to fire and be ignored.
@@ -226,7 +226,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
             <div className="relative">
                 <pre 
                     ref={preRef} 
-                    className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar scroll-smooth !overflow-x-auto`}
+                    className={`${className} group !m-0 !p-0 !border-none !rounded-none !bg-transparent custom-scrollbar !overflow-x-auto`}
                     style={{
                         transition: 'max-height 0.3s ease-out',
                         overflowY: 'auto',

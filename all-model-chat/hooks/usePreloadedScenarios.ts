@@ -108,6 +108,13 @@ Remember format - injection rebuke excitement, userStyle steps into prefix into 
 </project_instructions>`,
 };
 
+const succinctScenario: SavedScenario = {
+    id: 'succinct-scenario-default',
+    title: 'Succinct Mode',
+    messages: [],
+    systemInstruction: 'Respond briefly and directly, using as few words as possible. Focus on the core point without elaboration or follow-up questions.',
+};
+
 const demoScenario: SavedScenario = {
     id: 'demo-scenario-showcase',
     title: '✨ Feature Showcase',
@@ -181,7 +188,7 @@ How would you like to proceed?`
     systemInstruction: 'You are a helpful AI assistant demonstrating the features of this application. Be concise and use rich formatting.',
 };
 
-const SYSTEM_SCENARIO_IDS = [fopScenario.id, unrestrictedScenario.id, pyriteScenario.id];
+const SYSTEM_SCENARIO_IDS = [fopScenario.id, unrestrictedScenario.id, pyriteScenario.id, succinctScenario.id];
 
 export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPersistSessions, setActiveSessionId }: PreloadedScenariosProps) => {
     const [userSavedScenarios, setUserSavedScenarios] = useState<SavedScenario[]>([]);
@@ -215,7 +222,7 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
     const savedScenarios = useMemo(() => {
         // Ensure user-saved scenarios don't conflict with the default IDs
         const filteredUserScenarios = userSavedScenarios.filter(s => !SYSTEM_SCENARIO_IDS.includes(s.id));
-        return [fopScenario, unrestrictedScenario, pyriteScenario, ...filteredUserScenarios];
+        return [fopScenario, unrestrictedScenario, pyriteScenario, succinctScenario, ...filteredUserScenarios];
     }, [userSavedScenarios]);
 
     const handleSaveAllScenarios = (updatedScenarios: SavedScenario[]) => { 

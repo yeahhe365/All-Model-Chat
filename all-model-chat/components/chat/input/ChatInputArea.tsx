@@ -50,6 +50,7 @@ export interface ChatInputAreaProps {
         imageInputRef: React.RefObject<HTMLInputElement>;
         folderInputRef: React.RefObject<HTMLInputElement>;
         zipInputRef: React.RefObject<HTMLInputElement>;
+        cameraInputRef: React.RefObject<HTMLInputElement>;
         handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
         handleFolderChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
         handleZipChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -175,6 +176,15 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                 ref={fileInputRefs.zipInputRef}
                                 onChange={fileInputRefs.handleZipChange}
                                 accept=".zip"
+                                className="hidden"
+                                aria-hidden="true"
+                            />
+                            <input
+                                type="file"
+                                ref={fileInputRefs.cameraInputRef}
+                                onChange={fileInputRefs.handleFileChange}
+                                accept="image/*"
+                                capture="environment"
                                 className="hidden"
                                 aria-hidden="true"
                             />

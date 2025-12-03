@@ -12,6 +12,7 @@ import { CodeBlock } from './CodeBlock';
 import { MermaidBlock } from './MermaidBlock';
 import { GraphvizBlock } from './GraphvizBlock';
 import { TableBlock } from './TableBlock';
+import { ToolResultBlock } from './ToolResultBlock';
 import { UploadedFile } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
@@ -121,6 +122,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         return <InlineCode {...props} />;
     },
     table: (props: any) => <TableBlock {...props} />,
+    div: (props: any) => {
+      const { className, children, ...rest } = props;
+      if (className?.includes('tool-result')) {
+        return <ToolResultBlock className={className} {...rest}>{children}</ToolResultBlock>;
+      }
+      return <div className={className} {...rest}>{children}</div>;
+    },
     pre: (props: any) => {
       const { node, children, ...rest } = props;
       

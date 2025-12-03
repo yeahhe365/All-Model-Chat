@@ -1,4 +1,6 @@
 
+
+
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -65,8 +67,8 @@ export const settingsTranslations = {
     settingsExportHistory: { en: 'Export History', zh: '导出历史' },
     settingsImportScenarios: { en: 'Import Scenarios', zh: '导入场景' },
     settingsExportScenarios: { en: 'Export Scenarios', zh: '导出场景' },
-    settingsImportHistory_confirm: { en: 'The imported file contains chat history. This will OVERWRITE your current chat history and groups. Do you want to proceed?', zh: '导入的文件包含聊天记录。这将覆盖您当前的聊天记录和分组。您要继续吗？' },
-    settingsImportHistory_success: { en: 'Settings and history imported successfully! The app will now reload.', zh: '设置和历史记录导入成功！应用即将重新加载。' },
+    settingsImportHistory_confirm: { en: 'The imported chat history will be merged with your current data. Duplicate sessions (by ID) will be skipped to preserve your existing chats. Do you want to proceed?', zh: '导入的聊天记录将与当前数据合并。为保留现有数据，重复的会话（基于 ID）将被跳过。是否继续？' },
+    settingsImportHistory_success: { en: 'History merged successfully!', zh: '历史记录合并成功！' },
     settingsImport_success: { en: 'Settings imported successfully!', zh: '设置导入成功！' },
     settingsImport_error: { en: 'Failed to import settings. The file might be corrupted or in the wrong format.', zh: '导入设置失败。文件可能已损坏或格式不正确。' },
     apiConfig_default_info: { en: 'Using default API setup from environment. Enable for custom settings.', zh: '正在使用环境中的默认 API 配置。启用以进行自定义设置。' },
