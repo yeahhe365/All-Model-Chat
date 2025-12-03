@@ -142,14 +142,22 @@ export const useDataManagement = ({
         // Confirm dialog moved to UI component
         handleImportFile(file, 'AllModelChat-History', (data) => {
             if (data.history && Array.isArray(data.history)) {
-                updateAndPersistSessions(() => data.history);
+                updateAndPersistSessions((prev) => {
+                    const existingIds = new Set(prev.map(s => s.id));
+                    const newSessions = data.history.filter((s: SavedChatSession) => !existingIds.has(s.id));
+                    return [...prev, ...newSessions];
+                });
+
                 if (data.groups && Array.isArray(data.groups)) {
-                    updateAndPersistGroups(() => data.groups);
-                } else {
-                    updateAndPersistGroups(() => []); // Clear groups if not present in import
+                    updateAndPersistGroups((prev) => {
+                        const existingIds = new Set(prev.map(g => g.id));
+                        const newGroups = data.groups.filter((g: ChatGroup) => !existingIds.has(g.id));
+                        return [...prev, ...newGroups];
+                    });
                 }
+                
                 alert(t('settingsImportHistory_success'));
-                setTimeout(() => window.location.reload(), 300);
+                // Removed reload to prevent DB race conditions and improve UX
             } else {
                 throw new Error('History data is missing or not an array.');
             }

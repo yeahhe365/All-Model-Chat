@@ -51,8 +51,8 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
 
   const isSelectorDisabled = (isModelsLoading && availableModels.length === 0) || isLoading || isSwitchingModel;
   
-  // Check for Gemini 3 models (ignoring case)
-  const isGemini3 = GEMINI_3_RO_MODELS.some(id => id.toLowerCase() === selectedModelId.toLowerCase()) || selectedModelId.toLowerCase().includes('gemini-3-pro');
+  // Check for Gemini 3 models (ignoring case) but exclude image models
+  const isGemini3 = (GEMINI_3_RO_MODELS.some(id => id.toLowerCase() === selectedModelId.toLowerCase()) || selectedModelId.toLowerCase().includes('gemini-3-pro')) && !selectedModelId.toLowerCase().includes('image');
   const isLowThinking = thinkingLevel === 'LOW';
 
   return (

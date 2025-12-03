@@ -37,8 +37,8 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   onToggleFullscreen,
   isFullscreen,
 }) => {
-  const micIconSize = 18;
-  const sendIconSize = 18;
+  const micIconSize = 20;
+  const sendIconSize = 20;
 
   return (
     <div className="flex items-center justify-between w-full">

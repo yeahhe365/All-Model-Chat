@@ -5,7 +5,6 @@ export const DEFAULT_MODEL_ID = 'gemini-3-pro-preview';
 
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-3-pro-preview',
-    'gemma-3-27b-it',
     'gemini-2.5-pro',
     'models/gemini-flash-latest',
     'models/gemini-flash-lite-latest',

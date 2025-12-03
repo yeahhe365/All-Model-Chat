@@ -1,6 +1,6 @@
 
 import { Dispatch, SetStateAction, useCallback } from 'react';
-import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualChatSettings } from '../types';
+import { AppSettings, ChatMessage, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { Part, UsageMetadata, Chat } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { generateUniqueId, logService, showNotification, getTranslator, base64ToBlobUrl } from '../utils/appUtils';
@@ -24,6 +24,36 @@ const isToolMessage = (msg: ChatMessage): boolean => {
     // A message with just files is content, not a tool, so text should be appendable.
     return (content.startsWith('```') && content.endsWith('```')) ||
            content.startsWith('<div class="tool-result');
+};
+
+const getExtensionFromMime = (mimeType: string) => {
+    if (mimeType.startsWith('image/')) return '.' + mimeType.split('/')[1];
+    if (mimeType.startsWith('audio/')) return '.' + mimeType.split('/')[1];
+    if (mimeType.startsWith('video/')) return '.' + mimeType.split('/')[1];
+    
+    const map: Record<string, string> = {
+        'application/pdf': '.pdf',
+        'text/csv': '.csv',
+        'text/plain': '.txt',
+        'application/json': '.json',
+        'text/html': '.html',
+        'text/xml': '.xml',
+        'text/markdown': '.md',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+        'application/vnd.ms-excel': '.xls',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+        'application/msword': '.doc',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+        'application/vnd.ms-powerpoint': '.ppt',
+        'application/zip': '.zip',
+        'application/x-zip-compressed': '.zip',
+        'application/x-7z-compressed': '.7z',
+        'application/x-tar': '.tar',
+        'application/gzip': '.gz',
+        'application/octet-stream': '.bin',
+        'text/x-python': '.py',
+    };
+    return map[mimeType] || '.file';
 };
 
 export const useChatStreamHandler = ({
@@ -233,14 +263,49 @@ export const useChatStreamHandler = ({
                     messages.push(createNewMessage(toolContent));
                 } else if (anyPart.inlineData) {
                     const { mimeType, data } = anyPart.inlineData;
-                    if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+                    
+                    const supportedMimeTypes = new Set([
+                        // Images
+                        'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+                        // Docs
+                        'application/pdf',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.ms-excel',
+                        'text/csv',
+                        'text/plain',
+                        'application/json',
+                        'text/html',
+                        'text/xml',
+                        'text/markdown',
+                        'text/x-python',
+                        // Media
+                        'audio/wav',
+                        'audio/mp3',
+                        'video/mp4',
+                        // Other
+                        'application/zip',
+                        'application/x-zip-compressed',
+                        'application/x-7z-compressed',
+                        'application/octet-stream'
+                    ]);
+
+                    const isSupportedFile = 
+                        mimeType.startsWith('image/') || 
+                        mimeType.startsWith('audio/') ||
+                        mimeType.startsWith('video/') ||
+                        supportedMimeTypes.has(mimeType);
+
+                    if (isSupportedFile) {
                         const dataUrl = base64ToBlobUrl(data, mimeType);
                         
                         let fileName = 'Generated File';
-                        if (mimeType === 'application/pdf') {
-                            fileName = `generated_output_${generateUniqueId().slice(-4)}.pdf`;
-                        } else {
-                            fileName = 'Generated Image';
+                        const ext = getExtensionFromMime(mimeType);
+                        if (ext) {
+                            fileName = `generated_file_${generateUniqueId().slice(-4)}${ext}`;
+                        } else if (mimeType.startsWith('image/')) {
+                            fileName = `generated-image-${generateUniqueId().slice(-4)}.png`;
                         }
 
                         const newFile: UploadedFile = {

@@ -25,7 +25,7 @@ interface AttachmentMenuProps {
     t: (key: keyof typeof translations) => string;
 }
 
-const attachIconSize = 18;
+const attachIconSize = 20;
 const menuIconSize = 18; // Consistent icon size for menu items
 
 export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {

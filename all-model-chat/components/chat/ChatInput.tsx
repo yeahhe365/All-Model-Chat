@@ -112,10 +112,10 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [isConverting, setIsConverting] = useState(false);
 
   const {
-    showCamera, showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
-    fileInputRef, imageInputRef, folderInputRef, zipInputRef,
-    handleAttachmentAction, handleConfirmCreateTextFile, handlePhotoCapture, handleAudioRecord,
-    setIsHelpModalOpen, setShowAddByIdInput, setShowCamera, setShowRecorder, setShowCreateTextFileEditor, setShowAddByUrlInput,
+    showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
+    fileInputRef, imageInputRef, folderInputRef, zipInputRef, cameraInputRef,
+    handleAttachmentAction, handleConfirmCreateTextFile, handleAudioRecord,
+    setIsHelpModalOpen, setShowAddByIdInput, setShowRecorder, setShowCreateTextFileEditor, setShowAddByUrlInput,
   } = useChatInputModals({
     onProcessFiles: (files) => onProcessFiles(files),
     justInitiatedFileOpRef,
@@ -140,7 +140,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     onTogglePip, onSetDefaultModel, currentModelId: currentChatSettings.modelId,
   });
 
-  const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder || !!configuringFile || !!previewFile;
+  const isModalOpen = showCreateTextFileEditor || showRecorder || !!configuringFile || !!previewFile;
   const isAnyModalOpen = isModalOpen || isHelpModalOpen;
   
   const canSend = (
@@ -154,7 +154,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isAddingById, setIsAddingById, isAddingByUrl, setIsAddingByUrl,
     isTranslating, setIsTranslating, isConverting, setIsConverting,
     isLoading, isFullscreen, setIsFullscreen, setIsAnimatingSend, setIsWaitingForUpload,
-    showCreateTextFileEditor, showCamera, showRecorder, setShowAddByUrlInput, setShowAddByIdInput,
+    showCreateTextFileEditor, showCamera: false, showRecorder, setShowAddByUrlInput, setShowAddByIdInput,
     textareaRef, fileInputRef, imageInputRef, folderInputRef, zipInputRef,
     justInitiatedFileOpRef, isComposingRef,
     appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError,
@@ -303,6 +303,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             imageInputRef,
             folderInputRef,
             zipInputRef,
+            cameraInputRef,
             handleFileChange: handlers.handleFileChange,
             handleFolderChange: handlers.handleFolderChange,
             handleZipChange: handlers.handleZipChange,
@@ -317,9 +318,9 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   return (
     <>
       <ChatInputModals
-        showCamera={showCamera}
-        onPhotoCapture={handlePhotoCapture}
-        onCameraCancel={() => { setShowCamera(false); textareaRef.current?.focus(); }}
+        showCamera={false}
+        onPhotoCapture={() => {}}
+        onCameraCancel={() => {}}
         showRecorder={showRecorder}
         onAudioRecord={handleAudioRecord}
         onRecorderCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }}

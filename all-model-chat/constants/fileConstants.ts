@@ -61,6 +61,13 @@ export const SUPPORTED_VIDEO_MIME_TYPES = [
     'video/3gpp',
 ];
 
+export const SUPPORTED_SPREADSHEET_MIME_TYPES = [
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'application/vnd.oasis.opendocument.spreadsheet',
+    'text/csv',
+];
+
 export const TEXT_BASED_EXTENSIONS = [
   '.txt', '.md', '.markdown', '.json', '.xml', '.csv', '.tsv', '.log', '.rtf',
   '.js', '.ts', '.jsx', '.tsx', '.html', '.htm', '.css', '.scss', '.less',
@@ -76,4 +83,5 @@ export const ALL_SUPPORTED_MIME_TYPES = [
     ...SUPPORTED_AUDIO_MIME_TYPES,
     ...SUPPORTED_PDF_MIME_TYPES,
     ...SUPPORTED_VIDEO_MIME_TYPES,
+    ...SUPPORTED_SPREADSHEET_MIME_TYPES,
 ];

@@ -7,7 +7,7 @@ import { triggerDownload, sanitizeFilename } from '../utils/exportUtils';
 
 export type ModalView = 'list' | 'editor';
 
-const SYSTEM_SCENARIO_IDS = ['fop-scenario-default', 'unrestricted-scenario-default', 'pyrite-scenario-default'];
+const SYSTEM_SCENARIO_IDS = ['fop-scenario-default', 'unrestricted-scenario-default', 'pyrite-scenario-default', 'succinct-scenario-default'];
 
 interface UseScenarioManagerProps {
   isOpen: boolean;

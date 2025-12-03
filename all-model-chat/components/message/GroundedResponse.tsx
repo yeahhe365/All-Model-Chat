@@ -39,8 +39,13 @@ const getDomain = (url: string) => {
     }
 };
 
-const getFavicon = (url: string) => {
+const getFavicon = (url: string, title?: string) => {
     try {
+        // Heuristic: If title looks like a domain (has dot, no spaces), use it.
+        // This helps when the URI is a proxy/redirect (e.g. Vertex AI Search).
+        if (title && title.includes('.') && !title.trim().includes(' ')) {
+            return `https://www.google.com/s2/favicons?domain=${title.trim()}&sz=64`;
+        }
         const domain = new URL(url).hostname;
         return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
     } catch {
@@ -243,7 +248,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {sources.map((source, i) => {
-                const favicon = getFavicon(source.uri);
+                const favicon = getFavicon(source.uri, source.title);
                 return (
                   <a 
                     key={`source-${i}`}

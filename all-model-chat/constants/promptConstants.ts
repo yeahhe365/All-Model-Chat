@@ -53,7 +53,7 @@ export const CANVAS_SYSTEM_PROMPT = `#### 角色设定 (System Role)
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Canvas Report</title>
 <!-- [DECISION: KEEP ONLY IF MATH IS REQUIRED] -->
 <script>
@@ -76,25 +76,125 @@ window.MathJax = {
 <!-- [END ECHARTS DECISION] -->
 
 <style>
-:root{--p:#007bff;--bg:#f8faff;--t:#374151;--b:#dde2e9}
-body{font:1rem/1.6 system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--t);margin:0;padding:20px}
-.box{max-width:900px;margin:0 auto;padding:24px;background:#ffffff;border-radius:12px;box-shadow:0 4px 20px #0000000d}
-h2{font-size:1.5rem;margin:0 0 16px;color:#111827;border-bottom:2px solid #f3f4f6;padding-bottom:8px}
-p{margin-bottom:16px;text-align:justify}
-code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:0.9em;color:#c2410c}
-.viz{position:relative;border:1px solid var(--b);border-radius:8px;margin:24px 0;background:#ffffff;overflow:hidden}
-.ctrl{position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:10}
-.btn{background:#ffffff;border:1px solid #e5e7eb;width:32px;height:32px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t);transition:all .2s}
-.btn:hover{background:#f9fafb;border-color:#d1d5db;color:#000000;box-shadow:0 1px 2px #0000000d}
-.btn svg{width:18px;height:18px;fill:currentColor}
-#out{min-height:300px;display:flex;align-items:center;justify-content:center;padding:20px}
-#out svg{max-width:100%;height:auto}
-#ec{width:100%;height:350px}
-#mod{display:none;position:fixed;inset:0;background:#ffffff;z-index:999}
-#mb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
-#mc{position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:#f3f4f6;border:1px solid #e5e7eb;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s;color:#4b5563}
-#mc:hover{background:#e5e7eb;transform:rotate(90deg);color:#000000}
-.math-block{background:#fcfcfc;border-left:4px solid var(--p);padding:12px 16px;margin:16px 0;overflow-x:auto}
+/* 基础变量 */
+:root { --p: #007bff; --bg: #f8faff; --t: #374151; --b: #dde2e9; --c-bg: #ffffff; }
+
+/* 全局重置：移动端优先 */
+body {
+    font: 16px/1.6 system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--t);
+    margin: 0;
+    padding: 0; /* 移动端移除 Body 边距 */
+    -webkit-text-size-adjust: 100%;
+}
+
+/* 核心容器：移动端铺满 */
+.box {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px; /* 移动端仅保留必要留白 */
+    background: var(--c-bg);
+    margin: 0 auto;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+h2 {
+    font-size: 1.35rem;
+    margin: 24px 0 16px;
+    color: #111827;
+    border-bottom: 2px solid #f3f4f6;
+    padding-bottom: 8px;
+    line-height: 1.4;
+}
+h2:first-child { margin-top: 0; }
+
+p {
+    margin-bottom: 16px;
+    text-align: left; /* 移动端左对齐 */
+    word-wrap: break-word;
+}
+
+code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #c2410c;
+    word-break: break-all;
+}
+
+/* 图表容器优化 */
+.viz {
+    position: relative;
+    border: 1px solid var(--b);
+    border-radius: 8px;
+    margin: 20px 0;
+    background: #ffffff;
+    overflow: hidden;
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
+}
+
+.ctrl {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+}
+
+.btn {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #e5e7eb;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--t);
+    backdrop-filter: blur(2px);
+}
+.btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+#out {
+    min-height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+#out svg { max-width: 100%; height: auto; }
+
+#ec { width: 100%; height: 300px; }
+
+/* 全屏模态框 */
+#mod { display: none; position: fixed; inset: 0; background: #ffffff; z-index: 9999; }
+#mb { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+#mc { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background: #f3f4f6; border: 1px solid #e5e7eb; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #4b5563; z-index: 10000; }
+
+.math-block {
+    background: #fcfcfc;
+    border-left: 4px solid var(--p);
+    padding: 12px;
+    margin: 16px 0;
+    overflow-x: auto;
+}
+
+/* 桌面端适配 */
+@media (min-width: 768px) {
+    body { padding: 24px; background: var(--bg); }
+    .box { max-width: 900px; border-radius: 12px; padding: 32px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    h2 { font-size: 1.5rem; }
+    p { text-align: justify; }
+    #ec { height: 400px; }
+    #out { min-height: 350px; padding: 20px; }
+}
 </style>
 </head>
 <body>
@@ -129,7 +229,7 @@ code{background:#f3f4f6;padding:2px 6px;border-radius:4px;font-family:monospace;
     <!-- [DECISION: DELETE ENTIRE SECTION IF NO ECHARTS] -->
     <section id="chart-container">
         <h2>数据统计</h2>
-        <div class="viz"><div id="ec"></div></div>
+        <div class="viz" style="border:none; padding:0; margin-bottom:0;"><div id="ec"></div></div>
     </section>
     <!-- [END ECHARTS DECISION] -->
 </div>
@@ -149,8 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // [DECISION: DELETE ALL GRAPHVIZ LOGIC IF NOT NEEDED]
     // ==========================================
     const DOT_SOURCE = \`digraph G {
-        graph [rankdir="LR", bgcolor="transparent", pad="0.5"];
-        node [fontname="system-ui, sans-serif", shape="rect", style="filled,rounded", height=0.6, penwidth=1.5, color="#4b5563", fontcolor="#1f2937", fillcolor="#ffffff"];
+        graph [rankdir="LR", bgcolor="transparent", pad="0.2", margin="0"];
+        node [fontname="system-ui, sans-serif", shape="rect", style="filled,rounded", height=0.5, penwidth=1.5, color="#4b5563", fontcolor="#1f2937", fillcolor="#ffffff", fontsize=14];
         edge [fontname="system-ui, sans-serif", color="#6b7280", penwidth=1.2, arrowsize=0.8];
         
         // ⚠️ GENERATE REAL NODES HERE BASED ON CONTENT
@@ -162,10 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const out = $('#out');
     let vizInstance, panInstance, currentDir = 'LR';
     
+    // 自动检测屏幕方向调整初始布局
+    if(window.innerWidth < 600) currentDir = 'TB';
+
     const renderGraph = async (direction) => {
         try {
             if(!vizInstance) vizInstance = new Viz();
             const svgElement = await vizInstance.renderSVGElement(DOT_SOURCE.replace('rankdir="LR"', \`rankdir="\${direction}"\`));
+            svgElement.style.maxWidth = "100%";
             out.innerHTML = '';
             out.append(svgElement);
             currentDir = direction;
@@ -226,13 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const chart = echarts.init($('#ec'));
         const option = {
             // ⚠️ GENERATE REAL DATA HERE
-            tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#e5e7eb', textStyle: { color: '#374151' } },
-            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            tooltip: { trigger: 'axis', backgroundColor: '#ffffff', borderColor: '#e5e7eb', textStyle: { color: '#374151' }, confine: true },
+            grid: { left: '1%', right: '4%', bottom: '3%', top: '15%', containLabel: true },
             xAxis: { 
                 type: 'category', 
                 data: ['A', 'B', 'C'],
                 axisLine: { lineStyle: { color: '#e5e7eb' } },
-                axisLabel: { color: '#6b7280' }
+                axisLabel: { color: '#6b7280', interval: 0 }
             },
             yAxis: { 
                 type: 'value',

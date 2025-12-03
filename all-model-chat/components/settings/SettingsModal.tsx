@@ -71,6 +71,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     message: string;
     onConfirm: () => void;
     isDanger?: boolean;
+    confirmLabel?: string;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -91,7 +92,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         title: t('settingsReset'),
         message: t('settingsReset_confirm'),
         onConfirm: () => onSave(DEFAULT_APP_SETTINGS),
-        isDanger: true
+        isDanger: true,
+        confirmLabel: t('settingsReset')
     });
   };
   
@@ -101,7 +103,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           title: t('settingsClearLogs'),
           message: t('settingsClearLogs_confirm'),
           onConfirm: async () => { await logService.clearLogs(); },
-          isDanger: true
+          isDanger: true,
+          confirmLabel: t('delete')
       });
   };
   
@@ -111,7 +114,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           title: t('settingsClearHistory'),
           message: t('settingsClearHistory_confirm'),
           onConfirm: onClearAllHistory,
-          isDanger: true
+          isDanger: true,
+          confirmLabel: t('delete')
       });
   };
 
@@ -121,7 +125,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           title: t('settingsClearCache'),
           message: t('settingsClearCache_confirm'),
           onConfirm: onClearCache,
-          isDanger: true
+          isDanger: true,
+          confirmLabel: t('delete')
       });
   };
 
@@ -131,7 +136,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           title: t('settingsImportHistory'),
           message: t('settingsImportHistory_confirm'),
           onConfirm: () => onImportHistory(file),
-          isDanger: true
+          isDanger: false,
+          confirmLabel: t('import')
       });
   };
   
@@ -346,7 +352,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 title={confirmConfig.title}
                 message={confirmConfig.message}
                 isDanger={confirmConfig.isDanger}
-                confirmLabel={t('delete') === 'Delete' ? 'Confirm' : t('delete')}
+                confirmLabel={confirmConfig.confirmLabel}
+                cancelLabel={t('cancel')}
             />
         )}
     </>
