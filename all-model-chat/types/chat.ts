@@ -105,6 +105,13 @@ export interface CommandInfo {
     icon?: string;
 }
 
+export interface SideViewContent {
+    type: 'html' | 'mermaid' | 'graphviz' | 'svg';
+    content: string;
+    language?: string;
+    title?: string;
+}
+
 // Toolbar Props Definition
 export interface ChatInputToolbarProps {
   isImagenModel: boolean;

@@ -5,7 +5,7 @@ import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
 import { ChatInput } from '../chat/ChatInput';
 import { useResponsiveValue } from '../../hooks/useDevice';
-import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption } from '../../types';
+import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent } from '../../types';
 import { ThemeColors } from '../../constants/themeConstants';
 import { translations } from '../../utils/appUtils';
 
@@ -123,6 +123,9 @@ export interface ChatAreaProps {
   generateQuadImages: boolean;
   onToggleQuadImages: () => void;
 
+  // Side Panel
+  onOpenSidePanel: (content: SideViewContent) => void;
+
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
@@ -151,6 +154,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     isPipSupported, isPipActive, onTogglePip,
     generateQuadImages, onToggleQuadImages,
     onSetThinkingLevel, setCurrentChatSettings,
+    onOpenSidePanel,
     t
   } = props;
 
@@ -254,6 +258,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onScrollToNextTurn={onScrollToNextTurn}
         chatInputHeight={chatInputHeight}
         appSettings={appSettings}
+        onOpenSidePanel={onOpenSidePanel}
       />
       <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
         <div className="pointer-events-auto">

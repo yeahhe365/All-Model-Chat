@@ -1,6 +1,3 @@
-
-
-
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -78,6 +75,8 @@ export const settingsTranslations = {
     apiConfig_testing: { en: 'Testing...', zh: '测试中...' },
     apiConfig_testSuccess: { en: 'Connection Successful', zh: '连接成功' },
     apiConfig_testFailed: { en: 'Connection Failed', zh: '连接失败' },
+    apiConfig_vertexExpress: { en: 'Use Vertex AI Express Endpoint', zh: '使用 Vertex AI Express 端点' },
+    apiConfig_vertexExpress_btn: { en: 'Vertex Express', zh: 'Vertex Express' },
     chatBehavior_voiceModel_label: { en: 'Voice Input Model', zh: '语音输入模型' },
     chatBehavior_voiceModel_tooltip: { en: 'Selects the model used for transcribing voice input to text.', zh: '选择用于将语音输入转录为文本的模型。' },
     chatBehavior_temp_tooltip: { en: "Controls randomness. Lower values (~0.2) make the model more deterministic and focused. Higher values (~1.0) make it more creative and diverse.", zh: "控制随机性。较低的值（~0.2）使模型更具确定性和专注性。较高的值（~1.0）使其更具创造性和多样性。" },

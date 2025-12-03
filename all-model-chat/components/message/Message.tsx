@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { ChatMessage, UploadedFile, ThemeColors, AppSettings } from '../../types';
+import { ChatMessage, UploadedFile, ThemeColors, AppSettings, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
 import { MessageActions } from './MessageActions';
@@ -28,6 +28,7 @@ interface MessageProps {
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
+    onOpenSidePanel: (content: SideViewContent) => void;
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {

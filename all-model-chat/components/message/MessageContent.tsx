@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Loader2, ChevronDown, Sparkles } from 'lucide-react';
 
-import { ChatMessage, UploadedFile, AppSettings } from '../../types';
+import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { FileDisplay } from './FileDisplay';
 import { translations, parseThoughtProcess } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
@@ -25,9 +25,10 @@ interface MessageContentProps {
     t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
     themeId: string;
+    onOpenSidePanel: (content: SideViewContent) => void;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId, onOpenSidePanel }) => {
     const { content, files, isLoading, thoughts, generationStartTime, audioSrc, groundingMetadata, urlContextMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -136,6 +137,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                     allowHtml={true}
                                     t={t}
                                     themeId={themeId}
+                                    onOpenSidePanel={onOpenSidePanel}
                                 />
                             </div>
                         </div>
@@ -165,6 +167,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                 isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} 
                 t={t} 
                 themeId={themeId} 
+                onOpenSidePanel={onOpenSidePanel}
               />
             ) : content && (
                 <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
@@ -179,6 +182,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                         allowHtml={true}
                         t={t}
                         themeId={themeId}
+                        onOpenSidePanel={onOpenSidePanel}
                     />
                 </div>
             )}

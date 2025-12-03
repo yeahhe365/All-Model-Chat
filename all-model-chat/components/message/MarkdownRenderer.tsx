@@ -13,7 +13,7 @@ import { MermaidBlock } from './MermaidBlock';
 import { GraphvizBlock } from './GraphvizBlock';
 import { TableBlock } from './TableBlock';
 import { ToolResultBlock } from './ToolResultBlock';
-import { UploadedFile } from '../../types';
+import { UploadedFile, SideViewContent } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
@@ -29,6 +29,7 @@ interface MarkdownRendererProps {
   allowHtml?: boolean;
   t: (key: keyof typeof translations) => string;
   themeId: string;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
 const InlineCode = ({ className, children, inline, ...props }: any) => {
@@ -69,6 +70,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   allowHtml = false,
   t,
   themeId,
+  onOpenSidePanel,
 }) => {
 
   const rehypePlugins = useMemo(() => {
@@ -155,7 +157,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       if (isMermaidRenderingEnabled && language === 'mermaid' && typeof rawCode === 'string') {
         return (
           <div>
-            <MermaidBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} />
+            <MermaidBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} onOpenSidePanel={onOpenSidePanel} />
           </div>
         );
       }
@@ -163,7 +165,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       if (isGraphvizRenderingEnabled && isGraphviz && typeof rawCode === 'string') {
         return (
           <div>
-            <GraphvizBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} />
+            <GraphvizBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} onOpenSidePanel={onOpenSidePanel} />
           </div>
         );
       }
@@ -175,12 +177,13 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
           onOpenHtmlPreview={onOpenHtmlPreview} 
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
           t={t}
+          onOpenSidePanel={onOpenSidePanel}
         >
           {codeElement || children}
         </CodeBlock>
       );
     }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId]);
+  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel]);
 
   const processedContent = useMemo(() => {
     if (!content) return '';

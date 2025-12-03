@@ -1,11 +1,12 @@
 
 import React, { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react';
-import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand } from 'lucide-react';
+import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/exportUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../constants/appConstants';
 import { extractTextFromNode } from '../../utils/uiUtils';
+import { SideViewContent } from '../../types';
 
 const isLikelyHtml = (textContent: string): boolean => {
   if (!textContent) return false;
@@ -28,11 +29,12 @@ interface CodeBlockProps {
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
   t: (key: keyof typeof translations) => string;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
 const COLLAPSE_THRESHOLD_PX = 320;
 
-export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault, t }) => {
+export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpenHtmlPreview, expandCodeBlocksByDefault, t, onOpenSidePanel }) => {
     const preRef = useRef<HTMLPreElement>(null);
     const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
@@ -178,6 +180,24 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     // Adjust final language display if content looks like HTML but was typed as txt
     const finalLanguage = language === 'txt' && contentLooksLikeHtml ? 'html' : (language === 'xml' && contentLooksLikeHtml ? 'html' : language);
 
+    const handleOpenSide = () => {
+        // Extract title from HTML content if possible, or use language
+        let title = `${finalLanguage.toUpperCase()} Snippet`;
+        if (finalLanguage === 'html') {
+            const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
+            if (titleMatch && titleMatch[1]) {
+                title = titleMatch[1];
+            }
+        }
+        
+        onOpenSidePanel({
+            type: showPreview ? 'html' : 'mermaid', // Reusing Mermaid type for code snippets just to enable code viewer, though sidepanel mostly designed for rendering
+            content: codeText.current,
+            language: finalLanguage,
+            title
+        });
+    };
+
     return (
         <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] overflow-hidden shadow-sm">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--theme-border-secondary)]/30 bg-[var(--theme-bg-code-block)]/50 backdrop-blur-sm">
@@ -189,6 +209,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 <div className="flex items-center gap-0.5 flex-shrink-0">
                     {showPreview && (
                         <>
+                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title="Open in Side Panel" onClick={handleOpenSide}>
+                                <Sidebar size={14} strokeWidth={2} />
+                            </button>
                             <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
                                 <Expand size={14} strokeWidth={2} /> 
                             </button>

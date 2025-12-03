@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { ChatMessage, UploadedFile, AppSettings } from '../../types';
+import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { Message } from '../message/Message';
 import { translations } from '../../utils/appUtils';
 import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
@@ -40,6 +40,7 @@ export interface MessageListProps {
   onScrollToNextTurn: () => void;
   chatInputHeight: number;
   appSettings: AppSettings;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ 
@@ -47,7 +48,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
-    chatInputHeight, appSettings
+    chatInputHeight, appSettings, onOpenSidePanel
 }) => {
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   
@@ -180,6 +181,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onSuggestionClick={onFollowUpSuggestionClick}
                         t={t}
                         appSettings={appSettings}
+                        onOpenSidePanel={onOpenSidePanel}
                     />
                 );
             } else {

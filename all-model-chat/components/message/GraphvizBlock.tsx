@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Loader2, AlertTriangle, Download, Maximize, Repeat, Code, Copy, Check } from 'lucide-react';
-import { UploadedFile } from '../../types';
+import { Loader2, AlertTriangle, Download, Maximize, Repeat, Code, Copy, Check, Sidebar } from 'lucide-react';
+import { SideViewContent, UploadedFile } from '../../types';
 import { exportSvgAsPng } from '../../utils/exportUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../constants/appConstants';
@@ -13,9 +13,10 @@ interface GraphvizBlockProps {
   onImageClick: (file: UploadedFile) => void;
   isLoading: boolean;
   themeId: string;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
-export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId }) => {
+export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
   const [svgContent, setSvgContent] = useState('');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(true);
@@ -181,6 +182,13 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
              </button>
              <button onClick={handleToggleLayout} disabled={isRendering} className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Toggle Layout (Current: ${layout})`}>
                 {isRendering ? <Loader2 size={14} className="animate-spin"/> : <Repeat size={14} />}
+             </button>
+             <button 
+                onClick={() => onOpenSidePanel({ type: 'graphviz', content: code, title: 'Graphviz Diagram' })}
+                className={MESSAGE_BLOCK_BUTTON_CLASS}
+                title="Open in Side Panel"
+             >
+                <Sidebar size={14} />
              </button>
              {diagramFile && (
                 <>
