@@ -231,6 +231,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         startNewChat,
         handleDeleteChatHistorySession,
         handleRenameSession: historyHandler.handleRenameSession,
+        handleDuplicateSession: historyHandler.handleDuplicateSession,
         handleAddNewGroup: historyHandler.handleAddNewGroup,
         handleDeleteGroup: historyHandler.handleDeleteGroup,
         handleRenameGroup: historyHandler.handleRenameGroup,

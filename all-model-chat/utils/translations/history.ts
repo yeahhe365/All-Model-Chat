@@ -1,3 +1,4 @@
+
 export const historyTranslations = {
     // HistorySidebar.tsx
     history_title: { en: 'History', zh: '历史记录' },
@@ -9,6 +10,7 @@ export const historyTranslations = {
     history_search_clear_aria: { en: 'Clear search', zh: '清除搜索' },
     history_pin: { en: 'Pin', zh: '置顶' },
     history_unpin: { en: 'Unpin', zh: '取消置顶' },
+    history_duplicate: { en: 'Duplicate', zh: '创建副本' },
     generatingTitle: { en: 'Generating title...', zh: '生成标题中...' },
     newGroup_title: { en: 'Untitled', zh: '无标题' },
     export_chat: { en: 'Export Chat', zh: '导出对话' },

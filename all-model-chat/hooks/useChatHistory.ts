@@ -213,6 +213,32 @@ export const useChatHistory = ({
         );
     }, [updateAndPersistSessions]);
 
+    const handleDuplicateSession = useCallback((sessionId: string) => {
+        logService.info(`Duplicating session: ${sessionId}`);
+        updateAndPersistSessions(prev => {
+            const sessionToDuplicate = prev.find(s => s.id === sessionId);
+            if (!sessionToDuplicate) return prev;
+
+            const newSessionId = generateUniqueId();
+            const newSession: SavedChatSession = {
+                ...sessionToDuplicate,
+                id: newSessionId,
+                title: `${sessionToDuplicate.title} (Copy)`,
+                timestamp: Date.now(),
+                // We recreate messages with new IDs to prevent key collisions during rendering or updates
+                // while preserving the content.
+                messages: sessionToDuplicate.messages.map(m => ({
+                    ...m,
+                    id: generateUniqueId(),
+                    isLoading: false, // Ensure copy isn't stuck in loading state
+                    generationStartTime: undefined,
+                    generationEndTime: undefined
+                })),
+            };
+            return [newSession, ...prev];
+        });
+    }, [updateAndPersistSessions]);
+
     const handleAddNewGroup = useCallback(() => {
         logService.info('Adding new group.');
         const newGroup: ChatGroup = {
@@ -272,6 +298,7 @@ export const useChatHistory = ({
         handleDeleteChatHistorySession,
         handleRenameSession,
         handleTogglePinSession,
+        handleDuplicateSession,
         handleAddNewGroup,
         handleDeleteGroup,
         handleRenameGroup,

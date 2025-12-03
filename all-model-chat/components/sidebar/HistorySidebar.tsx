@@ -23,6 +23,7 @@ export interface HistorySidebarProps {
   onDeleteSession: (sessionId: string) => void;
   onRenameSession: (sessionId: string, newTitle: string) => void;
   onTogglePinSession: (sessionId: string) => void;
+  onDuplicateSession: (sessionId: string) => void;
   onOpenExportModal: () => void;
   onAddNewGroup: () => void;
   onDeleteGroup: (groupId: string) => void;
@@ -43,7 +44,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     generatingTitleSessionIds, onSelectSession, onOpenExportModal, onAddNewGroup,
     onDeleteGroup, onRenameGroup, onMoveSessionToGroup, onToggleGroupExpansion,
     themeId, t, language, onNewChat, onDeleteSession, onRenameSession, onTogglePinSession,
-    onOpenSettingsModal, onOpenScenariosModal
+    onDuplicateSession, onOpenSettingsModal, onOpenScenariosModal
   } = props;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -232,7 +233,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const sessionItemSharedProps = {
     activeSessionId, editingItem, activeMenu, loadingSessionIds,
     generatingTitleSessionIds, newlyTitledSessionId, editInputRef, menuRef,
-    onSelectSession, onTogglePinSession, onDeleteSession, onOpenExportModal,
+    onSelectSession, onTogglePinSession, onDeleteSession, onDuplicateSession, onOpenExportModal,
     handleStartEdit: (item: SavedChatSession) => handleStartEdit('session', item),
     handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
   };
@@ -243,7 +244,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
             e.stopPropagation();
             onClick();
           }}
-          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
+          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
           title={title}
           aria-label={title}
       >
