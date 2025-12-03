@@ -1,7 +1,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AppSettings, ChatGroup, SavedChatSession, ChatMessage } from './types';
+import { AppSettings, ChatGroup, SavedChatSession, ChatMessage, SideViewContent } from './types';
 import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from './constants/appConstants';
 import { useAppSettings } from './hooks/useAppSettings';
 import { useChat } from './hooks/useChat';
@@ -68,6 +68,21 @@ const App: React.FC = () => {
     handleTouchStart, handleTouchEnd,
   } = useAppUI();
   
+  // Side Panel State
+  const [sidePanelContent, setSidePanelContent] = useState<SideViewContent | null>(null);
+  
+  const handleOpenSidePanel = (content: SideViewContent) => {
+      setSidePanelContent(content);
+      // Auto-collapse sidebar on smaller screens if opening side panel
+      if (window.innerWidth < 1280) {
+          setIsHistorySidebarOpen(false);
+      }
+  };
+
+  const handleCloseSidePanel = () => {
+      setSidePanelContent(null);
+  };
+
   const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture(setIsHistorySidebarOpen);
 
   // Sync styles to PiP window when theme changes
@@ -331,6 +346,7 @@ const App: React.FC = () => {
     onToggleQuadImages: () => setAppSettings(prev => ({ ...prev, generateQuadImages: !prev.generateQuadImages })),
     onSetThinkingLevel: handleSetThinkingLevel,
     setCurrentChatSettings,
+    onOpenSidePanel: handleOpenSidePanel, // NEW
     t,
   };
 
@@ -390,6 +406,9 @@ const App: React.FC = () => {
                             appModalsProps={appModalsProps}
                             isHistorySidebarOpen={isHistorySidebarOpen}
                             setIsHistorySidebarOpen={setIsHistorySidebarOpen}
+                            sidePanelContent={sidePanelContent} // NEW
+                            onCloseSidePanel={handleCloseSidePanel} // NEW
+                            themeId={currentTheme.id}
                         />
                         <EditMessageModal
                             isOpen={!!editingContentMessage}
@@ -412,6 +431,9 @@ const App: React.FC = () => {
                 appModalsProps={appModalsProps}
                 isHistorySidebarOpen={isHistorySidebarOpen}
                 setIsHistorySidebarOpen={setIsHistorySidebarOpen}
+                sidePanelContent={sidePanelContent} // NEW
+                onCloseSidePanel={handleCloseSidePanel} // NEW
+                themeId={currentTheme.id}
             />
             <EditMessageModal
                 isOpen={!!editingContentMessage}

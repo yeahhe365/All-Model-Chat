@@ -1,7 +1,10 @@
+
 import React from 'react';
 import { HistorySidebar, HistorySidebarProps } from '../sidebar/HistorySidebar';
 import { ChatArea, ChatAreaProps } from './ChatArea';
 import { AppModals, AppModalsProps } from '../modals/AppModals';
+import { SidePanel } from './SidePanel';
+import { SideViewContent } from '../../types';
 
 interface MainContentProps {
     sidebarProps: HistorySidebarProps;
@@ -9,6 +12,9 @@ interface MainContentProps {
     appModalsProps: AppModalsProps;
     isHistorySidebarOpen: boolean;
     setIsHistorySidebarOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
+    sidePanelContent: SideViewContent | null;
+    onCloseSidePanel: () => void;
+    themeId: string;
 }
 
 export const MainContent: React.FC<MainContentProps> = ({
@@ -17,6 +23,9 @@ export const MainContent: React.FC<MainContentProps> = ({
     appModalsProps,
     isHistorySidebarOpen,
     setIsHistorySidebarOpen,
+    sidePanelContent,
+    onCloseSidePanel,
+    themeId,
 }) => {
     return (
         <>
@@ -29,6 +38,15 @@ export const MainContent: React.FC<MainContentProps> = ({
             )}
             <HistorySidebar {...sidebarProps} />
             <ChatArea {...chatAreaProps} />
+            
+            {sidePanelContent && (
+                <SidePanel 
+                    content={sidePanelContent} 
+                    onClose={onCloseSidePanel}
+                    themeId={themeId}
+                />
+            )}
+            
             <AppModals {...appModalsProps} />
         </>
     );

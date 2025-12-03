@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import DOMPurify from 'dompurify';
-import { UploadedFile } from '../../types';
+import { UploadedFile, SideViewContent } from '../../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { translations } from '../../utils/appUtils';
 import { Globe, ExternalLink, Search, Link as LinkIcon, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -18,6 +18,7 @@ interface GroundedResponseProps {
   isGraphvizRenderingEnabled: boolean;
   t: (key: keyof typeof translations) => string;
   themeId: string;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
 const GoogleGIcon = () => (
@@ -60,7 +61,7 @@ interface UrlContextItem {
     url_retrieval_status?: string;
 }
 
-export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, urlContextMetadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t, themeId }) => {
+export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metadata, urlContextMetadata, isLoading, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, t, themeId, onOpenSidePanel }) => {
   const content = useMemo(() => {
     if (!metadata || !metadata.groundingSupports) {
       return text;
@@ -201,6 +202,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({ text, metada
           allowHtml={true}
           t={t}
           themeId={themeId}
+          onOpenSidePanel={onOpenSidePanel}
         />
       </div>
       

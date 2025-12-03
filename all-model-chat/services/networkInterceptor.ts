@@ -1,4 +1,7 @@
 
+
+
+
 import { logService } from './logService';
 
 const TARGET_HOST = 'generativelanguage.googleapis.com';
@@ -67,15 +70,38 @@ export const networkInterceptor = {
                     // Rewrite the URL
                     let newUrl = urlStr.replace(targetOrigin, currentProxyUrl);
                     
-                    // Heuristic fix: Double version duplication prevention
+                    // Fix Vertex AI Express path issue where SDK sends /v1beta/models but Vertex Express endpoint is /v1/publishers/google/models
+                    // This often results in .../publishers/google/v1beta/models which is invalid.
+                    
+                    // 1. Normalize version for Vertex Express style paths: /v1/v1beta/ -> /v1/
+                    // This handles the case where user sets base to .../v1 but SDK requests /v1beta/...
+                    if (newUrl.includes('/v1/v1beta/')) {
+                        newUrl = newUrl.replace('/v1/v1beta/', '/v1/');
+                    } else if (newUrl.includes('/v1/v1/')) {
+                        newUrl = newUrl.replace('/v1/v1/', '/v1/');
+                    }
+
+                    // 2. Inject publishers/google if missing for models endpoint on aiplatform
+                    // If the user uses aiplatform.googleapis.com/v1 as base, SDK requests /v1/models/..., which fails on standard Vertex.
+                    if (newUrl.includes('aiplatform.googleapis.com') && !newUrl.includes('publishers/google')) {
+                         if (newUrl.includes('/v1/models/')) {
+                             newUrl = newUrl.replace('/v1/models/', '/v1/publishers/google/models/');
+                         }
+                    }
+
+                    // 3. Existing fix for when publishers/google is already in the path or proxy
+                    if (newUrl.includes('/publishers/google/v1beta/models')) {
+                        newUrl = newUrl.replace('/publishers/google/v1beta/models', '/publishers/google/models');
+                    } else if (newUrl.includes('/publishers/google/v1/models')) {
+                        // Just in case SDK bumps to v1 but appends to base, handle duplication if it occurs
+                        newUrl = newUrl.replace('/publishers/google/v1/models', '/publishers/google/models');
+                    }
+
+                    // Heuristic fix: Double version duplication prevention for standard proxies
                     // If the user's proxy URL ends in /v1beta and the SDK path also starts with /v1beta,
                     // we might end up with .../v1beta/v1beta/... which causes 404s.
-                    // This is a common configuration error we can gracefully handle.
                     if (newUrl.includes('/v1beta/v1beta')) {
                         newUrl = newUrl.replace('/v1beta/v1beta', '/v1beta');
-                    }
-                    if (newUrl.includes('/v1/v1')) {
-                        newUrl = newUrl.replace('/v1/v1', '/v1');
                     }
                     
                     // Handle double slashes (e.g., https://proxy.com//v1beta) that might occur from concatenation

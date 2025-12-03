@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
-import { Loader2, AlertTriangle, Download, Maximize, Code, Copy, Check } from 'lucide-react';
-import { UploadedFile } from '../../types';
+import { Loader2, AlertTriangle, Download, Maximize, Code, Copy, Check, Sidebar } from 'lucide-react';
+import { SideViewContent, UploadedFile } from '../../types';
 import { exportSvgAsPng } from '../../utils/exportUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../constants/appConstants';
@@ -12,9 +12,10 @@ interface MermaidBlockProps {
   onImageClick: (file: UploadedFile) => void;
   isLoading: boolean;
   themeId: string;
+  onOpenSidePanel: (content: SideViewContent) => void;
 }
 
-export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId }) => {
+export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
   const [svg, setSvg] = useState('');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(true);
@@ -123,6 +124,13 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
           <div className="flex items-center gap-1 flex-shrink-0">
              <button onClick={() => setShowSource(!showSource)} className={MESSAGE_BLOCK_BUTTON_CLASS} title={showSource ? "Hide Source" : "Show Source"}>
                 <Code size={14} />
+             </button>
+             <button 
+                onClick={() => onOpenSidePanel({ type: 'mermaid', content: code, title: 'Mermaid Diagram' })}
+                className={MESSAGE_BLOCK_BUTTON_CLASS}
+                title="Open in Side Panel"
+             >
+                <Sidebar size={14} />
              </button>
              {diagramFile && (
                 <>
