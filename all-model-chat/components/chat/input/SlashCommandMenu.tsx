@@ -1,6 +1,8 @@
 
+
+
 import React, { useRef, useEffect } from 'react';
-import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Edit3, PictureInPicture, Bookmark, Telescope, CornerDownLeft } from 'lucide-react';
+import { HelpCircle, UploadCloud, Trash2, FilePlus2, Settings, Wand2, Globe, Terminal, Link, Pin, RotateCw, Bot, ImageIcon, Edit3, PictureInPicture, Bookmark, Telescope, CornerDownLeft, Zap } from 'lucide-react';
 import { IconStop } from '../../icons/CustomIcons';
 
 export const CommandIcon: React.FC<{ icon: string }> = ({ icon }) => {
@@ -23,6 +25,7 @@ export const CommandIcon: React.FC<{ icon: string }> = ({ icon }) => {
         case 'canvas': return <Wand2 {...iconProps} />;
         case 'image': return <ImageIcon {...iconProps} />;
         case 'pip': return <PictureInPicture {...iconProps} />;
+        case 'fast': return <Zap {...iconProps} />;
         case 'default': return <Bookmark {...iconProps} />;
         default: return <Bot {...iconProps} />;
     }

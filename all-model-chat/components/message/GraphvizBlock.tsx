@@ -185,7 +185,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
              </button>
              <button 
                 onClick={() => onOpenSidePanel({ type: 'graphviz', content: code, title: 'Graphviz Diagram' })}
-                className={MESSAGE_BLOCK_BUTTON_CLASS}
+                className={`${MESSAGE_BLOCK_BUTTON_CLASS} hidden md:block`}
                 title="Open in Side Panel"
              >
                 <Sidebar size={14} />

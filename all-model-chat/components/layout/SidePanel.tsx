@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Play, Code, Eye, Download } from 'lucide-react';
+import { X, Code, Eye, Download } from 'lucide-react';
 import { SideViewContent } from '../../types';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
@@ -15,23 +15,31 @@ interface SidePanelProps {
 
 export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId }) => {
     const [localCode, setLocalCode] = useState('');
+    const [debouncedCode, setDebouncedCode] = useState('');
     const [activeTab, setActiveTab] = useState<'code' | 'preview'>('preview');
-    const [renderKey, setRenderKey] = useState(0); // Force re-render of preview
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     // Resizing State
-    const [width, setWidth] = useState(500);
+    const [width, setWidth] = useState(600);
     const [isResizing, setIsResizing] = useState(false);
-    const isResizingRef = useRef(false); // Ref for event handler to avoid stale closures
+    const isResizingRef = useRef(false);
     const sidebarRef = useRef<HTMLDivElement>(null);
 
-    // Sync local code when content prop changes
+    // Initial sync
     useEffect(() => {
         if (content) {
             setLocalCode(content.content);
-            setRenderKey(prev => prev + 1);
+            setDebouncedCode(content.content);
         }
     }, [content]);
+
+    // Debounce code updates for preview to avoid excessive rendering
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedCode(localCode);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [localCode]);
 
     // Handle HTML updates in Iframe
     useEffect(() => {
@@ -39,15 +47,15 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
             const doc = iframeRef.current.contentDocument;
             if (doc) {
                 doc.open();
-                doc.write(localCode);
+                doc.write(debouncedCode);
                 doc.close();
             }
         }
-    }, [localCode, renderKey, content?.type]);
+    }, [debouncedCode, content?.type]);
 
     // Resizing Logic
     const startResizing = useCallback((e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent text selection
+        e.preventDefault();
         setIsResizing(true);
         isResizingRef.current = true;
     }, []);
@@ -60,7 +68,6 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     const resize = useCallback((mouseEvent: MouseEvent) => {
         if (isResizingRef.current) {
             const newWidth = window.innerWidth - mouseEvent.clientX;
-            // Constraints: Min 300px, Max 90% of screen
             if (newWidth > 300 && newWidth < window.innerWidth * 0.9) {
                 setWidth(newWidth);
             }
@@ -72,7 +79,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
             window.addEventListener('mousemove', resize);
             window.addEventListener('mouseup', stopResizing);
             document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none'; // Prevent text selection
+            document.body.style.userSelect = 'none';
         } else {
             window.removeEventListener('mousemove', resize);
             window.removeEventListener('mouseup', stopResizing);
@@ -89,10 +96,6 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
     if (!content) return null;
 
-    const handleRun = () => {
-        setRenderKey(prev => prev + 1);
-    };
-
     const handleDownload = () => {
         const ext = content.type === 'html' ? 'html' : content.type === 'mermaid' ? 'mmd' : 'txt';
         const blob = new Blob([localCode], { type: 'text/plain' });
@@ -103,10 +106,10 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     const renderPreview = () => {
         if (content.type === 'html') {
             return (
-                <div className="w-full h-full relative">
+                <div className="w-full h-full relative bg-white">
                     <iframe
                         ref={iframeRef}
-                        className="w-full h-full bg-white border-0"
+                        className="w-full h-full border-0"
                         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                         title="Live Preview"
                     />
@@ -116,14 +119,13 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
         if (content.type === 'mermaid') {
             return (
                 <div className="w-full h-full overflow-auto bg-white dark:bg-[#0d1117] p-4 flex items-center justify-center">
-                    <div className="w-full">
+                    <div className="w-full flex justify-center">
                         <MermaidBlock 
-                            key={renderKey} // Force remount on run
-                            code={localCode} 
+                            code={debouncedCode} 
                             onImageClick={() => {}} 
                             isLoading={false} 
                             themeId={themeId} 
-                            onOpenSidePanel={() => {}} // No-op to prevent recursion
+                            onOpenSidePanel={() => {}} 
                         />
                     </div>
                 </div>
@@ -132,33 +134,32 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
         if (content.type === 'graphviz') {
             return (
                 <div className="w-full h-full overflow-auto bg-white dark:bg-[#0d1117] p-4 flex items-center justify-center">
-                    <div className="w-full">
+                    <div className="w-full flex justify-center">
                         <GraphvizBlock 
-                            key={renderKey}
-                            code={localCode} 
+                            code={debouncedCode} 
                             onImageClick={() => {}} 
                             isLoading={false} 
                             themeId={themeId} 
-                            onOpenSidePanel={() => {}} // No-op to prevent recursion
+                            onOpenSidePanel={() => {}} 
                         />
                     </div>
                 </div>
             );
         }
-        return <div className="p-4 text-[var(--theme-text-tertiary)]">Preview not supported for this type.</div>;
+        return <div className="p-4 text-[var(--theme-text-tertiary)] flex items-center justify-center h-full">Preview not supported for this type.</div>;
     };
 
     const TabButton = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
         <button
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                 activeTab === id 
-                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' 
-                : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]'
+                ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] shadow-sm' 
+                : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-secondary)]/50'
             }`}
         >
-            <Icon size={14} />
-            <span className="hidden xl:inline">{label}</span>
+            <Icon size={14} strokeWidth={1.5} />
+            <span className="hidden sm:inline">{label}</span>
         </button>
     );
 
@@ -171,7 +172,6 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
     return (
         <>
-            {/* Global Overlay to trap events during resize anywhere on screen */}
             {isResizing && (
                 <div 
                     className="fixed inset-0 z-[9999] bg-transparent cursor-col-resize"
@@ -181,71 +181,51 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
             <div 
                 ref={sidebarRef}
-                className="h-full flex flex-col bg-[var(--theme-bg-secondary)] border-l border-[var(--theme-border-primary)] shadow-xl relative transition-none flex-shrink-0"
+                className="h-full flex flex-col bg-[var(--theme-bg-secondary)] border-l border-[var(--theme-border-primary)] shadow-2xl relative transition-none flex-shrink-0 z-20"
                 style={{ width: `${width}px` }}
             >
                 {/* Resize Handle */}
                 <div
                     onMouseDown={startResizing}
                     className={`
-                        absolute left-0 top-0 bottom-0 w-4 -ml-2 z-50 cursor-col-resize 
-                        flex items-center justify-center group
-                        bg-transparent hover:bg-transparent
+                        absolute left-0 top-0 bottom-0 w-1.5 -ml-0.5 z-50 cursor-col-resize 
+                        flex items-center justify-center group transition-colors hover:bg-[var(--theme-bg-accent)]
+                        ${isResizing ? 'bg-[var(--theme-bg-accent)]' : 'bg-transparent'}
                     `}
                     title="Drag to resize"
-                >
-                    {/* Visual Line */}
-                    <div className={`h-full w-[1px] bg-[var(--theme-border-primary)] group-hover:bg-[var(--theme-bg-accent)] transition-colors ${isResizing ? 'bg-[var(--theme-bg-accent)]' : ''}`} />
-                </div>
+                />
 
-                {/* Header */}
-                <div className="flex items-center justify-between p-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)]">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                        <span className="text-sm font-semibold text-[var(--theme-text-primary)] truncate" title={content.title}>
-                            {content.title || 'Workbench'}
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] uppercase tracking-wider font-bold">
-                            {content.type}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <button onClick={handleDownload} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Download Code">
-                            <Download size={16} />
-                        </button>
-                        <button onClick={onClose} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors">
-                            <X size={18} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Toolbar */}
-                <div className="flex items-center justify-between p-2 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]">
-                    <div className="flex gap-1 bg-[var(--theme-bg-input)] p-1 rounded-lg border border-[var(--theme-border-secondary)]">
-                        <TabButton id="code" icon={Code} label="Code" />
+                {/* Unified Header */}
+                <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex-shrink-0">
+                    {/* Left: Tabs */}
+                    <div className="flex bg-[var(--theme-bg-input)] p-1 rounded-lg border border-[var(--theme-border-secondary)] flex-shrink-0">
                         <TabButton id="preview" icon={Eye} label="Preview" />
+                        <TabButton id="code" icon={Code} label="Code" />
                     </div>
-                    <button 
-                        onClick={handleRun}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shadow-sm active:scale-95"
-                    >
-                        <Play size={14} fill="currentColor" />
-                        Run / Update
-                    </button>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                        <button onClick={handleDownload} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Download Code">
+                            <Download size={16} strokeWidth={1.5} />
+                        </button>
+                        <button onClick={onClose} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Close Panel">
+                            <X size={18} strokeWidth={1.5} />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content Body */}
-                <div className="flex-grow flex flex-col min-h-0 bg-[var(--theme-bg-primary)]">
-                    {activeTab === 'code' ? (
+                <div className="flex-grow flex flex-col min-h-0 bg-[var(--theme-bg-primary)] relative">
+                    <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
                         <CodeEditor 
                             value={localCode}
                             onChange={setLocalCode}
                             language={editorLanguage}
                         />
-                    ) : (
-                        <div className="w-full h-full relative">
-                            {renderPreview()}
-                        </div>
-                    )}
+                    </div>
+                    <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'preview' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
+                        {renderPreview()}
+                    </div>
                 </div>
             </div>
         </>

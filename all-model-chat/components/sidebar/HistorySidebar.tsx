@@ -226,6 +226,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
       }
   };
 
+  const handleSessionSelect = (sessionId: string) => {
+      onSelectSession(sessionId);
+      // Auto-close sidebar on mobile
+      if (window.innerWidth < 768) {
+          onToggle();
+      }
+  };
+
   const ungroupedSessions = sessionsByGroupId.get(null) || [];
   const pinnedUngrouped = ungroupedSessions.filter(s => s.isPinned);
   const { categories, categoryOrder } = categorizedUngroupedSessions;
@@ -233,7 +241,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const sessionItemSharedProps = {
     activeSessionId, editingItem, activeMenu, loadingSessionIds,
     generatingTitleSessionIds, newlyTitledSessionId, editInputRef, menuRef,
-    onSelectSession, onTogglePinSession, onDeleteSession, onDuplicateSession, onOpenExportModal,
+    onSelectSession: handleSessionSelect, onTogglePinSession, onDeleteSession, onDuplicateSession, onOpenExportModal,
     handleStartEdit: (item: SavedChatSession) => handleStartEdit('session', item),
     handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
   };
