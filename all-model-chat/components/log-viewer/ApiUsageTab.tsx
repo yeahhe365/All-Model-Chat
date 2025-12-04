@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { KeyRound, CheckCircle } from 'lucide-react';
 import { AppSettings, ChatSettings } from '../../types';
@@ -10,10 +11,24 @@ interface ApiUsageTabProps {
 }
 
 export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettings, currentChatSettings }) => {
-    const allApiKeys = (appSettings.apiKey || '').split('\n').map(k => k.trim()).filter(Boolean);
+    // Sanitize keys to match how they are logged in utils/apiUtils.ts (strip quotes, split by newlines/commas)
+    const allApiKeys = (appSettings.apiKey || '')
+        .split(/[\n,]+/)
+        .map(k => k.trim().replace(/^["']|["']$/g, ''))
+        .filter(k => k.length > 0);
+
     const displayApiKeyUsage = new Map<string, number>();
+    
+    // 1. Add keys from settings, checking usage logs
     allApiKeys.forEach(key => displayApiKeyUsage.set(key, apiKeyUsage.get(key) || 0));
-    apiKeyUsage.forEach((count, key) => { if (!displayApiKeyUsage.has(key)) displayApiKeyUsage.set(key, count); });
+    
+    // 2. Add any keys found in usage logs that aren't currently in settings (historical keys)
+    apiKeyUsage.forEach((count, key) => { 
+        if (!displayApiKeyUsage.has(key)) {
+            displayApiKeyUsage.set(key, count); 
+        }
+    });
+
     const totalApiUsage = Array.from(displayApiKeyUsage.values()).reduce((sum, count) => sum + count, 0);
 
     return (

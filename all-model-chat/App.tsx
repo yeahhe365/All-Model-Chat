@@ -365,7 +365,43 @@ const App: React.FC = () => {
   // Merge active chat settings into app settings for the modal so controls reflect current session
   const settingsForModal = useMemo(() => {
     if (activeSessionId && currentChatSettings) {
-        return { ...appSettings, ...currentChatSettings };
+        // Explicitly pick only the settings that should be overridable by the session
+        // This prevents dirty DB data from overwriting global UI settings
+        const {
+            modelId,
+            temperature,
+            topP,
+            showThoughts,
+            systemInstruction,
+            ttsVoice,
+            thinkingBudget,
+            thinkingLevel,
+            lockedApiKey,
+            isGoogleSearchEnabled,
+            isCodeExecutionEnabled,
+            isUrlContextEnabled,
+            isDeepSearchEnabled,
+            safetySettings
+        } = currentChatSettings;
+
+        return { 
+            ...appSettings,
+            // Only override these specific keys from the session
+            modelId,
+            temperature,
+            topP,
+            showThoughts,
+            systemInstruction,
+            ttsVoice,
+            thinkingBudget,
+            thinkingLevel,
+            lockedApiKey,
+            isGoogleSearchEnabled,
+            isCodeExecutionEnabled,
+            isUrlContextEnabled,
+            isDeepSearchEnabled,
+            safetySettings
+        };
     }
     return appSettings;
   }, [appSettings, currentChatSettings, activeSessionId]);

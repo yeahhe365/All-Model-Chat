@@ -96,10 +96,19 @@ export const useChatStreamHandler = ({
 
             // Record Token Usage Statistics
             if (usageMetadata) {
+                let promptTokens = usageMetadata.promptTokenCount || 0;
+                let completionTokens = usageMetadata.candidatesTokenCount || 0;
+                const totalTokens = usageMetadata.totalTokenCount || 0;
+
+                // Fallback: If candidatesTokenCount is missing (0/undefined) but we have total and prompt, calculate it
+                if (!completionTokens && totalTokens > 0 && promptTokens > 0) {
+                    completionTokens = totalTokens - promptTokens;
+                }
+
                 logService.recordTokenUsage(
                     currentChatSettings.modelId,
-                    usageMetadata.promptTokenCount || 0,
-                    usageMetadata.candidatesTokenCount || 0
+                    promptTokens,
+                    completionTokens
                 );
             }
 
@@ -310,7 +319,7 @@ export const useChatStreamHandler = ({
 
                         const newFile: UploadedFile = {
                             id: generateUniqueId(),
-                            name: fileName,
+                            name,
                             type: mimeType,
                             size: data.length,
                             dataUrl: dataUrl,

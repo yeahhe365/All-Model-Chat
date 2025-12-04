@@ -42,6 +42,24 @@ interface AppearanceSectionProps {
   t: (key: keyof typeof translations) => string;
 }
 
+const ToggleItem = ({ label, checked, onChange, tooltip, small = false }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string, small?: boolean }) => (
+    <div className={`flex items-center justify-between py-${small ? '2' : '3'} transition-colors`}>
+        <div className="flex items-center pr-4 flex-1 min-w-0">
+            <span className={`${small ? 'text-xs text-[var(--theme-text-secondary)]' : 'text-sm font-medium text-[var(--theme-text-primary)]'}`}>
+                {label}
+            </span>
+            {tooltip && (
+                <Tooltip text={tooltip}>
+                    <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
+                </Tooltip>
+            )}
+        </div>
+        <div className="flex-shrink-0">
+          <Toggle checked={checked} onChange={onChange} />
+        </div>
+    </div>
+);
+
 export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   themeId, setThemeId,
   language, setLanguage,
@@ -78,24 +96,6 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   ];
 
   const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
-
-  const ToggleItem = ({ label, checked, onChange, tooltip, small = false }: { label: string, checked: boolean, onChange: (v: boolean) => void, tooltip?: string, small?: boolean }) => (
-      <div className={`flex items-center justify-between py-${small ? '2' : '3'} transition-colors`}>
-          <div className="flex items-center pr-4 flex-1 min-w-0">
-              <span className={`${small ? 'text-xs text-[var(--theme-text-secondary)]' : 'text-sm font-medium text-[var(--theme-text-primary)]'}`}>
-                  {label}
-              </span>
-              {tooltip && (
-                  <Tooltip text={tooltip}>
-                      <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
-                  </Tooltip>
-              )}
-          </div>
-          <div className="flex-shrink-0">
-            <Toggle id={label} checked={checked} onChange={onChange} />
-          </div>
-      </div>
-  );
 
   const updateFileConfig = (key: keyof FilesApiConfig, val: boolean) => {
       setFilesApiConfig({ ...filesApiConfig, [key]: val });
@@ -233,3 +233,4 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
     </div>
   );
 };
+    
