@@ -7,6 +7,10 @@
 
 
 
+
+
+
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -96,6 +100,7 @@ export const chatInputTranslations = {
     help_cmd_canvas: { en: 'Toggle Canvas prompt', zh: '切换 Canvas 提示' },
     help_cmd_pip: { en: 'Toggle Picture-in-Picture mode', zh: '切换画中画模式' },
     help_cmd_setdefault: { en: 'Set current model as default', zh: '将当前模型设为默认' },
+    help_cmd_fast: { en: 'Toggle Fast Thinking Mode', zh: '切换快速思考模式' },
     
     // Help Modal
     helpModal_title: { en: 'Command Help', zh: '命令帮助' },

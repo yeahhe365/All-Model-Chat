@@ -1,5 +1,8 @@
 
 
+
+
+
 import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Command } from '../components/chat/input/SlashCommandMenu';
 import { translations } from '../utils/appUtils';
@@ -29,6 +32,8 @@ interface UseSlashCommandsProps {
   setInputText: Dispatch<SetStateAction<string>>;
   onSetDefaultModel: (modelId: string) => void;
   currentModelId: string;
+  onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
+  thinkingLevel?: 'LOW' | 'HIGH';
 }
 
 export const useSlashCommands = ({
@@ -38,7 +43,7 @@ export const useSlashCommands = ({
   onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction,
   availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
   textareaRef, onEditLastUserMessage, onTogglePip, setInputText,
-  onSetDefaultModel, currentModelId
+  onSetDefaultModel, currentModelId, onSetThinkingLevel, thinkingLevel
 }: UseSlashCommandsProps) => {
   
   const [slashCommandState, setSlashCommandState] = useState<{
@@ -81,7 +86,8 @@ export const useSlashCommands = ({
     { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
     { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
     { name: 'default', description: t('help_cmd_setdefault'), icon: 'default', action: () => onSetDefaultModel(currentModelId) },
-  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetDefaultModel, currentModelId]);
+    { name: 'fast', description: t('help_cmd_fast'), icon: 'fast', action: () => onSetThinkingLevel(thinkingLevel === 'LOW' ? 'HIGH' : 'LOW') },
+  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetDefaultModel, currentModelId, onSetThinkingLevel, thinkingLevel]);
   
   const allCommandsForHelp = useMemo(() => [
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description, icon: c.icon })),

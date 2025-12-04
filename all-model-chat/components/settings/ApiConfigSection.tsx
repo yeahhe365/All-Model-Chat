@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { KeyRound, Info, Check, AlertCircle, ShieldCheck, ArrowRight, Activity, Loader2, XCircle, Sparkles } from 'lucide-react';
+import { KeyRound, Info, Check, AlertCircle, ShieldCheck, ArrowRight, Activity, Loader2, XCircle, Sparkles, RotateCcw } from 'lucide-react';
 import { Toggle } from '../shared/Tooltip';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
@@ -51,6 +51,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   // Calculate preview URL
   const defaultBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
+  const defaultProxyUrl = 'https://api-proxy.de/gemini/v1beta';
   const currentBaseUrl = apiProxyUrl?.trim() || defaultBaseUrl;
   const cleanBaseUrl = currentBaseUrl.replace(/\/+$/, '');
   const previewUrl = `${cleanBaseUrl}/models/gemini-2.5-flash:generateContent`;
@@ -117,6 +118,11 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           setUseApiProxy(true);
           setApiModelsUrl(VERTEX_URL);
       }
+  };
+
+  const handleResetProxy = () => {
+      setApiProxyUrl(defaultProxyUrl);
+      setTestStatus('idle');
   };
 
   return (
@@ -208,6 +214,15 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                             >
                                 <Sparkles size={10} strokeWidth={isVertexExpressActive ? 2 : 1.5} />
                                 <span>{t('apiConfig_vertexExpress_btn')}</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleResetProxy}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] border-transparent hover:border-[var(--theme-border-secondary)]"
+                                title="Reset to default"
+                            >
+                                <RotateCcw size={10} strokeWidth={1.5} />
+                                <span>Reset</span>
                             </button>
                         </div>
                         <Toggle

@@ -209,7 +209,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                 <div className="flex items-center gap-0.5 flex-shrink-0">
                     {showPreview && (
                         <>
-                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title="Open in Side Panel" onClick={handleOpenSide}>
+                            <button className={`${MESSAGE_BLOCK_BUTTON_CLASS} hidden md:block`} title="Open in Side Panel" onClick={handleOpenSide}>
                                 <Sidebar size={14} strokeWidth={2} />
                             </button>
                             <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 

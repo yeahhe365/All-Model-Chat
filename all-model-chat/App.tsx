@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { AppSettings, ChatGroup, SavedChatSession, ChatMessage, SideViewContent } from './types';
 import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from './constants/appConstants';
@@ -71,17 +71,28 @@ const App: React.FC = () => {
   // Side Panel State
   const [sidePanelContent, setSidePanelContent] = useState<SideViewContent | null>(null);
   
-  const handleOpenSidePanel = (content: SideViewContent) => {
+  const handleOpenSidePanel = useCallback((content: SideViewContent) => {
       setSidePanelContent(content);
       // Auto-collapse sidebar on smaller screens if opening side panel
       if (window.innerWidth < 1280) {
           setIsHistorySidebarOpen(false);
       }
-  };
+  }, [setIsHistorySidebarOpen]);
 
-  const handleCloseSidePanel = () => {
+  const handleCloseSidePanel = useCallback(() => {
       setSidePanelContent(null);
-  };
+  }, []);
+
+  // Close SidePanel on window resize if width is too narrow
+  useEffect(() => {
+      const handleResize = () => {
+          if (window.innerWidth < 768) {
+              setSidePanelContent(null);
+          }
+      };
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const { isPipSupported, isPipActive, togglePip, pipContainer, pipWindow } = usePictureInPicture(setIsHistorySidebarOpen);
 
@@ -148,6 +159,7 @@ const App: React.FC = () => {
         showThoughts: newSettings.showThoughts,
         ttsVoice: newSettings.ttsVoice,
         thinkingBudget: newSettings.thinkingBudget,
+        thinkingLevel: newSettings.thinkingLevel,
         lockedApiKey: null,
       }));
     }
@@ -350,10 +362,18 @@ const App: React.FC = () => {
     t,
   };
 
+  // Merge active chat settings into app settings for the modal so controls reflect current session
+  const settingsForModal = useMemo(() => {
+    if (activeSessionId && currentChatSettings) {
+        return { ...appSettings, ...currentChatSettings };
+    }
+    return appSettings;
+  }, [appSettings, currentChatSettings, activeSessionId]);
+
   const appModalsProps = {
     isSettingsModalOpen,
     setIsSettingsModalOpen,
-    appSettings,
+    appSettings: settingsForModal, // Use merged settings
     availableModels: apiModels,
     handleSaveSettings,
     isModelsLoading,

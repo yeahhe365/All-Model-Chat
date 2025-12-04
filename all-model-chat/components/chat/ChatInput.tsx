@@ -1,4 +1,8 @@
 
+
+
+
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../../types';
@@ -138,6 +142,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction: handleAttachmentAction,
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
     onTogglePip, onSetDefaultModel, currentModelId: currentChatSettings.modelId,
+    onSetThinkingLevel: (level) => setCurrentChatSettings(prev => ({ ...prev, thinkingLevel: level })),
+    thinkingLevel: currentChatSettings.thinkingLevel,
   });
 
   const isModalOpen = showCreateTextFileEditor || showRecorder || !!configuringFile || !!previewFile;
