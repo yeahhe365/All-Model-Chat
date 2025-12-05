@@ -91,22 +91,29 @@ export const buildGenerationConfig = (
     safetySettings?: SafetySetting[]
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
-        // This model has specific requirements and doesn't support other configs.
-        return {
+        const imageConfig: any = {};
+        if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
+        
+        const config: any = {
             responseModalities: [Modality.IMAGE, Modality.TEXT],
-            imageConfig: {
-                aspectRatio: aspectRatio || '1:1',
-            }
         };
+        if (Object.keys(imageConfig).length > 0) {
+            config.imageConfig = imageConfig;
+        }
+        return config;
     }
 
     if (modelId === 'gemini-3-pro-image-preview') {
+         const imageConfig: any = {
+            imageSize: imageSize || '1K',
+         };
+         if (aspectRatio && aspectRatio !== 'Auto') {
+            imageConfig.aspectRatio = aspectRatio;
+         }
+         
          const config: any = {
             responseModalities: ['IMAGE', 'TEXT'],
-            imageConfig: {
-                aspectRatio: aspectRatio || '1:1',
-                imageSize: imageSize || '1K',
-            }
+            imageConfig,
          };
          
          // Add tools if enabled

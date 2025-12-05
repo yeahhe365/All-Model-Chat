@@ -1,8 +1,4 @@
 
-
-
-
-
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../../types';
@@ -213,6 +209,24 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft, isFullscreen]);
 
   const isGemini3ImageModel = currentChatSettings.modelId === 'gemini-3-pro-image-preview';
+  const isFlashImageModel = currentChatSettings.modelId.includes('gemini-2.5-flash-image');
+  const isRealImagen = currentChatSettings.modelId.includes('imagen');
+  
+  let supportedAspectRatios: string[] | undefined;
+  
+  if (isRealImagen) {
+      supportedAspectRatios = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+  } else if (isGemini3ImageModel || isFlashImageModel) {
+      supportedAspectRatios = ['Auto', '1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '4:5', '5:4', '21:9'];
+  }
+
+  let supportedImageSizes: string[] | undefined;
+  if (isGemini3ImageModel) {
+      supportedImageSizes = ['1K', '2K', '4K'];
+  } else if (isRealImagen && !currentChatSettings.modelId.includes('fast')) {
+      // Standard and Ultra support 1K and 2K
+      supportedImageSizes = ['1K', '2K'];
+  }
 
   const chatInputContent = (
       <ChatInputArea 
@@ -240,6 +254,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             t,
             generateQuadImages,
             onToggleQuadImages,
+            supportedAspectRatios,
+            supportedImageSizes,
         }}
         actionsProps={{
             onAttachmentAction: handleAttachmentAction,

@@ -75,13 +75,15 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
-        // Exclude gemini-3-pro-image-preview from isImageEditModel to force standard chat flow
+        // Exclude gemini-3-pro-image-preview from isImageEditModel to force standard chat flow, 
+        // unless Quad Images are enabled which we handle via edit route
         const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro');
+        const isGemini3Image = activeModelId === 'gemini-3-pro-image-preview';
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId });
 
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
-        if ((isTtsModel || isImagenModel || isImageEditModel) && !textToUse.trim()) return;
+        if ((isTtsModel || isImagenModel || isImageEditModel || isGemini3Image) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
             logService.warn("Send message blocked: files are still processing.");
             setAppFileError("Wait for files to finish processing."); 
@@ -121,17 +123,20 @@ export const useMessageSender = (props: MessageSenderProps) => {
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
         if (isTtsModel || isImagenModel) {
-            await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, { shouldLockKey });
+            await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, imageSize, { shouldLockKey });
             if (editingMessageId) {
                 setEditingMessageId(null);
             }
             return;
         }
         
-        if (isImageEditModel) {
+        // Use image edit flow for:
+        // 1. Explicit image edit models (e.g. flash-image)
+        // 2. Gemini 3 Pro Image IF Quad Images are enabled (for parallel generation)
+        if (isImageEditModel || (isGemini3Image && appSettings.generateQuadImages)) {
             const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
             const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
-            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, aspectRatio, { shouldLockKey });
+            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, aspectRatio, imageSize, { shouldLockKey });
             if (editingMessageId) {
                 setEditingMessageId(null);
             }

@@ -31,8 +31,8 @@ class GeminiServiceImpl implements GeminiService {
         return getFileMetadataApi(apiKey, fileApiName);
     }
 
-    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> {
-        return generateImagesApi(apiKey, modelId, prompt, aspectRatio, abortSignal);
+    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal): Promise<string[]> {
+        return generateImagesApi(apiKey, modelId, prompt, aspectRatio, imageSize, abortSignal);
     }
 
     async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
@@ -55,7 +55,7 @@ class GeminiServiceImpl implements GeminiService {
         return generateSuggestionsApi(apiKey, userContent, modelContent, language);
     }
 
-    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string): Promise<Part[]> {
+    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, imageSize?: string): Promise<Part[]> {
         return new Promise((resolve, reject) => {
             if (abortSignal.aborted) {
                 const abortError = new Error("aborted");
@@ -73,10 +73,14 @@ class GeminiServiceImpl implements GeminiService {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             };
             
-            if (aspectRatio) {
-                config.imageConfig = {
-                    aspectRatio: aspectRatio
-                };
+            if (aspectRatio && aspectRatio !== 'Auto') {
+                if (!config.imageConfig) config.imageConfig = {};
+                config.imageConfig.aspectRatio = aspectRatio;
+            }
+
+            if (modelId === 'gemini-3-pro-image-preview' && imageSize) {
+                if (!config.imageConfig) config.imageConfig = {};
+                config.imageConfig.imageSize = imageSize;
             }
 
             sendStatelessMessageNonStreamApi(

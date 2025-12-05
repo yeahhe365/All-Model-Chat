@@ -4,8 +4,8 @@ import { Part, Type } from "@google/genai";
 import { logService } from "../logService";
 import { fileToBase64 } from "../../utils/appUtils";
 
-export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, abortSignal: AbortSignal): Promise<string[]> => {
-    logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio });
+export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal): Promise<string[]> => {
+    logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio, imageSize });
     
     if (!prompt.trim()) {
         throw new Error("Image generation prompt cannot be empty.");
@@ -19,10 +19,20 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
+        const config: any = { 
+            numberOfImages: 1, 
+            outputMimeType: 'image/jpeg', 
+            aspectRatio: aspectRatio 
+        };
+
+        if (imageSize) {
+            config.imageSize = imageSize;
+        }
+
         const response = await ai.models.generateImages({
             model: modelId,
             prompt: prompt,
-            config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: aspectRatio },
+            config: config,
         });
 
         if (abortSignal.aborted) {
