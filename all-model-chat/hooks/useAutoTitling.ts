@@ -13,6 +13,7 @@ interface AutoTitlingProps {
     language: 'en' | 'zh';
     generatingTitleSessionIds: Set<string>;
     setGeneratingTitleSessionIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+    sessionKeyMapRef?: React.MutableRefObject<Map<string, string>>;
 }
 
 export const useAutoTitling = ({
@@ -22,6 +23,7 @@ export const useAutoTitling = ({
     language,
     generatingTitleSessionIds,
     setGeneratingTitleSessionIds,
+    sessionKeyMapRef,
 }: AutoTitlingProps) => {
 
     const generateTitleForSession = useCallback(async (session: SavedChatSession) => {
@@ -31,16 +33,26 @@ export const useAutoTitling = ({
         setGeneratingTitleSessionIds(prev => new Set(prev).add(sessionId));
         logService.info(`Auto-generating title for session ${sessionId}`);
 
-        // Use skipIncrement to avoid rotating keys for background title generation
-        const keyResult = getKeyForRequest(appSettings, session.settings, { skipIncrement: true });
-        if ('error' in keyResult) {
-            logService.error(`Could not generate title for session ${sessionId}: ${keyResult.error}`);
-            setGeneratingTitleSessionIds(prev => {
-                const next = new Set(prev);
-                next.delete(sessionId);
-                return next;
-            });
-            return;
+        // Sticky Key Logic: Prefer key used in the last turn if available
+        const stickyKey = sessionKeyMapRef?.current?.get(sessionId);
+        
+        let keyToUse: string;
+        if (stickyKey) {
+            keyToUse = stickyKey;
+            // logService.debug(`Reusing sticky key for title generation.`);
+        } else {
+            // Fallback to normal rotation (skipIncrement)
+            const keyResult = getKeyForRequest(appSettings, session.settings, { skipIncrement: true });
+            if ('error' in keyResult) {
+                logService.error(`Could not generate title for session ${sessionId}: ${keyResult.error}`);
+                setGeneratingTitleSessionIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(sessionId);
+                    return next;
+                });
+                return;
+            }
+            keyToUse = keyResult.key;
         }
 
         try {
@@ -52,7 +64,7 @@ export const useAutoTitling = ({
                 return;
             }
             
-            const newTitle = await geminiServiceInstance.generateTitle(keyResult.key, userContent, modelContent, language);
+            const newTitle = await geminiServiceInstance.generateTitle(keyToUse, userContent, modelContent, language);
             
             if (newTitle && newTitle.trim()) {
                 logService.info(`Generated new title for session ${sessionId}: "${newTitle}"`);
@@ -79,7 +91,7 @@ export const useAutoTitling = ({
                 return next;
             });
         }
-    }, [appSettings, updateAndPersistSessions, language, setGeneratingTitleSessionIds]);
+    }, [appSettings, updateAndPersistSessions, language, setGeneratingTitleSessionIds, sessionKeyMapRef]);
 
     useEffect(() => {
         if (!appSettings.isAutoTitleEnabled) return;

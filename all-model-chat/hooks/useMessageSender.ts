@@ -31,6 +31,7 @@ interface MessageSenderProps {
     updateAndPersistSessions: SessionsUpdater;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     chat: Chat | null;
+    sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -53,6 +54,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         updateAndPersistSessions,
         scrollContainerRef,
         chat,
+        sessionKeyMapRef,
     } = props;
 
     const { getStreamHandlers } = useChatStreamHandler(props);
@@ -178,6 +180,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
             }));
         }
 
+        // --- Store Key Affinity for this session ---
+        if (finalSessionId) {
+            sessionKeyMapRef.current.set(finalSessionId, keyToUse);
+        }
+
         if (editingMessageId) {
             setEditingMessageId(null);
         }
@@ -243,7 +250,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, imageSize,
         userScrolledUp, activeSessionId, setActiveSessionId, activeJobs,
         setLoadingSessionIds, updateAndPersistSessions, getStreamHandlers,
-        handleTtsImagenMessage, scrollContainerRef, chat, handleImageEditMessage
+        handleTtsImagenMessage, scrollContainerRef, chat, handleImageEditMessage, sessionKeyMapRef
     ]);
 
     return { handleSendMessage };
