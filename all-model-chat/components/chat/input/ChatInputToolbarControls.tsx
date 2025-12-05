@@ -1,6 +1,9 @@
 
-import React from 'react';
-import { Plus, X, Link, Youtube, Loader2, LayoutGrid } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Plus, X, Link, Youtube, Loader2, LayoutGrid, ChevronDown, Check, Sparkles } from 'lucide-react';
+import { useClickOutside } from '../../../hooks/useClickOutside';
+import { useWindowContext } from '../../../contexts/WindowContext';
 
 // --- AddFileByIdInput Component ---
 
@@ -160,7 +163,10 @@ export const AddUrlInput: React.FC<AddUrlInputProps> = ({
 
 // --- ImagenAspectRatioSelector Component ---
 
-const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
+const AspectRatioIcon = ({ ratio, className }: { ratio: string; className?: string }) => {
+    if (ratio === 'Auto') {
+        return <Sparkles size={16} className={className} strokeWidth={2} />;
+    }
     let styles: React.CSSProperties = {};
     switch (ratio) {
         case '1:1': styles = { width: '20px', height: '20px' }; break;
@@ -168,57 +174,120 @@ const AspectRatioIcon = ({ ratio }: { ratio: string }) => {
         case '16:9': styles = { width: '24px', height: '13.5px' }; break;
         case '4:3': styles = { width: '20px', height: '15px' }; break;
         case '3:4': styles = { width: '15px', height: '20px' }; break;
+        case '2:3': styles = { width: '14px', height: '21px' }; break;
+        case '3:2': styles = { width: '21px', height: '14px' }; break;
+        case '4:5': styles = { width: '16px', height: '20px' }; break;
+        case '5:4': styles = { width: '20px', height: '16px' }; break;
+        case '21:9': styles = { width: '24px', height: '10px' }; break;
+        default: styles = { width: '20px', height: '20px' }; break;
     }
-    return <div style={styles} className="border-2 border-current rounded-sm mb-1"></div>;
+    return <div style={styles} className={`border-2 border-current rounded-sm ${className || ''}`}></div>;
 };
 
-const aspectRatios = ['1:1', '9:16', '16:9', '4:3', '3:4'];
+const defaultAspectRatios = ['1:1', '16:9', '9:16', '4:3', '3:4', '2:3', '3:2', '4:5', '5:4', '21:9'];
 
 interface ImagenAspectRatioSelectorProps {
     aspectRatio: string;
     setAspectRatio: (ratio: string) => void;
     t: (key: string) => string;
+    supportedRatios?: string[];
 }
 
-export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps> = ({ aspectRatio, setAspectRatio, t }) => {
+export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps> = ({ aspectRatio, setAspectRatio, t, supportedRatios }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const { document: targetDocument, window: targetWindow } = useWindowContext();
+
+    useClickOutside(dropdownRef, (e) => {
+        if (buttonRef.current && buttonRef.current.contains(e.target as Node)) return;
+        setIsOpen(false);
+    }, isOpen);
+
+    const toggleOpen = () => setIsOpen(!isOpen);
+
+    const ratios = supportedRatios || defaultAspectRatios;
+
     return (
-        <div className="mb-2">
-            <div className="flex items-center gap-x-2 sm:gap-x-3 gap-y-2 flex-wrap">
-                {aspectRatios.map(ratioValue => {
-                    const isSelected = aspectRatio === ratioValue;
-                    return (
-                        <button
-                            key={ratioValue}
-                            onClick={() => setAspectRatio(ratioValue)}
-                            className={`p-2 rounded-lg flex flex-col items-center justify-center min-w-[50px] text-xs font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] ${isSelected ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-tertiary)] hover:bg-[var(--theme-bg-secondary)]/50'}`}
-                            title={`${t('aspectRatio_title')} ${ratioValue}`}
-                        >
-                            <AspectRatioIcon ratio={ratioValue} />
-                            <span>{ratioValue}</span>
-                        </button>
-                    );
-                })}
-            </div>
+        <div className="mb-2 relative">
+            <button
+                ref={buttonRef}
+                onClick={toggleOpen}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] text-xs font-medium text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
+                title={t('aspectRatio_title')}
+            >
+                <AspectRatioIcon ratio={aspectRatio} />
+                <span>{aspectRatio}</span>
+                <ChevronDown size={14} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isOpen && createPortal(
+                <div
+                    ref={dropdownRef}
+                    className="fixed z-[2200] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col w-40"
+                    style={{
+                        ...(buttonRef.current ? (() => {
+                            const rect = buttonRef.current.getBoundingClientRect();
+                            // Default to dropup since toolbar is at bottom
+                            const spaceAbove = rect.top;
+                            const dropdownHeight = 320; // Approx max height
+                            
+                            if (spaceAbove > dropdownHeight) {
+                                return {
+                                    left: rect.left,
+                                    bottom: targetWindow.innerHeight - rect.top + 8,
+                                    maxHeight: '300px'
+                                };
+                            }
+                            return {
+                                left: rect.left,
+                                top: rect.bottom + 8,
+                                maxHeight: '300px'
+                            };
+                        })() : {})
+                    }}
+                >
+                    <div className="overflow-y-auto custom-scrollbar p-1">
+                        {ratios.map(r => (
+                            <button
+                                key={r}
+                                onClick={() => { setAspectRatio(r); setIsOpen(false); }}
+                                className={`w-full text-left px-3 py-2 text-xs rounded-lg flex items-center justify-between transition-colors ${
+                                    aspectRatio === r
+                                    ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium'
+                                    : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]/50 hover:text-[var(--theme-text-primary)]'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <AspectRatioIcon ratio={r} />
+                                    <span>{r}</span>
+                                </div>
+                                {aspectRatio === r && <Check size={14} className="text-[var(--theme-text-link)]" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>,
+                targetDocument.body
+            )}
         </div>
     );
 };
 
 // --- ImageSizeSelector Component ---
 
-const sizes = ['1K', '2K', '4K'];
+const defaultSizes = ['1K', '2K', '4K'];
 
 interface ImageSizeSelectorProps {
     imageSize: string;
     setImageSize: (size: string) => void;
     t: (key: string) => string;
+    supportedSizes?: string[];
 }
 
-export const ImageSizeSelector: React.FC<ImageSizeSelectorProps> = ({ imageSize, setImageSize, t }) => {
+export const ImageSizeSelector: React.FC<ImageSizeSelectorProps> = ({ imageSize, setImageSize, t, supportedSizes }) => {
+    const sizes = supportedSizes || defaultSizes;
     return (
         <div className="mb-2">
-            <label className="block text-xs font-semibold uppercase text-[var(--theme-text-tertiary)] mb-1">
-                Resolution
-            </label>
             <div className="flex items-center gap-x-2">
                 {sizes.map(sizeValue => {
                     const isSelected = imageSize === sizeValue;

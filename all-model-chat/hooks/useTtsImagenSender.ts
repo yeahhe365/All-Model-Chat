@@ -1,3 +1,4 @@
+
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
@@ -32,6 +33,7 @@ export const useTtsImagenSender = ({
         currentChatSettings: IndividualChatSettings,
         text: string,
         aspectRatio: string,
+        imageSize: string | undefined,
         options: { shouldLockKey?: boolean } = {}
     ) => {
         const isTtsModel = currentChatSettings.modelId.includes('-tts');
@@ -97,12 +99,12 @@ export const useTtsImagenSender = ({
             } else { // Imagen
                 const imageBase64Array = appSettings.generateQuadImages
                     ? (await Promise.all([
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
+                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
                     ])).flat()
-                    : await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, newAbortController.signal);
+                    : await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal);
 
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {

@@ -188,6 +188,22 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
 
     useEffect(() => { if (isSwitchingModel) { const timer = setTimeout(() => setIsSwitchingModel(false), 0); return () => clearTimeout(timer); } }, [isSwitchingModel]);
 
+    // Auto-set default aspect ratio for specific image models
+    const prevModelIdRef = useRef(currentChatSettings.modelId);
+    useEffect(() => {
+        if (prevModelIdRef.current !== currentChatSettings.modelId) {
+            const modelId = currentChatSettings.modelId;
+            const isBananaModel = modelId.includes('gemini-2.5-flash-image') || modelId.includes('gemini-3-pro-image');
+            
+            if (isBananaModel) {
+                setAspectRatio('Auto');
+            } else if (aspectRatio === 'Auto') {
+                setAspectRatio('1:1');
+            }
+            prevModelIdRef.current = modelId;
+        }
+    }, [currentChatSettings.modelId, aspectRatio, setAspectRatio]);
+
     return {
         // State
         messages,

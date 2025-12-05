@@ -137,6 +137,8 @@ export interface ChatInputToolbarProps {
   t: (key: string) => string;
   generateQuadImages?: boolean;
   onToggleQuadImages?: () => void;
+  supportedAspectRatios?: string[];
+  supportedImageSizes?: string[]; // Added for configuring supported resolutions
 }
 
 export interface ChatInputActionsProps {
