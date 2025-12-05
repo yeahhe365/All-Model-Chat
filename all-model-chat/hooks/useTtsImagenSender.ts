@@ -108,8 +108,8 @@ export const useTtsImagenSender = ({
 
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
-                    const name = `generated-image-${index + 1}.jpeg`;
-                    const type = 'image/jpeg';
+                    const name = `generated-image-${index + 1}.png`;
+                    const type = 'image/png';
                     const blob = base64ToBlob(base64Data, type);
                     const file = new File([blob], name, { type });
                     const dataUrl = URL.createObjectURL(file);

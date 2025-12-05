@@ -21,7 +21,7 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
         const ai = await getConfiguredApiClient(apiKey);
         const config: any = { 
             numberOfImages: 1, 
-            outputMimeType: 'image/jpeg', 
+            outputMimeType: 'image/png', 
             aspectRatio: aspectRatio 
         };
 
