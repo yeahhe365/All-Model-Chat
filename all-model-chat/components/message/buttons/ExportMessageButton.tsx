@@ -15,7 +15,8 @@ import {
     generateExportHtmlTemplate,
     generateExportTxtTemplate,
     gatherPageStyles,
-    createSnapshotContainer
+    createSnapshotContainer,
+    embedImagesInClone
 } from '../../../utils/exportUtils';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { Modal } from '../../shared/Modal';
@@ -70,8 +71,35 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
         }
 
         if (type === 'png') {
-            const rawHtml = marked.parse(markdownContent);
-            const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
+            // Attempt to find the rendered DOM bubble to preserve Math/Syntax/Diagrams
+            const messageBubble = document.querySelector(`[data-message-id="${message.id}"] > div > .shadow-sm`);
+            
+            let contentNode: HTMLElement;
+
+            if (messageBubble) {
+                // Clone the full bubble (includes files, thoughts, and formatted content)
+                contentNode = messageBubble.cloneNode(true) as HTMLElement;
+                
+                // Embed images to ensure they render in the screenshot (handles CORS/Blob URLs)
+                await embedImagesInClone(contentNode);
+                
+                // Expand any collapsed details (like thoughts) if desired, or keep them as is. 
+                // We'll expand thoughts so they are visible in export.
+                contentNode.querySelectorAll('details').forEach(details => details.setAttribute('open', 'true'));
+            } else {
+                // Fallback to raw markdown parsing if DOM finding fails
+                const rawHtml = marked.parse(markdownContent);
+                const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
+                const wrapper = document.createElement('div');
+                wrapper.className = 'markdown-body';
+                wrapper.innerHTML = sanitizedHtml;
+                
+                wrapper.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block as HTMLElement);
+                });
+                
+                contentNode = wrapper;
+            }
             
             let cleanup = () => {};
             try {
@@ -92,16 +120,17 @@ export const ExportMessageButton: React.FC<ExportMessageButtonProps> = ({ messag
                     </div>
                 `;
 
-                innerContent.innerHTML = `
-                    ${headerHtml}
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        <div class="markdown-body">${sanitizedHtml}</div>
-                    </div>
-                `;
+                const headerDiv = document.createElement('div');
+                headerDiv.innerHTML = headerHtml;
+                innerContent.appendChild(headerDiv);
+
+                const bodyDiv = document.createElement('div');
+                bodyDiv.style.padding = '0 2rem 2rem 2rem';
+                bodyDiv.appendChild(contentNode);
+                innerContent.appendChild(bodyDiv);
                 
-                innerContent.querySelectorAll('pre code').forEach((block) => {
-                    hljs.highlightElement(block as HTMLElement);
-                });
+                // Wait for layout/images
+                await new Promise(resolve => setTimeout(resolve, 800));
                 
                 await exportElementAsPng(container, `${filenameBase}.png`, { backgroundColor: rootBgColor, scale: 2.5 });
             } finally {

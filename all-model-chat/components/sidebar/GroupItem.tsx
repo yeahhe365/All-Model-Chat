@@ -76,7 +76,16 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
             t={t}
           />
         )}
-        <ul className="pl-1 pb-1">{sessions?.map(session => <SessionItem key={session.id} session={session} {...sessionItemProps} />)}</ul>
+        <ul className="pl-1 pb-1">{sessions?.map(session => (
+            <SessionItem 
+                key={session.id} 
+                session={session} 
+                editingItem={editingItem} 
+                setEditingItem={setEditingItem} 
+                t={t} 
+                {...sessionItemProps} 
+            />
+        ))}</ul>
       </details>
     </div>
   );
