@@ -72,21 +72,13 @@ export const generateFolderContext = async (files: FileList): Promise<File> => {
     const roots: FileNode[] = [];
     const processedFiles: { path: string, content: string }[] = [];
 
-    // Filter valid files
-    const validFiles = fileList.filter(file => {
-        const path = (file as any).webkitRelativePath || file.name;
-        const parts = path.split('/');
-        // Check if any part of the path is in IGNORED_DIRS
-        if (parts.some((part: string) => IGNORED_DIRS.has(part))) return false;
-        
-        const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-        return !IGNORED_EXTENSIONS.has(extension);
-    });
-
-    // Build Tree and Read Content
-    for (const file of validFiles) {
+    // Iterate all files to build structure
+    for (const file of fileList) {
         const path = (file as any).webkitRelativePath || file.name;
         const parts = path.split('/').filter((p: string) => p);
+
+        // Check if any part of the path is in IGNORED_DIRS
+        if (parts.some((part: string) => IGNORED_DIRS.has(part))) continue;
 
         // Tree Building Logic
         let parentNode: FileNode | undefined = undefined;
@@ -116,8 +108,11 @@ export const generateFolderContext = async (files: FileList): Promise<File> => {
             parentNode = currentNode;
         }
 
-        // Read Content (only for files, skip large files > 2MB to be safe for text context)
-        if (file.size < 2 * 1024 * 1024) {
+        // Determine if we should read the content
+        const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+        const shouldReadContent = !IGNORED_EXTENSIONS.has(extension) && file.size < 2 * 1024 * 1024;
+
+        if (shouldReadContent) {
             try {
                 const content = await fileToString(file);
                 processedFiles.push({ path, content });
@@ -147,19 +142,18 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
 
     const entries = Object.values(zip.files);
 
-    // Filter valid entries
-    const validEntries = entries.filter(entry => {
-        if (entry.dir) return false;
+    for (const entry of entries) {
         const path = entry.name;
-        const parts = path.split('/');
-        if (parts.some(part => part.startsWith('.') || IGNORED_DIRS.has(part))) return false;
-        const extension = `.${path.split('.').pop()?.toLowerCase()}`;
-        return !IGNORED_EXTENSIONS.has(extension);
-    });
-
-    for (const entry of validEntries) {
-        const path = entry.name;
+        // Ignore directories themselves in this loop if they are explicitly stored, 
+        // we handle structure via path splitting of files/folders. 
+        // JSZip can have entries for folders "foo/" and files "foo/bar.txt".
+        // We generally rely on the file paths to build the tree implicitly, 
+        // but explicit directory entries are useful if empty.
+        
         const parts = path.split('/').filter(p => p);
+        
+        // Filter ignored dirs
+        if (parts.some(part => part.startsWith('.') || IGNORED_DIRS.has(part))) continue;
 
         // Tree Building Logic
         let parentNode: FileNode | undefined = undefined;
@@ -172,7 +166,10 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
             let currentNode = nodeMap.get(currentPath);
 
             if (!currentNode) {
-                const isDir = i < parts.length - 1;
+                // If this is the last part, check if the entry itself is a directory
+                // or if it's an intermediate path
+                const isDir = i < parts.length - 1 || entry.dir;
+                
                 currentNode = {
                     name: part,
                     children: [],
@@ -190,12 +187,19 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
             parentNode = currentNode;
         }
 
-        // Read content
-        try {
-            const content = await entry.async('string');
-            processedFiles.push({ path, content });
-        } catch (e) {
-            console.warn(`Failed to read zip entry ${path}`, e);
+        // Determine content reading
+        if (!entry.dir) {
+            const extension = `.${path.split('.').pop()?.toLowerCase()}`;
+            const shouldReadContent = !IGNORED_EXTENSIONS.has(extension);
+
+            if (shouldReadContent) {
+                try {
+                    const content = await entry.async('string');
+                    processedFiles.push({ path, content });
+                } catch (e) {
+                    console.warn(`Failed to read zip entry ${path}`, e);
+                }
+            }
         }
     }
 
