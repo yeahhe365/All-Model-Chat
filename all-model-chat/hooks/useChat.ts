@@ -11,7 +11,6 @@ import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
 import { useChatState } from './useChatState';
-import { useChatClient } from './useChatClient';
 import { useChatActions } from './useChatActions';
 import { logService } from '../utils/appUtils';
 
@@ -43,19 +42,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     // Ref to track which API key was last used for a session (for sticky affinity)
     const sessionKeyMapRef = useRef<Map<string, string>>(new Map());
 
-    // 2. Chat Client Initialization
-    const { chat } = useChatClient({
-        activeSessionId,
-        savedSessions,
-        appSettings,
-        currentChatSettings,
-        messages,
-        aspectRatio,
-        imageSize
-    });
-
-    // 3. Feature Hooks
-    const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels(appSettings);
+    // 2. Feature Hooks
+    const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels();
     
     const historyHandler = useChatHistory({ 
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
@@ -99,14 +87,14 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, 
         setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, 
         setLoadingSessionIds, updateAndPersistSessions, language, 
-        scrollContainerRef: scrollHandler.scrollContainerRef, chat,
+        scrollContainerRef: scrollHandler.scrollContainerRef,
         sessionKeyMapRef // Pass ref to message handler
     });
 
     useAutoTitling({ appSettings, savedSessions, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
     useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, sessionKeyMapRef });
 
-    // 4. Actions & Handlers
+    // 3. Actions & Handlers
     const { loadChatSession, startNewChat, handleDeleteChatHistorySession } = historyHandler;
 
     const chatActions = useChatActions({
@@ -127,7 +115,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         userScrolledUp
     });
 
-    // 5. Effects
+    // 4. Effects
     useEffect(() => {
         const loadData = async () => await historyHandler.loadInitialData();
         loadData();

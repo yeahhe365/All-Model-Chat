@@ -3,6 +3,7 @@ import React from 'react';
 import { KeyRound, CheckCircle } from 'lucide-react';
 import { AppSettings, ChatSettings } from '../../types';
 import { ObfuscatedApiKey } from './ObfuscatedApiKey';
+import { parseApiKeys } from '../../utils/apiUtils';
 
 interface ApiUsageTabProps {
     apiKeyUsage: Map<string, number>;
@@ -12,10 +13,7 @@ interface ApiUsageTabProps {
 
 export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettings, currentChatSettings }) => {
     // Sanitize keys to match how they are logged in utils/apiUtils.ts (strip quotes, split by newlines/commas)
-    const allApiKeys = (appSettings.apiKey || '')
-        .split(/[\n,]+/)
-        .map(k => k.trim().replace(/^["']|["']$/g, ''))
-        .filter(k => k.length > 0);
+    const allApiKeys = parseApiKeys(appSettings.apiKey);
 
     const displayApiKeyUsage = new Map<string, number>();
     

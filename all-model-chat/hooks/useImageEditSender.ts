@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService } from '../utils/appUtils';
+import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService, createNewSession } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -47,20 +47,14 @@ export const useImageEditSender = ({
         const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
         
         if (!finalSessionId) { // New Chat
-            const newSessionId = generateUniqueId();
-            finalSessionId = newSessionId;
             let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
             if (options.shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
             
-            const newSession: SavedChatSession = {
-                id: newSessionId,
-                title: "New Image Edit",
-                messages: [userMessage, modelMessage],
-                timestamp: Date.now(),
-                settings: newSessionSettings
-            };
+            const newSession = createNewSession(newSessionSettings, [userMessage, modelMessage], "New Image Edit");
+            finalSessionId = newSession.id;
+            
             updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
-            setActiveSessionId(newSessionId);
+            setActiveSessionId(newSession.id);
         } else { // Existing Chat or Edit
             updateAndPersistSessions(p => p.map(s => {
                 const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;

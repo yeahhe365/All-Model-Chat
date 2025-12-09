@@ -39,6 +39,7 @@ export interface ChatMessage {
   generationStartTime?: Date;
   generationEndTime?: Date;
   thinkingTimeMs?: number;
+  firstTokenTimeMs?: number; // Time to First Token (TTFT) in ms
   promptTokens?: number;
   completionTokens?: number;
   totalTokens?: number;

@@ -5,7 +5,7 @@ export const historyTranslations = {
     history_recent_chats: { en: 'Recent Chats', zh: '近期对话' },
     history_empty: { en: 'No chat history yet.', zh: '暂无聊天记录。' },
     history_search_placeholder: { en: 'Search history...', zh: '搜索历史...' },
-    history_search_button: { en: 'Search', zh: '搜索' },
+    history_search_button: { en: 'Search', zh: '搜索聊天' },
     history_search_aria: { en: 'Search chat history', zh: '搜索聊天记录' },
     history_search_clear_aria: { en: 'Clear search', zh: '清除搜索' },
     history_pin: { en: 'Pin', zh: '置顶' },

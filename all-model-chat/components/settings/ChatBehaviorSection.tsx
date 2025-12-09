@@ -7,8 +7,6 @@ import { SafetySection } from './SafetySection';
 interface ChatBehaviorSectionProps {
   modelId: string;
   setModelId: (value: string) => void;
-  isModelsLoading: boolean;
-  modelsLoadingError: string | null;
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
@@ -42,8 +40,6 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
         <ModelVoiceSettings
             modelId={props.modelId}
             setModelId={props.setModelId}
-            isModelsLoading={props.isModelsLoading}
-            modelsLoadingError={props.modelsLoadingError}
             availableModels={props.availableModels}
             setAvailableModels={props.setAvailableModels}
             transcriptionModelId={props.transcriptionModelId}

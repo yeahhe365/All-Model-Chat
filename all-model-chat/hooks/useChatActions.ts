@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../types';
 import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
-import { getKeyForRequest, logService, generateUniqueId } from '../utils/appUtils';
+import { getKeyForRequest, logService, createNewSession } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 
 interface UseChatActionsProps {
@@ -56,12 +56,11 @@ export const useChatActions = ({
         };
 
         if (!activeSessionId) {
-            const newSessionId = generateUniqueId();
-            const newSession: SavedChatSession = {
-                id: newSessionId, title: 'New Chat', messages: [], timestamp: Date.now(), settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...newSettingsPartial },
-            };
+            const sessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...newSettingsPartial };
+            const newSession = createNewSession(sessionSettings);
+            
             updateAndPersistSessions(prev => [newSession, ...prev]);
-            setActiveSessionId(newSessionId);
+            setActiveSessionId(newSession.id);
         } else {
             if (isLoading) handleStopGenerating();
             if (modelId !== currentChatSettings.modelId) {

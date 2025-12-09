@@ -1,22 +1,29 @@
 
 /* Animations */
 :root {
-  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  /* Apple-style spring easing for premium feel */
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-out-circ: cubic-bezier(0.075, 0.82, 0.165, 1);
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Enhanced fadeInUp with slight blur for a modern feel */
+/* Enhanced fadeInUp with 'settle' effect */
 @keyframes fadeInUp { 
-  from { opacity: 0; transform: translateY(12px); filter: blur(2px); } 
-  to { opacity: 1; transform: translateY(0); filter: blur(0); } 
+  0% { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(4px); } 
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 
+}
+
+/* Side Panel Slide In */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* Smoother modal entry with scale and slight vertical slide */
 @keyframes modalEnter { 
-  from { opacity: 0; transform: scale(0.96) translateY(8px); } 
+  from { opacity: 0; transform: scale(0.95) translateY(10px); } 
   to { opacity: 1; transform: scale(1) translateY(0); } 
 }
 
@@ -101,12 +108,13 @@
 .mic-recording-animate { animation: micPulse 2s infinite; background-color: var(--theme-bg-danger); color: var(--theme-icon-stop); }
 .title-update-animate { animation: newTitlePulse 1.5s ease-out; }
 
-/* Message animation uses improved cubic-bezier */
-.message-container-animate { animation: fadeInUp 0.5s var(--ease-out-expo) both; }
-.welcome-message-animate { animation: fadeInUp 0.7s 0.1s var(--ease-out-expo) both; }
+/* Message animation uses premium cubic-bezier */
+.message-container-animate { animation: fadeInUp 0.6s var(--ease-spring) both; }
+.welcome-message-animate { animation: fadeInUp 0.8s 0.1s var(--ease-out-expo) both; }
+.slide-in-right-animate { animation: slideInRight 0.4s var(--ease-out-expo) both; }
 
 .drag-overlay-animate { animation: fadeIn 0.2s ease-out both; }
-.modal-enter-animation { animation: modalEnter 0.3s var(--ease-out-expo) both; }
+.modal-enter-animation { animation: modalEnter 0.4s var(--ease-spring) both; }
 .modal-exit-animation { animation: modalExit 0.2s ease-in both; }
 .fullscreen-enter-animation { animation: fullscreenEnter 0.4s var(--ease-out-expo) both; }
 .form-send-animate { animation: formSendPulse 0.3s cubic-bezier(0.2, 0, 0, 1); }
@@ -184,6 +192,21 @@
 
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
+}
+
+/* Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Fade Mask for horizontal scroll lists */
+.fade-mask-x {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent);
 }
 
 /* Markdown Body Overrides to prevent theme conflicts */

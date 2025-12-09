@@ -14,8 +14,6 @@ export interface AppModalsProps {
   appSettings: AppSettings;
   availableModels: ModelOption[];
   handleSaveSettings: (newSettings: AppSettings) => void;
-  isModelsLoading: boolean;
-  modelsLoadingError: string | null;
   clearCacheAndReload: () => void;
   clearAllHistory: () => void;
   handleInstallPwa: () => void;
@@ -51,7 +49,7 @@ export interface AppModalsProps {
 export const AppModals: React.FC<AppModalsProps> = (props) => {
     const {
         isSettingsModalOpen, setIsSettingsModalOpen, appSettings, availableModels,
-        handleSaveSettings, isModelsLoading, modelsLoadingError, clearCacheAndReload,
+        handleSaveSettings, clearCacheAndReload,
         clearAllHistory,
         handleInstallPwa, installPromptEvent, isStandalone, 
         handleImportSettings, handleExportSettings,
@@ -82,8 +80,6 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
               availableModels={availableModels}
               availableThemes={AVAILABLE_THEMES}
               onSave={handleSaveSettings}
-              isModelsLoading={isModelsLoading}
-              modelsLoadingError={modelsLoadingError}
               onClearAllHistory={clearAllHistory}
               onClearCache={clearCacheAndReload}
               onOpenLogViewer={() => setIsLogViewerOpen(true)}

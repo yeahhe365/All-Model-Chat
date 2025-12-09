@@ -12,8 +12,6 @@ import { TextEditorModal } from '../modals/TextEditorModal';
 interface ModelVoiceSettingsProps {
   modelId: string;
   setModelId: (value: string) => void;
-  isModelsLoading: boolean;
-  modelsLoadingError: string | null;
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
@@ -39,7 +37,7 @@ interface ModelVoiceSettingsProps {
 
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => {
   const {
-    modelId, setModelId, isModelsLoading, modelsLoadingError, availableModels,
+    modelId, setModelId, availableModels,
     transcriptionModelId, setTranscriptionModelId,
     ttsVoice, setTtsVoice, 
     systemInstruction, setSystemInstruction,
@@ -64,8 +62,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
           <ModelSelector
             modelId={modelId}
             setModelId={setModelId}
-            isModelsLoading={isModelsLoading}
-            modelsLoadingError={modelsLoadingError}
             availableModels={availableModels}
             setAvailableModels={setAvailableModels}
             t={t}

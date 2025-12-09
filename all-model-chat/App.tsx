@@ -38,7 +38,7 @@ const App: React.FC = () => {
       selectedFiles, setSelectedFiles, editingMessageId,
       appFileError, setAppFileError, isAppProcessingFile,
       savedSessions, savedGroups, activeSessionId,
-      apiModels, isModelsLoading, modelsLoadingError, isSwitchingModel, setApiModels,
+      apiModels, isSwitchingModel, setApiModels,
       scrollContainerRef, setScrollContainerRef, savedScenarios, isAppDraggingOver, isProcessingDrop,
       aspectRatio, setAspectRatio, ttsMessageId,
       loadChatSession, startNewChat, handleClearCurrentChat,
@@ -215,8 +215,6 @@ const App: React.FC = () => {
 
   const getCurrentModelDisplayName = () => {
     const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
-    if (isModelsLoading && !modelIdToDisplay && apiModels.length === 0) return t('loading');
-    if (isModelsLoading && modelIdToDisplay && !apiModels.find(m => m.id === modelIdToDisplay)) return t('appVerifyingModel');
     if (isSwitchingModel) return t('appSwitchingModel');
     const model = apiModels.find(m => m.id === modelIdToDisplay);
     if (model) return model.name;
@@ -224,7 +222,7 @@ const App: React.FC = () => {
         let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; 
         return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');
     }
-    return apiModels.length === 0 && !isModelsLoading ? t('appNoModelsAvailable') : t('appNoModelSelected');
+    return apiModels.length === 0 ? t('appNoModelsAvailable') : t('appNoModelSelected');
   };
 
   const isCanvasPromptActive = currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT;
@@ -280,7 +278,6 @@ const App: React.FC = () => {
     availableModels: apiModels,
     selectedModelId: currentChatSettings.modelId || appSettings.modelId,
     onSelectModel: handleSelectModelInHeader,
-    isModelsLoading,
     isSwitchingModel,
     isHistorySidebarOpen,
     onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
@@ -289,7 +286,7 @@ const App: React.FC = () => {
     defaultModelId: appSettings.modelId,
     onSetDefaultModel: handleSetDefaultModel,
     themeId: currentTheme.id,
-    modelsLoadingError,
+    modelsLoadingError: null,
     messages,
     scrollContainerRef,
     setScrollContainerRef, // Pass the new ref callback
@@ -358,7 +355,7 @@ const App: React.FC = () => {
     onToggleQuadImages: () => setAppSettings(prev => ({ ...prev, generateQuadImages: !prev.generateQuadImages })),
     onSetThinkingLevel: handleSetThinkingLevel,
     setCurrentChatSettings,
-    onOpenSidePanel: handleOpenSidePanel, // NEW
+    onOpenSidePanel: handleOpenSidePanel,
     t,
   };
 
@@ -412,8 +409,6 @@ const App: React.FC = () => {
     appSettings: settingsForModal, // Use merged settings
     availableModels: apiModels,
     handleSaveSettings,
-    isModelsLoading,
-    modelsLoadingError,
     clearCacheAndReload,
     clearAllHistory,
     handleInstallPwa,

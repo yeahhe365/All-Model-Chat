@@ -4,7 +4,6 @@ import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatS
 import { useMessageSender } from './useMessageSender';
 import { useMessageActions } from './useMessageActions';
 import { useTextToSpeechHandler } from './useTextToSpeechHandler';
-import { Chat } from '@google/genai';
 
 type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -31,7 +30,6 @@ interface MessageHandlerProps {
     setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     updateAndPersistSessions: SessionsUpdater;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
-    chat: Chat | null;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
 }
 

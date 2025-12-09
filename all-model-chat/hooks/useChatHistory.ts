@@ -2,7 +2,7 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup } from '../types';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
-import { generateUniqueId, logService, getTranslator } from '../utils/appUtils';
+import { createNewSession, logService, getTranslator } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 
@@ -95,19 +95,11 @@ export const useChatHistory = ({
             };
         }
 
-        const newSessionId = generateUniqueId();
-        const newSession: SavedChatSession = {
-            id: newSessionId,
-            title: "New Chat",
-            messages: [],
-            timestamp: Date.now(),
-            settings: settingsForNewChat,
-            groupId: null,
-        };
+        const newSession = createNewSession(settingsForNewChat);
 
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
-        setActiveSessionId(newSessionId);
-        dbService.setActiveSessionId(newSessionId);
+        setActiveSessionId(newSession.id);
+        dbService.setActiveSessionId(newSession.id);
 
         // Don't force clear text (handled by localStorage draft for new ID)
         // Clear files for new chat
@@ -219,22 +211,19 @@ export const useChatHistory = ({
             const sessionToDuplicate = prev.find(s => s.id === sessionId);
             if (!sessionToDuplicate) return prev;
 
-            const newSessionId = generateUniqueId();
-            const newSession: SavedChatSession = {
-                ...sessionToDuplicate,
-                id: newSessionId,
-                title: `${sessionToDuplicate.title} (Copy)`,
-                timestamp: Date.now(),
+            const newSession = createNewSession(
+                sessionToDuplicate.settings,
                 // We recreate messages with new IDs to prevent key collisions during rendering or updates
                 // while preserving the content.
-                messages: sessionToDuplicate.messages.map(m => ({
+                sessionToDuplicate.messages.map(m => ({
                     ...m,
-                    id: generateUniqueId(),
-                    isLoading: false, // Ensure copy isn't stuck in loading state
+                    id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`, // Inline simple ID or use generateUniqueId
+                    isLoading: false,
                     generationStartTime: undefined,
                     generationEndTime: undefined
                 })),
-            };
+                `${sessionToDuplicate.title} (Copy)`
+            );
             return [newSession, ...prev];
         });
     }, [updateAndPersistSessions]);
@@ -242,7 +231,7 @@ export const useChatHistory = ({
     const handleAddNewGroup = useCallback(() => {
         logService.info('Adding new group.');
         const newGroup: ChatGroup = {
-            id: `group-${generateUniqueId()}`,
+            id: `group-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
             title: t('newGroup_title', 'Untitled'),
             timestamp: Date.now(),
             isExpanded: true,

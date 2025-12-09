@@ -18,6 +18,7 @@ export const scenariosTranslations = {
     scenarios_feedback_imported: { en: 'Scenario imported successfully!', zh: '场景导入成功！' },
     scenarios_feedback_importFailed: { en: 'Failed to import scenario. Invalid file format or content.', zh: '场景导入失败。文件格式或内容无效。' },
     scenarios_feedback_importError: { en: 'Import error: {error}', zh: '导入错误：{error}' },
+    scenarios_feedback_duplicated: { en: 'Scenario duplicated.', zh: '场景已复制。' },
     scenarios_editor_title_label: { en: 'Scenario Title', zh: '场景标题' },
     scenarios_editor_title_placeholder: { en: 'Enter a descriptive title...', zh: '输入一个描述性标题...' },
     scenarios_editor_edit_title: { en: 'Edit Message', zh: '编辑消息' },
@@ -41,7 +42,9 @@ export const scenariosTranslations = {
     scenarios_moveDown_title: { en: 'Move down', zh: '下移' },
     scenarios_edit_title: { en: 'Edit message', zh: '编辑消息' },
     scenarios_delete_title: { en: 'Delete message', zh: '删除消息' },
+    scenarios_duplicate_title: { en: 'Duplicate scenario', zh: '创建副本' },
     scenarios_export_single_title: { en: 'Export scenario', zh: '导出场景' },
+    scenarios_view_title: { en: 'View scenario', zh: '查看场景' },
     
     // New UI translations
     scenarios_create_button: { en: 'Add', zh: '添加' },
@@ -49,11 +52,16 @@ export const scenariosTranslations = {
     scenarios_export_button: { en: 'Export', zh: '导出' },
     scenarios_save_and_close: { en: 'Save', zh: '保存' },
     scenarios_create_first: { en: 'Create your first scenario', zh: '创建您的第一个场景' },
-    scenarios_has_system_prompt: { en: 'Has System Prompt', zh: '包含系统提示' },
+    scenarios_has_system_prompt: { en: 'System Prompt', zh: '系统提示' },
     scenarios_system_prompt_label: { en: 'System Prompt', zh: '系统提示' },
     scenarios_system_prompt_placeholder: { en: 'Define the persona or rules for the model...', zh: '定义模型的角色或规则...' },
     scenarios_conversation_flow: { en: 'Conversation Flow', zh: '对话流程' },
     scenarios_optional: { en: '(Optional)', zh: '(可选)' },
     scenarios_role_user: { en: 'User', zh: '用户' },
     scenarios_role_model: { en: 'Model', zh: '模型' },
+    
+    // Tabs
+    scenarios_tab_all: { en: 'All Scenarios', zh: '全部' },
+    scenarios_tab_mine: { en: 'My Scenarios', zh: '我的场景' },
+    scenarios_tab_system: { en: 'System Presets', zh: '系统预设' },
 };

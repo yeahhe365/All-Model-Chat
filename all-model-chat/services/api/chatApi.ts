@@ -1,5 +1,5 @@
 
-import { GenerateContentResponse, Part, UsageMetadata, Chat, ChatHistoryItem } from "@google/genai";
+import { GenerateContentResponse, Part, UsageMetadata, ChatHistoryItem } from "@google/genai";
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
@@ -58,22 +58,36 @@ const processResponse = (response: GenerateContentResponse) => {
     };
 };
 
-export const sendMessageStreamApi = async (
-    chat: Chat,
+export const sendStatelessMessageStreamApi = async (
+    apiKey: string,
+    modelId: string,
+    history: ChatHistoryItem[],
     parts: Part[],
+    config: any,
     abortSignal: AbortSignal,
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
     onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
-    logService.info(`Sending message via chat object (stream)`);
+    logService.info(`Sending message via stateless generateContentStream for ${modelId}`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
     let finalUrlContextMetadata: any = null;
 
     try {
-        const result = await chat.sendMessageStream({ message: parts });
+        const ai = await getConfiguredApiClient(apiKey);
+        
+        if (abortSignal.aborted) {
+            logService.warn("Streaming aborted by signal before start.");
+            return;
+        }
+
+        const result = await ai.models.generateContentStream({
+            model: modelId,
+            contents: [...history, { role: 'user', parts }],
+            config: config
+        });
 
         for await (const chunkResponse of result) {
             if (abortSignal.aborted) {
@@ -91,8 +105,7 @@ export const sendMessageStreamApi = async (
                     finalGroundingMetadata = metadataFromChunk;
                 }
                 
-                // Check for URL context metadata (handling potential SDK property names)
-                // @ts-ignore - SDK might not have strict types for this yet
+                // @ts-ignore
                 const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
                 if (urlMetadata) {
                     finalUrlContextMetadata = urlMetadata;
@@ -114,7 +127,6 @@ export const sendMessageStreamApi = async (
                     }
                 }
                 
-                // ALWAYS iterate through parts. The .text property is a shortcut and can be misleading for multimodal responses.
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
@@ -129,43 +141,11 @@ export const sendMessageStreamApi = async (
             }
         }
     } catch (error) {
-        logService.error("Error sending message to Gemini chat (stream):", error);
+        logService.error("Error sending message (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        logService.info("Streaming complete via chat object.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata, hasUrlContext: !!finalUrlContextMetadata });
+        logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
         onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata);
-    }
-};
-
-export const sendMessageNonStreamApi = async (
-    chat: Chat,
-    parts: Part[],
-    abortSignal: AbortSignal,
-    onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
-): Promise<void> => {
-    logService.info(`Sending message via chat object (non-stream)`);
-    
-    try {
-        if (abortSignal.aborted) {
-            logService.warn("Non-streaming call prevented by abort signal before starting.");
-            onComplete([], "", undefined, undefined, undefined);
-            return;
-        }
-        const response: GenerateContentResponse = await chat.sendMessage({ message: parts });
-        if (abortSignal.aborted) {
-            logService.warn("Non-streaming call completed, but aborted by signal before processing response.");
-            onComplete([], "", undefined, undefined, undefined);
-            return;
-        }
-        
-        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
-
-        logService.info("Non-stream chat call complete.", { usage, hasGrounding: !!grounding, hasUrlContext: !!urlContext });
-        onComplete(responseParts, thoughts, usage, grounding, urlContext);
-    } catch (error) {
-        logService.error("Error sending message to Gemini chat (non-stream):", error);
-        onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during non-streaming call."));
     }
 };
 

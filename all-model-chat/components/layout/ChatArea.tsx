@@ -32,7 +32,6 @@ export interface ChatAreaProps {
   availableModels: ModelOption[];
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
-  isModelsLoading: boolean;
   isSwitchingModel: boolean;
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
@@ -134,7 +133,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     activeSessionId, sessionTitle, currentChatSettings, setAppFileError,
     isAppDraggingOver, isProcessingDrop, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
-    currentModelName, availableModels, selectedModelId, onSelectModel, isModelsLoading,
+    currentModelName, availableModels, selectedModelId, onSelectModel,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
     isKeyLocked, defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
@@ -210,7 +209,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         availableModels={availableModels}
         selectedModelId={selectedModelId}
         onSelectModel={onSelectModel}
-        isModelsLoading={isModelsLoading}
         isSwitchingModel={isSwitchingModel}
         isHistorySidebarOpen={isHistorySidebarOpen}
         onLoadCanvasPrompt={onLoadCanvasPrompt}
@@ -313,6 +311,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             generateQuadImages={generateQuadImages}
             onToggleQuadImages={onToggleQuadImages}
             setCurrentChatSettings={setCurrentChatSettings}
+            onSuggestionClick={onSuggestionClick}
+            onOrganizeInfoClick={onOrganizeInfoClick}
+            showEmptyStateSuggestions={messages.length === 0}
           />
         </div>
       </div>

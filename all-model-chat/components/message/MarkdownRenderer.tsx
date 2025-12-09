@@ -187,12 +187,21 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
   const processedContent = useMemo(() => {
     if (!content) return '';
+    // Split by code blocks to avoid replacing content inside them
     const parts = content.split(/(```[\s\S]*?```)/g);
     return parts.map(part => {
       if (part.startsWith('```')) {
         return part;
       }
-      return part.replace(/((:|：)\*\*)(\S)/g, '$1 $3');
+      let processedPart = part.replace(/((:|：)\*\*)(\S)/g, '$1 $3');
+      
+      // Replace \[ ... \] with $$ ... $$
+      processedPart = processedPart.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+      
+      // Replace \( ... \) with $ ... $
+      processedPart = processedPart.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+      
+      return processedPart;
     }).join('');
   }, [content]);
 

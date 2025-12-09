@@ -11,6 +11,8 @@
 
 
 
+
+
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything... (type /help for commands)', zh: '询问任何问题 (输入 /help 查看所有命令)' },
@@ -29,7 +31,6 @@ export const chatInputTranslations = {
     attachMenu_importFolder: { en: 'Import Folder (as Text)', zh: '导入文件夹 (转为文本)' },
     attachMenu_importZip: { en: 'Import Zip (as Text)', zh: '导入 Zip (转为文本)' },
     attachMenu_gallery: { en: 'Gallery', zh: '图库' },
-    attachMenu_uploadVideo: { en: 'Upload Video', zh: '上传视频' },
     attachMenu_takePhoto: { en: 'Take Photo', zh: '拍照' },
     attachMenu_screenshot: { en: 'Screenshot', zh: '屏幕截图' },
     attachMenu_recordAudio: { en: 'Record Audio', zh: '录音' },

@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { UploadedFile, ThemeColors } from '../../types';
+import { UploadedFile } from '../../types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio, FileVideo, ExternalLink, FileText, Youtube } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Modal } from './Modal';
@@ -12,7 +12,6 @@ import { TextFileViewer } from './file-preview/TextFileViewer';
 interface FilePreviewModalProps {
   file: UploadedFile | null;
   onClose: () => void;
-  themeColors: ThemeColors;
   t: (key: keyof typeof translations) => string;
   onPrev?: () => void;
   onNext?: () => void;

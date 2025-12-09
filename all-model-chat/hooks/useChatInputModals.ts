@@ -1,7 +1,6 @@
 
 import { useState, useRef } from 'react';
 import { AttachmentAction } from '../components/chat/input/AttachmentMenu';
-import { generateFolderContext, generateZipContext } from '../utils/folderImportUtils';
 
 interface UseChatInputModalsProps {
   onProcessFiles: (files: File[]) => Promise<void>;

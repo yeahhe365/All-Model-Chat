@@ -172,9 +172,9 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     }
 };
 
-export const translateTextApi = async (apiKey: string, text: string): Promise<string> => {
-    logService.info(`Translating text...`);
-    const prompt = `Translate the following text to English. Only return the translated text, without any additional explanation or formatting.\n\nText to translate:\n"""\n${text}\n"""`;
+export const translateTextApi = async (apiKey: string, text: string, targetLanguage: string = 'English'): Promise<string> => {
+    logService.info(`Translating text to ${targetLanguage}...`);
+    const prompt = `Translate the following text to ${targetLanguage}. Only return the translated text, without any additional explanation or formatting.\n\nText to translate:\n"""\n${text}\n"""`;
 
     try {
         const ai = await getConfiguredApiClient(apiKey);

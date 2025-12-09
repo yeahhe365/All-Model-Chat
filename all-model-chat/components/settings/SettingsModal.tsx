@@ -22,8 +22,6 @@ interface SettingsModalProps {
   availableModels: ModelOption[];
   availableThemes: Theme[]; 
   onSave: (newSettings: AppSettings) => void; 
-  isModelsLoading: boolean;
-  modelsLoadingError: string | null;
   onClearAllHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: () => void;
@@ -45,7 +43,7 @@ const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels, availableThemes, 
-  onSave, isModelsLoading, modelsLoadingError, onClearAllHistory, onClearCache, onOpenLogViewer,
+  onSave, onClearAllHistory, onClearCache, onOpenLogViewer,
   onInstallPwa, isInstallable, t, 
   onImportSettings, onExportSettings,
   onImportHistory, onExportHistory,
@@ -227,8 +225,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     thinkingBudget={currentSettings.thinkingBudget} setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
                     thinkingLevel={currentSettings.thinkingLevel} setThinkingLevel={(v) => updateSetting('thinkingLevel', v)}
                     safetySettings={currentSettings.safetySettings} setSafetySettings={(v) => updateSetting('safetySettings', v)}
-                    isModelsLoading={isModelsLoading}
-                    modelsLoadingError={modelsLoadingError}
                     availableModels={availableModels}
                     t={t}
                     setAvailableModels={setAvailableModels}

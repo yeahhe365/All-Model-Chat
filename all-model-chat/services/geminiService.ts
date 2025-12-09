@@ -1,19 +1,14 @@
 
 import { GeminiService, ChatHistoryItem, ModelOption } from '../types';
-import { Part, UsageMetadata, File as GeminiFile, Chat, Modality } from "@google/genai";
-import { getAvailableModelsApi } from './api/modelApi';
+import { Part, UsageMetadata, File as GeminiFile, Modality } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
-import { sendMessageStreamApi, sendMessageNonStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
+import { sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
 
 class GeminiServiceImpl implements GeminiService {
     constructor() {
         logService.info("GeminiService created.");
-    }
-
-    async getAvailableModels(apiKeysString: string | null): Promise<ModelOption[]> {
-        return getAvailableModelsApi(apiKeysString);
     }
 
     async uploadFile(
@@ -43,8 +38,8 @@ class GeminiServiceImpl implements GeminiService {
         return transcribeAudioApi(apiKey, audioFile, modelId);
     }
 
-    async translateText(apiKey: string, text: string): Promise<string> {
-        return translateTextApi(apiKey, text);
+    async translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string> {
+        return translateTextApi(apiKey, text, targetLanguage);
     }
 
     async generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string> {
@@ -97,32 +92,23 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async sendMessageStream(
-        chat: Chat,
+        apiKey: string,
+        modelId: string,
+        history: ChatHistoryItem[],
         parts: Part[],
+        config: any,
         abortSignal: AbortSignal,
         onPart: (part: Part) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
         onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
     ): Promise<void> {
-        return sendMessageStreamApi(
-            chat, parts, abortSignal, onPart, onThoughtChunk, onError, onComplete
+        return sendStatelessMessageStreamApi(
+            apiKey, modelId, history, parts, config, abortSignal, onPart, onThoughtChunk, onError, onComplete
         );
     }
 
     async sendMessageNonStream(
-        chat: Chat,
-        parts: Part[],
-        abortSignal: AbortSignal,
-        onError: (error: Error) => void,
-        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
-    ): Promise<void> {
-        return sendMessageNonStreamApi(
-            chat, parts, abortSignal, onError, onComplete
-        );
-    }
-
-    async sendStatelessMessageNonStream(
         apiKey: string,
         modelId: string,
         history: ChatHistoryItem[],

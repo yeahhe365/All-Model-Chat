@@ -1,3 +1,4 @@
+
 export const commonTranslations = {
     cancel: { en: 'Cancel', zh: '取消' },
     save: { en: 'Save', zh: '保存' },
@@ -8,7 +9,7 @@ export const commonTranslations = {
     import: { en: 'Import', zh: '导入' },
     export: { en: 'Export', zh: '导出' },
     loading: { en: 'Loading...', zh: '加载中...' },
-    newChat: { en: 'New Chat', zh: '发起新对话' },
+    newChat: { en: 'New Chat', zh: '新聊天' },
     copy: { en: 'Copy', zh: '复制' },
     cut: { en: 'Cut', zh: '剪切' },
     paste: { en: 'Paste', zh: '粘贴' },

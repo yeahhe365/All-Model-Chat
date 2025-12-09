@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { SavedScenario } from '../../types';
-import { Play, Download, Edit3, Trash2, Shield, MessageSquare } from 'lucide-react';
+import { Download, Edit3, Trash2, Shield, MessageSquare, Eye, Copy, Sparkles } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 
 interface ScenarioItemProps {
@@ -10,7 +10,9 @@ interface ScenarioItemProps {
   onLoad: (scenario: SavedScenario) => void;
   onEdit?: (scenario: SavedScenario) => void;
   onDelete?: (id: string) => void;
+  onDuplicate: (scenario: SavedScenario) => void;
   onExport: (scenario: SavedScenario) => void;
+  onView?: (scenario: SavedScenario) => void;
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
@@ -20,72 +22,96 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
   onLoad,
   onEdit,
   onDelete,
+  onDuplicate,
   onExport,
+  onView,
   t
 }) => {
+  const messageCount = scenario.messages.length;
+  const hasSystemPrompt = !!scenario.systemInstruction;
+
+  const Icon = isSystem ? Shield : MessageSquare;
+  const iconColorClass = isSystem 
+    ? 'text-indigo-500 dark:text-indigo-400 bg-indigo-500/10' 
+    : 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10';
+
   return (
     <div
-      className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)] rounded-xl transition-all duration-200 cursor-pointer"
+      className="
+        group flex flex-col h-full
+        bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)]
+        rounded-xl p-4
+        transition-all duration-200
+        hover:bg-[var(--theme-bg-input)] hover:border-[var(--theme-border-focus)] hover:shadow-sm
+        cursor-pointer select-none
+      "
       onClick={() => onLoad(scenario)}
     >
-      <div className="flex-grow min-w-0 pr-4">
-        <div className="flex items-center gap-2 mb-1">
-          {isSystem ? (
-            <Shield size={14} className="text-[var(--theme-bg-accent)] flex-shrink-0" strokeWidth={2.5} />
-          ) : (
-            <MessageSquare size={14} className="text-[var(--theme-text-tertiary)] group-hover:text-[var(--theme-text-primary)] transition-colors flex-shrink-0" strokeWidth={2} />
-          )}
-          <h3 className="font-semibold text-[var(--theme-text-primary)] truncate text-sm sm:text-base">
-            {scenario.title}
-          </h3>
+        {/* Header: Icon & Title */}
+        <div className="flex items-center gap-3 mb-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${iconColorClass}`}>
+                <Icon size={16} strokeWidth={2} />
+            </div>
+            <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-sm text-[var(--theme-text-primary)] truncate" title={scenario.title}>
+                    {scenario.title}
+                </h3>
+                <div className="flex items-center gap-2 text-[10px] text-[var(--theme-text-tertiary)]">
+                    <span>{messageCount} msgs</span>
+                    {hasSystemPrompt && (
+                        <>
+                            <span className="w-0.5 h-0.5 rounded-full bg-current" />
+                            <span className="flex items-center gap-0.5 text-[var(--theme-text-secondary)]">
+                                <Sparkles size={8} /> Prompt
+                            </span>
+                        </>
+                    )}
+                </div>
+            </div>
         </div>
-        <p className="text-[var(--theme-text-tertiary)] text-xs flex items-center gap-3">
-          <span>{scenario.messages.length} msgs</span>
-          {scenario.systemInstruction && (
-            <span className="flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-[var(--theme-text-tertiary)]"></span>
-              System Prompt
-            </span>
-          )}
-        </p>
-      </div>
 
-      <div className="flex items-center gap-2 mt-3 sm:mt-0 self-end sm:self-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity focus-within:opacity-100">
-        <button
-          onClick={(e) => { e.stopPropagation(); onLoad(scenario); }}
-          className="p-2 bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded-lg transition-colors shadow-sm"
-          title={t('scenarios_load_title')}
-        >
-          <Play size={14} strokeWidth={2} fill="currentColor" />
-        </button>
+        {/* Content Preview */}
+        <div className="flex-grow mb-4">
+            <p className="text-xs text-[var(--theme-text-secondary)] leading-relaxed line-clamp-3 opacity-80 group-hover:opacity-100 transition-opacity">
+                {scenario.systemInstruction || (scenario.messages.length > 0 ? scenario.messages[0].content : 'No preview available')}
+            </p>
+        </div>
 
-        <button
-          onClick={(e) => { e.stopPropagation(); onExport(scenario); }}
-          className="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors"
-          title={t('scenarios_export_single_title', 'Export scenario')}
-        >
-          <Download size={16} strokeWidth={1.5} />
-        </button>
+        {/* Footer Actions - Visible on Hover (Desktop) / Always (Mobile) */}
+        <div className="flex items-center justify-end gap-1 pt-3 border-t border-[var(--theme-border-secondary)]/50 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+            {isSystem && onView && (
+                <ActionButton onClick={onView} icon={Eye} label={t('scenarios_view_title', 'View')} scenario={scenario} />
+            )}
+            {!isSystem && onEdit && (
+                <ActionButton onClick={onEdit} icon={Edit3} label={t('scenarios_edit_title')} scenario={scenario} />
+            )}
+            
+            <ActionButton onClick={onDuplicate} icon={Copy} label={t('scenarios_duplicate_title')} scenario={scenario} />
+            <ActionButton onClick={onExport} icon={Download} label={t('scenarios_export_single_title')} scenario={scenario} />
 
-        {!isSystem && onEdit && onDelete && (
-          <>
-            <button
-              onClick={(e) => { e.stopPropagation(); onEdit(scenario); }}
-              className="p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors"
-              title={t('scenarios_edit_title')}
-            >
-              <Edit3 size={16} strokeWidth={1.5} />
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(scenario.id); }}
-              className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-lg transition-colors"
-              title={t('scenarios_delete_title')}
-            >
-              <Trash2 size={16} strokeWidth={1.5} />
-            </button>
-          </>
-        )}
-      </div>
+            {!isSystem && onDelete && (
+                <>
+                    <div className="w-px h-3 bg-[var(--theme-border-secondary)] mx-1" />
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(scenario.id); }}
+                        className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-md transition-colors"
+                        title={t('scenarios_delete_title')}
+                    >
+                        <Trash2 size={14} />
+                    </button>
+                </>
+            )}
+        </div>
     </div>
   );
 };
+
+const ActionButton = ({ onClick, icon: Icon, label, scenario }: { onClick: (s: SavedScenario) => void, icon: any, label: string, scenario: SavedScenario }) => (
+    <button
+        onClick={(e) => { e.stopPropagation(); onClick(scenario); }}
+        className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
+        title={label}
+    >
+        <Icon size={14} />
+    </button>
+);
