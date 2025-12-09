@@ -48,7 +48,7 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         const baseTypeSpeed = 50;
         const deleteSpeed = 30;
         const pauseDuration = 4000; 
-        const blankDuration = 600;
+        const blankDuration = 2000;
 
         if (status === 'typing') {
             if (displayedText === targetPhrase) {
@@ -135,7 +135,9 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
             onMouseLeave={() => setIsHovering(false)}
         >
             {displayedText}
-            <span className="inline-block w-[0.6em] h-[1em] bg-[var(--theme-text-primary)] ml-1 align-text-bottom animate-pulse" />
+            {status !== 'paused' && (
+                <span className="inline-block w-[0.6em] h-[1em] bg-[var(--theme-text-primary)] ml-1 align-text-bottom animate-cursor-blink" />
+            )}
         </span>
     );
 };
