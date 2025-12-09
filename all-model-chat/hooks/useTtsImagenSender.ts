@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../services/geminiService';
-import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlob } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlob, createNewSession } from '../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 
@@ -47,20 +47,14 @@ export const useTtsImagenSender = ({
         
         // Handle session creation or update in a single atomic operation
         if (!finalSessionId) { // New Chat
-            const newSessionId = generateUniqueId();
-            finalSessionId = newSessionId;
             let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
             if (options.shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
             
-            const newSession: SavedChatSession = {
-                id: newSessionId,
-                title: "New Chat",
-                messages: [userMessage, modelMessage],
-                timestamp: Date.now(),
-                settings: newSessionSettings
-            };
+            const newSession = createNewSession(newSessionSettings, [userMessage, modelMessage], "New Chat");
+            finalSessionId = newSession.id;
+            
             updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
-            setActiveSessionId(newSessionId);
+            setActiveSessionId(newSession.id);
         } else { // Existing Chat
             updateAndPersistSessions(p => p.map(s => {
                 if (s.id !== finalSessionId) return s;

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Mic, Info } from 'lucide-react';
 import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS } from '../../constants/appConstants';
-import { Tooltip, Select, Toggle } from '../shared/Tooltip';
+import { Tooltip, Select } from '../shared/Tooltip';
 
 interface VoiceControlProps {
   transcriptionModelId: string;

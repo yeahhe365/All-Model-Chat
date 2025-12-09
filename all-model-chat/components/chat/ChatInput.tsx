@@ -13,7 +13,6 @@ import { useWindowContext } from '../../contexts/WindowContext';
 import { useChatInputState, INITIAL_TEXTAREA_HEIGHT_PX } from '../../hooks/useChatInputState';
 import { VideoSettingsModal } from '../modals/VideoSettingsModal';
 import { FilePreviewModal } from '../shared/ImageZoomModal';
-import { ThemeColors } from '../../constants/themeConstants';
 import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
 
 export interface ChatInputProps {
@@ -67,6 +66,9 @@ export interface ChatInputProps {
   generateQuadImages: boolean;
   onToggleQuadImages: () => void;
   setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
+  onSuggestionClick?: (suggestion: string) => void;
+  onOrganizeInfoClick?: (suggestion: string) => void;
+  showEmptyStateSuggestions?: boolean;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = (props) => {
@@ -81,7 +83,8 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
     onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen, onSetDefaultModel,
-    generateQuadImages, onToggleQuadImages, setCurrentChatSettings
+    generateQuadImages, onToggleQuadImages, setCurrentChatSettings,
+    onSuggestionClick, onOrganizeInfoClick, showEmptyStateSuggestions
   } = props;
 
   const {
@@ -333,6 +336,11 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         formProps={{
             onSubmit: handlers.handleSubmit,
         }}
+        suggestionsProps={showEmptyStateSuggestions && onSuggestionClick && onOrganizeInfoClick ? {
+            show: showEmptyStateSuggestions,
+            onSuggestionClick,
+            onOrganizeInfoClick
+        } : undefined}
         t={t}
       />
   );
@@ -340,9 +348,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   return (
     <>
       <ChatInputModals
-        showCamera={false}
-        onPhotoCapture={() => {}}
-        onCameraCancel={() => {}}
         showRecorder={showRecorder}
         onAudioRecord={handleAudioRecord}
         onRecorderCancel={() => { setShowRecorder(false); textareaRef.current?.focus(); }}
@@ -355,7 +360,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isProcessingFile={isProcessingFile}
         isLoading={isLoading}
         t={t}
-        isHistorySidebarOpen={isHistorySidebarOpen}
       />
       
       <VideoSettingsModal 
@@ -369,7 +373,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
       <FilePreviewModal
         file={previewFile}
         onClose={() => setPreviewFile(null)}
-        themeColors={{} as ThemeColors}
         t={t}
         onPrev={handlers.handlePrevImage}
         onNext={handlers.handleNextImage}

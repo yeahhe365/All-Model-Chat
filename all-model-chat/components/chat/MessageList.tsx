@@ -208,7 +208,6 @@ export const MessageList: React.FC<MessageListProps> = ({
     <FilePreviewModal 
         file={previewFile} 
         onClose={closeFilePreviewModal}
-        themeColors={themeColors}
         t={t}
         onPrev={handlePrevImage}
         onNext={handleNextImage}

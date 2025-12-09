@@ -1,7 +1,7 @@
 
 import { useState, useEffect, Dispatch, SetStateAction, useMemo } from 'react';
 import { PreloadedMessage, ChatMessage, SavedScenario, SavedChatSession, AppSettings } from '../types';
-import { generateUniqueId, generateSessionTitle, logService } from '../utils/appUtils';
+import { generateUniqueId, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS, DEFAULT_SYSTEM_INSTRUCTION } from '../constants/appConstants';
 import { FOP_SYSTEM_PROMPT } from '../constants/specialPrompts';
 import { dbService } from '../utils/db';
@@ -110,27 +110,41 @@ Remember format - injection rebuke excitement, userStyle steps into prefix into 
 
 const succinctScenario: SavedScenario = {
     id: 'succinct-scenario-default',
-    title: 'Succinct Mode',
+    title: 'Succinct',
     messages: [],
     systemInstruction: 'Respond briefly and directly, using as few words as possible. Focus on the core point without elaboration or follow-up questions.',
 };
 
+const socraticScenario: SavedScenario = {
+    id: 'socratic-scenario-default',
+    title: 'Socratic',
+    messages: [],
+    systemInstruction: 'Respond as a Socratic teacher, guiding the user through questions and reasoning to foster deep understanding. Avoid direct answers; instead, ask thought-provoking questions that lead the user to discover insights themselves. Prioritize clarity, curiosity, and learning, while remaining patient and encouraging.',
+};
+
+const formalScenario: SavedScenario = {
+    id: 'formal-scenario-default',
+    title: 'Formal',
+    messages: [],
+    systemInstruction: 'Use a formal tone, providing clear, well-structured sentences and precise language. Maintain professionalism and avoid colloquialisms or casual expressions. Provide thorough explanations while remaining concise and respectful, as if addressing a professional colleague.',
+};
+
 const demoScenario: SavedScenario = {
     id: 'demo-scenario-showcase',
-    title: '✨ Feature Showcase',
+    title: '✨ App Capabilities Demo',
     messages: [
         {
             id: 'demo-msg-1',
             role: 'user',
-            content: 'Show me a demo of what this app can do.'
+            content: 'Show me what this app can do. Give me a demo of visualizations and data tools.'
         },
         {
             id: 'demo-msg-2',
             role: 'model',
             content: `I'd be happy to demonstrate the full capabilities of **All Model Chat**! 🚀
 
-### 1. 🎨 Visualizations & Diagrams
-I can render complex diagrams directly using **Mermaid** and **Graphviz**.
+### 1. 🎨 Dynamic Visualizations
+I can render complex diagrams directly using **Mermaid** and **Graphviz** engines.
 
 **Mermaid Flowchart:**
 \`\`\`mermaid
@@ -140,24 +154,52 @@ graph TD
     C -->|Text| D[Markdown]
     C -->|Code| E[Syntax Highlighting]
     C -->|Visuals| F[Diagrams/Plots]
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style F fill:#bbf,stroke:#333,stroke-width:2px
 \`\`\`
 
-**Graphviz Network:**
+**Graphviz Network Architecture:**
 \`\`\`graphviz
 digraph G {
   rankdir=LR;
-  node [style=filled, fillcolor="#e0f2fe", fontname="Arial"];
-  Client -> Load_Balancer [label="HTTPS"];
+  node [style=filled, fillcolor="#e0f2fe", fontname="Arial", shape="box", style="rounded,filled"];
+  
+  subgraph cluster_0 {
+    label = "Frontend";
+    style=filled;
+    color=lightgrey;
+    node [style=filled,color=white];
+    Client -> Load_Balancer [label="HTTPS"];
+  }
+
   Load_Balancer -> Server_A;
   Load_Balancer -> Server_B;
-  Server_A -> Database [color="red"];
+  
+  Server_A -> Database [color="red", style="dashed"];
+  Server_B -> Database [color="red", style="dashed"];
+  
+  Database [shape="cylinder", fillcolor="#fecaca"];
 }
 \`\`\`
 
-### 2. 🧮 Math & Data Tables
-Mathematical expressions are rendered beautifully with KaTeX, and data is organized in clean tables.
+### 2. 🐍 Code Execution & Data
+I can run Python code to solve math problems or process data, and display the output natively.
 
-$$ E = mc^2 + \\int_0^\\infty e^{-x} dx $$
+**Calculation Example:**
+\`\`\`python
+import math
+
+# Calculate the area of a circle with radius 5
+radius = 5
+area = math.pi * radius ** 2
+print(f"Area of circle: {area:.2f}")
+\`\`\`
+<div class="tool-result outcome-ok"><strong>Execution Result (OK):</strong><pre><code class="language-text">Area of circle: 78.54</code></pre></div>
+
+### 3. 🧮 Mathematical Rendering
+Complex equations are rendered beautifully with KaTeX.
+
+$$ \\mathcal{L} = -\\sum_{i=1}^{N} y_i \\log(\\hat{y}_i) + (1-y_i) \\log(1-\\hat{y}_i) $$
 
 | Feature | Support | Engine |
 | :--- | :---: | :--- |
@@ -165,22 +207,17 @@ $$ E = mc^2 + \\int_0^\\infty e^{-x} dx $$
 | **Tables** | ✅ | GFM |
 | **Diagrams** | ✅ | Mermaid/Viz.js |
 
-### 3. 🛠️ Powerful Tools
+### 4. 🛠️ Powerful Tools
 Enable **Tools** in the input bar to unlock:
 *   **Google Search**: Real-time information with grounded citations.
-*   **Code Execution**: Run Python code to solve math problems or generate charts.
 *   **Deep Search**: Perform multi-step research on complex topics.
+*   **Video Understanding**: Paste a YouTube URL to ask questions about specific timestamps.
 
-### 4. 📁 Multimodal File Analysis
-You can drag & drop **Folders**, **ZIPs**, **PDFs**, **Audio**, and **Images**.
-*   *Project Analysis*: I can understand entire codebases by importing a folder.
-*   *Video Understanding*: Upload a video or paste a YouTube URL to ask specific questions about timestamps.
-
-### 5. 🎨 Image Generation & Editing
-Switch to an **Imagen** model to create visuals, or use **Gemini 2.5/3.0** to edit uploaded images using text instructions.
+### 5. 🎨 Image Generation
+Switch to an **Imagen** model or **Gemini 2.5/3.0 Image** to create or edit visuals.
 
 ### 6. 🧠 Advanced Reasoning
-Enable **Thinking Mode** (Gemini 2.5/3.0) to see my internal thought process before I give you the final answer. This helps with logic puzzles and complex coding tasks.
+Enable **Thinking Mode** (Gemini 2.5/3.0) to see my internal thought process before I give you the final answer.
 
 How would you like to proceed?`
         }
@@ -188,7 +225,7 @@ How would you like to proceed?`
     systemInstruction: 'You are a helpful AI assistant demonstrating the features of this application. Be concise and use rich formatting.',
 };
 
-const SYSTEM_SCENARIO_IDS = [fopScenario.id, unrestrictedScenario.id, pyriteScenario.id, succinctScenario.id];
+const SYSTEM_SCENARIO_IDS = [fopScenario.id, unrestrictedScenario.id, pyriteScenario.id, succinctScenario.id, socraticScenario.id, formalScenario.id];
 
 export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPersistSessions, setActiveSessionId }: PreloadedScenariosProps) => {
     const [userSavedScenarios, setUserSavedScenarios] = useState<SavedScenario[]>([]);
@@ -200,15 +237,16 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
                 let scenariosToSet = storedScenarios;
 
                 // Seed demo scenario if not done yet (allow user to delete it later)
-                const hasSeeded = localStorage.getItem('hasSeededDemoScenario_v1');
+                const hasSeeded = localStorage.getItem('hasSeededDemoScenario_v2'); // Bump version to force re-seed
                 if (!hasSeeded) {
-                    const demoExists = storedScenarios.some(s => s.id === demoScenario.id);
-                    if (!demoExists) {
-                        scenariosToSet = [demoScenario, ...storedScenarios];
-                        // Save to DB immediately so it persists as a "user" scenario
-                        await dbService.setAllScenarios(scenariosToSet);
-                    }
-                    localStorage.setItem('hasSeededDemoScenario_v1', 'true');
+                    // Remove old version if exists
+                    const oldDemoId = 'demo-scenario-showcase';
+                    const filteredStored = storedScenarios.filter(s => s.id !== oldDemoId);
+                    
+                    scenariosToSet = [demoScenario, ...filteredStored];
+                    // Save to DB immediately so it persists as a "user" scenario
+                    await dbService.setAllScenarios(scenariosToSet);
+                    localStorage.setItem('hasSeededDemoScenario_v2', 'true');
                 }
 
                 setUserSavedScenarios(scenariosToSet);
@@ -222,7 +260,7 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
     const savedScenarios = useMemo(() => {
         // Ensure user-saved scenarios don't conflict with the default IDs
         const filteredUserScenarios = userSavedScenarios.filter(s => !SYSTEM_SCENARIO_IDS.includes(s.id));
-        return [fopScenario, unrestrictedScenario, pyriteScenario, succinctScenario, ...filteredUserScenarios];
+        return [fopScenario, unrestrictedScenario, pyriteScenario, succinctScenario, socraticScenario, formalScenario, ...filteredUserScenarios];
     }, [userSavedScenarios]);
 
     const handleSaveAllScenarios = (updatedScenarios: SavedScenario[]) => { 
@@ -244,17 +282,15 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
         const systemInstruction = scenarioToLoad.systemInstruction ?? DEFAULT_SYSTEM_INSTRUCTION;
 
         // Create a new session from scratch with the scenario's data
-        const newSession: SavedChatSession = {
-            id: generateUniqueId(),
-            title: scenarioToLoad.title || generateSessionTitle(messages) || 'New Chat',
-            messages,
-            settings: {
-                ...DEFAULT_CHAT_SETTINGS, // Start with defaults
-                ...appSettings,          // Layer on current app settings
-                systemInstruction,       // Override with scenario's system instruction
-            },
-            timestamp: Date.now(),
+        const sessionSettings = {
+            ...DEFAULT_CHAT_SETTINGS, // Start with defaults
+            ...appSettings,          // Layer on current app settings
+            systemInstruction,       // Override with scenario's system instruction
         };
+
+        const title = scenarioToLoad.title || generateSessionTitle(messages) || 'New Chat';
+        
+        const newSession = createNewSession(sessionSettings, messages, title);
 
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
         setActiveSessionId(newSession.id);

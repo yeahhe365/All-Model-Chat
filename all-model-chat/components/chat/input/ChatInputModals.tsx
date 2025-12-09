@@ -7,9 +7,6 @@ import { translations } from '../../../utils/appUtils';
 import { CommandInfo } from '../../../types';
 
 export interface ChatInputModalsProps {
-  showCamera: boolean;
-  onPhotoCapture: (file: File) => void;
-  onCameraCancel: () => void;
   showRecorder: boolean;
   onAudioRecord: (file: File) => Promise<void>;
   onRecorderCancel: () => void;
@@ -22,7 +19,6 @@ export interface ChatInputModalsProps {
   isProcessingFile: boolean;
   isLoading: boolean;
   t: (key: keyof typeof translations) => string;
-  isHistorySidebarOpen?: boolean;
 }
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
@@ -38,7 +34,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   isProcessingFile,
   isLoading,
   t,
-  isHistorySidebarOpen,
 }) => {
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
     return null;

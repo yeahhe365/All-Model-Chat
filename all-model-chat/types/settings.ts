@@ -1,6 +1,4 @@
 
-import { ThemeColors } from '../constants/themeConstants';
-
 export interface ModelOption {
   id: string;
   name: string;

@@ -54,19 +54,19 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
             {showTokens && (
                 <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title="Token Usage">
                     <span className="flex items-center gap-2">
-                        <span>I: {promptTokens ?? 0}</span>
+                        <span>I: {(promptTokens ?? 0).toLocaleString()}</span>
                         <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
                         {thoughtTokens !== undefined && thoughtTokens > 0 && (
                             <>
                                 <span className="flex items-center gap-1">
-                                    R: {thoughtTokens}
+                                    R: {thoughtTokens.toLocaleString()}
                                 </span>
                                 <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
                             </>
                         )}
-                        <span>O: {completionTokens ?? 0}</span>
+                        <span>O: {(completionTokens ?? 0).toLocaleString()}</span>
                         <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
-                        <span className="font-semibold">Σ: {totalTokens ?? ((promptTokens||0) + (completionTokens||0))}</span>
+                        <span className="font-semibold">Σ: {(totalTokens ?? ((promptTokens||0) + (completionTokens||0))).toLocaleString()}</span>
                     </span>
                 </div>
             )}

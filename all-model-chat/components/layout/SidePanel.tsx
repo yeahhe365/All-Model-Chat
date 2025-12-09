@@ -181,7 +181,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
             <div 
                 ref={sidebarRef}
-                className="h-full flex flex-col bg-[var(--theme-bg-secondary)] border-l border-[var(--theme-border-primary)] shadow-2xl relative transition-none flex-shrink-0 z-20"
+                className="h-full flex flex-col bg-[var(--theme-bg-secondary)] border-l border-[var(--theme-border-primary)] shadow-2xl relative transition-none flex-shrink-0 z-20 slide-in-right-animate"
                 style={{ width: `${width}px` }}
             >
                 {/* Resize Handle */}

@@ -104,7 +104,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const handleRenameCancel = () => { setEditingItem(null); };
 
   const handleRenameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleRenameConfirm();
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleRenameConfirm();
     else if (e.key === 'Escape') handleRenameCancel();
   };
 
@@ -336,12 +336,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                 )}
             </div>
             
-            <div className="p-2 flex justify-between items-center">
+            <div className="p-3 bg-[var(--theme-bg-secondary)]/30">
                  <button
                     onClick={onOpenSettingsModal}
-                    className="p-2 text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] rounded-lg transition-colors flex items-center gap-2 text-sm flex-grow"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-xl transition-all duration-200 group"
                  >
-                    <Settings size={18} strokeWidth={2} />
+                    <Settings size={20} strokeWidth={2} className="text-[var(--theme-icon-settings)] group-hover:text-[var(--theme-text-primary)] transition-colors" />
                     <span>{t('settingsTitle')}</span>
                  </button>
             </div>

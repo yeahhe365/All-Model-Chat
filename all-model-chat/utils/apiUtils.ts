@@ -1,3 +1,4 @@
+
 import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
@@ -11,6 +12,18 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
     return {
         apiKeysString: process.env.API_KEY || null,
     };
+};
+
+/**
+ * Parses a raw API key string (which may contain multiple keys, newlines, commas, or quotes)
+ * into a clean array of individual keys.
+ */
+export const parseApiKeys = (apiKeysString: string | null): string[] => {
+    if (!apiKeysString) return [];
+    return apiKeysString
+        .split(/[\n,]+/)
+        .map(k => k.trim().replace(/^["']|["']$/g, ''))
+        .filter(k => k.length > 0);
 };
 
 export const getKeyForRequest = (
@@ -31,11 +44,7 @@ export const getKeyForRequest = (
         return { error: "API Key not configured." };
     }
     
-    // Robust parsing: split by newline or comma, trim, remove quotes, filter empty
-    const availableKeys = apiKeysString
-        .split(/[\n,]+/)
-        .map(k => k.trim().replace(/^["']|["']$/g, ''))
-        .filter(k => k.length > 0);
+    const availableKeys = parseApiKeys(apiKeysString);
 
     if (availableKeys.length === 0) {
         return { error: "No valid API keys found." };

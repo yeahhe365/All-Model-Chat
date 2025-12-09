@@ -20,8 +20,6 @@ export interface ModelPickerProps {
     models: ModelOption[];
     selectedId: string;
     onSelect: (modelId: string) => void;
-    isLoading?: boolean;
-    error?: string | null;
     t: (key: string) => string;
     
     // Render props for the trigger button
@@ -43,8 +41,6 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     models,
     selectedId,
     onSelect,
-    isLoading,
-    error,
     t,
     renderTrigger,
     defaultModelId,
@@ -136,14 +132,9 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                 <div 
                     className={`absolute top-full left-0 mt-1 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-50 flex flex-col modal-enter-animation overflow-hidden ${dropdownClassName || 'w-full min-w-[280px] max-h-[300px]'}`}
                 >
-                    {isLoading && !models.length ? (
+                    {!models.length ? (
                         <div className="p-4 text-center">
-                            <Loader2 size={20} className="animate-spin mx-auto text-[var(--theme-text-link)]" />
-                            <p className="text-xs text-[var(--theme-text-tertiary)] mt-2">{t('loading')}</p>
-                        </div>
-                    ) : error && !models.length ? (
-                        <div className="p-3 text-xs text-[var(--theme-text-danger)] bg-[var(--theme-bg-error-message)]">
-                            {error}
+                            <p className="text-xs text-[var(--theme-text-tertiary)] mt-2">No models available</p>
                         </div>
                     ) : (
                         <>

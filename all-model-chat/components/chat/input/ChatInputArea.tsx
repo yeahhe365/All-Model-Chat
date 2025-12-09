@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
 import { SlashCommandMenu, Command } from './SlashCommandMenu';
@@ -7,7 +7,21 @@ import { SelectedFileDisplay } from '../SelectedFileDisplay';
 import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { translations } from '../../../utils/appUtils';
-import { Loader2 } from 'lucide-react';
+import { SUGGESTIONS_KEYS } from '../../../constants/appConstants';
+import { Layers, Languages, ScanText, AudioWaveform, Captions, Lightbulb, FileText, Sparkles } from 'lucide-react';
+
+const SuggestionIcon = ({ iconName, className }: { iconName?: string, className?: string }) => {
+    switch(iconName) {
+        case 'Layers': return <Layers className={className} size={14} />;
+        case 'Languages': return <Languages className={className} size={14} />;
+        case 'ScanText': return <ScanText className={className} size={14} />;
+        case 'AudioWaveform': return <AudioWaveform className={className} size={14} />;
+        case 'Captions': return <Captions className={className} size={14} />;
+        case 'Lightbulb': return <Lightbulb className={className} size={14} />;
+        case 'FileText': return <FileText className={className} size={14} />;
+        default: return <Sparkles className={className} size={14} />;
+    }
+};
 
 export interface ChatInputAreaProps {
     toolbarProps: ChatInputToolbarProps;
@@ -58,6 +72,11 @@ export interface ChatInputAreaProps {
     formProps: {
         onSubmit: (e: React.FormEvent) => void;
     };
+    suggestionsProps?: {
+        show: boolean;
+        onSuggestionClick: (suggestion: string) => void;
+        onOrganizeInfoClick: (suggestion: string) => void;
+    };
     t: (key: keyof typeof translations) => string;
 }
 
@@ -70,13 +89,12 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     layoutProps,
     fileInputRefs,
     formProps,
+    suggestionsProps,
     t,
 }) => {
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
     const { isRecording } = actionsProps;
 
-    // Prevent blocking UI interactions (clicks) during recording so the user can stop it.
-    // We only apply opacity/pointer-events-none if disabled AND NOT recording.
     const isUIBlocked = inputProps.disabled && !isAnimatingSend && !isRecording;
 
     const wrapperClass = isFullscreen 
@@ -98,6 +116,37 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     return (
         <div className={wrapperClass} aria-hidden={isUIBlocked}>
             <div className={innerContainerClass}>
+                {/* Suggestions Chips */}
+                {suggestionsProps && suggestionsProps.show && !isFullscreen && (
+                    <div className="flex gap-2 overflow-x-auto pb-2 mb-2 px-1 no-scrollbar fade-mask-x">
+                        {SUGGESTIONS_KEYS.map((s, i) => (
+                            <button
+                                key={i}
+                                type="button"
+                                onClick={() => {
+                                    const text = t(s.descKey as any);
+                                    if ((s as any).specialAction === 'organize' && suggestionsProps.onOrganizeInfoClick) {
+                                        suggestionsProps.onOrganizeInfoClick(text);
+                                    } else if (suggestionsProps.onSuggestionClick) {
+                                        suggestionsProps.onSuggestionClick(text);
+                                    }
+                                }}
+                                className="
+                                    flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+                                    bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
+                                    border border-[var(--theme-border-secondary)]
+                                    text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
+                                    text-xs font-medium whitespace-nowrap
+                                    transition-all active:scale-95 shadow-sm
+                                "
+                            >
+                                <SuggestionIcon iconName={(s as any).icon} />
+                                <span>{t(s.titleKey as any)}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 <ChatInputToolbar {...toolbarProps} />
                 
                 <form onSubmit={formProps.onSubmit} className={formClass}>
@@ -143,51 +192,12 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                         <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1">
                             <ChatInputActions {...actionsProps} />
                             
-                            {/* Hidden inputs for file selection, triggered by AttachmentMenu */}
-                            <input 
-                                type="file" 
-                                ref={fileInputRefs.fileInputRef} 
-                                onChange={fileInputRefs.handleFileChange} 
-                                accept={ALL_SUPPORTED_MIME_TYPES.join(',')} 
-                                className="hidden" 
-                                aria-hidden="true" 
-                                multiple 
-                            />
-                            <input 
-                                type="file" 
-                                ref={fileInputRefs.imageInputRef} 
-                                onChange={fileInputRefs.handleFileChange} 
-                                accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} 
-                                className="hidden" 
-                                aria-hidden="true" 
-                                multiple 
-                            />
-                            <input
-                                type="file"
-                                ref={fileInputRefs.folderInputRef}
-                                onChange={fileInputRefs.handleFolderChange}
-                                className="hidden"
-                                aria-hidden="true"
-                                {...({ webkitdirectory: "", directory: "" } as any)}
-                                multiple
-                            />
-                            <input
-                                type="file"
-                                ref={fileInputRefs.zipInputRef}
-                                onChange={fileInputRefs.handleZipChange}
-                                accept=".zip"
-                                className="hidden"
-                                aria-hidden="true"
-                            />
-                            <input
-                                type="file"
-                                ref={fileInputRefs.cameraInputRef}
-                                onChange={fileInputRefs.handleFileChange}
-                                accept="image/*"
-                                capture="environment"
-                                className="hidden"
-                                aria-hidden="true"
-                            />
+                            {/* Hidden inputs */}
+                            <input type="file" ref={fileInputRefs.fileInputRef} onChange={fileInputRefs.handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                            <input type="file" ref={fileInputRefs.imageInputRef} onChange={fileInputRefs.handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+                            <input type="file" ref={fileInputRefs.folderInputRef} onChange={fileInputRefs.handleFolderChange} className="hidden" aria-hidden="true" {...({ webkitdirectory: "", directory: "" } as any)} multiple />
+                            <input type="file" ref={fileInputRefs.zipInputRef} onChange={fileInputRefs.handleZipChange} accept=".zip" className="hidden" aria-hidden="true" />
+                            <input type="file" ref={fileInputRefs.cameraInputRef} onChange={fileInputRefs.handleFileChange} accept="image/*" capture="environment" className="hidden" aria-hidden="true" />
                         </div>
                     </div>
                 </form>

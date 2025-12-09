@@ -16,7 +16,6 @@ interface HeaderProps {
   availableModels: ModelOption[];
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
-  isModelsLoading: boolean; 
   isSwitchingModel: boolean;
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
@@ -43,7 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
   availableModels,
   selectedModelId,
   onSelectModel,
-  isModelsLoading,
   isSwitchingModel,
   isHistorySidebarOpen,
   onLoadCanvasPrompt,
@@ -102,7 +100,6 @@ export const Header: React.FC<HeaderProps> = ({
             availableModels={availableModels}
             selectedModelId={selectedModelId}
             onSelectModel={onSelectModel}
-            isModelsLoading={isModelsLoading}
             isSwitchingModel={isSwitchingModel}
             isLoading={isLoading}
             t={t}

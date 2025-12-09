@@ -5,6 +5,7 @@ import { Toggle } from '../shared/Tooltip';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { getClient } from '../../services/api/baseApi';
+import { parseApiKeys } from '../../utils/apiUtils';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -79,7 +80,15 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       }
 
       // Handle multiple keys - pick first for test
-      const firstKey = keyToTest.split('\n')[0].trim().replace(/^["']|["']$/g, '');
+      const keys = parseApiKeys(keyToTest);
+      const firstKey = keys[0];
+      
+      if (!firstKey) {
+          setTestStatus('error');
+          setTestMessage("Invalid API Key format.");
+          return;
+      }
+
       const effectiveUrl = (useCustomApiConfig && useApiProxy && apiProxyUrl) ? apiProxyUrl : null;
 
       setTestStatus('testing');
