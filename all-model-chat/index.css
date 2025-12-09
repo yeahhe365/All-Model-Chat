@@ -64,6 +64,16 @@
   40% { transform: scale(1.0); opacity: 1; } 
 }
 
+/* Authentic Terminal Blink */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-cursor-blink {
+  animation: cursorBlink 1s step-end infinite;
+}
+
 /* Google Spinner Animation */
 .google-spinner {
   animation: google-rotator 1.4s linear infinite;
