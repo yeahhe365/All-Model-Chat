@@ -60,7 +60,7 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
                 // 1. Punctuation pauses
                 if ([',', ';', ':'].includes(lastChar)) {
                     currentDelay = 400; 
-                } else if ['.', '?', '!'].includes(lastChar)) {
+                } else if (['.', '?', '!'].includes(lastChar)) {
                     currentDelay = 800; 
                 }
                 
