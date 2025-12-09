@@ -48,6 +48,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const isVideo = category === 'video' || category === 'youtube';
 
   const progress = file.progress ?? 0;
+  const ErrorIcon = CATEGORY_STYLES['error'].Icon;
 
   return (
     <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>
@@ -108,7 +109,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
 
         {isFailed && !isCancelled && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--theme-bg-danger)]/10 backdrop-blur-[1px] z-20">
-                <CATEGORY_STYLES['error'].Icon size={20} className="text-[var(--theme-text-danger)] mb-1" />
+                <ErrorIcon size={20} className="text-[var(--theme-text-danger)] mb-1" />
             </div>
         )}
 
