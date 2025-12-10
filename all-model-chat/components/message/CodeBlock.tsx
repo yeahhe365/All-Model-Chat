@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useLayoutEffect, useEffect, useCallback } from 'react';
 import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
@@ -55,7 +56,7 @@ const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
         if (['sql', 'mysql', 'postgres', 'postgresql', 'sqlite', 'plsql'].includes(l)) return 'fa-solid fa-database text-blue-300';
         if (['json', 'json5'].includes(l)) return 'fa-solid fa-brackets-curly text-yellow-500'; // Valid FA? Use file-code if not
         if (['yaml', 'yml', 'toml', 'ini', 'config'].includes(l)) return 'fa-solid fa-file-code text-purple-400';
-        if (['md', 'markdown'].includes(l)) return 'fa-brands fa-markdown text-white';
+        if (['md', 'markdown'].includes(l)) return 'fa-brands fa-markdown text-[var(--theme-text-primary)]';
         if (['csv', 'txt', 'text', 'log'].includes(l)) return 'fa-solid fa-file-lines text-gray-400';
         
         // Tools / Devops

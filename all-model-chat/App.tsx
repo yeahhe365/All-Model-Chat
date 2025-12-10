@@ -153,6 +153,7 @@ const App: React.FC = () => {
     if (activeSessionId && setCurrentChatSettings) {
       setCurrentChatSettings(prevChatSettings => ({
         ...prevChatSettings,
+        modelId: newSettings.modelId, // Sync model change to active session
         temperature: newSettings.temperature,
         topP: newSettings.topP,
         systemInstruction: newSettings.systemInstruction,
