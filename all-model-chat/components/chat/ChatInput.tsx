@@ -62,7 +62,6 @@ export interface ChatInputProps {
   onTogglePip: () => void;
   isPipActive?: boolean;
   isHistorySidebarOpen?: boolean;
-  onSetDefaultModel: (modelId: string) => void;
   generateQuadImages: boolean;
   onToggleQuadImages: () => void;
   setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
@@ -82,7 +81,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
-    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen, onSetDefaultModel,
+    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen,
     generateQuadImages, onToggleQuadImages, setCurrentChatSettings,
     onSuggestionClick, onOrganizeInfoClick, showEmptyStateSuggestions
   } = props;
@@ -140,7 +139,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
     onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction: handleAttachmentAction,
     availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen, textareaRef, onEditLastUserMessage, setInputText,
-    onTogglePip, onSetDefaultModel, currentModelId: currentChatSettings.modelId,
+    onTogglePip, currentModelId: currentChatSettings.modelId,
     onSetThinkingLevel: (level) => setCurrentChatSettings(prev => ({ ...prev, thinkingLevel: level })),
     thinkingLevel: currentChatSettings.thinkingLevel,
   });

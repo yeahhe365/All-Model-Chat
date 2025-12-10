@@ -11,7 +11,7 @@ import { TextEditorModal } from '../modals/TextEditorModal';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
-  setModelId: (value: string) => void;
+  setModelId: (id: string) => void;
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
@@ -60,9 +60,9 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
       {/* Model Selection Group */}
       <div className="space-y-4">
           <ModelSelector
-            modelId={modelId}
-            setModelId={setModelId}
             availableModels={availableModels}
+            selectedModelId={modelId}
+            onSelectModel={setModelId}
             setAvailableModels={setAvailableModels}
             t={t}
           />

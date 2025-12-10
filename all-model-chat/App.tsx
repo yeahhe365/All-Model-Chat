@@ -165,14 +165,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSetDefaultModel = (modelId: string) => {
-    logService.info(`Setting new default model: ${modelId}`);
-    const newThinkingBudget = THINKING_BUDGET_RANGES[modelId]
-      ? THINKING_BUDGET_RANGES[modelId].max
-      : DEFAULT_APP_SETTINGS.thinkingBudget;
-    setAppSettings(prev => ({ ...prev, modelId, thinkingBudget: newThinkingBudget }));
-  };
-
   const handleLoadCanvasPromptAndSave = () => {
     const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT;
     const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_SYSTEM_PROMPT;
@@ -283,8 +275,6 @@ const App: React.FC = () => {
     onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
     isCanvasPromptActive,
     isKeyLocked: !!currentChatSettings.lockedApiKey,
-    defaultModelId: appSettings.modelId,
-    onSetDefaultModel: handleSetDefaultModel,
     themeId: currentTheme.id,
     modelsLoadingError: null,
     messages,

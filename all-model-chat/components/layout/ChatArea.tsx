@@ -37,8 +37,6 @@ export interface ChatAreaProps {
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
   isKeyLocked: boolean;
-  defaultModelId: string;
-  onSetDefaultModel: (modelId: string) => void;
   themeId: string;
   onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
 
@@ -135,7 +133,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
-    isKeyLocked, defaultModelId, onSetDefaultModel, themeId, modelsLoadingError,
+    isKeyLocked, themeId, modelsLoadingError,
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
@@ -215,8 +213,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         isCanvasPromptActive={isCanvasPromptActive}
         t={t}
         isKeyLocked={isKeyLocked}
-        defaultModelId={defaultModelId}
-        onSetDefaultModel={onSetDefaultModel}
         isPipSupported={isPipSupported}
         isPipActive={isPipActive}
         onTogglePip={onTogglePip}
@@ -307,7 +303,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onTogglePip={onTogglePip}
             isPipActive={isPipActive}
             isHistorySidebarOpen={isHistorySidebarOpen}
-            onSetDefaultModel={onSetDefaultModel}
             generateQuadImages={generateQuadImages}
             onToggleQuadImages={onToggleQuadImages}
             setCurrentChatSettings={setCurrentChatSettings}

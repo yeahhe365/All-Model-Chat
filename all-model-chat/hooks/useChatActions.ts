@@ -46,9 +46,20 @@ export const useChatActions = ({
 }: UseChatActionsProps) => {
 
     const handleSelectModelInHeader = useCallback((modelId: string) => {
-        const newThinkingBudget = THINKING_BUDGET_RANGES[modelId]
-            ? THINKING_BUDGET_RANGES[modelId].max
-            : DEFAULT_CHAT_SETTINGS.thinkingBudget;
+        // Resolve target settings based on context (Session vs Global)
+        const sourceSettings = activeSessionId ? currentChatSettings : appSettings;
+        let newThinkingBudget = sourceSettings.thinkingBudget;
+
+        // Validating range compatibility for the new model
+        const range = THINKING_BUDGET_RANGES[modelId];
+        if (range) {
+            // If user has a custom budget (>0), ensure it fits the new model's limits
+            if (newThinkingBudget > 0) {
+                if (newThinkingBudget > range.max) newThinkingBudget = range.max;
+                if (newThinkingBudget < range.min) newThinkingBudget = range.min;
+            }
+            // If currently Auto (-1) or Off (0), preserve that preference.
+        }
 
         const newSettingsPartial: Partial<IndividualChatSettings> = {
             modelId,
@@ -73,7 +84,7 @@ export const useChatActions = ({
             }
         }
         userScrolledUp.current = false;
-    }, [isLoading, currentChatSettings.modelId, currentChatSettings.thinkingBudget, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
+    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
 
     const handleClearCurrentChat = useCallback(() => {
         if (isLoading) handleStopGenerating();

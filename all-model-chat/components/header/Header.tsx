@@ -22,8 +22,6 @@ interface HeaderProps {
   isCanvasPromptActive: boolean;
   t: (key: keyof typeof translations) => string;
   isKeyLocked: boolean;
-  defaultModelId: string;
-  onSetDefaultModel: (modelId: string) => void;
   isPipSupported: boolean;
   isPipActive: boolean;
   onTogglePip: () => void;
@@ -48,8 +46,6 @@ export const Header: React.FC<HeaderProps> = ({
   isCanvasPromptActive,
   t,
   isKeyLocked,
-  defaultModelId,
-  onSetDefaultModel,
   isPipSupported,
   isPipActive,
   onTogglePip,
@@ -103,8 +99,6 @@ export const Header: React.FC<HeaderProps> = ({
             isSwitchingModel={isSwitchingModel}
             isLoading={isLoading}
             t={t}
-            defaultModelId={defaultModelId}
-            onSetDefaultModel={onSetDefaultModel}
             thinkingLevel={thinkingLevel}
             onSetThinkingLevel={onSetThinkingLevel}
         />
