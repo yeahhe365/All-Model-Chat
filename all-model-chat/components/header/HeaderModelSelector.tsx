@@ -14,8 +14,6 @@ interface HeaderModelSelectorProps {
   isSwitchingModel: boolean;
   isLoading: boolean;
   t: (key: string) => string;
-  defaultModelId: string;
-  onSetDefaultModel: (modelId: string) => void;
   thinkingLevel?: 'LOW' | 'HIGH';
   onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
 }
@@ -28,8 +26,6 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   isSwitchingModel,
   isLoading,
   t,
-  defaultModelId,
-  onSetDefaultModel,
   thinkingLevel,
   onSetThinkingLevel,
 }) => {
@@ -59,8 +55,6 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       selectedId={selectedModelId}
       onSelect={onSelectModel}
       t={t}
-      defaultModelId={defaultModelId}
-      onSetDefaultModel={onSetDefaultModel}
       dropdownClassName="w-[calc(100vw-2rem)] max-w-[240px] sm:w-[240px] sm:max-w-none max-h-96"
       renderTrigger={({ isOpen, setIsOpen }) => (
         <div className="relative flex items-center gap-1">
@@ -85,7 +79,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                         e.stopPropagation(); 
                         onSetThinkingLevel(isLowThinking ? 'HIGH' : 'LOW'); 
                     }}
-                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus:visible:ring-2 focus:visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
+                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus:visible:ring-2 focus:visible:ring-offset-2 focus:visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
                         isLowThinking 
                             ? 'text-yellow-500 hover:bg-[var(--theme-bg-tertiary)]' 
                             : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]'

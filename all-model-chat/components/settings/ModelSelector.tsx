@@ -1,22 +1,22 @@
 
 import React, { useState } from 'react';
 import { ModelOption } from '../../types';
-import { Bot, ChevronDown, Plus, Trash2, RotateCcw, Pencil, X, Check } from 'lucide-react';
-import { ModelPicker, getModelIcon } from '../shared/ModelPicker';
+import { Bot, Plus, Trash2, RotateCcw, Pencil, X, Check, Eye } from 'lucide-react';
+import { getModelIcon } from '../shared/ModelPicker';
 import { getDefaultModelOptions } from '../../utils/appUtils';
 
 interface ModelSelectorProps {
-  modelId: string;
-  setModelId: (value: string) => void;
   availableModels: ModelOption[];
+  selectedModelId: string;
+  onSelectModel: (id: string) => void;
   t: (key: string) => string;
   setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
-  modelId,
-  setModelId,
   availableModels,
+  selectedModelId,
+  onSelectModel,
   t,
   setAvailableModels
 }) => {
@@ -70,7 +70,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     <div className="space-y-4">
         <div className="flex items-center justify-between">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
-                <Bot size={14} strokeWidth={1.5} /> Model Selection
+                <Bot size={14} strokeWidth={1.5} /> Manage Models
             </h4>
             
             <button 
@@ -146,36 +146,59 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 </div>
             </div>
         ) : (
-            <div className="space-y-5">
-                <div className="flex items-center justify-between py-1">
-                    <label className="text-sm font-medium text-[var(--theme-text-primary)] mr-4 flex-shrink-0">{t('settingsDefaultModel')}</label>
-                    
-                    <div className="w-full sm:w-64 relative">
-                        <ModelPicker 
-                            models={availableModels}
-                            selectedId={modelId}
-                            onSelect={setModelId}
-                            t={t}
-                            dropdownClassName="w-72 right-0 left-auto max-h-[300px]"
-                            renderTrigger={({ isOpen, setIsOpen, selectedModel }) => (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOpen(!isOpen)}
-                                    className={`w-full p-2.5 text-left border rounded-lg flex items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] cursor-pointer bg-[var(--theme-bg-input)] hover:border-[var(--theme-border-focus)] border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm disabled:opacity-70 disabled:cursor-not-allowed`}
-                                    aria-haspopup="listbox"
-                                    aria-expanded={isOpen}
-                                >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        {getModelIcon(selectedModel)}
-                                        <span className="truncate font-medium">
-                                            {selectedModel ? selectedModel.name : <span className="text-[var(--theme-text-tertiary)]">{t('chatBehavior_model_noModels')}</span>}
-                                        </span>
+            <div className="border border-[var(--theme-border-secondary)] rounded-xl bg-[var(--theme-bg-input)]/30 overflow-hidden">
+                <div className="max-h-[200px] overflow-y-auto custom-scrollbar p-1">
+                    {availableModels.map((model, idx) => {
+                        const isSelected = model.id === selectedModelId;
+                        return (
+                            <div 
+                                key={model.id} 
+                                onClick={() => onSelectModel(model.id)}
+                                className={`flex items-center gap-3 px-3 py-2 text-sm border-b border-[var(--theme-border-secondary)]/50 last:border-0 transition-colors cursor-pointer group
+                                    ${isSelected 
+                                        ? 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-primary)]' 
+                                        : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)]/50 hover:text-[var(--theme-text-primary)]'
+                                    }
+                                `}
+                            >
+                                <div className={`flex-shrink-0 ${isSelected ? 'text-[var(--theme-text-link)]' : 'opacity-70'}`}>
+                                    {getModelIcon(model)}
+                                </div>
+                                <div className="flex-grow min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`font-medium truncate ${isSelected ? 'text-[var(--theme-text-link)]' : ''}`}>{model.name}</span>
+                                        {model.isPinned && <span className="text-[10px] bg-[var(--theme-bg-tertiary)] px-1.5 py-0.5 rounded text-[var(--theme-text-tertiary)] border border-[var(--theme-border-secondary)]">Pinned</span>}
                                     </div>
-                                    <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
-                                </button>
-                            )}
-                        />
-                    </div>
+                                    <div className="text-[10px] text-[var(--theme-text-tertiary)] font-mono truncate opacity-70">{model.id}</div>
+                                </div>
+                                
+                                <div className="flex-shrink-0 ml-2">
+                                    {isSelected ? (
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] text-[10px] font-bold shadow-sm border border-transparent animate-in fade-in zoom-in duration-200">
+                                            <Check size={11} strokeWidth={3} />
+                                            <span>Active</span>
+                                        </div>
+                                    ) : (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onSelectModel(model.id); }}
+                                            className="opacity-0 group-hover:opacity-100 focus:opacity-100 px-2.5 py-1 rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] text-[var(--theme-text-secondary)] hover:border-[var(--theme-bg-accent)] hover:text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent)] text-[10px] font-medium transition-all shadow-sm"
+                                        >
+                                            Set Active
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {availableModels.length === 0 && (
+                        <div className="p-4 text-center text-xs text-[var(--theme-text-tertiary)] italic">
+                            No models available.
+                        </div>
+                    )}
+                </div>
+                <div className="px-3 py-2 bg-[var(--theme-bg-secondary)]/50 border-t border-[var(--theme-border-secondary)] text-[10px] text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
+                    <Eye size={12} />
+                    <span>Click a model or "Set Active" to select it as default.</span>
                 </div>
             </div>
         )}

@@ -6,7 +6,7 @@ import { SafetySection } from './SafetySection';
 
 interface ChatBehaviorSectionProps {
   modelId: string;
-  setModelId: (value: string) => void;
+  setModelId: (id: string) => void;
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;

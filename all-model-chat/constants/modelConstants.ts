@@ -8,14 +8,19 @@ export const TAB_CYCLE_MODELS: string[] = [
     'gemini-2.5-pro',
     'models/gemini-flash-latest',
     'models/gemini-flash-lite-latest',
+    'gemini-pro-latest',
 ];
 
-export const GEMINI_3_RO_MODELS: string[] = ['gemini-3-pro-preview', 'models/gemini-3-pro-preview'];
+export const GEMINI_3_RO_MODELS: string[] = [
+    'gemini-3-pro-preview', 
+    'models/gemini-3-pro-preview',
+];
 
 export const MODELS_MANDATORY_THINKING = [
     'gemini-3-pro-preview',
     'models/gemini-3-pro-preview',
     'gemini-2.5-pro',
+    'gemini-pro-latest',
 ];
 
 export const THINKING_LEVELS = [
@@ -31,6 +36,7 @@ export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number
     'gemini-3-pro-preview': { min: 128, max: 32768 }, 
     'models/gemini-3-pro-preview': { min: 128, max: 32768 },
     'models/gemini-flash-lite-latest': { min: 512, max: 24576 },
+    'gemini-pro-latest': { min: 128, max: 32768 },
 };
 
 export const DEFAULT_TEMPERATURE = 1.0; 

@@ -1,4 +1,6 @@
 
+
+
 export const messagesTranslations = {
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
@@ -51,6 +53,14 @@ export const messagesTranslations = {
         zh: '请为附加的视频文件生成标准的 SRT 字幕文件。确保时间戳准确（格式：00:00:00,000 --> 00:00:00,000）并转录对话。请仅在代码块中输出 SRT 内容：' 
     },
     suggestion_srt_short: { en: 'Generate SRT subtitles from video.', zh: '从视频生成 SRT 字幕文件。' },
+
+    // HTML Generation Translations
+    suggestion_html_title: { en: 'Smart Board', zh: '智能看板' },
+    suggestion_html_desc: { 
+        en: 'Please organize the provided information into a structured, interactive HTML page using the Canvas system (Smart Board). Ensure the design is modern, responsive, and self-contained. Keep all information, do not omit details:', 
+        zh: '请利用 Canvas 系统，将提供的信息整理成一个结构化、交互式的 HTML 页面（智能看板）。确保设计现代、响应式且自包含。请保留所有信息，不要省略任何细节：' 
+    },
+    suggestion_html_short: { en: 'Create interactive HTML board.', zh: '创建交互式 HTML 看板。' },
 
     welcome_title: { en: 'Welcome to All Model Chat', zh: '欢迎使用 All Model Chat' },
     welcome_p1: { en: 'Start a conversation by typing below. You can also attach files, load scenarios via the', zh: '在下方输入文字开始对话。您也可以附加文件，或通过' },

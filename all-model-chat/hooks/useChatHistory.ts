@@ -88,6 +88,9 @@ export const useChatHistory = ({
         if (activeChat) {
             settingsForNewChat = {
                 ...settingsForNewChat,
+                modelId: activeChat.settings.modelId,
+                thinkingBudget: activeChat.settings.thinkingBudget,
+                thinkingLevel: activeChat.settings.thinkingLevel,
                 isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
                 isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
                 isUrlContextEnabled: activeChat.settings.isUrlContextEnabled,
