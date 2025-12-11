@@ -43,6 +43,14 @@ export const applyThemeToDocument = (doc: Document, theme: Theme, settings: AppS
   AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
   bodyClassList.add(`theme-${theme.id}`, 'antialiased');
 
+  // Dynamic Status Bar Color (Meta Theme Color)
+  // Matches the logic in Header.tsx: Pearl uses bgPrimary, others (Onyx) use bgSecondary
+  const metaThemeColor = doc.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+      const headerColor = theme.id === 'pearl' ? theme.colors.bgPrimary : theme.colors.bgSecondary;
+      metaThemeColor.setAttribute('content', headerColor);
+  }
+
   const markdownDarkTheme = doc.getElementById('markdown-dark-theme') as HTMLLinkElement;
   const markdownLightTheme = doc.getElementById('markdown-light-theme') as HTMLLinkElement;
   const hljsDarkTheme = doc.getElementById('hljs-dark-theme') as HTMLLinkElement;
