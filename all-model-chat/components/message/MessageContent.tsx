@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, ChevronDown, Sparkles, Languages } from 'lucide-react';
+import { Loader2, ChevronDown, Languages } from 'lucide-react';
 
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { FileDisplay } from './FileDisplay';
@@ -129,7 +129,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             
             {areThoughtsVisible && (
                 <div className="mb-2 mt-1">
-                    <details className="group rounded-lg bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 open:bg-[var(--theme-bg-tertiary)]/30 open:shadow-sm">
+                    <details className="group rounded-xl bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 open:bg-[var(--theme-bg-tertiary)]/30 open:shadow-sm">
                         <summary className="list-none flex select-none items-center gap-2 px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none">
                             <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                                 {/* Icon Area */}
@@ -309,10 +309,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                 active:scale-95
                             "
                         >
-                            <div className="flex items-center gap-1.5">
-                                <Sparkles size={12} className="text-[var(--theme-text-tertiary)] group-hover:text-[var(--theme-text-link)] opacity-50 group-hover:opacity-100 transition-opacity" />
-                                <span className="line-clamp-2">{suggestion}</span>
-                            </div>
+                            <span className="line-clamp-2">{suggestion}</span>
                         </button>
                     ))}
                 </div>

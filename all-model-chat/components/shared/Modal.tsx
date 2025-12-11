@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useWindowContext } from '../../contexts/WindowContext';
+import { useBackButton } from '../../hooks/useBackButton';
 
 interface ModalProps {
   isOpen: boolean;
@@ -23,6 +24,9 @@ export const Modal: React.FC<ModalProps> = ({
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
   const modalContentRef = useRef<HTMLDivElement>(null);
   const { document: targetDocument } = useWindowContext();
+
+  // Enable Android Back Button support for all modals
+  useBackButton(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {

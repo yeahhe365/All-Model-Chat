@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Info, Brain, Zap, Settings2, Ban, Gauge, Calculator } from 'lucide-react';
+import { Info, Lightbulb, Zap, Settings2, Ban, Gauge, Calculator, Cpu } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, GEMINI_3_RO_MODELS, SETTINGS_INPUT_CLASS, MODELS_MANDATORY_THINKING } from '../../constants/appConstants';
 import { Tooltip } from '../shared/Tooltip';
 
@@ -103,7 +103,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             {/* Header */}
             <div className="flex justify-between items-center">
                 <label className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
-                    <Brain size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
+                    <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
                     {t('settingsThinkingMode')}
                     <Tooltip text={t('settingsThinkingMode_tooltip')}>
                         <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
@@ -182,7 +182,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                                     onClick={() => setThinkingLevel('HIGH')} 
                                     label="High" 
                                     desc="Deep, comprehensive thought"
-                                    icon={<Brain size={16} />}
+                                    icon={<Cpu size={16} />}
                                 />
                             </div>
                         </div>

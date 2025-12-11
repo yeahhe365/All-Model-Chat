@@ -44,15 +44,28 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && props.showThoughts));
     
-    const messageContainerClasses = `flex items-start gap-2 sm:gap-3 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
+    // User messages align right, model messages align left (default)
+    const messageContainerClasses = `flex items-start gap-2 sm:gap-4 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
     
-    const bubbleClasses = `w-fit max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl px-4 py-3 sm:px-5 sm:py-4 shadow-sm flex flex-col min-w-0 transition-all duration-200 ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
+    // Common width constraints for readability
+    const widthConstraints = "max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl";
 
-    const roleSpecificBubbleClasses = {
-        user: 'bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-2xl rounded-tr-sm border border-transparent',
-        model: 'bg-[var(--theme-bg-model-message)] text-[var(--theme-bg-model-message-text)] rounded-2xl rounded-tl-sm border border-[var(--theme-border-secondary)]',
-        error: 'bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-2xl border border-transparent',
-    };
+    let bubbleClasses = `flex flex-col min-w-0 transition-all duration-200 ${widthConstraints} `;
+
+    if (message.role === 'user') {
+        // User Message: Bubble style
+        bubbleClasses += "w-fit px-4 py-3 sm:px-5 sm:py-4 shadow-sm ";
+        bubbleClasses += "bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-[24px] rounded-tr-[4px] border border-transparent";
+    } else if (message.role === 'model') {
+        // Model Message: No bubble style
+        // Removed padding (px-4 py-3), background, shadow, border, rounded corners
+        // Added some vertical padding for breathing room if needed, but 'py-1' is minimal
+        bubbleClasses += `w-full py-1 text-[var(--theme-text-primary)] ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
+    } else {
+        // Error Message: Bubble style (Red)
+        bubbleClasses += "w-fit px-4 py-3 shadow-sm ";
+        bubbleClasses += "bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-[24px] border border-transparent";
+    }
 
     return (
         <div 
@@ -63,7 +76,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         >
             <div className={`${messageContainerClasses}`}>
                 {message.role !== 'user' && <MessageActions {...props} isGrouped={isGrouped} />}
-                <div className={`${bubbleClasses} ${roleSpecificBubbleClasses[message.role]}`}>
+                <div className={`${bubbleClasses}`}>
                     <MessageContent {...props} />
                 </div>
                 {message.role === 'user' && <MessageActions {...props} isGrouped={isGrouped} />}
