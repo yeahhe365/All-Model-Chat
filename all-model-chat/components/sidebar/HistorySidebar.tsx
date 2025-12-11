@@ -9,6 +9,8 @@ import { GroupItem } from './GroupItem';
 import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
 import { useWindowContext } from '../../contexts/WindowContext';
+import { useBackButton } from '../../hooks/useBackButton';
+import { useIsMobile } from '../../hooks/useDevice';
 
 export interface HistorySidebarProps {
   isOpen: boolean;
@@ -58,6 +60,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
   
   const { document: targetDocument } = useWindowContext();
+  const isMobile = useIsMobile();
+
+  // Enable Android Back Button support ONLY on mobile when sidebar acts as an overlay
+  useBackButton(isOpen, onToggle, isMobile);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

@@ -16,6 +16,7 @@ import { FilePreviewModal } from '../shared/ImageZoomModal';
 import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
 import { TokenCountModal } from '../modals/TokenCountModal';
 import { GEMINI_3_RO_MODELS } from '../../constants/appConstants';
+import { useBackButton } from '../../hooks/useBackButton';
 
 export interface ChatInputProps {
   appSettings: AppSettings;
@@ -115,6 +116,9 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [isConverting, setIsConverting] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
+
+  // Enable Back Button support for Fullscreen Input
+  useBackButton(isFullscreen, handleToggleFullscreen);
 
   const {
     showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
