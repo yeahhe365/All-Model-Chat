@@ -24,5 +24,9 @@ export const useModels = () => {
         localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(models));
     }, []);
 
-    return { apiModels, setApiModels };
+    // Currently loading is instantaneous for local storage, but structure prepared for API fetch
+    const isModelsLoading = false;
+    const modelsLoadingError = null;
+
+    return { apiModels, setApiModels, isModelsLoading, modelsLoadingError };
 };

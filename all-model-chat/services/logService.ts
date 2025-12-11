@@ -242,7 +242,7 @@ class LogServiceImpl {
               message: error.message,
               name: error.name,
               stack: error.stack,
-              cause: error.cause
+              cause: (error as any).cause
           };
       }
       return error;

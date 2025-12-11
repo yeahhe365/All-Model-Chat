@@ -18,7 +18,7 @@ export const TableBlock: React.FC<React.TableHTMLAttributes<HTMLTableElement>> =
         const csvContent = rows.map(row => {
             const cells = Array.from(row.querySelectorAll('th, td'));
             return cells.map(cell => {
-                const text = cell.innerText || '';
+                const text = (cell as HTMLElement).innerText || '';
                 // Escape double quotes by doubling them
                 return `"${text.replace(/"/g, '""')}"`;
             }).join(',');

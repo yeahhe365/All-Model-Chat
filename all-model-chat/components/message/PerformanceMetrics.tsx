@@ -7,9 +7,10 @@ import { translations } from '../../utils/appUtils';
 interface PerformanceMetricsProps {
     message: ChatMessage;
     t: (key: keyof typeof translations) => string;
+    hideTimer?: boolean;
 }
 
-export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t }) => {
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t, hideTimer }) => {
     const { 
         promptTokens, 
         completionTokens, 
@@ -45,7 +46,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
         : 0;
 
     const showTokens = typeof promptTokens === 'number' || typeof completionTokens === 'number' || typeof totalTokens === 'number';
-    const showTimer = isLoading || (generationStartTime && generationEndTime);
+    const showTimer = (isLoading && !hideTimer) || (generationStartTime && generationEndTime);
 
     if (!showTokens && !showTimer) return null;
 

@@ -140,15 +140,12 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
     const roots: FileNode[] = [];
     const nodeMap = new Map<string, FileNode>();
 
-    const entries = Object.values(zip.files);
+    const entries = Object.values(zip.files) as JSZip.JSZipObject[];
 
     for (const entry of entries) {
         const path = entry.name;
         // Ignore directories themselves in this loop if they are explicitly stored, 
         // we handle structure via path splitting of files/folders. 
-        // JSZip can have entries for folders "foo/" and files "foo/bar.txt".
-        // We generally rely on the file paths to build the tree implicitly, 
-        // but explicit directory entries are useful if empty.
         
         const parts = path.split('/').filter(p => p);
         

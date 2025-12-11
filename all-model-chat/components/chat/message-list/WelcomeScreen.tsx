@@ -42,7 +42,7 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
     }, [text, isHovering, targetPhrase]);
 
     useEffect(() => {
-        let timeout: NodeJS.Timeout;
+        let timeout: ReturnType<typeof setTimeout>;
         
         const baseTypeSpeed = 50;
         const deleteSpeed = 30;

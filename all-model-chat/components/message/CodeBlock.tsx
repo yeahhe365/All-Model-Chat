@@ -317,14 +317,14 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                     }}
                 >
                     {codeElement ? (
-                        React.cloneElement(codeElement, {
+                        React.cloneElement(codeElement as React.ReactElement, {
                             // Add !cursor-text to override the pointer cursor from InlineCode
                             className: `${codeElement.props.className || ''} !p-4 !block font-mono text-[13px] sm:text-sm leading-relaxed !cursor-text`,
                             // Disable the click-to-copy behavior for code blocks
                             onClick: undefined,
                             // Remove the "Click to copy" tooltip
                             title: undefined,
-                        })
+                        } as any)
                     ) : (
                         children
                     )}

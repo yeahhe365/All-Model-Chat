@@ -12,6 +12,7 @@ import { PerformanceMetrics } from './PerformanceMetrics';
 import { ThinkingTimer } from './ThinkingTimer';
 import { AudioPlayer } from '../shared/AudioPlayer';
 import { geminiServiceInstance } from '../../services/geminiService';
+import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 
 interface MessageContentProps {
     message: ChatMessage;
@@ -37,6 +38,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
     const areThoughtsVisible = message.role === 'model' && thoughts && showThoughts;
     const isQuadImageView = files && files.length === 4 && files.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
+    const hasFiles = files && files.length > 0;
 
     const lastThought = useMemo(() => parseThoughtProcess(thoughts), [thoughts]);
     
@@ -80,7 +82,11 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
         setIsTranslatingThoughts(true);
         try {
-            const keyResult = getKeyForRequest(appSettings, message.settings ? message.settings : appSettings, { skipIncrement: true });
+            // Use appSettings + default chat settings as context for key retrieval if needed
+            // Ideally we should use the active session settings, but Message component doesn't receive it directly.
+            // Using appSettings is a reasonable fallback for tool usage like translation.
+            const tempSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+            const keyResult = getKeyForRequest(appSettings, tempSettings, { skipIncrement: true });
             if ('error' in keyResult) {
                 console.error("API Key error for translation:", keyResult.error);
                 return;
@@ -98,7 +104,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
 
     return (
         <>
-            {files && files.length > 0 && (
+            {hasFiles && (
                 isQuadImageView ? (
                     <div className={`grid grid-cols-2 gap-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
                         {files.map((file) => (
@@ -128,25 +134,25 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {areThoughtsVisible && (
-                <div className="mb-2 mt-1">
+                <div className={`mb-2 ${hasFiles ? 'mt-1' : '-mt-2'}`}>
                     <details className="group rounded-xl bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 open:bg-[var(--theme-bg-tertiary)]/30 open:shadow-sm">
                         <summary className="list-none flex select-none items-center gap-2 px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none">
                             <div className="flex items-center gap-2 min-w-0 overflow-hidden">
                                 {/* Icon Area */}
                                 {isLoading && (
-                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-300 bg-[var(--theme-bg-accent)]/10`}>
+                                    <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg transition-colors duration-300 bg-[var(--theme-bg-accent)]/10`}>
                                         <GoogleSpinner size={20} />
                                     </div>
                                 )}
 
                                 {/* Text Area */}
-                                <div className="flex flex-col min-w-0 justify-center">
+                                <div className="flex flex-col min-w-0 justify-center min-h-[1.75rem] sm:min-h-[2rem]">
                                     {isLoading ? (
                                         <>
                                             <span className="text-base font-bold uppercase tracking-wider text-[var(--theme-text-secondary)] truncate opacity-90">
                                                 {lastThought && !lastThought.isFallback ? lastThought.title : t('thinking_text')}
                                             </span>
-                                            <span className="text-xs text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
+                                            <span className="text-sm text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
                                                 {message.thinkingTimeMs !== undefined ? (
                                                     t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
                                                 ) : (
@@ -286,7 +292,11 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             )}
             
             {(message.role === 'model' || (message.role === 'error' && generationStartTime)) && (
-                <PerformanceMetrics message={message} t={t} />
+                <PerformanceMetrics 
+                    message={message} 
+                    t={t} 
+                    hideTimer={isLoading}
+                />
             )}
 
             {(suggestions && suggestions.length > 0) && (

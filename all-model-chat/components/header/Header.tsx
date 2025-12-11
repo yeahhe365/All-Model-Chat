@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
   const strokeWidth = 2; 
 
   return (
-    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} px-2 py-2 sm:px-3 sm:py-3 pt-[calc(env(safe-area-inset-top)+0.5rem)] flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
+    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 sm:p-3 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
       
       {/* Left Section: Navigation & Model Selector */}
       <div className="flex items-center gap-2 min-w-0">

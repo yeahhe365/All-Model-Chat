@@ -151,10 +151,7 @@ export const buildContentParts = async (
   const filesToProcess = files || [];
   
   // Check if model supports per-part resolution (Gemini 3 family)
-  const isGemini3 = modelId && (
-      GEMINI_3_RO_MODELS.some(m => modelId.toLowerCase().includes(m)) || 
-      modelId.toLowerCase().includes('gemini-3-pro')
-  );
+  const isGemini3 = modelId && isGemini3Model(modelId);
   
   const processedResults = await Promise.all(filesToProcess.map(async (file) => {
     const newFile = { ...file };
@@ -331,6 +328,13 @@ export const getDefaultModelOptions = (): ModelOption[] => {
         return { id, name, isPinned: true };
     });
     return sortModels([...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS]);
+};
+
+// --- Helper for Model Capabilities ---
+export const isGemini3Model = (modelId: string): boolean => {
+    if (!modelId) return false;
+    const lowerId = modelId.toLowerCase();
+    return GEMINI_3_RO_MODELS.some(m => lowerId.includes(m)) || lowerId.includes('gemini-3-pro');
 };
 
 // --- Model Settings Cache ---

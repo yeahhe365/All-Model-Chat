@@ -33,8 +33,9 @@ export const useChatInputModals = ({
 
     let stream: MediaStream;
     try {
+        // Cast to any to bypass strict type check for mediaSource property if necessary, or use compliant structure
         stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { mediaSource: "screen" },
+            video: { mediaSource: "screen" } as any, 
             audio: false,
         });
     } catch (err) {

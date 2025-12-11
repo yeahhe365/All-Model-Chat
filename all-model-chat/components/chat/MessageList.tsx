@@ -12,7 +12,7 @@ import { MessageListPlaceholder } from './message-list/MessageListPlaceholder';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
 import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { MediaResolution } from '../../types/settings';
-import { GEMINI_3_RO_MODELS } from '../../constants/appConstants';
+import { isGemini3Model } from '../../utils/appUtils';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -156,8 +156,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   // Determine if current model is Gemini 3 to enable per-part resolution
   // We use currentModelId from props which reflects the active session's model
   const isGemini3 = useMemo(() => {
-      if (!currentModelId) return false;
-      return GEMINI_3_RO_MODELS.some(m => currentModelId.toLowerCase().includes(m)) || currentModelId.toLowerCase().includes('gemini-3');
+      return isGemini3Model(currentModelId);
   }, [currentModelId]);
 
   return (
