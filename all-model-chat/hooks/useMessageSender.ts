@@ -141,7 +141,14 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
         
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
-        const { contentParts: promptParts, enrichedFiles } = await buildContentParts(textToUse.trim(), successfullyProcessedFiles);
+        
+        // Pass modelId and mediaResolution to buildContentParts for per-part injection
+        const { contentParts: promptParts, enrichedFiles } = await buildContentParts(
+            textToUse.trim(), 
+            successfullyProcessedFiles,
+            activeModelId,
+            sessionToUpdate.mediaResolution
+        );
         
         let finalSessionId = activeSessionId;
         
@@ -220,7 +227,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
             aspectRatio,
             sessionToUpdate.isDeepSearchEnabled,
             imageSize,
-            sessionToUpdate.safetySettings
+            sessionToUpdate.safetySettings,
+            sessionToUpdate.mediaResolution // Pass to config builder
         );
 
         // Pass generationStartTime by value to create a closure-safe handler

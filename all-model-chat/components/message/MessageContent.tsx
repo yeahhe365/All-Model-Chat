@@ -27,9 +27,11 @@ interface MessageContentProps {
     appSettings: AppSettings;
     themeId: string;
     onOpenSidePanel: (content: SideViewContent) => void;
+    onConfigureFile?: (file: UploadedFile, messageId: string) => void;
+    isGemini3?: boolean;
 }
 
-export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId, onOpenSidePanel }) => {
+export const MessageContent: React.FC<MessageContentProps> = React.memo(({ message, onImageClick, onOpenHtmlPreview, showThoughts, baseFontSize, expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, t, appSettings, themeId, onOpenSidePanel, onConfigureFile, isGemini3 }) => {
     const { content, files, isLoading, thoughts, generationStartTime, audioSrc, groundingMetadata, urlContextMetadata, suggestions, isGeneratingSuggestions } = message;
     
     const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
@@ -99,11 +101,28 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
             {files && files.length > 0 && (
                 isQuadImageView ? (
                     <div className={`grid grid-cols-2 gap-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
-                        {files.map((file) => <FileDisplay key={file.id} file={file} onFileClick={onImageClick} isFromMessageList={true} isGridView={true} />)}
+                        {files.map((file) => (
+                            <FileDisplay 
+                                key={file.id} 
+                                file={file} 
+                                onFileClick={onImageClick} 
+                                isFromMessageList={true} 
+                                isGridView={true} 
+                            />
+                        ))}
                     </div>
                 ) : (
                     <div className={`space-y-2 ${content || audioSrc ? 'mb-1.5 sm:mb-2' : ''}`}>
-                        {files.map((file) => <FileDisplay key={file.id} file={file} onFileClick={onImageClick} isFromMessageList={true} />)}
+                        {files.map((file) => (
+                            <FileDisplay 
+                                key={file.id} 
+                                file={file} 
+                                onFileClick={onImageClick} 
+                                isFromMessageList={true}
+                                onConfigure={onConfigureFile ? () => onConfigureFile(file, message.id) : undefined}
+                                isGemini3={isGemini3}
+                            />
+                        ))}
                     </div>
                 )
             )}

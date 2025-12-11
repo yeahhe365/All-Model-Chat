@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
 import { ModelOption } from '../../types';
-import { Info, Maximize2 } from 'lucide-react';
-import { Tooltip } from '../shared/Tooltip';
+import { Info, Maximize2, Image as ImageIcon } from 'lucide-react';
+import { Tooltip, Select } from '../shared/Tooltip';
 import { ModelSelector } from './ModelSelector';
 import { ThinkingControl } from './ThinkingControl';
 import { VoiceControl } from './VoiceControl';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { TextEditorModal } from '../modals/TextEditorModal';
+import { MediaResolution } from '../../types/settings';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -33,6 +34,8 @@ interface ModelVoiceSettingsProps {
   topP: number;
   setTopP: (value: number) => void;
   setAvailableModels: (models: ModelOption[]) => void;
+  mediaResolution?: MediaResolution;
+  setMediaResolution?: (resolution: MediaResolution) => void;
 }
 
 export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => {
@@ -47,7 +50,9 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     temperature, setTemperature,
     topP, setTopP,
     t,
-    setAvailableModels
+    setAvailableModels,
+    mediaResolution,
+    setMediaResolution
   } = props;
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
@@ -141,6 +146,31 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     <input id="top-p-slider" type="range" min="0" max="1" step="0.05" value={topP} onChange={(e) => setTopP(parseFloat(e.target.value))}
                     className="w-full h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]" />
                 </div>
+
+                {setMediaResolution && mediaResolution && (
+                    <Select
+                        id="media-resolution-select"
+                        label=""
+                        layout="horizontal"
+                        labelContent={
+                            <span className='flex items-center text-sm font-medium text-[var(--theme-text-primary)]'>
+                                <ImageIcon size={14} className="mr-2 text-[var(--theme-text-secondary)]" />
+                                {t('settingsMediaResolution')}
+                                <Tooltip text={t('settingsMediaResolution_tooltip')}>
+                                    <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
+                                </Tooltip>
+                            </span>
+                        }
+                        value={mediaResolution}
+                        onChange={(e) => setMediaResolution(e.target.value as MediaResolution)}
+                    >
+                        <option value={MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED}>{t('mediaResolution_unspecified')}</option>
+                        <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
+                        <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>
+                        <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>
+                        <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
+                    </Select>
+                )}
             </div>
       </div>
 

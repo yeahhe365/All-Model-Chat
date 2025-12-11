@@ -45,6 +45,7 @@ export interface GeminiService {
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
   editImage: (apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, imageSize?: string) => Promise<Part[]>;
+  countTokens: (apiKey: string, modelId: string, parts: Part[]) => Promise<number>;
 }
 
 export interface ThoughtSupportingPart extends Part {

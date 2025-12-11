@@ -2,7 +2,7 @@
 import { GeminiService, ChatHistoryItem, ModelOption } from '../types';
 import { Part, UsageMetadata, File as GeminiFile, Modality } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
-import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi } from './api/generationApi';
+import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi, countTokensApi } from './api/generationApi';
 import { sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
 
@@ -48,6 +48,10 @@ class GeminiServiceImpl implements GeminiService {
 
     async generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]> {
         return generateSuggestionsApi(apiKey, userContent, modelContent, language);
+    }
+
+    async countTokens(apiKey: string, modelId: string, parts: Part[]): Promise<number> {
+        return countTokensApi(apiKey, modelId, parts);
     }
 
     async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, imageSize?: string): Promise<Part[]> {

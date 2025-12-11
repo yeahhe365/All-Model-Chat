@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ThemeColors } from '../constants/themeConstants';
-import { AppSettings } from '../types';
+import { AppSettings, MediaResolution } from '../types';
 import { Theme, AVAILABLE_THEMES } from '../constants/themeConstants';
 import { 
   SUPPORTED_IMAGE_MIME_TYPES, 
@@ -164,4 +164,19 @@ export const extractTextFromNode = (node: React.ReactNode): string => {
     if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
     if (React.isValidElement(node)) return extractTextFromNode(node.props.children);
     return '';
+};
+
+export const getResolutionColor = (resolution?: MediaResolution): string => {
+    switch (resolution) {
+        case MediaResolution.MEDIA_RESOLUTION_LOW:
+            return 'text-emerald-400 hover:text-emerald-300';
+        case MediaResolution.MEDIA_RESOLUTION_MEDIUM:
+            return 'text-sky-400 hover:text-sky-300';
+        case MediaResolution.MEDIA_RESOLUTION_HIGH:
+            return 'text-violet-400 hover:text-violet-300';
+        case MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH:
+            return 'text-amber-400 hover:text-amber-300';
+        default:
+            return 'text-white/80 hover:text-white';
+    }
 };

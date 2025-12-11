@@ -5,9 +5,10 @@ import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
 import { ChatInput } from '../chat/ChatInput';
 import { useResponsiveValue } from '../../hooks/useDevice';
-import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent } from '../../types';
+import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata } from '../../types';
 import { ThemeColors } from '../../constants/themeConstants';
 import { translations } from '../../utils/appUtils';
+import { MediaResolution } from '../../types/settings';
 
 export interface ChatAreaProps {
   activeSessionId: string | null;
@@ -69,6 +70,7 @@ export interface ChatAreaProps {
   
   // Edit Content
   onEditMessageContent: (message: ChatMessage) => void;
+  onUpdateMessageFile: (messageId: string, fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => void;
 
   // ChatInput Props
   appSettings: AppSettings;
@@ -138,7 +140,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
-    onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent,
+    onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent, onUpdateMessageFile,
     appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
@@ -252,7 +254,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onScrollToNextTurn={onScrollToNextTurn}
         chatInputHeight={chatInputHeight}
         appSettings={appSettings}
+        currentModelId={currentChatSettings.modelId} // Passed down to determine model capabilities (e.g. Gemini 3 features)
         onOpenSidePanel={onOpenSidePanel}
+        onUpdateMessageFile={onUpdateMessageFile}
       />
       <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
         <div className="pointer-events-auto">

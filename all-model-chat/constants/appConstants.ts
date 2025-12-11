@@ -1,6 +1,6 @@
 
 import { AppSettings, FilesApiConfig } from '../types';
-import { HarmCategory, HarmBlockThreshold, SafetySetting } from '../types/settings';
+import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
 // Re-exporting from new modules
 export * from './modelConstants';
@@ -54,6 +54,8 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
     text: false,
 };
 
+export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
   modelId: DEFAULT_MODEL_ID,
@@ -70,6 +72,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   isUrlContextEnabled: false,
   isDeepSearchEnabled: false,
   safetySettings: DEFAULT_SAFETY_SETTINGS,
+  mediaResolution: DEFAULT_MEDIA_RESOLUTION,
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {

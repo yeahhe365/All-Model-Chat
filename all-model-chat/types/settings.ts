@@ -21,6 +21,14 @@ export enum HarmBlockThreshold {
   BLOCK_LOW_AND_ABOVE = 'BLOCK_LOW_AND_ABOVE',
 }
 
+export enum MediaResolution {
+  MEDIA_RESOLUTION_UNSPECIFIED = 'MEDIA_RESOLUTION_UNSPECIFIED',
+  MEDIA_RESOLUTION_LOW = 'MEDIA_RESOLUTION_LOW',
+  MEDIA_RESOLUTION_MEDIUM = 'MEDIA_RESOLUTION_MEDIUM',
+  MEDIA_RESOLUTION_HIGH = 'MEDIA_RESOLUTION_HIGH',
+  MEDIA_RESOLUTION_ULTRA_HIGH = 'MEDIA_RESOLUTION_ULTRA_HIGH',
+}
+
 export interface SafetySetting {
     category: HarmCategory;
     threshold: HarmBlockThreshold;
@@ -49,6 +57,7 @@ export interface ChatSettings {
   isUrlContextEnabled?: boolean;
   isDeepSearchEnabled?: boolean;
   safetySettings?: SafetySetting[];
+  mediaResolution?: MediaResolution;
 }
 
 export interface AppSettings extends ChatSettings {

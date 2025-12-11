@@ -1,5 +1,5 @@
 
-import { ChatSettings } from './settings';
+import { ChatSettings, MediaResolution } from './settings';
 
 export interface VideoMetadata {
   startOffset?: string;
@@ -26,6 +26,7 @@ export interface UploadedFile {
   abortController?: AbortController; // Added for cancelling uploads
   uploadSpeed?: string; // Added for upload speed display
   videoMetadata?: VideoMetadata; // Added for video clipping
+  mediaResolution?: MediaResolution; // Added for Gemini 3 per-part resolution
 }
 
 export interface ChatMessage {
@@ -67,6 +68,7 @@ export interface ContentPart {
   };
   videoMetadata?: VideoMetadata;
   thoughtSignature?: string; // Added to pass back to API
+  mediaResolution?: { level: string }; // Added for Gemini 3 per-part resolution
 }
 
 export interface ChatGroup {
@@ -171,4 +173,5 @@ export interface ChatInputActionsProps {
   inputText: string;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
+  onCountTokens: () => void;
 }

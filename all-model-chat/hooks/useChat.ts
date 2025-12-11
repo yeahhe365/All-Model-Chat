@@ -286,5 +286,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         toggleDeepSearch: chatActions.toggleDeepSearch,
         handleTogglePinCurrentSession: chatActions.handleTogglePinCurrentSession,
         handleUpdateMessageContent: chatActions.handleUpdateMessageContent,
+        handleUpdateMessageFile: chatActions.handleUpdateMessageFile,
     };
 };
