@@ -47,8 +47,11 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     // User messages align right, model messages align left (default)
     const messageContainerClasses = `flex items-start gap-2 sm:gap-4 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;
     
-    // Common width constraints for readability
-    const widthConstraints = "max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl";
+    // Width constraints
+    // Mobile: User messages capped at 80% for better visual separation. Model messages use available space (minus actions gap).
+    const widthConstraints = message.role === 'user' 
+        ? "max-w-[80%] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl"
+        : "max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl";
 
     let bubbleClasses = `flex flex-col min-w-0 transition-all duration-200 ${widthConstraints} `;
 
