@@ -1,3 +1,4 @@
+
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -42,6 +43,13 @@ export const settingsTranslations = {
     settingsThinkingLevel: { en: 'Thinking Level', zh: '等级' },
     settingsThinkingBudget_tooltip: { en: 'Set token budget for thinking. -1 for auto/unlimited, 0 to disable (like toggle off), >0 for specific token limit.', zh: '设置思考的令牌预算。-1 为自动/无限制，0 为禁用（与关闭开关效果相同），大于 0 为指定的令牌限制。' },
     settingsThinkingBudget_placeholder: { en: 'e.g., -1 for auto', zh: '例如：-1 代表自动' },
+    settingsMediaResolution: { en: 'Media Resolution', zh: '媒体分辨率' },
+    settingsMediaResolution_tooltip: { en: 'Controls the resolution of images, videos, and PDFs sent to the model. Higher resolution consumes more tokens but provides better detail.', zh: '控制发送给模型的图片、视频和PDF的分辨率。分辨率越高，消耗的令牌越多，但细节越丰富。' },
+    mediaResolution_unspecified: { en: 'Auto (Default)', zh: '自动 (默认)' },
+    mediaResolution_low: { en: 'Low (Faster)', zh: '低 (较快)' },
+    mediaResolution_medium: { en: 'Medium (Balanced)', zh: '中 (平衡)' },
+    mediaResolution_high: { en: 'High (Detail)', zh: '高 (细节)' },
+    mediaResolution_ultra_high: { en: 'Ultra High (Gemini 3 Only)', zh: '超高 (仅限 Gemini 3)' },
     settingsReset: { en: 'Reset Settings', zh: '重置设置' },
     settingsReset_confirm: { en: 'Are you sure you want to reset all settings to their default values? This does not affect chat history. Your current changes will be lost.', zh: '您确定要将所有设置重置为默认值吗？这不会影响您的聊天记录。您当前的更改将丢失。' },
     settingsClearHistory: { en: 'Clear Chat History', zh: '清空历史对话' },

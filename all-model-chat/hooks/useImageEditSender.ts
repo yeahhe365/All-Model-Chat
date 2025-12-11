@@ -86,7 +86,9 @@ export const useImageEditSender = ({
         activeJobs.current.set(generationId, newAbortController);
 
         try {
-            const { contentParts: promptParts } = await buildContentParts(text, imageFiles);
+            // For image edit, we typically don't apply custom resolution logic yet as it's a specific endpoint/task,
+            // but we can pass the modelId anyway.
+            const { contentParts: promptParts } = await buildContentParts(text, imageFiles, currentChatSettings.modelId);
             const historyForApi = await createChatHistoryForApi(messages);
             
             const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, imageSize);

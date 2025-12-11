@@ -3,6 +3,7 @@ import React from 'react';
 import { ModelOption, SafetySetting } from '../../types';
 import { ModelVoiceSettings } from './ModelVoiceSettings';
 import { SafetySection } from './SafetySection';
+import { MediaResolution } from '../../types/settings';
 
 interface ChatBehaviorSectionProps {
   modelId: string;
@@ -30,6 +31,8 @@ interface ChatBehaviorSectionProps {
   setSafetySettings: (settings: SafetySetting[]) => void;
   t: (key: string) => string;
   setAvailableModels: (models: ModelOption[]) => void;
+  mediaResolution?: MediaResolution;
+  setMediaResolution?: (resolution: MediaResolution) => void;
 }
 
 export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) => {
@@ -61,6 +64,8 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
             topP={props.topP}
             setTopP={props.setTopP}
             t={t}
+            mediaResolution={props.mediaResolution}
+            setMediaResolution={props.setMediaResolution}
         />
         
         <div className="pt-6 border-t border-[var(--theme-border-secondary)]">

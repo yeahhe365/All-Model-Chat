@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope } from 'lucide-react';
+import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { IconYoutube } from '../../icons/CustomIcons';
@@ -16,6 +16,7 @@ interface ToolsMenuProps {
     isDeepSearchEnabled: boolean;
     onToggleDeepSearch: () => void;
     onAddYouTubeVideo: () => void;
+    onCountTokens: () => void;
     disabled: boolean;
     t: (key: keyof typeof translations) => string;
 }
@@ -53,7 +54,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
-    onAddYouTubeVideo,
+    onAddYouTubeVideo, onCountTokens,
     disabled, t
 }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -74,7 +75,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'web_search_label', icon: <Globe size={18} strokeWidth={2} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
       { labelKey: 'code_execution_label', icon: <Terminal size={18} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
       { labelKey: 'url_context_label', icon: <Link size={18} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) },
-      { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } }
+      { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } },
+      { labelKey: 'tools_token_count_label', icon: <Calculator size={18} strokeWidth={2} />, isEnabled: false, action: () => { onCountTokens(); setIsOpen(false); } }
     ];
     
     return (

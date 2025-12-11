@@ -11,9 +11,11 @@ import { useSlashCommands } from '../../hooks/useSlashCommands';
 import { useIsDesktop } from '../../hooks/useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { useChatInputState, INITIAL_TEXTAREA_HEIGHT_PX } from '../../hooks/useChatInputState';
-import { VideoSettingsModal } from '../modals/VideoSettingsModal';
+import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { FilePreviewModal } from '../shared/ImageZoomModal';
 import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
+import { TokenCountModal } from '../modals/TokenCountModal';
+import { GEMINI_3_RO_MODELS } from '../../constants/appConstants';
 
 export interface ChatInputProps {
   appSettings: AppSettings;
@@ -112,6 +114,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [configuringFile, setConfiguringFile] = useState<UploadedFile | null>(null);
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [isConverting, setIsConverting] = useState(false);
+  const [showTokenModal, setShowTokenModal] = useState(false);
 
   const {
     showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -144,7 +147,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     thinkingLevel: currentChatSettings.thinkingLevel,
   });
 
-  const isModalOpen = showCreateTextFileEditor || showRecorder || !!configuringFile || !!previewFile;
+  const isModalOpen = showCreateTextFileEditor || showRecorder || !!configuringFile || !!previewFile || showTokenModal;
   const isAnyModalOpen = isModalOpen || isHelpModalOpen;
   
   const canSend = (
@@ -214,6 +217,10 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const isFlashImageModel = currentChatSettings.modelId.includes('gemini-2.5-flash-image');
   const isRealImagen = currentChatSettings.modelId.includes('imagen');
   
+  // Calculate if active model is a Gemini 3 model (for chat or image)
+  // Used to enable per-file resolution settings
+  const isGemini3 = GEMINI_3_RO_MODELS.some(m => currentChatSettings.modelId.toLowerCase().includes(m)) || currentChatSettings.modelId.toLowerCase().includes('gemini-3');
+
   let supportedAspectRatios: string[] | undefined;
   
   if (isRealImagen) {
@@ -271,6 +278,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             isDeepSearchEnabled,
             onToggleDeepSearch: () => handlers.handleToggleToolAndFocus(onToggleDeepSearch),
             onAddYouTubeVideo: () => { setShowAddByUrlInput(true); textareaRef.current?.focus(); },
+            onCountTokens: () => setShowTokenModal(true),
             onRecordButtonClick: handleVoiceInputClick,
             onCancelRecording: handleCancelRecording,
             isRecording,
@@ -301,6 +309,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             onCancelUpload,
             onConfigure: setConfiguringFile,
             onPreview: setPreviewFile,
+            isGemini3,
         }}
         inputProps={{
             value: inputText,
@@ -361,11 +370,23 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         t={t}
       />
       
-      <VideoSettingsModal 
+      <FileConfigurationModal 
         isOpen={!!configuringFile} 
         onClose={() => setConfiguringFile(null)} 
         file={configuringFile}
-        onSave={handlers.handleSaveVideoMetadata}
+        onSave={handlers.handleSaveFileConfig}
+        t={t}
+        isGemini3={isGemini3}
+      />
+
+      <TokenCountModal
+        isOpen={showTokenModal}
+        onClose={() => setShowTokenModal(false)}
+        initialText={inputText}
+        initialFiles={selectedFiles}
+        appSettings={appSettings}
+        availableModels={availableModels}
+        currentModelId={currentChatSettings.modelId}
         t={t}
       />
 

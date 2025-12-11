@@ -1,12 +1,12 @@
 
 import { useCallback } from 'react';
 import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings, VideoMetadata } from '../types';
-import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest } from '../utils/appUtils';
+import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
+import { generateUniqueId, getKeyForRequest, logService, getTranslator } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
-import { logService } from '../services/logService';
-import { generateFolderContext, generateZipContext } from '../utils/folderImportUtils';
+import { generateFolderContext } from '../utils/folderImportUtils';
 import { Command } from '../components/chat/input/SlashCommandMenu';
+import { MediaResolution } from '../types/settings';
 
 interface UseChatInputHandlersProps {
     // State & Setters
@@ -302,8 +302,8 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         setTimeout(() => textareaRef.current?.focus(), 0);
     }, [textareaRef]);
 
-    const handleSaveVideoMetadata = useCallback((fileId: string, metadata: VideoMetadata) => {
-        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, videoMetadata: metadata } : f));
+    const handleSaveFileConfig = useCallback((fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => {
+        setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, ...updates } : f));
     }, [setSelectedFiles]);
 
     // Derived Navigation State
@@ -340,7 +340,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         removeSelectedFile,
         handleAddFileByIdSubmit,
         handleToggleToolAndFocus,
-        handleSaveVideoMetadata,
+        handleSaveFileConfig,
         handlePrevImage,
         handleNextImage,
         inputImages,

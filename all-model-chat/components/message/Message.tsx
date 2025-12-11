@@ -29,6 +29,8 @@ interface MessageProps {
     t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
     onOpenSidePanel: (content: SideViewContent) => void;
+    onConfigureFile?: (file: UploadedFile, messageId: string) => void;
+    isGemini3?: boolean;
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {

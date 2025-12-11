@@ -45,10 +45,22 @@ export const chatInputTranslations = {
     code_execution_short: { en: 'Code', zh: '代码' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
     url_context_short: { en: 'URL', zh: 'URL' },
+    tools_token_count_label: { en: 'Token Calculator', zh: 'Token 计算器' },
+    token_count_result: { en: 'Estimated Tokens: {count}', zh: '预估 Token 数: {count}' },
+    token_count_error: { en: 'Failed to count tokens.', zh: '计算 Token 失败。' },
     translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
     translating_button_title: { en: 'Translating...', zh: '翻译中...' },
     fullscreen_tooltip_expand: { en: 'Expand Input', zh: '展开输入框' },
     fullscreen_tooltip_collapse: { en: 'Collapse Input', zh: '收起输入框' },
+
+    // Token Modal
+    tokenModal_title: { en: 'Token Calculator', zh: 'Token 计算器' },
+    tokenModal_model: { en: 'Select Model', zh: '选择模型' },
+    tokenModal_input: { en: 'Content', zh: '内容' },
+    tokenModal_placeholder: { en: 'Paste text here to count tokens...', zh: '在此粘贴文本以计算 Token...' },
+    tokenModal_files: { en: 'Files', zh: '文件' },
+    tokenModal_clear: { en: 'Clear', zh: '清空' },
+    tokenModal_count: { en: 'Calculate', zh: '计算' },
 
     // Create Text File Modal
     createText_title: { en: 'Create New Text File', zh: '创建新文本文件' },
@@ -56,7 +68,12 @@ export const chatInputTranslations = {
     createText_content_placeholder: { en: 'Type or paste your text content here...', zh: '在此输入或粘贴文本内容...' },
     createText_create_button: { en: 'Create File', zh: '创建文件' },
 
-    // Video Settings Modal
+    // File Settings Modal
+    fileSettings_title: { en: 'File Configuration', zh: '文件配置' },
+    fileSettings_resolution: { en: 'Token Resolution', zh: 'Token 分辨率' },
+    fileSettings_resolution_help: { en: 'Specific resolution for this file. Overrides global settings.', zh: '此文件的特定分辨率。覆盖全局设置。' },
+
+    // Video Settings Modal (Legacy/Shared)
     videoSettings_title: { en: 'Video Processing Options', zh: '视频处理选项' },
     videoSettings_clip_title: { en: 'Clip Video (Optional)', zh: '裁剪视频 (可选)' },
     videoSettings_start: { en: 'Start Time', zh: '开始时间' },

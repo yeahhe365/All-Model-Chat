@@ -4,7 +4,7 @@ import { AppSettings, ModelOption } from '../../types';
 import { X } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../../constants/appConstants';
 import { Theme } from '../../constants/themeConstants';
-import { translations, logService } from '../../utils/appUtils';
+import { translations, logService, cacheModelSettings, getCachedModelSettings } from '../../utils/appUtils';
 import { ApiConfigSection } from './ApiConfigSection';
 import { AppearanceSection } from './AppearanceSection';
 import { ChatBehaviorSection } from './ChatBehaviorSection';
@@ -14,6 +14,7 @@ import { AboutSection } from './AboutSection';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../icons/CustomIcons';
+import { MediaResolution } from '../../types/settings';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -143,6 +144,49 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onSave({ ...currentSettings, [key]: value });
   };
 
+  const handleModelChange = (newModelId: string) => {
+      // 1. Cache current model settings
+      if (currentSettings.modelId) {
+          cacheModelSettings(currentSettings.modelId, { 
+              mediaResolution: currentSettings.mediaResolution,
+              thinkingBudget: currentSettings.thinkingBudget,
+              thinkingLevel: currentSettings.thinkingLevel
+          });
+      }
+
+      // 2. Load cached settings for new model
+      const cached = getCachedModelSettings(newModelId);
+      
+      let newThinkingBudget = cached?.thinkingBudget ?? currentSettings.thinkingBudget;
+      const newThinkingLevel = cached?.thinkingLevel ?? currentSettings.thinkingLevel;
+      const newMediaResolution = cached?.mediaResolution ?? currentSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+
+      // 3. Apply defaults/clamping logic (mirroring useChatActions)
+      const range = THINKING_BUDGET_RANGES[newModelId];
+      if (range) {
+          const isGemini3 = newModelId.includes('gemini-3');
+          
+          if (cached?.thinkingBudget === undefined) {
+              if (!isGemini3 && newThinkingBudget !== 0) {
+                  newThinkingBudget = range.max;
+              }
+          }
+
+          if (newThinkingBudget > 0) {
+              if (newThinkingBudget > range.max) newThinkingBudget = range.max;
+              if (newThinkingBudget < range.min) newThinkingBudget = range.min;
+          }
+      }
+
+      onSave({
+          ...currentSettings,
+          modelId: newModelId,
+          thinkingBudget: newThinkingBudget,
+          thinkingLevel: newThinkingLevel,
+          mediaResolution: newMediaResolution,
+      });
+  };
+
   const tabs = useMemo(() => [
     { id: 'model' as SettingsTab, labelKey: 'settingsTabModel', icon: IconModel },
     { id: 'interface' as SettingsTab, labelKey: 'settingsTabInterface', icon: IconInterface },
@@ -161,7 +205,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className={`${animClass} max-w-4xl mx-auto`}>
                 <ChatBehaviorSection
                     modelId={currentSettings.modelId} 
-                    setModelId={(v) => updateSetting('modelId', v)}
+                    setModelId={handleModelChange}
                     transcriptionModelId={currentSettings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
                     generateQuadImages={currentSettings.generateQuadImages ?? false} setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
                     ttsVoice={currentSettings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
@@ -172,6 +216,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     thinkingBudget={currentSettings.thinkingBudget} setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
                     thinkingLevel={currentSettings.thinkingLevel} setThinkingLevel={(v) => updateSetting('thinkingLevel', v)}
                     safetySettings={currentSettings.safetySettings} setSafetySettings={(v) => updateSetting('safetySettings', v)}
+                    mediaResolution={currentSettings.mediaResolution} setMediaResolution={(v) => updateSetting('mediaResolution', v)}
                     availableModels={availableModels}
                     t={t}
                     setAvailableModels={setAvailableModels}

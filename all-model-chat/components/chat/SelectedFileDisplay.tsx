@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../types';
-import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors } from 'lucide-react';
-import { getFileTypeCategory, CATEGORY_STYLES } from '../../utils/uiUtils';
+import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal } from 'lucide-react';
+import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { formatFileSize } from '../../utils/domainUtils';
@@ -13,9 +13,10 @@ interface SelectedFileDisplayProps {
   onCancelUpload: (fileId: string) => void;
   onConfigure?: (file: UploadedFile) => void;
   onPreview?: (file: UploadedFile) => void;
+  isGemini3?: boolean;
 }
 
-export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, onRemove, onCancelUpload, onConfigure, onPreview }) => {
+export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, onRemove, onCancelUpload, onConfigure, onPreview, isGemini3 }) => {
   const [isNewlyActive, setIsNewlyActive] = useState(false);
   const prevUploadState = useRef(file.uploadState);
   const { isCopied: idCopied, copyToClipboard } = useCopyToClipboard();
@@ -45,7 +46,15 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   
   const category = getFileTypeCategory(file.type, file.error);
   const { Icon, colorClass, bgClass } = CATEGORY_STYLES[category] || CATEGORY_STYLES['code'];
+  
   const isVideo = category === 'video' || category === 'youtube';
+  const isImage = category === 'image';
+  const isPdf = category === 'pdf';
+  
+  // Determine if this file supports configuration (Video Clipping OR Gemini 3 Resolution)
+  const canConfigure = onConfigure && isActive && !file.error && (
+      isVideo || (isGemini3 && (isImage || isPdf))
+  );
 
   const progress = file.progress ?? 0;
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
@@ -119,14 +128,14 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
              </div>
         )}
 
-        {isActive && isVideo && onConfigure && !file.error && (
+        {canConfigure && (
              <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onConfigure(file); }}
-                title="Configure Video"
-                className="absolute bottom-1 left-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/70 transition-all z-20"
+                onClick={(e) => { e.stopPropagation(); onConfigure && onConfigure(file); }}
+                title="Configure File"
+                className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md hover:bg-black/70 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
              >
-                <Scissors size={12} strokeWidth={2} />
+                {isVideo ? <Scissors size={12} strokeWidth={2} /> : <SlidersHorizontal size={12} strokeWidth={2} />}
              </button>
         )}
 
@@ -151,6 +160,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             title={isFailed ? file.error : undefined}
         >
             {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
+            {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
             {isFailed ? (file.error || 'Error') : 
              isUploading ? 'Uploading...' :
              isProcessing ? 'Processing...' :

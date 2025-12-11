@@ -19,6 +19,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   isDeepSearchEnabled,
   onToggleDeepSearch,
   onAddYouTubeVideo,
+  onCountTokens,
   onRecordButtonClick,
   isRecording,
   isMicInitializing,
@@ -54,6 +55,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
                 isDeepSearchEnabled={isDeepSearchEnabled}
                 onToggleDeepSearch={onToggleDeepSearch}
                 onAddYouTubeVideo={onAddYouTubeVideo}
+                onCountTokens={onCountTokens}
                 disabled={disabled}
                 t={t as any}
             />

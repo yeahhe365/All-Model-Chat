@@ -1,6 +1,6 @@
 
 import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
+import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_PDF_MIME_TYPES, SUPPORTED_AUDIO_MIME_TYPES, SUPPORTED_VIDEO_MIME_TYPES, EXTENSION_TO_MIME } from '../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, fileToBlobUrl } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
@@ -126,6 +126,11 @@ export const useFileUpload = ({
             }
         }
 
+        // Determine default resolution for new files
+        const defaultResolution = currentChatSettings.mediaResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED
+            ? currentChatSettings.mediaResolution
+            : undefined;
+
         const uploadPromises = filesArray.map(async (file) => {
             const fileId = generateUniqueId();
             const effectiveMimeType = getEffectiveMimeType(file);
@@ -169,7 +174,8 @@ export const useFileUpload = ({
                     dataUrl: dataUrl, // Add local preview URL
                     uploadState: 'uploading', 
                     abortController: controller,
-                    uploadSpeed: 'Starting...'
+                    uploadSpeed: 'Starting...',
+                    mediaResolution: defaultResolution
                 };
                 
                 // Initialize tracking for speed calculation
@@ -253,7 +259,18 @@ export const useFileUpload = ({
                 }
             } else {
                 // Inline processing (Base64 or Text content)
-                const initialFileState: UploadedFile = { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: true, progress: 0, uploadState: 'pending', rawFile: file, dataUrl: dataUrl };
+                const initialFileState: UploadedFile = { 
+                    id: fileId, 
+                    name: file.name, 
+                    type: effectiveMimeType, 
+                    size: file.size, 
+                    isProcessing: true, 
+                    progress: 0, 
+                    uploadState: 'pending', 
+                    rawFile: file, 
+                    dataUrl: dataUrl,
+                    mediaResolution: defaultResolution
+                };
                 setSelectedFiles(prev => [...prev, initialFileState]);
 
                 // For text files being sent inline, we need to read the content now or during payload construction.
@@ -309,7 +326,11 @@ export const useFileUpload = ({
         }
 
         const tempId = generateUniqueId();
-        setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, }]);
+        const defaultResolution = currentChatSettings.mediaResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED
+            ? currentChatSettings.mediaResolution
+            : undefined;
+
+        setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, mediaResolution: defaultResolution }]);
 
         try {
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
@@ -326,7 +347,19 @@ export const useFileUpload = ({
                     setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${fileMetadata.mimeType}`, uploadState: 'failed' } : f));
                     return;
                 }
-                const newFile: UploadedFile = { id: tempId, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, fileUri: fileMetadata.uri, fileApiName: fileMetadata.name, isProcessing: fileMetadata.state === 'PROCESSING', progress: 100, uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined, };
+                const newFile: UploadedFile = { 
+                    id: tempId, 
+                    name: fileMetadata.displayName || fileApiId, 
+                    type: fileMetadata.mimeType, 
+                    size: Number(fileMetadata.sizeBytes) || 0, 
+                    fileUri: fileMetadata.uri, 
+                    fileApiName: fileMetadata.name, 
+                    isProcessing: fileMetadata.state === 'PROCESSING', 
+                    progress: 100, 
+                    uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), 
+                    error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined,
+                    mediaResolution: defaultResolution
+                };
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? newFile : f));
             } else {
                 logService.error(`File with ID ${fileApiId} not found or inaccessible.`);

@@ -4,7 +4,7 @@ import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import { GEMINI_3_RO_MODELS } from "../../constants/modelConstants";
 import { DEEP_SEARCH_SYSTEM_PROMPT } from "../../constants/promptConstants";
-import { SafetySetting } from "../../types/settings";
+import { SafetySetting, MediaResolution } from "../../types/settings";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -88,7 +88,8 @@ export const buildGenerationConfig = (
     aspectRatio?: string,
     isDeepSearchEnabled?: boolean,
     imageSize?: string,
-    safetySettings?: SafetySetting[]
+    safetySettings?: SafetySetting[],
+    mediaResolution?: MediaResolution
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: any = {};
@@ -138,6 +139,20 @@ export const buildGenerationConfig = (
         systemInstruction: finalSystemInstruction || undefined,
         safetySettings: safetySettings || undefined,
     };
+
+    // Check if model is Gemini 3. If so, prefer per-part media resolution (handled in content construction),
+    // but we can omit the global config to avoid conflict, or set it if per-part isn't used.
+    // However, if we are NOT Gemini 3, we MUST use global config.
+    const isGemini3 = GEMINI_3_RO_MODELS.some(m => modelId.toLowerCase().includes(m)) || modelId.toLowerCase().includes('gemini-3-pro');
+    
+    if (!isGemini3 && mediaResolution) {
+        // For non-Gemini 3 models, apply global resolution if specified
+        generationConfig.mediaResolution = mediaResolution;
+    } 
+    // Note: For Gemini 3, we don't set global mediaResolution here because we inject it into parts in `buildContentParts`.
+    // The API documentation says per-part overrides global, but to be clean/explicit as requested ("become Per-part"), 
+    // we skip global for G3.
+
     if (!generationConfig.systemInstruction) {
         delete generationConfig.systemInstruction;
     }

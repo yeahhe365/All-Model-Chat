@@ -1,9 +1,10 @@
 
 import { useCallback } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../types';
+import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, VideoMetadata } from '../types';
 import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
-import { getKeyForRequest, logService, createNewSession } from '../utils/appUtils';
+import { getKeyForRequest, logService, createNewSession, cacheModelSettings, getCachedModelSettings } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
+import { MediaResolution } from '../types/settings';
 
 interface UseChatActionsProps {
     appSettings: AppSettings;
@@ -48,22 +49,50 @@ export const useChatActions = ({
     const handleSelectModelInHeader = useCallback((modelId: string) => {
         // Resolve target settings based on context (Session vs Global)
         const sourceSettings = activeSessionId ? currentChatSettings : appSettings;
-        let newThinkingBudget = sourceSettings.thinkingBudget;
+        
+        // 1. Cache CURRENT model settings before switching
+        if (currentChatSettings.modelId) {
+            cacheModelSettings(currentChatSettings.modelId, { 
+                mediaResolution: currentChatSettings.mediaResolution,
+                thinkingBudget: currentChatSettings.thinkingBudget,
+                thinkingLevel: currentChatSettings.thinkingLevel
+            });
+        }
 
-        // Validating range compatibility for the new model
+        // 2. Retrieve CACHED settings for NEW model
+        const cached = getCachedModelSettings(modelId);
+
+        // 3. Determine new settings
+        const newMediaResolution = cached?.mediaResolution ?? sourceSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+        let newThinkingBudget = cached?.thinkingBudget ?? sourceSettings.thinkingBudget;
+        const newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
+
+        // Validating range compatibility for the new model (and fallback defaults if not cached)
         const range = THINKING_BUDGET_RANGES[modelId];
         if (range) {
-            // If user has a custom budget (>0), ensure it fits the new model's limits
+            const isGemini3 = modelId.includes('gemini-3');
+
+            // If we didn't have a cached budget, apply defaults
+            if (cached?.thinkingBudget === undefined) {
+                if (!isGemini3 && newThinkingBudget !== 0) {
+                    // For non-Gemini 3 models (e.g. 2.5), default to MAX budget if reasoning isn't disabled.
+                    // This ensures we utilize the full capability of the model by default when switching.
+                    newThinkingBudget = range.max;
+                }
+            }
+
+            // Always clamp budget if set (>0) to ensure validity for this model
             if (newThinkingBudget > 0) {
                 if (newThinkingBudget > range.max) newThinkingBudget = range.max;
                 if (newThinkingBudget < range.min) newThinkingBudget = range.min;
             }
-            // If currently Auto (-1) or Off (0), preserve that preference.
         }
 
         const newSettingsPartial: Partial<IndividualChatSettings> = {
             modelId,
             thinkingBudget: newThinkingBudget,
+            thinkingLevel: newThinkingLevel,
+            mediaResolution: newMediaResolution,
         };
 
         if (!activeSessionId) {
@@ -78,8 +107,13 @@ export const useChatActions = ({
                 setIsSwitchingModel(true);
                 updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, settings: { ...s.settings, ...newSettingsPartial } } : s));
             } else {
-                if (currentChatSettings.thinkingBudget !== newThinkingBudget) {
-                    setCurrentChatSettings(prev => ({...prev, thinkingBudget: newThinkingBudget}));
+                // If model is same but somehow we are updating params (rare here)
+                if (currentChatSettings.thinkingBudget !== newThinkingBudget || currentChatSettings.thinkingLevel !== newThinkingLevel) {
+                    setCurrentChatSettings(prev => ({
+                        ...prev, 
+                        thinkingBudget: newThinkingBudget, 
+                        thinkingLevel: newThinkingLevel
+                    }));
                 }
             }
         }
@@ -187,6 +221,27 @@ export const useChatActions = ({
         }));
     }, [activeSessionId, updateAndPersistSessions]);
 
+    const handleUpdateMessageFile = useCallback((messageId: string, fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => {
+        if (!activeSessionId) return;
+        updateAndPersistSessions(prev => prev.map(s => {
+            if (s.id === activeSessionId) {
+                return {
+                    ...s,
+                    messages: s.messages.map(m => {
+                        if (m.id === messageId && m.files) {
+                            return {
+                                ...m,
+                                files: m.files.map(f => f.id === fileId ? { ...f, ...updates } : f)
+                            };
+                        }
+                        return m;
+                    })
+                };
+            }
+            return s;
+        }));
+    }, [activeSessionId, updateAndPersistSessions]);
+
     return {
         handleSelectModelInHeader,
         handleClearCurrentChat,
@@ -196,6 +251,7 @@ export const useChatActions = ({
         toggleUrlContext,
         toggleDeepSearch,
         handleTogglePinCurrentSession,
-        handleUpdateMessageContent
+        handleUpdateMessageContent,
+        handleUpdateMessageFile,
     };
 };

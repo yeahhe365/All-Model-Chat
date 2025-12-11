@@ -40,6 +40,7 @@ export interface ChatInputAreaProps {
         onCancelUpload: (id: string) => void;
         onConfigure: (file: UploadedFile) => void;
         onPreview: (file: UploadedFile) => void;
+        isGemini3?: boolean;
     };
     inputProps: {
         value: string;
@@ -232,6 +233,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                         onCancelUpload={fileDisplayProps.onCancelUpload}
                                         onConfigure={fileDisplayProps.onConfigure}
                                         onPreview={fileDisplayProps.onPreview}
+                                        isGemini3={fileDisplayProps.isGemini3}
                                     />
                                 ))}
                             </div>

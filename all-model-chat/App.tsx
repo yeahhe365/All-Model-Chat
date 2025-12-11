@@ -14,23 +14,11 @@ import { WindowProvider } from './contexts/WindowContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
 import { EditMessageModal } from './components/modals/EditMessageModal';
-import { networkInterceptor } from './services/networkInterceptor';
 
 const App: React.FC = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = useMemo(() => getTranslator(language), [language]);
   
-  // Initialize Network Interceptor
-  useEffect(() => {
-      networkInterceptor.mount();
-  }, []);
-
-  // Update Interceptor Configuration when settings change
-  useEffect(() => {
-      const shouldUseProxy = appSettings.useCustomApiConfig && appSettings.useApiProxy;
-      networkInterceptor.configure(!!shouldUseProxy, appSettings.apiProxyUrl);
-  }, [appSettings.useCustomApiConfig, appSettings.useApiProxy, appSettings.apiProxyUrl]);
-
   const chatState = useChat(appSettings, setAppSettings, language);
   const {
       messages, isLoading, loadingSessionIds, generatingTitleSessionIds,
@@ -57,7 +45,7 @@ const App: React.FC = () => {
       scrollToPrevTurn, scrollToNextTurn, toggleGoogleSearch,
       toggleCodeExecution, toggleUrlContext, toggleDeepSearch,
       updateAndPersistSessions, updateAndPersistGroups,
-      imageSize, setImageSize, handleUpdateMessageContent
+      imageSize, setImageSize, handleUpdateMessageContent, handleUpdateMessageFile
   } = chatState;
 
   const {
@@ -162,6 +150,7 @@ const App: React.FC = () => {
         thinkingBudget: newSettings.thinkingBudget,
         thinkingLevel: newSettings.thinkingLevel,
         lockedApiKey: null,
+        mediaResolution: newSettings.mediaResolution,
       }));
     }
   };
@@ -286,6 +275,7 @@ const App: React.FC = () => {
     onDeleteMessage: handleDeleteMessage,
     onRetryMessage: handleRetryMessage,
     onEditMessageContent: setEditingContentMessage,
+    onUpdateMessageFile: handleUpdateMessageFile, // Added this prop
     showThoughts: currentChatSettings.showThoughts,
     themeColors: currentTheme.colors,
     baseFontSize: appSettings.baseFontSize,
@@ -369,7 +359,8 @@ const App: React.FC = () => {
             isCodeExecutionEnabled,
             isUrlContextEnabled,
             isDeepSearchEnabled,
-            safetySettings
+            safetySettings,
+            mediaResolution
         } = currentChatSettings;
 
         return { 
@@ -388,7 +379,8 @@ const App: React.FC = () => {
             isCodeExecutionEnabled,
             isUrlContextEnabled,
             isDeepSearchEnabled,
-            safetySettings
+            safetySettings,
+            mediaResolution
         };
     }
     return appSettings;

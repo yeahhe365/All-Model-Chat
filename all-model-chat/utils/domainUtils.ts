@@ -1,7 +1,9 @@
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession, ModelOption, ChatSettings } from '../types';
 import { SUPPORTED_IMAGE_MIME_TYPES, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, MIME_TO_EXTENSION_MAP } from '../constants/fileConstants';
 import { logService } from '../services/logService';
-import { TAB_CYCLE_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS } from '../constants/appConstants';
+import { TAB_CYCLE_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, GEMINI_3_RO_MODELS } from '../constants/appConstants';
+import { MediaResolution } from '../types/settings';
 
 export const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -139,12 +141,20 @@ export const parseThoughtProcess = (thoughts: string | undefined) => {
 
 export const buildContentParts = async (
   text: string, 
-  files: UploadedFile[] | undefined
+  files: UploadedFile[] | undefined,
+  modelId?: string,
+  mediaResolution?: MediaResolution
 ): Promise<{
   contentParts: ContentPart[];
   enrichedFiles: UploadedFile[];
 }> => {
   const filesToProcess = files || [];
+  
+  // Check if model supports per-part resolution (Gemini 3 family)
+  const isGemini3 = modelId && (
+      GEMINI_3_RO_MODELS.some(m => modelId.toLowerCase().includes(m)) || 
+      modelId.toLowerCase().includes('gemini-3-pro')
+  );
   
   const processedResults = await Promise.all(filesToProcess.map(async (file) => {
     const newFile = { ...file };
@@ -227,6 +237,18 @@ export const buildContentParts = async (
             part.videoMetadata.fps = file.videoMetadata.fps;
         }
     }
+
+    // Inject Per-Part Media Resolution (Gemini 3 feature)
+    // Only apply to supported media types (images, videos, pdfs) not text/code
+    // Prioritize file-level resolution, then global resolution
+    const effectiveResolution = file.mediaResolution || mediaResolution;
+    
+    if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED && !isTextLike && !isYoutube) {
+        // Only apply if it has inlineData or fileData
+        if (part.inlineData || part.fileData) {
+            part.mediaResolution = { level: effectiveResolution };
+        }
+    }
     
     return { file: newFile, part };
   }));
@@ -257,9 +279,6 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
         // Attach Thought Signatures if present (Crucial for Gemini 3 Pro)
         if (msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0) {
             if (contentParts.length > 0) {
-                // Strategy: Attach the last thought signature to the last part.
-                // Since we reconstruct parts from text/files (flattened), we may not have a 1:1 mapping to original parts.
-                // However, ensuring the signature accompanies the text response typically preserves the thought context.
                 const lastPart = contentParts[contentParts.length - 1];
                 lastPart.thoughtSignature = msg.thoughtSignatures[msg.thoughtSignatures.length - 1];
             }
@@ -312,4 +331,33 @@ export const getDefaultModelOptions = (): ModelOption[] => {
         return { id, name, isPinned: true };
     });
     return sortModels([...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS]);
+};
+
+// --- Model Settings Cache ---
+const MODEL_SETTINGS_CACHE_KEY = 'model_settings_cache';
+
+export interface CachedModelSettings {
+    mediaResolution?: MediaResolution;
+    thinkingBudget?: number;
+    thinkingLevel?: 'LOW' | 'HIGH';
+}
+
+export const getCachedModelSettings = (modelId: string): CachedModelSettings | undefined => {
+    try {
+        const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
+        return cache[modelId];
+    } catch {
+        return undefined;
+    }
+};
+
+export const cacheModelSettings = (modelId: string, settings: CachedModelSettings) => {
+    if (!modelId) return;
+    try {
+        const cache = JSON.parse(localStorage.getItem(MODEL_SETTINGS_CACHE_KEY) || '{}');
+        cache[modelId] = { ...cache[modelId], ...settings };
+        localStorage.setItem(MODEL_SETTINGS_CACHE_KEY, JSON.stringify(cache));
+    } catch (e) {
+        console.error("Failed to cache model settings", e);
+    }
 };
