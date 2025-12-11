@@ -144,8 +144,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         }
       ) as React.ReactElement | undefined;
 
-      const codeClassName = codeElement?.props?.className || '';
-      const codeContent = codeElement?.props?.children;
+      // Safe property access with optional chaining and type casting
+      const codeClassName = (codeElement?.props as any)?.className || '';
+      const codeContent = (codeElement?.props as any)?.children;
       
       // Extract text reliably from potential React Element tree (from highlighting)
       const rawCode = extractTextFromNode(codeContent);

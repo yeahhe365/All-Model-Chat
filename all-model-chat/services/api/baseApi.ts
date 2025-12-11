@@ -2,9 +2,9 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
-import { GEMINI_3_RO_MODELS } from "../../constants/modelConstants";
 import { DEEP_SEARCH_SYSTEM_PROMPT } from "../../constants/promptConstants";
 import { SafetySetting, MediaResolution } from "../../types/settings";
+import { isGemini3Model } from "../../utils/appUtils";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -143,7 +143,7 @@ export const buildGenerationConfig = (
     // Check if model is Gemini 3. If so, prefer per-part media resolution (handled in content construction),
     // but we can omit the global config to avoid conflict, or set it if per-part isn't used.
     // However, if we are NOT Gemini 3, we MUST use global config.
-    const isGemini3 = GEMINI_3_RO_MODELS.some(m => modelId.toLowerCase().includes(m)) || modelId.toLowerCase().includes('gemini-3-pro');
+    const isGemini3 = isGemini3Model(modelId);
     
     if (!isGemini3 && mediaResolution) {
         // For non-Gemini 3 models, apply global resolution if specified
@@ -158,7 +158,7 @@ export const buildGenerationConfig = (
     }
 
     // Robust check for Gemini 3
-    if (GEMINI_3_RO_MODELS.includes(modelId) || modelId.includes('gemini-3-pro')) {
+    if (isGemini3) {
         // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
         // We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {

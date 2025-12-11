@@ -62,8 +62,8 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     } else if (message.role === 'model') {
         // Model Message: No bubble style
         // Removed padding (px-4 py-3), background, shadow, border, rounded corners
-        // Added some vertical padding for breathing room if needed, but 'py-1' is minimal
-        bubbleClasses += `w-full py-1 text-[var(--theme-text-primary)] ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
+        // Changed to py-0 to further align text top with avatar icon center/top
+        bubbleClasses += `w-full py-0 text-[var(--theme-text-primary)] ${isModelThinkingOrHasThoughts ? 'sm:min-w-[320px]' : ''}`;
     } else {
         // Error Message: Bubble style (Red)
         bubbleClasses += "w-fit px-4 py-3 shadow-sm ";

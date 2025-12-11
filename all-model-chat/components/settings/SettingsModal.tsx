@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AppSettings, ModelOption } from '../../types';
 import { X } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../../constants/appConstants';
@@ -83,7 +83,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleClose = () => { onClose(); };
+  const handleClose = useCallback(() => { onClose(); }, [onClose]);
   
   const handleResetToDefaults = () => { 
     setConfirmConfig({

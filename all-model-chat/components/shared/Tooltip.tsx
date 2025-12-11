@@ -38,10 +38,11 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
     const options = useMemo(() => {
         return React.Children.toArray(children).map((child) => {
             if (React.isValidElement(child) && child.type === 'option') {
+                const props = child.props as React.OptionHTMLAttributes<HTMLOptionElement>;
                 return {
-                    value: child.props.value,
-                    label: child.props.children,
-                    disabled: child.props.disabled
+                    value: String(props.value),
+                    label: props.children,
+                    disabled: props.disabled
                 };
             }
             return null;
@@ -189,4 +190,3 @@ export const Toggle: React.FC<{
     </label>
   );
 };
-    

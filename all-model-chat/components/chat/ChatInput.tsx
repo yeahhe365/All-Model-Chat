@@ -15,8 +15,8 @@ import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { FilePreviewModal } from '../shared/ImageZoomModal';
 import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
 import { TokenCountModal } from '../modals/TokenCountModal';
-import { GEMINI_3_RO_MODELS } from '../../constants/appConstants';
 import { useBackButton } from '../../hooks/useBackButton';
+import { isGemini3Model } from '../../utils/appUtils';
 
 export interface ChatInputProps {
   appSettings: AppSettings;
@@ -223,7 +223,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   // Calculate if active model is a Gemini 3 model (for chat or image)
   // Used to enable per-file resolution settings
-  const isGemini3 = GEMINI_3_RO_MODELS.some(m => currentChatSettings.modelId.toLowerCase().includes(m)) || currentChatSettings.modelId.toLowerCase().includes('gemini-3');
+  const isGemini3 = isGemini3Model(currentChatSettings.modelId);
 
   let supportedAspectRatios: string[] | undefined;
   

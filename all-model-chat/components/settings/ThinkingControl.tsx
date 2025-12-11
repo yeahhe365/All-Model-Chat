@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Info, Lightbulb, Zap, Settings2, Ban, Gauge, Calculator, Cpu } from 'lucide-react';
-import { THINKING_BUDGET_RANGES, GEMINI_3_RO_MODELS, SETTINGS_INPUT_CLASS, MODELS_MANDATORY_THINKING } from '../../constants/appConstants';
+import { THINKING_BUDGET_RANGES, SETTINGS_INPUT_CLASS, MODELS_MANDATORY_THINKING } from '../../constants/appConstants';
 import { Tooltip } from '../shared/Tooltip';
+import { isGemini3Model } from '../../utils/appUtils';
 
 interface ThinkingControlProps {
   modelId: string;
@@ -25,7 +26,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   setShowThoughts,
   t
 }) => {
-  const isGemini3 = GEMINI_3_RO_MODELS.includes(modelId) || modelId.includes('gemini-3-pro');
+  const isGemini3 = isGemini3Model(modelId);
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
   
   const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
@@ -260,7 +261,7 @@ const LevelButton = ({ active, onClick, label, desc, icon }: { active: boolean, 
         }`}
     >
         <div className={`flex items-center gap-2 mb-1 ${active ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`}>
-            {React.cloneElement(icon as React.ReactElement, { size: 14, strokeWidth: 2 })}
+            {React.cloneElement(icon as React.ReactElement, { size: 14, strokeWidth: 2 } as any)}
             <span className="text-sm font-bold">{label}</span>
         </div>
         <span className="text-[10px] text-[var(--theme-text-secondary)] leading-tight">{desc}</span>
