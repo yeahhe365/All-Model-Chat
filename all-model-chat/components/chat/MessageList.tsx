@@ -13,6 +13,7 @@ import { ScrollNavigation } from './message-list/ScrollNavigation';
 import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { MediaResolution } from '../../types/settings';
 import { isGemini3Model } from '../../utils/appUtils';
+import { TextSelectionToolbar } from './TextSelectionToolbar';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -44,8 +45,9 @@ export interface MessageListProps {
   onScrollToNextTurn: () => void;
   chatInputHeight: number;
   appSettings: AppSettings;
-  currentModelId: string; // Added prop
+  currentModelId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
+  onQuote: (text: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ 
@@ -53,7 +55,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, onUpdateMessageFile, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
-    chatInputHeight, appSettings, currentModelId, onOpenSidePanel
+    chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote
 }) => {
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   
@@ -154,7 +156,6 @@ export const MessageList: React.FC<MessageListProps> = ({
   }, [configuringFile, onUpdateMessageFile]);
 
   // Determine if current model is Gemini 3 to enable per-part resolution
-  // We use currentModelId from props which reflects the active session's model
   const isGemini3 = useMemo(() => {
       return isGemini3Model(currentModelId);
   }, [currentModelId]);
@@ -168,6 +169,8 @@ export const MessageList: React.FC<MessageListProps> = ({
       style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
       aria-live="polite" 
     >
+      <TextSelectionToolbar onQuote={onQuote} containerRef={scrollContainerRef} />
+      
       {messages.length === 0 ? (
         <WelcomeScreen 
             t={t}

@@ -12,6 +12,8 @@ interface UseChatInputHandlersProps {
     // State & Setters
     inputText: string;
     setInputText: React.Dispatch<React.SetStateAction<string>>;
+    quoteText: string;
+    setQuoteText: React.Dispatch<React.SetStateAction<string>>;
     fileIdInput: string;
     setFileIdInput: React.Dispatch<React.SetStateAction<string>>;
     urlInput: string;
@@ -82,7 +84,7 @@ interface UseChatInputHandlersProps {
 
 export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
     const {
-        inputText, setInputText, fileIdInput, setFileIdInput, urlInput, setUrlInput,
+        inputText, setInputText, quoteText, setQuoteText, fileIdInput, setFileIdInput, urlInput, setUrlInput,
         selectedFiles, setSelectedFiles, previewFile, setPreviewFile,
         isAddingById, setIsAddingById, isAddingByUrl, setIsAddingByUrl,
         isTranslating, setIsTranslating, isConverting, setIsConverting,
@@ -204,8 +206,16 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
                 setIsWaitingForUpload(true);
             } else {
                 clearCurrentDraft();
-                onSendMessage(inputText);
+                
+                let textToSend = inputText;
+                if (quoteText) {
+                    const formattedQuote = quoteText.split('\n').map(l => `> ${l}`).join('\n');
+                    textToSend = `${formattedQuote}\n\n${inputText}`;
+                }
+
+                onSendMessage(textToSend);
                 setInputText('');
+                setQuoteText('');
                 onMessageSent();
                 setIsAnimatingSend(true);
                 setTimeout(() => setIsAnimatingSend(false), 400);
@@ -214,7 +224,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
                 }
             }
         }
-    }, [canSend, selectedFiles, setIsWaitingForUpload, clearCurrentDraft, onSendMessage, inputText, setInputText, onMessageSent, setIsAnimatingSend, isFullscreen, setIsFullscreen]);
+    }, [canSend, selectedFiles, setIsWaitingForUpload, clearCurrentDraft, onSendMessage, inputText, quoteText, setInputText, setQuoteText, onMessageSent, setIsAnimatingSend, isFullscreen, setIsFullscreen]);
 
     const handleTranslate = useCallback(async () => {
         if (!inputText.trim() || isTranslating) return;

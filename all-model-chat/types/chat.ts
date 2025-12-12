@@ -29,6 +29,12 @@ export interface UploadedFile {
   mediaResolution?: MediaResolution; // Added for Gemini 3 per-part resolution
 }
 
+export interface InputCommand {
+  text: string;
+  id: number;
+  mode?: 'replace' | 'append' | 'quote';
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model' | 'error';

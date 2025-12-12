@@ -8,7 +8,7 @@ import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../.
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { translations } from '../../../utils/appUtils';
 import { SUGGESTIONS_KEYS } from '../../../constants/appConstants';
-import { Layers, Languages, ScanText, AudioWaveform, Captions, Lightbulb, FileText, Sparkles, ChevronLeft, ChevronRight, AppWindow } from 'lucide-react';
+import { Layers, Languages, ScanText, AudioWaveform, Captions, Lightbulb, FileText, Sparkles, ChevronLeft, ChevronRight, AppWindow, Reply, X } from 'lucide-react';
 
 const SuggestionIcon = ({ iconName, className }: { iconName?: string, className?: string }) => {
     const size = 16;
@@ -54,6 +54,10 @@ export interface ChatInputAreaProps {
         onCompositionEnd: () => void;
         onFocus: () => void;
     };
+    quoteProps?: {
+        quoteText: string;
+        onClearQuote: () => void;
+    };
     layoutProps: {
         isFullscreen: boolean;
         isPipActive?: boolean;
@@ -89,6 +93,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     slashCommandProps,
     fileDisplayProps,
     inputProps,
+    quoteProps,
     layoutProps,
     fileInputRefs,
     formProps,
@@ -236,6 +241,28 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                         isGemini3={fileDisplayProps.isGemini3}
                                     />
                                 ))}
+                            </div>
+                        )}
+
+                        {quoteProps && quoteProps.quoteText && (
+                            <div className="flex items-start gap-3 p-3 bg-[var(--theme-bg-tertiary)]/50 rounded-xl relative group/quote mb-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--theme-text-tertiary)] rounded-l-xl opacity-50"></div>
+                                <div className="flex-shrink-0 text-[var(--theme-text-tertiary)] mt-0.5 ml-2">
+                                    <Reply size={16} className="transform -scale-x-100" />
+                                </div>
+                                <div className="flex-grow min-w-0 pr-6">
+                                    <p className="text-sm text-[var(--theme-text-secondary)] line-clamp-3 leading-relaxed font-medium">
+                                        {quoteProps.quoteText}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={quoteProps.onClearQuote}
+                                    className="absolute top-2 right-2 p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors"
+                                    aria-label="Remove quote"
+                                >
+                                    <X size={14} />
+                                </button>
                             </div>
                         )}
                         

@@ -6,7 +6,6 @@ import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
 import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
 import { CodeEditor } from '../shared/CodeEditor';
-import { useBackButton } from '../../hooks/useBackButton';
 import { useIsMobile } from '../../hooks/useDevice';
 
 interface SidePanelProps {
@@ -29,9 +28,6 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
     const isMobile = useIsMobile();
     
-    // Enable Back Button closing ONLY on mobile, where the side panel takes up most space
-    useBackButton(!!content, onClose, isMobile);
-
     // Initial sync
     useEffect(() => {
         if (content) {

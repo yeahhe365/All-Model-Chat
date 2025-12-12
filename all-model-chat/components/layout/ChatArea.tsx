@@ -1,11 +1,11 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Paperclip, Loader2 } from 'lucide-react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
 import { ChatInput } from '../chat/ChatInput';
 import { useResponsiveValue } from '../../hooks/useDevice';
-import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata } from '../../types';
+import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand } from '../../types';
 import { ThemeColors } from '../../constants/themeConstants';
 import { translations } from '../../utils/appUtils';
 import { MediaResolution } from '../../types/settings';
@@ -74,8 +74,8 @@ export interface ChatAreaProps {
 
   // ChatInput Props
   appSettings: AppSettings;
-  commandedInput: { text: string; id: number } | null;
-  setCommandedInput: (command: { text: string; id: number } | null) => void;
+  commandedInput: InputCommand | null;
+  setCommandedInput: (command: InputCommand | null) => void;
   onMessageSent: () => void;
   selectedFiles: UploadedFile[];
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
@@ -180,6 +180,10 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   // Determine if the model supports aspect ratio selection (Imagen models OR Gemini 2.5 Flash Image)
   const isImagenModel = currentChatSettings.modelId?.includes('imagen') || currentChatSettings.modelId?.includes('gemini-2.5-flash-image');
 
+  const handleQuote = useCallback((text: string) => {
+      setCommandedInput({ text: text, id: Date.now(), mode: 'quote' });
+  }, [setCommandedInput]);
+
   return (
     <div
       className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
@@ -254,9 +258,10 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onScrollToNextTurn={onScrollToNextTurn}
         chatInputHeight={chatInputHeight}
         appSettings={appSettings}
-        currentModelId={currentChatSettings.modelId} // Passed down to determine model capabilities (e.g. Gemini 3 features)
+        currentModelId={currentChatSettings.modelId} 
         onOpenSidePanel={onOpenSidePanel}
         onUpdateMessageFile={onUpdateMessageFile}
+        onQuote={handleQuote}
       />
       <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
         <div className="pointer-events-auto">
