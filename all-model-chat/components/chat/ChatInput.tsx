@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings } from '../../types';
+import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ChatInputModals } from './input/ChatInputModals';
 import { ChatInputArea } from './input/ChatInputArea';
@@ -15,7 +15,6 @@ import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { FilePreviewModal } from '../shared/ImageZoomModal';
 import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
 import { TokenCountModal } from '../modals/TokenCountModal';
-import { useBackButton } from '../../hooks/useBackButton';
 import { isGemini3Model } from '../../utils/appUtils';
 
 export interface ChatInputProps {
@@ -23,7 +22,7 @@ export interface ChatInputProps {
   currentChatSettings: IndividualChatSettings;
   setAppFileError: (error: string | null) => void;
   activeSessionId: string | null;
-  commandedInput: { text: string; id: number } | null;
+  commandedInput: InputCommand | null;
   onMessageSent: () => void;
   selectedFiles: UploadedFile[]; 
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
@@ -91,6 +90,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
 
   const {
     inputText, setInputText,
+    quoteText, setQuoteText,
     isTranslating, setIsTranslating,
     isAnimatingSend, setIsAnimatingSend,
     fileIdInput, setFileIdInput,
@@ -116,9 +116,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [isConverting, setIsConverting] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
-
-  // Enable Back Button support for Fullscreen Input
-  useBackButton(isFullscreen, handleToggleFullscreen);
 
   const {
     showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -155,12 +152,12 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const isAnyModalOpen = isModalOpen || isHelpModalOpen;
   
   const canSend = (
-    (inputText.trim() !== '' || selectedFiles.length > 0)
+    (inputText.trim() !== '' || selectedFiles.length > 0 || quoteText.trim() !== '')
     && !isLoading && !isAddingById && !isModalOpen && !isConverting
   );
 
   const handlers = useChatInputHandlers({
-    inputText, setInputText, fileIdInput, setFileIdInput, urlInput, setUrlInput,
+    inputText, setInputText, quoteText, setQuoteText, fileIdInput, setFileIdInput, urlInput, setUrlInput,
     selectedFiles, setSelectedFiles, previewFile, setPreviewFile,
     isAddingById, setIsAddingById, isAddingByUrl, setIsAddingByUrl,
     isTranslating, setIsTranslating, isConverting, setIsConverting,
@@ -177,17 +174,23 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   
   useEffect(() => {
     if (commandedInput) {
-      setInputText(commandedInput.text);
-      if (commandedInput.text) {
-        setTimeout(() => {
-          const textarea = textareaRef.current;
-          if (textarea) {
-            textarea.focus();
-            const textLength = textarea.value.length;
-            textarea.setSelectionRange(textLength, textLength);
-          }
-        }, 0);
+      if (commandedInput.mode === 'quote') {
+          setQuoteText(commandedInput.text);
+      } else if (commandedInput.mode === 'append') {
+          setInputText(prev => prev + (prev ? '\n' : '') + commandedInput.text);
+      } else {
+          setInputText(commandedInput.text);
       }
+      
+      // Focus regardless of mode
+      setTimeout(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+          textarea.focus();
+          const textLength = textarea.value.length;
+          textarea.setSelectionRange(textLength, textLength);
+        }
+      }, 0);
     }
   }, [commandedInput]);
 
@@ -204,8 +207,16 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
         if (!filesAreStillProcessing) {
             clearCurrentDraft();
-            onSendMessage(inputText);
+            
+            let textToSend = inputText;
+            if (quoteText) {
+                const formattedQuote = quoteText.split('\n').map(l => `> ${l}`).join('\n');
+                textToSend = `${formattedQuote}\n\n${inputText}`;
+            }
+
+            onSendMessage(textToSend);
             setInputText('');
+            setQuoteText('');
             onMessageSent();
             setIsWaitingForUpload(false);
             setIsAnimatingSend(true);
@@ -215,7 +226,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             }
         }
     }
-  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, onMessageSent, clearCurrentDraft, isFullscreen]);
+  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, quoteText, onMessageSent, clearCurrentDraft, isFullscreen]);
 
   const isGemini3ImageModel = currentChatSettings.modelId === 'gemini-3-pro-image-preview';
   const isFlashImageModel = currentChatSettings.modelId.includes('gemini-2.5-flash-image');
@@ -326,6 +337,10 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             onCompositionStart: () => isComposingRef.current = true,
             onCompositionEnd: () => isComposingRef.current = false,
             onFocus: adjustTextareaHeight,
+        }}
+        quoteProps={{
+            quoteText,
+            onClearQuote: () => setQuoteText('')
         }}
         layoutProps={{
             isFullscreen,

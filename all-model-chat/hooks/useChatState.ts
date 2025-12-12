@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
-import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../types';
+import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../types';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { dbService } from '../utils/db';
 import { logService } from '../utils/appUtils';
@@ -10,7 +10,7 @@ export const useChatState = (appSettings: AppSettings) => {
     const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-    const [commandedInput, setCommandedInput] = useState<{ text: string; id: number; } | null>(null);
+    const [commandedInput, setCommandedInput] = useState<InputCommand | null>(null);
     const [loadingSessionIds, setLoadingSessionIds] = useState(new Set<string>());
     const [generatingTitleSessionIds, setGeneratingTitleSessionIds] = useState(new Set<string>());
     const activeJobs = useRef(new Map<string, AbortController>());

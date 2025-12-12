@@ -1,12 +1,12 @@
 
 import { Dispatch, SetStateAction, useCallback } from 'react';
-import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup } from '../types';
+import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup, InputCommand } from '../types';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { createNewSession, logService, getTranslator } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 
-type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
+type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
 type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => Promise<void>;
 

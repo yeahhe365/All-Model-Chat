@@ -1,11 +1,11 @@
 
 import { Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, InputCommand } from '../types';
 import { useMessageSender } from './useMessageSender';
 import { useMessageActions } from './useMessageActions';
 import { useTextToSpeechHandler } from './useTextToSpeechHandler';
 
-type CommandedInputSetter = Dispatch<SetStateAction<{ text: string; id: number; } | null>>;
+type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
 interface MessageHandlerProps {
