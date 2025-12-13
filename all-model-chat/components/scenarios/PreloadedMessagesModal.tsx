@@ -70,6 +70,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     setTimeout(handleClose, 300);
   };
 
+  const isSystemScenario = editingScenario && systemScenarioIds.includes(editingScenario.id);
+
   if (!isOpen) return null;
 
   return (
@@ -96,8 +98,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                 {view === 'editor' ? (editingScenario?.title || t('scenarios_title_create')) : t('scenarios_title')}
             </h2>
             {view === 'editor' && (
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-xs font-semibold text-[var(--theme-text-accent)] border border-[var(--theme-bg-accent)]/20 uppercase tracking-wide">
-                    Editor
+                <span className={`hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border ${isSystemScenario ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' : 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-bg-accent)] border-[var(--theme-bg-accent)]/20'}`}>
+                    {isSystemScenario ? 'System Preset (Read Only)' : 'Editor'}
                 </span>
             )}
           </div>
@@ -183,6 +185,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                     onSave={actions.handleSaveScenario}
                     onCancel={actions.handleCancelEdit}
                     t={t}
+                    readOnly={!!isSystemScenario}
                 />
             )}
         </div>
