@@ -11,6 +11,7 @@ interface TextEditorModalProps {
   onChange: (value: string) => void;
   placeholder?: string;
   t: (key: string) => string;
+  readOnly?: boolean;
 }
 
 export const TextEditorModal: React.FC<TextEditorModalProps> = ({
@@ -20,7 +21,8 @@ export const TextEditorModal: React.FC<TextEditorModalProps> = ({
   value,
   onChange,
   placeholder,
-  t
+  t,
+  readOnly
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -50,7 +52,8 @@ export const TextEditorModal: React.FC<TextEditorModalProps> = ({
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => !readOnly && onChange(e.target.value)}
+          readOnly={readOnly}
           className="flex-grow w-full p-4 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none transition-all resize-none custom-scrollbar font-mono text-sm leading-relaxed"
           placeholder={placeholder}
         />

@@ -10,9 +10,10 @@ interface ScenarioEditorProps {
     onSave: (scenario: SavedScenario) => void;
     onCancel: () => void;
     t: (key: keyof typeof translations, fallback?: string) => string;
+    readOnly?: boolean;
 }
 
-export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave, onCancel, t }) => {
+export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave, onCancel, t, readOnly = false }) => {
     const [scenario, setScenario] = useState<SavedScenario>(initialScenario || { id: Date.now().toString(), title: '', messages: [], systemInstruction: '' });
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
@@ -30,7 +31,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
     }, [scenario.messages.length, editingMessageId]);
 
     const handleAddMessage = () => {
-        if (!newMessageContent.trim()) return;
+        if (!newMessageContent.trim() || readOnly) return;
         setScenario(prev => ({
             ...prev,
             messages: [...prev.messages, { id: Date.now().toString(), role: newMessageRole, content: newMessageContent }]
@@ -42,6 +43,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
     };
 
     const handleUpdateMessage = (id: string, content: string) => {
+        if (readOnly) return;
         setScenario(prev => ({
             ...prev,
             messages: prev.messages.map(m => m.id === id ? { ...m, content } : m)
@@ -50,6 +52,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
     };
 
     const handleDeleteMessage = (id: string) => {
+        if (readOnly) return;
         setScenario(prev => ({
             ...prev,
             messages: prev.messages.filter(m => m.id !== id)
@@ -57,6 +60,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
     };
 
     const handleMoveMessage = (index: number, direction: -1 | 1) => {
+        if (readOnly) return;
         if (index + direction < 0 || index + direction >= scenario.messages.length) return;
         const newMessages = [...scenario.messages];
         const temp = newMessages[index];
@@ -88,10 +92,11 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     <input
                         type="text"
                         value={scenario.title}
-                        onChange={(e) => setScenario(prev => ({...prev, title: e.target.value}))}
+                        onChange={(e) => !readOnly && setScenario(prev => ({...prev, title: e.target.value}))}
                         placeholder={t('scenarios_editor_title_placeholder', 'Scenario Title')}
                         className="flex-1 bg-transparent text-lg sm:text-xl font-bold text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none min-w-0"
-                        autoFocus={!initialScenario}
+                        autoFocus={!initialScenario && !readOnly}
+                        readOnly={readOnly}
                     />
                     
                     {/* Mobile System Prompt Trigger */}
@@ -103,14 +108,16 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                         <Settings2 size={20} />
                     </button>
 
-                    <button 
-                        onClick={() => onSave(scenario)} 
-                        disabled={!scenario.title.trim()} 
-                        className="px-3 sm:px-5 py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm hover:-translate-y-0.5 active:translate-y-0 flex-shrink-0"
-                    >
-                        <Save size={16} strokeWidth={2.5} /> 
-                        <span className="hidden sm:inline">{t('save')}</span>
-                    </button>
+                    {!readOnly && (
+                        <button 
+                            onClick={() => onSave(scenario)} 
+                            disabled={!scenario.title.trim()} 
+                            className="px-3 sm:px-5 py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm hover:-translate-y-0.5 active:translate-y-0 flex-shrink-0"
+                        >
+                            <Save size={16} strokeWidth={2.5} /> 
+                            <span className="hidden sm:inline">{t('save')}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -133,9 +140,10 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     </div>
                     <textarea
                         value={scenario.systemInstruction || ''}
-                        onChange={(e) => setScenario(prev => ({...prev, systemInstruction: e.target.value}))}
+                        onChange={(e) => !readOnly && setScenario(prev => ({...prev, systemInstruction: e.target.value}))}
                         placeholder={t('scenarios_system_prompt_placeholder')}
                         className="flex-grow w-full bg-transparent border-none outline-none p-4 text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-none font-mono leading-relaxed custom-scrollbar focus:bg-[var(--theme-bg-input)]/50 transition-colors"
+                        readOnly={readOnly}
                     />
                 </div>
 
@@ -147,6 +155,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     onChange={(val) => setScenario(prev => ({...prev, systemInstruction: val}))}
                     placeholder={t('scenarios_system_prompt_placeholder')}
                     t={t}
+                    readOnly={readOnly}
                 />
 
                 {/* 3. Message Flow Editor */}
@@ -215,7 +224,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                                             </div>
 
                                             {/* Floating Actions */}
-                                            {!isEditing && (
+                                            {!isEditing && !readOnly && (
                                                 <div className={`
                                                     absolute -top-3 ${isUser ? 'right-0' : 'left-0'} 
                                                     flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200
@@ -236,47 +245,49 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     </div>
 
                     {/* Input Area */}
-                    <div className="flex-shrink-0 p-3 sm:p-4 bg-[var(--theme-bg-secondary)]/30 border-t border-[var(--theme-border-secondary)] backdrop-blur-sm">
-                        <div className="flex items-center gap-3 mb-3">
-                            <span className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider">Add Message As</span>
-                            <div className="flex bg-[var(--theme-bg-input)] p-0.5 rounded-lg border border-[var(--theme-border-secondary)]">
+                    {!readOnly && (
+                        <div className="flex-shrink-0 p-3 sm:p-4 bg-[var(--theme-bg-secondary)]/30 border-t border-[var(--theme-border-secondary)] backdrop-blur-sm">
+                            <div className="flex items-center gap-3 mb-3">
+                                <span className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider">Add Message As</span>
+                                <div className="flex bg-[var(--theme-bg-input)] p-0.5 rounded-lg border border-[var(--theme-border-secondary)]">
+                                    <button
+                                        onClick={() => setNewMessageRole('user')}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${newMessageRole === 'user' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
+                                    >
+                                        <User size={12} /> User
+                                    </button>
+                                    <button
+                                        onClick={() => setNewMessageRole('model')}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${newMessageRole === 'model' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
+                                    >
+                                        <Bot size={12} /> Model
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div className="relative group">
+                                <textarea
+                                    ref={inputRef}
+                                    value={newMessageContent}
+                                    onChange={(e) => setNewMessageContent(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    placeholder={t('scenarios_editor_content_placeholder')}
+                                    className="w-full p-4 pr-14 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-none shadow-sm transition-all"
+                                    rows={2}
+                                />
                                 <button
-                                    onClick={() => setNewMessageRole('user')}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${newMessageRole === 'user' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
+                                    onClick={handleAddMessage}
+                                    disabled={!newMessageContent.trim()}
+                                    className="absolute right-2 bottom-2 p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95 transform"
                                 >
-                                    <User size={12} /> User
-                                </button>
-                                <button
-                                    onClick={() => setNewMessageRole('model')}
-                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${newMessageRole === 'model' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
-                                >
-                                    <Bot size={12} /> Model
+                                    <Send size={18} strokeWidth={2.5} />
                                 </button>
                             </div>
+                            <div className="text-[10px] text-[var(--theme-text-tertiary)] mt-2 text-center font-medium opacity-60">
+                                CMD/CTRL + Enter to Add
+                            </div>
                         </div>
-                        
-                        <div className="relative group">
-                            <textarea
-                                ref={inputRef}
-                                value={newMessageContent}
-                                onChange={(e) => setNewMessageContent(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                placeholder={t('scenarios_editor_content_placeholder')}
-                                className="w-full p-4 pr-14 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-sm text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-none shadow-sm transition-all"
-                                rows={2}
-                            />
-                            <button
-                                onClick={handleAddMessage}
-                                disabled={!newMessageContent.trim()}
-                                className="absolute right-2 bottom-2 p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95 transform"
-                            >
-                                <Send size={18} strokeWidth={2.5} />
-                            </button>
-                        </div>
-                        <div className="text-[10px] text-[var(--theme-text-tertiary)] mt-2 text-center font-medium opacity-60">
-                            CMD/CTRL + Enter to Add
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

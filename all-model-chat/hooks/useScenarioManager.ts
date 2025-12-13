@@ -7,7 +7,7 @@ import { triggerDownload, sanitizeFilename } from '../utils/exportUtils';
 
 export type ModalView = 'list' | 'editor';
 
-const SYSTEM_SCENARIO_IDS = ['succinct-scenario-default', 'socratic-scenario-default', 'formal-scenario-default'];
+const SYSTEM_SCENARIO_IDS = ['succinct-scenario-default', 'socratic-scenario-default', 'formal-scenario-default', 'reasoner-scenario-default'];
 
 interface UseScenarioManagerProps {
   isOpen: boolean;
