@@ -1,5 +1,4 @@
-
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { generateFolderContext } from '../utils/folderImportUtils';
 import { UploadedFile } from '../types';
 import { generateUniqueId } from '../utils/appUtils';
@@ -98,7 +97,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
             // Check if any dropped item is a directory
             if (items) {
                 for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
+                    const item: any = items[i];
                     if (item.kind === 'file' && typeof item.webkitGetAsEntry === 'function') {
                         const entry = item.webkitGetAsEntry();
                         if (entry && entry.isDirectory) {
@@ -123,7 +122,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
                 // Handle directory drop: recursive scan and convert to text context
                 const entries = Array.from(items)
                     .filter(item => item.kind === 'file')
-                    .map(item => item.webkitGetAsEntry())
+                    .map(item => (item as any).webkitGetAsEntry())
                     .filter(Boolean);
                 
                 const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));

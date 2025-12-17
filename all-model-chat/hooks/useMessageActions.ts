@@ -1,5 +1,4 @@
-
-import { useCallback, Dispatch, SetStateAction } from 'react';
+import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../types';
 import { logService } from '../utils/appUtils';
 

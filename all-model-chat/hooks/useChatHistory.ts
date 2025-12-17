@@ -1,5 +1,4 @@
-
-import { Dispatch, SetStateAction, useCallback } from 'react';
+import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings, ChatGroup, InputCommand } from '../types';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { createNewSession, logService, getTranslator } from '../utils/appUtils';

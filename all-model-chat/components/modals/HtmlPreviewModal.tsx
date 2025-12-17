@@ -1,9 +1,10 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, FileCode2, Image as ImageIcon, Expand } from 'lucide-react';
+import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, Image as ImageIcon, Expand, Atom } from 'lucide-react';
 import { sanitizeFilename, exportElementAsPng, triggerDownload } from '../../utils/exportUtils';
 import { useWindowContext } from '../../contexts/WindowContext';
+import { IconHtml5 } from '../icons/CustomIcons';
 
 interface HtmlPreviewModalProps {
   isOpen: boolean;
@@ -150,6 +151,11 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
     }
   } catch (e) { /* ignore errors in title extraction */ }
 
+  const isReactPreview = previewTitle.toLowerCase().includes('react');
+  const HeaderIcon = isReactPreview ? Atom : IconHtml5;
+  const iconBgClass = isReactPreview ? 'bg-cyan-500/10 text-cyan-500' : 'bg-orange-500/10';
+  const subtitle = isReactPreview ? "React App" : "HTML Preview";
+
   const handleDownload = () => {
     if (!htmlContent) return;
     const filename = `${sanitizeFilename(previewTitle)}.html`;
@@ -223,15 +229,15 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
         {/* Refined Header - Simplified */}
         <header className="h-14 px-4 flex items-center justify-between gap-4 bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-secondary)] z-10 select-none">
             <div className="flex items-center gap-3 min-w-0 overflow-hidden">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
-                    <FileCode2 size={18} strokeWidth={1.5} />
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
+                    <HeaderIcon size={20} />
                 </div>
                 <div className="flex flex-col min-w-0">
                     <h2 id="html-preview-modal-title" className="text-sm font-semibold text-[var(--theme-text-primary)] truncate" title={previewTitle}>
                         {previewTitle}
                     </h2>
                     <span className="text-[10px] text-[var(--theme-text-tertiary)] truncate">
-                        HTML Preview
+                        {subtitle}
                     </span>
                 </div>
             </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, AppSettings, ModelOption } from '../../types';

@@ -90,7 +90,8 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
         <Modal isOpen={isOpen} onClose={onClose} contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--theme-border-primary)]">
             <div className="p-4 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] flex justify-between items-center">
                 <h3 className="font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
-                    {isVideo ? <Scissors size={18} /> : <Settings2 size={18} />}
+                    {/* If we have resolution settings available, show general settings icon, else if just video clipping, show scissors */}
+                    {showResolutionSettings ? <Settings2 size={18} /> : (isVideo ? <Scissors size={18} /> : <Settings2 size={18} />)}
                     {t('fileSettings_title') || 'File Configuration'}
                 </h3>
                 <button onClick={onClose} className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]">

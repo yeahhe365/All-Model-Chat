@@ -5,6 +5,13 @@ import { logService } from '../services/logService';
 import { TAB_CYCLE_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, GEMINI_3_RO_MODELS } from '../constants/appConstants';
 import { MediaResolution } from '../types/settings';
 
+export const formatDuration = (seconds: number): string => {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+};
+
 export const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();

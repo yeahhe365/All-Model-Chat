@@ -1,6 +1,5 @@
-
 // hooks/useSuggestions.ts
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../types';
 import { getKeyForRequest, logService } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';

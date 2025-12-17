@@ -1,5 +1,4 @@
-
-import { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../types';
 import { getKeyForRequest, logService, generateSessionTitle } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';

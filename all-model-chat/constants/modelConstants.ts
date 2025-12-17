@@ -1,9 +1,9 @@
-
 import { ModelOption } from '../types';
 
-export const DEFAULT_MODEL_ID = 'gemini-3-pro-preview'; 
+export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview'; 
 
 export const TAB_CYCLE_MODELS: string[] = [
+    'gemini-3-flash-preview',
     'gemini-3-pro-preview',
     'gemini-2.5-pro',
     'models/gemini-flash-latest',
@@ -13,16 +13,22 @@ export const TAB_CYCLE_MODELS: string[] = [
 export const GEMINI_3_RO_MODELS: string[] = [
     'gemini-3-pro-preview', 
     'models/gemini-3-pro-preview',
+    'gemini-3-flash-preview',
+    'models/gemini-3-flash-preview',
 ];
 
 export const MODELS_MANDATORY_THINKING = [
     'gemini-3-pro-preview',
     'models/gemini-3-pro-preview',
+    'gemini-3-flash-preview',
+    'models/gemini-3-flash-preview',
     'gemini-2.5-pro',
 ];
 
 export const THINKING_LEVELS = [
+    { id: 'MINIMAL', name: 'Minimal' },
     { id: 'LOW', name: 'Low' },
+    { id: 'MEDIUM', name: 'Medium' },
     { id: 'HIGH', name: 'High' },
 ];
 
@@ -33,6 +39,8 @@ export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number
     'gemini-2.5-pro': { min: 128, max: 32768 },
     'gemini-3-pro-preview': { min: 128, max: 32768 }, 
     'models/gemini-3-pro-preview': { min: 128, max: 32768 },
+    'gemini-3-flash-preview': { min: 128, max: 32768 },
+    'models/gemini-3-flash-preview': { min: 128, max: 32768 },
     'models/gemini-flash-lite-latest': { min: 512, max: 24576 },
 };
 

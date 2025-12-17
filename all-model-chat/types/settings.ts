@@ -1,4 +1,3 @@
-
 export interface ModelOption {
   id: string;
   name: string;
@@ -50,7 +49,7 @@ export interface ChatSettings {
   systemInstruction: string;
   ttsVoice: string;
   thinkingBudget: number;
-  thinkingLevel?: 'LOW' | 'HIGH';
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
   lockedApiKey?: string | null;
   isGoogleSearchEnabled?: boolean;
   isCodeExecutionEnabled?: boolean;
@@ -82,4 +81,5 @@ export interface AppSettings extends ChatSettings {
  generateQuadImages?: boolean;
  autoFullscreenHtml?: boolean;
  showWelcomeSuggestions?: boolean;
+ isAudioCompressionEnabled: boolean;
 }

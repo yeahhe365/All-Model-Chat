@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Code, Eye, Download } from 'lucide-react';
+import { X, Code, Eye, Download, Atom, FileCode2 } from 'lucide-react';
 import { SideViewContent } from '../../types';
 import { MermaidBlock } from '../message/MermaidBlock';
 import { GraphvizBlock } from '../message/GraphvizBlock';
@@ -173,6 +173,13 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
         content.type === 'svg' ? 'xml' : 'plaintext'
     );
 
+    // Determine preview label and icon
+    const isReact = content.language === 'react' || content.language === 'jsx' || content.language === 'tsx' || (content.title?.includes('React') ?? false);
+    const isHtml = content.type === 'html' && !isReact;
+
+    const PreviewIcon = isReact ? Atom : (isHtml ? FileCode2 : Eye);
+    const previewLabel = isReact ? "React" : (isHtml ? "HTML" : "Preview");
+
     return (
         <>
             {isResizing && (
@@ -202,7 +209,7 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                 <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex-shrink-0">
                     {/* Left: Tabs */}
                     <div className="flex bg-[var(--theme-bg-input)] p-1 rounded-lg border border-[var(--theme-border-secondary)] flex-shrink-0">
-                        <TabButton id="preview" icon={Eye} label="Preview" />
+                        <TabButton id="preview" icon={PreviewIcon} label={previewLabel} />
                         <TabButton id="code" icon={Code} label="Code" />
                     </div>
 

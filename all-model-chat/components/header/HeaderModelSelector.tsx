@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Zap } from 'lucide-react';
 import { ModelOption } from '../../types';
@@ -14,8 +13,8 @@ interface HeaderModelSelectorProps {
   isSwitchingModel: boolean;
   isLoading: boolean;
   t: (key: string) => string;
-  thinkingLevel?: 'LOW' | 'HIGH';
-  onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
 }
 
 export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
@@ -84,7 +83,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                             ? 'text-yellow-500 hover:bg-[var(--theme-bg-tertiary)]' 
                             : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]'
                     }`}
-                    title={isLowThinking ? "Thinking: Low (Fast)" : "Thinking: High (Deep)"}
+                    title={isLowThinking ? "Thinking: Low (Flash Mode)" : "Thinking: High (Pro Mode)"}
                     aria-label="Toggle thinking level"
                 >
                     <Zap size={18} fill={isLowThinking ? "currentColor" : "none"} strokeWidth={2} />

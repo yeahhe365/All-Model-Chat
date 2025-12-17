@@ -1,15 +1,19 @@
-import { useState, useRef, useCallback } from 'react';
+
+import React, { useState, useRef, useCallback } from 'react';
+import { compressAudioToMp3 } from '../utils/audioCompression';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   setInputText: React.Dispatch<React.SetStateAction<string>>;
   adjustTextareaHeight: () => void;
+  isAudioCompressionEnabled?: boolean;
 }
 
 export const useVoiceInput = ({
   onTranscribeAudio,
   setInputText,
   adjustTextareaHeight,
+  isAudioCompressionEnabled = true,
 }: UseVoiceInputProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -61,14 +65,33 @@ export const useVoiceInput = ({
         }
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         if (audioBlob.size > 0) {
-          const audioFile = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
           setIsTranscribing(true);
-          const transcribedText = await onTranscribeAudio(audioFile);
-          if (transcribedText) {
-            setInputText(prev => (prev ? `${prev.trim()} ${transcribedText.trim()}` : transcribedText.trim()).trim());
-            setTimeout(() => adjustTextareaHeight(), 0);
+          try {
+              let fileToTranscribe: File;
+              
+              if (isAudioCompressionEnabled) {
+                  // Convert blob to MP3 via utility
+                  try {
+                      fileToTranscribe = await compressAudioToMp3(audioBlob);
+                  } catch (error) {
+                      console.error("Error compressing audio, falling back to original:", error);
+                      fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+                  }
+              } else {
+                  fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+              }
+
+              const transcribedText = await onTranscribeAudio(fileToTranscribe);
+              
+              if (transcribedText) {
+                setInputText(prev => (prev ? `${prev.trim()} ${transcribedText.trim()}` : transcribedText.trim()).trim());
+                setTimeout(() => adjustTextareaHeight(), 0);
+              }
+          } catch (error) {
+              console.error("Error processing/transcribing audio:", error);
+          } finally {
+              setIsTranscribing(false);
           }
-          setIsTranscribing(false);
         }
       };
 
@@ -80,7 +103,7 @@ export const useVoiceInput = ({
     } finally {
       setIsMicInitializing(false);
     }
-  }, [onTranscribeAudio, setInputText, adjustTextareaHeight]);
+  }, [onTranscribeAudio, setInputText, adjustTextareaHeight, isAudioCompressionEnabled]);
 
   const handleVoiceInputClick = () => {
     if (isRecording) {

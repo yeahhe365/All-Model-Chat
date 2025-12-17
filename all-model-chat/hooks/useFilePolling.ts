@@ -1,5 +1,4 @@
-
-import { useEffect, useRef, Dispatch, SetStateAction } from 'react';
+import React, { useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
 import { getKeyForRequest } from '../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
@@ -30,7 +29,7 @@ export const useFilePolling = ({
         // Stop polling for files that are no longer in the 'processing_api' state
         for (const fileId of filesCurrentlyPolling) {
             if (!filesThatShouldPoll.has(fileId)) {
-                clearInterval(pollingIntervals.current.get(fileId));
+                window.clearInterval(pollingIntervals.current.get(fileId));
                 pollingIntervals.current.delete(fileId);
                 logService.info(`Stopped polling for file ${fileId} as it is no longer in a processing state.`);
             }
@@ -85,7 +84,7 @@ export const useFilePolling = ({
 
         // Cleanup on unmount
         return () => {
-            pollingIntervals.current.forEach(intervalId => clearInterval(intervalId));
+            pollingIntervals.current.forEach(intervalId => window.clearInterval(intervalId));
         };
     }, [selectedFiles, appSettings, currentChatSettings, setSelectedFiles]);
 };

@@ -1,5 +1,4 @@
-
-import { useRef, useCallback, useState, useLayoutEffect } from 'react';
+import React, { useRef, useCallback, useState, useLayoutEffect } from 'react';
 import { ChatMessage } from '../types';
 
 interface ChatScrollProps {
@@ -81,8 +80,8 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
         
         const modelResponseElements: HTMLElement[] = [];
         for (let i = 1; i < allMessages.length; i++) {
-            const currentEl = allMessages[i];
-            const prevEl = allMessages[i-1];
+            const currentEl = allMessages[i] as HTMLElement;
+            const prevEl = allMessages[i-1] as HTMLElement;
             if ((currentEl.dataset.messageRole === 'model' || currentEl.dataset.messageRole === 'error') && prevEl.dataset.messageRole === 'user') {
                 modelResponseElements.push(currentEl);
             }
@@ -109,8 +108,8 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
         
         const modelResponseElements: HTMLElement[] = [];
         for (let i = 1; i < allMessages.length; i++) {
-            const currentEl = allMessages[i];
-            const prevEl = allMessages[i-1];
+            const currentEl = allMessages[i] as HTMLElement;
+            const prevEl = allMessages[i-1] as HTMLElement;
             if ((currentEl.dataset.messageRole === 'model' || currentEl.dataset.messageRole === 'error') && prevEl.dataset.messageRole === 'user') {
                 modelResponseElements.push(currentEl);
             }

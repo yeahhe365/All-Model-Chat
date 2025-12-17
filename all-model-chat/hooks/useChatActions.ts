@@ -1,5 +1,4 @@
-
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile, VideoMetadata } from '../types';
 import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES } from '../constants/appConstants';
 import { getKeyForRequest, logService, createNewSession, cacheModelSettings, getCachedModelSettings } from '../utils/appUtils';

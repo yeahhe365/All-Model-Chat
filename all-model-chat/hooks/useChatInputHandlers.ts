@@ -1,5 +1,4 @@
-
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings, VideoMetadata } from '../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, logService, getTranslator } from '../utils/appUtils';
@@ -183,9 +182,14 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         const items = event.clipboardData?.items;
         if (!items) return;
 
-        const filesToProcess = Array.from(items)
-            .filter(item => item.kind === 'file' && ALL_SUPPORTED_MIME_TYPES.includes(item.type))
-            .map(item => item.getAsFile()).filter((f): f is File => f !== null);
+        const filesToProcess: File[] = [];
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === 'file' && ALL_SUPPORTED_MIME_TYPES.includes(item.type)) {
+                const file = item.getAsFile();
+                if (file) filesToProcess.push(file);
+            }
+        }
 
         if (filesToProcess.length > 0) {
             event.preventDefault();

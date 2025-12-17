@@ -1,4 +1,5 @@
 
+
 export const settingsTranslations = {
     // Settings Modal and subcomponents
     settingsTitle: { en: 'Settings', zh: '设置' },
@@ -125,6 +126,8 @@ export const settingsTranslations = {
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
     settingsClearLogs: { en: 'Clear Logs', zh: '清空日志' },
     settingsClearLogs_confirm: { en: 'Are you sure you want to clear all system logs?', zh: '您确定要清空所有系统日志吗？' },
+    settings_audioCompression_label: { en: 'Compress Audio Uploads', zh: '压缩音频上传' },
+    settings_audioCompression_tooltip: { en: 'Automatically compress audio files (including voice recordings) to MP3 64kbps to save tokens and bandwidth.', zh: '自动将音频文件（包括语音录音）压缩为 MP3 64kbps，以节省 Token 和带宽。' },
     
     // Shortcuts Section
     shortcuts_general_title: { en: 'General', zh: '通用' },

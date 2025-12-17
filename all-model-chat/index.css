@@ -240,6 +240,16 @@
   background-color: var(--theme-bg-code-block) !important;
 }
 
+/* Blockquote Overrides */
+.markdown-body blockquote {
+  color: inherit !important; /* Inherit color to ensure high contrast in chat bubbles */
+  border-left: 3px solid currentColor !important; /* Use current text color for border */
+  background-color: transparent !important;
+  padding: 0.25rem 0 0.25rem 1rem !important;
+  margin: 0.5rem 0 !important;
+  opacity: 0.85; /* Slight dimming for differentiation, but keeping high readability */
+}
+
 /* Ensure lists are visible */
 .markdown-body ol {
   list-style-type: decimal !important;

@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { SavedScenario } from '../types';
 import { translations } from '../utils/appUtils';
 import { generateUniqueId } from '../utils/appUtils';
