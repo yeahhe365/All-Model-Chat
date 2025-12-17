@@ -86,10 +86,15 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={onClose} backdropClassName="bg-black/70 backdrop-blur-md">
-      <div className="bg-[var(--theme-bg-primary)] w-full h-[95vh] max-w-6xl shadow-2xl flex flex-col overflow-hidden rounded-xl border border-[var(--theme-border-primary)]">
+    <Modal 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        backdropClassName="bg-black/70 backdrop-blur-md"
+        contentClassName="w-full max-w-6xl h-[95vh]"
+    >
+      <div className="bg-[var(--theme-bg-primary)] w-full h-full shadow-2xl flex flex-col overflow-hidden rounded-xl border border-[var(--theme-border-primary)]">
         {/* Header */}
-        <header className="py-2 px-4 border-b border-[var(--theme-border-secondary)] flex justify-between items-center bg-[var(--theme-bg-secondary)]">
+        <header className="py-2 px-4 border-b border-[var(--theme-border-secondary)] flex justify-between items-center bg-[var(--theme-bg-secondary)] flex-shrink-0">
           <h2 className="text-lg font-semibold text-[var(--theme-text-link)] flex items-center gap-2">
             <Terminal size={20} /> System Logs
           </h2>
@@ -97,7 +102,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         </header>
 
         {/* Tabs */}
-        <div className="border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] px-4">
+        <div className="border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] px-4 flex-shrink-0">
           <nav className="flex space-x-4">
             <button onClick={() => setActiveTab('console')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'console' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                 <Terminal size={14} /> Console

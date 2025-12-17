@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef } from 'react';
 import { ChevronDown, Check, Info, Type, CloudUpload } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
@@ -36,6 +37,8 @@ interface AppearanceSectionProps {
   setAutoFullscreenHtml: (value: boolean) => void;
   showWelcomeSuggestions: boolean;
   setShowWelcomeSuggestions: (value: boolean) => void;
+  isAudioCompressionEnabled: boolean;
+  setIsAudioCompressionEnabled: (value: boolean) => void;
   // Updated prop for file strategy
   filesApiConfig: FilesApiConfig;
   setFilesApiConfig: (value: FilesApiConfig) => void;
@@ -75,6 +78,7 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
   isAutoSendOnSuggestionClick, setIsAutoSendOnSuggestionClick,
   autoFullscreenHtml, setAutoFullscreenHtml,
   showWelcomeSuggestions, setShowWelcomeSuggestions,
+  isAudioCompressionEnabled, setIsAudioCompressionEnabled,
   filesApiConfig, setFilesApiConfig,
   t,
 }) => {
@@ -228,9 +232,9 @@ export const AppearanceSection: React.FC<AppearanceSectionProps> = ({
               <ToggleItem label={t('settings_autoFullscreenHtml_label')} checked={autoFullscreenHtml} onChange={setAutoFullscreenHtml} tooltip={t('settings_autoFullscreenHtml_tooltip')} />
               <ToggleItem label={t('settings_enableMermaidRendering_label')} checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} tooltip={t('settings_enableMermaidRendering_tooltip')} />
               <ToggleItem label={t('settings_enableGraphvizRendering_label')} checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} tooltip={t('settings_enableGraphvizRendering_tooltip')} />
+              <ToggleItem label={t('settings_audioCompression_label')} checked={isAudioCompressionEnabled} onChange={setIsAudioCompressionEnabled} tooltip={t('settings_audioCompression_tooltip')} />
           </div>
       </div>
     </div>
   );
 };
-    

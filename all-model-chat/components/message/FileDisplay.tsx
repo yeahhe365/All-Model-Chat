@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
-import { Check, Copy, Download, SlidersHorizontal, Scissors } from 'lucide-react'; 
+import { Check, Copy, Download, SlidersHorizontal, Scissors, Settings2 } from 'lucide-react'; 
 import { triggerDownload } from '../../utils/exportUtils';
 import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
 import { formatFileSize } from '../../utils/domainUtils';
@@ -57,6 +57,8 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
       isVideo || (isGemini3 && (isImage || isPdf))
   );
 
+  const ConfigIcon = (isGemini3) ? SlidersHorizontal : (isVideo ? Scissors : Settings2);
+
   // Render Image Content specifically
   if (category === 'image' && file.dataUrl && !file.error) {
       return (
@@ -78,7 +80,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                             title={file.mediaResolution ? `Configure (Resolution: ${file.mediaResolution})` : "Configure"}
                             className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${getResolutionColor(file.mediaResolution)}`}
                         >
-                            <SlidersHorizontal size={14} strokeWidth={2} />
+                            <ConfigIcon size={14} strokeWidth={2} />
                         </button>
                     ) : file.mediaResolution ? (
                         <div className={`p-1.5 rounded-full bg-black/50 backdrop-blur-sm ${getResolutionColor(file.mediaResolution)}`} title={`Resolution: ${file.mediaResolution}`}>
@@ -159,7 +161,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                     title="Configure"
                     className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                 >
-                    {isVideo ? <Scissors size={16} strokeWidth={2} /> : <SlidersHorizontal size={16} strokeWidth={2} />}
+                    <ConfigIcon size={16} strokeWidth={2} />
                 </button>
             )}
 

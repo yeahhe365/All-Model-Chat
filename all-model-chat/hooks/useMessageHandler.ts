@@ -1,5 +1,4 @@
-
-import { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, InputCommand } from '../types';
 import { useMessageSender } from './useMessageSender';
 import { useMessageActions } from './useMessageActions';
@@ -31,6 +30,7 @@ interface MessageHandlerProps {
     updateAndPersistSessions: SessionsUpdater;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
+    language: 'en' | 'zh';
 }
 
 export const useMessageHandler = (props: MessageHandlerProps) => {

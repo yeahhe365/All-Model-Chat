@@ -1,5 +1,4 @@
-
-import { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, UploadedFile, ChatSettings } from '../types';
 import { useModels } from './useModels';
 import { useChatHistory } from './useChatHistory';

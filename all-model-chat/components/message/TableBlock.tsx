@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download } from 'lucide-react';

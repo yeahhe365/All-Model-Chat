@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Info, Lightbulb, Zap, Settings2, Ban, Gauge, Calculator, Cpu } from 'lucide-react';
+import { Info, Lightbulb, Zap, Settings2, Ban, Gauge, Calculator, Cpu, Sparkles, Feather } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, SETTINGS_INPUT_CLASS, MODELS_MANDATORY_THINKING } from '../../constants/appConstants';
 import { Tooltip } from '../shared/Tooltip';
 import { isGemini3Model } from '../../utils/appUtils';
@@ -9,8 +9,8 @@ interface ThinkingControlProps {
   modelId: string;
   thinkingBudget: number;
   setThinkingBudget: (value: number) => void;
-  thinkingLevel?: 'LOW' | 'HIGH';
-  setThinkingLevel?: (value: 'LOW' | 'HIGH') => void;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
@@ -27,6 +27,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   t
 }) => {
   const isGemini3 = isGemini3Model(modelId);
+  const isFlash3 = isGemini3 && modelId.toLowerCase().includes('flash');
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
   
   const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
@@ -170,20 +171,32 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                                     <Gauge size={12} /> Intensity Level
                                 </span>
                             </div>
-                            <div className="flex gap-3">
+                            <div className={`grid ${isFlash3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-2`}>
+                                {isFlash3 && (
+                                    <LevelButton 
+                                        active={thinkingLevel === 'MINIMAL'} 
+                                        onClick={() => setThinkingLevel('MINIMAL')} 
+                                        label="Minimal" 
+                                        icon={<Feather size={14} />}
+                                    />
+                                )}
                                 <LevelButton 
                                     active={thinkingLevel === 'LOW'} 
                                     onClick={() => setThinkingLevel('LOW')} 
                                     label="Low" 
-                                    desc="Faster, concise reasoning"
-                                    icon={<Zap size={16} />}
+                                    icon={<Zap size={14} />}
+                                />
+                                <LevelButton 
+                                    active={thinkingLevel === 'MEDIUM'} 
+                                    onClick={() => setThinkingLevel('MEDIUM')} 
+                                    label="Medium" 
+                                    icon={<Sparkles size={14} />}
                                 />
                                 <LevelButton 
                                     active={thinkingLevel === 'HIGH'} 
                                     onClick={() => setThinkingLevel('HIGH')} 
                                     label="High" 
-                                    desc="Deep, comprehensive thought"
-                                    icon={<Cpu size={16} />}
+                                    icon={<Cpu size={14} />}
                                 />
                             </div>
                         </div>
@@ -251,19 +264,18 @@ const SparklesIcon = ({ active }: { active: boolean }) => (
     </svg>
 );
 
-const LevelButton = ({ active, onClick, label, desc, icon }: { active: boolean, onClick: () => void, label: string, desc: string, icon: React.ReactNode }) => (
+const LevelButton = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon: React.ReactNode }) => (
     <button
         onClick={onClick}
-        className={`flex-1 flex flex-col items-start p-3 rounded-lg border transition-all duration-200 text-left ${
+        className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all duration-200 text-center gap-1 ${
             active
             ? 'bg-[var(--theme-bg-accent)]/5 border-[var(--theme-border-focus)] ring-1 ring-[var(--theme-border-focus)]'
             : 'bg-[var(--theme-bg-tertiary)]/30 border-transparent hover:bg-[var(--theme-bg-tertiary)]/60'
         }`}
     >
-        <div className={`flex items-center gap-2 mb-1 ${active ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`}>
+        <div className={active ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}>
             {React.cloneElement(icon as React.ReactElement, { size: 14, strokeWidth: 2 } as any)}
-            <span className="text-sm font-bold">{label}</span>
         </div>
-        <span className="text-[10px] text-[var(--theme-text-secondary)] leading-tight">{desc}</span>
+        <span className={`text-[10px] font-bold ${active ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)]'}`}>{label}</span>
     </button>
 );

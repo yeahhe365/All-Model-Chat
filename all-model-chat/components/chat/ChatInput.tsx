@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
@@ -134,6 +135,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     onTranscribeAudio,
     setInputText,
     adjustTextareaHeight,
+    isAudioCompressionEnabled: appSettings.isAudioCompressionEnabled,
   });
 
   const {

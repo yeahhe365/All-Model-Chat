@@ -4,7 +4,7 @@ import { Loader2, ChevronDown, Languages } from 'lucide-react';
 
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { FileDisplay } from './FileDisplay';
-import { translations, parseThoughtProcess, getKeyForRequest } from '../../utils/appUtils';
+import { translations, parseThoughtProcess, getKeyForRequest, formatDuration } from '../../utils/appUtils';
 import { GroundedResponse } from './GroundedResponse';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
@@ -154,7 +154,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                             </span>
                                             <span className="text-sm text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
                                                 {message.thinkingTimeMs !== undefined ? (
-                                                    t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString())
+                                                    t('thinking_took_time').replace('{duration}', formatDuration(Math.round(message.thinkingTimeMs / 1000)))
                                                 ) : (
                                                     message.generationStartTime ? <ThinkingTimer startTime={message.generationStartTime} t={t} /> : 'Processing...'
                                                 )}
@@ -169,7 +169,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo(({ messa
                                         <div className="flex items-baseline gap-2 min-w-0">
                                             <span className="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
                                                 {message.thinkingTimeMs !== undefined 
-                                                    ? t('thinking_took_time').replace('{seconds}', Math.round(message.thinkingTimeMs / 1000).toString()) 
+                                                    ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(message.thinkingTimeMs / 1000))) 
                                                     : 'Thought Process'}
                                             </span>
                                             {message.firstTokenTimeMs !== undefined && (

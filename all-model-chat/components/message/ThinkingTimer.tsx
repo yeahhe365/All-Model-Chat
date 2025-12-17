@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { translations } from '../../utils/appUtils';
+import { translations, formatDuration } from '../../utils/appUtils';
 
 interface ThinkingTimerProps {
     startTime: Date;
@@ -18,5 +18,5 @@ export const ThinkingTimer: React.FC<ThinkingTimerProps> = ({ startTime, t }) =>
         return () => clearInterval(interval);
     }, [startTime]);
 
-    return <span>{t('thinking_text')} ({seconds}s)</span>;
+    return <span>{t('thinking_text')} ({formatDuration(seconds)})</span>;
 };

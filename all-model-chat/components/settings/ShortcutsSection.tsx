@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { translations } from '../../utils/appUtils';
 import { Command } from 'lucide-react';

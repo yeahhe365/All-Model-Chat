@@ -24,6 +24,7 @@ import { DEFAULT_SYSTEM_INSTRUCTION } from './promptConstants';
 // Define constants that are truly app-level
 export const DEFAULT_IS_STREAMING_ENABLED = true; 
 export const DEFAULT_BASE_FONT_SIZE = 16; 
+export const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
 
 // localStorage keys
 export const APP_SETTINGS_KEY = 'chatAppSettings';
@@ -98,6 +99,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   generateQuadImages: false,
   autoFullscreenHtml: true,
   showWelcomeSuggestions: true,
+  isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
 };
 
 export const SUGGESTIONS_KEYS = [

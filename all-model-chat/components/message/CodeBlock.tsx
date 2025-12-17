@@ -14,6 +14,108 @@ const isLikelyHtml = (textContent: string): boolean => {
   return s.startsWith('<!doctype html>') || (s.includes('<html') && s.includes('</html>')) || (s.startsWith('<svg') && s.includes('</svg>'));
 };
 
+const isLikelyReact = (textContent: string, language: string): boolean => {
+    const lang = language.toLowerCase();
+    if (['jsx', 'tsx'].includes(lang)) return true;
+    
+    // For JS/TS, check for React signatures
+    if (['js', 'javascript', 'ts', 'typescript'].includes(lang)) {
+        return (
+            (textContent.includes('import React') || textContent.includes('from "react"') || textContent.includes("from 'react'")) &&
+            (textContent.includes('export default') || textContent.includes('return (') || textContent.includes('className='))
+        );
+    }
+    return false;
+};
+
+const generateReactPreview = (code: string): string => {
+    // Basic transformation to make the code run in a browser standalone environment
+    let processedCode = code;
+
+    // Remove imports that won't work in browser without import maps (we provide React globally)
+    processedCode = processedCode.replace(/import\s+React.*?from\s+['"]react['"];?/g, '');
+    processedCode = processedCode.replace(/import\s+.*?from\s+['"]react-dom\/client['"];?/g, '');
+    processedCode = processedCode.replace(/import\s+.*?from\s+['"]lucide-react['"];?/g, ''); // Lucide icons not available in this simple harness
+
+    // Handle export default
+    // We want to capture the component name or class to mount it
+    // Strategy: Replace 'export default function App' with 'function App', then mount App.
+    // Or 'export default App' -> mount App.
+    
+    const componentNameMatch = processedCode.match(/export\s+default\s+(?:function|class)\s+([A-Z][a-zA-Z0-9]*)/);
+    let componentName = 'App'; // Default assumption
+
+    if (componentNameMatch) {
+        componentName = componentNameMatch[1];
+        // Remove 'export default' but keep 'function Name'
+        processedCode = processedCode.replace(/export\s+default\s+/, '');
+    } else {
+        // Check for 'export default Name;' at the end
+        const exportMatch = processedCode.match(/export\s+default\s+([A-Z][a-zA-Z0-9]*);?/);
+        if (exportMatch) {
+            componentName = exportMatch[1];
+            processedCode = processedCode.replace(/export\s+default\s+[A-Z][a-zA-Z0-9]*;?/, '');
+        }
+    }
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { background-color: #ffffff; color: #1f2937; margin: 0; padding: 20px; font-family: system-ui, -apple-system, sans-serif; }
+        #root { width: 100%; height: 100%; }
+        /* Error Overlay */
+        #error-overlay { display: none; background: #fee2e2; color: #b91c1c; padding: 20px; border-radius: 8px; border: 1px solid #f87171; white-space: pre-wrap; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <div id="error-overlay"></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        window.onerror = function(message, source, lineno, colno, error) {
+            const el = document.getElementById('error-overlay');
+            el.style.display = 'block';
+            el.innerText = 'Runtime Error:\\n' + message;
+        };
+
+        try {
+            const { useState, useEffect, useRef, useMemo, useCallback, useReducer, useContext, createContext } = React;
+            
+            // --- User Code Start ---
+            ${processedCode}
+            // --- User Code End ---
+
+            // Mount logic
+            const container = document.getElementById('root');
+            const root = ReactDOM.createRoot(container);
+            
+            // Check if the inferred component exists
+            if (typeof ${componentName} !== 'undefined') {
+                root.render(<${componentName} />);
+            } else if (typeof App !== 'undefined') {
+                root.render(<App />);
+            } else {
+                throw new Error("Could not find a component to render. Ensure you export a component named 'App' or use 'export default'.");
+            }
+        } catch (err) {
+            const el = document.getElementById('error-overlay');
+            el.style.display = 'block';
+            el.innerText = 'Render Error:\\n' + err.message;
+        }
+    </script>
+</body>
+</html>`;
+};
+
 const LanguageIcon: React.FC<{ language: string }> = ({ language }) => {
     const lang = language ? language.toLowerCase() : 'text';
     
@@ -229,33 +331,59 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
     else if (language === 'json') mimeType = 'application/json';
     else if (language === 'markdown' || language === 'md') mimeType = 'text/markdown';
 
-    // Determine if HTML features should be active based on current content OR language tag
+    // Determine if HTML/React features should be active
     const contentLooksLikeHtml = isLikelyHtml(codeText.current);
+    const contentLooksLikeReact = isLikelyReact(codeText.current, language);
     const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language.toLowerCase());
     
-    // Show preview if content looks like HTML OR if the block is explicitly tagged as html/xml/svg
-    const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
+    // Show preview if content looks like HTML/React OR if the block is explicitly tagged as such
+    const showPreview = contentLooksLikeHtml || contentLooksLikeReact || isExplicitHtmlLanguage;
 
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (showPreview ? 'text/html' : 'text/plain');
-    // Adjust final language display if content looks like HTML but was typed as txt
-    const finalLanguage = language === 'txt' && contentLooksLikeHtml ? 'html' : (language === 'xml' && contentLooksLikeHtml ? 'html' : language);
+    
+    // Adjust final language display
+    let finalLanguage = language;
+    if (language === 'txt' && contentLooksLikeHtml) finalLanguage = 'html';
+    else if (language === 'xml' && contentLooksLikeHtml) finalLanguage = 'html';
+    else if (contentLooksLikeReact) finalLanguage = 'react';
+
+    const preparePreviewContent = () => {
+        if (contentLooksLikeReact || finalLanguage === 'react' || finalLanguage === 'jsx' || finalLanguage === 'tsx') {
+            return {
+                content: generateReactPreview(codeText.current),
+                title: 'React Preview',
+                isReact: true
+            };
+        }
+        return {
+            content: codeText.current,
+            title: 'HTML Preview',
+            isReact: false
+        };
+    };
 
     const handleOpenSide = () => {
-        // Extract title from HTML content if possible, or use language
-        let title = `${finalLanguage.toUpperCase()} Snippet`;
-        if (finalLanguage === 'html') {
+        const { content, title, isReact } = preparePreviewContent();
+        
+        let displayTitle = title;
+        if (!isReact && finalLanguage === 'html') {
             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
-                title = titleMatch[1];
+                displayTitle = titleMatch[1];
             }
         }
         
         onOpenSidePanel({
-            type: showPreview ? 'html' : 'mermaid', // Reusing Mermaid type for code snippets just to enable code viewer, though sidepanel mostly designed for rendering
-            content: codeText.current,
+            type: 'html', // SidePanel uses 'html' type which renders inside an iframe
+            content: content,
             language: finalLanguage,
-            title
+            title: displayTitle
         });
+    };
+
+    const handleFullscreenPreview = (trueFullscreen: boolean) => {
+        const { content } = preparePreviewContent();
+        onOpenHtmlPreview(content, { initialTrueFullscreen: trueFullscreen });
     };
 
     return (
@@ -272,17 +400,17 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({ children, className, onOpe
                             <button className={`${MESSAGE_BLOCK_BUTTON_CLASS} hidden md:block`} title="Open in Side Panel" onClick={handleOpenSide}>
                                 <Sidebar size={14} strokeWidth={2} />
                             </button>
-                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: true })}> 
+                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => handleFullscreenPreview(true)}> 
                                 <Expand size={14} strokeWidth={2} /> 
                             </button>
-                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_modal')} onClick={() => onOpenHtmlPreview(codeText.current)}> 
+                            <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_modal')} onClick={() => handleFullscreenPreview(false)}> 
                                 <Maximize2 size={14} strokeWidth={2} /> 
                             </button>
                         </>
                     )}
                     <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Download ${finalLanguage.toUpperCase()}`} onClick={() => {
-                        let filename = `snippet.${finalLanguage}`;
-                        if (downloadMimeType === 'text/html') {
+                        let filename = `snippet.${finalLanguage === 'react' ? 'tsx' : finalLanguage}`;
+                        if (downloadMimeType === 'text/html' && !contentLooksLikeReact) {
                             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
                             if (titleMatch && titleMatch[1]) {
                                 let saneTitle = titleMatch[1].trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').replace(/[. ]+$/, '');

@@ -10,7 +10,7 @@ interface AboutSectionProps {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = useResponsiveValue(18, 20);
-  const version = "1.8.1"; 
+  const version = "1.8.2"; 
   const [stars, setStars] = useState<number | null>(null);
 
   useEffect(() => {

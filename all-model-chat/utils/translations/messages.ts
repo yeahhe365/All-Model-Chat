@@ -76,7 +76,7 @@ export const messagesTranslations = {
     export_failed_title: { en: 'Export failed.', zh: '导出失败。' },
     tokens_unit: { en: 'tokens', zh: '个令牌' },
     thinking_text: { en: 'Thinking...', zh: '思考中...' },
-    thinking_took_time: { en: 'Thought for {seconds} seconds', zh: '已思考 {seconds} 秒' },
+    thinking_took_time: { en: 'Thought for {duration}', zh: '已思考 {duration}' },
     metrics_ttft: { en: 'TTFT', zh: '首字' },
     cancelled_by_user: { en: '[Cancelled by user]', zh: '[用户已取消]' },
     stopped_by_user: { en: '[Stopped by user]', zh: '[用户已停止]' },

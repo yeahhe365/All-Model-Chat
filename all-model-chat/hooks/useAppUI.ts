@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 
 export const useAppUI = () => {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);

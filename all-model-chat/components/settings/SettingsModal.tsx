@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from 'react';
 import { AppSettings, ModelOption } from '../../types';
 import { X } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../../constants/appConstants';
@@ -74,12 +74,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollSaveTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (activeTab) {
       localStorage.setItem(SETTINGS_TAB_STORAGE_KEY, activeTab);
     }
   }, [activeTab]);
+
+  // Restore scroll position when tab changes or modal opens
+  useLayoutEffect(() => {
+    if (isOpen && scrollContainerRef.current) {
+        const key = `chatSettingsScroll_${activeTab}`;
+        const savedPosition = localStorage.getItem(key);
+        
+        // Use requestAnimationFrame to ensure content has reflowed
+        requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+                scrollContainerRef.current.scrollTop = savedPosition ? parseInt(savedPosition, 10) : 0;
+            }
+        });
+    }
+  }, [activeTab, isOpen]);
+
+  const handleContentScroll = (e: React.UIEvent<HTMLDivElement>) => {
+      const scrollTop = e.currentTarget.scrollTop;
+      
+      if (scrollSaveTimeoutRef.current) {
+          clearTimeout(scrollSaveTimeoutRef.current);
+      }
+      
+      // Debounce saving to localStorage
+      scrollSaveTimeoutRef.current = window.setTimeout(() => {
+          localStorage.setItem(`chatSettingsScroll_${activeTab}`, scrollTop.toString());
+      }, 150);
+  };
 
   if (!isOpen) return null;
 
@@ -254,6 +284,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     setAutoFullscreenHtml={(v) => updateSetting('autoFullscreenHtml', v)}
                     showWelcomeSuggestions={currentSettings.showWelcomeSuggestions ?? true}
                     setShowWelcomeSuggestions={(v) => updateSetting('showWelcomeSuggestions', v)}
+                    isAudioCompressionEnabled={currentSettings.isAudioCompressionEnabled}
+                    setIsAudioCompressionEnabled={(v) => updateSetting('isAudioCompressionEnabled', v)}
                     filesApiConfig={currentSettings.filesApiConfig}
                     setFilesApiConfig={(v) => updateSetting('filesApiConfig', v)}
                     t={t}
@@ -363,7 +395,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </header>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8">
+            <div 
+                ref={scrollContainerRef}
+                onScroll={handleContentScroll}
+                className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8"
+            >
                 {renderTabContent()}
             </div>
         </main>

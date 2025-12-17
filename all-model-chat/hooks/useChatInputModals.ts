@@ -1,5 +1,4 @@
-
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { AttachmentAction } from '../components/chat/input/AttachmentMenu';
 
 interface UseChatInputModalsProps {
