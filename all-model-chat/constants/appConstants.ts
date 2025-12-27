@@ -100,6 +100,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoFullscreenHtml: true,
   showWelcomeSuggestions: true,
   isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
+  autoCanvasVisualization: false,
+  autoCanvasModelId: 'gemini-3-flash-preview',
 };
 
 export const SUGGESTIONS_KEYS = [

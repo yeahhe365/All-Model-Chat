@@ -1,13 +1,17 @@
 
 import React from 'react';
-import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2, Save } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
 import { IconStop } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { ChatInputActionsProps } from '../../../types';
 
-export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
+export interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
+    editMode?: 'update' | 'resend';
+}
+
+export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onAttachmentAction,
   disabled,
   isGoogleSearchEnabled,
@@ -37,6 +41,7 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
   inputText,
   onToggleFullscreen,
   isFullscreen,
+  editMode
 }) => {
   const micIconSize = 20;
   const sendIconSize = 20;
@@ -129,7 +134,9 @@ export const ChatInputActions: React.FC<ChatInputActionsProps> = ({
             ) : isEditing ? (
                 <>
                     <button type="button" onClick={onCancelEdit} className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={2} /></button>
-                    <button type="submit" disabled={!canSend} className={`${CHAT_INPUT_BUTTON_CLASS} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}><Edit2 size={sendIconSize} strokeWidth={2} /></button>
+                    <button type="submit" disabled={!canSend} className={`${CHAT_INPUT_BUTTON_CLASS} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}>
+                        {editMode === 'update' ? <Save size={sendIconSize} strokeWidth={2} /> : <Edit2 size={sendIconSize} strokeWidth={2} />}
+                    </button>
                 </>
             ) : (
                 <button 

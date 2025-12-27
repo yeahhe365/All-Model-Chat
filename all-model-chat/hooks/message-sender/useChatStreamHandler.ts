@@ -1,0 +1,186 @@
+import React, { Dispatch, SetStateAction, useCallback } from 'react';
+import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
+import { Part, UsageMetadata } from '@google/genai';
+import { useApiErrorHandler } from './useApiErrorHandler';
+import { logService, showNotification } from '../../utils/appUtils';
+import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
+import { updateMessagesWithPart, updateMessagesWithThought, finalizeMessages } from '../chat-stream/processors';
+
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
+
+interface ChatStreamHandlerProps {
+    appSettings: AppSettings;
+    updateAndPersistSessions: SessionsUpdater;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+}
+
+export const useChatStreamHandler = ({
+    appSettings,
+    updateAndPersistSessions,
+    setLoadingSessionIds,
+    activeJobs
+}: ChatStreamHandlerProps) => {
+    const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
+
+    const getStreamHandlers = useCallback((
+        currentSessionId: string,
+        generationId: string,
+        abortController: AbortController,
+        generationStartTime: Date,
+        currentChatSettings: IndividualChatSettings,
+        onSuccess?: (generationId: string, finalContent: string) => void
+    ) => {
+        const newModelMessageIds = new Set<string>([generationId]);
+        let firstContentPartTime: Date | null = null;
+        let accumulatedText = "";
+
+        const streamOnError = (error: Error) => {
+            handleApiError(error, currentSessionId, generationId);
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            activeJobs.current.delete(generationId);
+        };
+
+        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => {
+            // Use correct language from state
+            const lang = appSettings.language === 'system' 
+                ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
+                : appSettings.language;
+
+            if (appSettings.isStreamingEnabled && !firstContentPartTime) {
+                firstContentPartTime = new Date();
+            }
+
+            // Record Token Usage Statistics
+            if (usageMetadata) {
+                let promptTokens = usageMetadata.promptTokenCount || 0;
+                // Fallback if completion count missing
+                let completionTokens = usageMetadata.candidatesTokenCount || 0;
+                const totalTokens = usageMetadata.totalTokenCount || 0;
+                if (!completionTokens && totalTokens > 0 && promptTokens > 0) {
+                    completionTokens = totalTokens - promptTokens;
+                }
+
+                logService.recordTokenUsage(
+                    currentChatSettings.modelId,
+                    promptTokens,
+                    completionTokens
+                );
+            }
+
+            updateAndPersistSessions(prev => {
+                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                if (sessionIndex === -1) return prev;
+
+                const newSessions = [...prev];
+                const sessionToUpdate = { ...newSessions[sessionIndex] };
+                
+                const { updatedMessages, completedMessageForNotification } = finalizeMessages(
+                    sessionToUpdate.messages,
+                    generationStartTime,
+                    newModelMessageIds,
+                    currentChatSettings,
+                    lang,
+                    firstContentPartTime,
+                    usageMetadata,
+                    groundingMetadata,
+                    urlContextMetadata,
+                    abortController.signal.aborted
+                );
+
+                sessionToUpdate.messages = updatedMessages;
+                newSessions[sessionIndex] = sessionToUpdate;
+
+                if (completedMessageForNotification) {
+                    if (appSettings.isCompletionNotificationEnabled && document.hidden) {
+                        const notificationBody = (completedMessageForNotification.content || "Media or tool response received").substring(0, 150) + (completedMessageForNotification.content && completedMessageForNotification.content.length > 150 ? '...' : '');
+                        showNotification(
+                            'Response Ready', 
+                            {
+                                body: notificationBody,
+                                icon: APP_LOGO_SVG_DATA_URI,
+                            }
+                        );
+                    }
+                }
+
+                return newSessions;
+            }, { persist: true });
+
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            activeJobs.current.delete(generationId);
+
+            // Invoke success callback after state updates
+            if (onSuccess && !abortController.signal.aborted) {
+                // Use the locally accumulated text to avoid state closure issues
+                setTimeout(() => onSuccess(generationId, accumulatedText), 0);
+            }
+        };
+
+        const streamOnPart = (part: Part) => {
+            const anyPart = part as any;
+            
+            if (anyPart.text) {
+                accumulatedText += anyPart.text;
+            }
+
+            const hasMeaningfulContent = 
+                (anyPart.text && anyPart.text.trim().length > 0) || 
+                anyPart.executableCode || 
+                anyPart.codeExecutionResult || 
+                anyPart.inlineData;
+
+            if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
+                firstContentPartTime = new Date();
+            }
+        
+            updateAndPersistSessions(prev => {
+                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                if (sessionIndex === -1) return prev;
+        
+                const newSessions = [...prev];
+                const sessionToUpdate = { ...newSessions[sessionIndex] };
+                
+                // Use pure processor to calculate new messages state
+                const updatedMessages = updateMessagesWithPart(
+                    sessionToUpdate.messages,
+                    part,
+                    generationStartTime,
+                    newModelMessageIds,
+                    firstContentPartTime
+                );
+                
+                sessionToUpdate.messages = updatedMessages;
+                newSessions[sessionIndex] = sessionToUpdate;
+                
+                return newSessions;
+            }, { persist: false });
+        };
+        
+        const onThoughtChunk = (thoughtChunk: string) => {
+            updateAndPersistSessions(prev => {
+                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                if (sessionIndex === -1) return prev;
+        
+                const newSessions = [...prev];
+                const sessionToUpdate = { ...newSessions[sessionIndex] };
+                
+                const updatedMessages = updateMessagesWithThought(
+                    sessionToUpdate.messages,
+                    thoughtChunk,
+                    generationStartTime
+                );
+
+                sessionToUpdate.messages = updatedMessages;
+                newSessions[sessionIndex] = sessionToUpdate;
+                
+                return newSessions;
+            }, { persist: false });
+        };
+        
+        return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
+
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    
+    return { getStreamHandlers };
+};

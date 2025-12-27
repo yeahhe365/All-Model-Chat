@@ -130,7 +130,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         };
 
         // Apply specific defaults based on model
-        if (modelId.includes('gemini-3-pro')) {
+        if (modelId.includes('gemini-3')) {
             config.thinkingConfig = {
                 includeThoughts: false,
                 thinkingLevel: "LOW"
@@ -215,11 +215,6 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
 助手: "${modelContent}"`
         : `As a conversation expert, predict the 3 most likely short follow-up messages the USER would send based on the context below.
 
-Rules:
-1. If the Assistant ended with a question, suggestions MUST answer it.
-2. Suggestions should be concise (under 15 words) and diverse (e.g., one drill-down question, one request for examples, one pivot).
-3. Natural, conversational tone.
-
 Context:
 USER: "${userContent}"
 ASSISTANT: "${modelContent}"`;
@@ -227,7 +222,7 @@ ASSISTANT: "${modelContent}"`;
     try {
         const ai = await getConfiguredApiClient(apiKey);
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-2.5-flash-lite',
             contents: prompt,
             config: {
                 thinkingConfig: { thinkingBudget: -1 }, // auto
@@ -264,7 +259,7 @@ ASSISTANT: "${modelContent}"`;
             const ai = await getConfiguredApiClient(apiKey); // Re-get client
             const fallbackPrompt = `${prompt}\n\nReturn the three suggestions as a numbered list, one per line. Do not include any other text or formatting.`;
              const fallbackResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-2.5-flash-lite',
                 contents: fallbackPrompt,
                 config: {
                     thinkingConfig: { thinkingBudget: -1 },

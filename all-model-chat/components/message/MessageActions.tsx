@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil } from 'lucide-react';
+import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil, Wand2 } from 'lucide-react';
 import { ChatMessage, ThemeColors } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
@@ -38,11 +38,11 @@ interface MessageActionsProps {
     sessionTitle?: string;
     messageIndex?: number;
     isGrouped: boolean;
-    onEditMessage: (messageId: string) => void;
+    onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void;
-    onEditMessageContent: (message: ChatMessage) => void;
     onTextToSpeech: (messageId: string, text: string) => void;
+    onGenerateCanvas: (messageId: string, text: string) => void;
     ttsMessageId: string | null;
     themeColors: ThemeColors;
     themeId: string;
@@ -57,8 +57,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
-    onEditMessageContent,
     onTextToSpeech,
+    onGenerateCanvas,
     ttsMessageId,
     themeColors,
     themeId,
@@ -77,12 +77,12 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                 {!isGrouped && (
                     <>
                         {message.role === 'user' && (
-                            <AvatarWrapper onClick={() => onEditMessageContent(message)} showEditOverlay={true}>
+                            <AvatarWrapper onClick={() => onEditMessage(message.id, 'update')} showEditOverlay={true}>
                                 <UserIcon />
                             </AvatarWrapper>
                         )}
                         {message.role === 'model' && (
-                            <AvatarWrapper onClick={() => onEditMessageContent(message)} showEditOverlay={true}>
+                            <AvatarWrapper onClick={() => onEditMessage(message.id, 'update')} showEditOverlay={true}>
                                 <BotIcon />
                             </AvatarWrapper>
                         )}
@@ -97,7 +97,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             >
                 {message.role === 'user' && !message.isLoading && (
                     <button 
-                        onClick={() => onEditMessage(message.id)} 
+                        onClick={() => onEditMessage(message.id, 'resend')} 
                         title={t('edit')} 
                         aria-label={t('edit')} 
                         className={actionButtonClasses}
@@ -128,6 +128,16 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                 
                 {message.content && !message.isLoading && message.role === 'model' && !message.audioSrc && (
                     <>
+                        {/* Canvas Generation Button */}
+                        <button
+                            onClick={() => onGenerateCanvas(message.id, message.content)}
+                            title={t('generate_canvas_title')}
+                            aria-label={t('generate_canvas_title')}
+                            className={actionButtonClasses}
+                        >
+                            <Wand2 size={actionIconSize} strokeWidth={2} />
+                        </button>
+
                         <button 
                             onClick={() => onTextToSpeech(message.id, message.content)} 
                             disabled={!!ttsMessageId} 

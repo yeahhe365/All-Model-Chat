@@ -5,7 +5,7 @@ import { UploadedFile, VideoMetadata } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { Clock, Scissors, Save, X, MonitorPlay, Info, Settings2, Image as ImageIcon } from 'lucide-react';
 import { MediaResolution } from '../../types/settings';
-import { Select } from '../shared/Tooltip';
+import { Select } from '../shared/Select';
 
 // MARK: Configuration Modal - Handles Video Clipping & Resolution Settings
 

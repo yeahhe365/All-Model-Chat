@@ -82,4 +82,6 @@ export interface AppSettings extends ChatSettings {
  autoFullscreenHtml?: boolean;
  showWelcomeSuggestions?: boolean;
  isAudioCompressionEnabled: boolean;
+ autoCanvasVisualization?: boolean;
+ autoCanvasModelId: string;
 }
