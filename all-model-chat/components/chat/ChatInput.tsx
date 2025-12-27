@@ -1,22 +1,20 @@
-
-
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { UploadedFile, AppSettings, ModelOption, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ChatInputModals } from './input/ChatInputModals';
 import { ChatInputArea } from './input/ChatInputArea';
-import { useChatInputModals } from '../../hooks/useChatInputModals';
+import { useChatInputModals } from '../../hooks/chat-input/useChatInputModals';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { useSlashCommands } from '../../hooks/useSlashCommands';
 import { useIsDesktop } from '../../hooks/useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
-import { useChatInputState, INITIAL_TEXTAREA_HEIGHT_PX } from '../../hooks/useChatInputState';
-import { FileConfigurationModal } from '../modals/FileConfigurationModal';
-import { FilePreviewModal } from '../shared/ImageZoomModal';
-import { useChatInputHandlers } from '../../hooks/useChatInputHandlers';
-import { TokenCountModal } from '../modals/TokenCountModal';
-import { isGemini3Model } from '../../utils/appUtils';
+import { useChatInputState } from '../../hooks/chat-input/useChatInputState';
+import { useChatInputHandlers } from '../../hooks/chat-input/useChatInputHandlers';
+import { ChatInputFileModals } from './input/ChatInputFileModals';
+import { useChatInputAreaProps } from '../../hooks/chat-input/useChatInputAreaProps';
+import { useChatInputEffects } from '../../hooks/chat-input/useChatInputEffects';
+import { useModelCapabilities } from '../../hooks/useModelCapabilities';
 
 export interface ChatInputProps {
   appSettings: AppSettings;
@@ -71,6 +69,10 @@ export interface ChatInputProps {
   onSuggestionClick?: (suggestion: string) => void;
   onOrganizeInfoClick?: (suggestion: string) => void;
   showEmptyStateSuggestions?: boolean;
+  editMode: 'update' | 'resend';
+  onUpdateMessageContent: (messageId: string, content: string) => void;
+  editingMessageId: string | null;
+  setEditingMessageId: (id: string | null) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = (props) => {
@@ -78,15 +80,16 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     appSettings, currentChatSettings, setAppFileError, activeSessionId, commandedInput, onMessageSent, selectedFiles, setSelectedFiles, onSendMessage,
     isLoading, isEditing, onStopGenerating, onCancelEdit, onProcessFiles,
     onAddFileById, onCancelUpload, isProcessingFile, fileError, t,
-    isImagenModel, isImageEditModel, aspectRatio, setAspectRatio, imageSize, setImageSize, onTranscribeAudio,
+    aspectRatio, setAspectRatio, imageSize, setImageSize, onTranscribeAudio,
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onTogglePip,
-    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive, isHistorySidebarOpen,
+    onRetryLastTurn, onSelectModel, availableModels, onEditLastUserMessage, isPipActive,
     generateQuadImages, onToggleQuadImages, setCurrentChatSettings,
-    onSuggestionClick, onOrganizeInfoClick, showEmptyStateSuggestions
+    onSuggestionClick, onOrganizeInfoClick, showEmptyStateSuggestions,
+    editMode, onUpdateMessageContent, editingMessageId, setEditingMessageId
   } = props;
 
   const {
@@ -117,6 +120,15 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
   const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [isConverting, setIsConverting] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
+
+  // Model Capabilities Hook
+  const { 
+      isImagenModel, 
+      isGemini3ImageModel, 
+      isGemini3, 
+      supportedAspectRatios, 
+      supportedImageSizes 
+  } = useModelCapabilities(currentChatSettings.modelId);
 
   const {
     showRecorder, showCreateTextFileEditor, showAddByIdInput, showAddByUrlInput, isHelpModalOpen,
@@ -158,221 +170,128 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     && !isLoading && !isAddingById && !isModalOpen && !isConverting
   );
 
+  // Core Event Handlers
   const handlers = useChatInputHandlers({
     inputText, setInputText, quoteText, setQuoteText, fileIdInput, setFileIdInput, urlInput, setUrlInput,
     selectedFiles, setSelectedFiles, previewFile, setPreviewFile,
     isAddingById, setIsAddingById, isAddingByUrl, setIsAddingByUrl,
     isTranslating, setIsTranslating, isConverting, setIsConverting,
     isLoading, isFullscreen, setIsFullscreen, setIsAnimatingSend, setIsWaitingForUpload,
+    isEditing, editMode, editingMessageId, setEditingMessageId,
     showCreateTextFileEditor, showCamera: false, showRecorder, setShowAddByUrlInput, setShowAddByIdInput,
     textareaRef, fileInputRef, imageInputRef, folderInputRef, zipInputRef,
     justInitiatedFileOpRef, isComposingRef,
     appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError,
     slashCommandState, setSlashCommandState, handleCommandSelect, handleSlashCommandExecution, handleSlashInputChange,
-    onProcessFiles, onAddFileById, onSendMessage, onMessageSent,
+    onProcessFiles, onAddFileById, onSendMessage, onMessageSent, onUpdateMessageContent,
     adjustTextareaHeight, clearCurrentDraft, handleToggleFullscreen,
     isMobile, isDesktop, canSend
   });
   
-  useEffect(() => {
-    if (commandedInput) {
-      if (commandedInput.mode === 'quote') {
-          setQuoteText(commandedInput.text);
-      } else if (commandedInput.mode === 'append') {
-          setInputText(prev => prev + (prev ? '\n' : '') + commandedInput.text);
-      } else {
-          setInputText(commandedInput.text);
-      }
-      
-      // Focus regardless of mode
-      setTimeout(() => {
-        const textarea = textareaRef.current;
-        if (textarea) {
-          textarea.focus();
-          const textLength = textarea.value.length;
-          textarea.setSelectionRange(textLength, textLength);
-        }
-      }, 0);
-    }
-  }, [commandedInput]);
+  // Side Effects Hook (Paste, Focus, Auto-Send)
+  useChatInputEffects({
+      commandedInput,
+      setInputText,
+      setQuoteText,
+      textareaRef,
+      prevIsProcessingFileRef,
+      isProcessingFile,
+      isAddingById,
+      justInitiatedFileOpRef,
+      isWaitingForUpload,
+      selectedFiles,
+      clearCurrentDraft,
+      inputText,
+      quoteText,
+      onSendMessage,
+      onMessageSent,
+      setIsAnimatingSend,
+      isFullscreen,
+      setIsFullscreen,
+      onProcessFiles,
+      isModalOpen: isAnyModalOpen
+  });
 
-  useEffect(() => {
-    if (prevIsProcessingFileRef.current && !isProcessingFile && !isAddingById && justInitiatedFileOpRef.current) {
-      textareaRef.current?.focus();
-      justInitiatedFileOpRef.current = false;
-    }
-    prevIsProcessingFileRef.current = isProcessingFile;
-  }, [isProcessingFile, isAddingById]);
+  // Prepare Props for Area Component
+  const areaProps = useChatInputAreaProps({
+    isImagenModel,
+    isGemini3ImageModel,
+    aspectRatio,
+    setAspectRatio,
+    imageSize,
+    setImageSize,
+    fileError,
+    isLoading,
+    t,
+    generateQuadImages,
+    onToggleQuadImages,
+    supportedAspectRatios,
+    supportedImageSizes,
+    selectedFiles,
+    onCancelUpload,
+    isGemini3,
+    isRecording,
+    isMicInitializing,
+    isTranscribing,
+    onStopGenerating,
+    isEditing,
+    onCancelEdit,
+    canSend,
+    isWaitingForUpload,
+    isGoogleSearchEnabled,
+    onToggleGoogleSearch,
+    isCodeExecutionEnabled,
+    onToggleCodeExecution,
+    isUrlContextEnabled,
+    onToggleUrlContext,
+    isDeepSearchEnabled,
+    onToggleDeepSearch,
+    editMode,
+    fileIdInput,
+    setFileIdInput,
+    isAddingById,
+    showAddByIdInput,
+    urlInput,
+    setUrlInput,
+    isAddingByUrl,
+    showAddByUrlInput,
+    inputText,
+    quoteText,
+    setQuoteText,
+    isTranslating,
+    isFullscreen,
+    isPipActive,
+    isAnimatingSend,
+    isMobile,
+    isConverting,
+    isModalOpen: isAnyModalOpen,
+    slashCommandState,
+    textareaRef,
+    fileInputRef,
+    imageInputRef,
+    folderInputRef,
+    zipInputRef,
+    cameraInputRef,
+    handlers,
+    setShowAddByIdInput,
+    setShowAddByUrlInput,
+    setConfiguringFile,
+    setPreviewFile,
+    setShowTokenModal,
+    handleAttachmentAction,
+    handleVoiceInputClick,
+    handleCancelRecording,
+    handleToggleFullscreen,
+    showEmptyStateSuggestions,
+    onSuggestionClick,
+    onOrganizeInfoClick,
+  });
 
-  useEffect(() => {
-    if (isWaitingForUpload) {
-        const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
-        if (!filesAreStillProcessing) {
-            clearCurrentDraft();
-            
-            let textToSend = inputText;
-            if (quoteText) {
-                const formattedQuote = quoteText.split('\n').map(l => `> ${l}`).join('\n');
-                textToSend = `${formattedQuote}\n\n${inputText}`;
-            }
+  // Assign ref functions to inputProps for Composition
+  areaProps.inputProps.onCompositionStart = () => isComposingRef.current = true;
+  areaProps.inputProps.onCompositionEnd = () => isComposingRef.current = false;
 
-            onSendMessage(textToSend);
-            setInputText('');
-            setQuoteText('');
-            onMessageSent();
-            setIsWaitingForUpload(false);
-            setIsAnimatingSend(true);
-            setTimeout(() => setIsAnimatingSend(false), 400);
-            if (isFullscreen) {
-                setIsFullscreen(false);
-            }
-        }
-    }
-  }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, quoteText, onMessageSent, clearCurrentDraft, isFullscreen]);
-
-  const isGemini3ImageModel = currentChatSettings.modelId === 'gemini-3-pro-image-preview';
-  const isFlashImageModel = currentChatSettings.modelId.includes('gemini-2.5-flash-image');
-  const isRealImagen = currentChatSettings.modelId.includes('imagen');
-  
-  // Calculate if active model is a Gemini 3 model (for chat or image)
-  // Used to enable per-file resolution settings
-  const isGemini3 = isGemini3Model(currentChatSettings.modelId);
-
-  let supportedAspectRatios: string[] | undefined;
-  
-  if (isRealImagen) {
-      supportedAspectRatios = ['1:1', '16:9', '9:16', '4:3', '3:4'];
-  } else if (isGemini3ImageModel || isFlashImageModel) {
-      supportedAspectRatios = ['Auto', '1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '4:5', '5:4', '21:9'];
-  }
-
-  let supportedImageSizes: string[] | undefined;
-  if (isGemini3ImageModel) {
-      supportedImageSizes = ['1K', '2K', '4K'];
-  } else if (isRealImagen && !currentChatSettings.modelId.includes('fast')) {
-      // Standard and Ultra support 1K and 2K
-      supportedImageSizes = ['1K', '2K'];
-  }
-
-  const chatInputContent = (
-      <ChatInputArea 
-        toolbarProps={{
-            isImagenModel: isImagenModel || false,
-            isGemini3ImageModel,
-            aspectRatio,
-            setAspectRatio,
-            imageSize,
-            setImageSize,
-            fileError,
-            showAddByIdInput,
-            fileIdInput,
-            setFileIdInput,
-            onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
-            onCancelAddById: () => { setShowAddByIdInput(false); setFileIdInput(''); textareaRef.current?.focus(); },
-            isAddingById,
-            showAddByUrlInput,
-            urlInput,
-            setUrlInput,
-            onAddUrlSubmit: () => handlers.handleAddUrl(urlInput),
-            onCancelAddUrl: () => { setShowAddByUrlInput(false); setUrlInput(''); textareaRef.current?.focus(); },
-            isAddingByUrl,
-            isLoading,
-            t,
-            generateQuadImages,
-            onToggleQuadImages,
-            supportedAspectRatios,
-            supportedImageSizes,
-        }}
-        actionsProps={{
-            onAttachmentAction: handleAttachmentAction,
-            disabled: isAddingById || isModalOpen || isWaitingForUpload || isConverting,
-            isGoogleSearchEnabled,
-            onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(onToggleGoogleSearch),
-            isCodeExecutionEnabled,
-            onToggleCodeExecution: () => handlers.handleToggleToolAndFocus(onToggleCodeExecution),
-            isUrlContextEnabled,
-            onToggleUrlContext: () => handlers.handleToggleToolAndFocus(onToggleUrlContext),
-            isDeepSearchEnabled,
-            onToggleDeepSearch: () => handlers.handleToggleToolAndFocus(onToggleDeepSearch),
-            onAddYouTubeVideo: () => { setShowAddByUrlInput(true); textareaRef.current?.focus(); },
-            onCountTokens: () => setShowTokenModal(true),
-            onRecordButtonClick: handleVoiceInputClick,
-            onCancelRecording: handleCancelRecording,
-            isRecording,
-            isMicInitializing,
-            isTranscribing,
-            isLoading,
-            onStopGenerating,
-            isEditing,
-            onCancelEdit,
-            canSend,
-            isWaitingForUpload,
-            t,
-            onTranslate: handlers.handleTranslate,
-            isTranslating,
-            inputText,
-            onToggleFullscreen: handleToggleFullscreen,
-            isFullscreen,
-        }}
-        slashCommandProps={{
-            isOpen: slashCommandState.isOpen,
-            commands: slashCommandState.filteredCommands,
-            onSelect: handleCommandSelect,
-            selectedIndex: slashCommandState.selectedIndex,
-        }}
-        fileDisplayProps={{
-            selectedFiles,
-            onRemove: handlers.removeSelectedFile,
-            onCancelUpload,
-            onConfigure: setConfiguringFile,
-            onPreview: setPreviewFile,
-            isGemini3,
-        }}
-        inputProps={{
-            value: inputText,
-            onChange: handlers.handleInputChange,
-            onKeyDown: handlers.handleKeyDown,
-            onPaste: handlers.handlePaste,
-            textareaRef,
-            placeholder: t('chatInputPlaceholder'),
-            disabled: isAnyModalOpen || isTranscribing || isWaitingForUpload || isRecording || isConverting,
-            onCompositionStart: () => isComposingRef.current = true,
-            onCompositionEnd: () => isComposingRef.current = false,
-            onFocus: adjustTextareaHeight,
-        }}
-        quoteProps={{
-            quoteText,
-            onClearQuote: () => setQuoteText('')
-        }}
-        layoutProps={{
-            isFullscreen,
-            isPipActive,
-            isAnimatingSend,
-            isMobile,
-            initialTextareaHeight: isMobile ? 24 : INITIAL_TEXTAREA_HEIGHT_PX,
-            isConverting,
-        }}
-        fileInputRefs={{
-            fileInputRef,
-            imageInputRef,
-            folderInputRef,
-            zipInputRef,
-            cameraInputRef,
-            handleFileChange: handlers.handleFileChange,
-            handleFolderChange: handlers.handleFolderChange,
-            handleZipChange: handlers.handleZipChange,
-        }}
-        formProps={{
-            onSubmit: handlers.handleSubmit,
-        }}
-        suggestionsProps={showEmptyStateSuggestions && onSuggestionClick && onOrganizeInfoClick ? {
-            show: showEmptyStateSuggestions,
-            onSuggestionClick,
-            onOrganizeInfoClick
-        } : undefined}
-        t={t}
-      />
-  );
+  const chatInputContent = <ChatInputArea {...areaProps} />;
 
   return (
     <>
@@ -391,34 +310,27 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         t={t}
       />
       
-      <FileConfigurationModal 
-        isOpen={!!configuringFile} 
-        onClose={() => setConfiguringFile(null)} 
-        file={configuringFile}
-        onSave={handlers.handleSaveFileConfig}
-        t={t}
-        isGemini3={isGemini3}
-      />
-
-      <TokenCountModal
-        isOpen={showTokenModal}
-        onClose={() => setShowTokenModal(false)}
-        initialText={inputText}
-        initialFiles={selectedFiles}
+      <ChatInputFileModals
+        configuringFile={configuringFile}
+        setConfiguringFile={setConfiguringFile}
+        showTokenModal={showTokenModal}
+        setShowTokenModal={setShowTokenModal}
+        previewFile={previewFile}
+        setPreviewFile={setPreviewFile}
+        inputText={inputText}
+        selectedFiles={selectedFiles}
         appSettings={appSettings}
         availableModels={availableModels}
         currentModelId={currentChatSettings.modelId}
         t={t}
-      />
-
-      <FilePreviewModal
-        file={previewFile}
-        onClose={() => setPreviewFile(null)}
-        t={t}
-        onPrev={handlers.handlePrevImage}
-        onNext={handlers.handleNextImage}
-        hasPrev={handlers.currentImageIndex > 0}
-        hasNext={handlers.currentImageIndex !== -1 && handlers.currentImageIndex < handlers.inputImages.length - 1}
+        isGemini3={isGemini3}
+        handlers={{
+            handleSaveFileConfig: handlers.handleSaveFileConfig,
+            handlePrevImage: handlers.handlePrevImage,
+            handleNextImage: handlers.handleNextImage,
+            currentImageIndex: handlers.currentImageIndex,
+            inputImages: handlers.inputImages
+        }}
       />
 
       {isFullscreen ? createPortal(chatInputContent, targetDocument.body) : chatInputContent}

@@ -1,19 +1,19 @@
 
-import React, { useState, useCallback, useMemo } from 'react';
-import { ChatMessage, UploadedFile, AppSettings, SideViewContent, VideoMetadata } from '../../types';
+import React, { useMemo } from 'react';
+import { ChatMessage, AppSettings, SideViewContent, VideoMetadata } from '../../types';
 import { Message } from '../message/Message';
 import { translations } from '../../utils/appUtils';
 import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
-import { FilePreviewModal } from '../shared/ImageZoomModal';
-import { ThemeColors } from '../../constants/themeConstants';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import { FilePreviewModal } from '../modals/FilePreviewModal';
+import { ThemeColors } from '../../types/theme';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { MessageListPlaceholder } from './message-list/MessageListPlaceholder';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
 import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { MediaResolution } from '../../types/settings';
 import { isGemini3Model } from '../../utils/appUtils';
-import { TextSelectionToolbar } from './TextSelectionToolbar';
+import { TextSelectionToolbar } from './message-list/TextSelectionToolbar';
+import { useMessageListUI } from '../../hooks/useMessageListUI';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -21,10 +21,9 @@ export interface MessageListProps {
   scrollContainerRef: React.RefObject<HTMLDivElement>;
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
   onScrollContainerScroll: () => void;
-  onEditMessage: (messageId: string) => void;
+  onEditMessage: (messageId: string, mode?: 'update' | 'resend') => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
-  onEditMessageContent: (message: ChatMessage) => void;
   onUpdateMessageFile: (messageId: string, fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => void;
   showThoughts: boolean;
   themeColors: ThemeColors;
@@ -37,6 +36,7 @@ export interface MessageListProps {
   onOrganizeInfoClick?: (suggestion: string) => void;
   onFollowUpSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
+  onGenerateCanvas: (messageId: string, text: string) => void;
   ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
@@ -52,108 +52,32 @@ export interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, sessionTitle, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
-    onEditMessage, onDeleteMessage, onRetryMessage, onEditMessageContent, onUpdateMessageFile, showThoughts, themeColors, baseFontSize,
-    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, t, language, themeId,
+    onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, themeColors, baseFontSize,
+    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote
 }) => {
-  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
-  
-  const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
-  const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
-  const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
-  
-  // File Configuration State
-  const [configuringFile, setConfiguringFile] = useState<{ file: UploadedFile, messageId: string } | null>(null);
-
-  // Virtualization state
-  const [visibleMessages, setVisibleMessages] = useState<Set<string>>(() => {
-    const initialVisible = new Set<string>();
-    const lastN = 15;
-    for (let i = Math.max(0, messages.length - lastN); i < messages.length; i++) {
-        initialVisible.add(messages[i].id);
-    }
-    return initialVisible;
-  });
-
-  const estimateMessageHeight = useCallback((message: ChatMessage) => {
-    if (!message) return 150;
-    let height = 80;
-    if (message.content) {
-        const lines = message.content.length / 80;
-        height += lines * 24;
-    }
-    if (message.files && message.files.length > 0) {
-        height += message.files.length * 120;
-    }
-    if (message.thoughts && showThoughts) {
-        height += 100;
-    }
-    return Math.min(height, 1200);
-  }, [showThoughts]);
-
-  const handleBecameVisible = useCallback((messageId: string) => {
-    setVisibleMessages(prev => {
-        if (prev.has(messageId)) return prev;
-        const newSet = new Set(prev);
-        newSet.add(messageId);
-        return newSet;
-    });
-  }, []);
-
-  const handleFileClick = useCallback((file: UploadedFile) => {
-    setPreviewFile(file);
-  }, []);
-
-  const closeFilePreviewModal = useCallback(() => {
-    setPreviewFile(null);
-  }, []);
-
-  const allImages = useMemo(() => {
-      if (!previewFile) return [];
-      return messages.flatMap(m => m.files || []).filter(f => 
-          (SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml') && !f.error
-      );
-  }, [messages, previewFile]);
-
-  const currentImageIndex = useMemo(() => {
-      if (!previewFile) return -1;
-      return allImages.findIndex(f => f.id === previewFile.id);
-  }, [allImages, previewFile]);
-
-  const handlePrevImage = useCallback(() => {
-      if (currentImageIndex > 0) {
-          setPreviewFile(allImages[currentImageIndex - 1]);
-      }
-  }, [currentImageIndex, allImages]);
-
-  const handleNextImage = useCallback(() => {
-      if (currentImageIndex < allImages.length - 1) {
-          setPreviewFile(allImages[currentImageIndex + 1]);
-      }
-  }, [currentImageIndex, allImages]);
-
-  const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
-    setHtmlToPreview(htmlContent);
-    setInitialTrueFullscreenRequest(options?.initialTrueFullscreen ?? false);
-    setIsHtmlPreviewModalOpen(true);
-  }, []);
-
-  const handleCloseHtmlPreview = useCallback(() => {
-    setIsHtmlPreviewModalOpen(false);
-    setHtmlToPreview(null);
-    setInitialTrueFullscreenRequest(false);
-  }, []);
-
-  const handleConfigureFile = useCallback((file: UploadedFile, messageId: string) => {
-      setConfiguringFile({ file, messageId });
-  }, []);
-
-  const handleSaveFileConfig = useCallback((fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => {
-      if (configuringFile) {
-          onUpdateMessageFile(configuringFile.messageId, fileId, updates);
-      }
-  }, [configuringFile, onUpdateMessageFile]);
+  const {
+      previewFile,
+      isHtmlPreviewModalOpen,
+      htmlToPreview,
+      initialTrueFullscreenRequest,
+      configuringFile,
+      setConfiguringFile,
+      visibleMessages,
+      handleBecameVisible,
+      handleFileClick,
+      closeFilePreviewModal,
+      allImages,
+      currentImageIndex,
+      handlePrevImage,
+      handleNextImage,
+      handleOpenHtmlPreview,
+      handleCloseHtmlPreview,
+      handleConfigureFile,
+      handleSaveFileConfig,
+      estimateMessageHeight
+  } = useMessageListUI({ messages, onUpdateMessageFile });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => {
@@ -193,7 +117,6 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onEditMessage={onEditMessage}
                         onDeleteMessage={onDeleteMessage}
                         onRetryMessage={onRetryMessage}
-                        onEditMessageContent={onEditMessageContent}
                         onImageClick={handleFileClick} 
                         onOpenHtmlPreview={handleOpenHtmlPreview}
                         showThoughts={showThoughts}
@@ -204,6 +127,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                         onTextToSpeech={onTextToSpeech}
+                        onGenerateCanvas={onGenerateCanvas}
                         ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
                         t={t}
@@ -217,7 +141,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 return (
                     <MessageListPlaceholder
                         key={`${msg.id}-placeholder`}
-                        height={estimateMessageHeight(msg)}
+                        height={estimateMessageHeight(msg, showThoughts)}
                         onVisible={() => handleBecameVisible(msg.id)}
                     />
                 );

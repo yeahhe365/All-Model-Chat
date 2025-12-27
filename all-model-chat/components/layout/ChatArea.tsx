@@ -1,14 +1,15 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Paperclip, Loader2 } from 'lucide-react';
+import React, { useCallback } from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
 import { ChatInput } from '../chat/ChatInput';
-import { useResponsiveValue } from '../../hooks/useDevice';
 import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand } from '../../types';
 import { ThemeColors } from '../../constants/themeConstants';
 import { translations } from '../../utils/appUtils';
 import { MediaResolution } from '../../types/settings';
+import { useChatInputHeight } from '../../hooks/chat-input/useChatInputHeight';
+import { DragDropOverlay } from '../chat/overlays/DragDropOverlay';
+import { ModelsErrorDisplay } from '../chat/overlays/ModelsErrorDisplay';
 
 export interface ChatAreaProps {
   activeSessionId: string | null;
@@ -17,7 +18,7 @@ export interface ChatAreaProps {
   setAppFileError: (error: string | null) => void;
   // Drag & Drop
   isAppDraggingOver: boolean;
-  isProcessingDrop?: boolean; // Added prop
+  isProcessingDrop?: boolean;
   handleAppDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
   handleAppDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   handleAppDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -47,9 +48,9 @@ export interface ChatAreaProps {
   // MessageList Props
   messages: ChatMessage[];
   scrollContainerRef: React.RefObject<HTMLDivElement>;
-  setScrollContainerRef: (node: HTMLDivElement | null) => void; // New prop
+  setScrollContainerRef: (node: HTMLDivElement | null) => void;
   onScrollContainerScroll: () => void;
-  onEditMessage: (messageId: string) => void;
+  onEditMessage: (messageId: string, mode?: 'update' | 'resend') => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
   showThoughts: boolean;
@@ -62,6 +63,7 @@ export interface ChatAreaProps {
   onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
+  onGenerateCanvas: (messageId: string, text: string) => void;
   ttsMessageId: string | null;
   language: 'en' | 'zh';
   scrollNavVisibility: { up: boolean; down: boolean };
@@ -81,6 +83,9 @@ export interface ChatAreaProps {
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
   onSendMessage: (text: string) => void;
   isEditing: boolean;
+  editMode: 'update' | 'resend';
+  editingMessageId: string | null;
+  setEditingMessageId: (id: string | null) => void;
   onStopGenerating: () => void;
   onCancelEdit: () => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
@@ -112,6 +117,7 @@ export interface ChatAreaProps {
   onOpenLogViewer: () => void;
   onClearAllHistory: () => void;
   setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
+  onUpdateMessageContent: (messageId: string, content: string) => void;
 
   // PiP Props
   isPipSupported: boolean;
@@ -131,7 +137,7 @@ export interface ChatAreaProps {
 export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const {
     activeSessionId, sessionTitle, currentChatSettings, setAppFileError,
-    isAppDraggingOver, isProcessingDrop, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
+    isAppDraggingOver, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
@@ -139,45 +145,27 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
-    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, ttsMessageId, language, scrollNavVisibility,
+    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, ttsMessageId, language, scrollNavVisibility,
     onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent, onUpdateMessageFile,
     appSettings, commandedInput, setCommandedInput, onMessageSent,
-    selectedFiles, setSelectedFiles, onSendMessage, isEditing, onStopGenerating,
+    selectedFiles, setSelectedFiles, onSendMessage, isEditing, editMode, editingMessageId, setEditingMessageId, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
     isProcessingFile, fileError, isImageEditModel, aspectRatio, setAspectRatio, imageSize, setImageSize,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
     isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
-    onOpenLogViewer, onClearAllHistory,
     isPipSupported, isPipActive, onTogglePip,
     generateQuadImages, onToggleQuadImages,
-    onSetThinkingLevel, setCurrentChatSettings,
+    onSetThinkingLevel, setCurrentChatSettings, onUpdateMessageContent,
     onOpenSidePanel,
     t
   } = props;
 
-  const [chatInputHeight, setChatInputHeight] = useState(160); // A reasonable default.
-  const chatInputContainerRef = React.useRef<HTMLDivElement>(null);
-  const dragIconSize = useResponsiveValue(48, 64);
+  // Extract logic to custom hook
+  const { chatInputHeight, chatInputContainerRef } = useChatInputHeight();
 
-  React.useEffect(() => {
-    const chatInputEl = chatInputContainerRef.current;
-    if (!chatInputEl) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-        setChatInputHeight(chatInputEl.offsetHeight); 
-    });
-
-    resizeObserver.observe(chatInputEl);
-
-    // Initial measurement
-    setChatInputHeight(chatInputEl.offsetHeight);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  // Determine if the model supports aspect ratio selection (Imagen models OR Gemini 2.5 Flash Image)
+  // Helper to determine model capabilities for UI logic
   const isImagenModel = currentChatSettings.modelId?.includes('imagen') || currentChatSettings.modelId?.includes('gemini-2.5-flash-image');
 
   const handleQuote = useCallback((text: string) => {
@@ -192,17 +180,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       onDragLeave={handleAppDragLeave}
       onDrop={handleAppDrop}
     >
-      {isAppDraggingOver && (
-        <div className="absolute inset-0 bg-[var(--theme-bg-accent)] bg-opacity-25 flex flex-col items-center justify-center pointer-events-none z-50 border-4 border-dashed border-[var(--theme-bg-accent)] rounded-lg m-1 sm:m-2 drag-overlay-animate backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-2">
-                <Paperclip size={dragIconSize} className="text-[var(--theme-bg-accent)] opacity-80 mb-2 sm:mb-4" />
-                <p className="text-lg sm:text-2xl font-semibold text-[var(--theme-text-link)] text-center px-2">
-                {t('appDragDropRelease')}
-                </p>
-                <p className="text-sm text-[var(--theme-text-primary)] opacity-80 mt-2">{t('appDragDropHelpText')}</p>
-            </div>
-        </div>
-      )}
+      <DragDropOverlay isDraggingOver={isAppDraggingOver} t={t} />
+      
       <Header
         onNewChat={onNewChat}
         onOpenSettingsModal={onOpenSettingsModal}
@@ -226,9 +205,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         thinkingLevel={currentChatSettings.thinkingLevel}
         onSetThinkingLevel={onSetThinkingLevel}
       />
-      {modelsLoadingError && (
-        <div className="mx-2 my-1 p-2 text-sm text-center text-[var(--theme-text-danger)] bg-[var(--theme-bg-error-message)] border border-[var(--theme-bg-danger)] rounded-md flex-shrink-0">{modelsLoadingError}</div>
-      )}
+
+      <ModelsErrorDisplay error={modelsLoadingError} />
+
       <MessageList
         messages={messages}
         sessionTitle={sessionTitle}
@@ -250,6 +229,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onOrganizeInfoClick={onOrganizeInfoClick}
         onFollowUpSuggestionClick={onFollowUpSuggestionClick}
         onTextToSpeech={onTextToSpeech}
+        onGenerateCanvas={onGenerateCanvas}
         ttsMessageId={ttsMessageId}
         t={t}
         language={language}
@@ -263,6 +243,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onUpdateMessageFile={onUpdateMessageFile}
         onQuote={handleQuote}
       />
+
       <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
         <div className="pointer-events-auto">
           <ChatInput
@@ -277,6 +258,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onSendMessage={onSendMessage}
             isLoading={isLoading}
             isEditing={isEditing}
+            editMode={editMode}
+            editingMessageId={editingMessageId}
+            setEditingMessageId={setEditingMessageId}
             onStopGenerating={onStopGenerating}
             onCancelEdit={onCancelEdit}
             onProcessFiles={onProcessFiles}
@@ -318,6 +302,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onSuggestionClick={onSuggestionClick}
             onOrganizeInfoClick={onOrganizeInfoClick}
             showEmptyStateSuggestions={messages.length === 0}
+            onUpdateMessageContent={onUpdateMessageContent}
           />
         </div>
       </div>

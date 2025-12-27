@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { ModelOption } from '../../types';
 import { Info, Maximize2, Image as ImageIcon } from 'lucide-react';
-import { Tooltip, Select } from '../shared/Tooltip';
-import { ModelSelector } from './ModelSelector';
-import { ThinkingControl } from './ThinkingControl';
-import { VoiceControl } from './VoiceControl';
+import { Tooltip } from '../shared/Tooltip';
+import { Select } from '../shared/Select';
+import { ModelSelector } from './controls/ModelSelector';
+import { ThinkingControl } from './controls/thinking/ThinkingControl';
+import { VoiceControl } from './controls/VoiceControl';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { MediaResolution } from '../../types/settings';

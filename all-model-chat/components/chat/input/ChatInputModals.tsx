@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { AudioRecorder } from '../AudioRecorder';
-import { CreateTextFileEditor } from '../CreateTextFileEditor';
-import { HelpModal } from './HelpModal';
+import { AudioRecorder } from '../../modals/AudioRecorder';
+import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
+import { HelpModal } from '../../modals/HelpModal';
 import { translations } from '../../../utils/appUtils';
 import { CommandInfo } from '../../../types';
 

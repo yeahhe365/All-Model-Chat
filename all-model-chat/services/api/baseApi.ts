@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
@@ -172,9 +171,7 @@ export const buildGenerationConfig = (
         }
     } else {
         const modelSupportsThinking = [
-            'models/gemini-flash-lite-latest',
             'gemini-2.5-pro',
-            'models/gemini-flash-latest'
         ].includes(modelId) || modelId.includes('gemini-2.5');
 
         if (modelSupportsThinking) {

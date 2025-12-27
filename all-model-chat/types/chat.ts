@@ -1,5 +1,6 @@
 
 import { ChatSettings, MediaResolution } from './settings';
+import { ThemeColors } from './theme';
 
 export interface VideoMetadata {
   startOffset?: string;
@@ -59,6 +60,7 @@ export interface ChatMessage {
   isGeneratingSuggestions?: boolean;
   stoppedByUser?: boolean;
   thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
+  excludeFromContext?: boolean; // Added to exclude message from API history context
 }
 
 // Defines the structure for a part of a content message
@@ -181,3 +183,4 @@ export interface ChatInputActionsProps {
   isFullscreen?: boolean;
   onCountTokens: () => void;
 }
+export type { ThemeColors };

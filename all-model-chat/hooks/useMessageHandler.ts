@@ -1,3 +1,4 @@
+
 import React, { Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, InputCommand } from '../types';
 import { useMessageSender } from './useMessageSender';
@@ -16,6 +17,7 @@ interface MessageHandlerProps {
     setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
     editingMessageId: string | null;
     setEditingMessageId: (id: string | null) => void;
+    setEditMode: (mode: 'update' | 'resend') => void;
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
     userScrolledUp: React.MutableRefObject<boolean>;
@@ -43,13 +45,14 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setCommandedInput,
         setSelectedFiles,
         setEditingMessageId,
+        setEditMode,
         setAppFileError,
         updateAndPersistSessions,
         userScrolledUp,
         setLoadingSessionIds
     } = props;
     
-    const { handleSendMessage } = useMessageSender(props);
+    const { handleSendMessage, handleGenerateCanvas } = useMessageSender(props);
     
     const messageActions = useMessageActions({
         messages,
@@ -60,6 +63,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setCommandedInput,
         setSelectedFiles,
         setEditingMessageId,
+        setEditMode,
         setAppFileError,
         updateAndPersistSessions,
         userScrolledUp,
@@ -71,6 +75,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
 
     return {
         handleSendMessage,
+        handleGenerateCanvas,
         ...messageActions,
         handleTextToSpeech,
     };

@@ -1,22 +1,16 @@
 
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
-import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import { CodeBlock } from './CodeBlock';
-import { MermaidBlock } from './MermaidBlock';
-import { GraphvizBlock } from './GraphvizBlock';
-import { TableBlock } from './TableBlock';
-import { ToolResultBlock } from './ToolResultBlock';
+import { CodeBlock } from './blocks/CodeBlock';
+import { MermaidBlock } from './blocks/MermaidBlock';
+import { GraphvizBlock } from './blocks/GraphvizBlock';
+import { TableBlock } from './blocks/TableBlock';
+import { ToolResultBlock } from './blocks/ToolResultBlock';
 import { UploadedFile, SideViewContent } from '../../types';
 import { translations } from '../../utils/appUtils';
-import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
+import { getRehypePlugins, remarkPlugins } from '../../utils/markdownConfig';
+import { InlineCode } from './code-block/InlineCode';
 
 interface MarkdownRendererProps {
   content: string;
@@ -32,33 +26,6 @@ interface MarkdownRendererProps {
   onOpenSidePanel: (content: SideViewContent) => void;
 }
 
-const InlineCode = ({ className, children, inline, ...props }: any) => {
-    const { isCopied, copyToClipboard } = useCopyToClipboard(1500);
-
-    const handleCopy = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        const text = String(children).trim();
-        if (!text) return;
-        copyToClipboard(text);
-    };
-
-    return (
-        <code
-            className={`${className || ''} relative inline-block cursor-pointer group/code`}
-            onClick={handleCopy}
-            title="Click to copy"
-            {...props}
-        >
-            {children}
-            {isCopied && (
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap z-10 animate-in fade-in zoom-in duration-200">
-                    Copied!
-                </span>
-            )}
-        </code>
-    );
-};
-
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   content,
   isLoading,
@@ -73,57 +40,28 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   onOpenSidePanel,
 }) => {
 
-  const rehypePlugins = useMemo(() => {
-    const sanitizeSchema = {
-      ...defaultSchema,
-      tagNames: [
-        ...(defaultSchema.tagNames || []),
-        'div', 'span', 'pre', 'code', 'section', 'header', 'footer', 'nav', 'article', 'aside', 'figure', 'figcaption',
-        'svg', 'path', 'defs', 'symbol', 'use', 'g',
-        'math', 'maction', 'maligngroup', 'malignmark', 'menclose', 'merror', 
-        'mfenced', 'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mlongdiv', 
-        'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom', 
-        'mroot', 'mrow', 'ms', 'mscarries', 'mscarry', 'msgroup', 
-        'msline', 'mspace', 'msqrt', 'msrow', 'mstack', 'mstyle', 
-        'msub', 'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 
-        'munder', 'munderover', 'semantics', 'annotation', 'annotation-xml',
-        'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th'
-      ],
-      attributes: {
-        ...defaultSchema.attributes,
-        '*': ['className', 'class', 'style', 'ariaHidden', 'ariaLabel', 'role', 'title', 'id', 'width', 'height', 'viewBox', 'preserveAspectRatio', 'xmlns', 'd', 'fill', 'stroke', 'strokeWidth', 'opacity'],
-        code: [...(defaultSchema.attributes?.code || []), 'className', 'inline'],
-        span: [...(defaultSchema.attributes?.span || []), 'className', 'style'],
-        div: [...(defaultSchema.attributes?.div || []), 'className', 'class', 'style'],
-        math: ['xmlns', 'display', 'alttext'],
-        mtext: ['mathvariant'],
-        mstyle: ['mathvariant', 'mathcolor', 'mathbackground', 'scriptlevel', 'displaystyle'],
-        mo: ['lspace', 'rspace', 'stretchy', 'fence', 'separator', 'accent'],
-        td: ['align', 'colSpan', 'rowSpan'],
-        th: ['align', 'colSpan', 'rowSpan'],
-      },
-      clobberPrefix: '', 
-    };
-
-    const plugins: any[] = [];
-    
-    if (allowHtml) {
-      plugins.push(rehypeRaw);
-    }
-
-    plugins.push([rehypeSanitize, sanitizeSchema]);
-    plugins.push([rehypeKatex, { throwOnError: false, strict: false }]);
-    // Explicitly enabling detect: true for better fallback detection of code blocks without language tags
-    plugins.push([rehypeHighlight, { ignoreMissing: true, detect: true }]);
-
-    return plugins;
-  }, [allowHtml]);
+  const rehypePlugins = useMemo(() => getRehypePlugins(allowHtml), [allowHtml]);
 
   const components = useMemo(() => ({
     code: (props: any) => {
         return <InlineCode {...props} />;
     },
     table: (props: any) => <TableBlock {...props} />,
+    a: (props: any) => {
+        const { href, children, ...rest } = props;
+        const isInternal = href && (href.startsWith('#') || href.startsWith('/'));
+        
+        return (
+            <a 
+                href={href} 
+                target={isInternal ? undefined : '_blank'} 
+                rel={isInternal ? undefined : 'noopener noreferrer'} 
+                {...rest}
+            >
+                {children}
+            </a>
+        );
+    },
     div: (props: any) => {
       const { className, children, ...rest } = props;
       if (className?.includes('tool-result')) {
@@ -208,7 +146,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
   return (
     <ReactMarkdown
-      remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
+      remarkPlugins={remarkPlugins as any}
       rehypePlugins={rehypePlugins as any}
       components={components}
     >

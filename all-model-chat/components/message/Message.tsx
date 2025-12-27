@@ -10,10 +10,9 @@ interface MessageProps {
     sessionTitle?: string;
     prevMessage?: ChatMessage;
     messageIndex: number;
-    onEditMessage: (messageId: string) => void;
+    onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void; 
-    onEditMessageContent: (message: ChatMessage) => void;
     onImageClick: (file: UploadedFile) => void; // Renamed to onFileClick in logic, kept name for props compat
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
@@ -24,6 +23,7 @@ interface MessageProps {
     isMermaidRenderingEnabled: boolean;
     isGraphvizRenderingEnabled: boolean;
     onTextToSpeech: (messageId: string, text: string) => void;
+    onGenerateCanvas: (messageId: string, text: string) => void;
     ttsMessageId: string | null;
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;

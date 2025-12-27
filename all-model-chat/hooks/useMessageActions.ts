@@ -1,3 +1,4 @@
+
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../types';
 import { logService } from '../utils/appUtils';
@@ -15,6 +16,7 @@ interface MessageActionsProps {
     setCommandedInput: CommandedInputSetter;
     setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
     setEditingMessageId: (id: string | null) => void;
+    setEditMode: (mode: 'update' | 'resend') => void;
     setAppFileError: (error: string | null) => void;
     updateAndPersistSessions: SessionsUpdater;
     userScrolledUp: React.MutableRefObject<boolean>;
@@ -31,6 +33,7 @@ export const useMessageActions = ({
     setCommandedInput,
     setSelectedFiles,
     setEditingMessageId,
+    setEditMode,
     setAppFileError,
     updateAndPersistSessions,
     userScrolledUp,
@@ -93,21 +96,23 @@ export const useMessageActions = ({
         setCommandedInput({ text: '', id: Date.now() });
         setSelectedFiles([]); 
         setEditingMessageId(null); 
+        setEditMode('resend'); // Reset to default
         setAppFileError(null); 
-    }, [setCommandedInput, setSelectedFiles, setEditingMessageId, setAppFileError]);
+    }, [setCommandedInput, setSelectedFiles, setEditingMessageId, setEditMode, setAppFileError]);
     
-    const handleEditMessage = useCallback((messageId: string) => {
-        logService.info("User initiated message edit", { messageId });
+    const handleEditMessage = useCallback((messageId: string, mode: 'update' | 'resend' = 'resend') => {
+        logService.info("User initiated message edit", { messageId, mode });
         const messageToEdit = messages.find(msg => msg.id === messageId);
-        if (messageToEdit?.role === 'user') {
+        if (messageToEdit) {
             if (isLoading) handleStopGenerating();
-            setCommandedInput({ text: messageToEdit.content, id: Date.now() });
+            setCommandedInput({ text: messageToEdit.content || '', id: Date.now() });
             setSelectedFiles(messageToEdit.files || []);
             setEditingMessageId(messageId);
+            setEditMode(mode);
             setAppFileError(null);
             (document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement)?.focus();
         }
-    }, [messages, isLoading, handleStopGenerating, setCommandedInput, setSelectedFiles, setEditingMessageId, setAppFileError]);
+    }, [messages, isLoading, handleStopGenerating, setCommandedInput, setSelectedFiles, setEditingMessageId, setEditMode, setAppFileError]);
 
 
     const handleDeleteMessage = useCallback((messageId: string) => {
@@ -169,7 +174,7 @@ export const useMessageActions = ({
         const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
         if (lastUserMessage) {
             logService.info("User editing last message via command", { messageId: lastUserMessage.id });
-            handleEditMessage(lastUserMessage.id);
+            handleEditMessage(lastUserMessage.id, 'resend');
         } else {
             logService.warn("Could not edit last message: no user message found.");
         }

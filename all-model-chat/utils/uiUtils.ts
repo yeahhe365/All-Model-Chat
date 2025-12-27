@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ThemeColors } from '../constants/themeConstants';
+import { ThemeColors } from '../types/theme';
 import { AppSettings, MediaResolution } from '../types';
 import { Theme, AVAILABLE_THEMES } from '../constants/themeConstants';
 import { 
@@ -155,9 +155,6 @@ export const CATEGORY_STYLES: Record<FileCategory, { Icon: React.ElementType, co
     error: { Icon: AlertTriangle, colorClass: "text-[var(--theme-text-danger)]", bgClass: "bg-[var(--theme-bg-danger)]/10" },
 };
 
-/**
- * Helper to recursively extract text from React children (handles string, array, elements)
- */
 export const extractTextFromNode = (node: React.ReactNode): string => {
     if (!node) return '';
     if (typeof node === 'string' || typeof node === 'number') return String(node);

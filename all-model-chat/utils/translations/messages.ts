@@ -1,6 +1,4 @@
 
-
-
 export const messagesTranslations = {
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
@@ -41,13 +39,13 @@ export const messagesTranslations = {
     suggestion_prompt_label: { en: 'Prompt', zh: '提示' },
     
     // New ASR and SRT Translations
-    suggestion_asr_title: { en: 'Audio to Text (ASR)', zh: '音频转文字 (ASR)' },
+    suggestion_asr_title: { en: 'Audio to Text', zh: '音频转文字' },
     suggestion_asr_desc: { 
         en: 'Please perform Automatic Speech Recognition (ASR) on the attached audio file. Transcribe the spoken content verbatim into text. Do not summarize, just output the exact words spoken:', 
         zh: '请对附加的音频文件进行自动语音识别（ASR）。将语音内容逐字转录为文本。不要总结，请直接输出所说的确切文字：' 
     },
     suggestion_asr_short: { en: 'Transcribe audio files verbatim.', zh: '逐字转录音频文件内容。' },
-    suggestion_srt_title: { en: 'Video to Subtitles (SRT)', zh: '视频生成字幕 (SRT)' },
+    suggestion_srt_title: { en: 'Generate Subtitles', zh: '生成字幕' },
     suggestion_srt_desc: { 
         en: 'Please generate a standard SRT subtitle file for the attached video. Ensure accurate timestamps (format: 00:00:00,000 --> 00:00:00,000) and transcribe the dialogue. Output ONLY the SRT content inside a code block:', 
         zh: '请为附加的视频文件生成标准的 SRT 字幕文件。确保时间戳准确（格式：00:00:00,000 --> 00:00:00,000）并转录对话。请仅在代码块中输出 SRT 内容：' 
@@ -57,8 +55,8 @@ export const messagesTranslations = {
     // HTML Generation Translations
     suggestion_html_title: { en: 'Smart Board', zh: '智能看板' },
     suggestion_html_desc: { 
-        en: 'Please organize the provided information into a structured, interactive HTML page using the Canvas system (Smart Board). Ensure the design is modern, responsive, and self-contained. Keep all information, do not omit details:', 
-        zh: '请利用 Canvas 系统，将提供的信息整理成一个结构化、交互式的 HTML 页面（智能看板）。确保设计现代、响应式且自包含。请保留所有信息，不要省略任何细节：' 
+        en: 'You are a layout artist. Please use the Canvas system to organize the provided information into a structured, interactive HTML page. Ensure the design is modern and responsive. Please keep all information:', 
+        zh: '你是一位排版艺术家。请利用 Canvas 系统，将提供的信息整理成一个结构化、交互式的 HTML 页面。确保设计现代、响应式。请保留所有信息：' 
     },
     suggestion_html_short: { en: 'Create interactive HTML board.', zh: '创建交互式 HTML 看板。' },
 
@@ -70,6 +68,7 @@ export const messagesTranslations = {
     retry_and_stop_button_title: { en: 'Stop and Retry', zh: '停止并重试' },
     copy_button_title: { en: 'Copy content', zh: '复制内容' },
     copied_button_title: { en: 'Copied!', zh: '已复制！' },
+    generate_canvas_title: { en: 'Visualize with Canvas', zh: '使用 Canvas 可视化' },
     export_as_title: { en: 'Export as {type}', zh: '导出为 {type}' },
     exporting_title: { en: 'Exporting {type}...', zh: '正在导出 {type}...' },
     exported_title: { en: '{type} Exported!', zh: '{type} 已导出！' },

@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Code, Eye, Download, Atom, FileCode2 } from 'lucide-react';
 import { SideViewContent } from '../../types';
-import { MermaidBlock } from '../message/MermaidBlock';
-import { GraphvizBlock } from '../message/GraphvizBlock';
+import { MermaidBlock } from '../message/blocks/MermaidBlock';
+import { GraphvizBlock } from '../message/blocks/GraphvizBlock';
 import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
 import { CodeEditor } from '../shared/CodeEditor';
 import { useIsMobile } from '../../hooks/useDevice';
