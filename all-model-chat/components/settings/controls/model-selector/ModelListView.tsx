@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Eye, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { ModelOption } from '../../../../types';
 import { getModelIcon } from '../../../shared/ModelPicker';
 
@@ -59,10 +60,6 @@ export const ModelListView: React.FC<ModelListViewProps> = ({ availableModels, s
                     No models available.
                 </div>
             )}
-        </div>
-        <div className="px-3 py-2 bg-[var(--theme-bg-secondary)]/50 border-t border-[var(--theme-border-secondary)] text-[10px] text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-            <Eye size={12} />
-            <span>Click a model or "Set Active" to select it as default.</span>
         </div>
     </div>
 );
