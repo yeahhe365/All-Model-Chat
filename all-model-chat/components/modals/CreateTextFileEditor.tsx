@@ -1,6 +1,5 @@
-
 import React, { useRef, useState, useEffect } from 'react';
-import { Save, X, FilePlus } from 'lucide-react';
+import { Save, X, FilePlus, Edit3 } from 'lucide-react';
 import { Modal } from '../shared/Modal';
 
 interface CreateTextFileEditorProps {
@@ -9,6 +8,8 @@ interface CreateTextFileEditorProps {
   isProcessing: boolean;
   isLoading: boolean;
   t: (key: string) => string;
+  initialContent?: string;
+  initialFilename?: string;
 }
 
 export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
@@ -17,16 +18,29 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
   isProcessing,
   isLoading,
   t,
+  initialContent = '',
+  initialFilename = '',
 }) => {
-  const [createTextContent, setCreateTextContent] = useState('');
-  const [customFilename, setCustomFilename] = useState('');
+  const [createTextContent, setCreateTextContent] = useState(initialContent);
+  const [customFilename, setCustomFilename] = useState(initialFilename);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const isEditing = initialFilename !== '';
 
   useEffect(() => {
     // Focus the textarea when the editor becomes visible
-    const timer = setTimeout(() => textareaRef.current?.focus(), 100);
+    const timer = setTimeout(() => {
+        if (textareaRef.current) {
+            textareaRef.current.focus();
+            if (isEditing) {
+                // Move cursor to end
+                const len = textareaRef.current.value.length;
+                textareaRef.current.setSelectionRange(len, len);
+            }
+        }
+    }, 100);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isEditing]);
 
   const handleConfirm = () => {
     if (!createTextContent.trim() || isProcessing || isLoading) return;
@@ -42,8 +56,9 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
     >
       {/* Header */}
       <div className="flex justify-between items-center px-4 py-3 sm:px-6 sm:py-4 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/50">
-        <h2 id="create-text-file-title" className="text-lg font-semibold text-[var(--theme-text-primary)] tracking-tight">
-          {t('createText_title')}
+        <h2 id="create-text-file-title" className="text-lg font-semibold text-[var(--theme-text-primary)] tracking-tight flex items-center gap-2">
+          {isEditing ? <Edit3 size={18} /> : <FilePlus size={18} />}
+          {isEditing ? `Edit ${initialFilename}` : t('createText_title')}
         </h2>
         <button
           onClick={onCancel}
@@ -95,7 +110,8 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = ({
           disabled={!createTextContent.trim() || isProcessing || isLoading}
           className="px-5 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95"
         >
-          <FilePlus size={16} strokeWidth={2} /> {t('createText_create_button')}
+          {isEditing ? <Save size={16} strokeWidth={2} /> : <FilePlus size={16} strokeWidth={2} />}
+          {isEditing ? t('save') : t('createText_create_button')}
         </button>
       </div>
     </Modal>

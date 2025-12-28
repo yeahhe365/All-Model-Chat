@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { X, Check, Download, ClipboardCopy, Loader2, FileText, ImageIcon, FileVideo, FileAudio, FileCode2 } from 'lucide-react';
+import { X, Check, Download, ClipboardCopy, Loader2, FileText, ImageIcon, FileVideo, FileAudio, FileCode2, Save, Edit3 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
 import { triggerDownload } from '../../../utils/exportUtils';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
@@ -10,9 +10,23 @@ interface FilePreviewHeaderProps {
     file: UploadedFile;
     onClose: () => void;
     t: (key: string) => string;
+    isEditable?: boolean;
+    onToggleEdit?: () => void;
+    onSave?: () => void;
+    editedName?: string;
+    onNameChange?: (name: string) => void;
 }
 
-export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ file, onClose, t }) => {
+export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ 
+    file, 
+    onClose, 
+    t,
+    isEditable = false,
+    onToggleEdit,
+    onSave,
+    editedName,
+    onNameChange
+}) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
 
@@ -21,6 +35,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ file, onCl
     const isVideo = file.type.startsWith('video/');
     const isAudio = file.type.startsWith('audio/');
     const isMermaidDiagram = file.type === 'image/svg+xml';
+    const isText = !isImage && !isPdf && !isVideo && !isAudio;
 
     const FileIcon = isImage ? ImageIcon : isPdf ? FileText : isVideo ? FileVideo : isAudio ? FileAudio : FileCode2;
 
@@ -92,30 +107,59 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ file, onCl
                 <div className="bg-white/10 p-1.5 rounded-full text-white/90 group-hover/info:bg-white/20 transition-colors flex-shrink-0">
                     <FileIcon size={16} strokeWidth={1.5} />
                 </div>
-                <div className="min-w-0 flex flex-col">
-                    <span className="text-xs sm:text-sm font-medium text-white/90 truncate leading-tight" title={file.name}>{file.name}</span>
-                    <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-white/50 leading-none mt-0.5">
-                        <span className="truncate max-w-[60px]">{file.type.split('/').pop()?.toUpperCase()}</span>
-                        <span className="w-0.5 h-0.5 rounded-full bg-white/30 flex-shrink-0"></span>
-                        <span className="whitespace-nowrap">{formatFileSize(file.size)}</span>
-                    </div>
+                <div className="min-w-0 flex flex-col justify-center">
+                    {isEditable && onNameChange ? (
+                        <input 
+                            type="text"
+                            value={editedName}
+                            onChange={(e) => onNameChange(e.target.value)}
+                            className="bg-transparent border-b border-white/20 text-xs sm:text-sm font-medium text-white/90 focus:border-white/50 outline-none w-full"
+                            placeholder="Filename"
+                            autoFocus
+                        />
+                    ) : (
+                        <span className="text-xs sm:text-sm font-medium text-white/90 truncate leading-tight" title={file.name}>{file.name}</span>
+                    )}
+                    
+                    {!isEditable && (
+                        <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono text-white/50 leading-none mt-0.5">
+                            <span className="truncate max-w-[60px]">{file.type.split('/').pop()?.toUpperCase()}</span>
+                            <span className="w-0.5 h-0.5 rounded-full bg-white/30 flex-shrink-0"></span>
+                            <span className="whitespace-nowrap">{formatFileSize(file.size)}</span>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Top Actions */}
             <div className={`pointer-events-auto ${floatingBarBase} rounded-full p-1 flex items-center gap-1 flex-shrink-0`}>
-                <button onClick={handleCopy} disabled={isCopied} className={actionButtonClass} title={isCopied ? "Copied!" : "Copy Content"}>
-                    {isCopied ? <Check size={18} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
-                </button>
-                <button onClick={handleDownload} disabled={isDownloading} className={actionButtonClass} title={isMermaidDiagram ? "Download SVG" : "Download File"}>
-                    {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <Download size={18} strokeWidth={1.5} />}
-                </button>
+                {isEditable ? (
+                    <button onClick={onSave} className={`${actionButtonClass} !text-green-400 hover:!bg-green-500/20`} title="Save Changes">
+                        <Save size={18} strokeWidth={2} />
+                    </button>
+                ) : (
+                    <>
+                        {isText && onToggleEdit && (
+                            <button onClick={onToggleEdit} className={actionButtonClass} title="Edit File">
+                                <Edit3 size={18} strokeWidth={1.5} />
+                            </button>
+                        )}
+                        <button onClick={handleCopy} disabled={isCopied} className={actionButtonClass} title={isCopied ? "Copied!" : "Copy Content"}>
+                            {isCopied ? <Check size={18} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
+                        </button>
+                        <button onClick={handleDownload} disabled={isDownloading} className={actionButtonClass} title={isMermaidDiagram ? "Download SVG" : "Download File"}>
+                            {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <Download size={18} strokeWidth={1.5} />}
+                        </button>
+                    </>
+                )}
+                
                 <div className="w-px h-5 bg-white/10 mx-1"></div>
+                
                 <button
-                    onClick={onClose}
+                    onClick={isEditable && onToggleEdit ? onToggleEdit : onClose}
                     className={`${actionButtonClass} hover:bg-red-500/20 hover:text-red-400`}
-                    aria-label={t('imageZoom_close_aria')}
-                    title={t('imageZoom_close_title')}
+                    aria-label={isEditable ? "Cancel Edit" : t('imageZoom_close_aria')}
+                    title={isEditable ? "Cancel Edit" : t('imageZoom_close_title')}
                 >
                     <X size={18} strokeWidth={1.5} />
                 </button>

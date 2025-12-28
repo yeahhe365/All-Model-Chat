@@ -161,7 +161,7 @@ export const buildGenerationConfig = (
         // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
         // We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {
-            includeThoughts: showThoughts,
+            includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
         };
 
         if (thinkingBudget > 0) {
@@ -177,10 +177,10 @@ export const buildGenerationConfig = (
         if (modelSupportsThinking) {
             // Decouple thinking budget from showing thoughts.
             // `thinkingBudget` controls if and how much the model thinks.
-            // `showThoughts` controls if the `thought` field is returned in the stream.
+            // `includeThoughts` controls if the `thought` field is returned in the stream.
             generationConfig.thinkingConfig = {
                 thinkingBudget: thinkingBudget,
-                includeThoughts: showThoughts,
+                includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
             };
         }
     }

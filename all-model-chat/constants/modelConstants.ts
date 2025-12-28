@@ -6,9 +6,15 @@ export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-3-flash-preview',
     'gemini-3-pro-preview',
+];
+
+export const INITIAL_PINNED_MODELS: string[] = [
+    'gemini-3-flash-preview',
+    'gemini-3-pro-preview',
     'gemini-2.5-pro',
     'gemini-2.5-flash-preview-09-2025',
     'gemini-2.5-flash-lite-preview-09-2025',
+    'gemini-2.5-flash-native-audio-preview-12-2025',
 ];
 
 export const GEMINI_3_RO_MODELS: string[] = [
@@ -43,6 +49,7 @@ export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number
     'gemini-3-flash-preview': { min: 128, max: 32768 },
     'models/gemini-3-flash-preview': { min: 128, max: 32768 },
     'gemini-2.5-flash-lite-preview-09-2025': { min: 512, max: 24576 },
+    'gemini-2.5-flash-native-audio-preview-12-2025': { min: 0, max: 24576 },
 };
 
 export const DEFAULT_TEMPERATURE = 1.0; 
@@ -55,8 +62,8 @@ export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-3-flash-preview';
 export const DEFAULT_TTS_MODEL_ID = 'gemini-2.5-flash-preview-tts';
 
 export const STATIC_TTS_MODELS: ModelOption[] = [
-    { id: 'gemini-2.5-pro-preview-tts', name: 'Gemini 2.5 Pro (TTS)', isPinned: true },
-    { id: 'gemini-2.5-flash-preview-tts', name: 'Gemini 2.5 Flash (TTS)', isPinned: true },
+    { id: 'gemini-2.5-pro-preview-tts', name: 'Gemini 2.5 Pro TTS', isPinned: true },
+    { id: 'gemini-2.5-flash-preview-tts', name: 'Gemini 2.5 Flash TTS', isPinned: true },
 ];
 
 export const STATIC_IMAGEN_MODELS: ModelOption[] = [
@@ -73,6 +80,7 @@ export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
     { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
     { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
+    { id: 'gemini-2.5-flash-native-audio-preview-12-2025', name: 'Gemini 2.5 Flash Native Audio' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [

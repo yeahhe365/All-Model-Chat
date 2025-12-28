@@ -29,6 +29,17 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const vizInstanceRef = useRef<any>(null);
 
+  // Initialize Viz instance once
+  useEffect(() => {
+      if (typeof Viz !== 'undefined' && !vizInstanceRef.current) {
+          try {
+              vizInstanceRef.current = new Viz();
+          } catch (e) {
+              console.error("Failed to initialize Viz", e);
+          }
+      }
+  }, []);
+
   const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
     if (!vizInstanceRef.current) return;
     setIsRendering(true);
@@ -38,29 +49,28 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
     try {
       let processedCode = code;
       
-      // 1. Layout Injection
-      const rankdirRegex = /rankdir\s*=\s*"(LR|TB)"/i;
-      const graphAttrsRegex = /(\s*(?:di)?graph\s*.*?\[)([^\]]*)(\])/i;
+      // 1. Layout Injection - Robust Regex
+      // Matches rankdir=LR, rankdir="TB", rankdir='RL' etc. case-insensitive
+      const rankdirRegex = /(rankdir\s*=\s*)(["']?)(LR|TB|RL|BT)\2/gi;
+      
       if (rankdirRegex.test(processedCode)) {
-          processedCode = processedCode.replace(rankdirRegex, `rankdir="${currentLayout}"`);
-      } else if (graphAttrsRegex.test(processedCode)) {
-          processedCode = processedCode.replace(graphAttrsRegex, (match, p1, p2, p3) => {
-              const attrs = p2.trim();
-              const separator = attrs && !attrs.endsWith(',') ? ', ' : ' ';
-              return `${p1}${attrs}${separator}rankdir="${currentLayout}"${p3}`;
-          });
+          // Replace existing rankdir directives to enforce the current layout
+          processedCode = processedCode.replace(rankdirRegex, `$1"${currentLayout}"`);
       } else {
+          // Inject if missing
           const digraphMatch = processedCode.match(/(\s*(?:di)?graph\s+[\w\d_"]*\s*\{)/i);
           if (digraphMatch) {
-              processedCode = processedCode.replace(digraphMatch[0], `${digraphMatch[0]}\n  graph [rankdir="${currentLayout}"];`);
+              // Add rankdir statement explicitly after graph declaration
+              processedCode = processedCode.replace(digraphMatch[0], `${digraphMatch[0]}\n  rankdir="${currentLayout}";`);
           }
       }
 
       // 2. Theme Injection
       const isDark = themeId === 'onyx';
       const color = isDark ? '#e4e4e7' : '#374151'; // zinc-200 : gray-700
+      // Inject margin="0" to reduce internal graph whitespace
       const themeDefaults = `
-        graph [bgcolor="transparent" fontcolor="${color}"];
+        graph [bgcolor="transparent" fontcolor="${color}" margin="0"];
         node [color="${color}" fontcolor="${color}"];
         edge [color="${color}" fontcolor="${color}"];
       `;
@@ -72,10 +82,18 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       }
 
       const svgElement = await vizInstanceRef.current.renderSVGElement(processedCode);
+      
+      // 3. Post-process SVG for responsive scaling (removes fixed size whitespace issues)
+      svgElement.removeAttribute('width');
+      svgElement.removeAttribute('height');
+      svgElement.style.maxWidth = "100%";
+      svgElement.style.height = "auto";
+      svgElement.style.display = "block"; // prevents inline spacing issues
+
       const svgString = svgElement.outerHTML;
       setSvgContent(svgString);
 
-      // Create UploadedFile object for preview (matches MermaidBlock pattern)
+      // Create UploadedFile object for preview
       const id = `graphviz-svg-${Math.random().toString(36).substring(2, 9)}`;
       const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
       
@@ -100,24 +118,27 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   useEffect(() => {
     let intervalId: number;
     
+    // Attempt initialization if not ready (e.g. script loaded async)
+    if (typeof Viz !== 'undefined' && !vizInstanceRef.current) {
+        vizInstanceRef.current = new Viz();
+    }
+
     if (isMessageLoading) {
         setIsRendering(true);
         setError('');
         setSvgContent('');
     } else if (code) {
-        const initAndRender = () => {
-            vizInstanceRef.current = new Viz({ worker: undefined });
+        if (vizInstanceRef.current) {
             renderGraph(layout);
-        };
-        if (typeof Viz === 'undefined') {
+        } else {
+            // Polling fallback
             intervalId = window.setInterval(() => {
                 if (typeof Viz !== 'undefined') {
                     clearInterval(intervalId);
-                    initAndRender();
+                    if (!vizInstanceRef.current) vizInstanceRef.current = new Viz();
+                    renderGraph(layout);
                 }
             }, 100);
-        } else {
-            initAndRender();
         }
     }
     return () => clearInterval(intervalId);
@@ -132,7 +153,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
     if (!svgContent || isDownloading) return;
     setIsDownloading(true);
     try {
-        await exportSvgAsPng(svgContent, `graphviz-diagram-${Date.now()}.png`);
+        await exportSvgAsPng(svgContent, `graphviz-diagram-${Date.now()}.png`, 5);
     } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to export diagram.');
     } finally {
@@ -144,7 +165,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       copyToClipboard(code);
   };
 
-  const containerClasses = "p-4 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[150px] transition-colors duration-300";
+  const containerClasses = "p-2 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[100px] transition-colors duration-300";
   const bgClass = themeId === 'onyx' ? 'bg-[var(--theme-bg-secondary)]' : 'bg-white';
 
   if (isRendering) {
@@ -185,7 +206,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
              </button>
              <button 
                 onClick={() => onOpenSidePanel({ type: 'graphviz', content: code, title: 'Graphviz Diagram' })}
-                className={`${MESSAGE_BLOCK_BUTTON_CLASS} hidden md:block`}
+                className={MESSAGE_BLOCK_BUTTON_CLASS}
                 title="Open in Side Panel"
              >
                 <Sidebar size={14} />

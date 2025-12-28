@@ -36,7 +36,7 @@ export const useAppLogic = () => {
   
   const handleOpenSidePanel = useCallback((content: SideViewContent) => {
       setSidePanelContent(content);
-      // Auto-collapse sidebar on smaller screens if opening side panel
+      // Auto-collapse sidebar on smaller screens if opening side panel to save space
       if (window.innerWidth < 1280) {
           setIsHistorySidebarOpen(false);
       }
@@ -44,17 +44,6 @@ export const useAppLogic = () => {
 
   const handleCloseSidePanel = useCallback(() => {
       setSidePanelContent(null);
-  }, []);
-
-  // Close SidePanel on window resize if width is too narrow
-  useEffect(() => {
-      const handleResize = () => {
-          if (window.innerWidth < 768) {
-              setSidePanelContent(null);
-          }
-      };
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const pipState = usePictureInPicture(uiState.setIsHistorySidebarOpen);
@@ -77,7 +66,9 @@ export const useAppLogic = () => {
     setIsLogViewerOpen: uiState.setIsLogViewerOpen,
     onTogglePip: pipState.togglePip,
     isPipSupported: pipState.isPipSupported,
-    pipWindow: pipState.pipWindow
+    pipWindow: pipState.pipWindow,
+    isLoading: chatState.isLoading,
+    onStopGenerating: chatState.handleStopGenerating
   });
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);

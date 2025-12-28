@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { AppSettings, ChatSettings } from '../../types';
 import { TAB_CYCLE_MODELS } from '../../constants/appConstants';
@@ -16,6 +15,8 @@ interface AppEventsProps {
     onTogglePip: () => void;
     isPipSupported: boolean;
     pipWindow?: Window | null;
+    isLoading: boolean;
+    onStopGenerating: () => void;
 }
 
 export const useAppEvents = ({
@@ -30,6 +31,8 @@ export const useAppEvents = ({
     onTogglePip,
     isPipSupported,
     pipWindow,
+    isLoading,
+    onStopGenerating,
 }: AppEventsProps) => {
     const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
@@ -66,6 +69,8 @@ export const useAppEvents = ({
     // Keyboard shortcuts
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.defaultPrevented) return; // Ignore if already handled (e.g. by textarea)
+
             // Check active element in the document where the event occurred
             const targetDoc = event.view?.document || document;
             const activeElement = targetDoc.activeElement as HTMLElement;
@@ -77,32 +82,45 @@ export const useAppEvents = ({
                 activeElement.isContentEditable
             );
             
-            if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'n') {
+            // Stop Generation: Esc
+            if (event.key === 'Escape' && isLoading) {
+                event.preventDefault();
+                onStopGenerating();
+                return;
+            }
+
+            // New Chat: Cmd/Ctrl + Shift + N
+            if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'n') {
                 event.preventDefault();
                 startNewChat(); 
-            } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'l') {
+            } 
+            // Open Logs: Cmd/Ctrl + Alt + L
+            else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'l') {
                 event.preventDefault();
                 setIsLogViewerOpen(prev => !prev);
-            } else if ((event.ctrlKey || event.metaKey) && event.altKey && event.key.toLowerCase() === 'p') {
+            } 
+            // PiP Mode: Cmd/Ctrl + Shift + P
+            else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'p') {
                 if (isPipSupported) {
                     event.preventDefault();
                     onTogglePip();
                 }
-            } else if (event.key === 'Delete') {
-                if (isSettingsModalOpen || isPreloadedMessagesModalOpen) return;
-                const chatTextareaAriaLabel = 'Chat message input';
-                const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === chatTextareaAriaLabel;
-                
-                if (isGenerallyInputFocused) {
-                    if (isChatTextareaFocused && (activeElement as HTMLTextAreaElement).value.trim() === '') {
-                        event.preventDefault();
-                        handleClearCurrentChat(); 
-                    }
+            } 
+            // Toggle Website Fullscreen: Cmd/Ctrl + Shift + F
+            else if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'f') {
+                event.preventDefault();
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                    });
                 } else {
-                    event.preventDefault();
-                    handleClearCurrentChat();
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
                 }
-            } else if (event.key === 'Tab' && TAB_CYCLE_MODELS.length > 0) {
+            }
+            // Cycle Models: Tab
+            else if (event.key === 'Tab' && TAB_CYCLE_MODELS.length > 0) {
                 const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
                 if (isChatTextareaFocused || !isGenerallyInputFocused) {
                     event.preventDefault();
@@ -128,7 +146,7 @@ export const useAppEvents = ({
                 pipWindow.document.removeEventListener('keydown', handleKeyDown);
             }
         };
-    }, [startNewChat, handleClearCurrentChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow]);
+    }, [startNewChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating]);
 
     return {
         installPromptEvent,

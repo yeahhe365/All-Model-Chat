@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UploadedFile } from '../../../types';
 import { FileDisplay } from '../FileDisplay';
@@ -22,7 +23,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     if (!files || files.length === 0) return null;
 
     const isQuadImageView = files.length === 4 && files.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
-    const marginClass = hasContentOrAudio ? 'mb-1.5 sm:mb-2' : '';
+    const marginClass = hasContentOrAudio ? 'mb-2' : '';
 
     if (isQuadImageView) {
         return (
@@ -41,16 +42,17 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     }
 
     return (
-        <div className={`space-y-2 ${marginClass}`}>
+        <div className={`flex flex-row gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar ${marginClass}`}>
             {files.map((file) => (
-                <FileDisplay 
-                    key={file.id} 
-                    file={file} 
-                    onFileClick={onImageClick} 
-                    isFromMessageList={true}
-                    onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
-                    isGemini3={isGemini3}
-                />
+                <div key={file.id} className="flex-shrink-0">
+                    <FileDisplay 
+                        file={file} 
+                        onFileClick={onImageClick} 
+                        isFromMessageList={true}
+                        onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
+                        isGemini3={isGemini3}
+                    />
+                </div>
             ))}
         </div>
     );

@@ -21,6 +21,8 @@ interface ChatInputFileModalsProps {
     currentModelId: string;
     t: (key: string) => string;
     isGemini3: boolean;
+    isPreviewEditable?: boolean;
+    onSaveTextFile?: (fileId: string, content: string, newName: string) => void;
     handlers: {
         handleSaveFileConfig: (fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => void;
         handlePrevImage: () => void;
@@ -44,6 +46,8 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
     currentModelId,
     t,
     isGemini3,
+    isPreviewEditable,
+    onSaveTextFile,
     handlers
 }) => {
     return (
@@ -76,6 +80,8 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                 onNext={handlers.handleNextImage}
                 hasPrev={handlers.currentImageIndex > 0}
                 hasNext={handlers.currentImageIndex !== -1 && handlers.currentImageIndex < handlers.inputImages.length - 1}
+                onSaveText={onSaveTextFile}
+                initialEditMode={isPreviewEditable}
             />
         </>
     );

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { generateFolderContext } from '../utils/folderImportUtils';
 import { UploadedFile } from '../types';
@@ -43,17 +44,13 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
     }, []);
 
     // Helper to recursively read entries from a dropped directory
-    const scanEntry = async (entry: any, path: string = ''): Promise<File[]> => {
+    // Now returns objects with explicit path strings to avoid read-only property issues
+    const scanEntry = async (entry: any, path: string = ''): Promise<{ file: File, path: string }[]> => {
         if (entry.isFile) {
             return new Promise((resolve) => {
                 entry.file((file: File) => {
-                    // Inject webkitRelativePath for structure preservation in generateFolderContext
                     const relativePath = path + file.name;
-                    Object.defineProperty(file, 'webkitRelativePath', {
-                        value: relativePath,
-                        writable: true
-                    });
-                    resolve([file]);
+                    resolve([{ file, path: relativePath }]);
                 });
             });
         } else if (entry.isDirectory) {
@@ -126,11 +123,11 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
                     .filter(Boolean);
                 
                 const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));
-                const flatFiles = filesArrays.flat();
+                const flatFilesWithPath = filesArrays.flat();
                 
-                if (flatFiles.length > 0) {
-                    // Convert list of files to a single text context file
-                    const contextFile = await generateFolderContext(flatFiles as unknown as FileList);
+                if (flatFilesWithPath.length > 0) {
+                    // Convert list of file-path objects to a single text context file
+                    const contextFile = await generateFolderContext(flatFilesWithPath);
                     await onFilesDropped([contextFile]);
                 }
                 

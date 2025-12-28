@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { UploadedFile } from '../../types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio, FileVideo, ExternalLink, FileText, Youtube } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
@@ -17,17 +17,33 @@ interface FilePreviewModalProps {
   onNext?: () => void;
   hasPrev?: boolean;
   hasNext?: boolean;
+  onSaveText?: (fileId: string, content: string, newName: string) => void;
+  initialEditMode?: boolean;
 }
 
 export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ 
     file, onClose, t, 
-    onPrev, onNext, hasPrev = false, hasNext = false 
+    onPrev, onNext, hasPrev = false, hasNext = false,
+    onSaveText, initialEditMode = false
 }) => {
-  
+  const [isEditing, setIsEditing] = useState(initialEditMode);
+  const [editedContent, setEditedContent] = useState('');
+  const [editedName, setEditedName] = useState('');
+  const [textContentLoaded, setTextContentLoaded] = useState(false);
+
+  useEffect(() => {
+      if (file) {
+          setIsEditing(initialEditMode);
+          setEditedName(file.name);
+          setEditedContent(''); // Will be populated by onLoad from viewer
+          setTextContentLoaded(false);
+      }
+  }, [file, initialEditMode]);
+
   // Keyboard navigation
   useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-          if (!file) return;
+          if (!file || isEditing) return; // Disable nav when editing
           if (e.key === 'ArrowLeft' && hasPrev && onPrev) {
               e.preventDefault();
               onPrev();
@@ -38,7 +54,28 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [file, hasPrev, hasNext, onPrev, onNext]);
+  }, [file, hasPrev, hasNext, onPrev, onNext, isEditing]);
+
+  const handleSave = useCallback(() => {
+      if (file && onSaveText) {
+          onSaveText(file.id, editedContent, editedName);
+          setIsEditing(false);
+          // Optional: Close modal or just exit edit mode? 
+          // Exiting edit mode seems friendlier to review changes.
+      }
+  }, [file, onSaveText, editedContent, editedName]);
+
+  const handleToggleEdit = useCallback(() => {
+      if (isEditing) {
+          // Cancel
+          setIsEditing(false);
+          setEditedName(file?.name || '');
+          // Content revert is handled by re-render of viewer with original file, 
+          // but we rely on TextFileViewer to re-fetch or re-use cached content.
+      } else {
+          setIsEditing(true);
+      }
+  }, [isEditing, file]);
 
   if (!file) return null;
 
@@ -70,15 +107,24 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         <h2 id="file-preview-modal-title" className="sr-only">{t('imageZoom_title').replace('{filename}', file.name)}</h2>
         
         {/* Header */}
-        <FilePreviewHeader file={file} onClose={onClose} t={t as (key: string) => string} />
+        <FilePreviewHeader 
+            file={file} 
+            onClose={onClose} 
+            t={t as (key: string) => string} 
+            isEditable={isEditing}
+            onToggleEdit={isText && onSaveText ? handleToggleEdit : undefined}
+            onSave={handleSave}
+            editedName={editedName}
+            onNameChange={setEditedName}
+        />
 
-        {/* Navigation Buttons */}
-        {hasPrev && onPrev && (
+        {/* Navigation Buttons - Hide in Edit Mode */}
+        {!isEditing && hasPrev && onPrev && (
             <button onClick={(e) => { e.stopPropagation(); onPrev(); }} className={`${navButtonClass} left-2`} aria-label="Previous">
                 <ChevronLeft size={24} />
             </button>
         )}
-        {hasNext && onNext && (
+        {!isEditing && hasNext && onNext && (
             <button onClick={(e) => { e.stopPropagation(); onNext(); }} className={`${navButtonClass} right-2`} aria-label="Next">
                 <ChevronRight size={24} />
             </button>
@@ -89,7 +135,20 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
           {isImage ? (
               <ImageViewer file={file} t={t as (key: string) => string} />
           ) : isText ? (
-              <TextFileViewer file={file} />
+              <TextFileViewer 
+                  file={file} 
+                  isEditable={isEditing}
+                  onChange={setEditedContent}
+                  onLoad={(content) => {
+                      if (!textContentLoaded) {
+                          setEditedContent(content);
+                          setTextContentLoaded(true);
+                      }
+                  }}
+                  // If we are editing, we pass current editedContent to keep sync (though TextFileViewer manages internal state usually, 
+                  // passing content makes it controlled which is better for save)
+                  content={textContentLoaded ? editedContent : undefined}
+              />
           ) : isPdf ? (
               <div className="w-full h-full pt-20 pb-20 px-4 sm:px-8 relative group/pdf flex items-center justify-center">
                   {file.dataUrl && (

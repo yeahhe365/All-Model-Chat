@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { AttachmentAction } from '../../components/chat/input/AttachmentMenu';
+import { UploadedFile } from '../../types';
 
 interface UseChatInputModalsProps {
   onProcessFiles: (files: File[]) => Promise<void>;
@@ -14,6 +15,7 @@ export const useChatInputModals = ({
   textareaRef,
 }: UseChatInputModalsProps) => {
   const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
+  const [editingFile, setEditingFile] = useState<UploadedFile | null>(null);
   const [showRecorder, setShowRecorder] = useState(false);
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
@@ -33,7 +35,6 @@ export const useChatInputModals = ({
 
     let stream: MediaStream;
     try {
-        // Cast to any to bypass strict type check for mediaSource property if necessary, or use compliant structure
         stream = await navigator.mediaDevices.getDisplayMedia({
             video: { mediaSource: "screen" } as any, 
             audio: false,
@@ -64,7 +65,7 @@ export const useChatInputModals = ({
     };
 
     try {
-        // @ts-ignore - ImageCapture is not in all TS libs yet
+        // @ts-ignore
         if (typeof ImageCapture !== 'undefined') {
              // @ts-ignore
             const imageCapture = new ImageCapture(track);
@@ -98,7 +99,6 @@ export const useChatInputModals = ({
   };
 
   const handleAttachmentAction = (action: AttachmentAction) => {
-    // Close other inputs when a new one is opened
     setShowAddByIdInput(false);
     setShowAddByUrlInput(false);
 
@@ -111,7 +111,10 @@ export const useChatInputModals = ({
       case 'recorder': setShowRecorder(true); break;
       case 'id': setShowAddByIdInput(true); break;
       case 'url': setShowAddByUrlInput(true); break;
-      case 'text': setShowCreateTextFileEditor(true); break;
+      case 'text': 
+        setEditingFile(null);
+        setShowCreateTextFileEditor(true); 
+        break;
       case 'screenshot': handleScreenshot(); break;
     }
   };
@@ -127,20 +130,27 @@ export const useChatInputModals = ({
     const newFile = new File([content], finalFilename, { type: "text/plain" });
     
     setShowCreateTextFileEditor(false);
+    setEditingFile(null);
     onProcessFiles([newFile]);
   };
 
   const handleAudioRecord = async (file: File) => {
     justInitiatedFileOpRef.current = true;
-    // 立即关闭模态框并聚焦，让耗时的压缩逻辑在后台异步运行
     setShowRecorder(false);
     onProcessFiles([file]); 
     textareaRef.current?.focus();
   };
 
+  const handleEditFile = (file: UploadedFile) => {
+      setEditingFile(file);
+      setShowCreateTextFileEditor(true);
+  };
+
   return {
     showCreateTextFileEditor,
     setShowCreateTextFileEditor,
+    editingFile,
+    setEditingFile,
     showRecorder,
     setShowRecorder,
     showAddByIdInput,
@@ -157,5 +167,6 @@ export const useChatInputModals = ({
     handleAttachmentAction,
     handleConfirmCreateTextFile,
     handleAudioRecord,
+    handleEditFile,
   };
 };

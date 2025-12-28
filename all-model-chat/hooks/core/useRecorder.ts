@@ -19,21 +19,32 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+
+    // Sync stream state to ref for cleanup access
+    useEffect(() => {
+        streamRef.current = stream;
+    }, [stream]);
 
     const cleanup = useCallback(() => {
-        if (stream) {
-            stream.getTracks().forEach(t => t.stop());
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
             setStream(null);
+            streamRef.current = null;
         }
         if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
         }
         mediaRecorderRef.current = null;
-    }, [stream]);
+    }, []);
 
-    // Ensure cleanup on unmount
-    useEffect(() => cleanup, [cleanup]);
+    // Ensure cleanup on unmount only
+    useEffect(() => {
+        return () => {
+            cleanup();
+        };
+    }, [cleanup]);
 
     const startRecording = useCallback(async () => {
         setError(null);
@@ -41,6 +52,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         try {
             const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             setStream(mediaStream);
+            // streamRef will be updated by effect, but we can use mediaStream directly here
             
             const recorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
             mediaRecorderRef.current = recorder;

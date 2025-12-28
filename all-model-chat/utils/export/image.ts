@@ -1,3 +1,4 @@
+
 import { triggerDownload } from './core';
 
 /**
@@ -53,39 +54,90 @@ export const exportElementAsPng = async (
 
 /**
  * Converts an SVG string to a PNG data URL and triggers a download.
+ * Enhanced logic parses the SVG, calculates dimensions from viewBox/attributes,
+ * and explicitly sets high-res attributes on the SVG node to ensure crisp rasterization.
+ * 
  * @param svgString The string content of the SVG.
  * @param filename The desired filename for the downloaded PNG.
  * @param scale The resolution scale factor for the output PNG.
  */
 export const exportSvgAsPng = async (svgString: string, filename: string, scale: number = 3): Promise<void> => {
-    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgString)}`;
+    // 1. Parse SVG to modify dimensions
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, "image/svg+xml");
+    const svgElement = doc.documentElement;
+
+    if (svgElement.tagName.toLowerCase() !== 'svg') {
+        throw new Error("Invalid SVG string");
+    }
+
+    // 2. Determine base dimensions
+    // Priority: explicit width/height -> viewBox -> default fallback
+    let width = parseFloat(svgElement.getAttribute('width') || '0');
+    let height = parseFloat(svgElement.getAttribute('height') || '0');
+    const viewBox = svgElement.getAttribute('viewBox');
+
+    if ((!width || !height) && viewBox) {
+        const parts = viewBox.split(/\s+|,/).filter(Boolean).map(parseFloat);
+        if (parts.length === 4) {
+            width = parts[2];
+            height = parts[3];
+        }
+    }
+
+    // Fallback if no dimensions found
+    if (!width || !height) {
+        width = 300; 
+        height = 150;
+    }
+
+    // 3. Set scaled dimensions on the SVG element
+    // This forces the browser to rasterize the SVG at high resolution when loading the Image
+    const scaledWidth = Math.ceil(width * scale);
+    const scaledHeight = Math.ceil(height * scale);
+
+    svgElement.setAttribute('width', scaledWidth.toString());
+    svgElement.setAttribute('height', scaledHeight.toString());
+    
+    // Reset CSS constraints that might interfere with intrinsic sizing
+    svgElement.style.width = '';
+    svgElement.style.height = '';
+    svgElement.style.maxWidth = '';
+    svgElement.style.maxHeight = '';
+
+    // 4. Serialize back to string
+    const serializer = new XMLSerializer();
+    const scaledSvgString = serializer.serializeToString(svgElement);
+
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(scaledSvgString)}`;
     const img = new Image();
 
+    // 5. Draw to canvas
     return new Promise((resolve, reject) => {
         img.onload = () => {
-            const imgWidth = img.width;
-            const imgHeight = img.height;
-
-            if (imgWidth === 0 || imgHeight === 0) {
-                return reject(new Error("Diagram has zero dimensions, cannot export."));
-            }
             const canvas = document.createElement('canvas');
-            canvas.width = imgWidth * scale;
-            canvas.height = imgHeight * scale;
+            canvas.width = scaledWidth;
+            canvas.height = scaledHeight;
             const ctx = canvas.getContext('2d');
 
             if (ctx) {
-                ctx.drawImage(img, 0, 0, imgWidth * scale, imgHeight * scale);
-                const pngUrl = canvas.toDataURL('image/png');
-                triggerDownload(pngUrl, filename);
-                resolve();
+                // Draw at 1:1 of the scaled image
+                ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+                
+                try {
+                    const pngUrl = canvas.toDataURL('image/png');
+                    triggerDownload(pngUrl, filename);
+                    resolve();
+                } catch (e) {
+                    reject(e);
+                }
             } else {
                 reject(new Error("Could not get canvas context."));
             }
         };
 
         img.onerror = () => {
-            reject(new Error("Failed to load SVG into an image element for conversion."));
+            reject(new Error("Failed to load SVG into image element."));
         };
 
         img.src = svgDataUrl;

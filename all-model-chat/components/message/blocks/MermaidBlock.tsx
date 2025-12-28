@@ -127,7 +127,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
              </button>
              <button 
                 onClick={() => onOpenSidePanel({ type: 'mermaid', content: code, title: 'Mermaid Diagram' })}
-                className={`${MESSAGE_BLOCK_BUTTON_CLASS} hidden md:block`}
+                className={MESSAGE_BLOCK_BUTTON_CLASS}
                 title="Open in Side Panel"
              >
                 <Sidebar size={14} />

@@ -5,11 +5,15 @@ import { AddUrlInput } from './toolbar/AddUrlInput';
 import { ImagenAspectRatioSelector } from './toolbar/ImagenAspectRatioSelector';
 import { ImageSizeSelector } from './toolbar/ImageSizeSelector';
 import { QuadImageToggle } from './toolbar/QuadImageToggle';
+import { TtsVoiceSelector } from './toolbar/TtsVoiceSelector';
 import { ChatInputToolbarProps } from '../../../types';
 
 export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   isImagenModel,
   isGemini3ImageModel,
+  isTtsModel,
+  ttsVoice,
+  setTtsVoice,
   aspectRatio,
   setAspectRatio,
   imageSize,
@@ -37,11 +41,13 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   const showAspectRatio = (isImagenModel || isGemini3ImageModel) && setAspectRatio && aspectRatio;
   const showImageSize = supportedImageSizes && supportedImageSizes.length > 0 && setImageSize && imageSize;
   const showQuadToggle = (isImagenModel || isGemini3ImageModel) && onToggleQuadImages && generateQuadImages !== undefined;
+  const showTtsVoice = isTtsModel && ttsVoice && setTtsVoice;
 
   return (
     <div className="flex flex-col gap-2">
-      {(showAspectRatio || showImageSize || showQuadToggle) && (
+      {(showAspectRatio || showImageSize || showQuadToggle || showTtsVoice) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {showTtsVoice && <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} t={t as (key: string) => string} />}
             {showAspectRatio && <ImagenAspectRatioSelector aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} t={t as (key: string) => string} supportedRatios={supportedAspectRatios} />}
             {showImageSize && <ImageSizeSelector imageSize={imageSize} setImageSize={setImageSize} t={t as (key: string) => string} supportedSizes={supportedImageSizes} />}
             {showQuadToggle && <QuadImageToggle enabled={generateQuadImages} onToggle={onToggleQuadImages} t={t as (key: string) => string} />}

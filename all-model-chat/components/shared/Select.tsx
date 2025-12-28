@@ -1,8 +1,6 @@
 
-import React, { useState, useRef, useMemo, useCallback } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useState, useRef, useMemo } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
-import { useWindowContext } from '../../contexts/WindowContext';
 import { useClickOutside } from '../../hooks/useClickOutside';
 
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
@@ -15,18 +13,9 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
 
 export const Select: React.FC<SelectProps> = ({ id, label, children, labelContent, value, onChange, disabled, className, layout = 'vertical', ...rest }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
-    const buttonRef = useRef<HTMLButtonElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const wrapperRef = useRef<HTMLDivElement>(null);
     
-    const { document: targetDocument, window: targetWindow } = useWindowContext();
-
-    useClickOutside(dropdownRef, (e) => {
-        if (buttonRef.current && buttonRef.current.contains(e.target as Node)) {
-            return;
-        }
-        setIsOpen(false);
-    }, isOpen);
+    useClickOutside(wrapperRef, () => setIsOpen(false), isOpen);
 
     const options = useMemo(() => {
         return React.Children.toArray(children).map((child) => {
@@ -44,36 +33,6 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));
 
-    const updatePosition = useCallback(() => {
-        if (buttonRef.current) {
-            const rect = buttonRef.current.getBoundingClientRect();
-            setPosition({
-                top: rect.bottom + 4,
-                left: rect.left,
-                width: rect.width
-            });
-        }
-    }, []);
-
-    React.useEffect(() => {
-        const handleScroll = (event: Event) => {
-            if (dropdownRef.current && dropdownRef.current.contains(event.target as Node)) {
-                return;
-            }
-            updatePosition();
-        };
-
-        if (isOpen) {
-            targetWindow.addEventListener('resize', updatePosition);
-            targetDocument.addEventListener('scroll', handleScroll, true); 
-        }
-
-        return () => {
-            targetWindow.removeEventListener('resize', updatePosition);
-            targetDocument.removeEventListener('scroll', handleScroll, true);
-        };
-    }, [isOpen, updatePosition, targetDocument, targetWindow]);
-
     const handleSelect = (val: string) => {
         onChange({ target: { value: val } });
         setIsOpen(false);
@@ -81,9 +40,6 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
 
     const handleToggle = () => {
         if (disabled) return;
-        if (!isOpen) {
-            updatePosition();
-        }
         setIsOpen(!isOpen);
     };
 
@@ -104,9 +60,8 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
             <label htmlFor={id} className={labelClasses}>
               {labelContent || label}
             </label>
-            <div className={wrapperClasses}>
+            <div className={wrapperClasses} ref={wrapperRef}>
                 <button
-                    ref={buttonRef}
                     type="button"
                     id={id}
                     onClick={handleToggle}
@@ -120,16 +75,9 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
                     <ChevronDown size={16} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} strokeWidth={1.5} />
                 </button>
                 
-                {isOpen && createPortal(
+                {isOpen && (
                     <div
-                        ref={dropdownRef}
-                        className="fixed z-[2200] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col"
-                        style={{
-                            top: position.top,
-                            left: position.left,
-                            width: position.width,
-                            maxHeight: '300px',
-                        }}
+                        className="absolute top-full left-0 z-50 w-full mt-1 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col max-h-[300px]"
                     >
                         <div className="overflow-y-auto custom-scrollbar p-1">
                             {options.map((opt, idx) => (
@@ -149,8 +97,7 @@ export const Select: React.FC<SelectProps> = ({ id, label, children, labelConten
                                 </button>
                             ))}
                         </div>
-                    </div>,
-                    targetDocument.body
+                    </div>
                 )}
             </div>
         </div>

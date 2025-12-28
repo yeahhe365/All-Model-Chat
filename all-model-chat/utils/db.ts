@@ -82,6 +82,21 @@ async function setAll<T>(storeName: string, values: T[]): Promise<void> {
   return transactionToPromise(tx);
 }
 
+// New Atomic Operations
+async function put<T>(storeName: string, value: T): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(storeName, 'readwrite');
+  tx.objectStore(storeName).put(value);
+  return transactionToPromise(tx);
+}
+
+async function deleteItem(storeName: string, key: string): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(storeName, 'readwrite');
+  tx.objectStore(storeName).delete(key);
+  return transactionToPromise(tx);
+}
+
 async function getKeyValue<T>(key: string): Promise<T | undefined> {
   const db = await getDb();
   return requestToPromise(db.transaction(KEY_VALUE_STORE, 'readonly').objectStore(KEY_VALUE_STORE).get(key));
@@ -183,14 +198,21 @@ async function clearAllData(): Promise<void> {
 export const dbService = {
   getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
+  saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
+  deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),
+  
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
   setAllGroups: (groups: ChatGroup[]) => setAll<ChatGroup>(GROUPS_STORE, groups),
+  
   getAllScenarios: () => getAll<SavedScenario>(SCENARIOS_STORE),
   setAllScenarios: (scenarios: SavedScenario[]) => setAll<SavedScenario>(SCENARIOS_STORE, scenarios),
+  
   getAppSettings: () => getKeyValue<AppSettings>('appSettings'),
   setAppSettings: (settings: AppSettings) => setKeyValue<AppSettings>('appSettings', settings),
+  
   getActiveSessionId: () => getKeyValue<string | null>('activeSessionId'),
   setActiveSessionId: (id: string | null) => setKeyValue<string | null>('activeSessionId', id),
+  
   // Log specific
   addLogs,
   getLogs,

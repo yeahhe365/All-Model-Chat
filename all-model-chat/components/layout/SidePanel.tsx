@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Code, Eye, Download, Atom, FileCode2 } from 'lucide-react';
+import { X, Code, Eye, Download, FileCode2 } from 'lucide-react';
 import { SideViewContent } from '../../types';
 import { MermaidBlock } from '../message/blocks/MermaidBlock';
 import { GraphvizBlock } from '../message/blocks/GraphvizBlock';
@@ -15,8 +15,9 @@ interface SidePanelProps {
 }
 
 export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId }) => {
-    const [localCode, setLocalCode] = useState('');
-    const [debouncedCode, setDebouncedCode] = useState('');
+    // Initialize with content immediately to ensure iframe has srcDoc on first render
+    const [localCode, setLocalCode] = useState(content?.content || '');
+    const [debouncedCode, setDebouncedCode] = useState(content?.content || '');
     const [activeTab, setActiveTab] = useState<'code' | 'preview'>('preview');
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -28,33 +29,28 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
     const isMobile = useIsMobile();
     
-    // Initial sync
+    // Sync state when content prop changes (e.g. opening different file while panel is open)
     useEffect(() => {
         if (content) {
             setLocalCode(content.content);
             setDebouncedCode(content.content);
+            // Reset to preview tab when new content is loaded for better UX
+            if (activeTab === 'code' && content.type === 'html') {
+                // Optional: Force preview for HTML, or keep current tab? 
+                // Keeping current tab is usually better for persistent editing, 
+                // but if opening new file, preview is expected.
+                // Let's stick to user preference or default to preview if type changed.
+            }
         }
     }, [content]);
 
-    // Debounce code updates for preview to avoid excessive rendering
+    // Debounce code updates for preview to avoid excessive rendering during edits
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedCode(localCode);
         }, 1000);
         return () => clearTimeout(timer);
     }, [localCode]);
-
-    // Handle HTML updates in Iframe
-    useEffect(() => {
-        if (content?.type === 'html' && iframeRef.current) {
-            const doc = iframeRef.current.contentDocument;
-            if (doc) {
-                doc.open();
-                doc.write(debouncedCode);
-                doc.close();
-            }
-        }
-    }, [debouncedCode, content?.type]);
 
     // Resizing Logic
     const startResizing = useCallback((e: React.MouseEvent) => {
@@ -112,9 +108,12 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                 <div className="w-full h-full relative bg-white">
                     <iframe
                         ref={iframeRef}
-                        className="w-full h-full border-0"
-                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                        className="w-full h-full border-0 block"
+                        // SECURITY: Removed allow-same-origin to prevent access to localStorage/parent DOM
+                        // Added allow-downloads to match main preview capabilities
+                        sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
                         title="Live Preview"
+                        srcDoc={debouncedCode}
                     />
                 </div>
             );
@@ -174,11 +173,10 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     );
 
     // Determine preview label and icon
-    const isReact = content.language === 'react' || content.language === 'jsx' || content.language === 'tsx' || (content.title?.includes('React') ?? false);
-    const isHtml = content.type === 'html' && !isReact;
+    const isHtml = content.type === 'html';
 
-    const PreviewIcon = isReact ? Atom : (isHtml ? FileCode2 : Eye);
-    const previewLabel = isReact ? "React" : (isHtml ? "HTML" : "Preview");
+    const PreviewIcon = isHtml ? FileCode2 : Eye;
+    const previewLabel = isHtml ? "HTML" : "Preview";
 
     return (
         <>
@@ -191,19 +189,24 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
             <div 
                 ref={sidebarRef}
-                className="h-full flex flex-col bg-[var(--theme-bg-secondary)] border-l border-[var(--theme-border-primary)] shadow-2xl relative transition-none flex-shrink-0 z-20 slide-in-right-animate"
-                style={{ width: `${width}px` }}
+                className={`
+                    h-full flex flex-col bg-[var(--theme-bg-secondary)] border-l border-[var(--theme-border-primary)] shadow-2xl relative transition-none flex-shrink-0 z-40 slide-in-right-animate
+                    ${isMobile ? 'fixed inset-0 w-full z-[3000]' : ''} 
+                `}
+                style={{ width: isMobile ? '100%' : `${width}px` }}
             >
-                {/* Resize Handle */}
-                <div
-                    onMouseDown={startResizing}
-                    className={`
-                        absolute left-0 top-0 bottom-0 w-1.5 -ml-0.5 z-50 cursor-col-resize 
-                        flex items-center justify-center group transition-colors hover:bg-[var(--theme-bg-accent)]
-                        ${isResizing ? 'bg-[var(--theme-bg-accent)]' : 'bg-transparent'}
-                    `}
-                    title="Drag to resize"
-                />
+                {/* Resize Handle - Desktop Only */}
+                {!isMobile && (
+                    <div
+                        onMouseDown={startResizing}
+                        className={`
+                            absolute left-0 top-0 bottom-0 w-1.5 -ml-0.5 z-50 cursor-col-resize 
+                            flex items-center justify-center group transition-colors hover:bg-[var(--theme-bg-accent)]
+                            ${isResizing ? 'bg-[var(--theme-bg-accent)]' : 'bg-transparent'}
+                        `}
+                        title="Drag to resize"
+                    />
+                )}
 
                 {/* Unified Header */}
                 <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex-shrink-0">

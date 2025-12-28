@@ -1,8 +1,9 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
-import { generateUniqueId, logService } from '../../utils/appUtils';
+import { generateUniqueId, logService, fileToString } from '../../utils/appUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
+import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 
 interface UseFilePreProcessingProps {
     appSettings: AppSettings;
@@ -16,10 +17,13 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
         for (const file of rawFilesArray) {
             const fileNameLower = file.name.toLowerCase();
+            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             
             // Expanded audio detection
             const isAudio = file.type.startsWith('audio/') || 
                 ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.webm', '.wma', '.aiff'].some(ext => fileNameLower.endsWith(ext));
+            
+            const isText = SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension) || file.type === 'text/plain';
 
             if (fileNameLower.endsWith('.zip')) {
                 const tempId = generateUniqueId();
@@ -44,7 +48,6 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
                 }
             } else if (isAudio) {
                 if (appSettings.isAudioCompressionEnabled) {
-                    // Auto-compress audio
                     const tempId = generateUniqueId();
                     const abortController = new AbortController();
 
@@ -66,10 +69,9 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
                         const isAbort = (error instanceof Error || error instanceof DOMException) && error.name === 'AbortError';
                         if (isAbort) {
                              logService.info(`Compression cancelled for ${file.name}`);
-                             // Do not push to filesArray, effectively removing it
                         } else {
                             logService.error(`Failed to compress audio file ${file.name}`, { error });
-                            processedFiles.push(file); // Fallback to original
+                            processedFiles.push(file); 
                         }
                     } finally {
                         setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
@@ -77,6 +79,11 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
                 } else {
                     processedFiles.push(file);
                 }
+            } else if (isText) {
+                // Ensure text files have their content read early for editing support
+                // We don't block the UI here, but we ensure it's available.
+                // Note: useFileUpload will also handle reading this if it's sent inline.
+                processedFiles.push(file);
             } else {
                 processedFiles.push(file);
             }

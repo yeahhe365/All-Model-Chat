@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { translations } from '../../../utils/appUtils';
-import { Command } from 'lucide-react';
+import { Command, ArrowUp } from 'lucide-react';
 
 interface ShortcutsSectionProps {
     t: (key: keyof typeof translations | string) => string;
@@ -35,6 +35,7 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ t }) => {
 
     const modKey = isMac ? <Kbd><Command size={10} /></Kbd> : <Kbd>Ctrl</Kbd>;
     const altKey = <Kbd>{isMac ? 'Opt' : 'Alt'}</Kbd>;
+    const shiftKey = <Kbd>Shift</Kbd>;
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -42,9 +43,10 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ t }) => {
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-3">
                     {t('shortcuts_general_title')}
                 </h4>
-                <ShortcutRow label={t('shortcuts_new_chat')} keys={[modKey, altKey, <Kbd>N</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_new_chat')} keys={[modKey, shiftKey, <Kbd>N</Kbd>]} />
                 <ShortcutRow label={t('shortcuts_open_logs')} keys={[modKey, altKey, <Kbd>L</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_toggle_pip')} keys={[modKey, altKey, <Kbd>P</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_toggle_pip')} keys={[modKey, shiftKey, <Kbd>P</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_toggle_fullscreen')} keys={[modKey, shiftKey, <Kbd>F</Kbd>]} />
             </div>
 
             <div className="space-y-2">
@@ -53,9 +55,20 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ t }) => {
                 </h4>
                 <ShortcutRow label={t('shortcuts_send_message')} keys={[<Kbd>Enter</Kbd>]} />
                 <ShortcutRow label={t('shortcuts_new_line')} keys={[<Kbd>Shift</Kbd>, <Kbd>Enter</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_edit_last')} keys={[<Kbd><ArrowUp size={10} /></Kbd>]} />
                 <ShortcutRow label={t('shortcuts_cycle_models')} keys={[<Kbd>Tab</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_clear_chat')} keys={[<Kbd>Del</Kbd>]} />
                 <ShortcutRow label={t('shortcuts_slash_commands')} keys={[<Kbd>/</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_hold_record')} keys={[altKey]} />
+                <ShortcutRow label={t('shortcuts_focus_input')} keys={[<span className="text-xs font-mono text-[var(--theme-text-tertiary)] bg-[var(--theme-bg-tertiary)]/50 px-2 py-1 rounded">{t('shortcuts_any_key')}</span>]} />
+                <ShortcutRow label={t('shortcuts_clear_input_draft')} keys={[<Kbd>Delete</Kbd>]} />
+            </div>
+
+            <div className="space-y-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-3">
+                    {t('shortcuts_global_title')}
+                </h4>
+                <ShortcutRow label={t('shortcuts_stop_cancel')} keys={[<Kbd>Esc</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_save_confirm')} keys={[modKey, <Kbd>Enter</Kbd>]} />
             </div>
         </div>
     );

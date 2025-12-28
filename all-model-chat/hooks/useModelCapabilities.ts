@@ -1,12 +1,16 @@
+
 import { useMemo } from 'react';
 import { isGemini3Model } from '../utils/appUtils';
 
 export const useModelCapabilities = (modelId: string) => {
     return useMemo(() => {
+        const lowerId = modelId.toLowerCase();
         const isGemini3ImageModel = modelId === 'gemini-3-pro-image-preview';
-        const isFlashImageModel = modelId.includes('gemini-2.5-flash-image');
-        const isRealImagen = modelId.includes('imagen');
+        const isFlashImageModel = lowerId.includes('gemini-2.5-flash-image');
+        const isRealImagen = lowerId.includes('imagen');
         const isGemini3 = isGemini3Model(modelId);
+        const isTtsModel = lowerId.includes('tts');
+        const isNativeAudioModel = lowerId.includes('native-audio');
 
         let supportedAspectRatios: string[] | undefined;
 
@@ -27,6 +31,8 @@ export const useModelCapabilities = (modelId: string) => {
             isImagenModel: isRealImagen || isFlashImageModel || isGemini3ImageModel,
             isGemini3ImageModel,
             isGemini3,
+            isTtsModel,
+            isNativeAudioModel,
             supportedAspectRatios,
             supportedImageSizes
         };

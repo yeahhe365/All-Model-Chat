@@ -10,6 +10,7 @@ import { ChatSuggestions } from './area/ChatSuggestions';
 import { ChatQuoteDisplay } from './area/ChatQuoteDisplay';
 import { ChatFilePreviewList } from './area/ChatFilePreviewList';
 import { ChatTextArea } from './area/ChatTextArea';
+import { LiveStatusBanner } from './LiveStatusBanner';
 
 export interface ChatInputAreaProps {
     toolbarProps: ChatInputToolbarProps;
@@ -70,6 +71,13 @@ export interface ChatInputAreaProps {
         onSuggestionClick: (suggestion: string) => void;
         onOrganizeInfoClick: (suggestion: string) => void;
     };
+    liveStatusProps?: {
+        isConnected: boolean;
+        isSpeaking: boolean;
+        volume: number;
+        onDisconnect: () => void;
+        error: string | null;
+    };
     t: (key: keyof typeof translations) => string;
 }
 
@@ -84,6 +92,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     fileInputRefs,
     formProps,
     suggestionsProps,
+    liveStatusProps,
     t,
 }) => {
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
@@ -121,6 +130,10 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                 )}
 
                 <ChatInputToolbar {...toolbarProps} />
+                
+                {liveStatusProps && (
+                    <LiveStatusBanner {...liveStatusProps} />
+                )}
                 
                 <form onSubmit={formProps.onSubmit} className={formClass}>
                     <SlashCommandMenu

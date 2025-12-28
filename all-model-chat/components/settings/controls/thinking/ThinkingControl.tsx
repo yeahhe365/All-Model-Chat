@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Info, Lightbulb, Settings2, Ban, Gauge, Calculator, Cpu, Sparkles, Feather, Zap } from 'lucide-react';
-import { THINKING_BUDGET_RANGES, SETTINGS_INPUT_CLASS, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
+import { Info, Lightbulb } from 'lucide-react';
+import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
 import { isGemini3Model } from '../../../../utils/appUtils';
-import { SparklesIcon } from './SparklesIcon';
-import { LevelButton } from './LevelButton';
+import { ThinkingModeSelector } from './ThinkingModeSelector';
+import { ThinkingLevelSelector } from './ThinkingLevelSelector';
+import { ThinkingBudgetSlider } from './ThinkingBudgetSlider';
 
 interface ThinkingControlProps {
   modelId: string;
@@ -121,45 +122,13 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             </div>
             
             {/* Segmented Control (Tabs) */}
-            <div className={`grid ${isMandatoryThinking ? 'grid-cols-2' : 'grid-cols-3'} gap-1 bg-[var(--theme-bg-tertiary)] p-1 rounded-lg mt-3 select-none`}>
-                <button
-                    onClick={() => handleModeChange('auto')}
-                    className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
-                        mode === 'auto'
-                        ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm ring-1 ring-[var(--theme-border-secondary)]'
-                        : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-primary)]/50'
-                    }`}
-                >
-                    <SparklesIcon active={mode === 'auto'} />
-                    {isGemini3 ? t('settingsThinkingMode_preset') : t('settingsThinkingMode_auto')}
-                </button>
-
-                <button
-                    onClick={() => handleModeChange('custom')}
-                    className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
-                        mode === 'custom'
-                        ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm ring-1 ring-[var(--theme-border-secondary)]'
-                        : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-primary)]/50'
-                    }`}
-                >
-                    <Settings2 size={14} strokeWidth={2} className={mode === 'custom' ? 'text-amber-500' : 'opacity-70'} />
-                    {t('settingsThinkingMode_custom')}
-                </button>
-
-                {!isMandatoryThinking && (
-                    <button
-                        onClick={() => handleModeChange('off')}
-                        className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
-                            mode === 'off'
-                            ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm ring-1 ring-[var(--theme-border-secondary)]'
-                            : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-primary)]/50'
-                        }`}
-                    >
-                        <Ban size={14} strokeWidth={2} className={mode === 'off' ? 'text-red-500' : 'opacity-70'} />
-                        {t('settingsThinkingMode_off')}
-                    </button>
-                )}
-            </div>
+            <ThinkingModeSelector
+                mode={mode}
+                onModeChange={handleModeChange}
+                isGemini3={isGemini3}
+                isMandatoryThinking={isMandatoryThinking}
+                t={t}
+            />
 
             {/* Content Area */}
             {showContent && (
@@ -167,80 +136,21 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                     
                     {/* 1. Gemini 3.0 Preset Level Selector */}
                     {isGemini3 && mode === 'auto' && setThinkingLevel && (
-                        <div className="flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                                    <Gauge size={12} /> Intensity Level
-                                </span>
-                            </div>
-                            <div className={`grid ${isFlash3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-2`}>
-                                {isFlash3 && (
-                                    <LevelButton 
-                                        active={thinkingLevel === 'MINIMAL'} 
-                                        onClick={() => setThinkingLevel('MINIMAL')} 
-                                        label="Minimal" 
-                                        icon={<Feather size={14} />}
-                                    />
-                                )}
-                                <LevelButton 
-                                    active={thinkingLevel === 'LOW'} 
-                                    onClick={() => setThinkingLevel('LOW')} 
-                                    label="Low" 
-                                    icon={<Zap size={14} />}
-                                />
-                                <LevelButton 
-                                    active={thinkingLevel === 'MEDIUM'} 
-                                    onClick={() => setThinkingLevel('MEDIUM')} 
-                                    label="Medium" 
-                                    icon={<Sparkles size={14} />}
-                                />
-                                <LevelButton 
-                                    active={thinkingLevel === 'HIGH'} 
-                                    onClick={() => setThinkingLevel('HIGH')} 
-                                    label="High" 
-                                    icon={<Cpu size={14} />}
-                                />
-                            </div>
-                        </div>
+                        <ThinkingLevelSelector
+                            thinkingLevel={thinkingLevel}
+                            setThinkingLevel={setThinkingLevel}
+                            isFlash3={isFlash3}
+                        />
                     )}
 
                     {/* 2. Custom Budget Slider & Input */}
                     {mode === 'custom' && (
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                                    <Calculator size={12} /> Token Budget
-                                </label>
-                                <span className="text-xs font-mono text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)] px-2 py-0.5 rounded border border-[var(--theme-border-secondary)]">
-                                    {parseInt(customBudgetValue).toLocaleString()} tokens
-                                </span>
-                            </div>
-
-                            <div className="flex items-center gap-4">
-                                <input
-                                    type="range"
-                                    min={minBudget}
-                                    max={maxBudget}
-                                    step={128}
-                                    value={customBudgetValue}
-                                    onChange={(e) => handleCustomBudgetChange(e.target.value)}
-                                    className="flex-grow h-1.5 bg-[var(--theme-border-secondary)] rounded-lg appearance-none cursor-pointer accent-[var(--theme-bg-accent)] hover:accent-[var(--theme-bg-accent-hover)]"
-                                />
-                                <div className="relative w-24">
-                                    <input
-                                        type="number"
-                                        value={customBudgetValue}
-                                        onChange={(e) => handleCustomBudgetChange(e.target.value)}
-                                        className={`${SETTINGS_INPUT_CLASS} w-full py-1.5 pl-2 pr-1 text-sm rounded-lg text-center font-mono focus:ring-2 focus:ring-[var(--theme-border-focus)]`}
-                                        min={minBudget}
-                                        max={maxBudget}
-                                    />
-                                </div>
-                            </div>
-                            <p className="text-[10px] text-[var(--theme-text-tertiary)] text-center">
-                                Controls the maximum number of tokens the model can use for its internal thought process ({minBudget}-{maxBudget}).
-                            </p>
-                        </div>
+                        <ThinkingBudgetSlider
+                            minBudget={minBudget}
+                            maxBudget={maxBudget}
+                            value={customBudgetValue}
+                            onChange={handleCustomBudgetChange}
+                        />
                     )}
 
                     {/* 3. Off State Message */}

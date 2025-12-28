@@ -84,4 +84,6 @@ export interface AppSettings extends ChatSettings {
  isAudioCompressionEnabled: boolean;
  autoCanvasVisualization?: boolean;
  autoCanvasModelId: string;
+ isPasteRichTextAsMarkdownEnabled?: boolean;
+ isPasteAsTextFileEnabled?: boolean;
 }

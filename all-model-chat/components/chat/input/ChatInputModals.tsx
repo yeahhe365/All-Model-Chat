@@ -18,6 +18,8 @@ export interface ChatInputModalsProps {
   isProcessingFile: boolean;
   isLoading: boolean;
   t: (key: keyof typeof translations) => string;
+  initialContent?: string;
+  initialFilename?: string;
 }
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
@@ -33,6 +35,8 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   isProcessingFile,
   isLoading,
   t,
+  initialContent,
+  initialFilename,
 }) => {
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
     return null;
@@ -41,7 +45,17 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   return (
     <>
       {showRecorder && <AudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />}
-      {showCreateTextFileEditor && <CreateTextFileEditor onConfirm={onConfirmCreateTextFile} onCancel={onCreateTextFileCancel} isProcessing={isProcessingFile} isLoading={isLoading} t={t as (key: string) => string} />}
+      {showCreateTextFileEditor && (
+        <CreateTextFileEditor 
+            onConfirm={onConfirmCreateTextFile} 
+            onCancel={onCreateTextFileCancel} 
+            isProcessing={isProcessingFile} 
+            isLoading={isLoading} 
+            t={t as (key: string) => string} 
+            initialContent={initialContent}
+            initialFilename={initialFilename}
+        />
+      )}
       {isHelpModalOpen && <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />}
     </>
   );

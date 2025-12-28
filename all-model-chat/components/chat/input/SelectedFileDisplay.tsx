@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
-import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, Settings2 } from 'lucide-react';
+import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, Settings2, Edit3 } from 'lucide-react';
 import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
@@ -50,19 +49,21 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const isVideo = category === 'video' || category === 'youtube';
   const isImage = category === 'image';
   const isPdf = category === 'pdf';
+  const isText = category === 'code'; // Based on getFileTypeCategory logic
   
-  // Determine if this file supports configuration (Video Clipping OR Gemini 3 Resolution)
+  // Determine if this file supports configuration (Video Clipping OR Gemini 3 Resolution OR Text Editing)
   const canConfigure = onConfigure && isActive && !file.error && (
-      isVideo || (isGemini3 && (isImage || isPdf))
+      isVideo || (isGemini3 && (isImage || isPdf)) || isText
   );
 
   const progress = file.progress ?? 0;
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
 
   // Icon Selection Logic:
-  // If it's Gemini 3, we support resolution settings (and maybe clipping). Use Settings/Sliders icon.
+  // If it's a text file, use Edit icon
+  // If it's Gemini 3, we support resolution settings. Use Sliders icon.
   // If it's NOT Gemini 3 but is Video, we only support clipping. Use Scissors.
-  const ConfigIcon = (isGemini3) ? SlidersHorizontal : (isVideo ? Scissors : Settings2);
+  const ConfigIcon = isText ? Edit3 : (isGemini3 ? SlidersHorizontal : (isVideo ? Scissors : Settings2));
 
   return (
     <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>
@@ -137,7 +138,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
              <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onConfigure && onConfigure(file); }}
-                title="Configure File"
+                title={isText ? "Edit File" : "Configure File"}
                 className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md hover:bg-black/70 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
              >
                 <ConfigIcon size={12} strokeWidth={2} />

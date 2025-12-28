@@ -102,6 +102,8 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
   autoCanvasVisualization: false,
   autoCanvasModelId: 'gemini-3-flash-preview',
+  isPasteRichTextAsMarkdownEnabled: true,
+  isPasteAsTextFileEnabled: true,
 };
 
 export const SUGGESTIONS_KEYS = [
