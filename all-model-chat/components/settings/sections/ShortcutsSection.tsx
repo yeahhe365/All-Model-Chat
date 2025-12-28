@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { translations } from '../../../utils/appUtils';
-import { Command, ArrowUp } from 'lucide-react';
+import { Command, ArrowUp, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface ShortcutsSectionProps {
     t: (key: keyof typeof translations | string) => string;
@@ -69,6 +70,7 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ t }) => {
                 </h4>
                 <ShortcutRow label={t('shortcuts_stop_cancel')} keys={[<Kbd>Esc</Kbd>]} />
                 <ShortcutRow label={t('shortcuts_save_confirm')} keys={[modKey, <Kbd>Enter</Kbd>]} />
+                <ShortcutRow label={t('shortcuts_file_nav')} keys={[<Kbd><ArrowLeft size={10} /></Kbd>, <Kbd><ArrowRight size={10} /></Kbd>]} />
             </div>
         </div>
     );

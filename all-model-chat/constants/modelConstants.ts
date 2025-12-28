@@ -15,6 +15,7 @@ export const INITIAL_PINNED_MODELS: string[] = [
     'gemini-2.5-flash-preview-09-2025',
     'gemini-2.5-flash-lite-preview-09-2025',
     'gemini-2.5-flash-native-audio-preview-12-2025',
+    'gemma-3-27b-it',
 ];
 
 export const GEMINI_3_RO_MODELS: string[] = [

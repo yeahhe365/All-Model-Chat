@@ -22,4 +22,5 @@ export const shortcutsSettings = {
     shortcuts_global_title: { en: 'Global & Dialogs', zh: '全局与弹窗' },
     shortcuts_stop_cancel: { en: 'Stop / Cancel', zh: '停止 / 取消' },
     shortcuts_save_confirm: { en: 'Save / Confirm', zh: '保存 / 确认' },
+    shortcuts_file_nav: { en: 'Next/Prev File', zh: '切换文件' },
 };
