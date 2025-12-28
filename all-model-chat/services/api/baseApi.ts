@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
@@ -143,9 +144,11 @@ export const buildGenerationConfig = (
     // but we can omit the global config to avoid conflict, or set it if per-part isn't used.
     // However, if we are NOT Gemini 3, we MUST use global config.
     const isGemini3 = isGemini3Model(modelId);
+    // Gemma models do not support media resolution at all
+    const isGemma = modelId.toLowerCase().includes('gemma');
     
-    if (!isGemini3 && mediaResolution) {
-        // For non-Gemini 3 models, apply global resolution if specified
+    if (!isGemini3 && !isGemma && mediaResolution) {
+        // For non-Gemini 3 models (and not Gemma), apply global resolution if specified
         generationConfig.mediaResolution = mediaResolution;
     } 
     // Note: For Gemini 3, we don't set global mediaResolution here because we inject it into parts in `buildContentParts`.
