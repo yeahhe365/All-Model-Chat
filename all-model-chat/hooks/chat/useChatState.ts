@@ -33,9 +33,31 @@ export const useChatState = (appSettings: AppSettings) => {
         setSavedSessions(prevSessions => {
             const newSessions = updater(prevSessions);
             if (persist) {
-                dbService.setAllSessions(newSessions)
-                    .then(() => logService.debug('Persisted sessions to IndexedDB.'))
-                    .catch(e => logService.error('Failed to persist sessions', { error: e }));
+                // Optimization: Granular updates based on reference equality
+                const updates: Promise<void>[] = [];
+                const newSessionsMap = new Map(newSessions.map(s => [s.id, s]));
+                
+                // 1. Detect Updated or Added sessions
+                // We rely on React immutability: if reference changes, object changed.
+                newSessions.forEach(session => {
+                    const prevSession = prevSessions.find(s => s.id === session.id);
+                    if (prevSession !== session) {
+                        updates.push(dbService.saveSession(session));
+                    }
+                });
+
+                // 2. Detect Deleted sessions
+                prevSessions.forEach(session => {
+                    if (!newSessionsMap.has(session.id)) {
+                        updates.push(dbService.deleteSession(session.id));
+                    }
+                });
+
+                if (updates.length > 0) {
+                    Promise.all(updates)
+                        // .then(() => logService.debug(`Persisted ${updates.length} session updates atomically.`))
+                        .catch(e => logService.error('Failed to persist session updates', { error: e }));
+                }
             }
             return newSessions;
         });

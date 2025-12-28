@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings } from '../../types';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
 import { useFileSelectionHandlers } from '../chat-input-handlers/useFileSelectionHandlers';
@@ -79,6 +80,9 @@ interface UseChatInputHandlersProps {
     adjustTextareaHeight: () => void;
     clearCurrentDraft: () => void;
     handleToggleFullscreen: () => void;
+    onStopGenerating: () => void;
+    onCancelEdit: () => void;
+    onEditLastUserMessage: () => void;
     
     // Environment
     isMobile: boolean;
@@ -102,6 +106,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
 
     // 2. Input, Paste, URL logic
     const { handleAddUrl, handlePaste, handleInputChange } = useInputAndPasteHandlers({
+        setInputText: props.setInputText,
         setUrlInput: props.setUrlInput,
         setShowAddByUrlInput: props.setShowAddByUrlInput,
         setAppFileError: props.setAppFileError,
@@ -114,6 +119,8 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         showCamera: props.showCamera,
         showRecorder: props.showRecorder,
         handleSlashInputChange: props.handleSlashInputChange,
+        isPasteRichTextAsMarkdownEnabled: props.appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
+        isPasteAsTextFileEnabled: props.appSettings.isPasteAsTextFileEnabled ?? true,
     });
 
     // 3. Submission & Translation
@@ -155,9 +162,14 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         isDesktop: props.isDesktop,
         handleSlashCommandExecution: props.handleSlashCommandExecution,
         canSend: props.canSend,
-        handleSubmit, // Pass the handler from step 3
+        handleSubmit, 
         isFullscreen: props.isFullscreen,
         handleToggleFullscreen: props.handleToggleFullscreen,
+        isLoading: props.isLoading,
+        onStopGenerating: props.onStopGenerating,
+        isEditing: props.isEditing,
+        onCancelEdit: props.onCancelEdit,
+        onEditLastUserMessage: props.onEditLastUserMessage,
     });
 
     // 5. File Management (Remove, Add ID, Config, Preview Nav)
@@ -185,7 +197,8 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         setPreviewFile: props.setPreviewFile,
     });
 
-    return {
+    // Memoize the return object to stabilize prop references downstream
+    return useMemo(() => ({
         handleFileChange,
         handleFolderChange,
         handleZipChange,
@@ -203,5 +216,13 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         handleNextImage,
         inputImages,
         currentImageIndex
-    };
+    }), [
+        handleFileChange, handleFolderChange, handleZipChange,
+        handleAddUrl, handlePaste, handleInputChange,
+        handleSubmit, handleTranslate, handleKeyDown,
+        removeSelectedFile, handleAddFileByIdSubmit,
+        handleToggleToolAndFocus, handleSaveFileConfig,
+        handlePrevImage, handleNextImage,
+        inputImages, currentImageIndex
+    ]);
 };

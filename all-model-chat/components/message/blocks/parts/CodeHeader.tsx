@@ -41,7 +41,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
             <div className="flex items-center gap-0.5 flex-shrink-0">
                 {showPreview && (
                     <>
-                        <button className={`${MESSAGE_BLOCK_BUTTON_CLASS} hidden md:block`} title="Open in Side Panel" onClick={onOpenSide}>
+                        <button className={MESSAGE_BLOCK_BUTTON_CLASS} title="Open in Side Panel" onClick={onOpenSide}>
                             <Sidebar size={14} strokeWidth={2} />
                         </button>
                         <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onFullscreen(true)}> 

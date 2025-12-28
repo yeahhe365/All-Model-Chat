@@ -1,23 +1,19 @@
 
 import React, { useState } from 'react';
 import { Mic, Info } from 'lucide-react';
-import { AVAILABLE_TTS_VOICES, AVAILABLE_TRANSCRIPTION_MODELS } from '../../../constants/appConstants';
+import { AVAILABLE_TRANSCRIPTION_MODELS } from '../../../constants/appConstants';
 import { Tooltip } from '../../shared/Tooltip';
 import { Select } from '../../shared/Select';
 
 interface VoiceControlProps {
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
-  ttsVoice: string;
-  setTtsVoice: (value: string) => void;
   t: (key: string) => string;
 }
 
 export const VoiceControl: React.FC<VoiceControlProps> = ({
   transcriptionModelId,
   setTranscriptionModelId,
-  ttsVoice,
-  setTtsVoice,
   t
 }) => {
   return (
@@ -43,16 +39,6 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
                 onChange={(e) => setTranscriptionModelId(e.target.value)}
             >
                 {AVAILABLE_TRANSCRIPTION_MODELS.map((model) => ( <option key={model.id} value={model.id}>{model.name}</option>))}
-            </Select>
-
-            <Select
-                id="tts-voice-select"
-                label={t('settingsTtsVoice')}
-                layout="horizontal"
-                value={ttsVoice}
-                onChange={(e) => setTtsVoice(e.target.value)}
-            >
-                {AVAILABLE_TTS_VOICES.map((voice) => ( <option key={voice.id} value={voice.id}>{voice.name}</option> ))}
             </Select>
         </div>
     </div>

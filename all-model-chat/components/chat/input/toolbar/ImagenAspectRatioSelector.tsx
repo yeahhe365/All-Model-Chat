@@ -1,9 +1,7 @@
 
 import React, { useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { Sparkles, ChevronDown, Check } from 'lucide-react';
 import { useClickOutside } from '../../../../hooks/useClickOutside';
-import { useWindowContext } from '../../../../contexts/WindowContext';
 
 const AspectRatioIcon = ({ ratio, className }: { ratio: string; className?: string }) => {
     if (ratio === 'Auto') {
@@ -37,23 +35,17 @@ interface ImagenAspectRatioSelectorProps {
 
 export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps> = ({ aspectRatio, setAspectRatio, t, supportedRatios }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const buttonRef = useRef<HTMLButtonElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const { document: targetDocument, window: targetWindow } = useWindowContext();
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    useClickOutside(dropdownRef, (e) => {
-        if (buttonRef.current && buttonRef.current.contains(e.target as Node)) return;
-        setIsOpen(false);
-    }, isOpen);
+    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
     const toggleOpen = () => setIsOpen(!isOpen);
 
     const ratios = supportedRatios || defaultAspectRatios;
 
     return (
-        <div className="mb-2 relative">
+        <div className="mb-2 relative" ref={containerRef}>
             <button
-                ref={buttonRef}
                 onClick={toggleOpen}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] text-xs font-medium text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
                 title={t('aspectRatio_title')}
@@ -63,31 +55,9 @@ export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps>
                 <ChevronDown size={14} className={`text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {isOpen && createPortal(
+            {isOpen && (
                 <div
-                    ref={dropdownRef}
-                    className="fixed z-[2200] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col w-40"
-                    style={{
-                        ...(buttonRef.current ? (() => {
-                            const rect = buttonRef.current.getBoundingClientRect();
-                            // Default to dropup since toolbar is at bottom
-                            const spaceAbove = rect.top;
-                            const dropdownHeight = 320; // Approx max height
-                            
-                            if (spaceAbove > dropdownHeight) {
-                                return {
-                                    left: rect.left,
-                                    bottom: targetWindow.innerHeight - rect.top + 8,
-                                    maxHeight: '300px'
-                                };
-                            }
-                            return {
-                                left: rect.left,
-                                top: rect.bottom + 8,
-                                maxHeight: '300px'
-                            };
-                        })() : {})
-                    }}
+                    className="absolute bottom-full left-0 mb-2 z-[50] bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium overflow-hidden animate-in fade-in zoom-in-95 duration-100 flex flex-col w-40 max-h-[300px]"
                 >
                     <div className="overflow-y-auto custom-scrollbar p-1">
                         {ratios.map(r => (
@@ -108,8 +78,7 @@ export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps>
                             </button>
                         ))}
                     </div>
-                </div>,
-                targetDocument.body
+                </div>
             )}
         </div>
     );

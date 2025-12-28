@@ -1,0 +1,141 @@
+
+/* Base Variables & Reset */
+:root {
+  /* Apple-style spring easing for premium feel */
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-circ: cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+/* Global Layout Reset for Full Height */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent body scroll, let React app handle scrolling */
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom Selection Color (Yellow Note Style) */
+::selection {
+  background-color: #fde047; /* Yellow-300 */
+  color: #1f2937; /* Gray-800 for readability */
+}
+
+::-moz-selection {
+  background-color: #fde047;
+  color: #1f2937;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-scrollbar-thumb) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--theme-scrollbar-thumb);
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--theme-border-focus);
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Hide Scrollbar Utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Fade Mask for horizontal scroll lists */
+.fade-mask-x {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent);
+  mask-image: linear-gradient(to right, transparent, black 10px, black calc(100% - 10px), transparent);
+}
+
+/* Tooltip Styles */
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: max-content;
+  max-width: 240px;
+  background-color: var(--theme-bg-tertiary);
+  color: var(--theme-text-primary);
+  text-align: center;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  position: absolute;
+  z-index: 50;
+  bottom: 135%;
+  left: 50%;
+  transform: translateX(-50%) scale(0.95);
+  opacity: 0;
+  transition: all 0.2s var(--ease-out-expo);
+  border: 1px solid var(--theme-border-secondary);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: normal;
+  pointer-events: none;
+  line-height: 1.4;
+  transform-origin: bottom center;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+/* 
+   EXPORT STYLES 
+   Target specific elements to hide during PNG export
+*/
+.is-exporting-png .message-actions,
+.is-exporting-png button:not(.code-block-dummy-btn), /* Keep code buttons structure but hide logic below */
+.is-exporting-png .code-block-utility-button,
+.is-exporting-png [aria-label*="Scroll to"], 
+.is-exporting-png .sticky {
+  display: none !important;
+}
+
+/* Hide suggestion chips in export */
+.is-exporting-png button[class*="rounded-xl"] {
+    display: none !important;
+}
+
+/* Hide scrollbars in export */
+.is-exporting-png * {
+    scrollbar-width: none !important;
+}
+.is-exporting-png *::-webkit-scrollbar {
+    display: none !important;
+}

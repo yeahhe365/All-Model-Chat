@@ -213,7 +213,7 @@ export const finalizeMessages = (
                 ...m,
                 isLoading: false,
                 content: m.content,
-                thoughts: currentChatSettings.showThoughts ? m.thoughts : undefined,
+                thoughts: m.thoughts, // Data preservation: Always save thoughts regardless of display setting
                 generationEndTime: new Date(),
                 thinkingTimeMs: thinkingTime,
                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,

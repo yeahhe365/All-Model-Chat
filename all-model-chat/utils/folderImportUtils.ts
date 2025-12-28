@@ -66,15 +66,29 @@ const generateContextContent = (rootName: string, roots: FileNode[], processedFi
     return output;
 };
 
-export const generateFolderContext = async (files: FileList): Promise<File> => {
-    const fileList = Array.from(files);
+export const generateFolderContext = async (files: FileList | File[] | { file: File, path: string }[]): Promise<File> => {
+    // Normalize input to a consistent array
+    const items = Array.isArray(files) ? files : Array.from(files);
+    
     const nodeMap = new Map<string, FileNode>();
     const roots: FileNode[] = [];
     const processedFiles: { path: string, content: string }[] = [];
 
-    // Iterate all files to build structure
-    for (const file of fileList) {
-        const path = (file as any).webkitRelativePath || file.name;
+    // Iterate all items to build structure
+    for (const item of items) {
+        let file: File;
+        let path: string;
+
+        if ('file' in item && 'path' in item && typeof item.path === 'string') {
+             // Custom object from Drag & Drop hook
+             file = item.file;
+             path = item.path;
+        } else {
+             // Standard File object (from input[type=file] webkitdirectory)
+             file = item as File;
+             path = (file as any).webkitRelativePath || file.name;
+        }
+
         const parts = path.split('/').filter((p: string) => p);
 
         // Check if any part of the path is in IGNORED_DIRS

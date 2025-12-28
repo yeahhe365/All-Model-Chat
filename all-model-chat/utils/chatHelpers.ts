@@ -1,6 +1,6 @@
 
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem, SavedChatSession, ChatSettings } from '../types';
-import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
+import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS, SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { logService } from '../services/logService';
 import { fileToBase64, fileToString } from './fileHelpers';
 import { isGemini3Model } from './modelHelpers';
@@ -175,9 +175,13 @@ export const buildContentParts = async (
     // Prioritize file-level resolution, then global resolution
     const effectiveResolution = file.mediaResolution || mediaResolution;
     
-    if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED && !isTextLike && !isYoutube) {
-        // Only apply if it has inlineData or fileData
-        if (part.inlineData || part.fileData) {
+    if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED) {
+        // Logic update: 
+        // 1. If it's fileData (File API), we always inject resolution (unless it's YouTube link which uses fileUri but is special).
+        // 2. If it's inlineData, we ensure it's not text-like.
+        const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
+
+        if (shouldInject) {
             part.mediaResolution = { level: effectiveResolution };
         }
     }
@@ -220,4 +224,30 @@ export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<Chat
       });
       
     return Promise.all(historyItemsPromises);
+};
+
+export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSession => {
+    const newMessages = session.messages.map(message => {
+        if (!message.files?.length) return message;
+
+        const newFiles = message.files.map(file => {
+            // Check if it's an image that was stored locally (has rawFile)
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.rawFile) {
+                try {
+                    // Create a new blob URL. The browser will handle the old invalid one on page unload.
+                    const dataUrl = URL.createObjectURL(file.rawFile);
+                    return { ...file, dataUrl: dataUrl };
+                } catch (error) {
+                    logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
+                    // Keep the file but mark that preview failed
+                    return { ...file, dataUrl: undefined, error: "Preview failed to load" };
+                }
+            }
+            return file;
+        });
+
+        return { ...message, files: newFiles };
+    });
+
+    return { ...session, messages: newMessages };
 };

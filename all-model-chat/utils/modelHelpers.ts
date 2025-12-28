@@ -1,6 +1,6 @@
 
 import { ModelOption } from '../types';
-import { GEMINI_3_RO_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, TAB_CYCLE_MODELS } from '../constants/appConstants';
+import { GEMINI_3_RO_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, TAB_CYCLE_MODELS, INITIAL_PINNED_MODELS } from '../constants/appConstants';
 import { MediaResolution } from '../types/settings';
 
 // --- Model Sorting & Defaults ---
@@ -8,9 +8,10 @@ import { MediaResolution } from '../types/settings';
 export const sortModels = (models: ModelOption[]): ModelOption[] => {
     const getCategoryWeight = (id: string) => {
         const lower = id.toLowerCase();
-        if (lower.includes('tts')) return 4;
-        if (lower.includes('imagen')) return 3;
-        if (lower.includes('image')) return 2;
+        if (lower.includes('tts')) return 5;
+        if (lower.includes('imagen')) return 4;
+        if (lower.includes('image')) return 3;
+        if (lower.includes('native-audio')) return 2;
         return 1;
     };
 
@@ -34,12 +35,14 @@ export const sortModels = (models: ModelOption[]): ModelOption[] => {
 };
 
 export const getDefaultModelOptions = (): ModelOption[] => {
-    const pinnedInternalModels: ModelOption[] = TAB_CYCLE_MODELS.map(id => {
+    const pinnedInternalModels: ModelOption[] = INITIAL_PINNED_MODELS.map(id => {
         let name;
         if (id === 'gemini-2.5-flash-preview-09-2025') {
             name = 'Gemini 2.5 Flash';
         } else if (id === 'gemini-2.5-flash-lite-preview-09-2025') {
             name = 'Gemini 2.5 Flash Lite';
+        } else if (id === 'gemini-2.5-flash-native-audio-preview-12-2025') {
+            name = 'Gemini 2.5 Flash Native Audio';
         } else if (id.toLowerCase().includes('gemma')) {
              name = id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         } else {

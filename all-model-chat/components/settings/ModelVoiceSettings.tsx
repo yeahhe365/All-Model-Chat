@@ -179,8 +179,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
       <VoiceControl
         transcriptionModelId={transcriptionModelId}
         setTranscriptionModelId={setTranscriptionModelId}
-        ttsVoice={ttsVoice}
-        setTtsVoice={setTtsVoice}
         t={t}
       />
     </div>

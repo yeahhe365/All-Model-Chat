@@ -163,6 +163,7 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     onOpenSidePanel: handleOpenSidePanel,
     onUpdateMessageContent: chatState.handleUpdateMessageContent,
     handleUpdateMessageFile: chatState.handleUpdateMessageFile,
+    onAddUserMessage: chatState.handleAddUserMessage,
     t,
   }), [
     chatState, uiState, appSettings, currentTheme, language, t, sessionTitle, 

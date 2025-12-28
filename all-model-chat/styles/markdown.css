@@ -1,0 +1,202 @@
+
+/* Markdown Body Overrides to prevent theme conflicts */
+.markdown-body {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+
+/* Ensure first element doesn't push down the content, aligning text with avatar */
+.markdown-body > *:first-child {
+  margin-top: 0 !important;
+}
+
+.markdown-body p {
+  color: inherit !important;
+}
+
+.markdown-body a {
+  color: var(--theme-text-link) !important;
+}
+
+.markdown-body pre {
+  background-color: var(--theme-bg-code-block) !important;
+}
+
+/* Blockquote Overrides */
+.markdown-body blockquote {
+  color: inherit !important; /* Inherit color to ensure high contrast in chat bubbles */
+  border-left: 3px solid currentColor !important; /* Use current text color for border */
+  background-color: transparent !important;
+  padding: 0.25rem 0 0.25rem 1rem !important;
+  margin: 0.5rem 0 !important;
+  opacity: 0.85; /* Slight dimming for differentiation, but keeping high readability */
+}
+
+/* Ensure lists are visible */
+.markdown-body ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+}
+
+.markdown-body ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+}
+
+.markdown-body li {
+  display: list-item !important;
+}
+
+/* Highlight.js Overrides for seamless integration */
+.markdown-body pre code.hljs,
+code.hljs {
+  background-color: transparent !important;
+}
+
+/* Inline Code Styling - Emphasis */
+.markdown-body code:not(pre code) {
+  color: var(--theme-text-link) !important;
+  background-color: var(--theme-bg-info) !important;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.2em 0.4em;
+  border: 1px solid var(--theme-bg-info);
+  font-size: 0.9em;
+}
+
+/* Table Styles - Clean Transparent Style with NO Black Backgrounds */
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0; /* Handled by TableBlock wrapper */
+  background-color: transparent !important;
+}
+
+.markdown-body thead {
+  background-color: transparent !important;
+}
+
+/* Explicitly target thead tr to remove any black background on the first row */
+.markdown-body thead tr {
+  background-color: transparent !important;
+}
+
+.markdown-body thead th {
+  background-color: transparent !important; /* Removed solid background */
+  color: var(--theme-text-primary) !important; /* Ensure header text is visible */
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: 1px solid var(--theme-border-secondary) !important;
+  border-bottom: 2px solid var(--theme-border-secondary) !important; /* Distinct separation */
+  white-space: nowrap;
+}
+
+.markdown-body tbody {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody td {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--theme-border-secondary) !important;
+  color: var(--theme-text-secondary) !important;
+  vertical-align: middle;
+  background-color: transparent !important;
+}
+
+/* Removed zebra striping to avoid "black effect" on dark themes */
+.markdown-body tbody tr {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody tr:nth-child(2n) {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody tr:nth-child(odd) {
+  background-color: transparent !important;
+}
+
+.markdown-body tbody tr:hover {
+  background-color: var(--theme-bg-tertiary) !important;
+}
+
+/* Highlight the last row typically used for Totals */
+.markdown-body tbody tr:last-child td {
+  font-weight: 600;
+  color: var(--theme-text-primary) !important;
+}
+
+/* Citation Styles */
+.citation-ref {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: bold;
+  color: var(--theme-text-link) !important;
+  text-decoration: none !important;
+  vertical-align: super;
+  line-height: 1;
+  margin: 0 1px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.citation-ref:hover {
+  color: var(--theme-text-accent) !important;
+  text-decoration: underline !important;
+}
+
+/* Gemini Code Execution Result Styles */
+.tool-result {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  background-color: var(--theme-bg-code-block);
+  border-left: 3px solid var(--theme-border-secondary);
+  overflow-x: auto;
+  color: var(--theme-text-primary); /* Ensure default text is readable */
+}
+
+.tool-result.outcome-ok {
+  border-left-color: var(--theme-text-success);
+  background-color: rgba(22, 163, 74, 0.05);
+}
+
+.tool-result.outcome-failed, .tool-result.outcome-dead {
+  border-left-color: var(--theme-icon-error);
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+.tool-result strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+/* Ensure pre/code blocks inside tool results are readable and handle overflow */
+.tool-result pre {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--theme-text-primary) !important; /* Force primary text color */
+  font-family: inherit;
+}
+
+/* Target the specific structure from CodeBlock if it's used inside tool-result */
+.tool-result .group.relative.rounded-lg {
+    border: 1px solid var(--theme-border-secondary);
+    background-color: var(--theme-bg-primary); /* Slightly elevate the code block */
+}

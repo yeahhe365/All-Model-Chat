@@ -69,7 +69,6 @@ export const useSlashCommands = ({
     { name: 'edit', description: t('help_cmd_edit'), icon: 'edit', action: onEditLastUserMessage },
     { name: 'pin', description: t('help_cmd_pin'), icon: 'pin', action: onTogglePinCurrentSession },
     { name: 'retry', description: t('help_cmd_retry'), icon: 'retry', action: onRetryLastTurn },
-    { name: 'stop', description: t('help_cmd_stop'), icon: 'stop', action: onStopGenerating },
     { name: 'online', description: t('help_cmd_search'), icon: 'search', action: onToggleGoogleSearch },
     { name: 'deep', description: t('help_cmd_deep'), icon: 'deep', action: onToggleDeepSearch },
     { name: 'code', description: t('help_cmd_code'), icon: 'code', action: onToggleCodeExecution },
@@ -90,16 +89,24 @@ export const useSlashCommands = ({
   const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;
     
+    // Execute the command action immediately
     command.action();
     
     setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
 
     const commandsThatPopulateInput = ['model', 'edit'];
-    // This check prevents clearing the input for commands like /edit or /model
-    // and also for the dynamic model selection commands (whose actions handle clearing the input themselves).
-    if (!commandsThatPopulateInput.includes(command.name) && !availableModels.some(m => m.name === command.name)) {
-        setInputText('');
-        onMessageSent();
+    const isDynamicModelCommand = availableModels.some(m => m.name === command.name);
+
+    // If the command is meant to clear the input (i.e. not a template command or dynamic model selection)
+    // we explicitly clear the text.
+    // Dynamic model commands handle their own clearing in their action definition (see handleInputChange).
+    if (!commandsThatPopulateInput.includes(command.name) && !isDynamicModelCommand) {
+        // Use setTimeout to ensure the input clear happens after the event loop tick
+        // This solves issues where Enter key press might interfere with state updates
+        setTimeout(() => {
+            setInputText('');
+            onMessageSent();
+        }, 0);
     }
   }, [onMessageSent, setInputText, availableModels]);
   

@@ -3,16 +3,11 @@ import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
 import { Theme } from '../../constants/themeConstants';
 import { translations } from '../../utils/appUtils';
-import { ApiConfigSection } from './sections/ApiConfigSection';
-import { AppearanceSection } from './sections/AppearanceSection';
-import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
-import { DataManagementSection } from './sections/DataManagementSection';
-import { ShortcutsSection } from './sections/ShortcutsSection';
-import { AboutSection } from './sections/AboutSection';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { useSettingsLogic } from '../../hooks/features/useSettingsLogic';
 import { SettingsSidebar } from './SettingsSidebar';
+import { SettingsContent } from './SettingsContent';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -75,8 +70,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const animClass = "animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both";
-
   return (
     <>
         <Modal 
@@ -108,110 +101,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     onScroll={handleContentScroll}
                     className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8"
                 >
-                    <div className="max-w-3xl mx-auto w-full">
-                        {activeTab === 'model' && (
-                            <div className={`${animClass} max-w-4xl mx-auto`}>
-                                <ChatBehaviorSection
-                                    modelId={currentSettings.modelId} 
-                                    setModelId={handleModelChange}
-                                    transcriptionModelId={currentSettings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
-                                    generateQuadImages={currentSettings.generateQuadImages ?? false} setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
-                                    ttsVoice={currentSettings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
-                                    systemInstruction={currentSettings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
-                                    temperature={currentSettings.temperature} setTemperature={(v) => updateSetting('temperature', v)}
-                                    topP={currentSettings.topP} setTopP={(v) => updateSetting('topP', v)}
-                                    showThoughts={currentSettings.showThoughts} setShowThoughts={(v) => updateSetting('showThoughts', v)}
-                                    thinkingBudget={currentSettings.thinkingBudget} setThinkingBudget={(v) => updateSetting('thinkingBudget', v)}
-                                    thinkingLevel={currentSettings.thinkingLevel} setThinkingLevel={(v) => updateSetting('thinkingLevel', v)}
-                                    safetySettings={currentSettings.safetySettings} setSafetySettings={(v) => updateSetting('safetySettings', v)}
-                                    mediaResolution={currentSettings.mediaResolution} setMediaResolution={(v) => updateSetting('mediaResolution', v)}
-                                    autoCanvasVisualization={currentSettings.autoCanvasVisualization ?? false}
-                                    setAutoCanvasVisualization={(v) => updateSetting('autoCanvasVisualization', v)}
-                                    autoCanvasModelId={currentSettings.autoCanvasModelId || 'gemini-3-flash-preview'}
-                                    setAutoCanvasModelId={(v) => updateSetting('autoCanvasModelId', v)}
-                                    availableModels={availableModels}
-                                    t={t}
-                                    setAvailableModels={setAvailableModels}
-                                />
-                            </div>
-                        )}
-                        {activeTab === 'interface' && (
-                            <div className={animClass}>
-                                <AppearanceSection
-                                    themeId={currentSettings.themeId}
-                                    setThemeId={(val) => updateSetting('themeId', val)}
-                                    language={currentSettings.language}
-                                    setLanguage={(val) => updateSetting('language', val)}
-                                    isCompletionNotificationEnabled={currentSettings.isCompletionNotificationEnabled}
-                                    setIsCompletionNotificationEnabled={(val) => updateSetting('isCompletionNotificationEnabled', val)}
-                                    baseFontSize={currentSettings.baseFontSize}
-                                    setBaseFontSize={(val) => updateSetting('baseFontSize', val)}
-                                    expandCodeBlocksByDefault={currentSettings.expandCodeBlocksByDefault}
-                                    setExpandCodeBlocksByDefault={(v) => updateSetting('expandCodeBlocksByDefault', v)}
-                                    isMermaidRenderingEnabled={currentSettings.isMermaidRenderingEnabled}
-                                    setIsMermaidRenderingEnabled={(v) => updateSetting('isMermaidRenderingEnabled', v)}
-                                    isGraphvizRenderingEnabled={currentSettings.isGraphvizRenderingEnabled ?? true}
-                                    setIsGraphvizRenderingEnabled={(v) => updateSetting('isGraphvizRenderingEnabled', v)}
-                                    isAutoScrollOnSendEnabled={currentSettings.isAutoScrollOnSendEnabled ?? true}
-                                    setIsAutoScrollOnSendEnabled={(v) => updateSetting('isAutoScrollOnSendEnabled', v)}
-                                    isStreamingEnabled={currentSettings.isStreamingEnabled}
-                                    setIsStreamingEnabled={(v) => updateSetting('isStreamingEnabled', v)}
-                                    isAutoTitleEnabled={currentSettings.isAutoTitleEnabled}
-                                    setIsAutoTitleEnabled={(v) => updateSetting('isAutoTitleEnabled', v)}
-                                    isSuggestionsEnabled={currentSettings.isSuggestionsEnabled}
-                                    setIsSuggestionsEnabled={(v) => updateSetting('isSuggestionsEnabled', v)}
-                                    isAutoSendOnSuggestionClick={currentSettings.isAutoSendOnSuggestionClick ?? true}
-                                    setIsAutoSendOnSuggestionClick={(v) => updateSetting('isAutoSendOnSuggestionClick', v)}
-                                    autoFullscreenHtml={currentSettings.autoFullscreenHtml ?? true}
-                                    setAutoFullscreenHtml={(v) => updateSetting('autoFullscreenHtml', v)}
-                                    showWelcomeSuggestions={currentSettings.showWelcomeSuggestions ?? true}
-                                    setShowWelcomeSuggestions={(v) => updateSetting('showWelcomeSuggestions', v)}
-                                    isAudioCompressionEnabled={currentSettings.isAudioCompressionEnabled}
-                                    setIsAudioCompressionEnabled={(v) => updateSetting('isAudioCompressionEnabled', v)}
-                                    filesApiConfig={currentSettings.filesApiConfig}
-                                    setFilesApiConfig={(v) => updateSetting('filesApiConfig', v)}
-                                    t={t}
-                                />
-                            </div>
-                        )}
-                        {activeTab === 'account' && (
-                            <div className={animClass}>
-                                <ApiConfigSection
-                                    useCustomApiConfig={currentSettings.useCustomApiConfig}
-                                    setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
-                                    apiKey={currentSettings.apiKey}
-                                    setApiKey={(val) => updateSetting('apiKey', val)}
-                                    apiProxyUrl={currentSettings.apiProxyUrl}
-                                    setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
-                                    useApiProxy={currentSettings.useApiProxy ?? false}
-                                    setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
-                                    t={t}
-                                />
-                            </div>
-                        )}
-                        {activeTab === 'data' && (
-                            <div className={animClass}>
-                                <DataManagementSection
-                                    onClearHistory={handleRequestClearHistory}
-                                    onClearCache={handleRequestClearCache}
-                                    onOpenLogViewer={() => { onOpenLogViewer(); onClose(); }}
-                                    onClearLogs={handleClearLogs}
-                                    onInstallPwa={onInstallPwa}
-                                    isInstallable={isInstallable}
-                                    onImportSettings={onImportSettings}
-                                    onExportSettings={onExportSettings}
-                                    onImportHistory={handleRequestImportHistory}
-                                    onExportHistory={onExportHistory}
-                                    onImportScenarios={onImportScenarios}
-                                    onExportScenarios={onExportScenarios}
-                                    onReset={handleResetToDefaults}
-                                    t={t}
-                                />
-                            </div>
-                        )}
-                        {activeTab === 'shortcuts' && ( <div className={animClass}><ShortcutsSection t={t} /></div> )}
-                        {activeTab === 'about' && ( <div className={animClass}><AboutSection t={t} /></div> )}
-                    </div>
+                    <SettingsContent
+                        activeTab={activeTab}
+                        currentSettings={currentSettings}
+                        availableModels={availableModels}
+                        updateSetting={updateSetting}
+                        handleModelChange={handleModelChange}
+                        setAvailableModels={setAvailableModels}
+                        onClearHistory={handleRequestClearHistory}
+                        onClearCache={handleRequestClearCache}
+                        onOpenLogViewer={() => { onOpenLogViewer(); onClose(); }}
+                        onClearLogs={handleClearLogs}
+                        onReset={handleResetToDefaults}
+                        onInstallPwa={onInstallPwa}
+                        isInstallable={isInstallable}
+                        onImportSettings={onImportSettings}
+                        onExportSettings={onExportSettings}
+                        onImportHistory={handleRequestImportHistory}
+                        onExportHistory={onExportHistory}
+                        onImportScenarios={onImportScenarios}
+                        onExportScenarios={onExportScenarios}
+                        t={t}
+                    />
                 </div>
             </main>
         </Modal>

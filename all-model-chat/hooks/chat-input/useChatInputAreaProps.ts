@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ChatInputAreaProps } from '../../components/chat/input/ChatInputArea';
 import { UploadedFile, ChatSettings, AppSettings } from '../../types';
@@ -7,6 +8,9 @@ interface FactoryParams {
     // Props passed down from ChatInput
     isImagenModel: boolean;
     isGemini3ImageModel: boolean;
+    isTtsModel: boolean;
+    ttsVoice?: string;
+    setTtsVoice?: (voice: string) => void;
     aspectRatio?: string;
     setAspectRatio?: (ratio: string) => void;
     imageSize?: string;
@@ -41,6 +45,7 @@ interface FactoryParams {
     showEmptyStateSuggestions?: boolean;
     onSuggestionClick?: (suggestion: string) => void;
     onOrganizeInfoClick?: (suggestion: string) => void;
+    isNativeAudioModel?: boolean;
 
     // State from hooks
     fileIdInput: string;
@@ -91,15 +96,18 @@ interface FactoryParams {
         handleToggleToolAndFocus: (fn: () => void) => void;
         handleTranslate: () => void;
         handleCommandSelect: (cmd: Command) => void;
+        onCompositionStart: () => void;
+        onCompositionEnd: () => void;
+        onStartLiveSession: () => void;
+        onConfigureFile: (file: UploadedFile) => void;
+        onPreviewFile: (file: UploadedFile) => void;
     };
 
     // UI Setters
     setShowAddByIdInput: (v: boolean) => void;
     setShowAddByUrlInput: (v: boolean) => void;
-    setFileIdInput: (v: string) => void; // Duplicate but necessary if we use it in inline handler
+    setFileIdInput: (v: string) => void; 
     setUrlInput: (v: string) => void;
-    setConfiguringFile: (f: UploadedFile | null) => void;
-    setPreviewFile: (f: UploadedFile | null) => void;
     setShowTokenModal: (v: boolean) => void;
     handleAttachmentAction: (action: any) => void;
     handleVoiceInputClick: () => void;
@@ -109,9 +117,10 @@ interface FactoryParams {
 
 export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps => {
     const {
-        isImagenModel, isGemini3ImageModel, aspectRatio, setAspectRatio, imageSize, setImageSize,
+        isImagenModel, isGemini3ImageModel, isTtsModel, ttsVoice, setTtsVoice,
+        aspectRatio, setAspectRatio, imageSize, setImageSize,
         fileError, isLoading, t, generateQuadImages, onToggleQuadImages, supportedAspectRatios, supportedImageSizes,
-        selectedFiles, onCancelUpload, isGemini3,
+        selectedFiles, onCancelUpload, isGemini3, isNativeAudioModel,
         isRecording, isMicInitializing, isTranscribing, onStopGenerating, isEditing, onCancelEdit, canSend, isWaitingForUpload,
         isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
         isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch, editMode,
@@ -121,7 +130,7 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
         isFullscreen, isPipActive, isAnimatingSend, isMobile, isConverting, isModalOpen,
         slashCommandState, textareaRef, fileInputRef, imageInputRef, folderInputRef, zipInputRef, cameraInputRef,
         handlers,
-        setShowAddByIdInput, setShowAddByUrlInput, setConfiguringFile, setPreviewFile, setShowTokenModal,
+        setShowAddByIdInput, setShowAddByUrlInput, setShowTokenModal,
         handleAttachmentAction, handleVoiceInputClick, handleCancelRecording, handleToggleFullscreen,
         showEmptyStateSuggestions, onSuggestionClick, onOrganizeInfoClick
     } = params;
@@ -130,6 +139,9 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
         toolbarProps: {
             isImagenModel: isImagenModel || false,
             isGemini3ImageModel,
+            isTtsModel,
+            ttsVoice,
+            setTtsVoice,
             aspectRatio,
             setAspectRatio,
             imageSize,
@@ -185,6 +197,8 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             onToggleFullscreen: handleToggleFullscreen,
             isFullscreen,
             editMode,
+            isNativeAudioModel,
+            onStartLiveSession: handlers.onStartLiveSession,
         },
         slashCommandProps: {
             isOpen: slashCommandState.isOpen,
@@ -196,8 +210,8 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             selectedFiles,
             onRemove: handlers.removeSelectedFile,
             onCancelUpload,
-            onConfigure: setConfiguringFile,
-            onPreview: setPreviewFile,
+            onConfigure: handlers.onConfigureFile,
+            onPreview: handlers.onPreviewFile,
             isGemini3,
         },
         inputProps: {
@@ -208,8 +222,8 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             textareaRef,
             placeholder: t('chatInputPlaceholder'),
             disabled: isModalOpen || isTranscribing || isWaitingForUpload || isRecording || isConverting,
-            onCompositionStart: () => {}, // Managed via ref in component if needed, or pass handler if extracted
-            onCompositionEnd: () => {},
+            onCompositionStart: handlers.onCompositionStart,
+            onCompositionEnd: handlers.onCompositionEnd,
             onFocus: handlers.adjustTextareaHeight,
         },
         quoteProps: {
@@ -221,7 +235,7 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             isPipActive,
             isAnimatingSend,
             isMobile,
-            initialTextareaHeight: 28, // Handled inside logic usually, passing constant or calculated value
+            initialTextareaHeight: 28,
             isConverting,
         },
         fileInputRefs: {

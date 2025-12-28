@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { AppSettings } from '../../types';
-import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES } from '../../constants/appConstants';
+import { DEFAULT_APP_SETTINGS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../constants/appConstants';
 import { translations, logService, cacheModelSettings, getCachedModelSettings } from '../../utils/appUtils';
 import { MediaResolution } from '../../types/settings';
 import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
@@ -172,13 +172,19 @@ export const useSettingsLogic = ({
         const range = THINKING_BUDGET_RANGES[newModelId];
         if (range) {
             const isGemini3 = newModelId.includes('gemini-3');
+            const isMandatory = MODELS_MANDATORY_THINKING.includes(newModelId);
 
-            if (cached?.thinkingBudget === undefined) {
-                if (!isGemini3 && newThinkingBudget !== 0) {
-                    newThinkingBudget = range.max;
-                }
+            // Mandatory Check
+            if (isMandatory && newThinkingBudget === 0) {
+                newThinkingBudget = isGemini3 ? -1 : range.max;
             }
 
+            // Auto Compatibility Check
+            if (!isGemini3 && newThinkingBudget === -1) {
+                newThinkingBudget = range.max;
+            }
+
+            // Range Clamp
             if (newThinkingBudget > 0) {
                 if (newThinkingBudget > range.max) newThinkingBudget = range.max;
                 if (newThinkingBudget < range.min) newThinkingBudget = range.min;

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { useCopyToClipboard } from './useCopyToClipboard';
 import { extractTextFromNode } from '../utils/uiUtils';
-import { isLikelyHtml, isLikelyReact, generateReactPreview } from '../utils/codeUtils';
+import { isLikelyHtml } from '../utils/codeUtils';
 import { triggerDownload, sanitizeFilename } from '../utils/exportUtils';
 import { SideViewContent } from '../types';
 
@@ -146,37 +146,18 @@ export const useCodeBlock = ({
     else if (['markdown', 'md'].includes(language)) mimeType = 'text/markdown';
 
     const contentLooksLikeHtml = isLikelyHtml(codeText.current);
-    const contentLooksLikeReact = isLikelyReact(codeText.current, language);
     const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language.toLowerCase());
     
-    const showPreview = contentLooksLikeHtml || contentLooksLikeReact || isExplicitHtmlLanguage;
+    const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (showPreview ? 'text/html' : 'text/plain');
     
     let finalLanguage = language;
     if (language === 'txt' && contentLooksLikeHtml) finalLanguage = 'html';
     else if (language === 'xml' && contentLooksLikeHtml) finalLanguage = 'html';
-    else if (contentLooksLikeReact) finalLanguage = 'react';
-
-    const preparePreviewContent = () => {
-        if (contentLooksLikeReact || finalLanguage === 'react' || finalLanguage === 'jsx' || finalLanguage === 'tsx') {
-            return {
-                content: generateReactPreview(codeText.current),
-                title: 'React Preview',
-                isReact: true
-            };
-        }
-        return {
-            content: codeText.current,
-            title: 'HTML Preview',
-            isReact: false
-        };
-    };
 
     const handleOpenSide = () => {
-        const { content, title, isReact } = preparePreviewContent();
-        
-        let displayTitle = title;
-        if (!isReact && finalLanguage === 'html') {
+        let displayTitle = 'HTML Preview';
+        if (finalLanguage === 'html') {
             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 displayTitle = titleMatch[1];
@@ -185,20 +166,19 @@ export const useCodeBlock = ({
         
         onOpenSidePanel({
             type: 'html',
-            content: content,
+            content: codeText.current,
             language: finalLanguage,
             title: displayTitle
         });
     };
 
     const handleFullscreenPreview = (trueFullscreen: boolean) => {
-        const { content } = preparePreviewContent();
-        onOpenHtmlPreview(content, { initialTrueFullscreen: trueFullscreen });
+        onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: trueFullscreen });
     };
 
     const handleDownload = () => {
-        let filename = `snippet.${finalLanguage === 'react' ? 'tsx' : finalLanguage}`;
-        if (downloadMimeType === 'text/html' && !contentLooksLikeReact) {
+        let filename = `snippet.${finalLanguage}`;
+        if (downloadMimeType === 'text/html') {
             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 let saneTitle = sanitizeFilename(titleMatch[1].trim());
