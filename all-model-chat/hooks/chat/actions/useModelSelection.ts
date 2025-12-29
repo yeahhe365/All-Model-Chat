@@ -110,6 +110,14 @@ export const useModelSelection = ({
             }
         }
         userScrolledUp.current = false;
+
+        // Auto-focus input after model selection
+        setTimeout(() => {
+            const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+            if (textarea) {
+                textarea.focus();
+            }
+        }, 50);
     }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
 
     return { handleSelectModelInHeader };

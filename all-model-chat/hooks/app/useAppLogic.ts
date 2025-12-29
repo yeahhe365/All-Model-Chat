@@ -128,6 +128,7 @@ export const useAppLogic = () => {
         thinkingLevel: newSettings.thinkingLevel,
         lockedApiKey: null,
         mediaResolution: newSettings.mediaResolution,
+        safetySettings: newSettings.safetySettings,
       }));
     }
   }, [setAppSettings, activeSessionId, setCurrentChatSettings]);

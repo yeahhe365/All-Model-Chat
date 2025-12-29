@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
 import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, Settings2, Edit3 } from 'lucide-react';
@@ -56,7 +57,6 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       isVideo || (isGemini3 && (isImage || isPdf)) || isText
   );
 
-  const progress = file.progress ?? 0;
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
 
   // Icon Selection Logic:
@@ -99,26 +99,9 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
 
         {(isUploading || isProcessing) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                {isUploading ? (
-                    <div className="flex flex-col items-center">
-                        <div className="relative w-10 h-10 flex items-center justify-center">
-                            <svg className="w-full h-full -rotate-90 drop-shadow-md" viewBox="0 0 36 36">
-                                <path className="text-[var(--theme-bg-primary)] opacity-50" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" />
-                                <path className="text-[var(--theme-text-link)] transition-all duration-200 ease-out" strokeDasharray={`${progress}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                            </svg>
-                            <span className="absolute text-[9px] font-bold text-[var(--theme-text-primary)]">{Math.round(progress)}%</span>
-                        </div>
-                        {file.uploadSpeed && (
-                            <span className="mt-1 text-[8px] font-medium text-[var(--theme-text-primary)] bg-black/40 px-1 rounded backdrop-blur-[1px] shadow-sm whitespace-nowrap">
-                                {file.uploadSpeed}
-                            </span>
-                        )}
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center gap-1">
-                        <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" />
-                    </div>
-                )}
+                <div className="flex flex-col items-center gap-1">
+                    <Loader2 size={20} className="animate-spin text-[var(--theme-text-link)]" />
+                </div>
             </div>
         )}
 

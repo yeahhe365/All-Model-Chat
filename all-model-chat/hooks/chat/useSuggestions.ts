@@ -77,6 +77,17 @@ export const useSuggestions = ({
         // Trigger condition: loading just finished for the active chat
         if (prevIsLoadingRef.current && !isLoading && appSettings.isSuggestionsEnabled && activeChat) {
             const { messages, id: sessionId, settings } = activeChat;
+            
+            // Filter out non-text models (Imagen, TTS, Audio, etc.)
+            const lowerModelId = settings.modelId.toLowerCase();
+            const isImageModel = lowerModelId.includes('imagen') || lowerModelId.includes('flash-image') || lowerModelId.includes('image-preview');
+            const isAudioModel = lowerModelId.includes('tts') || lowerModelId.includes('native-audio');
+            
+            if (isImageModel || isAudioModel) {
+                prevIsLoadingRef.current = isLoading;
+                return;
+            }
+
             if (messages.length < 2) return;
 
             const lastMessage = messages[messages.length - 1];

@@ -232,15 +232,26 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
 
         const newFiles = message.files.map(file => {
             // Check if it's an image that was stored locally (has rawFile)
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) && file.rawFile) {
-                try {
-                    // Create a new blob URL. The browser will handle the old invalid one on page unload.
-                    const dataUrl = URL.createObjectURL(file.rawFile);
-                    return { ...file, dataUrl: dataUrl };
-                } catch (error) {
-                    logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
-                    // Keep the file but mark that preview failed
-                    return { ...file, dataUrl: undefined, error: "Preview failed to load" };
+            // Fix for Issue #21: Ensure rawFile is a valid Blob/File before using it.
+            // JSON import may produce plain objects {} for rawFile which causes crashes.
+            const isValidRawFile = file.rawFile && (file.rawFile instanceof Blob || file.rawFile instanceof File);
+
+            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
+                if (isValidRawFile) {
+                    try {
+                        // Create a new blob URL. The browser will handle the old invalid one on page unload.
+                        const dataUrl = URL.createObjectURL(file.rawFile as Blob);
+                        return { ...file, dataUrl: dataUrl };
+                    } catch (error) {
+                        logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
+                        // Keep the file but mark that preview failed
+                        return { ...file, dataUrl: undefined, error: "Preview failed to load" };
+                    }
+                } else if (file.rawFile) {
+                    // It has a rawFile property but it's not a Blob (e.g. {} from JSON). Strip it.
+                    // This prevents re-using invalid file objects.
+                    const { rawFile, ...rest } = file;
+                    return rest;
                 }
             }
             return file;
@@ -250,4 +261,35 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
     });
 
     return { ...session, messages: newMessages };
+};
+
+/**
+ * Prepares a session object for export by stripping out non-serializable properties
+ * like Blobs, Files, and ephemeral URL references.
+ */
+export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession => {
+    return {
+        ...session,
+        messages: session.messages.map(msg => {
+            if (!msg.files) return msg;
+            return {
+                ...msg,
+                files: msg.files.map(f => {
+                    // Create a shallow copy to avoid mutating the original
+                    const fileCopy = { ...f };
+                    
+                    // Remove non-serializable or local-only properties
+                    // rawFile cannot be serialized to JSON and causes {} artifacts if attempted
+                    delete fileCopy.rawFile;
+                    delete fileCopy.abortController;
+                    
+                    // Remove blob URLs as they are not persistent across sessions/devices
+                    if (fileCopy.dataUrl && fileCopy.dataUrl.startsWith('blob:')) {
+                        delete fileCopy.dataUrl;
+                    }
+                    return fileCopy;
+                })
+            };
+        })
+    };
 };
