@@ -4,7 +4,7 @@
   "description": "A React-based chatbot interface that interacts with the Gemini API, featuring system message configuration, streaming responses, context management, and model selection.",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "transparent",
+  "background_color": "#ffffff",
   "theme_color": "#1f2937",
   "icons": [
     {
