@@ -18,6 +18,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
         thoughtTokens,
         generationStartTime, 
         generationEndTime, 
+        firstTokenTimeMs,
         isLoading 
     } = message;
 
@@ -41,8 +42,16 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
     // Calculate tokens per second
     // Include thought tokens in speed calculation as they are generated content
     const generatedTokens = (completionTokens || 0) + (thoughtTokens || 0);
-    const tokensPerSecond = (generatedTokens > 0 && elapsedTime > 0) 
-        ? generatedTokens / elapsedTime 
+    
+    // Calculate generation duration excluding Time to First Token (TTFT)
+    // This gives the pure generation speed (decoding speed) rather than end-to-end latency
+    let generationDuration = elapsedTime;
+    if (firstTokenTimeMs !== undefined) {
+        generationDuration = Math.max(0, elapsedTime - (firstTokenTimeMs / 1000));
+    }
+
+    const tokensPerSecond = (generatedTokens > 0 && generationDuration > 0) 
+        ? generatedTokens / generationDuration 
         : 0;
 
     const showTokens = typeof promptTokens === 'number' || typeof completionTokens === 'number' || typeof totalTokens === 'number';
@@ -73,14 +82,14 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
             )}
 
             {tokensPerSecond > 0 && (
-                <div className="flex items-center gap-1" title="Generation Speed">
+                <div className="flex items-center gap-1" title="Generation Speed (excluding TTFT)">
                     <Zap size={11} className="text-amber-400 fill-amber-400/20" strokeWidth={2} />
                     <span>{tokensPerSecond.toFixed(1)} t/s</span>
                 </div>
             )}
 
             {showTimer && (
-                <div className="tabular-nums" title="Generation Time">
+                <div className="tabular-nums" title="Total Duration">
                     {elapsedTime.toFixed(1)}s
                 </div>
             )}

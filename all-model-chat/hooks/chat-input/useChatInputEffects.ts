@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { InputCommand, UploadedFile } from '../../types';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 
@@ -247,4 +247,17 @@ export const useChatInputEffects = ({
         document.addEventListener('keydown', handleGlobalKeyDown);
         return () => document.removeEventListener('keydown', handleGlobalKeyDown);
     }, [isModalOpen, textareaRef, setInputText]);
+
+    // 6. Auto-focus on File Add (Drag & Drop or Selection)
+    const prevFileCountRef = useRef(selectedFiles.length);
+    useEffect(() => {
+        if (selectedFiles.length > prevFileCountRef.current) {
+            // Focus textarea when new files are added (e.g. drag & drop, file selection)
+            // Use a small timeout to ensure UI updates and disabled state (if any) clears
+            setTimeout(() => {
+                textareaRef.current?.focus();
+            }, 50);
+        }
+        prevFileCountRef.current = selectedFiles.length;
+    }, [selectedFiles.length, textareaRef]);
 };
