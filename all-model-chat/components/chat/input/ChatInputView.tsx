@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { ChatInputModals } from './input/ChatInputModals';
-import { ChatInputFileModals } from './input/ChatInputFileModals';
-import { ChatInputArea } from './input/ChatInputArea';
-import { useChatInputController } from '../../hooks/chat-input/useChatInputController';
+import { ChatInputModals } from './ChatInputModals';
+import { ChatInputFileModals } from './ChatInputFileModals';
+import { ChatInputArea } from './ChatInputArea';
+import { useChatInputController } from '../../../hooks/chat-input/useChatInputController';
 
 type ControllerResult = ReturnType<typeof useChatInputController>;
 
@@ -55,8 +55,6 @@ export const ChatInputView: React.FC<ControllerResult> = ({
             />
 
             <ChatInputFileModals {...fileModalsProps} />
-
-            {/* Removed LiveSessionModal, functionality integrated into ChatInputArea */}
 
             {isFullscreen ? createPortal(chatInputContent, targetDocument.body) : chatInputContent}
         </>

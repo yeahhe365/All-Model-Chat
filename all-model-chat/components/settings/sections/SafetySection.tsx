@@ -103,16 +103,22 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
     (category: HarmCategory, valueIndex: number) => {
       const nextIndex = clampIndex(valueIndex);
 
-      setSliderValues((prev) => ({ ...prev, [category]: nextIndex }));
+      setSliderValues((prev) => {
+        const nextSliderValues = { ...prev, [category]: nextIndex };
+        
+        // Reconstruct the entire settings array from the authoritative local state
+        // to prevent race conditions where rapid updates might be lost if we relied on the 'safetySettings' prop.
+        const updatedSettings = ALL_CATEGORIES.map((cat) => ({
+            category: cat,
+            threshold: thresholdSteps[nextSliderValues[cat] ?? 3] ?? HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE
+        }));
 
-      const newThreshold = thresholdSteps[nextIndex] ?? HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE;
+        setSafetySettings(updatedSettings);
 
-      const base = normalizeSettings(safetySettings);
-      const updated = base.map((s) => (s.category === category ? { ...s, threshold: newThreshold } : s));
-
-      setSafetySettings(updated);
+        return nextSliderValues;
+      });
     },
-    [safetySettings, setSafetySettings]
+    [setSafetySettings]
   );
 
   return (
@@ -130,6 +136,7 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
       <div className="grid gap-6">
         {normalizedSettings.map((setting) => {
           const category = setting.category;
+          // Use local state for immediate feedback, fallback to prop derived value
           const sliderValue = sliderValues[category] ?? indexFromThreshold(setting.threshold);
           const effectiveThreshold = thresholdSteps[sliderValue] ?? HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE;
 

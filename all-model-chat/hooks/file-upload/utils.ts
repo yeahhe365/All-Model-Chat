@@ -1,3 +1,4 @@
+
 import { 
     SUPPORTED_TEXT_MIME_TYPES, 
     TEXT_BASED_EXTENSIONS, 
@@ -47,7 +48,9 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
     else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
     else userPrefersFileApi = appSettings.filesApiConfig.text; // Fallback for text/code
 
-    return userPrefersFileApi || file.size > LARGE_FILE_THRESHOLD;
+    // Respect the user's toggle strictly. 
+    // If OFF, send inline regardless of size (even if > 20MB, though API might reject it).
+    return userPrefersFileApi;
 };
 
 export const checkBatchNeedsApiKey = (files: File[], appSettings: AppSettings): boolean => {

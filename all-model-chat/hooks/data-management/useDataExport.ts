@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
-import { logService } from '../../utils/appUtils';
+import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/exportUtils';
 
 interface UseDataExportProps {
@@ -37,7 +37,10 @@ export const useDataExport = ({
     const handleExportHistory = useCallback(() => {
         logService.info(`Exporting chat history.`);
         try {
-            const dataToExport = { type: 'AllModelChat-History', version: 1, history: savedSessions, groups: savedGroups };
+            // Sanitize all sessions before export to remove rawFile/Blobs/AbortControllers
+            const sanitizedSessions = savedSessions.map(sanitizeSessionForExport);
+            
+            const dataToExport = { type: 'AllModelChat-History', version: 1, history: sanitizedSessions, groups: savedGroups };
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const date = new Date().toISOString().slice(0, 10);

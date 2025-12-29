@@ -2,7 +2,7 @@
 import React from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
-import { ChatInput } from '../chat/ChatInput';
+import { ChatInput } from '../chat/input/ChatInput';
 import { DragDropOverlay } from '../chat/overlays/DragDropOverlay';
 import { ModelsErrorDisplay } from '../chat/overlays/ModelsErrorDisplay';
 import { ChatAreaProps } from './chat-area/ChatAreaProps';

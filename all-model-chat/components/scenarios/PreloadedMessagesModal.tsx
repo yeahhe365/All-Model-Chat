@@ -6,7 +6,7 @@ import { translations } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioList } from './ScenarioList';
-import { useScenarioManager } from '../../hooks/useScenarioManager';
+import { useScenarioManager } from '../../hooks/features/useScenarioManager';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;

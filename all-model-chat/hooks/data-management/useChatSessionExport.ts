@@ -1,7 +1,7 @@
 
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
-import { logService } from '../../utils/appUtils';
+import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
 import { 
     sanitizeFilename, 
     exportElementAsPng, 
@@ -161,11 +161,14 @@ export const useChatSessionExport = ({
         } else if (format === 'json') {
             logService.info(`Exporting chat ${activeChat.id} as JSON.`);
             try {
+                // Sanitize the session before export to remove non-serializable blobs
+                const sanitizedChat = sanitizeSessionForExport(activeChat);
+                
                 // We create a structure compatible with the history import feature
                 const dataToExport = {
                     type: 'AllModelChat-History',
                     version: 1,
-                    history: [activeChat], // Exporting only the active chat session
+                    history: [sanitizedChat], // Exporting only the active chat session
                     groups: [], // No groups are exported with a single chat
                 };
                 const jsonString = JSON.stringify(dataToExport, null, 2);
