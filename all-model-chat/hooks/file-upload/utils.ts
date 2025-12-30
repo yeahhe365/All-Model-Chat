@@ -7,7 +7,8 @@ import {
     SUPPORTED_IMAGE_MIME_TYPES,
     SUPPORTED_PDF_MIME_TYPES,
     SUPPORTED_AUDIO_MIME_TYPES,
-    SUPPORTED_VIDEO_MIME_TYPES
+    SUPPORTED_VIDEO_MIME_TYPES,
+    SUPPORTED_DOC_MIME_TYPES
 } from '../../constants/fileConstants';
 import { AppSettings } from '../../types';
 
@@ -46,6 +47,7 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
     else if (SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.pdfs;
     else if (SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.audio;
     else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
+    else if (SUPPORTED_DOC_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.text; // Treat docs as text config
     else userPrefersFileApi = appSettings.filesApiConfig.text; // Fallback for text/code
 
     // Respect the user's toggle strictly. 

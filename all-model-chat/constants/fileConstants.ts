@@ -69,6 +69,11 @@ export const SUPPORTED_SPREADSHEET_MIME_TYPES = [
     'text/csv',
 ];
 
+export const SUPPORTED_DOC_MIME_TYPES = [
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+];
+
 export const TEXT_BASED_EXTENSIONS = [
   '.txt', '.md', '.markdown', '.json', '.xml', '.csv', '.tsv', '.log', '.rtf',
   '.js', '.ts', '.jsx', '.tsx', '.html', '.htm', '.css', '.scss', '.less',
@@ -85,6 +90,7 @@ export const ALL_SUPPORTED_MIME_TYPES = [
     ...SUPPORTED_PDF_MIME_TYPES,
     ...SUPPORTED_VIDEO_MIME_TYPES,
     ...SUPPORTED_SPREADSHEET_MIME_TYPES,
+    ...SUPPORTED_DOC_MIME_TYPES,
 ];
 
 export const EXTENSION_TO_MIME: Record<string, string> = {
@@ -107,6 +113,8 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
     '.png': 'image/png',
     '.webp': 'image/webp',
     '.gif': 'image/gif',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.doc': 'application/msword',
 };
 
 // Centralized map for generating file extensions from MIME types
@@ -121,6 +129,8 @@ export const MIME_TO_EXTENSION_MAP: Record<string, string> = {
     'text/markdown': '.md',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
     'application/vnd.ms-excel': '.xls',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+    'application/msword': '.doc',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
     'application/msword': '.doc',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',

@@ -41,26 +41,22 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   }, []);
 
   const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
-    if (!vizInstanceRef.current) return;
-    setIsRendering(true);
-    setError('');
-    setDiagramFile(null);
+    if (!vizInstanceRef.current || !code) return;
+    
+    // Note: We don't set setIsRendering(true) immediately here to avoid flashing spinner on every keystroke
+    // unless the render takes time or fails.
 
     try {
       let processedCode = code;
       
       // 1. Layout Injection - Robust Regex
-      // Matches rankdir=LR, rankdir="TB", rankdir='RL' etc. case-insensitive
       const rankdirRegex = /(rankdir\s*=\s*)(["']?)(LR|TB|RL|BT)\2/gi;
       
       if (rankdirRegex.test(processedCode)) {
-          // Replace existing rankdir directives to enforce the current layout
           processedCode = processedCode.replace(rankdirRegex, `$1"${currentLayout}"`);
       } else {
-          // Inject if missing
           const digraphMatch = processedCode.match(/(\s*(?:di)?graph\s+[\w\d_"]*\s*\{)/i);
           if (digraphMatch) {
-              // Add rankdir statement explicitly after graph declaration
               processedCode = processedCode.replace(digraphMatch[0], `${digraphMatch[0]}\n  rankdir="${currentLayout}";`);
           }
       }
@@ -68,14 +64,12 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       // 2. Theme Injection
       const isDark = themeId === 'onyx';
       const color = isDark ? '#e4e4e7' : '#374151'; // zinc-200 : gray-700
-      // Inject margin="0" to reduce internal graph whitespace
       const themeDefaults = `
         graph [bgcolor="transparent" fontcolor="${color}" margin="0"];
         node [color="${color}" fontcolor="${color}"];
         edge [color="${color}" fontcolor="${color}"];
       `;
       
-      // Insert defaults right after the opening brace
       const openBraceIndex = processedCode.indexOf('{');
       if (openBraceIndex !== -1) {
           processedCode = processedCode.slice(0, openBraceIndex + 1) + themeDefaults + processedCode.slice(openBraceIndex + 1);
@@ -83,17 +77,16 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
       const svgElement = await vizInstanceRef.current.renderSVGElement(processedCode);
       
-      // 3. Post-process SVG for responsive scaling (removes fixed size whitespace issues)
+      // 3. Post-process SVG
       svgElement.removeAttribute('width');
       svgElement.removeAttribute('height');
       svgElement.style.maxWidth = "100%";
       svgElement.style.height = "auto";
-      svgElement.style.display = "block"; // prevents inline spacing issues
+      svgElement.style.display = "block";
 
       const svgString = svgElement.outerHTML;
       setSvgContent(svgString);
 
-      // Create UploadedFile object for preview
       const id = `graphviz-svg-${Math.random().toString(36).substring(2, 9)}`;
       const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
       
@@ -105,44 +98,60 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
           dataUrl: svgDataUrl,
           uploadState: 'active'
       });
+      
+      setError('');
+      setIsRendering(false);
 
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Failed to render Graphviz diagram.';
-      setError(errorMessage.replace(/.*error:\s*/, ''));
-      setSvgContent('');
-    } finally {
-      setIsRendering(false);
-    }
-  }, [code, themeId]);
-
-  useEffect(() => {
-    let intervalId: number;
-    
-    // Attempt initialization if not ready (e.g. script loaded async)
-    if (typeof Viz !== 'undefined' && !vizInstanceRef.current) {
-        vizInstanceRef.current = new Viz();
-    }
-
-    if (isMessageLoading) {
-        setIsRendering(true);
-        setError('');
-        setSvgContent('');
-    } else if (code) {
-        if (vizInstanceRef.current) {
-            renderGraph(layout);
+        if (isMessageLoading) {
+            // Still streaming, assume partial code -> spinner
+            setIsRendering(true);
         } else {
-            // Polling fallback
-            intervalId = window.setInterval(() => {
-                if (typeof Viz !== 'undefined') {
-                    clearInterval(intervalId);
-                    if (!vizInstanceRef.current) vizInstanceRef.current = new Viz();
-                    renderGraph(layout);
-                }
-            }, 100);
+            const errorMessage = e instanceof Error ? e.message : 'Failed to render Graphviz diagram.';
+            setError(errorMessage.replace(/.*error:\s*/, ''));
+            setSvgContent('');
+            setIsRendering(false);
         }
     }
-    return () => clearInterval(intervalId);
-  }, [renderGraph, layout, code, isMessageLoading]);
+  }, [code, themeId, isMessageLoading]);
+
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const performRender = async () => {
+        if (!isMounted) return;
+        
+        if (!vizInstanceRef.current) {
+             if (typeof Viz !== 'undefined') {
+                 vizInstanceRef.current = new Viz();
+             } else {
+                 return; // Script not loaded yet, polling below handles init
+             }
+        }
+        await renderGraph(layout);
+    };
+
+    // Debounce rendering
+    timeoutId = setTimeout(performRender, 500);
+
+    // Initial polling fallback if Viz script is lazy loaded
+    let pollInterval: number;
+    if (typeof Viz === 'undefined') {
+        pollInterval = window.setInterval(() => {
+            if (typeof Viz !== 'undefined') {
+                clearInterval(pollInterval);
+                performRender();
+            }
+        }, 100);
+    }
+
+    return () => {
+        isMounted = false;
+        clearTimeout(timeoutId);
+        if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [renderGraph, layout]);
 
   const handleToggleLayout = () => {
     const newLayout = layout === 'LR' ? 'TB' : 'LR';

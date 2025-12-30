@@ -22,6 +22,17 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
     firstTokenTimeMs,
     t
 }) => {
+    // Determine the effective start time for the timer (to exclude TTFT)
+    // If firstTokenTimeMs is available, we start counting from (Start + TTFT)
+    const effectiveTimerStart = (generationStartTime && firstTokenTimeMs !== undefined)
+        ? new Date(new Date(generationStartTime).getTime() + firstTokenTimeMs)
+        : null;
+
+    // Calculate final duration excluding TTFT
+    const finalDuration = thinkingTimeMs !== undefined
+        ? Math.max(0, thinkingTimeMs - (firstTokenTimeMs || 0))
+        : 0;
+
     return (
         <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-grow">
             {/* Icon Area */}
@@ -41,9 +52,11 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                             </span>
                             <span className="text-sm text-[var(--theme-text-tertiary)] truncate font-mono mt-0.5">
                                 {thinkingTimeMs !== undefined ? (
-                                    t('thinking_took_time').replace('{duration}', formatDuration(Math.round(thinkingTimeMs / 1000)))
+                                    t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
                                 ) : (
-                                    generationStartTime ? <ThinkingTimer startTime={generationStartTime} t={t} /> : 'Processing...'
+                                    effectiveTimerStart 
+                                        ? <ThinkingTimer startTime={effectiveTimerStart} t={t} /> 
+                                        : <span className="animate-pulse">{t('thinking_text')}</span>
                                 )}
                                 {firstTokenTimeMs !== undefined && (
                                     <span className="ml-1 opacity-75">
@@ -56,7 +69,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                         <div className="flex items-baseline gap-2 min-w-0">
                             <span className="text-base text-[var(--theme-text-secondary)] font-medium truncate opacity-90">
                                 {thinkingTimeMs !== undefined
-                                    ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(thinkingTimeMs / 1000)))
+                                    ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
                                     : 'Thought Process'}
                             </span>
                             {firstTokenTimeMs !== undefined && (
