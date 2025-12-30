@@ -38,6 +38,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
     // 3. Live API Hook
     const liveAPI = useLiveAPI({
         appSettings,
+        chatSettings: currentChatSettings,
         modelId: currentChatSettings.modelId,
         onClose: undefined, // Optional callback
         onTranscript: onLiveTranscript

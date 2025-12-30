@@ -1,23 +1,23 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { LiveServerMessage, Modality } from '@google/genai';
+import { LiveServerMessage, Modality, Tool } from '@google/genai';
 import { getConfiguredApiClient } from '../services/api/baseApi';
 import { logService } from '../utils/appUtils';
-import { AppSettings } from '../types';
+import { AppSettings, ChatSettings } from '../types';
 import { getKeyForRequest } from '../utils/apiUtils';
-import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { float32ToPCM16Base64 } from '../utils/audio/audioProcessing';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
 
 interface UseLiveAPIProps {
     appSettings: AppSettings;
+    chatSettings: ChatSettings;
     modelId: string;
     onClose?: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean) => void;
 }
 
-export const useLiveAPI = ({ appSettings, modelId, onClose, onTranscript }: UseLiveAPIProps) => {
+export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript }: UseLiveAPIProps) => {
     const [isConnected, setIsConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const sessionRef = useRef<Promise<any> | null>(null);
@@ -47,8 +47,8 @@ export const useLiveAPI = ({ appSettings, modelId, onClose, onTranscript }: UseL
     const connect = useCallback(async () => {
         setError(null);
         try {
-            // Get API Key
-            const keyResult = getKeyForRequest(appSettings, { ...DEFAULT_CHAT_SETTINGS, modelId }, { skipIncrement: true });
+            // Get API Key using the current chat settings to respect locked keys or rotation
+            const keyResult = getKeyForRequest(appSettings, chatSettings, { skipIncrement: true });
             if ('error' in keyResult) {
                 throw new Error(keyResult.error);
             }
@@ -71,22 +71,32 @@ export const useLiveAPI = ({ appSettings, modelId, onClose, onTranscript }: UseL
                 }
             });
 
+            // Construct Tools Configuration
+            const tools: Tool[] = [];
+            if (chatSettings.isGoogleSearchEnabled || chatSettings.isDeepSearchEnabled) {
+                tools.push({ googleSearch: {} });
+            }
+            if (chatSettings.isCodeExecutionEnabled) {
+                tools.push({ codeExecution: {} });
+            }
+
             // Connect Session
             const sessionPromise = ai.live.connect({
                 model: modelId,
                 config: {
                     responseModalities: [Modality.AUDIO],
                     speechConfig: {
-                        voiceConfig: { prebuiltVoiceConfig: { voiceName: appSettings.ttsVoice || 'Zephyr' } },
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: chatSettings.ttsVoice || 'Zephyr' } },
                     },
-                    systemInstruction: appSettings.systemInstruction,
+                    systemInstruction: chatSettings.systemInstruction,
+                    tools: tools.length > 0 ? tools : undefined,
                     // Enable transcription for both input and output
                     inputAudioTranscription: {},
                     outputAudioTranscription: {},
                 },
                 callbacks: {
                     onopen: () => {
-                        logService.info("Live API Connected");
+                        logService.info("Live API Connected", { tools: tools.length > 0 });
                         setIsConnected(true);
                     },
                     onmessage: async (msg: LiveServerMessage) => {
@@ -134,13 +144,13 @@ export const useLiveAPI = ({ appSettings, modelId, onClose, onTranscript }: UseL
             setIsConnected(false);
             cleanupAudio(); // Ensure cleanup on init failure
         }
-    }, [appSettings, modelId, onClose, initializeAudio, playAudioChunk, stopAudioPlayback, cleanupAudio, onTranscript]);
+    }, [appSettings, chatSettings, modelId, onClose, initializeAudio, playAudioChunk, stopAudioPlayback, cleanupAudio, onTranscript]);
 
     const sendText = useCallback(async (text: string) => {
         if (!sessionRef.current) return;
         try {
             const session = await sessionRef.current;
-            await session.send([{ text }], true); 
+            await session.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true });
             logService.info("Sent text to Live API", { textLength: text.length });
         } catch (e) {
             logService.error("Failed to send text to Live API", e);
@@ -207,10 +217,10 @@ export const useLiveAPI = ({ appSettings, modelId, onClose, onTranscript }: UseL
         error, 
         volume, 
         connect, 
-        disconnect,
+        disconnect, 
         sendText,
         videoStream,
-        startVideo,
+        startVideo, 
         stopVideo,
         videoRef
     }), [isConnected, isSpeaking, error, volume, connect, disconnect, sendText, videoStream, startVideo, stopVideo, videoRef]);
