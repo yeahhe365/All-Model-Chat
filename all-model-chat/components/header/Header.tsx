@@ -77,6 +77,14 @@ export const Header: React.FC<HeaderProps> = ({
   const iconSize = 20; 
   const strokeWidth = 2; 
 
+  const lowerModelId = selectedModelId?.toLowerCase() || '';
+  const isNativeAudioModel = lowerModelId.includes('native-audio');
+  const isImageModel = lowerModelId.includes('image') || lowerModelId.includes('imagen');
+  const isTtsModel = lowerModelId.includes('tts');
+  
+  // Only show Canvas button for standard chat models (not specialized audio/image models)
+  const showCanvasButton = !isNativeAudioModel && !isImageModel && !isTtsModel;
+
   return (
     <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 sm:p-3 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
       
@@ -108,15 +116,17 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-1 sm:gap-2.5 justify-end flex-shrink-0">
         
         {/* 1. Canvas Helper Button (Arc/Wand) */}
-        <button
-          onClick={onLoadCanvasPrompt}
-          disabled={isLoading}
-          className={`${headerButtonBase} ${isCanvasPromptActive ? headerButtonActive : headerButtonInactive}`}
-          aria-label={canvasPromptAriaLabel}
-          title={canvasPromptTitle}
-        >
-          <Wand2 size={iconSize} strokeWidth={strokeWidth} />
-        </button>
+        {showCanvasButton && (
+            <button
+              onClick={onLoadCanvasPrompt}
+              disabled={isLoading}
+              className={`${headerButtonBase} ${isCanvasPromptActive ? headerButtonActive : headerButtonInactive}`}
+              aria-label={canvasPromptAriaLabel}
+              title={canvasPromptTitle}
+            >
+              <Wand2 size={iconSize} strokeWidth={strokeWidth} />
+            </button>
+        )}
 
         {/* 2. Scenarios Button (Cards/Book) */}
         <button

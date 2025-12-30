@@ -155,6 +155,9 @@ export interface ChatInputToolbarProps {
   onToggleQuadImages?: () => void;
   supportedAspectRatios?: string[];
   supportedImageSizes?: string[]; // Added for configuring supported resolutions
+  isNativeAudioModel?: boolean;
+  mediaResolution?: MediaResolution;
+  setMediaResolution?: (resolution: MediaResolution) => void;
 }
 
 export interface ChatInputActionsProps {
@@ -191,6 +194,8 @@ export interface ChatInputActionsProps {
   isNativeAudioModel?: boolean;
   onStartLiveSession?: () => void;
   isLiveConnected?: boolean;
+  isLiveMuted?: boolean;
+  onToggleLiveMute?: () => void;
 }
 
 export interface ChatInputProps {

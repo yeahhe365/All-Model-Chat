@@ -19,6 +19,7 @@ interface ToolsMenuProps {
     onCountTokens: () => void;
     disabled: boolean;
     t: (key: keyof typeof translations) => string;
+    isNativeAudioModel?: boolean;
 }
 
 const ActiveToolBadge: React.FC<{
@@ -55,7 +56,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
     onAddYouTubeVideo, onCountTokens,
-    disabled, t
+    disabled, t, isNativeAudioModel
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -78,7 +79,20 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } },
       { labelKey: 'tools_token_count_label', icon: <Calculator size={18} strokeWidth={2} />, isEnabled: false, action: () => { onCountTokens(); setIsOpen(false); } }
     ];
+
+    const filteredItems = menuItems.filter(item => {
+        if (isNativeAudioModel) {
+            // For Live API:
+            // 1. Code Execution is NOT supported.
+            // 2. Web Search is supported but moved to the main toolbar.
+            // 3. Other tools are not explicitly supported/tested in this mode yet.
+            return false;
+        }
+        return true;
+    });
     
+    if (filteredItems.length === 0) return null;
+
     return (
       <div className="flex items-center">
         <div className="relative" ref={containerRef}>
@@ -99,7 +113,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                     className="absolute bottom-full left-0 mb-2 w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium z-20 py-1.5 animate-in fade-in zoom-in-95 duration-100" 
                     role="menu"
                 >
-                    {menuItems.map(item => (
+                    {filteredItems.map(item => (
                       <button 
                         key={item.labelKey} 
                         onClick={item.action} 
@@ -116,10 +130,15 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                 </div>
             )}
         </div>
-        {isDeepSearchEnabled && <ActiveToolBadge label={t('deep_search_short')} onRemove={onToggleDeepSearch} removeAriaLabel="Disable Deep Search" icon={<Telescope size={14} strokeWidth={2} />} />}
-        {isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
-        {isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
-        {isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
+        {/* Only show badges for tools that are relevant to the current mode */}
+        {!isNativeAudioModel && isDeepSearchEnabled && <ActiveToolBadge label={t('deep_search_short')} onRemove={onToggleDeepSearch} removeAriaLabel="Disable Deep Search" icon={<Telescope size={14} strokeWidth={2} />} />}
+        
+        {/* In Live Mode, Web Search is a toggle button, so badge is redundant/confusing if inside tools menu logic, but let's hide it from here if the button shows status */}
+        {!isNativeAudioModel && isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
+        
+        {!isNativeAudioModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
+        
+        {!isNativeAudioModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
       </div>
     );
 };

@@ -131,8 +131,6 @@ export const MIME_TO_EXTENSION_MAP: Record<string, string> = {
     'application/vnd.ms-excel': '.xls',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
     'application/msword': '.doc',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-    'application/msword': '.doc',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
     'application/vnd.ms-powerpoint': '.ppt',
     'application/zip': '.zip',

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowUp, X, Edit2, Loader2, Mic, Languages, Maximize2, Minimize2, Save, AudioWaveform, PhoneOff } from 'lucide-react';
+import { ArrowUp, X, Edit2, Loader2, Mic, MicOff, Languages, Maximize2, Minimize2, Save, AudioWaveform, PhoneOff, Globe } from 'lucide-react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
 import { IconStop } from '../../icons/CustomIcons';
@@ -12,6 +12,8 @@ export interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
     isNativeAudioModel?: boolean;
     onStartLiveSession?: () => void;
     isLiveConnected?: boolean;
+    isLiveMuted?: boolean;
+    onToggleLiveMute?: () => void;
 }
 
 export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
@@ -47,7 +49,9 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   editMode,
   isNativeAudioModel,
   onStartLiveSession,
-  isLiveConnected
+  isLiveConnected,
+  isLiveMuted,
+  onToggleLiveMute
 }) => {
   const micIconSize = 20;
   const sendIconSize = 20;
@@ -56,6 +60,21 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
     <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
             <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t as any} />
+            
+            {/* Live API: Standalone Web Search Button */}
+            {isNativeAudioModel && (
+                <button
+                    type="button"
+                    onClick={onToggleGoogleSearch}
+                    disabled={disabled}
+                    className={`${CHAT_INPUT_BUTTON_CLASS} ${isGoogleSearchEnabled ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
+                    aria-label={t('web_search_label')}
+                    title={t('web_search_label')}
+                >
+                    <Globe size={20} strokeWidth={2} />
+                </button>
+            )}
+
             <ToolsMenu
                 isGoogleSearchEnabled={isGoogleSearchEnabled}
                 onToggleGoogleSearch={onToggleGoogleSearch}
@@ -69,6 +88,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 onCountTokens={onCountTokens}
                 disabled={disabled}
                 t={t as any}
+                isNativeAudioModel={isNativeAudioModel}
             />
         </div>
 
@@ -85,7 +105,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 </button>
             )}
             
-            {onToggleFullscreen && (
+            {onToggleFullscreen && !isNativeAudioModel && (
                 <button
                     type="button"
                     onClick={onToggleFullscreen}
@@ -98,20 +118,36 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 </button>
             )}
 
-            <button
-                type="button"
-                onClick={onTranslate}
-                disabled={!inputText.trim() || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
-                className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
-                aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
-                title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
-            >
-                {isTranslating ? (
-                    <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
-                ) : (
-                    <Languages size={micIconSize} strokeWidth={2} />
-                )}
-            </button>
+            {!isNativeAudioModel && (
+                <button
+                    type="button"
+                    onClick={onTranslate}
+                    disabled={!inputText.trim() || isEditing || disabled || isTranscribing || isMicInitializing || isTranslating}
+                    className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]`}
+                    aria-label={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+                    title={isTranslating ? t('translating_button_title') : t('translate_button_title')}
+                >
+                    {isTranslating ? (
+                        <Loader2 size={micIconSize} className="animate-spin text-[var(--theme-text-link)]" strokeWidth={2} />
+                    ) : (
+                        <Languages size={micIconSize} strokeWidth={2} />
+                    )}
+                </button>
+            )}
+
+            {/* Live Session Mute Button */}
+            {isNativeAudioModel && isLiveConnected && onToggleLiveMute && (
+                <button
+                    type="button"
+                    onClick={onToggleLiveMute}
+                    disabled={disabled}
+                    className={`${CHAT_INPUT_BUTTON_CLASS} ${isLiveMuted ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)]'}`}
+                    aria-label={isLiveMuted ? "Unmute Microphone" : "Mute Microphone"}
+                    title={isLiveMuted ? "Unmute Microphone" : "Mute Microphone"}
+                >
+                     {isLiveMuted ? <MicOff size={micIconSize} strokeWidth={2} /> : <Mic size={micIconSize} strokeWidth={2} />}
+                </button>
+            )}
 
             {/* Live Session Button for Native Audio Model */}
             {isNativeAudioModel && onStartLiveSession && !isRecording && !isTranscribing && (
@@ -132,7 +168,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             )}
 
             {/* Standard Record Button */}
-            {!isLiveConnected && (
+            {!isLiveConnected && !isNativeAudioModel && (
                 <button
                     type="button"
                     onClick={onRecordButtonClick}

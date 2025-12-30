@@ -7,6 +7,7 @@ import { logService } from '../../utils/appUtils';
 export const useLiveAudio = () => {
     const [volume, setVolume] = useState(0);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
 
     const audioContextRef = useRef<AudioContext | null>(null);
     const inputContextRef = useRef<AudioContext | null>(null);
@@ -33,6 +34,11 @@ export const useLiveAudio = () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamRef.current = stream;
 
+        // Apply initial mute state
+        stream.getAudioTracks().forEach(track => {
+            track.enabled = !isMuted;
+        });
+
         if (inputCtx.state === 'suspended') {
             await inputCtx.resume();
         }
@@ -55,6 +61,14 @@ export const useLiveAudio = () => {
 
         // Handle Worklet Messages (Volume + Data)
         workletNode.port.onmessage = (e) => {
+            // If muted, we effectively send silence or nothing.
+            // However, track.enabled = false usually stops data flow at the source level (OS/Browser).
+            // But to be safe and ensure volume is 0 in UI:
+            if (isMuted) {
+                setVolume(0);
+                return;
+            }
+
             const inputData = e.data; // Float32Array
             
             // Calculate Volume
@@ -75,7 +89,21 @@ export const useLiveAudio = () => {
         workletNode.connect(inputCtx.destination); // Keep graph alive
 
         return { audioCtx, inputCtx };
-    }, []);
+    }, [isMuted]);
+
+    const toggleMute = useCallback(() => {
+        if (streamRef.current) {
+            const tracks = streamRef.current.getAudioTracks();
+            const newMutedState = !isMuted;
+            tracks.forEach(track => {
+                track.enabled = !newMutedState;
+            });
+            setIsMuted(newMutedState);
+        } else {
+            // Even if stream is not active (yet), toggle state so it applies on next init
+            setIsMuted(prev => !prev);
+        }
+    }, [isMuted]);
 
     const playAudioChunk = useCallback(async (base64Audio: string) => {
         const ctx = audioContextRef.current;
@@ -148,11 +176,14 @@ export const useLiveAudio = () => {
         }
 
         setVolume(0);
+        setIsMuted(false); // Reset mute state on cleanup
     }, [stopAudioPlayback]);
 
     return {
         volume,
         isSpeaking,
+        isMuted,
+        toggleMute,
         initializeAudio,
         playAudioChunk,
         stopAudioPlayback,
