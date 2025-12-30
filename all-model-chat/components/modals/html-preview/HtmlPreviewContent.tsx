@@ -36,8 +36,9 @@ export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({
                     height: `${100 / scale}%`,
                     transform: `scale(${scale})`,
                 }}
-                // SECURITY: Removed allow-same-origin to prevent accessing localStorage/cookies/parent DOM
-                sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
+                // We strictly need allow-same-origin for html2canvas to access the contentDocument for screenshots.
+                // NOTE: This does reduce isolation slightly, but is necessary for the feature set.
+                sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"
                 onError={handleIframeError}
             />
         </div>

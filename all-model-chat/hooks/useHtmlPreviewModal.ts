@@ -155,15 +155,19 @@ export const useHtmlPreviewModal = ({
     }, [htmlContent, getPreviewTitle]);
 
     const handleScreenshot = useCallback(async () => {
-        if (!iframeRef.current?.contentDocument?.body || isScreenshotting) return;
+        // Ensure contentDocument is accessible (requires allow-same-origin in sandbox)
+        if (!iframeRef.current?.contentDocument || isScreenshotting) return;
+        
         setIsScreenshotting(true);
         try {
-            const iframeBody = iframeRef.current.contentDocument.body;
+            // Capture the whole document element to ensure background colors and full layout are captured
+            const elementToCapture = iframeRef.current.contentDocument.documentElement;
             const title = getPreviewTitle();
             const filename = `${sanitizeFilename(title)}-screenshot.png`;
             
-            await exportElementAsPng(iframeBody, filename, {
-                backgroundColor: iframeRef.current.contentDocument.body.style.backgroundColor || getComputedStyle(iframeRef.current.contentDocument.body).backgroundColor || '#ffffff',
+            await exportElementAsPng(elementToCapture as HTMLElement, filename, {
+                // Allow styles to dictate background, or default to transparent which renders as white in most viewers or explicit if set in html
+                backgroundColor: null,
                 scale: 2,
             });
         } catch (err) {

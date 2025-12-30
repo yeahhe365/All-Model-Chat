@@ -53,15 +53,23 @@ export const exportElementAsPng = async (
 };
 
 /**
- * Converts an SVG string to a PNG data URL and triggers a download.
+ * Converts an SVG string to an image data URL and triggers a download.
  * Enhanced logic parses the SVG, calculates dimensions from viewBox/attributes,
  * and explicitly sets high-res attributes on the SVG node to ensure crisp rasterization.
  * 
  * @param svgString The string content of the SVG.
- * @param filename The desired filename for the downloaded PNG.
- * @param scale The resolution scale factor for the output PNG.
+ * @param filename The desired filename for the downloaded image.
+ * @param scale The resolution scale factor for the output image.
+ * @param mimeType The MIME type of the output image (e.g., 'image/png', 'image/jpeg').
+ * @param backgroundColor Optional background color (e.g., '#FFFFFF'). Defaults to white for JPEG, transparent for PNG.
  */
-export const exportSvgAsPng = async (svgString: string, filename: string, scale: number = 3): Promise<void> => {
+export const exportSvgAsImage = async (
+    svgString: string, 
+    filename: string, 
+    scale: number = 3,
+    mimeType: string = 'image/png',
+    backgroundColor?: string
+): Promise<void> => {
     // 1. Parse SVG to modify dimensions
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgString, "image/svg+xml");
@@ -121,12 +129,22 @@ export const exportSvgAsPng = async (svgString: string, filename: string, scale:
             const ctx = canvas.getContext('2d');
 
             if (ctx) {
+                // Handle background color
+                if (backgroundColor) {
+                    ctx.fillStyle = backgroundColor;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                } else if (mimeType === 'image/jpeg') {
+                    // Force white background for JPG to prevent black transparent areas
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
                 // Draw at 1:1 of the scaled image
                 ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
                 
                 try {
-                    const pngUrl = canvas.toDataURL('image/png');
-                    triggerDownload(pngUrl, filename);
+                    const dataUrl = canvas.toDataURL(mimeType);
+                    triggerDownload(dataUrl, filename);
                     resolve();
                 } catch (e) {
                     reject(e);

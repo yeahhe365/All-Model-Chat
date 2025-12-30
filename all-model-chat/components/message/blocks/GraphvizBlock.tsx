@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, Code, Copy, Check, Sidebar } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
-import { exportSvgAsPng } from '../../../utils/exportUtils';
+import { exportSvgAsImage } from '../../../utils/exportUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 
@@ -158,11 +158,11 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
     setLayout(newLayout);
   };
   
-  const handleDownloadPng = async () => {
+  const handleDownloadJpg = async () => {
     if (!svgContent || isDownloading) return;
     setIsDownloading(true);
     try {
-        await exportSvgAsPng(svgContent, `graphviz-diagram-${Date.now()}.png`, 5);
+        await exportSvgAsImage(svgContent, `graphviz-diagram-${Date.now()}.jpg`, 5, 'image/jpeg');
     } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to export diagram.');
     } finally {
@@ -230,10 +230,10 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
                         <Maximize size={14} />
                     </button>
                     <button 
-                        onClick={(e) => { e.stopPropagation(); handleDownloadPng(); }}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadJpg(); }}
                         disabled={isDownloading} 
                         className={MESSAGE_BLOCK_BUTTON_CLASS} 
-                        title="Download as PNG"
+                        title="Download as JPG"
                     >
                         {isDownloading ? <Loader2 size={14} className="animate-spin"/> : <Download size={14} />}
                     </button>

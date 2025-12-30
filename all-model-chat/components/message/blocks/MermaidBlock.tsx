@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { Loader2, AlertTriangle, Download, Maximize, Code, Copy, Check, Sidebar } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
-import { exportSvgAsPng } from '../../../utils/exportUtils';
+import { exportSvgAsImage } from '../../../utils/exportUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 
@@ -83,13 +83,13 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
     };
   }, [code, isMessageLoading, themeId]);
 
-  const handleDownloadPng = async () => {
+  const handleDownloadJpg = async () => {
     if (!svg || isDownloading) return;
     setIsDownloading(true);
     try {
-        await exportSvgAsPng(svg, `mermaid-diagram-${Date.now()}.png`);
+        await exportSvgAsImage(svg, `mermaid-diagram-${Date.now()}.jpg`, 3, 'image/jpeg');
     } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram as PNG.';
+        const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram as JPG.';
         setError(errorMessage);
     } finally {
         setIsDownloading(false);
@@ -154,10 +154,10 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
                         <Maximize size={14} />
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleDownloadPng(); }}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadJpg(); }}
                         disabled={isDownloading}
                         className={MESSAGE_BLOCK_BUTTON_CLASS}
-                        title="Download as PNG"
+                        title="Download as JPG"
                     >
                         {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                     </button>
