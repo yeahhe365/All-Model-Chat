@@ -26,10 +26,12 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
   const diagramContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const renderMermaid = async () => {
-      setIsRendering(true);
-      setError('');
-      setDiagramFile(null);
+    let isMounted = true;
+    
+    // Debounce rendering to avoid syntax errors while typing
+    const timeoutId = setTimeout(async () => {
+      if (!code) return;
+
       try {
         const id = `mermaid-svg-${Math.random().toString(36).substring(2, 9)}`;
         
@@ -41,6 +43,9 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
         });
         
         const { svg: renderedSvg } = await mermaid.render(id, code);
+        
+        if (!isMounted) return;
+
         setSvg(renderedSvg);
         
         const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(renderedSvg)))}`;
@@ -52,23 +57,30 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
             dataUrl: svgDataUrl,
             uploadState: 'active'
         });
+        setError('');
+        setIsRendering(false);
 
       } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Failed to render Mermaid diagram.';
-        setError(errorMessage.replace(/.*error:\s*/, '')); 
-        setSvg('');
-      } finally {
-        setIsRendering(false);
-      }
-    };
+        if (!isMounted) return;
 
-    if (isMessageLoading) {
-        setIsRendering(true);
-        setError('');
-        setSvg('');
-    } else if (code) {
-        setTimeout(renderMermaid, 100);
-    }
+        if (isMessageLoading) {
+            // If still loading (streaming), treat parsing errors as "generating..."
+            // Show spinner to indicate incomplete state
+            setIsRendering(true);
+        } else {
+            // Final error state
+            const errorMessage = e instanceof Error ? e.message : 'Failed to render Mermaid diagram.';
+            setError(errorMessage.replace(/.*error:\s*/, '')); 
+            setSvg('');
+            setIsRendering(false);
+        }
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+        isMounted = false;
+        clearTimeout(timeoutId);
+    };
   }, [code, isMessageLoading, themeId]);
 
   const handleDownloadPng = async () => {

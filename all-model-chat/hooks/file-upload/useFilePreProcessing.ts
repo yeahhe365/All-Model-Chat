@@ -1,9 +1,11 @@
+
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { generateUniqueId, logService, fileToString } from '../../utils/appUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
 import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
+import mammoth from 'mammoth';
 
 interface UseFilePreProcessingProps {
     appSettings: AppSettings;
@@ -42,6 +44,38 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
                     processedFiles.push(contextFile);
                 } catch (error) {
                     logService.error(`Failed to auto-convert zip file ${file.name}`, { error });
+                    processedFiles.push(file);
+                } finally {
+                    setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
+                }
+            } else if (fileNameLower.endsWith('.docx')) {
+                const tempId = generateUniqueId();
+                setSelectedFiles(prev => [...prev, {
+                    id: tempId,
+                    name: `Extracting text from ${file.name}...`,
+                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    size: file.size,
+                    isProcessing: true,
+                    uploadState: 'pending'
+                }]);
+
+                try {
+                    logService.info(`Extracting text from Word file: ${file.name}`);
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    
+                    if (result.messages && result.messages.length > 0) {
+                        logService.warn("Mammoth extraction warnings:", { messages: result.messages });
+                    }
+
+                    const textContent = result.value;
+                    const newFileName = file.name.replace(/\.docx$/i, '.txt');
+                    const textFile = new File([textContent], newFileName, { type: 'text/plain' });
+                    
+                    processedFiles.push(textFile);
+                } catch (error) {
+                    logService.error(`Failed to extract text from docx ${file.name}`, { error });
+                    // Fallback: send original file (might fail if not supported by API directly, but safer than crashing)
                     processedFiles.push(file);
                 } finally {
                     setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
