@@ -60,6 +60,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
 
   const inputBaseClasses = "w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm";
   const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
+  
+  const isNativeAudio = modelId.toLowerCase().includes('native-audio');
 
   return (
     <div className="space-y-8">
@@ -157,7 +159,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                             <span className='flex items-center text-sm font-medium text-[var(--theme-text-primary)]'>
                                 <ImageIcon size={14} className="mr-2 text-[var(--theme-text-secondary)]" />
                                 {t('settingsMediaResolution')}
-                                <Tooltip text={t('settingsMediaResolution_tooltip')}>
+                                <Tooltip text={isNativeAudio ? "Controls video/audio resolution for Live API." : t('settingsMediaResolution_tooltip')}>
                                     <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
                                 </Tooltip>
                             </span>
@@ -167,9 +169,9 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     >
                         <option value={MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED}>{t('mediaResolution_unspecified')}</option>
                         <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
-                        <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>
-                        <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>
-                        <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>
+                        {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>}
+                        {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>}
+                        {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>}
                     </Select>
                 )}
             </div>

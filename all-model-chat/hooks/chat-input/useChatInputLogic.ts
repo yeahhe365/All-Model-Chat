@@ -95,16 +95,31 @@ export const useChatInputLogic = (props: ChatInputProps) => {
     );
 
     // Intercept Send Message for Live API
-    const handleSmartSendMessage = useCallback((text: string) => {
-        if (liveAPI.isConnected) {
+    const handleSmartSendMessage = useCallback(async (text: string) => {
+        if (capabilities.isNativeAudioModel) {
+            // Live API Logic: Auto-connect if needed
+            if (!liveAPI.isConnected) {
+                try {
+                    await liveAPI.connect();
+                } catch (error) {
+                    console.error("Failed to auto-connect Live API:", error);
+                    return;
+                }
+            }
+            
+            // Check again if connected (in case connect failed gracefully or was aborted)
+            // Note: isConnected state might not update immediately in React render cycle, 
+            // but connect() is async and sessionRef in useLiveAPI should be ready.
             liveAPI.sendText(text);
+            
             if (onAddUserMessage) {
                 onAddUserMessage(text);
             }
         } else {
+            // Standard Chat
             onSendMessage(text);
         }
-    }, [liveAPI.isConnected, liveAPI.sendText, onSendMessage, onAddUserMessage]);
+    }, [capabilities.isNativeAudioModel, liveAPI.isConnected, liveAPI.connect, liveAPI.sendText, onSendMessage, onAddUserMessage]);
 
     // 8. Handlers
     const handlers = useChatInputHandlers({

@@ -3,6 +3,7 @@ import React from 'react';
 import { ChatInputAreaProps } from '../../components/chat/input/ChatInputArea';
 import { UploadedFile, ChatSettings, AppSettings } from '../../types';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
+import { MediaResolution } from '../../types/settings';
 
 interface FactoryParams {
     // Props passed down from ChatInput
@@ -46,6 +47,8 @@ interface FactoryParams {
     onSuggestionClick?: (suggestion: string) => void;
     onOrganizeInfoClick?: (suggestion: string) => void;
     isNativeAudioModel?: boolean;
+    mediaResolution?: MediaResolution;
+    setMediaResolution?: (resolution: MediaResolution) => void;
 
     // State from hooks
     fileIdInput: string;
@@ -120,7 +123,7 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
         isImagenModel, isGemini3ImageModel, isTtsModel, ttsVoice, setTtsVoice,
         aspectRatio, setAspectRatio, imageSize, setImageSize,
         fileError, isLoading, t, generateQuadImages, onToggleQuadImages, supportedAspectRatios, supportedImageSizes,
-        selectedFiles, onCancelUpload, isGemini3, isNativeAudioModel,
+        selectedFiles, onCancelUpload, isGemini3, isNativeAudioModel, mediaResolution, setMediaResolution,
         isRecording, isMicInitializing, isTranscribing, onStopGenerating, isEditing, onCancelEdit, canSend, isWaitingForUpload,
         isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
         isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch, editMode,
@@ -165,6 +168,9 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             onToggleQuadImages,
             supportedAspectRatios,
             supportedImageSizes,
+            isNativeAudioModel,
+            mediaResolution,
+            setMediaResolution
         },
         actionsProps: {
             onAttachmentAction: handleAttachmentAction,

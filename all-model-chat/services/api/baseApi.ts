@@ -12,7 +12,7 @@ const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
-export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI => {
+export const getClient = (apiKey: string, baseUrl?: string | null, httpOptions?: any): GoogleGenAI => {
   try {
       // Sanitize the API key to replace common non-ASCII characters that might
       // be introduced by copy-pasting from rich text editors. This prevents
@@ -35,6 +35,10 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
           // Remove trailing slash for consistency
           config.baseUrl = baseUrl.trim().replace(/\/$/, '');
       }
+
+      if (httpOptions) {
+          config.httpOptions = httpOptions;
+      }
       
       return new GoogleGenAI(config);
   } catch (error) {
@@ -44,20 +48,20 @@ export const getClient = (apiKey: string, baseUrl?: string | null): GoogleGenAI 
   }
 };
 
-export const getApiClient = (apiKey?: string | null, baseUrl?: string | null): GoogleGenAI => {
+export const getApiClient = (apiKey?: string | null, baseUrl?: string | null, httpOptions?: any): GoogleGenAI => {
     if (!apiKey) {
         const silentError = new Error("API key is not configured in settings or provided.");
         silentError.name = "SilentError";
         throw silentError;
     }
-    return getClient(apiKey, baseUrl);
+    return getClient(apiKey, baseUrl, httpOptions);
 };
 
 /**
  * Async helper to get an API client with settings (proxy, etc) loaded from DB.
  * Respects the `useApiProxy` toggle.
  */
-export const getConfiguredApiClient = async (apiKey: string): Promise<GoogleGenAI> => {
+export const getConfiguredApiClient = async (apiKey: string, httpOptions?: any): Promise<GoogleGenAI> => {
     const settings = await dbService.getAppSettings();
     
     // Only use the proxy URL if Custom Config AND Use Proxy are both enabled
@@ -72,7 +76,7 @@ export const getConfiguredApiClient = async (apiKey: string): Promise<GoogleGenA
         }
     }
     
-    return getClient(apiKey, apiProxyUrl);
+    return getClient(apiKey, apiProxyUrl, httpOptions);
 };
 
 export const buildGenerationConfig = (

@@ -41,6 +41,8 @@ export const useChatInputPropsBuilder = (
         setImageSize: props.setImageSize,
         generateQuadImages: props.generateQuadImages,
         onToggleQuadImages: props.onToggleQuadImages,
+        mediaResolution: props.currentChatSettings.mediaResolution,
+        setMediaResolution: (res) => props.setCurrentChatSettings(prev => ({ ...prev, mediaResolution: res })),
         
         // Status & Config
         fileError: props.fileError,
@@ -121,6 +123,18 @@ export const useChatInputPropsBuilder = (
         onSuggestionClick: props.onSuggestionClick,
         onOrganizeInfoClick: props.onOrganizeInfoClick,
     });
+
+    // Inject live mute controls into actionsProps
+    // This is done here because useChatInputAreaProps might not have direct access to liveAPI object 
+    // unless we pass it, but it's cleaner to inject the specialized props at this stage
+    const extendedActionsProps = {
+        ...areaProps.actionsProps,
+        isLiveMuted: liveAPI.isMuted,
+        onToggleLiveMute: liveAPI.toggleMute,
+    };
+    
+    // Override the actionsProps in areaProps
+    areaProps.actionsProps = extendedActionsProps;
 
     const modalsProps = {
         showRecorder: modalsState.showRecorder,
