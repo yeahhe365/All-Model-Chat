@@ -1,7 +1,4 @@
 
-
-
-
 import { logService } from './logService';
 
 const TARGET_HOST = 'generativelanguage.googleapis.com';
@@ -9,6 +6,7 @@ const TARGET_HOST = 'generativelanguage.googleapis.com';
 // Capture the original fetch immediately when the module loads.
 // We handle potential HMR re-runs or pre-existing patches by checking the flag.
 let originalFetch: typeof window.fetch = window.fetch;
+let originalWebSocket: typeof window.WebSocket = window.WebSocket;
 
 // If the current window.fetch is already our patched version (e.g. after HMR),
 // we shouldn't treat it as the original. 
@@ -33,14 +31,14 @@ export const networkInterceptor = {
     },
 
     /**
-     * Mounts the interceptor to window.fetch.
+     * Mounts the interceptor to window.fetch and window.WebSocket.
      * Should be called once at app startup.
      */
     mount: () => {
         // Prevent double mounting
         if ((window.fetch as any).__isAllModelChatInterceptor) return;
 
-        // Ensure we have the original fetch
+        // --- HTTP Fetch Patch ---
         originalFetch = window.fetch;
 
         const patchedFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -133,18 +131,49 @@ export const networkInterceptor = {
         try {
             window.fetch = patchedFetch;
         } catch (e) {
-            // Handle environments where window.fetch is a getter-only property (e.g., CodeSandbox, some strict environments)
-            try {
-                Object.defineProperty(window, 'fetch', {
-                    value: patchedFetch,
-                    writable: true,
-                    configurable: true
-                });
-            } catch (err) {
-                console.error("[NetworkInterceptor] Critical: Failed to mount fetch interceptor.", err);
-            }
+            console.error("[NetworkInterceptor] Failed to mount fetch interceptor.", e);
+        }
+
+        // --- WebSocket Patch (For Live API) ---
+        originalWebSocket = window.WebSocket;
+
+        if (!(window.WebSocket as any).__isAllModelChatInterceptor) {
+            const PatchedWebSocket = class extends originalWebSocket {
+                constructor(url: string | URL, protocols?: string | string[]) {
+                    let urlStr = url instanceof URL ? url.toString() : url;
+                    
+                    // Check if we need to intercept this WebSocket connection
+                    if (isInterceptorEnabled && currentProxyUrl && urlStr.includes(TARGET_HOST)) {
+                        try {
+                            const proxyUrlObj = new URL(currentProxyUrl);
+                            const targetUrlObj = new URL(urlStr);
+
+                            // Map protocol: https -> wss, http -> ws
+                            // Live API uses wss, so we switch based on the proxy's protocol
+                            const newProtocol = proxyUrlObj.protocol === 'https:' ? 'wss:' : 'ws:';
+                            
+                            targetUrlObj.protocol = newProtocol;
+                            targetUrlObj.hostname = proxyUrlObj.hostname;
+                            targetUrlObj.port = proxyUrlObj.port;
+                            
+                            // We generally preserve the path (/ws/...) from the SDK's original URL.
+                            // Proxies usually forward the path.
+                            
+                            urlStr = targetUrlObj.toString();
+                            logService.debug(`[NetworkInterceptor] WebSocket Rerouted: -> ${urlStr}`, { category: 'NETWORK' });
+                        } catch (e) {
+                             console.error("[NetworkInterceptor] WebSocket Rewrite Failed", e);
+                        }
+                    }
+                    
+                    super(urlStr, protocols);
+                }
+            };
+
+            (PatchedWebSocket as any).__isAllModelChatInterceptor = true;
+            window.WebSocket = PatchedWebSocket;
         }
         
-        logService.info("[NetworkInterceptor] Network interceptor mounted.", { category: 'SYSTEM' });
+        logService.info("[NetworkInterceptor] Network interceptor (Fetch + WebSocket) mounted.", { category: 'SYSTEM' });
     }
 };

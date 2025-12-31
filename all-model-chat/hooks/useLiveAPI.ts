@@ -139,20 +139,14 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
             // We pass a callback that sends the encoded audio to the session
             await initializeAudio((pcmData) => {
                 const base64Data = float32ToPCM16Base64(pcmData);
-                if (sessionRef.current && !isUserDisconnectRef.current) {
+                if (sessionRef.current) {
                     sessionRef.current.then(session => {
-                        try {
-                            session.sendRealtimeInput({
-                                media: {
-                                    mimeType: 'audio/pcm;rate=16000',
-                                    data: base64Data
-                                }
-                            });
-                        } catch (e) {
-                            // Suppress logs for closed socket to avoid console spam
-                        }
-                    }).catch(() => {
-                        // Ignore session promise errors here
+                        session.sendRealtimeInput({
+                            media: {
+                                mimeType: 'audio/pcm;rate=16000',
+                                data: base64Data
+                            }
+                        });
                     });
                 }
             });
@@ -251,17 +245,13 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
             const base64Data = captureFrame();
             if (base64Data && sessionRef.current) {
                 sessionRef.current.then(session => {
-                    try {
-                        session.sendRealtimeInput({
-                            media: {
-                                mimeType: 'image/jpeg',
-                                data: base64Data
-                            }
-                        });
-                    } catch (e) {
-                        // Suppress logs for closed socket
-                    }
-                }).catch(() => {});
+                    session.sendRealtimeInput({
+                        media: {
+                            mimeType: 'image/jpeg',
+                            data: base64Data
+                        }
+                    });
+                });
             }
         };
 
@@ -310,7 +300,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     return useMemo(() => ({ 
         isConnected, 
         isSpeaking, 
-        isMuted, 
+        isMuted,
         toggleMute,
         error, 
         volume, 
