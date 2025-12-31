@@ -139,7 +139,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
             // We pass a callback that sends the encoded audio to the session
             await initializeAudio((pcmData) => {
                 const base64Data = float32ToPCM16Base64(pcmData);
-                if (sessionRef.current) {
+                if (sessionRef.current && !isUserDisconnectRef.current) {
                     sessionRef.current.then(session => {
                         try {
                             session.sendRealtimeInput({
@@ -149,10 +149,10 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
                                 }
                             });
                         } catch (e) {
-                            // Ignore WebSocket closed errors to prevent console spam during reconnection
+                            // Suppress logs for closed socket to avoid console spam
                         }
                     }).catch(() => {
-                        // Ignore promise rejection if session isn't ready
+                        // Ignore session promise errors here
                     });
                 }
             });
@@ -259,7 +259,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
                             }
                         });
                     } catch (e) {
-                        // Ignore connection errors during frame send
+                        // Suppress logs for closed socket
                     }
                 }).catch(() => {});
             }
@@ -310,7 +310,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     return useMemo(() => ({ 
         isConnected, 
         isSpeaking, 
-        isMuted,
+        isMuted, 
         toggleMute,
         error, 
         volume, 
