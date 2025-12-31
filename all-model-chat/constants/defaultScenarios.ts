@@ -1,6 +1,6 @@
 
 import { succinctScenario, socraticScenario, formalScenario, reasonerScenario } from './scenarios/utility';
-import { voxelScenario, codingInterviewScenario } from './scenarios/demo';
+import { voxelScenario } from './scenarios/demo';
 import { cyberpunkAdventureScenario } from './scenarios/adventure';
 
 // Re-export all scenarios
@@ -16,6 +16,5 @@ export const SYSTEM_SCENARIO_IDS = [
     formalScenario.id,
     reasonerScenario.id,
     voxelScenario.id,
-    codingInterviewScenario.id,
     cyberpunkAdventureScenario.id
 ];

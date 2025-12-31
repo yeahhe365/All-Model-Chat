@@ -9,8 +9,7 @@ import {
     unrestrictedScenario, 
     pyriteScenario, 
     annaScenario, 
-    voxelScenario,
-    codingInterviewScenario,
+    voxelScenario, 
     reasonerScenario, 
     succinctScenario, 
     socraticScenario, 
@@ -78,7 +77,6 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
         return [
             // FOP, Unrestricted, Pyrite, Anna are now in filteredUserScenarios
             voxelScenario,
-            codingInterviewScenario,
             reasonerScenario,
             succinctScenario, 
             socraticScenario, 
