@@ -19,7 +19,55 @@ export const useLiveAudio = () => {
     const nextStartTimeRef = useRef<number>(0);
     const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
+    const stopAudioPlayback = useCallback(() => {
+        sourcesRef.current.forEach(s => {
+            try { s.stop(); } catch (e) { /* ignore already stopped */ }
+        });
+        sourcesRef.current.clear();
+        nextStartTimeRef.current = 0;
+        setIsSpeaking(false);
+    }, []);
+
+    const cleanupAudio = useCallback(() => {
+        stopAudioPlayback();
+
+        // Stop Microphone
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+
+        // Disconnect Input Nodes
+        if (processorRef.current) {
+            try {
+                processorRef.current.port.onmessage = null; // Remove handler
+                processorRef.current.disconnect();
+            } catch (e) {}
+            processorRef.current = null;
+        }
+        if (inputSourceRef.current) {
+            try { inputSourceRef.current.disconnect(); } catch (e) {}
+            inputSourceRef.current = null;
+        }
+
+        // Close Contexts
+        if (audioContextRef.current) {
+            audioContextRef.current.close().catch(() => {});
+            audioContextRef.current = null;
+        }
+        if (inputContextRef.current) {
+            inputContextRef.current.close().catch(() => {});
+            inputContextRef.current = null;
+        }
+
+        setVolume(0);
+        setIsMuted(false); // Reset mute state on cleanup
+    }, [stopAudioPlayback]);
+
     const initializeAudio = useCallback(async (onAudioData: (data: Float32Array) => void) => {
+        // Ensure clean state before initializing
+        cleanupAudio();
+
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         
         // Output Context (Playback)
@@ -27,6 +75,7 @@ export const useLiveAudio = () => {
         audioContextRef.current = audioCtx;
 
         // Input Context (Microphone)
+        // Request 16kHz, but browser may ignore. We return the actual rate below.
         const inputCtx = new AudioContextClass({ sampleRate: 16000 });
         inputContextRef.current = inputCtx;
 
@@ -62,8 +111,7 @@ export const useLiveAudio = () => {
         // Handle Worklet Messages (Volume + Data)
         workletNode.port.onmessage = (e) => {
             // If muted, we effectively send silence or nothing.
-            // However, track.enabled = false usually stops data flow at the source level (OS/Browser).
-            // But to be safe and ensure volume is 0 in UI:
+            // track.enabled = false usually stops data flow at the source level.
             if (isMuted) {
                 setVolume(0);
                 return;
@@ -88,8 +136,8 @@ export const useLiveAudio = () => {
         source.connect(workletNode);
         workletNode.connect(inputCtx.destination); // Keep graph alive
 
-        return { audioCtx, inputCtx };
-    }, [isMuted]);
+        return { audioCtx, inputCtx, sampleRate: inputCtx.sampleRate };
+    }, [isMuted, cleanupAudio]);
 
     const toggleMute = useCallback(() => {
         if (streamRef.current) {
@@ -136,48 +184,6 @@ export const useLiveAudio = () => {
             logService.error("Failed to play audio chunk", error);
         }
     }, []);
-
-    const stopAudioPlayback = useCallback(() => {
-        sourcesRef.current.forEach(s => {
-            try { s.stop(); } catch (e) { /* ignore already stopped */ }
-        });
-        sourcesRef.current.clear();
-        nextStartTimeRef.current = 0;
-        setIsSpeaking(false);
-    }, []);
-
-    const cleanupAudio = useCallback(() => {
-        stopAudioPlayback();
-
-        // Stop Microphone
-        if (streamRef.current) {
-            streamRef.current.getTracks().forEach(t => t.stop());
-            streamRef.current = null;
-        }
-
-        // Disconnect Input Nodes
-        if (processorRef.current) {
-            processorRef.current.disconnect();
-            processorRef.current = null;
-        }
-        if (inputSourceRef.current) {
-            inputSourceRef.current.disconnect();
-            inputSourceRef.current = null;
-        }
-
-        // Close Contexts
-        if (audioContextRef.current) {
-            audioContextRef.current.close().catch(() => {});
-            audioContextRef.current = null;
-        }
-        if (inputContextRef.current) {
-            inputContextRef.current.close().catch(() => {});
-            inputContextRef.current = null;
-        }
-
-        setVolume(0);
-        setIsMuted(false); // Reset mute state on cleanup
-    }, [stopAudioPlayback]);
 
     return {
         volume,
