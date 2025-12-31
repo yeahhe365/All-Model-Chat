@@ -112,6 +112,8 @@ export interface ChatAreaProps {
   setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;
   onUpdateMessageContent: (messageId: string, content: string) => void;
   onAddUserMessage: (text: string, files?: UploadedFile[]) => void;
+  
+  onLiveTranscript: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
 
   // PiP Props
   isPipSupported: boolean;

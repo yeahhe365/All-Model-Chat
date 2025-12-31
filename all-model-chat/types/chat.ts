@@ -56,6 +56,7 @@ export interface ChatMessage {
   thoughtTokens?: number; // Added for tracking thinking tokens
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
+  audioAutoplay?: boolean; // Controls whether the audioSrc should play automatically on render
   groundingMetadata?: any;
   urlContextMetadata?: any;
   suggestions?: string[];
@@ -256,7 +257,7 @@ export interface ChatInputProps {
   editingMessageId: string | null;
   setEditingMessageId: (id: string | null) => void;
   onAddUserMessage: (text: string, files?: UploadedFile[]) => void;
-  onLiveTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean) => void;
+  onLiveTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
 }
 
 export type { ThemeColors };

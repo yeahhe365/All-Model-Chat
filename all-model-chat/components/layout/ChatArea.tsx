@@ -36,6 +36,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     generateQuadImages, onToggleQuadImages,
     onSetThinkingLevel, setCurrentChatSettings, onUpdateMessageContent, onAddUserMessage,
     onOpenSidePanel,
+    onLiveTranscript,
     t
   } = props;
 
@@ -173,6 +174,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             showEmptyStateSuggestions={messages.length === 0}
             onUpdateMessageContent={onUpdateMessageContent}
             onAddUserMessage={onAddUserMessage}
+            onLiveTranscript={onLiveTranscript}
           />
         </div>
       </div>

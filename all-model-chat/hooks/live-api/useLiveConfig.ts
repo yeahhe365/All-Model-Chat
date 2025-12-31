@@ -23,10 +23,9 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
         
         // Code execution is not supported by Native Audio models (Live API)
         
-        // Client-side tools (Function Declarations could be processed here if provided in a specific format)
-        // For now, we assume clientFunctions logic is handled in the message processor, 
-        // but if we needed to send declarations, we would add them here.
-        // if (clientFunctions) { ... }
+        // Client-side tools handling (if specific definitions needed, add here)
+        // Note: Function declarations for client tools would be added here if we were defining them schema-first.
+        // For dynamic client functions, we assume the model knows or we handle standard ones.
 
         // Build Config
         const liveConfig: any = {
