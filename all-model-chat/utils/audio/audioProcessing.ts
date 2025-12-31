@@ -51,3 +51,57 @@ export const float32ToPCM16Base64 = (data: Float32Array): string => {
     }
     return btoa(binary);
 };
+
+/**
+ * Combines multiple Base64 PCM16 chunks into a single WAV Blob URL.
+ */
+export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000): string | null => {
+    if (chunks.length === 0) return null;
+
+    // 1. Calculate total length
+    let totalLen = 0;
+    const decodedChunks: Uint8Array[] = [];
+    
+    for (const chunk of chunks) {
+        const decoded = decodeBase64ToArrayBuffer(chunk);
+        decodedChunks.push(decoded);
+        totalLen += decoded.length;
+    }
+
+    // 2. Merge chunks
+    const merged = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const chunk of decodedChunks) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    // 3. Create WAV Header
+    const numChannels = 1;
+    const bytesPerSample = 2; // 16-bit
+    const blockAlign = numChannels * bytesPerSample;
+    const wav = new ArrayBuffer(44 + totalLen);
+    const dv = new DataView(wav);
+
+    let p = 0;
+    const writeStr = (s: string) => [...s].forEach(ch => dv.setUint8(p++, ch.charCodeAt(0)));
+
+    writeStr('RIFF');
+    dv.setUint32(p, 36 + totalLen, true); p += 4;
+    writeStr('WAVEfmt ');
+    dv.setUint32(p, 16, true); p += 4;        // fmt length
+    dv.setUint16(p, 1, true);  p += 2;        // PCM
+    dv.setUint16(p, numChannels, true); p += 2;
+    dv.setUint32(p, sampleRate, true); p += 4;
+    dv.setUint32(p, sampleRate * blockAlign, true); p += 4;
+    dv.setUint16(p, blockAlign, true); p += 2;
+    dv.setUint16(p, bytesPerSample * 8, true); p += 2;
+    writeStr('data');
+    dv.setUint32(p, totalLen, true); p += 4;
+
+    new Uint8Array(wav, 44).set(merged);
+
+    // 4. Create Blob and URL
+    const blob = new Blob([wav], { type: 'audio/wav' });
+    return URL.createObjectURL(blob);
+};

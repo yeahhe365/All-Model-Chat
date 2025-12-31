@@ -84,6 +84,9 @@ export const useChatActions = ({
         handleLiveTranscript
     } = useMessageUpdates({
         activeSessionId,
+        setActiveSessionId: (id) => setActiveSessionId(id), // Helper to match types if needed, though strictly compatible
+        appSettings,
+        currentChatSettings,
         updateAndPersistSessions,
         userScrolledUp,
     });

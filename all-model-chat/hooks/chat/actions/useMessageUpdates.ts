@@ -1,22 +1,40 @@
 
-import React, { useCallback, useRef } from 'react';
-import { SavedChatSession, ChatMessage, UploadedFile, VideoMetadata } from '../../../types';
-import { generateUniqueId, logService } from '../../../utils/appUtils';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { SavedChatSession, ChatMessage, UploadedFile, VideoMetadata, AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
+import { generateUniqueId, logService, createNewSession } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
+import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 
 interface UseMessageUpdatesProps {
     activeSessionId: string | null;
+    setActiveSessionId: (id: string) => void;
+    appSettings: AppSettings;
+    currentChatSettings: IndividualChatSettings;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
     userScrolledUp: React.MutableRefObject<boolean>;
 }
 
 export const useMessageUpdates = ({
     activeSessionId,
+    setActiveSessionId,
+    appSettings,
+    currentChatSettings,
     updateAndPersistSessions,
     userScrolledUp,
 }: UseMessageUpdatesProps) => {
     
+    // Track active message IDs for the live session within the closure of the hook instance
     const liveConversationRefs = useRef<{ userId: string|null, modelId: string|null }>({ userId: null, modelId: null });
+    
+    // Track pending session ID creation to prevent duplicates during async state updates
+    const pendingSessionIdRef = useRef<string | null>(null);
+
+    // Reset pending ref when activeSessionId matches (state caught up)
+    useEffect(() => {
+        if (activeSessionId && activeSessionId === pendingSessionIdRef.current) {
+            pendingSessionIdRef.current = null;
+        }
+    }, [activeSessionId]);
 
     const handleUpdateMessageContent = useCallback((messageId: string, newContent: string) => {
         if (!activeSessionId) return;
@@ -54,7 +72,17 @@ export const useMessageUpdates = ({
     }, [activeSessionId, updateAndPersistSessions]);
 
     const handleAddUserMessage = useCallback((text: string, files: UploadedFile[] = []) => {
-        if (!activeSessionId) return;
+        let currentSessionId = activeSessionId || pendingSessionIdRef.current;
+
+        // Auto-create session if sending message from New Chat state
+        if (!currentSessionId) {
+            const newSession = createNewSession({...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings});
+            currentSessionId = newSession.id;
+            pendingSessionIdRef.current = currentSessionId;
+            setActiveSessionId(currentSessionId);
+            
+            updateAndPersistSessions(prev => [newSession, ...prev]);
+        }
         
         const newMessage: ChatMessage = {
             id: generateUniqueId(),
@@ -65,7 +93,7 @@ export const useMessageUpdates = ({
         };
 
         updateAndPersistSessions(prev => prev.map(s => {
-            if (s.id === activeSessionId) {
+            if (s.id === currentSessionId) {
                 return {
                     ...s,
                     messages: [...s.messages, newMessage]
@@ -74,58 +102,115 @@ export const useMessageUpdates = ({
             return s;
         }));
         userScrolledUp.current = false;
-    }, [activeSessionId, updateAndPersistSessions, userScrolledUp]);
+    }, [activeSessionId, updateAndPersistSessions, userScrolledUp, appSettings, currentChatSettings, setActiveSessionId]);
 
-    const handleLiveTranscript = useCallback((text: string, role: 'user' | 'model', isFinal: boolean) => {
-        if (!activeSessionId) return;
+    const handleLiveTranscript = useCallback((text: string, role: 'user' | 'model', isFinal: boolean, type: 'content' | 'thought' = 'content', audioUrl?: string | null) => {
+        let currentSessionId = activeSessionId || pendingSessionIdRef.current;
+
+        // Auto-create session if receiving transcript in New Chat state
+        if (!currentSessionId && text) {
+            const newSession = createNewSession({...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings}, [], "Live Session");
+            currentSessionId = newSession.id;
+            pendingSessionIdRef.current = currentSessionId;
+            setActiveSessionId(currentSessionId);
+            
+            // Inject new session immediately
+            updateAndPersistSessions(prev => [newSession, ...prev]);
+        }
+
+        if (!currentSessionId) return;
 
         updateAndPersistSessions(prev => prev.map(s => {
-            if (s.id !== activeSessionId) return s;
+            if (s.id !== currentSessionId) return s;
 
+            // Determine which ID we are currently tracking for this role
             let currentId = role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
             let messages = [...s.messages];
-
-            // If we don't have a current ID for this role, or the message is not found, create new
+            
+            // Find the index of the existing message, if any
             let messageIndex = currentId ? messages.findIndex(m => m.id === currentId) : -1;
 
-            if (messageIndex === -1) {
-                // New message needed
-                const newMessage: ChatMessage = {
-                    id: generateUniqueId(),
-                    role: role === 'user' ? 'user' : 'model',
-                    content: text,
-                    timestamp: new Date(),
-                    // For model, we can treat it as 'isLoading' if needed, but for Live it's continuous.
-                    // We'll mark it loading=true to show it's active, but we don't have a strict generationStartTime
-                    // that matches the standard streaming logic.
-                    isLoading: true 
-                };
-                messages.push(newMessage);
-                if (role === 'user') liveConversationRefs.current.userId = newMessage.id;
-                else liveConversationRefs.current.modelId = newMessage.id;
-            } else {
-                // Update existing
-                const msg = messages[messageIndex];
-                messages[messageIndex] = { ...msg, content: msg.content + text };
+            // Only create or update if there is actual text content (or thoughts)
+            // OR if there is an audioUrl to attach (e.g. at the end of a turn even if no text change)
+            if (text || audioUrl) {
+                if (messageIndex === -1) {
+                    // Start a new message for this turn
+                    const newMessage: ChatMessage = {
+                        id: generateUniqueId(),
+                        role: role === 'user' ? 'user' : 'model',
+                        content: type === 'content' ? text : '',
+                        thoughts: type === 'thought' ? text : undefined,
+                        timestamp: new Date(),
+                        // Mark as loading to indicate active stream/live status
+                        isLoading: true,
+                        // Capture start time for thinking timer
+                        generationStartTime: new Date(),
+                        // Initialize TTFT to 0 for Live API to ensure timer starts immediately
+                        firstTokenTimeMs: 0,
+                        audioSrc: audioUrl || undefined,
+                        audioAutoplay: audioUrl ? false : undefined // Disable autoplay for Live API generated audio
+                    };
+                    messages.push(newMessage);
+                    
+                    // Update ref to track this new message
+                    if (role === 'user') liveConversationRefs.current.userId = newMessage.id;
+                    else liveConversationRefs.current.modelId = newMessage.id;
+                    
+                    // Update index so we can finalize it below if needed
+                    messageIndex = messages.length - 1;
+                } else {
+                    // Update existing message content
+                    const msg = messages[messageIndex];
+                    const updates: Partial<ChatMessage> = {};
+                    
+                    if (text) {
+                        if (type === 'thought') {
+                            updates.thoughts = (msg.thoughts || '') + text;
+                        } else {
+                            // If we are switching to content from thoughts, and thinkingTimeMs isn't set yet
+                            // This effectively "stops" the thinking timer
+                            if (msg.thoughts && !msg.thinkingTimeMs && msg.generationStartTime) {
+                                updates.thinkingTimeMs = new Date().getTime() - msg.generationStartTime.getTime();
+                            }
+                            updates.content = msg.content + text;
+                        }
+                    }
+                    
+                    if (audioUrl) {
+                        updates.audioSrc = audioUrl;
+                        updates.audioAutoplay = false; // Disable autoplay for Live API generated audio
+                    }
+                    
+                    messages[messageIndex] = { ...msg, ...updates };
+                }
             }
             
-            // If final or turn changed (implicit), we reset ref.
-            // Note: `isFinal` from useLiveAPI might be triggered on turnComplete.
+            // If the turn is complete (isFinal=true), mark the message as not loading and clear the ref
             if (isFinal) {
-                 // Finalize the message
-                 const index = role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
-                 const finalIndex = index ? messages.findIndex(m => m.id === index) : -1;
-                 if (finalIndex !== -1) {
-                     messages[finalIndex] = { ...messages[finalIndex], isLoading: false };
-                 }
+                 if (messageIndex !== -1) {
+                     const updatedMsg = messages[messageIndex];
+                     
+                     // Finalize thinking time if not already set (e.g. if the message was ONLY thoughts)
+                     let finalThinkingTime = updatedMsg.thinkingTimeMs;
+                     if (updatedMsg.thoughts && !finalThinkingTime && updatedMsg.generationStartTime) {
+                         finalThinkingTime = new Date().getTime() - updatedMsg.generationStartTime.getTime();
+                     }
 
+                     messages[messageIndex] = { 
+                         ...updatedMsg, 
+                         isLoading: false,
+                         generationEndTime: new Date(),
+                         thinkingTimeMs: finalThinkingTime
+                     };
+                 }
+                 // Reset tracking ref for this role so next transcript starts a new message bubble
                  if (role === 'user') liveConversationRefs.current.userId = null;
                  else liveConversationRefs.current.modelId = null;
             }
 
             return { ...s, messages };
         }));
-    }, [activeSessionId, updateAndPersistSessions]);
+    }, [activeSessionId, updateAndPersistSessions, appSettings, currentChatSettings, setActiveSessionId]);
 
     return {
         handleUpdateMessageContent,

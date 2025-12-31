@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { ChatMessage } from '../../../types';
@@ -12,13 +13,13 @@ interface MessageFooterProps {
 }
 
 export const MessageFooter: React.FC<MessageFooterProps> = ({ message, t, onSuggestionClick }) => {
-    const { audioSrc, suggestions, isGeneratingSuggestions, role, generationStartTime } = message;
+    const { audioSrc, audioAutoplay, suggestions, isGeneratingSuggestions, role, generationStartTime } = message;
 
     return (
         <>
             {audioSrc && (
                 <div className="mt-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
-                    <AudioPlayer src={audioSrc} autoPlay={true} />
+                    <AudioPlayer src={audioSrc} autoPlay={audioAutoplay ?? false} />
                 </div>
             )}
             

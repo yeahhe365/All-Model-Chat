@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { getKeyForRequest, logService, pcmBase64ToWavUrl } from '../utils/appUtils';
@@ -45,7 +46,8 @@ export const useTextToSpeechHandler = ({
             
             updateAndPersistSessions(prev => prev.map(s => {
                 if(s.messages.some(m => m.id === messageId)) {
-                    return {...s, messages: s.messages.map(m => m.id === messageId ? {...m, audioSrc: wavUrl} : m)};
+                    // Autoplay is true because user explicitly requested playback via button
+                    return {...s, messages: s.messages.map(m => m.id === messageId ? {...m, audioSrc: wavUrl, audioAutoplay: true} : m)};
                 }
                 return s;
             }));

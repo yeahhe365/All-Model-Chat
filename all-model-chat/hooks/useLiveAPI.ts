@@ -16,7 +16,7 @@ interface UseLiveAPIProps {
     chatSettings: ChatSettings;
     modelId: string;
     onClose?: () => void;
-    onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean) => void;
+    onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
     clientFunctions?: Record<string, (args: any) => Promise<any>>; // Registry for client-side tools
 }
 
