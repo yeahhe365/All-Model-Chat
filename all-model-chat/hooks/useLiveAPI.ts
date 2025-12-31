@@ -141,12 +141,18 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
                 const base64Data = float32ToPCM16Base64(pcmData);
                 if (sessionRef.current) {
                     sessionRef.current.then(session => {
-                        session.sendRealtimeInput({
-                            media: {
-                                mimeType: 'audio/pcm;rate=16000',
-                                data: base64Data
-                            }
-                        });
+                        try {
+                            session.sendRealtimeInput({
+                                media: {
+                                    mimeType: 'audio/pcm;rate=16000',
+                                    data: base64Data
+                                }
+                            });
+                        } catch (e) {
+                            // Ignore WebSocket closed errors to prevent console spam during reconnection
+                        }
+                    }).catch(() => {
+                        // Ignore promise rejection if session isn't ready
                     });
                 }
             });
@@ -245,13 +251,17 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
             const base64Data = captureFrame();
             if (base64Data && sessionRef.current) {
                 sessionRef.current.then(session => {
-                    session.sendRealtimeInput({
-                        media: {
-                            mimeType: 'image/jpeg',
-                            data: base64Data
-                        }
-                    });
-                });
+                    try {
+                        session.sendRealtimeInput({
+                            media: {
+                                mimeType: 'image/jpeg',
+                                data: base64Data
+                            }
+                        });
+                    } catch (e) {
+                        // Ignore connection errors during frame send
+                    }
+                }).catch(() => {});
             }
         };
 
