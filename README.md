@@ -156,6 +156,17 @@ src/
 
 欢迎提交 Issue 或 Pull Request！无论是修复 Bug、添加新翻译还是开发新功能，我们都非常感谢您的贡献。
 
+## ☕ 支持项目
+
+**赞赏通道（爱发电）：** [https://afdian.com/a/gemini-nexus](https://afdian.com/a/gemini-nexus)
+
+<div align="center">
+  <a href="https://afdian.com/a/gemini-nexus" target="_blank">
+    <img src="https://github.com/user-attachments/assets/b833ac9b-ca8d-4ff6-b83c-f3b2b0094aa8" width="200" alt="afdian-yeahhe">
+  </a>
+  <p><b>扫描上方二维码或 <a href="https://afdian.com/a/gemini-nexus" target="_blank">点击此处</a> 前往爱发电支持我</b></p>
+</div>
+
 ## 📄 许可证
 
 MIT License
