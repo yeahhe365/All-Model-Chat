@@ -1,4 +1,3 @@
-
 # 🤖 All Model Chat (v1.8.4)
 
 <div align="center">
@@ -10,6 +9,9 @@
   <p>
     <a href="https://all-model-chat.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
+    </a>
+    <a href="https://ai.studio/apps/drive/1QTVIPSUjPTWHBzCFRBDG0aiGO6GLNwcD?fullscreenApplet=true" target="_blank">
+      <img src="https://img.shields.io/badge/AI_Studio-Build-orange?style=for-the-badge&logo=google&logoColor=white" alt="AI Studio Build">
     </a>
     <a href="https://github.com/yeahhe365/All-Model-Chat/releases" target="_blank">
       <img src="https://img.shields.io/github/v/release/yeahhe365/All-Model-Chat?style=for-the-badge&color=blue" alt="Release">
