@@ -34,8 +34,8 @@ class GeminiServiceImpl implements GeminiService {
         return generateSpeechApi(apiKey, modelId, text, voice, abortSignal);
     }
 
-    async transcribeAudio(apiKey: string, audioFile: File, modelId: string): Promise<string> {
-        return transcribeAudioApi(apiKey, audioFile, modelId);
+    async transcribeAudio(apiKey: string, audioFile: File, modelId: string, prompt?: string): Promise<string> {
+        return transcribeAudioApi(apiKey, audioFile, modelId, prompt);
     }
 
     async translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string> {

@@ -1,3 +1,4 @@
+
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import { Part } from "@google/genai";
@@ -56,7 +57,7 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
     }
 };
 
-export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string): Promise<string> => {
+export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelId: string, prompt?: string): Promise<string> => {
     logService.info(`Transcribing audio with model ${modelId}`, { fileName: audioFile.name, size: audioFile.size });
     
     try {
@@ -71,7 +72,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         };
 
         const textPart: Part = {
-            text: "Transcribe audio.",
+            text: prompt || "Transcribe audio.",
         };
         
         const config: any = {

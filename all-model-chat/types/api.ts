@@ -40,7 +40,7 @@ export interface GeminiService {
 
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
-  transcribeAudio: (apiKey: string, audioFile: File, modelId: string) => Promise<string>;
+  transcribeAudio: (apiKey: string, audioFile: File, modelId: string, prompt?: string) => Promise<string>;
   translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
