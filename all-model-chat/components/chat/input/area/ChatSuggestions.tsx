@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
 import { SuggestionIcon } from './SuggestionIcon';
 import { translations } from '../../../../utils/appUtils';
+import { useResponsiveValue } from '../../../../hooks/useDevice';
 
 interface ChatSuggestionsProps {
     show: boolean;
@@ -18,6 +19,8 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
     const [isSuggestionsHovered, setIsSuggestionsHovered] = useState(false);
+
+    const iconSize = useResponsiveValue(14, 16);
 
     const checkScroll = useCallback(() => {
         if (suggestionsRef.current) {
@@ -69,15 +72,15 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                             }
                         }}
                         className="
-                            flex items-center gap-2 px-4 py-2.5 rounded-xl
+                            flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
                             bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
                             border border-[var(--theme-border-secondary)]
                             text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
-                            text-sm font-medium whitespace-nowrap
+                            text-xs sm:text-sm font-medium whitespace-nowrap
                             transition-all active:scale-95 shadow-sm
                         "
                     >
-                        <SuggestionIcon iconName={(s as any).icon} />
+                        <SuggestionIcon iconName={(s as any).icon} size={iconSize} />
                         <span>{t(s.titleKey as any)}</span>
                     </button>
                 ))}
