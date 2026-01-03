@@ -54,27 +54,23 @@ export const useChatSessionActions = ({
 
     const toggleGoogleSearch = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isGoogleSearchEnabled: !prev.isGoogleSearchEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, setCurrentChatSettings]);
     
     const toggleCodeExecution = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isCodeExecutionEnabled: !prev.isCodeExecutionEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, setCurrentChatSettings]);
 
     const toggleUrlContext = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isUrlContextEnabled: !prev.isUrlContextEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, setCurrentChatSettings]);
 
     const toggleDeepSearch = useCallback(() => {
         if (!activeSessionId) return;
-        if (isLoading) handleStopGenerating();
         setCurrentChatSettings(prev => ({ ...prev, isDeepSearchEnabled: !prev.isDeepSearchEnabled }));
-    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+    }, [activeSessionId, setCurrentChatSettings]);
 
     return {
         handleClearCurrentChat,

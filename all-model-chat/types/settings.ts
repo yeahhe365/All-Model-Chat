@@ -1,3 +1,4 @@
+
 export interface ModelOption {
   id: string;
   name: string;
@@ -41,6 +42,17 @@ export interface FilesApiConfig {
     text: boolean;
 }
 
+export interface KeyDefinition {
+    key: string;
+    mod?: boolean; // Represents Cmd on Mac, Ctrl on others
+    ctrl?: boolean;
+    meta?: boolean;
+    alt?: boolean;
+    shift?: boolean;
+}
+
+export type ShortcutMap = Record<string, KeyDefinition>;
+
 export interface ChatSettings {
   modelId: string;
   temperature: number;
@@ -82,8 +94,10 @@ export interface AppSettings extends ChatSettings {
  autoFullscreenHtml?: boolean;
  showWelcomeSuggestions?: boolean;
  isAudioCompressionEnabled: boolean;
+ isSystemAudioRecordingEnabled?: boolean;
  autoCanvasVisualization?: boolean;
  autoCanvasModelId: string;
  isPasteRichTextAsMarkdownEnabled?: boolean;
  isPasteAsTextFileEnabled?: boolean;
+ customShortcuts?: ShortcutMap;
 }

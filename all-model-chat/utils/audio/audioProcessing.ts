@@ -105,3 +105,76 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
     const blob = new Blob([wav], { type: 'audio/wav' });
     return URL.createObjectURL(blob);
 };
+
+/**
+ * Mixes microphone audio with system audio (if enabled/available).
+ * Returns the mixed MediaStream and a cleanup function.
+ */
+export const getMixedAudioStream = async (micStream: MediaStream, includeSystemAudio: boolean): Promise<{ stream: MediaStream, cleanup: () => void }> => {
+    if (!includeSystemAudio) {
+        return { 
+            stream: micStream, 
+            cleanup: () => {
+                // No extra cleanup needed for single stream beyond caller stopping tracks
+            } 
+        };
+    }
+
+    try {
+        // Request System Audio (Display Media)
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+                width: 1, height: 1 // Request minimal video to reduce overhead, as we only need audio
+            },
+            audio: true
+        });
+
+        // Check if user shared audio
+        const systemAudioTrack = displayStream.getAudioTracks()[0];
+        if (!systemAudioTrack) {
+            // User likely didn't check "Share tab audio"
+            displayStream.getTracks().forEach(t => t.stop());
+            console.warn("System audio requested but not provided by user.");
+            // Fallback to mic only
+            return { stream: micStream, cleanup: () => {} };
+        }
+
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const ctx = new AudioContextClass();
+        const dest = ctx.createMediaStreamDestination();
+
+        // Mic Source
+        const micSource = ctx.createMediaStreamSource(micStream);
+        
+        // System Source
+        const sysSource = ctx.createMediaStreamSource(displayStream);
+
+        // Mix
+        // Optional: Gain nodes to balance volume if needed
+        micSource.connect(dest);
+        sysSource.connect(dest);
+
+        const mixedStream = dest.stream;
+
+        // Cleanup function
+        const cleanup = () => {
+            displayStream.getTracks().forEach(t => t.stop());
+            micSource.disconnect();
+            sysSource.disconnect();
+            ctx.close();
+        };
+
+        // Listen for track ending on the display stream (user clicked "Stop Sharing")
+        systemAudioTrack.onended = () => {
+            // We could handle this gracefully, but usually this just cuts the system audio.
+            // The mix will continue with just mic.
+        };
+
+        return { stream: mixedStream, cleanup };
+
+    } catch (error) {
+        console.error("Failed to capture system audio:", error);
+        // Fallback to mic only if system capture fails/cancelled
+        return { stream: micStream, cleanup: () => {} };
+    }
+};

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AppSettings, ModelOption } from '../../types';
+import { AppSettings, ModelOption, KeyDefinition } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { ApiConfigSection } from './sections/ApiConfigSection';
@@ -9,6 +9,7 @@ import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
 import { DataManagementSection } from './sections/DataManagementSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
+import { DEFAULT_SHORTCUTS } from '../../constants/appConstants';
 
 interface SettingsContentProps {
     activeTab: SettingsTab;
@@ -59,6 +60,15 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     t
 }) => {
     const animClass = "animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both";
+
+    const handleUpdateShortcut = (id: string, def: KeyDefinition) => {
+        const newShortcuts = { ...currentSettings.customShortcuts, [id]: def };
+        updateSetting('customShortcuts', newShortcuts);
+    };
+
+    const handleResetShortcuts = () => {
+        updateSetting('customShortcuts', DEFAULT_SHORTCUTS);
+    };
 
     return (
         <div className="max-w-3xl mx-auto w-full">
@@ -121,6 +131,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         setShowWelcomeSuggestions={(v) => updateSetting('showWelcomeSuggestions', v)}
                         isAudioCompressionEnabled={currentSettings.isAudioCompressionEnabled}
                         setIsAudioCompressionEnabled={(v) => updateSetting('isAudioCompressionEnabled', v)}
+                        isSystemAudioRecordingEnabled={currentSettings.isSystemAudioRecordingEnabled ?? false}
+                        setIsSystemAudioRecordingEnabled={(v) => updateSetting('isSystemAudioRecordingEnabled', v)}
                         filesApiConfig={currentSettings.filesApiConfig}
                         setFilesApiConfig={(v) => updateSetting('filesApiConfig', v)}
                         isPasteRichTextAsMarkdownEnabled={currentSettings.isPasteRichTextAsMarkdownEnabled ?? true}
@@ -166,7 +178,16 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     />
                 </div>
             )}
-            {activeTab === 'shortcuts' && ( <div className={animClass}><ShortcutsSection t={t} /></div> )}
+            {activeTab === 'shortcuts' && ( 
+                <div className={animClass}>
+                    <ShortcutsSection 
+                        customShortcuts={currentSettings.customShortcuts}
+                        onUpdateShortcut={handleUpdateShortcut}
+                        onResetAll={handleResetShortcuts}
+                        t={t} 
+                    />
+                </div> 
+            )}
             {activeTab === 'about' && ( <div className={animClass}><AboutSection t={t} /></div> )}
         </div>
     );
