@@ -66,6 +66,8 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         setInputText: inputState.setInputText,
         adjustTextareaHeight: inputState.adjustTextareaHeight,
         isAudioCompressionEnabled: appSettings.isAudioCompressionEnabled,
+        isSystemAudioRecordingEnabled: appSettings.isSystemAudioRecordingEnabled,
+        customShortcuts: appSettings.customShortcuts,
     });
 
     // 7. Slash Commands
