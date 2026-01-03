@@ -3,13 +3,15 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { compressAudioToMp3 } from '../utils/audioCompression';
 import { useRecorder } from './core/useRecorder';
 import { checkShortcut } from '../utils/shortcutUtils';
-import { useAppSettings } from './core/useAppSettings';
+import { ShortcutMap } from '../types';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   setInputText: React.Dispatch<React.SetStateAction<string>>;
   adjustTextareaHeight: () => void;
   isAudioCompressionEnabled?: boolean;
+  isSystemAudioRecordingEnabled?: boolean;
+  customShortcuts?: ShortcutMap;
 }
 
 export const useVoiceInput = ({
@@ -17,9 +19,10 @@ export const useVoiceInput = ({
   setInputText,
   adjustTextareaHeight,
   isAudioCompressionEnabled = true,
+  isSystemAudioRecordingEnabled = false,
+  customShortcuts,
 }: UseVoiceInputProps) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const { appSettings } = useAppSettings();
 
   const handleRecordingComplete = useCallback(async (audioBlob: Blob) => {
     if (audioBlob.size > 0) {
@@ -65,8 +68,8 @@ export const useVoiceInput = ({
   const isRecording = status === 'recording';
 
   const startRecording = useCallback(() => {
-      startCore(appSettings.isSystemAudioRecordingEnabled);
-  }, [startCore, appSettings.isSystemAudioRecordingEnabled]);
+      startCore(isSystemAudioRecordingEnabled);
+  }, [startCore, isSystemAudioRecordingEnabled]);
 
   const handleVoiceInputClick = () => {
     if (isRecording) {
@@ -79,7 +82,7 @@ export const useVoiceInput = ({
   // Toggle Record Logic with Custom Shortcuts
   useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-          const shortcuts = appSettings?.customShortcuts;
+          const shortcuts = customShortcuts;
           if (!shortcuts) return;
 
           if (checkShortcut(e, shortcuts.toggleVoice) && !e.repeat) {
@@ -100,7 +103,7 @@ export const useVoiceInput = ({
       return () => {
           window.removeEventListener('keydown', handleKeyDown);
       };
-  }, [isRecording, isTranscribing, isInitializing, startRecording, stopRecording, appSettings]);
+  }, [isRecording, isTranscribing, isInitializing, startRecording, stopRecording, customShortcuts]);
 
   return {
     isRecording,
