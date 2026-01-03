@@ -12,6 +12,7 @@ export const useLiveAudio = () => {
     const audioContextRef = useRef<AudioContext | null>(null);
     const inputContextRef = useRef<AudioContext | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const originalMicStreamRef = useRef<MediaStream | null>(null); // Track original mic stream separately
     const processorRef = useRef<AudioWorkletNode | null>(null);
     const inputSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
@@ -34,6 +35,7 @@ export const useLiveAudio = () => {
         try {
             // 1. Get Microphone Stream
             const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            originalMicStreamRef.current = micStream; // Store ref
             
             // 2. Mix with System Audio if requested
             const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(micStream, includeSystemAudio);
@@ -161,6 +163,13 @@ export const useLiveAudio = () => {
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             streamRef.current = null;
+        }
+
+        // Explicitly stop Original Mic Stream
+        // This is crucial if we were using a mixed stream (streamRef points to destination, not mic)
+        if (originalMicStreamRef.current) {
+            originalMicStreamRef.current.getTracks().forEach(t => t.stop());
+            originalMicStreamRef.current = null;
         }
 
         // Run custom cleanup for system audio if present

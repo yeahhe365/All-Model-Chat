@@ -21,6 +21,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     const chunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const originalMicStreamRef = useRef<MediaStream | null>(null); // Track original mic stream separately
     const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
 
     // Sync stream state to ref for cleanup access
@@ -29,10 +30,18 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     }, [stream]);
 
     const cleanup = useCallback(() => {
+        // Stop the active stream (final mixed stream or mic stream)
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             setStream(null);
             streamRef.current = null;
+        }
+
+        // Explicitly stop original mic stream if it exists
+        // This handles cases where streamRef was pointing to a mixed WebAudio destination stream
+        if (originalMicStreamRef.current) {
+            originalMicStreamRef.current.getTracks().forEach(t => t.stop());
+            originalMicStreamRef.current = null;
         }
         
         if (mixedStreamCleanupRef.current) {
@@ -60,6 +69,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         try {
             // 1. Get Microphone Stream
             const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            originalMicStreamRef.current = micStream; // Store ref
             
             // 2. Mix with System Audio if requested
             const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(micStream, includeSystemAudio);

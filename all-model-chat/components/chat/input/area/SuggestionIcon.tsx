@@ -2,8 +2,7 @@
 import React from 'react';
 import { Layers, Languages, ScanText, AudioWaveform, Captions, Lightbulb, FileText, Sparkles, AppWindow } from 'lucide-react';
 
-export const SuggestionIcon = ({ iconName, className }: { iconName?: string, className?: string }) => {
-    const size = 16;
+export const SuggestionIcon = ({ iconName, className, size = 16 }: { iconName?: string, className?: string, size?: number }) => {
     switch(iconName) {
         case 'AppWindow': return <AppWindow className={className} size={size} />;
         case 'Layers': return <Layers className={className} size={size} />;
