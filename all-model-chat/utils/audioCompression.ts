@@ -121,8 +121,14 @@ export const compressAudioToMp3 = async (file: File | Blob, signal?: AbortSignal
             worker.onmessage = (e) => {
                 if (e.data.type === 'success') {
                     const mp3Blob = new Blob(e.data.buffers, { type: 'audio/mpeg' });
-                    const originalName = (file as File).name || `audio-${Date.now()}`;
-                    const newName = originalName.replace(/\.[^/.]+$/, "") + ".mp3";
+                    const originalName = 'name' in file ? (file as File).name : `audio-${Date.now()}`;
+                    // Strip extension properly
+                    const nameWithoutExt = originalName.lastIndexOf('.') > 0 
+                        ? originalName.substring(0, originalName.lastIndexOf('.'))
+                        : originalName;
+                    
+                    const newName = `${nameWithoutExt}.mp3`;
+                    
                     cleanup();
                     resolve(new File([mp3Blob], newName, { type: 'audio/mpeg' }));
                 } else {
@@ -134,8 +140,21 @@ export const compressAudioToMp3 = async (file: File | Blob, signal?: AbortSignal
 
             const fallbackToOriginal = () => {
                 cleanup();
-                const originalName = (file as File).name || `recording-${Date.now()}.wav`;
-                resolve(new File([file], originalName, { type: file.type || "audio/wav" }));
+                
+                // Determine sensible defaults for the fallback file
+                let originalName = `recording-${Date.now()}`;
+                let mimeType = file.type || "audio/wav"; 
+                
+                if ('name' in file) {
+                     originalName = (file as File).name;
+                } else {
+                     // Heuristic for Blobs without names
+                     if (mimeType.includes('webm')) originalName += '.webm';
+                     else if (mimeType.includes('mp4')) originalName += '.mp4';
+                     else originalName += '.wav';
+                }
+
+                resolve(new File([file], originalName, { type: mimeType }));
             };
 
             worker.postMessage({ pcmData, sampleRate: targetSampleRate, kbps: 64 }, [pcmData.buffer]);
@@ -144,7 +163,18 @@ export const compressAudioToMp3 = async (file: File | Blob, signal?: AbortSignal
         if ((error instanceof DOMException && error.name === 'AbortError') || (error instanceof Error && error.name === 'AbortError')) {
             throw error;
         }
-        const originalName = (file as File).name || `recording-${Date.now()}.wav`;
-        return new File([file], originalName, { type: file.type || "audio/wav" });
+        
+        // Final fallback block
+        let originalName = `recording-${Date.now()}`;
+        let mimeType = file.type || "audio/wav";
+        
+        if ('name' in file) {
+             originalName = (file as File).name;
+        } else {
+             if (mimeType.includes('webm')) originalName += '.webm';
+             else originalName += '.wav';
+        }
+        
+        return new File([file], originalName, { type: mimeType });
     }
 };

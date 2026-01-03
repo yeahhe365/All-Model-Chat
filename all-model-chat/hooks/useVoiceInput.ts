@@ -28,17 +28,22 @@ export const useVoiceInput = ({
     if (audioBlob.size > 0) {
         setIsTranscribing(true);
         try {
+            // Create a File object with the correct MIME type (WebM) immediately.
+            // This ensures downstream logic knows what container format this is.
+            const timestamp = Date.now();
+            const rawFile = new File([audioBlob], `voice-input-${timestamp}.webm`, { type: 'audio/webm' });
+            
             let fileToTranscribe: File;
             
             if (isAudioCompressionEnabled) {
                 try {
-                    fileToTranscribe = await compressAudioToMp3(audioBlob);
+                    fileToTranscribe = await compressAudioToMp3(rawFile);
                 } catch (error) {
                     console.error("Error compressing audio, falling back to original:", error);
-                    fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+                    fileToTranscribe = rawFile;
                 }
             } else {
-                fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
+                fileToTranscribe = rawFile;
             }
 
             const transcribedText = await onTranscribeAudio(fileToTranscribe);
