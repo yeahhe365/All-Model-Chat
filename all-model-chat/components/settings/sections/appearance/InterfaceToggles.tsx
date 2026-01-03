@@ -28,6 +28,8 @@ interface InterfaceTogglesProps {
   setIsGraphvizRenderingEnabled: (value: boolean) => void;
   isAudioCompressionEnabled: boolean;
   setIsAudioCompressionEnabled: (value: boolean) => void;
+  isSystemAudioRecordingEnabled: boolean;
+  setIsSystemAudioRecordingEnabled: (value: boolean) => void;
   isPasteRichTextAsMarkdownEnabled: boolean;
   setIsPasteRichTextAsMarkdownEnabled: (value: boolean) => void;
   isPasteAsTextFileEnabled: boolean;
@@ -48,6 +50,7 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
   isMermaidRenderingEnabled, setIsMermaidRenderingEnabled,
   isGraphvizRenderingEnabled, setIsGraphvizRenderingEnabled,
   isAudioCompressionEnabled, setIsAudioCompressionEnabled,
+  isSystemAudioRecordingEnabled, setIsSystemAudioRecordingEnabled,
   isPasteRichTextAsMarkdownEnabled, setIsPasteRichTextAsMarkdownEnabled,
   isPasteAsTextFileEnabled, setIsPasteAsTextFileEnabled,
   t,
@@ -81,6 +84,7 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
             <ToggleItem label={t('settings_enableMermaidRendering_label')} checked={isMermaidRenderingEnabled} onChange={setIsMermaidRenderingEnabled} tooltip={t('settings_enableMermaidRendering_tooltip')} />
             <ToggleItem label={t('settings_enableGraphvizRendering_label')} checked={isGraphvizRenderingEnabled} onChange={setIsGraphvizRenderingEnabled} tooltip={t('settings_enableGraphvizRendering_tooltip')} />
             <ToggleItem label={t('settings_audioCompression_label')} checked={isAudioCompressionEnabled} onChange={setIsAudioCompressionEnabled} tooltip={t('settings_audioCompression_tooltip')} />
+            <ToggleItem label={t('settings_systemAudioRecording_label')} checked={isSystemAudioRecordingEnabled} onChange={setIsSystemAudioRecordingEnabled} tooltip={t('settings_systemAudioRecording_tooltip')} />
         </div>
     </div>
   );

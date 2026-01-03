@@ -170,6 +170,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         isEditing: props.isEditing,
         onCancelEdit: props.onCancelEdit,
         onEditLastUserMessage: props.onEditLastUserMessage,
+        appSettings: props.appSettings
     });
 
     // 5. File Management (Remove, Add ID, Config, Preview Nav)

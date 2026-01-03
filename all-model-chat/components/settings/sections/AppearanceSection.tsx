@@ -38,6 +38,8 @@ interface AppearanceSectionProps {
   setShowWelcomeSuggestions: (value: boolean) => void;
   isAudioCompressionEnabled: boolean;
   setIsAudioCompressionEnabled: (value: boolean) => void;
+  isSystemAudioRecordingEnabled: boolean;
+  setIsSystemAudioRecordingEnabled: (value: boolean) => void;
   filesApiConfig: FilesApiConfig;
   setFilesApiConfig: (value: FilesApiConfig) => void;
   isPasteRichTextAsMarkdownEnabled: boolean;

@@ -1,5 +1,5 @@
 
-import { AppSettings, FilesApiConfig } from '../types';
+import { AppSettings, FilesApiConfig, KeyDefinition } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
 // Re-exporting from new modules
@@ -57,6 +57,25 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
 
 export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
+export const DEFAULT_SHORTCUTS: Record<string, KeyDefinition> = {
+    newChat: { key: 'n', mod: true, shift: true },
+    openLogs: { key: 'l', mod: true, alt: true },
+    togglePip: { key: 'p', mod: true, shift: true },
+    toggleFullscreen: { key: 'f', mod: true, shift: true },
+    cycleModels: { key: 'Tab' },
+    stopGeneration: { key: 'Escape' },
+    sendMessage: { key: 'Enter' },
+    newLine: { key: 'Enter', shift: true },
+    editLastMessage: { key: 'ArrowUp' },
+    cancelEdit: { key: 'Escape' },
+    slashCommands: { key: '/' },
+    toggleVoice: { key: 'h', mod: true },
+    focusInput: { key: 'Escape', shift: true }, // Placeholder logic for "focus input" if we want a specific one, or handle "any key" separately
+    saveConfirm: { key: 'Enter', mod: true },
+    fileNavNext: { key: 'ArrowRight' },
+    fileNavPrev: { key: 'ArrowLeft' }
+};
+
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
   modelId: DEFAULT_MODEL_ID,
@@ -100,10 +119,12 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoFullscreenHtml: true,
   showWelcomeSuggestions: true,
   isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
+  isSystemAudioRecordingEnabled: false,
   autoCanvasVisualization: false,
   autoCanvasModelId: 'gemini-3-flash-preview',
   isPasteRichTextAsMarkdownEnabled: true,
   isPasteAsTextFileEnabled: true,
+  customShortcuts: DEFAULT_SHORTCUTS,
 };
 
 export const SUGGESTIONS_KEYS = [

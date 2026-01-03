@@ -103,7 +103,16 @@ export const networkInterceptor = {
         try {
             window.fetch = patchedFetch;
         } catch (e) {
-            console.error("[NetworkInterceptor] Failed to mount fetch interceptor.", e);
+            // Fallback for environments where window.fetch is a getter-only property
+            try {
+                Object.defineProperty(window, 'fetch', {
+                    value: patchedFetch,
+                    writable: true,
+                    configurable: true
+                });
+            } catch (e2) {
+                console.error("[NetworkInterceptor] Failed to mount fetch interceptor.", e2);
+            }
         }
 
         // --- WebSocket Interceptor ---
@@ -147,7 +156,16 @@ export const networkInterceptor = {
         try {
             window.WebSocket = PatchedWebSocket;
         } catch (e) {
-             console.error("[NetworkInterceptor] Failed to mount WebSocket interceptor.", e);
+             // Fallback for environments where window.WebSocket is a getter-only property
+             try {
+                Object.defineProperty(window, 'WebSocket', {
+                    value: PatchedWebSocket,
+                    writable: true,
+                    configurable: true
+                });
+             } catch (e2) {
+                console.error("[NetworkInterceptor] Failed to mount WebSocket interceptor.", e2);
+             }
         }
 
         logService.info("[NetworkInterceptor] Network interceptor (Fetch + WebSocket) mounted.", { category: 'SYSTEM' });

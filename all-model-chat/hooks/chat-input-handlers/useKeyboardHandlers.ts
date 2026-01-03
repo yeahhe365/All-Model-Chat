@@ -1,6 +1,8 @@
 
 import { useCallback } from 'react';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
+import { AppSettings } from '../../types';
+import { checkShortcut } from '../../utils/shortcutUtils';
 
 interface UseKeyboardHandlersProps {
     isComposingRef: React.MutableRefObject<boolean>;
@@ -20,6 +22,7 @@ interface UseKeyboardHandlersProps {
     isEditing: boolean;
     onCancelEdit: () => void;
     onEditLastUserMessage: () => void;
+    appSettings: AppSettings;
 }
 
 export const useKeyboardHandlers = ({
@@ -40,12 +43,17 @@ export const useKeyboardHandlers = ({
     isEditing,
     onCancelEdit,
     onEditLastUserMessage,
+    appSettings
 }: UseKeyboardHandlersProps) => {
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        const shortcuts = appSettings.customShortcuts;
+        if (!shortcuts) return; // Should not happen with default initialization
+
         // 1. Slash Menu Navigation (Highest Priority for Arrows/Enter when Open)
-        // We handle this BEFORE composition check to ensure the menu is navigable even if
-        // the browser thinks a composition is briefly active (common with some IMEs or fast typing).
+        // Note: We use explicit key checks here because these are UI navigation behaviors, not general app shortcuts.
+        // Users expect ArrowDown to move down in a list, changing this might break basic UX expectations.
+        // However, we could technically allow mapping 'Select' to something else.
         if (slashCommandState.isOpen) {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
@@ -77,54 +85,65 @@ export const useKeyboardHandlers = ({
                 }
                 return;
             }
-            // If other keys are pressed while menu is open, we let them fall through
-            // (e.g. typing more letters to filter), unless it's Escape.
         }
 
         // 2. Composition Guard
-        // If we are composing text (IME), ignore other shortcuts to avoid interrupting input.
         if (isComposingRef.current) return;
 
-        // 3. Esc Hierarchical Logic
-        if (e.key === 'Escape') {
-            // Stop Generation
-            if (isLoading) {
-                e.preventDefault();
-                onStopGenerating();
-                return;
-            }
-            // Cancel Edit
-            if (isEditing) {
-                e.preventDefault();
-                onCancelEdit();
-                return;
-            }
-            // Close Slash Menu (Explicit close if not handled by blur/input change)
-            if (slashCommandState.isOpen) {
-                e.preventDefault();
-                setSlashCommandState((prev: any) => ({ ...prev, isOpen: false }));
-                return;
-            }
-            // Exit Fullscreen
-            if (isFullscreen) {
-                e.preventDefault();
-                handleToggleFullscreen();
-                return;
-            }
+        // 3. Hierarchical Logic (Esc usually)
+        // Stop Generation
+        if (isLoading && checkShortcut(e.nativeEvent, shortcuts.stopGeneration)) {
+            e.preventDefault();
+            onStopGenerating();
             return;
         }
 
+        // Cancel Edit
+        if (isEditing && checkShortcut(e.nativeEvent, shortcuts.cancelEdit)) {
+            e.preventDefault();
+            onCancelEdit();
+            return;
+        }
+
+        // Close Slash Menu or Exit Fullscreen (Esc logic)
+        // Since Esc is mapped to multiple things, we check priority or allow collision if user mapped them same
+        if (checkShortcut(e.nativeEvent, shortcuts.stopGeneration)) { // Assuming cancelEdit/stopGeneration default is Esc
+             if (slashCommandState.isOpen) {
+                 e.preventDefault();
+                 setSlashCommandState((prev: any) => ({ ...prev, isOpen: false }));
+                 return;
+             }
+             if (isFullscreen && checkShortcut(e.nativeEvent, shortcuts.toggleFullscreen)) { // Handle collision if user mapped toggleFullscreen to Esc (rare)
+                 // Handled below if mapped
+             }
+        }
+
+        if (isFullscreen && checkShortcut(e.nativeEvent, shortcuts.toggleFullscreen)) {
+             e.preventDefault();
+             handleToggleFullscreen();
+             return;
+        }
+
+
         // 4. Edit Last User Message (ArrowUp when empty)
-        if (e.key === 'ArrowUp' && !isLoading && inputText.length === 0) {
+        if (inputText.length === 0 && !isLoading && checkShortcut(e.nativeEvent, shortcuts.editLastMessage)) {
             e.preventDefault();
             onEditLastUserMessage();
             return;
         }
 
         // 5. Standard Message Submission
-        if (e.key === 'Enter' && !e.shiftKey && (!isMobile || isDesktop)) {
+        // "sendMessage" (Enter) vs "newLine" (Shift+Enter)
+        // We prioritize New Line check first if it's a specific combo involving modifiers
+        if (checkShortcut(e.nativeEvent, shortcuts.newLine)) {
+            // Allow default behavior (insert new line)
+            return;
+        }
+
+        if (checkShortcut(e.nativeEvent, shortcuts.sendMessage) && (!isMobile || isDesktop)) {
             const trimmedInput = inputText.trim();
-            // Double check: If it looks like a command but menu wasn't open (edge case), try executing
+            // Slash command trigger logic
+            // Note: slash command trigger itself is handled by input change, but executing via Enter is standard
             if (trimmedInput.startsWith('/')) {
                 e.preventDefault();
                 handleSlashCommandExecution(trimmedInput);
@@ -134,8 +153,10 @@ export const useKeyboardHandlers = ({
                 e.preventDefault();
                 handleSubmit(e as unknown as React.FormEvent);
             }
+            return;
         }
-    }, [isComposingRef, slashCommandState, setSlashCommandState, handleCommandSelect, isMobile, isDesktop, inputText, handleSlashCommandExecution, canSend, handleSubmit, isFullscreen, handleToggleFullscreen, isLoading, onStopGenerating, isEditing, onCancelEdit, onEditLastUserMessage]);
+        
+    }, [isComposingRef, slashCommandState, setSlashCommandState, handleCommandSelect, isMobile, isDesktop, inputText, handleSlashCommandExecution, canSend, handleSubmit, isFullscreen, handleToggleFullscreen, isLoading, onStopGenerating, isEditing, onCancelEdit, onEditLastUserMessage, appSettings.customShortcuts]);
 
     return { handleKeyDown };
 };

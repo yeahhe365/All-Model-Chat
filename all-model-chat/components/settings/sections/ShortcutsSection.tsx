@@ -1,76 +1,120 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { translations } from '../../../utils/appUtils';
-import { Command, ArrowUp, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ShortcutMap, KeyDefinition } from '../../../types';
+import { DEFAULT_SHORTCUTS } from '../../../constants/appConstants';
+import { ShortcutRecorder } from './shortcuts/ShortcutRecorder';
+import { RefreshCw, Command } from 'lucide-react';
 
 interface ShortcutsSectionProps {
+    customShortcuts?: ShortcutMap;
+    onUpdateShortcut: (id: string, def: KeyDefinition) => void;
+    onResetAll: () => void;
     t: (key: keyof typeof translations | string) => string;
 }
 
-export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ t }) => {
-    const [isMac, setIsMac] = useState(false);
+const SHORTCUT_GROUPS = [
+    {
+        titleKey: 'shortcuts_general_title',
+        keys: ['newChat', 'openLogs', 'togglePip', 'toggleFullscreen']
+    },
+    {
+        titleKey: 'shortcuts_chat_input_title',
+        keys: ['sendMessage', 'newLine', 'editLastMessage', 'cycleModels', 'slashCommands', 'toggleVoice', 'focusInput', 'clearChat']
+    },
+    {
+        titleKey: 'shortcuts_global_title',
+        keys: ['stopGeneration', 'saveConfirm', 'fileNavNext', 'fileNavPrev']
+    }
+];
 
-    useEffect(() => {
-        setIsMac(navigator.platform.toUpperCase().indexOf('MAC') >= 0);
-    }, []);
-
-    const Kbd = ({ children }: { children: React.ReactNode }) => (
-        <kbd className="px-2 py-1 text-xs font-semibold text-[var(--theme-text-primary)] bg-[var(--theme-bg-tertiary)] border border-[var(--theme-border-secondary)] rounded-md font-mono shadow-sm min-w-[24px] inline-flex justify-center items-center">
-            {children}
-        </kbd>
+// Helper to check deep equality of key definition
+const isSameShortcut = (a: KeyDefinition, b: KeyDefinition) => {
+    return (
+        a.key === b.key &&
+        !!a.mod === !!b.mod &&
+        !!a.ctrl === !!b.ctrl &&
+        !!a.alt === !!b.alt &&
+        !!a.shift === !!b.shift &&
+        !!a.meta === !!b.meta
     );
+};
 
-    const ShortcutRow = ({ label, keys }: { label: string, keys: React.ReactNode[] }) => (
-        <div className="flex items-center justify-between py-3 border-b border-[var(--theme-border-secondary)]/50 last:border-0">
-            <span className="text-sm text-[var(--theme-text-secondary)] font-medium">{label}</span>
-            <div className="flex items-center gap-1.5">
-                {keys.map((k, i) => (
-                    <React.Fragment key={i}>
-                        {i > 0 && <span className="text-[var(--theme-text-tertiary)] text-xs">+</span>}
-                        {k}
-                    </React.Fragment>
-                ))}
-            </div>
-        </div>
-    );
-
-    const modKey = isMac ? <Kbd><Command size={10} /></Kbd> : <Kbd>Ctrl</Kbd>;
-    const altKey = <Kbd>{isMac ? 'Opt' : 'Alt'}</Kbd>;
-    const shiftKey = <Kbd>Shift</Kbd>;
+export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ 
+    customShortcuts, 
+    onUpdateShortcut, 
+    onResetAll,
+    t 
+}) => {
+    
+    // Merge current with defaults to ensure all keys exist
+    const shortcuts = useMemo(() => {
+        return { ...DEFAULT_SHORTCUTS, ...customShortcuts };
+    }, [customShortcuts]);
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-3">
-                    {t('shortcuts_general_title')}
-                </h4>
-                <ShortcutRow label={t('shortcuts_new_chat')} keys={[modKey, shiftKey, <Kbd>N</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_open_logs')} keys={[modKey, altKey, <Kbd>L</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_toggle_pip')} keys={[modKey, shiftKey, <Kbd>P</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_toggle_fullscreen')} keys={[modKey, shiftKey, <Kbd>F</Kbd>]} />
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-8 px-1">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--theme-border-secondary)]">
+                <div className="space-y-1">
+                     <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
+                        <Command size={20} className="text-[var(--theme-text-link)]" />
+                        {t('settingsTabShortcuts')}
+                    </h3>
+                    <p className="text-sm text-[var(--theme-text-secondary)] max-w-lg">
+                        {t('shortcuts_description')}
+                    </p>
+                </div>
+                <button
+                    onClick={onResetAll}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[var(--theme-text-secondary)] bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors shadow-sm active:translate-y-0.5"
+                >
+                    <RefreshCw size={14} />
+                    <span>{t('shortcuts_reset_all')}</span>
+                </button>
             </div>
 
-            <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-3">
-                    {t('shortcuts_chat_input_title')}
-                </h4>
-                <ShortcutRow label={t('shortcuts_send_message')} keys={[<Kbd>Enter</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_new_line')} keys={[<Kbd>Shift</Kbd>, <Kbd>Enter</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_edit_last')} keys={[<Kbd><ArrowUp size={10} /></Kbd>]} />
-                <ShortcutRow label={t('shortcuts_cycle_models')} keys={[<Kbd>Tab</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_slash_commands')} keys={[<Kbd>/</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_hold_record')} keys={[altKey]} />
-                <ShortcutRow label={t('shortcuts_focus_input')} keys={[<span className="text-xs font-mono text-[var(--theme-text-tertiary)] bg-[var(--theme-bg-tertiary)]/50 px-2 py-1 rounded">{t('shortcuts_any_key')}</span>]} />
-                <ShortcutRow label={t('shortcuts_clear_input_draft')} keys={[<Kbd>Delete</Kbd>]} />
-            </div>
+            {/* Groups */}
+            <div className="grid gap-8">
+                {SHORTCUT_GROUPS.map(group => (
+                    <div key={group.titleKey} className="space-y-3">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">
+                            {t(group.titleKey)}
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {group.keys.map(keyId => {
+                                // Skip if keyId doesn't exist in defaults (e.g. removed feature)
+                                if (!DEFAULT_SHORTCUTS[keyId]) return null;
+                                
+                                const currentDef = shortcuts[keyId];
+                                const defaultDef = DEFAULT_SHORTCUTS[keyId];
+                                const isDefault = isSameShortcut(currentDef, defaultDef);
+                                
+                                // Translation key construction
+                                const labelKey = `shortcuts_${keyId.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)}`;
 
-            <div className="space-y-2">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-3">
-                    {t('shortcuts_global_title')}
-                </h4>
-                <ShortcutRow label={t('shortcuts_stop_cancel')} keys={[<Kbd>Esc</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_save_confirm')} keys={[modKey, <Kbd>Enter</Kbd>]} />
-                <ShortcutRow label={t('shortcuts_file_nav')} keys={[<Kbd><ArrowLeft size={10} /></Kbd>, <Kbd><ArrowRight size={10} /></Kbd>]} />
+                                return (
+                                    <div 
+                                        key={keyId} 
+                                        className="group flex items-center justify-between p-3 rounded-xl bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)]/50 hover:border-[var(--theme-border-secondary)] transition-all hover:shadow-sm"
+                                    >
+                                        <span className="text-sm font-medium text-[var(--theme-text-primary)] truncate pr-4" title={t(labelKey, keyId)}>
+                                            {t(labelKey, keyId)}
+                                        </span>
+                                        <ShortcutRecorder 
+                                            shortcut={currentDef} 
+                                            isDefault={isDefault}
+                                            onChange={(newDef) => onUpdateShortcut(keyId, newDef)}
+                                            onReset={() => onUpdateShortcut(keyId, defaultDef)}
+                                            t={t}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );

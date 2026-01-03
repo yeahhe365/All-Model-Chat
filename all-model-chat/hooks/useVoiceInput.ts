@@ -1,7 +1,9 @@
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { compressAudioToMp3 } from '../utils/audioCompression';
 import { useRecorder } from './core/useRecorder';
+import { checkShortcut } from '../utils/shortcutUtils';
+import { useAppSettings } from './core/useAppSettings';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
@@ -17,6 +19,7 @@ export const useVoiceInput = ({
   isAudioCompressionEnabled = true,
 }: UseVoiceInputProps) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const { appSettings } = useAppSettings();
 
   const handleRecordingComplete = useCallback(async (audioBlob: Blob) => {
     if (audioBlob.size > 0) {
@@ -52,7 +55,7 @@ export const useVoiceInput = ({
   const { 
       status, 
       isInitializing, 
-      startRecording, 
+      startRecording: startCore, 
       stopRecording, 
       cancelRecording 
   } = useRecorder({
@@ -60,6 +63,10 @@ export const useVoiceInput = ({
   });
 
   const isRecording = status === 'recording';
+
+  const startRecording = useCallback(() => {
+      startCore(appSettings.isSystemAudioRecordingEnabled);
+  }, [startCore, appSettings.isSystemAudioRecordingEnabled]);
 
   const handleVoiceInputClick = () => {
     if (isRecording) {
@@ -69,43 +76,31 @@ export const useVoiceInput = ({
     }
   };
 
-  // Hold-to-Record (Alt Key) Logic
-  const isAltRecordingRef = useRef(false);
-
+  // Toggle Record Logic with Custom Shortcuts
   useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-          // If we are currently recording via Alt, and the user presses another key (e.g., Tab, L, or a character key)
-          // We cancel the recording to allow the shortcut or typing to happen without sending a partial audio.
-          if (isAltRecordingRef.current && e.key !== 'Alt') {
-              cancelRecording();
-              isAltRecordingRef.current = false;
-              return;
-          }
+          const shortcuts = appSettings?.customShortcuts;
+          if (!shortcuts) return;
 
-          // Start recording on Alt down
-          if (e.key === 'Alt' && !e.repeat && !isRecording && !isTranscribing && !isInitializing) {
-              e.preventDefault(); // Prevent menu focus on Windows
-              isAltRecordingRef.current = true;
-              startRecording();
-          }
-      };
+          if (checkShortcut(e, shortcuts.toggleVoice) && !e.repeat) {
+              e.preventDefault(); // Prevent browser history / hide window
+              
+              if (isTranscribing || isInitializing) return;
 
-      const handleKeyUp = (e: KeyboardEvent) => {
-          if (e.key === 'Alt' && isAltRecordingRef.current) {
-              e.preventDefault();
-              isAltRecordingRef.current = false;
-              stopRecording();
+              if (isRecording) {
+                  stopRecording();
+              } else {
+                  startRecording();
+              }
           }
       };
 
       window.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('keyup', handleKeyUp);
 
       return () => {
           window.removeEventListener('keydown', handleKeyDown);
-          window.removeEventListener('keyup', handleKeyUp);
       };
-  }, [isRecording, isTranscribing, isInitializing, startRecording, stopRecording, cancelRecording]);
+  }, [isRecording, isTranscribing, isInitializing, startRecording, stopRecording, appSettings]);
 
   return {
     isRecording,

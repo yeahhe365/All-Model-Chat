@@ -1,5 +1,6 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getMixedAudioStream } from '../../utils/audio/audioProcessing';
 
 export type RecorderStatus = 'idle' | 'recording' | 'paused';
 
@@ -20,6 +21,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     const chunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
+    const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
 
     // Sync stream state to ref for cleanup access
     useEffect(() => {
@@ -32,6 +34,12 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
             setStream(null);
             streamRef.current = null;
         }
+        
+        if (mixedStreamCleanupRef.current) {
+            mixedStreamCleanupRef.current();
+            mixedStreamCleanupRef.current = null;
+        }
+
         if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
@@ -46,15 +54,21 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         };
     }, [cleanup]);
 
-    const startRecording = useCallback(async () => {
+    const startRecording = useCallback(async (includeSystemAudio: boolean = false) => {
         setError(null);
         setIsInitializing(true);
         try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            setStream(mediaStream);
-            // streamRef will be updated by effect, but we can use mediaStream directly here
+            // 1. Get Microphone Stream
+            const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
-            const recorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm' });
+            // 2. Mix with System Audio if requested
+            const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(micStream, includeSystemAudio);
+            mixedStreamCleanupRef.current = streamCleanup;
+            
+            setStream(finalStream);
+            // streamRef will be updated by effect
+            
+            const recorder = new MediaRecorder(finalStream, { mimeType: 'audio/webm' });
             mediaRecorderRef.current = recorder;
             chunksRef.current = [];
 
@@ -77,7 +91,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
             timerRef.current = window.setInterval(() => setDuration(d => d + 1), 1000);
         } catch (err) {
             console.error("Recorder error:", err);
-            const msg = "Could not access microphone. Please check permissions.";
+            const msg = "Could not access microphone or system audio. Please check permissions.";
             setError(msg);
             if (onError) onError(msg);
             setStatus('idle');
