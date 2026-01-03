@@ -72,11 +72,12 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         };
 
         const textPart: Part = {
-            text: prompt || "Transcribe audio.",
+            // Updated default user prompt to be more explicit
+            text: prompt && prompt.trim() ? prompt : "Transcribe the audio exactly as spoken.",
         };
         
         const config: any = {
-          systemInstruction: "Transcribe the audio exactly as spoken. Use proper punctuation. Do not describe the audio, answer questions, or add conversational filler. Return ONLY the text.",
+          systemInstruction: "Transcribe the audio verbatim into text. Return ONLY the spoken words. Do not reply to the content, do not translate, and do not add markdown or commentary.",
         };
 
         // Apply specific defaults based on model
