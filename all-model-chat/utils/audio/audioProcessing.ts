@@ -125,12 +125,20 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
 
     try {
         // Request System Audio (Display Media)
+        // Added 'displaySurface: monitor' to default to entire screen
+        // Added 'systemAudio: include' to hint ensuring audio checkbox is checked
         const displayStream = await navigator.mediaDevices.getDisplayMedia({
             video: {
-                width: 1, height: 1 // Request minimal video to reduce overhead, as we only need audio
-            },
-            audio: true
-        });
+                width: 1, 
+                height: 1, // Request minimal video to reduce overhead
+                displaySurface: 'monitor', // Hint to browser: Default to "Entire Screen" tab
+            } as any,
+            audio: true,
+            // @ts-ignore
+            systemAudio: 'include', // Hint to browser: Default check "Share system audio"
+            // @ts-ignore
+            selfBrowserSurface: 'exclude' // Prefer not capturing the chat app itself if possible
+        } as any);
 
         // Check if user shared audio
         const systemAudioTrack = displayStream.getAudioTracks()[0];
