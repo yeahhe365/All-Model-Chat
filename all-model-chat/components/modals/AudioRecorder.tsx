@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Mic, X, Loader2, AlertCircle } from 'lucide-react';
+import { Mic, X, Loader2, AlertCircle, ChevronDown, Settings2 } from 'lucide-react';
 import { Modal } from '../shared/Modal';
 import { AudioPlayer } from '../shared/AudioPlayer';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
@@ -23,7 +23,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
         stream,
         startRecording,
         stopRecording,
-        discardRecording
+        discardRecording,
+        audioDevices,
+        selectedDeviceId,
+        setSelectedDeviceId
     } = useAudioRecorder();
 
     const [isSaving, setIsSaving] = useState(false);
@@ -67,7 +70,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             </div>
 
             {/* Content Body */}
-            <div className="p-6 flex flex-col items-center justify-center min-h-[220px]">
+            <div className="p-6 flex flex-col items-center justify-center min-h-[240px]">
                 
                 {error && (
                     <div className="flex flex-col items-center text-[var(--theme-text-danger)] gap-2 mb-4 text-center animate-in fade-in zoom-in duration-200">
@@ -78,7 +81,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
 
                 {/* State: Idle / Initializing */}
                 {viewState === 'idle' && !error && (
-                    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300">
+                    <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300 w-full">
                         <div className="relative">
                             <div className="absolute inset-0 bg-[var(--theme-bg-accent)]/20 rounded-full animate-ping"></div>
                             <div className="relative w-20 h-20 bg-[var(--theme-bg-accent)]/10 rounded-full flex items-center justify-center text-[var(--theme-text-link)]">
@@ -89,9 +92,36 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                                 )}
                             </div>
                         </div>
-                        <p className="text-sm text-[var(--theme-text-secondary)]">
-                            {isInitializing ? "Accessing microphone..." : "Ready to record"}
-                        </p>
+                        
+                        <div className="w-full max-w-xs flex flex-col items-center gap-3">
+                             <p className="text-sm text-[var(--theme-text-secondary)] text-center">
+                                {isInitializing ? "Accessing microphone..." : "Ready to record"}
+                            </p>
+                            
+                            {/* Device Selector */}
+                            {!isInitializing && audioDevices.length > 0 && (
+                                <div className="relative w-full">
+                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[var(--theme-text-tertiary)]">
+                                        <Settings2 size={14} />
+                                    </div>
+                                    <select 
+                                        value={selectedDeviceId}
+                                        onChange={(e) => setSelectedDeviceId(e.target.value)}
+                                        className="w-full appearance-none pl-9 pr-8 py-2 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg text-xs text-[var(--theme-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] transition-all cursor-pointer"
+                                    >
+                                        <option value="default">Default Microphone</option>
+                                        {audioDevices.map(device => (
+                                            <option key={device.deviceId} value={device.deviceId}>
+                                                {device.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[var(--theme-text-tertiary)]">
+                                        <ChevronDown size={14} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 

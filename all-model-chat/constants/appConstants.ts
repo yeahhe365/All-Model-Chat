@@ -69,7 +69,7 @@ export const DEFAULT_SHORTCUTS: Record<string, KeyDefinition> = {
     editLastMessage: { key: 'ArrowUp' },
     cancelEdit: { key: 'Escape' },
     slashCommands: { key: '/' },
-    toggleVoice: { key: 'h', mod: true },
+    toggleVoice: { key: 'h', ctrl: true },
     focusInput: { key: 'Escape', shift: true }, // Placeholder logic for "focus input" if we want a specific one, or handle "any key" separately
     saveConfirm: { key: 'Enter', mod: true },
     fileNavNext: { key: 'ArrowRight' },

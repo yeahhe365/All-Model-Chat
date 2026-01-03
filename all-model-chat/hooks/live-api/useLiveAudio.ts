@@ -33,8 +33,16 @@ export const useLiveAudio = () => {
         inputContextRef.current = inputCtx;
 
         try {
-            // 1. Get Microphone Stream
-            const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 1. Get Microphone Stream with raw constraints for best AI quality
+            const micStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    channelCount: 1,
+                    sampleRate: 16000
+                } 
+            });
             originalMicStreamRef.current = micStream; // Store ref
             
             // 2. Mix with System Audio if requested

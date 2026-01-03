@@ -65,6 +65,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         onTranscribeAudio,
         setInputText: inputState.setInputText,
         adjustTextareaHeight: inputState.adjustTextareaHeight,
+        textareaRef: inputState.textareaRef,
         isAudioCompressionEnabled: appSettings.isAudioCompressionEnabled,
         isSystemAudioRecordingEnabled: appSettings.isSystemAudioRecordingEnabled,
         customShortcuts: appSettings.customShortcuts,
