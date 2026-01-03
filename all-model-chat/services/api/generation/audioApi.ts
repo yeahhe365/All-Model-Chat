@@ -84,7 +84,7 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         if (modelId.includes('gemini-3')) {
             config.thinkingConfig = {
                 includeThoughts: false,
-                thinkingLevel: "LOW"
+                thinkingLevel: "MINIMAL"
             };
         } else if (modelId === 'gemini-2.5-pro') {
             config.thinkingConfig = {
