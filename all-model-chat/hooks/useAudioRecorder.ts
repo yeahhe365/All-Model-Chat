@@ -32,7 +32,10 @@ export const useAudioRecorder = () => {
         stream, 
         startRecording: startCore, 
         stopRecording, 
-        cancelRecording: cancelCore 
+        cancelRecording: cancelCore,
+        audioDevices,
+        selectedDeviceId,
+        setSelectedDeviceId
     } = useRecorder({
         onStop: handleRecordingComplete,
         onError: () => setViewState('idle')
@@ -67,6 +70,9 @@ export const useAudioRecorder = () => {
         stream,
         startRecording,
         stopRecording,
-        discardRecording
+        discardRecording,
+        audioDevices,
+        selectedDeviceId,
+        setSelectedDeviceId
     };
 };

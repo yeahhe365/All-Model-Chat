@@ -111,6 +111,9 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
  * Returns the mixed MediaStream and a cleanup function.
  */
 export const getMixedAudioStream = async (micStream: MediaStream, includeSystemAudio: boolean): Promise<{ stream: MediaStream, cleanup: () => void }> => {
+    // If system audio is not requested, return the mic stream directly.
+    // This preserves the raw constraints (no echo cancellation, etc.) applied during getUserMedia,
+    // as passing it through Web Audio API nodes might inadvertently alter these characteristics or introduce latency.
     if (!includeSystemAudio) {
         return { 
             stream: micStream, 

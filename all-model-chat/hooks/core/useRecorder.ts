@@ -9,6 +9,11 @@ interface UseRecorderOptions {
     onError?: (error: string) => void;
 }
 
+interface AudioDevice {
+    deviceId: string;
+    label: string;
+}
+
 export const useRecorder = (options: UseRecorderOptions = {}) => {
     const { onStop, onError } = options;
     const [status, setStatus] = useState<RecorderStatus>('idle');
@@ -16,6 +21,10 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     const [duration, setDuration] = useState(0);
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string | null>(null);
+    
+    // Device Management
+    const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState<string>('default');
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
@@ -23,6 +32,28 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     const streamRef = useRef<MediaStream | null>(null);
     const originalMicStreamRef = useRef<MediaStream | null>(null); // Track original mic stream separately
     const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
+
+    // Fetch devices on mount
+    useEffect(() => {
+        const fetchDevices = async () => {
+            try {
+                // Request permission first to get labels
+                await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop()));
+                
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const inputs = devices
+                    .filter(d => d.kind === 'audioinput')
+                    .map(d => ({ deviceId: d.deviceId, label: d.label || `Microphone ${d.deviceId.slice(0, 5)}...` }));
+                setAudioDevices(inputs);
+            } catch (e) {
+                console.warn("Could not enumerate devices:", e);
+            }
+        };
+        fetchDevices();
+        
+        navigator.mediaDevices.addEventListener('devicechange', fetchDevices);
+        return () => navigator.mediaDevices.removeEventListener('devicechange', fetchDevices);
+    }, []);
 
     // Sync stream state to ref for cleanup access
     useEffect(() => {
@@ -67,8 +98,17 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         setError(null);
         setIsInitializing(true);
         try {
-            // 1. Get Microphone Stream
-            const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // 1. Get Microphone Stream with RAW constraints
+            // We disable processing to ensure physical isolation from system output and higher quality for AI
+            const constraints: MediaTrackConstraints = {
+                deviceId: selectedDeviceId && selectedDeviceId !== 'default' ? { exact: selectedDeviceId } : undefined,
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
+                channelCount: 1
+            };
+
+            const micStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
             originalMicStreamRef.current = micStream; // Store ref
             
             // 2. Mix with System Audio if requested
@@ -109,7 +149,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         } finally {
             setIsInitializing(false);
         }
-    }, [onStop, onError, cleanup]);
+    }, [onStop, onError, cleanup, selectedDeviceId]);
 
     const stopRecording = useCallback(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -141,6 +181,9 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         stream,
         startRecording,
         stopRecording,
-        cancelRecording
+        cancelRecording,
+        audioDevices,
+        selectedDeviceId,
+        setSelectedDeviceId
     };
 };

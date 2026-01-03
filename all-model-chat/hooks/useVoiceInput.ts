@@ -8,6 +8,7 @@ import { ShortcutMap } from '../types';
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   setInputText: React.Dispatch<React.SetStateAction<string>>;
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
   adjustTextareaHeight: () => void;
   isAudioCompressionEnabled?: boolean;
   isSystemAudioRecordingEnabled?: boolean;
@@ -17,6 +18,7 @@ interface UseVoiceInputProps {
 export const useVoiceInput = ({
   onTranscribeAudio,
   setInputText,
+  textareaRef,
   adjustTextareaHeight,
   isAudioCompressionEnabled = true,
   isSystemAudioRecordingEnabled = false,
@@ -49,8 +51,38 @@ export const useVoiceInput = ({
             const transcribedText = await onTranscribeAudio(fileToTranscribe);
             
             if (transcribedText) {
-              setInputText(prev => (prev ? `${prev.trim()} ${transcribedText.trim()}` : transcribedText.trim()).trim());
-              setTimeout(() => adjustTextareaHeight(), 0);
+                const textToInsert = transcribedText.trim();
+                
+                if (textToInsert) {
+                    const textarea = textareaRef.current;
+                    if (textarea) {
+                        const start = textarea.selectionStart;
+                        const end = textarea.selectionEnd;
+                        const currentVal = textarea.value;
+                        
+                        const prefix = currentVal.substring(0, start);
+                        const suffix = currentVal.substring(end);
+                        
+                        // Intelligent spacing: Add space if preceding char is not whitespace and prefix isn't empty
+                        const needsSpace = prefix.length > 0 && !/\s$/.test(prefix);
+                        const finalInsert = (needsSpace ? ' ' : '') + textToInsert;
+                        
+                        const newVal = prefix + finalInsert + suffix;
+                        setInputText(newVal);
+                        
+                        // Update cursor position and height
+                        requestAnimationFrame(() => {
+                            textarea.focus();
+                            const newCursorPos = start + finalInsert.length;
+                            textarea.setSelectionRange(newCursorPos, newCursorPos);
+                            adjustTextareaHeight();
+                        });
+                    } else {
+                        // Fallback behavior
+                        setInputText(prev => (prev ? `${prev.trim()} ${textToInsert}` : textToInsert).trim());
+                        setTimeout(() => adjustTextareaHeight(), 0);
+                    }
+                }
             }
         } catch (error) {
             console.error("Error processing/transcribing audio:", error);
@@ -58,7 +90,7 @@ export const useVoiceInput = ({
             setIsTranscribing(false);
         }
     }
-  }, [onTranscribeAudio, setInputText, adjustTextareaHeight, isAudioCompressionEnabled]);
+  }, [onTranscribeAudio, setInputText, adjustTextareaHeight, isAudioCompressionEnabled, textareaRef]);
 
   const { 
       status, 
