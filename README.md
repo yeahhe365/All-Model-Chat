@@ -1,4 +1,3 @@
-
 # 🤖 All Model Chat (v1.8.4)
 
 <div align="center">
@@ -10,6 +9,9 @@
   <p>
     <a href="https://all-model-chat.pages.dev/" target="_blank">
       <img src="https://img.shields.io/badge/Online_Demo-Live-success?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Online Demo">
+    </a>
+    <a href="https://ai.studio/apps/drive/1QTVIPSUjPTWHBzCFRBDG0aiGO6GLNwcD?fullscreenApplet=true" target="_blank">
+      <img src="https://img.shields.io/badge/AI_Studio-Build-orange?style=for-the-badge&logo=google&logoColor=white" alt="AI Studio Build">
     </a>
     <a href="https://github.com/yeahhe365/All-Model-Chat/releases" target="_blank">
       <img src="https://img.shields.io/github/v/release/yeahhe365/All-Model-Chat?style=for-the-badge&color=blue" alt="Release">
@@ -153,6 +155,17 @@ src/
 ## 🤝 贡献
 
 欢迎提交 Issue 或 Pull Request！无论是修复 Bug、添加新翻译还是开发新功能，我们都非常感谢您的贡献。
+
+## ☕ 支持项目
+
+**赞赏通道（爱发电）：** [https://afdian.com/a/gemini-nexus](https://afdian.com/a/gemini-nexus)
+
+<div align="center">
+  <a href="https://afdian.com/a/gemini-nexus" target="_blank">
+    <img src="https://github.com/user-attachments/assets/b833ac9b-ca8d-4ff6-b83c-f3b2b0094aa8" width="200" alt="afdian-yeahhe">
+  </a>
+  <p><b>扫描上方二维码或 <a href="https://afdian.com/a/gemini-nexus" target="_blank">点击此处</a> 前往爱发电支持我</b></p>
+</div>
 
 ## 📄 许可证
 
