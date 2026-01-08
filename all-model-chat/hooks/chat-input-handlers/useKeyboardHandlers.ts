@@ -2,14 +2,16 @@
 import { useCallback } from 'react';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
 import { AppSettings } from '../../types';
-import { checkShortcut } from '../../utils/shortcutUtils';
+import { isShortcutPressed } from '../../utils/shortcutUtils';
 
 interface UseKeyboardHandlersProps {
+    appSettings: AppSettings; // Added
     isComposingRef: React.MutableRefObject<boolean>;
     slashCommandState: { isOpen: boolean; filteredCommands: Command[]; selectedIndex: number; };
     setSlashCommandState: React.Dispatch<React.SetStateAction<any>>;
     handleCommandSelect: (command: Command) => void;
     inputText: string;
+    setInputText: React.Dispatch<React.SetStateAction<string>>; // Added for new line insertion
     isMobile: boolean;
     isDesktop: boolean;
     handleSlashCommandExecution: (text: string) => void;
@@ -22,15 +24,16 @@ interface UseKeyboardHandlersProps {
     isEditing: boolean;
     onCancelEdit: () => void;
     onEditLastUserMessage: () => void;
-    appSettings: AppSettings;
 }
 
 export const useKeyboardHandlers = ({
+    appSettings,
     isComposingRef,
     slashCommandState,
     setSlashCommandState,
     handleCommandSelect,
     inputText,
+    setInputText,
     isMobile,
     isDesktop,
     handleSlashCommandExecution,
@@ -43,27 +46,17 @@ export const useKeyboardHandlers = ({
     isEditing,
     onCancelEdit,
     onEditLastUserMessage,
-    appSettings
 }: UseKeyboardHandlersProps) => {
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        const shortcuts = appSettings.customShortcuts;
-        if (!shortcuts) return; // Should not happen with default initialization
-
         // 1. Slash Menu Navigation (Highest Priority for Arrows/Enter when Open)
-        // Note: We use explicit key checks here because these are UI navigation behaviors, not general app shortcuts.
-        // Users expect ArrowDown to move down in a list, changing this might break basic UX expectations.
-        // However, we could technically allow mapping 'Select' to something else.
         if (slashCommandState.isOpen) {
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 setSlashCommandState((prev: any) => {
                     const len = prev.filteredCommands?.length || 0;
                     if (len === 0) return prev;
-                    return { 
-                        ...prev, 
-                        selectedIndex: (prev.selectedIndex + 1) % len, 
-                    };
+                    return { ...prev, selectedIndex: (prev.selectedIndex + 1) % len };
                 });
                 return;
             } else if (e.key === 'ArrowUp') {
@@ -71,18 +64,13 @@ export const useKeyboardHandlers = ({
                 setSlashCommandState((prev: any) => {
                     const len = prev.filteredCommands?.length || 0;
                     if (len === 0) return prev;
-                    return { 
-                        ...prev, 
-                        selectedIndex: (prev.selectedIndex - 1 + len) % len, 
-                    };
+                    return { ...prev, selectedIndex: (prev.selectedIndex - 1 + len) % len };
                 });
                 return;
             } else if (e.key === 'Enter' || e.key === 'Tab') {
                 e.preventDefault();
                 const command = slashCommandState.filteredCommands[slashCommandState.selectedIndex];
-                if (command) {
-                    handleCommandSelect(command);
-                }
+                if (command) handleCommandSelect(command);
                 return;
             }
         }
@@ -90,73 +78,125 @@ export const useKeyboardHandlers = ({
         // 2. Composition Guard
         if (isComposingRef.current) return;
 
-        // 3. Hierarchical Logic (Esc usually)
-        // Stop Generation
-        if (isLoading && checkShortcut(e.nativeEvent, shortcuts.stopGeneration)) {
-            e.preventDefault();
-            onStopGenerating();
-            return;
+        // 3. Stop / Cancel (Custom Shortcut or default Escape)
+        if (isShortcutPressed(e, 'global.stopCancel', appSettings)) {
+            // Stop Generation
+            if (isLoading) {
+                e.preventDefault();
+                onStopGenerating();
+                return;
+            }
+            // Cancel Edit
+            if (isEditing) {
+                e.preventDefault();
+                onCancelEdit();
+                return;
+            }
+            // Close Slash Menu
+            if (slashCommandState.isOpen) {
+                e.preventDefault();
+                setSlashCommandState((prev: any) => ({ ...prev, isOpen: false }));
+                return;
+            }
+             // Exit Fullscreen
+            if (isFullscreen) {
+                e.preventDefault();
+                handleToggleFullscreen();
+                return;
+            }
+            // Fallthrough to allow other Escape handlers (like modal close) if not captured above
         }
 
-        // Cancel Edit
-        if (isEditing && checkShortcut(e.nativeEvent, shortcuts.cancelEdit)) {
-            e.preventDefault();
-            onCancelEdit();
-            return;
-        }
-
-        // Close Slash Menu or Exit Fullscreen (Esc logic)
-        // Since Esc is mapped to multiple things, we check priority or allow collision if user mapped them same
-        if (checkShortcut(e.nativeEvent, shortcuts.stopGeneration)) { // Assuming cancelEdit/stopGeneration default is Esc
-             if (slashCommandState.isOpen) {
-                 e.preventDefault();
-                 setSlashCommandState((prev: any) => ({ ...prev, isOpen: false }));
-                 return;
-             }
-             if (isFullscreen && checkShortcut(e.nativeEvent, shortcuts.toggleFullscreen)) { // Handle collision if user mapped toggleFullscreen to Esc (rare)
-                 // Handled below if mapped
-             }
-        }
-
-        if (isFullscreen && checkShortcut(e.nativeEvent, shortcuts.toggleFullscreen)) {
-             e.preventDefault();
-             handleToggleFullscreen();
-             return;
-        }
-
-
-        // 4. Edit Last User Message (ArrowUp when empty)
-        if (inputText.length === 0 && !isLoading && checkShortcut(e.nativeEvent, shortcuts.editLastMessage)) {
+        // 4. Edit Last User Message
+        if (isShortcutPressed(e, 'input.editLast', appSettings) && !isLoading && inputText.length === 0) {
             e.preventDefault();
             onEditLastUserMessage();
             return;
         }
 
-        // 5. Standard Message Submission
-        // "sendMessage" (Enter) vs "newLine" (Shift+Enter)
-        // We prioritize New Line check first if it's a specific combo involving modifiers
-        if (checkShortcut(e.nativeEvent, shortcuts.newLine)) {
-            // Allow default behavior (insert new line)
-            return;
+        // 5. Slash Commands Trigger
+        if (isShortcutPressed(e, 'input.slashCommands', appSettings)) {
+            // If the user types '/' (or whatever custom key)
+            // Just let it pass through to `onChange` to trigger menu logic, unless it's a modifier combo?
+            // Usually slash commands are typed. If user mapped it to 'Ctrl+/', we might need to manually insert '/'
+            // For now, assume standard typing handles opening.
         }
 
-        if (checkShortcut(e.nativeEvent, shortcuts.sendMessage) && (!isMobile || isDesktop)) {
+        // 6. Send Message vs New Line
+        const isSendPressed = isShortcutPressed(e, 'input.sendMessage', appSettings);
+        const isNewLinePressed = isShortcutPressed(e, 'input.newLine', appSettings);
+
+        // Priority resolution: if both match (unlikely/bad config), prefer Send?
+        if (isSendPressed) {
+            // If on mobile (without desktop override), we might want to respect soft keyboard behavior?
+            // But if user set a shortcut, we should honor it.
+            
+            // Allow Slash Command execution on Send
             const trimmedInput = inputText.trim();
-            // Slash command trigger logic
-            // Note: slash command trigger itself is handled by input change, but executing via Enter is standard
             if (trimmedInput.startsWith('/')) {
                 e.preventDefault();
                 handleSlashCommandExecution(trimmedInput);
                 return;
             }
+            
             if (canSend) {
                 e.preventDefault();
                 handleSubmit(e as unknown as React.FormEvent);
             }
             return;
         }
-        
-    }, [isComposingRef, slashCommandState, setSlashCommandState, handleCommandSelect, isMobile, isDesktop, inputText, handleSlashCommandExecution, canSend, handleSubmit, isFullscreen, handleToggleFullscreen, isLoading, onStopGenerating, isEditing, onCancelEdit, onEditLastUserMessage, appSettings.customShortcuts]);
+
+        if (isNewLinePressed) {
+            // If native behavior (Enter) isn't triggered, we need to insert manually?
+            // If mapped to Shift+Enter (default), browser handles newline in textarea naturally.
+            // If mapped to something else (e.g. Ctrl+Enter for newline, Enter for send), browser might not do it.
+            // We need to manually insert '\n' if the key isn't naturally producing it.
+            // Simplified: Always insert '\n' manually if this shortcut is hit, unless it's just 'Enter' without mods.
+            
+            // Check if it's a standard typing key (Enter)
+            if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                // Native behavior works.
+                return;
+            }
+            
+            // If it's a combo, perform manual insertion
+             e.preventDefault();
+             const target = e.target as HTMLTextAreaElement;
+             const start = target.selectionStart;
+             const end = target.selectionEnd;
+             const value = target.value;
+             const newValue = value.substring(0, start) + "\n" + value.substring(end);
+             setInputText(newValue);
+             
+             // Restore cursor next frame
+             requestAnimationFrame(() => {
+                 target.selectionStart = target.selectionEnd = start + 1;
+                 target.scrollTop = target.scrollHeight; // Auto scroll to bottom
+             });
+             return;
+        }
+
+    }, [
+        appSettings,
+        isComposingRef,
+        slashCommandState,
+        setSlashCommandState,
+        handleCommandSelect,
+        inputText,
+        setInputText,
+        isMobile,
+        isDesktop,
+        handleSlashCommandExecution,
+        canSend,
+        handleSubmit,
+        isFullscreen,
+        handleToggleFullscreen,
+        isLoading,
+        onStopGenerating,
+        isEditing,
+        onCancelEdit,
+        onEditLastUserMessage
+    ]);
 
     return { handleKeyDown };
 };

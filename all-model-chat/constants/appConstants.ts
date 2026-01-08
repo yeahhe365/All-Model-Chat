@@ -1,10 +1,11 @@
 
-import { AppSettings, FilesApiConfig, KeyDefinition } from '../types';
+import { AppSettings, FilesApiConfig } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
 // Re-exporting from new modules
 export * from './modelConstants';
 export * from './promptConstants';
+export * from './shortcuts';
 
 export const APP_LOGO_SVG_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xNSAxOCAxOCAxOTUgNzUiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2FhMDBmZiIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48bWFzayBpZD0ibSI+PHJlY3QgeD0iLTUwIiB5PSIwIiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSItNTAiIHk9IjQ1IiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjQiIGZpbGw9ImJsYWNrIi8+PHJlY3QgeD0iLTUwIiB5PSI2MCIgd2lkdGg9IjM1MCIgaGVpZ2h0PSIyIiBmaWxsPSJibGFjayIvPjxyZWN0IHg9IjM2IiB5PSI1NSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0iYmxhY2siLz48L21hc2s+PC9kZWZzPjxnIHRyYW5zZm9ybT0ic2tld1goLTE1KSI+PGcgbWFNrPSJ1cmwoI20pIiBmaWxsPSJ1cmwoI2cpIj48cGF0aCBkPSJNMjAsODAgTDQwLDIwIEw2MCw4MCBMNDgsODAgTDQ0LDY4IEwzNiw2OCBMMzIsODAgWiIvPjxwYXRoIGQ9Ik03MCw4MCBMNzAsMjAgTDg1LDIwIEw9NSw1MCBMMTA1LDIwIEwxMjAsMjAgTDEyMCw4MCBMMTEwLDgwIEwxMTAsNDAgTDk4LDcwIEw5Miw3MCBMODAsNDAgTDgwLDgwIFoiLz48cGF0aCBkPSJNMTY1LDI1IEwxNDAsMjUgTDEzNSw0MCBMMTM1LDY1IEwxNDAsODAgTDE2NSw4MCBMMTY1LDcwIEwxNDUsNzAgTDE0NSwzNSBMMTY1LDM1IFoiLz48L2c+PHJlY3QgeD0iMTcwIiB5PSIyMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDBmZmZmIi8+PHJlY3QgeD0iMTAiIHk9Ijg1IiB3aWR0aD0iMjAiIGhlaWdodD0iMyIgZmlsbD0iIzAwZmZmZiIvPjwvZz48L3N2Zz4=';
 
@@ -57,25 +58,6 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
 
 export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
-export const DEFAULT_SHORTCUTS: Record<string, KeyDefinition> = {
-    newChat: { key: 'n', mod: true, shift: true },
-    openLogs: { key: 'l', mod: true, alt: true },
-    togglePip: { key: 'p', mod: true, shift: true },
-    toggleFullscreen: { key: 'f', mod: true, shift: true },
-    cycleModels: { key: 'Tab' },
-    stopGeneration: { key: 'Escape' },
-    sendMessage: { key: 'Enter' },
-    newLine: { key: 'Enter', shift: true },
-    editLastMessage: { key: 'ArrowUp' },
-    cancelEdit: { key: 'Escape' },
-    slashCommands: { key: '/' },
-    toggleVoice: { key: 'h', ctrl: true },
-    focusInput: { key: 'Escape', shift: true }, // Placeholder logic for "focus input" if we want a specific one, or handle "any key" separately
-    saveConfirm: { key: 'Enter', mod: true },
-    fileNavNext: { key: 'ArrowRight' },
-    fileNavPrev: { key: 'ArrowLeft' }
-};
-
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
   modelId: DEFAULT_MODEL_ID,
@@ -119,12 +101,12 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   autoFullscreenHtml: true,
   showWelcomeSuggestions: true,
   isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
-  isSystemAudioRecordingEnabled: false,
   autoCanvasVisualization: false,
   autoCanvasModelId: 'gemini-3-flash-preview',
   isPasteRichTextAsMarkdownEnabled: true,
   isPasteAsTextFileEnabled: true,
-  customShortcuts: DEFAULT_SHORTCUTS,
+  isSystemAudioRecordingEnabled: false,
+  customShortcuts: {}, // Empty object implies using defaults
 };
 
 export const SUGGESTIONS_KEYS = [

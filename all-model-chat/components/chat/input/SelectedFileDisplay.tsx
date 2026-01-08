@@ -66,7 +66,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const ConfigIcon = isText ? Edit3 : (isGemini3 ? SlidersHorizontal : (isVideo ? Scissors : Settings2));
 
   return (
-    <div className={`group relative flex flex-col w-20 sm:w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>
+    <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>
       
       <button
         type="button"
@@ -141,7 +141,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       </div>
 
       <div className="mt-1.5 px-0.5 text-left w-full">
-        <p className="text-[10px] sm:text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight" title={file.name}>
+        <p className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight" title={file.name}>
             {file.name}
         </p>
         <p 

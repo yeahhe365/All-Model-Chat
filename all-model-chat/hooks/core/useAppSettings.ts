@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { AppSettings } from '../../types';
-import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG, DEFAULT_SHORTCUTS } from '../../constants/appConstants';
+import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG } from '../../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../../constants/themeConstants';
 import { applyThemeToDocument, logService } from '../../utils/appUtils';
 import { dbService } from '../../utils/db';
@@ -20,13 +20,6 @@ export const useAppSettings = () => {
                     if (storedSettings.filesApiConfig) {
                         // Ensure new keys are present if structure updated
                         newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
-                    }
-                    
-                    // Merge shortcuts ensuring new defaults are added if missing in stored settings
-                    if (storedSettings.customShortcuts) {
-                        newSettings.customShortcuts = { ...DEFAULT_SHORTCUTS, ...storedSettings.customShortcuts };
-                    } else {
-                        newSettings.customShortcuts = DEFAULT_SHORTCUTS;
                     }
 
                     setAppSettings(newSettings);

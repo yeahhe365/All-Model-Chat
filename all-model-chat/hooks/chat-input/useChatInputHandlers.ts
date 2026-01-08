@@ -153,11 +153,13 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
 
     // 4. Keyboard Handling
     const { handleKeyDown } = useKeyboardHandlers({
+        appSettings: props.appSettings, // Pass appSettings
         isComposingRef: props.isComposingRef,
         slashCommandState: props.slashCommandState,
         setSlashCommandState: props.setSlashCommandState,
         handleCommandSelect: props.handleCommandSelect,
         inputText: props.inputText,
+        setInputText: props.setInputText,
         isMobile: props.isMobile,
         isDesktop: props.isDesktop,
         handleSlashCommandExecution: props.handleSlashCommandExecution,
@@ -170,7 +172,6 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         isEditing: props.isEditing,
         onCancelEdit: props.onCancelEdit,
         onEditLastUserMessage: props.onEditLastUserMessage,
-        appSettings: props.appSettings
     });
 
     // 5. File Management (Remove, Add ID, Config, Preview Nav)

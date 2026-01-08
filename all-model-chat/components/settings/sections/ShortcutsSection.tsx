@@ -1,121 +1,85 @@
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { translations } from '../../../utils/appUtils';
-import { ShortcutMap, KeyDefinition } from '../../../types';
-import { DEFAULT_SHORTCUTS } from '../../../constants/appConstants';
+import { SHORTCUT_REGISTRY, DEFAULT_SHORTCUTS } from '../../../constants/shortcuts';
+import { AppSettings } from '../../../types';
 import { ShortcutRecorder } from './shortcuts/ShortcutRecorder';
-import { RefreshCw, Command } from 'lucide-react';
 
 interface ShortcutsSectionProps {
-    customShortcuts?: ShortcutMap;
-    onUpdateShortcut: (id: string, def: KeyDefinition) => void;
-    onResetAll: () => void;
+    currentSettings?: AppSettings;
+    onUpdateSettings?: (settings: Partial<AppSettings>) => void;
     t: (key: keyof typeof translations | string) => string;
 }
 
-const SHORTCUT_GROUPS = [
-    {
-        titleKey: 'shortcuts_general_title',
-        keys: ['newChat', 'openLogs', 'togglePip', 'toggleFullscreen']
-    },
-    {
-        titleKey: 'shortcuts_chat_input_title',
-        keys: ['sendMessage', 'newLine', 'editLastMessage', 'cycleModels', 'slashCommands', 'toggleVoice', 'focusInput', 'clearChat']
-    },
-    {
-        titleKey: 'shortcuts_global_title',
-        keys: ['stopGeneration', 'saveConfirm', 'fileNavNext', 'fileNavPrev']
-    }
-];
-
-// Helper to check deep equality of key definition
-const isSameShortcut = (a: KeyDefinition, b: KeyDefinition) => {
-    return (
-        a.key === b.key &&
-        !!a.mod === !!b.mod &&
-        !!a.ctrl === !!b.ctrl &&
-        !!a.alt === !!b.alt &&
-        !!a.shift === !!b.shift &&
-        !!a.meta === !!b.meta
-    );
-};
-
-export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ 
-    customShortcuts, 
-    onUpdateShortcut, 
-    onResetAll,
-    t 
-}) => {
+export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ currentSettings, onUpdateSettings, t }) => {
     
-    // Merge current with defaults to ensure all keys exist
-    const shortcuts = useMemo(() => {
-        return { ...DEFAULT_SHORTCUTS, ...customShortcuts };
-    }, [customShortcuts]);
+    // Group shortcuts by category
+    const groupedShortcuts = useMemo(() => {
+        const groups: Record<string, typeof SHORTCUT_REGISTRY> = {};
+        SHORTCUT_REGISTRY.forEach(item => {
+            if (!groups[item.category]) groups[item.category] = [];
+            groups[item.category].push(item);
+        });
+        return groups;
+    }, []);
+
+    const categoryTitles: Record<string, string> = {
+        general: 'shortcuts_general_title',
+        input: 'shortcuts_chat_input_title',
+        global: 'shortcuts_global_title'
+    };
+
+    const handleShortcutChange = useCallback((id: string, newKey: string) => {
+        if (!currentSettings || !onUpdateSettings) return;
+        
+        const updatedShortcuts = { ...currentSettings.customShortcuts };
+        
+        if (newKey === DEFAULT_SHORTCUTS[id]) {
+            // If setting back to default, remove from custom map to keep it clean
+            delete updatedShortcuts[id];
+        } else {
+            updatedShortcuts[id] = newKey;
+        }
+
+        onUpdateSettings({ customShortcuts: updatedShortcuts });
+    }, [currentSettings, onUpdateSettings]);
+
+    // Read-only mode fallback if props missing (e.g. during refactor transition)
+    if (!currentSettings || !onUpdateSettings) {
+        return <div className="p-4 text-center text-[var(--theme-text-tertiary)]">Shortcut configuration unavailable.</div>;
+    }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 pb-8 px-1">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--theme-border-secondary)]">
-                <div className="space-y-1">
-                     <h3 className="text-lg font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
-                        <Command size={20} className="text-[var(--theme-text-link)]" />
-                        {t('settingsTabShortcuts')}
-                    </h3>
-                    <p className="text-sm text-[var(--theme-text-secondary)] max-w-lg">
-                        {t('shortcuts_description')}
-                    </p>
-                </div>
-                <button
-                    onClick={onResetAll}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-medium text-[var(--theme-text-secondary)] bg-[var(--theme-bg-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors shadow-sm active:translate-y-0.5"
-                >
-                    <RefreshCw size={14} />
-                    <span>{t('shortcuts_reset_all')}</span>
-                </button>
-            </div>
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            {Object.entries(groupedShortcuts).map(([category, items]) => (
+                <div key={category} className="space-y-2">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-3 border-b border-[var(--theme-border-secondary)]/50 pb-2">
+                        {t(categoryTitles[category] || category)}
+                    </h4>
+                    
+                    <div className="space-y-1">
+                        {items.map(item => {
+                            const customKey = currentSettings.customShortcuts?.[item.id];
+                            const effectiveKey = customKey !== undefined ? customKey : item.defaultKey;
 
-            {/* Groups */}
-            <div className="grid gap-8">
-                {SHORTCUT_GROUPS.map(group => (
-                    <div key={group.titleKey} className="space-y-3">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">
-                            {t(group.titleKey)}
-                        </h4>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {group.keys.map(keyId => {
-                                // Skip if keyId doesn't exist in defaults (e.g. removed feature)
-                                if (!DEFAULT_SHORTCUTS[keyId]) return null;
-                                
-                                const currentDef = shortcuts[keyId];
-                                const defaultDef = DEFAULT_SHORTCUTS[keyId];
-                                const isDefault = isSameShortcut(currentDef, defaultDef);
-                                
-                                // Translation key construction
-                                const labelKey = `shortcuts_${keyId.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)}`;
-
-                                return (
-                                    <div 
-                                        key={keyId} 
-                                        className="group flex items-center justify-between p-3 rounded-xl bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)]/50 hover:border-[var(--theme-border-secondary)] transition-all hover:shadow-sm"
-                                    >
-                                        <span className="text-sm font-medium text-[var(--theme-text-primary)] truncate pr-4" title={t(labelKey, keyId)}>
-                                            {t(labelKey, keyId)}
+                            return (
+                                <div key={item.id} className="flex items-center justify-between py-2 group">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm text-[var(--theme-text-secondary)] font-medium group-hover:text-[var(--theme-text-primary)] transition-colors">
+                                            {t(item.labelKey as any)}
                                         </span>
-                                        <ShortcutRecorder 
-                                            shortcut={currentDef} 
-                                            isDefault={isDefault}
-                                            onChange={(newDef) => onUpdateShortcut(keyId, newDef)}
-                                            onReset={() => onUpdateShortcut(keyId, defaultDef)}
-                                            t={t}
-                                        />
                                     </div>
-                                );
-                            })}
-                        </div>
+                                    <ShortcutRecorder 
+                                        value={effectiveKey} 
+                                        defaultValue={item.defaultKey}
+                                        onChange={(val) => handleShortcutChange(item.id, val)}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
-                ))}
-            </div>
+                </div>
+            ))}
         </div>
     );
 };

@@ -2,6 +2,7 @@
 import { useMemo } from 'react';
 import { useAppLogic } from './useAppLogic';
 import { CANVAS_SYSTEM_PROMPT } from '../../constants/appConstants';
+import { getShortcutDisplay } from '../../utils/shortcutUtils';
 
 export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
   const {
@@ -54,9 +55,10 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     t,
     themeId: currentTheme.id,
     language,
+    newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
   }), [
     uiState.isHistorySidebarOpen, chatState.savedSessions, chatState.savedGroups, chatState.activeSessionId,
-    chatState.loadingSessionIds, chatState.generatingTitleSessionIds, currentTheme, language, t
+    chatState.loadingSessionIds, chatState.generatingTitleSessionIds, currentTheme, language, t, appSettings
   ]);
 
   // Chat Area Props

@@ -31,10 +31,10 @@ export const appearanceSettings = {
     settings_autoScrollOnSend_label: { en: 'Auto-scroll on Send', zh: '发送时自动滚动' },
     settings_audioCompression_label: { en: 'Compress Audio Uploads', zh: '压缩音频上传' },
     settings_audioCompression_tooltip: { en: 'Automatically compress audio files (including voice recordings) to MP3 64kbps to save tokens and bandwidth.', zh: '自动将音频文件（包括语音录音）压缩为 MP3 64kbps，以节省 Token 和带宽。' },
-    settings_systemAudioRecording_label: { en: 'Capture System Audio', zh: '录制系统音频' },
-    settings_systemAudioRecording_tooltip: { en: 'When enabled, recording audio (or voice input) will prompt you to share a tab/window to capture system audio along with the microphone.', zh: '启用后，录音（或语音输入）时会提示您共享标签页/窗口，以便同时录制系统音频和麦克风。' },
     settings_pasteRichTextAsMarkdown_label: { en: 'Paste Rich Text as Markdown', zh: '粘贴富文本为 Markdown' },
     settings_pasteRichTextAsMarkdown_tooltip: { en: 'Automatically convert formatted text (HTML) from clipboard to Markdown when pasting.', zh: '粘贴时自动将剪贴板中的富文本（HTML）转换为 Markdown。' },
     settings_pasteAsTextFile_label: { en: 'Paste Large Text as File', zh: '长文本粘贴为文件' },
     settings_pasteAsTextFile_tooltip: { en: 'Automatically convert large pasted text (>5000 characters) into an attached .txt file.', zh: '粘贴大量文本（>5000 字符）时，自动将其转换为 .txt 附件。' },
+    settings_systemAudioRecording_label: { en: 'Enable System Audio Recording', zh: '启用系统音频录制' },
+    settings_systemAudioRecording_tooltip: { en: 'When enabled, you will be prompted to share system audio (via screen share) along with microphone input during recording.', zh: '启用后，录音时将提示您共享系统音频（通过屏幕共享）以混合麦克风输入。' },
 };

@@ -22,7 +22,6 @@ interface UseLiveAPIProps {
 
 export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript, clientFunctions }: UseLiveAPIProps) => {
     const [isConnected, setIsConnected] = useState(false);
-    const isConnectedRef = useRef(false); // Ref for audio callback access
     const [error, setError] = useState<string | null>(null);
     const sessionRef = useRef<Promise<LiveSession> | null>(null);
     
@@ -41,14 +40,10 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     // Video Interval Ref to manage the capture loop
     const frameIntervalRef = useRef<number | null>(null);
 
-    // Sync Ref with State for Session Handle & Connection
+    // Sync Ref with State for Session Handle
     useEffect(() => {
         sessionHandleRef.current = sessionHandle;
     }, [sessionHandle]);
-
-    useEffect(() => {
-        isConnectedRef.current = isConnected;
-    }, [isConnected]);
 
     // 1. Audio Management Hook
     const { 
@@ -68,7 +63,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         videoSource, 
         videoRef, 
         startCamera, 
-        startScreenShare, 
+        startScreenShare,
         stopVideo, 
         captureFrame 
     } = useLiveVideo();
@@ -140,13 +135,9 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
             // Specify API version v1alpha for Live API support
             const ai = await getConfiguredApiClient(keyResult.key, { apiVersion: 'v1alpha' });
             
-            // Initialize Audio (Mic & Worklet) with System Audio check
+            // Initialize Audio (Mic & Worklet)
             // We pass a callback that sends the encoded audio to the session
             await initializeAudio((pcmData) => {
-                // CRITICAL: Only send audio if we are connected and the session is ready.
-                // Sending data during the handshake or before 'onopen' can cause the server to close the connection.
-                if (!isConnectedRef.current) return;
-
                 const base64Data = float32ToPCM16Base64(pcmData);
                 if (sessionRef.current) {
                     sessionRef.current.then(session => {
@@ -156,11 +147,9 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
                                 data: base64Data
                             }
                         });
-                    }).catch(e => {
-                        // Swallow session promise errors here to prevent unhandled rejection during teardown
                     });
                 }
-            }, appSettings.isSystemAudioRecordingEnabled);
+            });
 
             // Connect Session
             const sessionPromise = ai.live.connect({
@@ -232,7 +221,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     }, [connect]);
 
     const sendText = useCallback(async (text: string) => {
-        if (!sessionRef.current || !isConnected) return;
+        if (!sessionRef.current) return;
         try {
             const session = await sessionRef.current;
             await session.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true });
@@ -240,7 +229,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         } catch (e) {
             logService.error("Failed to send text to Live API", e);
         }
-    }, [isConnected]);
+    }, []);
 
     // Frame Capture Loop
     useEffect(() => {
@@ -253,8 +242,6 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         }
 
         const sendFrame = () => {
-            if (!isConnectedRef.current) return;
-            
             const base64Data = captureFrame();
             if (base64Data && sessionRef.current) {
                 sessionRef.current.then(session => {
@@ -264,7 +251,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
                             data: base64Data
                         }
                     });
-                }).catch(() => {});
+                });
             }
         };
 
@@ -286,7 +273,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         }
 
         if (sessionRef.current) {
-            sessionRef.current.then((session: any) => session.close()).catch(() => {});
+            sessionRef.current.then((session: any) => session.close());
         }
         
         cleanupAudio();
@@ -304,16 +291,11 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     useEffect(() => {
         return () => {
             isUserDisconnectRef.current = true;
-            // We use the ref to check state to avoid dependency loop, 
-            // though cleanup functions in effects run with values from render time.
-            // Safe to just call disconnect logic here.
-            
-            if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-            
-            // Note: We can't easily call 'disconnect' here if it changes, so we duplicate minimal cleanup logic
-            // or rely on the fact that `cleanupAudio` and `stopVideo` are stable.
+            if (isConnected || isReconnecting) {
+                disconnect();
+            }
         };
-    }, []);
+    }, [disconnect, isConnected, isReconnecting]);
 
     return useMemo(() => ({ 
         isConnected, 

@@ -1,28 +1,24 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { compressAudioToMp3 } from '../utils/audioCompression';
 import { useRecorder } from './core/useRecorder';
-import { checkShortcut } from '../utils/shortcutUtils';
-import { ShortcutMap } from '../types';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   setInputText: React.Dispatch<React.SetStateAction<string>>;
-  textareaRef: React.RefObject<HTMLTextAreaElement>;
   adjustTextareaHeight: () => void;
   isAudioCompressionEnabled?: boolean;
   isSystemAudioRecordingEnabled?: boolean;
-  customShortcuts?: ShortcutMap;
+  textareaRef: React.RefObject<HTMLTextAreaElement>;
 }
 
 export const useVoiceInput = ({
   onTranscribeAudio,
   setInputText,
-  textareaRef,
   adjustTextareaHeight,
   isAudioCompressionEnabled = true,
   isSystemAudioRecordingEnabled = false,
-  customShortcuts,
+  textareaRef,
 }: UseVoiceInputProps) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
 
@@ -30,58 +26,60 @@ export const useVoiceInput = ({
     if (audioBlob.size > 0) {
         setIsTranscribing(true);
         try {
-            // Create a File object with the correct MIME type (WebM) immediately.
-            // This ensures downstream logic knows what container format this is.
-            const timestamp = Date.now();
-            const rawFile = new File([audioBlob], `voice-input-${timestamp}.webm`, { type: 'audio/webm' });
-            
             let fileToTranscribe: File;
             
             if (isAudioCompressionEnabled) {
                 try {
-                    fileToTranscribe = await compressAudioToMp3(rawFile);
+                    fileToTranscribe = await compressAudioToMp3(audioBlob);
                 } catch (error) {
                     console.error("Error compressing audio, falling back to original:", error);
-                    fileToTranscribe = rawFile;
+                    fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
                 }
             } else {
-                fileToTranscribe = rawFile;
+                fileToTranscribe = new File([audioBlob], `voice-input-${Date.now()}.webm`, { type: 'audio/webm' });
             }
 
             const transcribedText = await onTranscribeAudio(fileToTranscribe);
             
             if (transcribedText) {
                 const textToInsert = transcribedText.trim();
-                
-                if (textToInsert) {
-                    const textarea = textareaRef.current;
-                    if (textarea) {
-                        const start = textarea.selectionStart;
-                        const end = textarea.selectionEnd;
-                        const currentVal = textarea.value;
-                        
-                        const prefix = currentVal.substring(0, start);
-                        const suffix = currentVal.substring(end);
-                        
-                        // Intelligent spacing: Add space if preceding char is not whitespace and prefix isn't empty
-                        const needsSpace = prefix.length > 0 && !/\s$/.test(prefix);
-                        const finalInsert = (needsSpace ? ' ' : '') + textToInsert;
-                        
-                        const newVal = prefix + finalInsert + suffix;
-                        setInputText(newVal);
-                        
-                        // Update cursor position and height
-                        requestAnimationFrame(() => {
-                            textarea.focus();
-                            const newCursorPos = start + finalInsert.length;
-                            textarea.setSelectionRange(newCursorPos, newCursorPos);
-                            adjustTextareaHeight();
-                        });
-                    } else {
-                        // Fallback behavior
-                        setInputText(prev => (prev ? `${prev.trim()} ${textToInsert}` : textToInsert).trim());
-                        setTimeout(() => adjustTextareaHeight(), 0);
+                const textarea = textareaRef.current;
+
+                if (textarea) {
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const currentValue = textarea.value;
+
+                    const before = currentValue.substring(0, start);
+                    const after = currentValue.substring(end);
+
+                    let prefix = "";
+                    let suffix = "";
+
+                    // Add space before if not at start and previous char is not whitespace
+                    if (start > 0 && !/\s$/.test(before)) {
+                        prefix = " ";
                     }
+                    // Add space after if not at end and next char is not whitespace
+                    if (after.length > 0 && !/^\s/.test(after)) {
+                        suffix = " ";
+                    }
+
+                    const newValue = before + prefix + textToInsert + suffix + after;
+
+                    setInputText(newValue);
+
+                    // Restore cursor position after the inserted text
+                    requestAnimationFrame(() => {
+                        textarea.focus();
+                        const newCursorPos = start + prefix.length + textToInsert.length;
+                        textarea.setSelectionRange(newCursorPos, newCursorPos);
+                        adjustTextareaHeight();
+                    });
+                } else {
+                    // Fallback if ref is missing
+                    setInputText(prev => (prev ? `${prev.trim()} ${textToInsert}` : textToInsert).trim());
+                    setTimeout(() => adjustTextareaHeight(), 0);
                 }
             }
         } catch (error) {
@@ -95,7 +93,7 @@ export const useVoiceInput = ({
   const { 
       status, 
       isInitializing, 
-      startRecording: startCore, 
+      startRecording, 
       stopRecording, 
       cancelRecording 
   } = useRecorder({
@@ -104,43 +102,51 @@ export const useVoiceInput = ({
 
   const isRecording = status === 'recording';
 
-  const startRecording = useCallback(() => {
-      startCore(isSystemAudioRecordingEnabled);
-  }, [startCore, isSystemAudioRecordingEnabled]);
-
   const handleVoiceInputClick = () => {
     if (isRecording) {
       stopRecording();
     } else {
-      startRecording();
+      startRecording({ captureSystemAudio: isSystemAudioRecordingEnabled });
     }
   };
 
-  // Toggle Record Logic with Custom Shortcuts
+  // Hold-to-Record (Alt Key) Logic
+  const isAltRecordingRef = useRef(false);
+
   useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-          const shortcuts = customShortcuts;
-          if (!shortcuts) return;
+          // If we are currently recording via Alt, and the user presses another key (e.g., Tab, L, or a character key)
+          // We cancel the recording to allow the shortcut or typing to happen without sending a partial audio.
+          if (isAltRecordingRef.current && e.key !== 'Alt') {
+              cancelRecording();
+              isAltRecordingRef.current = false;
+              return;
+          }
 
-          if (checkShortcut(e, shortcuts.toggleVoice) && !e.repeat) {
-              e.preventDefault(); // Prevent browser history / hide window
-              
-              if (isTranscribing || isInitializing) return;
+          // Start recording on Alt down
+          if (e.key === 'Alt' && !e.repeat && !isRecording && !isTranscribing && !isInitializing) {
+              e.preventDefault(); // Prevent menu focus on Windows
+              isAltRecordingRef.current = true;
+              startRecording({ captureSystemAudio: isSystemAudioRecordingEnabled });
+          }
+      };
 
-              if (isRecording) {
-                  stopRecording();
-              } else {
-                  startRecording();
-              }
+      const handleKeyUp = (e: KeyboardEvent) => {
+          if (e.key === 'Alt' && isAltRecordingRef.current) {
+              e.preventDefault();
+              isAltRecordingRef.current = false;
+              stopRecording();
           }
       };
 
       window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
 
       return () => {
           window.removeEventListener('keydown', handleKeyDown);
+          window.removeEventListener('keyup', handleKeyUp);
       };
-  }, [isRecording, isTranscribing, isInitializing, startRecording, stopRecording, customShortcuts]);
+  }, [isRecording, isTranscribing, isInitializing, startRecording, stopRecording, cancelRecording, isSystemAudioRecordingEnabled]);
 
   return {
     isRecording,

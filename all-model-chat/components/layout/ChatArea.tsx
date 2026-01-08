@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
 import { ChatInput } from '../chat/input/ChatInput';
@@ -7,6 +7,7 @@ import { DragDropOverlay } from '../chat/overlays/DragDropOverlay';
 import { ModelsErrorDisplay } from '../chat/overlays/ModelsErrorDisplay';
 import { ChatAreaProps } from './chat-area/ChatAreaProps';
 import { useChatArea } from './chat-area/useChatArea';
+import { getShortcutDisplay } from '../../utils/shortcutUtils';
 
 // Re-export props for consumers like useAppProps
 export type { ChatAreaProps };
@@ -41,6 +42,9 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   } = props;
 
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote } = useChatArea(props);
+  
+  const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
+  const pipShortcut = useMemo(() => getShortcutDisplay('general.togglePip', appSettings), [appSettings]);
 
   return (
     <div
@@ -74,6 +78,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         themeId={themeId}
         thinkingLevel={currentChatSettings.thinkingLevel}
         onSetThinkingLevel={onSetThinkingLevel}
+        newChatShortcut={newChatShortcut}
+        pipShortcut={pipShortcut}
       />
 
       <ModelsErrorDisplay error={modelsLoadingError} />

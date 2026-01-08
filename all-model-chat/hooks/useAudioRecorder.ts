@@ -1,12 +1,10 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRecorder } from './core/useRecorder';
-import { useAppSettings } from './core/useAppSettings';
 
 export type RecorderState = 'idle' | 'recording' | 'review';
 
 export const useAudioRecorder = () => {
-    const { appSettings } = useAppSettings();
     const [viewState, setViewState] = useState<RecorderState>('idle');
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -32,18 +30,15 @@ export const useAudioRecorder = () => {
         stream, 
         startRecording: startCore, 
         stopRecording, 
-        cancelRecording: cancelCore,
-        audioDevices,
-        selectedDeviceId,
-        setSelectedDeviceId
+        cancelRecording: cancelCore 
     } = useRecorder({
         onStop: handleRecordingComplete,
         onError: () => setViewState('idle')
     });
 
-    const startRecording = useCallback(() => {
-        startCore(appSettings.isSystemAudioRecordingEnabled);
-    }, [startCore, appSettings.isSystemAudioRecordingEnabled]);
+    const startRecording = useCallback((opts?: { captureSystemAudio?: boolean }) => {
+        startCore(opts);
+    }, [startCore]);
 
     const discardRecording = useCallback(() => {
         setAudioBlob(null);
@@ -70,9 +65,6 @@ export const useAudioRecorder = () => {
         stream,
         startRecording,
         stopRecording,
-        discardRecording,
-        audioDevices,
-        selectedDeviceId,
-        setSelectedDeviceId
+        discardRecording
     };
 };

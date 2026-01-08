@@ -1,7 +1,7 @@
 
 import { useState, useRef, useCallback } from 'react';
 import { audioWorkletCode } from '../../utils/audio/audioWorklet';
-import { decodeBase64ToArrayBuffer, decodeAudioData, getMixedAudioStream } from '../../utils/audio/audioProcessing';
+import { decodeBase64ToArrayBuffer, decodeAudioData } from '../../utils/audio/audioProcessing';
 import { logService } from '../../utils/appUtils';
 
 export const useLiveAudio = () => {
@@ -12,16 +12,14 @@ export const useLiveAudio = () => {
     const audioContextRef = useRef<AudioContext | null>(null);
     const inputContextRef = useRef<AudioContext | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const originalMicStreamRef = useRef<MediaStream | null>(null); // Track original mic stream separately
     const processorRef = useRef<AudioWorkletNode | null>(null);
     const inputSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-    const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
     
     // Playback timing state
     const nextStartTimeRef = useRef<number>(0);
     const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
-    const initializeAudio = useCallback(async (onAudioData: (data: Float32Array) => void, includeSystemAudio: boolean = false) => {
+    const initializeAudio = useCallback(async (onAudioData: (data: Float32Array) => void) => {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
         
         // Output Context (Playback)
@@ -32,81 +30,72 @@ export const useLiveAudio = () => {
         const inputCtx = new AudioContextClass({ sampleRate: 16000 });
         inputContextRef.current = inputCtx;
 
-        try {
-            // 1. Get Microphone Stream with raw constraints for best AI quality
-            const micStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                    autoGainControl: false,
-                    channelCount: 1,
-                    sampleRate: 16000
-                } 
-            });
-            originalMicStreamRef.current = micStream; // Store ref
-            
-            // 2. Mix with System Audio if requested
-            const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(micStream, includeSystemAudio);
-            mixedStreamCleanupRef.current = streamCleanup;
-            streamRef.current = finalStream;
-
-            // Apply initial mute state
-            finalStream.getAudioTracks().forEach(track => {
-                track.enabled = !isMuted;
-            });
-
-            if (inputCtx.state === 'suspended') {
-                await inputCtx.resume();
+        // Microphone Stream
+        // Disable browser processing to prevent crosstalk/system audio leak
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false,
             }
+        });
+        streamRef.current = stream;
 
-            const source = inputCtx.createMediaStreamSource(finalStream);
-            inputSourceRef.current = source;
+        // Apply initial mute state
+        stream.getAudioTracks().forEach(track => {
+            track.enabled = !isMuted;
+        });
 
-            // AudioWorklet Setup
-            const blob = new Blob([audioWorkletCode], { type: 'application/javascript' });
-            const blobUrl = URL.createObjectURL(blob);
-
-            try {
-                await inputCtx.audioWorklet.addModule(blobUrl);
-            } finally {
-                URL.revokeObjectURL(blobUrl);
-            }
-
-            const workletNode = new AudioWorkletNode(inputCtx, 'pcm-processor');
-            processorRef.current = workletNode;
-
-            // Handle Worklet Messages (Volume + Data)
-            workletNode.port.onmessage = (e) => {
-                // If muted, we effectively send silence or nothing.
-                if (isMuted) {
-                    setVolume(0);
-                    return;
-                }
-
-                const inputData = e.data; // Float32Array
-                
-                // Calculate Volume
-                let sum = 0;
-                const sampleCount = inputData.length;
-                const step = Math.ceil(sampleCount / 100);
-                for (let i = 0; i < sampleCount; i += step) {
-                    sum += inputData[i] * inputData[i];
-                }
-                const rms = Math.sqrt(sum / (sampleCount / step));
-                setVolume(rms);
-
-                // Pass data to callback (for sending to API)
-                onAudioData(inputData);
-            };
-
-            source.connect(workletNode);
-            workletNode.connect(inputCtx.destination); // Keep graph alive
-
-            return { audioCtx, inputCtx };
-        } catch (error) {
-            logService.error("Audio initialization failed", error);
-            throw error;
+        if (inputCtx.state === 'suspended') {
+            await inputCtx.resume();
         }
+
+        const source = inputCtx.createMediaStreamSource(stream);
+        inputSourceRef.current = source;
+
+        // AudioWorklet Setup
+        const blob = new Blob([audioWorkletCode], { type: 'application/javascript' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        try {
+            await inputCtx.audioWorklet.addModule(blobUrl);
+        } finally {
+            URL.revokeObjectURL(blobUrl);
+        }
+
+        const workletNode = new AudioWorkletNode(inputCtx, 'pcm-processor');
+        processorRef.current = workletNode;
+
+        // Handle Worklet Messages (Volume + Data)
+        workletNode.port.onmessage = (e) => {
+            // If muted, we effectively send silence or nothing.
+            // However, track.enabled = false usually stops data flow at the source level (OS/Browser).
+            // But to be safe and ensure volume is 0 in UI:
+            if (isMuted) {
+                setVolume(0);
+                return;
+            }
+
+            const inputData = e.data; // Float32Array
+            
+            // Calculate Volume
+            let sum = 0;
+            const sampleCount = inputData.length;
+            const step = Math.ceil(sampleCount / 100);
+            for (let i = 0; i < sampleCount; i += step) {
+                sum += inputData[i] * inputData[i];
+            }
+            const rms = Math.sqrt(sum / (sampleCount / step));
+            setVolume(rms);
+
+            // Pass data to callback (for sending to API)
+            onAudioData(inputData);
+        };
+
+        source.connect(workletNode);
+        workletNode.connect(inputCtx.destination); // Keep graph alive
+
+        return { audioCtx, inputCtx };
     }, [isMuted]);
 
     const toggleMute = useCallback(() => {
@@ -167,23 +156,10 @@ export const useLiveAudio = () => {
     const cleanupAudio = useCallback(() => {
         stopAudioPlayback();
 
-        // Stop Microphone / Mixed Stream
+        // Stop Microphone
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             streamRef.current = null;
-        }
-
-        // Explicitly stop Original Mic Stream
-        // This is crucial if we were using a mixed stream (streamRef points to destination, not mic)
-        if (originalMicStreamRef.current) {
-            originalMicStreamRef.current.getTracks().forEach(t => t.stop());
-            originalMicStreamRef.current = null;
-        }
-
-        // Run custom cleanup for system audio if present
-        if (mixedStreamCleanupRef.current) {
-            mixedStreamCleanupRef.current();
-            mixedStreamCleanupRef.current = null;
         }
 
         // Disconnect Input Nodes

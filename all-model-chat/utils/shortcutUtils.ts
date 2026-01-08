@@ -1,53 +1,121 @@
 
-import { KeyDefinition } from '../types/settings';
+import { AppSettings } from '../types';
+import { DEFAULT_SHORTCUTS } from '../constants/shortcuts';
 
-/**
- * Checks if a keyboard event matches a given shortcut configuration.
- * Handles "mod" (Command/Control) logic based on platform.
- */
-export const checkShortcut = (event: KeyboardEvent, shortcut: KeyDefinition | undefined): boolean => {
-    if (!shortcut) return false;
-    
-    // Normalize keys
-    const targetKey = shortcut.key.toLowerCase();
-    const pressedKey = event.key.toLowerCase();
-    
-    if (targetKey !== pressedKey) return false;
+export const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
-    const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-
-    // Resolve 'mod' to specific keys
-    // If shortcut.mod is true:
-    //   - On Mac: Require metaKey (Cmd) to be true
-    //   - On Other: Require ctrlKey to be true
-    // If shortcut.mod is false/undefined, strict check specific ctrl/meta properties
+export const formatShortcut = (shortcut: string): string[] => {
+    if (!shortcut) return [];
     
-    const requiredCtrl = shortcut.ctrl || (shortcut.mod && !isMac);
-    const requiredMeta = shortcut.meta || (shortcut.mod && isMac);
-    
-    return (
-        event.ctrlKey === !!requiredCtrl &&
-        event.metaKey === !!requiredMeta &&
-        event.altKey === !!shortcut.alt &&
-        event.shiftKey === !!shortcut.shift
-    );
+    const parts = shortcut.split('+');
+    return parts.map(part => {
+        const lower = part.trim().toLowerCase();
+        if (lower === 'mod') return isMac ? '⌘' : 'Ctrl';
+        if (lower === 'alt') return isMac ? 'Opt' : 'Alt';
+        if (lower === 'shift') return 'Shift';
+        if (lower === 'ctrl') return 'Ctrl';
+        if (lower === 'meta') return isMac ? 'Cmd' : 'Win';
+        if (lower === 'enter') return 'Enter';
+        if (lower === 'escape') return 'Esc';
+        if (lower === 'delete') return 'Del';
+        if (lower === 'backspace') return 'Back';
+        if (lower === 'tab') return 'Tab';
+        if (lower === 'arrowup') return '↑';
+        if (lower === 'arrowdown') return '↓';
+        if (lower === 'arrowleft') return '←';
+        if (lower === 'arrowright') return '→';
+        if (lower === ' ') return 'Space';
+        return part.toUpperCase();
+    });
 };
 
-export const formatShortcut = (shortcut: KeyDefinition): string => {
-    const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-    const parts = [];
+export const normalizeKey = (key: string): string => {
+    const lower = key.toLowerCase();
+    if (lower === 'control') return 'ctrl';
+    if (lower === 'escape') return 'escape';
+    if (lower === 'enter') return 'enter';
+    if (lower === 'tab') return 'tab';
+    if (lower === ' ') return 'space';
+    if (lower === 'arrowup') return 'arrowup';
+    if (lower === 'arrowdown') return 'arrowdown';
+    if (lower === 'arrowleft') return 'arrowleft';
+    if (lower === 'arrowright') return 'arrowright';
+    return lower;
+};
 
-    if (shortcut.mod) {
-        parts.push(isMac ? 'Cmd' : 'Ctrl');
-    }
-    if (shortcut.ctrl && !shortcut.mod) parts.push('Ctrl');
-    if (shortcut.meta && !shortcut.mod) parts.push(isMac ? 'Cmd' : 'Win');
-    if (shortcut.alt) parts.push(isMac ? 'Opt' : 'Alt');
-    if (shortcut.shift) parts.push('Shift');
+export const getEventKeyCombo = (e: React.KeyboardEvent | KeyboardEvent): string | null => {
+    // Ignore modifier-only presses for combo detection (unless that's what we want? usually not)
+    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return null;
+
+    const parts: string[] = [];
     
-    let keyDisplay = shortcut.key.toUpperCase();
-    if (keyDisplay === ' ') keyDisplay = 'Space';
-    parts.push(keyDisplay);
+    if (e.ctrlKey) parts.push('ctrl');
+    if (e.metaKey) parts.push('meta');
+    if (e.altKey) parts.push('alt');
+    if (e.shiftKey) parts.push('shift');
 
-    return parts.join(isMac ? ' ' : ' + ');
+    // Handle normal keys
+    let key = e.key;
+    if (key === ' ') key = 'space';
+    if (key === 'ArrowUp') key = 'arrowup';
+    if (key === 'ArrowDown') key = 'arrowdown';
+    if (key === 'ArrowLeft') key = 'arrowleft';
+    if (key === 'ArrowRight') key = 'arrowright';
+    if (key === 'Enter') key = 'enter';
+    if (key === 'Escape') key = 'escape';
+    if (key === 'Tab') key = 'tab';
+    if (key === 'Delete') key = 'delete';
+    if (key === 'Backspace') key = 'backspace';
+
+    if (key.length === 1) key = key.toLowerCase();
+    else key = key.toLowerCase();
+
+    parts.push(key);
+
+    // Filter duplicates if any
+    const uniqueParts = [...new Set(parts)];
+
+    // Sort modifiers: meta, ctrl, alt, shift
+    const order = ['meta', 'ctrl', 'alt', 'shift'];
+    const modifiers = uniqueParts.slice(0, -1).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const finalKey = uniqueParts[uniqueParts.length - 1];
+
+    let resultParts = [...modifiers, finalKey];
+    
+    // Normalize to 'mod' concept for cross-platform defaults
+    if (isMac) {
+        if (resultParts.includes('meta')) {
+            resultParts = resultParts.map(p => p === 'meta' ? 'mod' : p);
+        }
+    } else {
+        if (resultParts.includes('ctrl')) {
+            resultParts = resultParts.map(p => p === 'ctrl' ? 'mod' : p);
+        }
+    }
+
+    return resultParts.join('+');
+};
+
+export const recordKeyCombination = (e: React.KeyboardEvent | KeyboardEvent): string | null => {
+    e.preventDefault();
+    e.stopPropagation();
+    return getEventKeyCombo(e);
+};
+
+export const isShortcutPressed = (e: React.KeyboardEvent | KeyboardEvent, actionId: string, settings: AppSettings): boolean => {
+    const customKey = settings.customShortcuts?.[actionId];
+    const defaultKey = DEFAULT_SHORTCUTS[actionId];
+    const targetKey = customKey !== undefined ? customKey : defaultKey;
+
+    if (!targetKey) return false;
+
+    const pressedKey = getEventKeyCombo(e);
+    return pressedKey === targetKey;
+};
+
+export const getShortcutDisplay = (actionId: string, settings: AppSettings): string => {
+    const customKey = settings.customShortcuts?.[actionId];
+    const key = customKey !== undefined ? customKey : DEFAULT_SHORTCUTS[actionId];
+    if (!key) return '';
+    return formatShortcut(key).join(' + ');
 };
