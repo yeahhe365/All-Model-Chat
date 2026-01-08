@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AppSettings, ChatSettings } from '../../types';
 import { TAB_CYCLE_MODELS } from '../../constants/appConstants';
 import { logService } from '../../utils/appUtils';
-import { checkShortcut } from '../../utils/shortcutUtils';
+import { isShortcutPressed } from '../../utils/shortcutUtils';
 
 interface AppEventsProps {
     appSettings: AppSettings;
@@ -73,9 +73,6 @@ export const useAppEvents = ({
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.defaultPrevented) return; // Ignore if already handled (e.g. by textarea)
 
-            const shortcuts = appSettings.customShortcuts;
-            if (!shortcuts) return;
-
             // Check active element in the document where the event occurred
             const targetDoc = event.view?.document || document;
             const activeElement = targetDoc.activeElement as HTMLElement;
@@ -86,33 +83,43 @@ export const useAppEvents = ({
                 activeElement.tagName.toLowerCase() === 'select' || 
                 activeElement.isContentEditable
             );
-            
-            // Stop Generation: Esc
-            if (isLoading && checkShortcut(event, shortcuts.stopGeneration)) {
-                event.preventDefault();
-                onStopGenerating();
-                return;
+
+            // Handle Stop / Cancel (Global Esc)
+            if (isShortcutPressed(event, 'global.stopCancel', appSettings)) {
+                if (isLoading) {
+                    event.preventDefault();
+                    onStopGenerating();
+                    return;
+                }
+                // Don't prevent default for Esc generally as it closes modals etc.
+                // unless we specifically handle it here.
             }
 
             // New Chat
-            if (checkShortcut(event, shortcuts.newChat)) {
+            if (isShortcutPressed(event, 'general.newChat', appSettings)) {
                 event.preventDefault();
                 startNewChat(); 
-            } 
+                return;
+            }
+
             // Open Logs
-            else if (checkShortcut(event, shortcuts.openLogs)) {
+            if (isShortcutPressed(event, 'general.openLogs', appSettings)) {
                 event.preventDefault();
                 setIsLogViewerOpen(prev => !prev);
-            } 
-            // PiP Mode
-            else if (checkShortcut(event, shortcuts.togglePip)) {
+                return;
+            }
+
+            // Toggle PiP
+            if (isShortcutPressed(event, 'general.togglePip', appSettings)) {
                 if (isPipSupported) {
                     event.preventDefault();
                     onTogglePip();
                 }
-            } 
-            // Toggle Website Fullscreen
-            else if (checkShortcut(event, shortcuts.toggleFullscreen)) {
+                return;
+            }
+
+            // Toggle Fullscreen
+            if (isShortcutPressed(event, 'general.toggleFullscreen', appSettings)) {
                 event.preventDefault();
                 if (!document.fullscreenElement) {
                     document.documentElement.requestFullscreen().catch(err => {
@@ -123,11 +130,14 @@ export const useAppEvents = ({
                         document.exitFullscreen();
                     }
                 }
+                return;
             }
+
             // Cycle Models
-            else if (TAB_CYCLE_MODELS.length > 0 && checkShortcut(event, shortcuts.cycleModels)) {
-                const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
-                if (isChatTextareaFocused || !isGenerallyInputFocused) {
+            if (isShortcutPressed(event, 'input.cycleModels', appSettings)) {
+                 const isChatTextareaFocused = activeElement?.getAttribute('aria-label') === 'Chat message input';
+                 // Only allow cycling via Tab if not in a general input, OR if specifically in chat input (where Tab indentation isn't primary)
+                 if (isChatTextareaFocused || !isGenerallyInputFocused) {
                     event.preventDefault();
                     const currentModelId = currentChatSettings.modelId;
                     const currentIndex = TAB_CYCLE_MODELS.indexOf(currentModelId);
@@ -137,6 +147,20 @@ export const useAppEvents = ({
                     const newModelId = TAB_CYCLE_MODELS[nextIndex];
                     if (newModelId) handleSelectModelInHeader(newModelId);
                 }
+            }
+
+            // Focus Input
+            if (isShortcutPressed(event, 'input.focusInput', appSettings) && !isGenerallyInputFocused) {
+                 event.preventDefault();
+                 const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+                 if (textarea) textarea.focus();
+            }
+
+            // File Navigation (Global)
+            if (isShortcutPressed(event, 'global.prevFile', appSettings)) {
+                 // Dispatch custom event or handle via context if file preview is open?
+                 // For now, FilePreviewModal handles its own keys locally, 
+                 // this global hook is for app-wide.
             }
         };
 
@@ -151,7 +175,7 @@ export const useAppEvents = ({
                 pipWindow.document.removeEventListener('keydown', handleKeyDown);
             }
         };
-    }, [startNewChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating, appSettings.customShortcuts]);
+    }, [appSettings, startNewChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating]);
 
     return {
         installPromptEvent,

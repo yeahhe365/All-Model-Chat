@@ -1,9 +1,10 @@
+
 import React from 'react';
 import { AudioRecorder } from '../../modals/AudioRecorder';
 import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
 import { HelpModal } from '../../modals/HelpModal';
 import { translations } from '../../../utils/appUtils';
-import { CommandInfo } from '../../../types';
+import { CommandInfo, UploadedFile } from '../../../types';
 
 export interface ChatInputModalsProps {
   showRecorder: boolean;
@@ -20,6 +21,8 @@ export interface ChatInputModalsProps {
   t: (key: keyof typeof translations) => string;
   initialContent?: string;
   initialFilename?: string;
+  editingFile?: UploadedFile | null;
+  isSystemAudioRecordingEnabled?: boolean;
 }
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
@@ -37,6 +40,7 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   t,
   initialContent,
   initialFilename,
+  isSystemAudioRecordingEnabled
 }) => {
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
     return null;
@@ -44,7 +48,13 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
 
   return (
     <>
-      {showRecorder && <AudioRecorder onRecord={onAudioRecord} onCancel={onRecorderCancel} />}
+      {showRecorder && (
+          <AudioRecorder 
+            onRecord={onAudioRecord} 
+            onCancel={onRecorderCancel} 
+            isSystemAudioRecordingEnabled={isSystemAudioRecordingEnabled}
+          />
+      )}
       {showCreateTextFileEditor && (
         <CreateTextFileEditor 
             onConfirm={onConfirmCreateTextFile} 

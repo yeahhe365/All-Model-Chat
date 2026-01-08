@@ -9,11 +9,6 @@ interface UseRecorderOptions {
     onError?: (error: string) => void;
 }
 
-interface AudioDevice {
-    deviceId: string;
-    label: string;
-}
-
 export const useRecorder = (options: UseRecorderOptions = {}) => {
     const { onStop, onError } = options;
     const [status, setStatus] = useState<RecorderStatus>('idle');
@@ -21,39 +16,15 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     const [duration, setDuration] = useState(0);
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [error, setError] = useState<string | null>(null);
-    
-    // Device Management
-    const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([]);
-    const [selectedDeviceId, setSelectedDeviceId] = useState<string>('default');
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<number | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
-    const originalMicStreamRef = useRef<MediaStream | null>(null); // Track original mic stream separately
+    
+    // Track resources for cleanup
+    const micStreamRef = useRef<MediaStream | null>(null);
     const mixedStreamCleanupRef = useRef<(() => void) | null>(null);
-
-    // Fetch devices on mount
-    useEffect(() => {
-        const fetchDevices = async () => {
-            try {
-                // Request permission first to get labels
-                await navigator.mediaDevices.getUserMedia({ audio: true }).then(s => s.getTracks().forEach(t => t.stop()));
-                
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const inputs = devices
-                    .filter(d => d.kind === 'audioinput')
-                    .map(d => ({ deviceId: d.deviceId, label: d.label || `Microphone ${d.deviceId.slice(0, 5)}...` }));
-                setAudioDevices(inputs);
-            } catch (e) {
-                console.warn("Could not enumerate devices:", e);
-            }
-        };
-        fetchDevices();
-        
-        navigator.mediaDevices.addEventListener('devicechange', fetchDevices);
-        return () => navigator.mediaDevices.removeEventListener('devicechange', fetchDevices);
-    }, []);
 
     // Sync stream state to ref for cleanup access
     useEffect(() => {
@@ -61,23 +32,23 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
     }, [stream]);
 
     const cleanup = useCallback(() => {
-        // Stop the active stream (final mixed stream or mic stream)
+        // Stop main recorder stream (could be mixed or raw mic)
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(t => t.stop());
             setStream(null);
             streamRef.current = null;
         }
 
-        // Explicitly stop original mic stream if it exists
-        // This handles cases where streamRef was pointing to a mixed WebAudio destination stream
-        if (originalMicStreamRef.current) {
-            originalMicStreamRef.current.getTracks().forEach(t => t.stop());
-            originalMicStreamRef.current = null;
-        }
-        
+        // Run mixed stream specific cleanup (closes AudioContext, stops display stream)
         if (mixedStreamCleanupRef.current) {
             mixedStreamCleanupRef.current();
             mixedStreamCleanupRef.current = null;
+        }
+
+        // Stop raw mic stream
+        if (micStreamRef.current) {
+            micStreamRef.current.getTracks().forEach(t => t.stop());
+            micStreamRef.current = null;
         }
 
         if (timerRef.current) {
@@ -94,29 +65,31 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         };
     }, [cleanup]);
 
-    const startRecording = useCallback(async (includeSystemAudio: boolean = false) => {
+    const startRecording = useCallback(async (opts?: { captureSystemAudio?: boolean }) => {
         setError(null);
         setIsInitializing(true);
-        try {
-            // 1. Get Microphone Stream with RAW constraints
-            // We disable processing to ensure physical isolation from system output and higher quality for AI
-            const constraints: MediaTrackConstraints = {
-                deviceId: selectedDeviceId && selectedDeviceId !== 'default' ? { exact: selectedDeviceId } : undefined,
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false,
-                channelCount: 1
-            };
+        cleanup(); // Ensure fresh start
 
-            const micStream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-            originalMicStreamRef.current = micStream; // Store ref
+        try {
+            // 1. Get Microphone Stream
+            const micStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                }
+            });
             
+            // Store mic stream to stop it later
+            micStreamRef.current = micStream;
+
             // 2. Mix with System Audio if requested
-            const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(micStream, includeSystemAudio);
+            const { stream: finalStream, cleanup: streamCleanup } = await getMixedAudioStream(micStream, opts?.captureSystemAudio);
+            
+            // Store cleanup for mixed stream resources
             mixedStreamCleanupRef.current = streamCleanup;
             
             setStream(finalStream);
-            // streamRef will be updated by effect
             
             const recorder = new MediaRecorder(finalStream, { mimeType: 'audio/webm' });
             mediaRecorderRef.current = recorder;
@@ -141,7 +114,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
             timerRef.current = window.setInterval(() => setDuration(d => d + 1), 1000);
         } catch (err) {
             console.error("Recorder error:", err);
-            const msg = "Could not access microphone or system audio. Please check permissions.";
+            const msg = "Could not start recording. Please check permissions.";
             setError(msg);
             if (onError) onError(msg);
             setStatus('idle');
@@ -149,7 +122,7 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         } finally {
             setIsInitializing(false);
         }
-    }, [onStop, onError, cleanup, selectedDeviceId]);
+    }, [onStop, onError, cleanup]);
 
     const stopRecording = useCallback(() => {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
@@ -181,9 +154,6 @@ export const useRecorder = (options: UseRecorderOptions = {}) => {
         stream,
         startRecording,
         stopRecording,
-        cancelRecording,
-        audioDevices,
-        selectedDeviceId,
-        setSelectedDeviceId
+        cancelRecording
     };
 };

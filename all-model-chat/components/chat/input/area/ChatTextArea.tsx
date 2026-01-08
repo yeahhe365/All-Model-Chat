@@ -48,11 +48,19 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
         
         if (isFullscreen) {
              target.style.height = '100%';
+             target.style.overflowY = 'auto';
         } else {
              const scrollHeight = shadow.scrollHeight;
              const baseHeight = isMobile ? 24 : initialTextareaHeight;
              const newHeight = Math.max(baseHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
              target.style.height = `${newHeight}px`;
+
+             // Only show scrollbar if content exceeds MAX_TEXTAREA_HEIGHT_PX
+             if (scrollHeight > MAX_TEXTAREA_HEIGHT_PX) {
+                 target.style.overflowY = 'auto';
+             } else {
+                 target.style.overflowY = 'hidden';
+             }
         }
     }, [value, isFullscreen, isMobile, initialTextareaHeight, textareaRef]);
 
@@ -84,7 +92,10 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
                 onCompositionEnd={onCompositionEnd}
                 placeholder={placeholder}
                 className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px] transition-[height] duration-200 ease-out"
-                style={{ height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px` }}
+                style={{ 
+                    height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px`,
+                    overflowY: isFullscreen ? 'auto' : 'hidden'
+                }}
                 aria-label="Chat message input"
                 onFocus={onFocus}
                 disabled={disabled || isConverting}

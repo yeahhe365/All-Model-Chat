@@ -150,6 +150,7 @@ export const useChatInputPropsBuilder = (
         isLoading: props.isLoading,
         t: props.t,
         editingFile: modalsState.editingFile,
+        isSystemAudioRecordingEnabled: props.appSettings.isSystemAudioRecordingEnabled,
     };
 
     const fileModalsProps = {

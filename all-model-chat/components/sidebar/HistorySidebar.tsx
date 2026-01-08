@@ -36,6 +36,7 @@ export interface HistorySidebarProps {
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
   themeId: string;
+  newChatShortcut?: string;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
@@ -44,7 +45,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     generatingTitleSessionIds, onOpenExportModal, onAddNewGroup,
     onDeleteGroup, onToggleGroupExpansion, themeId, t, 
     onNewChat, onDeleteSession, onTogglePinSession, onDuplicateSession, 
-    onOpenSettingsModal
+    onOpenSettingsModal, newChatShortcut
   } = props;
 
   const {
@@ -119,6 +120,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 t={t}
+                newChatShortcut={newChatShortcut}
             />
             <div 
                 className="flex-grow overflow-y-auto custom-scrollbar p-2"
@@ -192,7 +194,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
               
               <div className="w-8 h-px bg-[var(--theme-border-primary)] my-1"></div>
               
-              <MiniSidebarButton onClick={onNewChat} icon={IconNewChat} title={t('newChat')} />
+              <MiniSidebarButton onClick={onNewChat} icon={IconNewChat} title={`${t('newChat')} ${newChatShortcut ? `(${newChatShortcut})` : ''}`} />
               <MiniSidebarButton onClick={handleMiniSearchClick} icon={Search} title={t('history_search_button')} />
               
               <div className="mt-auto">

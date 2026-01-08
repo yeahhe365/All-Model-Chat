@@ -12,15 +12,17 @@ interface SidebarActionsProps {
   setIsSearching: (isSearching: boolean) => void;
   setSearchQuery: (query: string) => void;
   t: (key: keyof typeof translations) => string;
+  newChatShortcut?: string;
 }
 
-export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAddNewGroup, isSearching, searchQuery, setIsSearching, setSearchQuery, t }) => (
+export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAddNewGroup, isSearching, searchQuery, setIsSearching, setSearchQuery, t, newChatShortcut }) => (
   <>
     <div className="px-2 pt-3 flex items-center gap-2">
       <button 
         onClick={onNewChat} 
         className="flex-grow flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors" 
         aria-label={t('headerNewChat_aria')}
+        title={`${t('newChat')} ${newChatShortcut ? `(${newChatShortcut})` : ''}`}
       >
         <IconNewChat size={18} className="text-[var(--theme-icon-history)]" strokeWidth={2} />
         <span className="text-[var(--theme-text-primary)]">{t('newChat')}</span>

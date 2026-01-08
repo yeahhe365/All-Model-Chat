@@ -34,18 +34,16 @@ interface AppearanceSectionProps {
   setIsAutoSendOnSuggestionClick: (value: boolean) => void;
   autoFullscreenHtml: boolean;
   setAutoFullscreenHtml: (value: boolean) => void;
-  showWelcomeSuggestions: boolean;
-  setShowWelcomeSuggestions: (value: boolean) => void;
   isAudioCompressionEnabled: boolean;
   setIsAudioCompressionEnabled: (value: boolean) => void;
-  isSystemAudioRecordingEnabled: boolean;
-  setIsSystemAudioRecordingEnabled: (value: boolean) => void;
   filesApiConfig: FilesApiConfig;
   setFilesApiConfig: (value: FilesApiConfig) => void;
   isPasteRichTextAsMarkdownEnabled: boolean;
   setIsPasteRichTextAsMarkdownEnabled: (value: boolean) => void;
   isPasteAsTextFileEnabled: boolean;
   setIsPasteAsTextFileEnabled: (value: boolean) => void;
+  isSystemAudioRecordingEnabled: boolean;
+  setIsSystemAudioRecordingEnabled: (value: boolean) => void;
   t: (key: keyof typeof translations) => string;
 }
 

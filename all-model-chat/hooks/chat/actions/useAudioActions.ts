@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
-import { getKeyForRequest, logService, getTranslator } from '../../../utils/appUtils';
+import { getKeyForRequest, logService } from '../../../utils/appUtils';
 import { geminiServiceInstance } from '../../../services/geminiService';
 
 interface UseAudioActionsProps {
@@ -38,21 +38,13 @@ export const useAudioActions = ({
                 setCurrentChatSettings(prev => ({...prev, lockedApiKey: keyResult.key }));
             }
         }
-
-        // Get localized prompt for ASR
-        const effectiveLanguage = appSettings.language === 'system'
-            ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
-            : (appSettings.language as 'en' | 'zh');
-        const t = getTranslator(effectiveLanguage);
-        const prompt = t('suggestion_asr_desc');
     
         try {
             const modelToUse = appSettings.transcriptionModelId || 'models/gemini-flash-latest';
             const transcribedText = await geminiServiceInstance.transcribeAudio(
                 keyResult.key,
                 audioFile,
-                modelToUse,
-                prompt
+                modelToUse
             );
             return transcribedText;
         } catch (error) {
