@@ -258,6 +258,8 @@ export interface ChatInputProps {
   setEditingMessageId: (id: string | null) => void;
   onAddUserMessage: (text: string, files?: UploadedFile[]) => void;
   onLiveTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
+  onToggleBBox?: () => void;
+  isBBoxModeActive?: boolean;
 }
 
 export type { ThemeColors };

@@ -157,6 +157,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         isAddingById: inputState.isAddingById,
         justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
         isWaitingForUpload: inputState.isWaitingForUpload,
+        setIsWaitingForUpload: inputState.setIsWaitingForUpload,
         selectedFiles: props.selectedFiles,
         clearCurrentDraft: inputState.clearCurrentDraft,
         inputText: inputState.inputText,

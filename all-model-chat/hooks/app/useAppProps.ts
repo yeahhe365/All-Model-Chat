@@ -1,7 +1,7 @@
 
 import { useMemo } from 'react';
 import { useAppLogic } from './useAppLogic';
-import { CANVAS_SYSTEM_PROMPT } from '../../constants/appConstants';
+import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT } from '../../constants/appConstants';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
 
 export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
@@ -18,6 +18,7 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     sessionTitle,
     handleSaveSettings,
     handleLoadCanvasPromptAndSave,
+    handleToggleBBoxMode,
     handleSuggestionClick,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
@@ -86,6 +87,8 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     isHistorySidebarOpen: uiState.isHistorySidebarOpen,
     onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
     isCanvasPromptActive: chatState.currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT,
+    isBBoxModeActive: chatState.currentChatSettings.systemInstruction === BBOX_SYSTEM_PROMPT,
+    onToggleBBox: handleToggleBBoxMode,
     isKeyLocked: !!chatState.currentChatSettings.lockedApiKey,
     themeId: currentTheme.id,
     modelsLoadingError: null,
@@ -170,7 +173,7 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     t,
   }), [
     chatState, uiState, appSettings, currentTheme, language, t, sessionTitle, 
-    pipState, handleLoadCanvasPromptAndSave, handleSuggestionClick, handleSetThinkingLevel, 
+    pipState, handleLoadCanvasPromptAndSave, handleToggleBBoxMode, handleSuggestionClick, handleSetThinkingLevel, 
     handleOpenSidePanel, getCurrentModelDisplayName
   ]);
 

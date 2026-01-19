@@ -31,6 +31,8 @@ export interface ChatAreaProps {
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
+  onToggleBBox: () => void;
+  isBBoxModeActive: boolean;
   isKeyLocked: boolean;
   themeId: string;
   onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;

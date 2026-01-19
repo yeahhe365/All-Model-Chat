@@ -9,11 +9,13 @@ interface ChatSuggestionsProps {
     show: boolean;
     onSuggestionClick?: (suggestion: string) => void;
     onOrganizeInfoClick?: (suggestion: string) => void;
+    onToggleBBox?: () => void;
+    isBBoxModeActive?: boolean;
     t: (key: keyof typeof translations) => string;
     isFullscreen: boolean;
 }
 
-export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, t, isFullscreen }) => {
+export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, onToggleBBox, isBBoxModeActive, t, isFullscreen }) => {
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
@@ -57,29 +59,52 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                 className="flex gap-2 overflow-x-auto pb-2 px-1 no-scrollbar fade-mask-x scroll-smooth"
             >
                 {SUGGESTIONS_KEYS.map((s, i) => (
-                    <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                            const text = t(s.descKey as any);
-                            if ((s as any).specialAction === 'organize' && onOrganizeInfoClick) {
-                                onOrganizeInfoClick(text);
-                            } else if (onSuggestionClick) {
-                                onSuggestionClick(text);
-                            }
-                        }}
-                        className="
-                            flex items-center gap-2 px-4 py-2.5 rounded-xl
-                            bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
-                            border border-[var(--theme-border-secondary)]
-                            text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
-                            text-sm font-medium whitespace-nowrap
-                            transition-all active:scale-95 shadow-sm
-                        "
-                    >
-                        <SuggestionIcon iconName={(s as any).icon} />
-                        <span>{t(s.titleKey as any)}</span>
-                    </button>
+                    <React.Fragment key={i}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const text = t(s.descKey as any);
+                                if ((s as any).specialAction === 'organize' && onOrganizeInfoClick) {
+                                    onOrganizeInfoClick(text);
+                                } else if (onSuggestionClick) {
+                                    onSuggestionClick(text);
+                                }
+                            }}
+                            className="
+                                flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
+                                border border-[var(--theme-border-secondary)]
+                                text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
+                                text-sm font-medium whitespace-nowrap
+                                transition-all active:scale-95 shadow-sm
+                            "
+                        >
+                            <SuggestionIcon iconName={(s as any).icon} />
+                            <span>{t(s.titleKey as any)}</span>
+                        </button>
+                        
+                        {/* Insert BBox Button after "Smart Board" (organize action) if available */}
+                        {(s as any).specialAction === 'organize' && onToggleBBox && (
+                            <button
+                                type="button"
+                                onClick={onToggleBBox}
+                                className={`
+                                    flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                    border border-[var(--theme-border-secondary)]
+                                    text-sm font-medium whitespace-nowrap
+                                    transition-all active:scale-95 shadow-sm
+                                    ${isBBoxModeActive 
+                                        ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
+                                        : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}
+                                `}
+                                aria-label={t('bbox_button_title')}
+                                title={t('bbox_button_title')}
+                            >
+                                <SuggestionIcon iconName="Scan" />
+                                <span>Bbox</span>
+                            </button>
+                        )}
+                    </React.Fragment>
                 ))}
             </div>
 

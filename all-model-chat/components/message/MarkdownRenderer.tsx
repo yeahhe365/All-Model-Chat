@@ -132,13 +132,18 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       if (part.startsWith('```')) {
         return part;
       }
-      let processedPart = part.replace(/((:|：)\*\*)(\S)/g, '$1 $3');
       
       // Replace \[ ... \] with $$ ... $$
-      processedPart = processedPart.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+      let processedPart = part.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
       
       // Replace \( ... \) with $ ... $
       processedPart = processedPart.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+
+      // Fix Markdown bold/italic markers when adjacent to Chinese full-width punctuation
+      // Uses zero-width space (\u200B) to separate markers from punctuation without adding visual gap
+      // This forces the parser to recognize the symbols as delimiters.
+      processedPart = processedPart.replace(/(\*\*|__|\*|_)([“《（【「『])/g, '$1\u200B$2');
+      processedPart = processedPart.replace(/([”》）】」』])(\*\*|__|\*|_)/g, '$1\u200B$2');
       
       return processedPart;
     }).join('');

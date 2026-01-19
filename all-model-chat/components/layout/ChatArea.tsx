@@ -19,6 +19,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
     currentModelName, availableModels, selectedModelId, onSelectModel,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
+    onToggleBBox, isBBoxModeActive,
     isKeyLocked, themeId, modelsLoadingError,
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
@@ -181,6 +182,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onUpdateMessageContent={onUpdateMessageContent}
             onAddUserMessage={onAddUserMessage}
             onLiveTranscript={onLiveTranscript}
+            onToggleBBox={onToggleBBox}
+            isBBoxModeActive={isBBoxModeActive}
           />
         </div>
       </div>

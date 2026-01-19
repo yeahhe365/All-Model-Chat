@@ -70,6 +70,8 @@ export interface ChatInputAreaProps {
         show: boolean;
         onSuggestionClick: (suggestion: string) => void;
         onOrganizeInfoClick: (suggestion: string) => void;
+        onToggleBBox?: () => void;
+        isBBoxModeActive?: boolean;
     };
     liveStatusProps?: {
         isConnected: boolean;
@@ -118,17 +120,21 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
     return (
         <div className={wrapperClass} aria-hidden={isUIBlocked}>
-            <div className={innerContainerClass}>
-                {suggestionsProps && !isFullscreen && (
+            <div className="mx-auto w-full max-w-4xl px-2 sm:px-3">
+                 {suggestionsProps && !isFullscreen && (
                     <ChatSuggestions 
                         show={suggestionsProps.show}
                         onSuggestionClick={suggestionsProps.onSuggestionClick}
                         onOrganizeInfoClick={suggestionsProps.onOrganizeInfoClick}
+                        onToggleBBox={suggestionsProps.onToggleBBox}
+                        isBBoxModeActive={suggestionsProps.isBBoxModeActive}
                         t={t}
                         isFullscreen={isFullscreen}
                     />
                 )}
+            </div>
 
+            <div className={innerContainerClass}>
                 <ChatInputToolbar {...toolbarProps} />
                 
                 {liveStatusProps && (

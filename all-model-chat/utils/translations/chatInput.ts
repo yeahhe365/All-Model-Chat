@@ -50,6 +50,7 @@ export const chatInputTranslations = {
     token_count_error: { en: 'Failed to count tokens.', zh: '计算 Token 失败。' },
     translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
     translating_button_title: { en: 'Translating...', zh: '翻译中...' },
+    bbox_button_title: { en: 'Object Detection (BBox)', zh: '目标检测 (BBox)' },
     fullscreen_tooltip_expand: { en: 'Expand Input', zh: '展开输入框' },
     fullscreen_tooltip_collapse: { en: 'Collapse Input', zh: '收起输入框' },
 

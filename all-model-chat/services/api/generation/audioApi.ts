@@ -1,3 +1,4 @@
+
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import { Part } from "@google/genai";
@@ -75,14 +76,14 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         };
         
         const config: any = {
-          systemInstruction: "请准确转录语音内容。使用正确的标点符号。不要描述音频、回答问题或添加对话填充词。仅返回文本。",
+          systemInstruction: "请准确转录语音内容。使用正确的标点符号。不要描述音频、回答问题或添加对话填充词，仅返回文本。若音频中无语音或仅有背景噪音，请不要输出任何文字。",
         };
 
         // Apply specific defaults based on model
         if (modelId.includes('gemini-3')) {
             config.thinkingConfig = {
                 includeThoughts: false,
-                thinkingLevel: "LOW"
+                thinkingLevel: "MINIMAL"
             };
         } else if (modelId === 'gemini-2.5-pro') {
             config.thinkingConfig = {
