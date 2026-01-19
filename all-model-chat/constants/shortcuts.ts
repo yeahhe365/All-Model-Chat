@@ -22,7 +22,6 @@ export const SHORTCUT_REGISTRY: ShortcutDefinition[] = [
     { id: 'input.cycleModels', labelKey: 'shortcuts_cycle_models', defaultKey: 'tab', category: 'input' },
     { id: 'input.slashCommands', labelKey: 'shortcuts_slash_commands', defaultKey: '/', category: 'input' },
     { id: 'input.clearDraft', labelKey: 'shortcuts_clear_input_draft', defaultKey: 'delete', category: 'input' },
-    { id: 'input.holdRecord', labelKey: 'shortcuts_hold_record', defaultKey: 'alt', category: 'input' },
 
     // Global / Dialogs
     { id: 'global.stopCancel', labelKey: 'shortcuts_stop_cancel', defaultKey: 'escape', category: 'global' },
