@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
@@ -24,7 +25,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
-    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, ttsMessageId, language, scrollNavVisibility,
+    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, language, scrollNavVisibility,
     onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent, onUpdateMessageFile,
     appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, editMode, editingMessageId, setEditingMessageId, onStopGenerating,
@@ -107,6 +108,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onFollowUpSuggestionClick={onFollowUpSuggestionClick}
         onTextToSpeech={onTextToSpeech}
         onGenerateCanvas={onGenerateCanvas}
+        onContinueGeneration={onContinueGeneration}
         ttsMessageId={ttsMessageId}
         t={t}
         language={language}
@@ -121,7 +123,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onQuote={handleQuote}
       />
 
-      <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none">
+      <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
         <div className="pointer-events-auto">
           <ChatInput
             appSettings={appSettings}

@@ -56,6 +56,8 @@ export interface ChatSettings {
   isCodeExecutionEnabled?: boolean;
   isUrlContextEnabled?: boolean;
   isDeepSearchEnabled?: boolean;
+  isRawModeEnabled?: boolean;
+  hideThinkingInContext?: boolean;
   safetySettings?: SafetySetting[];
   mediaResolution?: MediaResolution;
 }

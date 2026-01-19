@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { translations } from '../../../utils/appUtils';
@@ -101,6 +102,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                         t={t}
                         themeId={themeId}
                         onOpenSidePanel={onOpenSidePanel}
+                        hideThinkingInContext={appSettings.hideThinkingInContext}
                     />
                 </div>
             ) : null}

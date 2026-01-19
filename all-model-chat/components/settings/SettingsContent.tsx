@@ -133,6 +133,10 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         setIsPasteAsTextFileEnabled={(v) => updateSetting('isPasteAsTextFileEnabled', v)}
                         isSystemAudioRecordingEnabled={currentSettings.isSystemAudioRecordingEnabled ?? false}
                         setIsSystemAudioRecordingEnabled={(v) => updateSetting('isSystemAudioRecordingEnabled', v)}
+                        isRawModeEnabled={currentSettings.isRawModeEnabled ?? false}
+                        setIsRawModeEnabled={(v) => updateSetting('isRawModeEnabled', v)}
+                        hideThinkingInContext={currentSettings.hideThinkingInContext ?? false}
+                        setHideThinkingInContext={(v) => updateSetting('hideThinkingInContext', v)}
                         t={t}
                     />
                 </div>

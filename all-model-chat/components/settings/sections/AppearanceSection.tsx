@@ -44,6 +44,10 @@ interface AppearanceSectionProps {
   setIsPasteAsTextFileEnabled: (value: boolean) => void;
   isSystemAudioRecordingEnabled: boolean;
   setIsSystemAudioRecordingEnabled: (value: boolean) => void;
+  isRawModeEnabled: boolean;
+  setIsRawModeEnabled: (value: boolean) => void;
+  hideThinkingInContext: boolean;
+  setHideThinkingInContext: (value: boolean) => void;
   t: (key: keyof typeof translations) => string;
 }
 

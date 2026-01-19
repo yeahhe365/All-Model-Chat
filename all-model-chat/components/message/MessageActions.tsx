@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil, Wand2 } from 'lucide-react';
+import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil, Wand2, CirclePlay } from 'lucide-react';
 import { ChatMessage, ThemeColors } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
@@ -43,6 +43,7 @@ interface MessageActionsProps {
     onRetryMessage: (messageId: string) => void;
     onTextToSpeech: (messageId: string, text: string) => void;
     onGenerateCanvas: (messageId: string, text: string) => void;
+    onContinueGeneration: (messageId: string) => void;
     ttsMessageId: string | null;
     themeColors: ThemeColors;
     themeId: string;
@@ -59,6 +60,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onRetryMessage,
     onTextToSpeech,
     onGenerateCanvas,
+    onContinueGeneration,
     ttsMessageId,
     themeColors,
     themeId,
@@ -114,6 +116,17 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                         className={actionButtonClasses}
                     >
                         <RotateCw size={actionIconSize} strokeWidth={2} />
+                    </button>
+                )}
+
+                {message.role === 'model' && !message.isLoading && (
+                    <button 
+                        onClick={() => onContinueGeneration(message.id)} 
+                        title="Continue Generating" 
+                        aria-label="Continue Generating" 
+                        className={actionButtonClasses}
+                    >
+                        <CirclePlay size={actionIconSize} strokeWidth={2} />
                     </button>
                 )}
                 

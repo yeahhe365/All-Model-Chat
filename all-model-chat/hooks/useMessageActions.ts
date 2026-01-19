@@ -1,11 +1,12 @@
 
+
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../types';
 import { logService } from '../utils/appUtils';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
-type SendMessageFunc = (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => Promise<void>;
+type SendMessageFunc = (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string; isContinueMode?: boolean }) => Promise<void>;
 
 interface MessageActionsProps {
     messages: ChatMessage[];
@@ -180,6 +181,31 @@ export const useMessageActions = ({
         }
     }, [messages, isLoading, handleEditMessage, handleStopGenerating]);
 
+    const handleContinueGeneration = useCallback(async (messageId: string) => {
+        if (!activeSessionId) return;
+        
+        const message = messages.find(m => m.id === messageId);
+        if (!message || message.role !== 'model') return;
+
+        logService.info("User requested Continue Generation", { messageId });
+
+        if (isLoading) {
+            handleStopGenerating({ silent: true });
+        }
+        
+        // IMPORTANT: Ensure UI input is cleared/reset when continuing, to avoid "prefilling" input box
+        // although handleSendMessage doesn't use it, UI effects might. 
+        setCommandedInput(null);
+        setAppFileError(null);
+        setEditingMessageId(null);
+
+        // Pass isContinueMode: true and the ID of the model message we want to extend
+        await handleSendMessage({
+            editingId: messageId,
+            isContinueMode: true
+        });
+    }, [activeSessionId, messages, isLoading, handleStopGenerating, handleSendMessage, setCommandedInput, setAppFileError, setEditingMessageId]);
+
     return {
         handleStopGenerating,
         handleEditMessage,
@@ -188,5 +214,6 @@ export const useMessageActions = ({
         handleRetryMessage,
         handleRetryLastTurn,
         handleEditLastUserMessage,
+        handleContinueGeneration
     };
 };

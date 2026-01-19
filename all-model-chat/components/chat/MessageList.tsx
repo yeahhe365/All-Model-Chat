@@ -37,6 +37,7 @@ export interface MessageListProps {
   onFollowUpSuggestionClick?: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
+  onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
@@ -53,7 +54,7 @@ export interface MessageListProps {
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, sessionTitle, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, themeColors, baseFontSize,
-    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, ttsMessageId, t, language, themeId,
+    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote
 }) => {
@@ -128,6 +129,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                         onTextToSpeech={onTextToSpeech}
                         onGenerateCanvas={onGenerateCanvas}
+                        onContinueGeneration={onContinueGeneration}
                         ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
                         t={t}

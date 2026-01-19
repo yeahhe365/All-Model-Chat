@@ -24,7 +24,8 @@ export interface GeminiService {
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+    role?: 'user' | 'model'
   ) => Promise<void>;
 
   sendMessageNonStream: (

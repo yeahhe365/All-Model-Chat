@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
@@ -183,7 +184,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                             isConverting={isConverting}
                         />
 
-                        <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1">
+                        <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1 relative z-10">
                             <ChatInputActions {...actionsProps} />
                             
                             {/* Hidden inputs */}

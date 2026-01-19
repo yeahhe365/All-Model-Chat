@@ -126,6 +126,7 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     onFollowUpSuggestionClick: (text: string) => handleSuggestionClick('follow-up', text),
     onTextToSpeech: chatState.handleTextToSpeech,
     onGenerateCanvas: chatState.handleGenerateCanvas,
+    onContinueGeneration: chatState.handleContinueGeneration,
     ttsMessageId: chatState.ttsMessageId,
     language,
     scrollNavVisibility: chatState.scrollNavVisibility,

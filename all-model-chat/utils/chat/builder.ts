@@ -1,4 +1,9 @@
 
+
+
+
+
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
@@ -137,12 +142,23 @@ export const buildContentParts = async (
   return { contentParts: contentPartsResult, enrichedFiles };
 };
 
-export const createChatHistoryForApi = async (msgs: ChatMessage[]): Promise<ChatHistoryItem[]> => {
+export const createChatHistoryForApi = async (
+    msgs: ChatMessage[],
+    stripThinking: boolean = false
+): Promise<ChatHistoryItem[]> => {
     const historyItemsPromises = msgs
       .filter(msg => (msg.role === 'user' || msg.role === 'model') && !msg.excludeFromContext)
       .map(async (msg) => {
+        let contentToUse = msg.content;
+        
+        if (stripThinking) {
+            // Remove <thinking> blocks including tags from the content
+            // Matches <thinking> ... </any-tag> to handle variations and potential hallucinated closing tags
+            contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
+        }
+
         // Use buildContentParts for both user and model messages to handle text and files consistently.
-        const { contentParts } = await buildContentParts(msg.content, msg.files);
+        const { contentParts } = await buildContentParts(contentToUse, msg.files);
         
         // Attach Thought Signatures if present (Crucial for Gemini 3 Pro)
         if (msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0) {
