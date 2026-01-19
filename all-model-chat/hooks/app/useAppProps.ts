@@ -59,7 +59,21 @@ export const useAppProps = (logic: ReturnType<typeof useAppLogic>) => {
     newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
   }), [
     uiState.isHistorySidebarOpen, chatState.savedSessions, chatState.savedGroups, chatState.activeSessionId,
-    chatState.loadingSessionIds, chatState.generatingTitleSessionIds, currentTheme, language, t, appSettings
+    chatState.loadingSessionIds, chatState.generatingTitleSessionIds, currentTheme, language, t, appSettings,
+    chatState.startNewChat,
+    chatState.loadChatSession,
+    chatState.handleDeleteChatHistorySession,
+    chatState.handleRenameSession,
+    chatState.handleTogglePinCurrentSession,
+    chatState.handleDuplicateSession,
+    chatState.handleAddNewGroup,
+    chatState.handleDeleteGroup,
+    chatState.handleRenameGroup,
+    chatState.handleMoveSessionToGroup,
+    chatState.handleToggleGroupExpansion,
+    uiState.setIsSettingsModalOpen,
+    uiState.setIsPreloadedMessagesModalOpen,
+    setIsExportModalOpen
   ]);
 
   // Chat Area Props

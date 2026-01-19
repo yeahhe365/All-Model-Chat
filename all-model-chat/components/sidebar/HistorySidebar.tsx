@@ -39,6 +39,20 @@ export interface HistorySidebarProps {
   newChatShortcut?: string;
 }
 
+const MiniSidebarButton = ({ onClick, icon: Icon, title }: { onClick: () => void, icon: React.ElementType, title: string }) => (
+    <button 
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
+        title={title}
+        aria-label={title}
+    >
+        <Icon size={20} strokeWidth={2} />
+    </button>
+);
+
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const { 
     isOpen, onToggle, sessions, groups, activeSessionId, loadingSessionIds,
@@ -83,20 +97,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleStartEdit: (item: SavedChatSession) => handleStartEdit('session', item),
     handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
   };
-
-  const MiniSidebarButton = ({ onClick, icon: Icon, title }: { onClick: () => void, icon: React.ElementType, title: string }) => (
-      <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-          className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
-          title={title}
-          aria-label={title}
-      >
-          <Icon size={20} strokeWidth={2} />
-      </button>
-  );
 
   return (
     <aside
