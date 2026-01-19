@@ -24,6 +24,7 @@ interface MessageProps {
     isGraphvizRenderingEnabled: boolean;
     onTextToSpeech: (messageId: string, text: string) => void;
     onGenerateCanvas: (messageId: string, text: string) => void;
+    onContinueGeneration: (messageId: string) => void;
     ttsMessageId: string | null;
     onSuggestionClick?: (suggestion: string) => void;
     t: (key: keyof typeof translations) => string;

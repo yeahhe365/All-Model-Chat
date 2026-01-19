@@ -68,9 +68,10 @@ export const sendStatelessMessageStreamApi = async (
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+    role: 'user' | 'model' = 'user'
 ): Promise<void> => {
-    logService.info(`Sending message via stateless generateContentStream for ${modelId}`);
+    logService.info(`Sending message via stateless generateContentStream for ${modelId} (Role: ${role})`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
     let finalUrlContextMetadata: any = null;
@@ -85,7 +86,7 @@ export const sendStatelessMessageStreamApi = async (
 
         const result = await ai.models.generateContentStream({
             model: modelId,
-            contents: [...history, { role: 'user', parts }],
+            contents: [...history, { role: role, parts }],
             config: config
         });
 

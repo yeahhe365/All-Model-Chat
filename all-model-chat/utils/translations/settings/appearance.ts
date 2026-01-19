@@ -1,4 +1,6 @@
 
+
+
 export const appearanceSettings = {
     settingsAppearance: { en: 'Appearance', zh: '外观' },
     settingsTheme: { en: 'Theme', zh: '主题' },
@@ -37,4 +39,8 @@ export const appearanceSettings = {
     settings_pasteAsTextFile_tooltip: { en: 'Automatically convert large pasted text (>5000 characters) into an attached .txt file.', zh: '粘贴大量文本（>5000 字符）时，自动将其转换为 .txt 附件。' },
     settings_systemAudioRecording_label: { en: 'Enable System Audio Recording', zh: '启用系统音频录制' },
     settings_systemAudioRecording_tooltip: { en: 'When enabled, you will be prompted to share system audio (via screen share) along with microphone input during recording.', zh: '启用后，录音时将提示您共享系统音频（通过屏幕共享）以混合麦克风输入。' },
+    settings_rawMode_label: { en: 'Raw Chain of Thought', zh: '原始思维链模式' },
+    settings_rawMode_tooltip: { en: 'Automatically pre-fill the model response with <thinking> to force a chain-of-thought, continuing generation from there.', zh: '自动在模型回复开头预填 <thinking> 标签，以强制触发思维链并继续生成。' },
+    settings_hideThinkingInContext_label: { en: 'Hide & Exclude Raw Thinking', zh: '折叠并排除原始思考' },
+    settings_hideThinkingInContext_tooltip: { en: 'Collapses <thinking> blocks in UI and removes them from API context history to save tokens.', zh: '在界面中折叠 <thinking> 内容，并在发送给 API 的上下文历史中将其移除以节省 Token。' },
 };

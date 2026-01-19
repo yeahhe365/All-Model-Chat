@@ -1,3 +1,4 @@
+
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
@@ -77,10 +78,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
     });
 
     // Main Entry Point
-    const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string }) => {
+    const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string; isContinueMode?: boolean }) => {
         const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
+        const isContinueMode = overrideOptions?.isContinueMode ?? false;
         
         const sessionToUpdate = currentChatSettings;
         const activeModelId = sessionToUpdate.modelId;
@@ -91,10 +93,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro');
         const isGemini3Image = activeModelId === 'gemini-3-pro-image-preview';
 
-        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId });
+        logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId, isContinueMode });
 
         // Basic Validation
-        if (!textToUse.trim() && !isTtsModel && !isImagenModel && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
+        // Allow empty text if continuing generation (it uses existing model content)
+        if (!textToUse.trim() && !isTtsModel && !isImagenModel && !isContinueMode && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
         if ((isTtsModel || isImagenModel || isImageEditModel || isGemini3Image) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
             logService.warn("Send message blocked: files are still processing.");
@@ -154,7 +157,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
         
         // Standard Chat Flow
-        await sendStandardMessage(textToUse, filesToUse, effectiveEditingId, activeModelId);
+        await sendStandardMessage(textToUse, filesToUse, effectiveEditingId, activeModelId, isContinueMode);
 
     }, [
         appSettings, currentChatSettings, messages, selectedFiles, setSelectedFiles,

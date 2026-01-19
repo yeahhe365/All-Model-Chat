@@ -1,4 +1,5 @@
 
+
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
@@ -21,7 +22,8 @@ export const getRehypePlugins = (allowHtml: boolean) => {
       'msline', 'mspace', 'msqrt', 'msrow', 'mstack', 'mstyle', 
       'msub', 'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 
       'munder', 'munderover', 'semantics', 'annotation', 'annotation-xml',
-      'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th'
+      'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+      'details', 'summary'
     ],
     attributes: {
       ...defaultSchema.attributes,
@@ -37,6 +39,8 @@ export const getRehypePlugins = (allowHtml: boolean) => {
       mo: ['lspace', 'rspace', 'stretchy', 'fence', 'separator', 'accent'],
       td: ['align', 'colSpan', 'rowSpan', 'valign'],
       th: ['align', 'colSpan', 'rowSpan', 'valign'],
+      details: ['open', 'className'],
+      summary: ['className'],
     },
     clobberPrefix: '', 
   };

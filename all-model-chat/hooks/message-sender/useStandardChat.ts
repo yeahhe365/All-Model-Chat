@@ -1,6 +1,8 @@
 
+
+
 import { useCallback } from 'react';
-import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../../utils/appUtils';
+import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService, createNewSession, isGemini3Model } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/baseApi';
@@ -30,7 +32,13 @@ export const useStandardChat = ({
     handleGenerateCanvas,
 }: StandardChatProps) => {
 
-    const sendStandardMessage = useCallback(async (textToUse: string, filesToUse: UploadedFile[], effectiveEditingId: string | null, activeModelId: string) => {
+    const sendStandardMessage = useCallback(async (
+        textToUse: string, 
+        filesToUse: UploadedFile[], 
+        effectiveEditingId: string | null, 
+        activeModelId: string,
+        isContinueMode: boolean = false
+    ) => {
         const sessionToUpdate = currentChatSettings;
 
         const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
@@ -46,8 +54,20 @@ export const useStandardChat = ({
         const shouldLockKey = isNewKey && filesToUse.some(f => f.fileUri && f.uploadState === 'active');
 
         const newAbortController = new AbortController();
-        const generationId = generateUniqueId();
-        const generationStartTime = new Date();
+        
+        let generationId: string;
+        let generationStartTime: Date;
+        
+        if (isContinueMode && effectiveEditingId) {
+            // Re-use existing ID for continuity
+            generationId = effectiveEditingId;
+            // Keep original start time if possible, or reset to now
+            const targetMsg = messages.find(m => m.id === effectiveEditingId);
+            generationStartTime = targetMsg?.generationStartTime || new Date();
+        } else {
+            generationId = generateUniqueId();
+            generationStartTime = new Date();
+        }
         
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
         
@@ -61,33 +81,69 @@ export const useStandardChat = ({
         
         let finalSessionId = activeSessionId;
         
-        const userMessageContent: ChatMessage = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles : undefined, timestamp: new Date() };
-        const modelMessageContent: ChatMessage = { id: generationId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: generationStartTime };
+        // Raw Mode Check
+        const isRawMode = (sessionToUpdate.isRawModeEnabled ?? appSettings.isRawModeEnabled) && !isContinueMode;
+        
+        // Prepare Message Objects
+        let userMessageContent: ChatMessage | null = null;
+        let modelMessageContent: ChatMessage | null = null;
 
-        // Perform a single, atomic state update for adding messages and creating a new session if necessary.
+        if (!isContinueMode) {
+            userMessageContent = { id: generateUniqueId(), role: 'user', content: textToUse.trim(), files: enrichedFiles.length ? enrichedFiles : undefined, timestamp: new Date() };
+            
+            // If Raw CoT is enabled, we initialize the model message content with <thinking>
+            const initialContent = isRawMode ? '<thinking>' : '';
+            
+            modelMessageContent = { id: generationId, role: 'model', content: initialContent, timestamp: new Date(), isLoading: true, generationStartTime: generationStartTime };
+        }
+
+        // Perform a single, atomic state update
         if (!finalSessionId) { // New Chat
+             if (isContinueMode) {
+                 console.error("Cannot continue generation in a new/empty chat.");
+                 return;
+             }
             let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
             if (shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
             
-            userMessageContent.cumulativeTotalTokens = 0;
-            const newSession = createNewSession(newSessionSettings, [userMessageContent, modelMessageContent], "New Chat");
+            // Safe access as userMessageContent is guaranteed here
+            userMessageContent!.cumulativeTotalTokens = 0;
+            const newSession = createNewSession(newSessionSettings, [userMessageContent!, modelMessageContent!], "New Chat");
             finalSessionId = newSession.id;
             
             updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
             setActiveSessionId(newSession.id);
-        } else { // Existing Chat or Edit
+        } else { // Existing Chat (Normal or Continue)
             updateAndPersistSessions(prev => prev.map(s => {
                 const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
                 if (!isSessionToUpdate) return s;
 
-                const editIndex = effectiveEditingId ? s.messages.findIndex(m => m.id === effectiveEditingId) : -1;
-                const baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : [...s.messages];
+                // Edit Logic (Rewind)
+                let baseMessages = [...s.messages];
+                if (effectiveEditingId && !isContinueMode) {
+                    const editIndex = s.messages.findIndex(m => m.id === effectiveEditingId);
+                    if (editIndex !== -1) {
+                         baseMessages = s.messages.slice(0, editIndex);
+                    }
+                }
                 
-                userMessageContent.cumulativeTotalTokens = baseMessages.length > 0 ? (baseMessages[baseMessages.length - 1].cumulativeTotalTokens || 0) : 0;
-                const newMessages = [...baseMessages, userMessageContent, modelMessageContent];
+                let newMessages: ChatMessage[];
+                if (isContinueMode) {
+                    // Update the target model message to loading state
+                     newMessages = baseMessages.map(m => 
+                         m.id === effectiveEditingId 
+                         ? { ...m, isLoading: true, generationEndTime: undefined, stoppedByUser: false } 
+                         : m
+                     );
+                } else {
+                    // Append new messages
+                    const lastBaseMsg = baseMessages[baseMessages.length - 1];
+                    userMessageContent!.cumulativeTotalTokens = lastBaseMsg?.cumulativeTotalTokens || 0;
+                    newMessages = [...baseMessages, userMessageContent!, modelMessageContent!];
+                }
 
                 let newTitle = s.title;
-                if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
+                if (!isContinueMode && s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
                     newTitle = generateSessionTitle(newMessages);
                 }
                 let updatedSettings = s.settings;
@@ -107,22 +163,64 @@ export const useStandardChat = ({
             setEditingMessageId(null);
         }
         
-        if (promptParts.length === 0) {
-             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
-             activeJobs.current.delete(generationId);
-             return; 
-        }
-        
         // Prepare Stateless Chat Params
         let baseMessagesForApi: ChatMessage[] = messages;
-        if (effectiveEditingId) {
+        
+        // If continue mode, history includes everything UP TO the target message, plus the target message content
+        if (isContinueMode && effectiveEditingId) {
+            const targetIndex = messages.findIndex(m => m.id === effectiveEditingId);
+            if (targetIndex !== -1) {
+                baseMessagesForApi = messages.slice(0, targetIndex);
+            }
+        } else if (effectiveEditingId) {
+             // Normal Edit mode (Regenerate from user message)
             const editIndex = messages.findIndex(m => m.id === effectiveEditingId);
             if (editIndex !== -1) {
                 baseMessagesForApi = messages.slice(0, editIndex);
             }
         }
         
-        const historyForChat = await createChatHistoryForApi(baseMessagesForApi);
+        let finalRole: 'user' | 'model' = 'user';
+        let finalParts = promptParts;
+
+        if (isContinueMode) {
+            finalRole = 'model';
+            const targetMsg = messages.find(m => m.id === effectiveEditingId);
+            const currentContent = targetMsg?.content || '';
+            const isG3 = isGemini3Model(activeModelId);
+
+            // To continue generation, we send the *existing* content as the last message in the sequence (role: model).
+            // The API sees this as a partial turn and completes it.
+            // If content is empty, we must send something valid. 
+            // For G3, a thinking tag is a good starter. For others, a space acts as a neutral starter.
+            let prefillContent = currentContent;
+            if (!prefillContent.trim()) {
+                prefillContent = isG3 ? "<thinking>I have finished reasoning</thinking>" : " ";
+            }
+            finalParts = [{ text: prefillContent }];
+            
+        } else if (isRawMode) {
+            // Raw Mode Logic:
+            // 1. Manually inject the new user message into history array passed to API.
+            if (userMessageContent) {
+                baseMessagesForApi = [...baseMessagesForApi, userMessageContent];
+            }
+            
+            // 2. Set params for pre-filled model turn
+            finalRole = 'model';
+            finalParts = [{ text: '<thinking>' }];
+        } else if (promptParts.length === 0) {
+             // Empty user prompt check (standard mode only)
+             setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
+             activeJobs.current.delete(generationId);
+             return; 
+        }
+        
+        // Create History AFTER modifying baseMessagesForApi (important for Raw Mode)
+        // Pass the setting to strip thinking tags if configured
+        const shouldStripThinking = sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;
+        let historyForChat = await createChatHistoryForApi(baseMessagesForApi, shouldStripThinking);
+        
         const config = buildGenerationConfig(
             activeModelId,
             sessionToUpdate.systemInstruction,
@@ -137,7 +235,7 @@ export const useStandardChat = ({
             sessionToUpdate.isDeepSearchEnabled,
             imageSize,
             sessionToUpdate.safetySettings,
-            sessionToUpdate.mediaResolution // Pass to config builder
+            sessionToUpdate.mediaResolution
         );
 
         // Pass generationStartTime by value to create a closure-safe handler
@@ -147,17 +245,10 @@ export const useStandardChat = ({
             newAbortController, 
             generationStartTime, 
             sessionToUpdate,
-            // onSuccess callback for Auto-Canvas feature
             (msgId, content) => {
-                // If auto-canvas enabled, and content is substantial but NOT already HTML/Code block wrapping entire content
-                // We use isLikelyHtml to detect if it's already an HTML artifact.
-                if (appSettings.autoCanvasVisualization && content && content.length > 50 && !isLikelyHtml(content)) {
-                    // Check if content is just a pure code block (starts and ends with backticks), which shouldn't trigger canvas
+                if (!isContinueMode && appSettings.autoCanvasVisualization && content && content.length > 50 && !isLikelyHtml(content)) {
                     const trimmed = content.trim();
-                    if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-                        return;
-                    }
-                    
+                    if (trimmed.startsWith('```') && trimmed.endsWith('```')) return;
                     logService.info("Auto-triggering Canvas visualization for message", { msgId });
                     handleGenerateCanvas(msgId, content);
                 }
@@ -172,20 +263,21 @@ export const useStandardChat = ({
                 keyToUse,
                 activeModelId,
                 historyForChat,
-                promptParts,
+                finalParts,
                 config,
                 newAbortController.signal,
                 streamOnPart,
                 onThoughtChunk,
                 streamOnError,
-                streamOnComplete
+                streamOnComplete,
+                finalRole 
             );
         } else { 
             await geminiServiceInstance.sendMessageNonStream(
                 keyToUse,
                 activeModelId,
                 historyForChat,
-                promptParts,
+                finalParts,
                 config,
                 newAbortController.signal,
                 streamOnError,

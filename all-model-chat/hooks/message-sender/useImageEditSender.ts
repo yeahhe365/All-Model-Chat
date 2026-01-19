@@ -1,3 +1,4 @@
+
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
@@ -88,7 +89,9 @@ export const useImageEditSender = ({
             // For image edit, we typically don't apply custom resolution logic yet as it's a specific endpoint/task,
             // but we can pass the modelId anyway.
             const { contentParts: promptParts } = await buildContentParts(text, imageFiles, currentChatSettings.modelId);
-            const historyForApi = await createChatHistoryForApi(messages);
+            // Apply thinking strip logic here too
+            const shouldStripThinking = currentChatSettings.hideThinkingInContext ?? appSettings.hideThinkingInContext;
+            const historyForApi = await createChatHistoryForApi(messages, shouldStripThinking);
             
             const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, imageSize);
 

@@ -129,6 +129,7 @@ export const useAppLogic = () => {
         lockedApiKey: null,
         mediaResolution: newSettings.mediaResolution,
         safetySettings: newSettings.safetySettings,
+        isRawModeEnabled: newSettings.isRawModeEnabled,
       }));
     }
   }, [setAppSettings, activeSessionId, setCurrentChatSettings]);

@@ -59,6 +59,7 @@ export interface ChatAreaProps {
   onFollowUpSuggestionClick: (suggestion: string) => void;
   onTextToSpeech: (messageId: string, text: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
+  onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
   language: 'en' | 'zh';
   scrollNavVisibility: { up: boolean; down: boolean };

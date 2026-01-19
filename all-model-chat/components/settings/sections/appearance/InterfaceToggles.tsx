@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { translations } from '../../../../utils/appUtils';
 import { ToggleItem } from '../../../shared/ToggleItem';
@@ -31,6 +32,10 @@ interface InterfaceTogglesProps {
   setIsPasteAsTextFileEnabled: (value: boolean) => void;
   isSystemAudioRecordingEnabled: boolean;
   setIsSystemAudioRecordingEnabled: (value: boolean) => void;
+  isRawModeEnabled: boolean;
+  setIsRawModeEnabled: (value: boolean) => void;
+  hideThinkingInContext: boolean;
+  setHideThinkingInContext: (value: boolean) => void;
   t: (key: keyof typeof translations) => string;
 }
 
@@ -49,6 +54,8 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
   isPasteRichTextAsMarkdownEnabled, setIsPasteRichTextAsMarkdownEnabled,
   isPasteAsTextFileEnabled, setIsPasteAsTextFileEnabled,
   isSystemAudioRecordingEnabled, setIsSystemAudioRecordingEnabled,
+  isRawModeEnabled, setIsRawModeEnabled,
+  hideThinkingInContext, setHideThinkingInContext,
   t,
 }) => {
   return (
@@ -58,6 +65,8 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
         </label>
         <div className="grid grid-cols-1 gap-1">
             <ToggleItem label={t('headerStream')} checked={isStreamingEnabled} onChange={setIsStreamingEnabled} />
+            <ToggleItem label={t('settings_rawMode_label')} checked={isRawModeEnabled} onChange={setIsRawModeEnabled} tooltip={t('settings_rawMode_tooltip')} />
+            <ToggleItem label={t('settings_hideThinkingInContext_label')} checked={hideThinkingInContext} onChange={setHideThinkingInContext} tooltip={t('settings_hideThinkingInContext_tooltip')} />
             <ToggleItem label={t('settings_pasteRichTextAsMarkdown_label')} checked={isPasteRichTextAsMarkdownEnabled} onChange={setIsPasteRichTextAsMarkdownEnabled} tooltip={t('settings_pasteRichTextAsMarkdown_tooltip')} />
             <ToggleItem label={t('settings_pasteAsTextFile_label')} checked={isPasteAsTextFileEnabled} onChange={setIsPasteAsTextFileEnabled} tooltip={t('settings_pasteAsTextFile_tooltip')} />
             <ToggleItem label={t('settings_systemAudioRecording_label')} checked={isSystemAudioRecordingEnabled} onChange={setIsSystemAudioRecordingEnabled} tooltip={t('settings_systemAudioRecording_tooltip')} />
