@@ -15,6 +15,7 @@ interface UseChatInputEffectsProps {
     isAddingById: boolean;
     justInitiatedFileOpRef: React.MutableRefObject<boolean>;
     isWaitingForUpload: boolean;
+    setIsWaitingForUpload: React.Dispatch<React.SetStateAction<boolean>>;
     selectedFiles: UploadedFile[];
     clearCurrentDraft: () => void;
     inputText: string;
@@ -40,6 +41,7 @@ export const useChatInputEffects = ({
     isAddingById,
     justInitiatedFileOpRef,
     isWaitingForUpload,
+    setIsWaitingForUpload,
     selectedFiles,
     clearCurrentDraft,
     inputText,
@@ -91,6 +93,9 @@ export const useChatInputEffects = ({
         if (isWaitingForUpload) {
             const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
             if (!filesAreStillProcessing) {
+                // Reset waiting state immediately to unlock UI
+                setIsWaitingForUpload(false);
+
                 clearCurrentDraft();
 
                 let textToSend = inputText;
@@ -110,7 +115,7 @@ export const useChatInputEffects = ({
                 }
             }
         }
-    }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, quoteText, onMessageSent, clearCurrentDraft, isFullscreen, setIsAnimatingSend, setIsFullscreen, setInputText, setQuoteText]);
+    }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, quoteText, onMessageSent, clearCurrentDraft, isFullscreen, setIsAnimatingSend, setIsFullscreen, setInputText, setQuoteText, setIsWaitingForUpload]);
 
     // 4. Global Paste Handler
     useEffect(() => {

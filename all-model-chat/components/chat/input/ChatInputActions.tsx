@@ -51,7 +51,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onStartLiveSession,
   isLiveConnected,
   isLiveMuted,
-  onToggleLiveMute
+  onToggleLiveMute,
 }) => {
   const micIconSize = 20;
   const sendIconSize = 20;

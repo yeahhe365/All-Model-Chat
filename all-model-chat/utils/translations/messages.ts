@@ -1,4 +1,5 @@
 
+
 export const messagesTranslations = {
     // MessageList.tsx and sub-components
     imageZoom_title: { en: 'Zoomed Image: {filename}', zh: '图片缩放: {filename}' },
@@ -12,12 +13,6 @@ export const messagesTranslations = {
         zh: '请阅读以下内容，并用一句话精准提炼其核心主旨。这一句话需要包含关键要素（谁、做了什么、结果如何），保持简练有力：' 
     },
     suggestion_summarize_short: { en: 'Quickly extract the core theme.', zh: '快速提炼核心主旨。' },
-    suggestion_organize_title: { en: 'Organize Information', zh: '信息整理' },
-    suggestion_organize_desc: { 
-        en: 'As an information organization expert, please de-duplicate, categorize, and structure the following content. Extract key points, ignore irrelevant details, and make the logic clear and readable:', 
-        zh: '作为信息整理专家，请对以下内容进行去重、分类和结构化整理。请提取关键点，忽略无关细节，使逻辑清晰易读：' 
-    },
-    suggestion_organize_short: { en: 'Structure and categorize messy info.', zh: '结构化整理杂乱信息。' },
     suggestion_translate_title: { en: 'Bilingual Translation', zh: '中英互译' },
     suggestion_translate_desc: { 
         en: `You are a professional translator proficient in Chinese and English. Please translate the following text (Chinese to English, or English to Chinese). Aim for accuracy, fluency, and elegance, preserving the original meaning and tone. Do not add any explanations or extra symbols:`, 

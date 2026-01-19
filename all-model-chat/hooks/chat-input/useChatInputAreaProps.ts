@@ -227,6 +227,7 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             onPaste: handlers.handlePaste,
             textareaRef,
             placeholder: t('chatInputPlaceholder'),
+            // Explicitly excluding isLoading to allow typing during generation
             disabled: isModalOpen || isTranscribing || isWaitingForUpload || isRecording || isConverting,
             onCompositionStart: handlers.onCompositionStart,
             onCompositionEnd: handlers.onCompositionEnd,

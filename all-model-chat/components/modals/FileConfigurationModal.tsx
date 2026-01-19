@@ -86,7 +86,7 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
     const showResolutionSettings = isGemini3 && (isImage || isVideo || isPdf);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-[var(--theme-border-primary)]">
+        <Modal isOpen={isOpen} onClose={onClose} contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--theme-border-primary)]">
             <FileConfigHeader 
                 onClose={onClose} 
                 t={t} 
