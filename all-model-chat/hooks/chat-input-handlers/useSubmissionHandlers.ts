@@ -70,6 +70,7 @@ export const useSubmissionHandlers = ({
                 if (isEditing && editMode === 'update' && editingMessageId) {
                     onUpdateMessageContent(editingMessageId, inputText);
                     setEditingMessageId(null);
+                    clearCurrentDraft(); // Clear draft to prevent it from reloading when edit mode exits
                     setInputText('');
                     setQuoteText('');
                     onMessageSent();

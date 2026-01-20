@@ -14,7 +14,8 @@ export const getModelIcon = (model: ModelOption | undefined) => {
     if (lowerId.includes('native-audio')) return <AudioWaveform size={15} className="text-amber-500 dark:text-amber-400 flex-shrink-0" strokeWidth={1.5} />;
 
     if (lowerId.includes('tts')) return <Volume2 size={15} className="text-purple-500 dark:text-purple-400 flex-shrink-0" strokeWidth={1.5} />;
-    if (lowerId.includes('imagen') || lowerId.includes('image-')) return <ImageIcon size={15} className="text-rose-500 dark:text-rose-400 flex-shrink-0" strokeWidth={1.5} />;
+    // Check for 'imagen' or 'image' to capture models like gemini-2.5-flash-image (Nano Banana)
+    if (lowerId.includes('imagen') || lowerId.includes('image')) return <ImageIcon size={15} className="text-rose-500 dark:text-rose-400 flex-shrink-0" strokeWidth={1.5} />;
     
     // Gemini Text Models
     if (lowerId.includes('gemini')) return <MessageSquareText size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
