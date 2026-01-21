@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { UploadedFile } from '../../../types';
 import { FileDisplay } from '../FileDisplay';
@@ -81,7 +80,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
                     }}
                 >
                     {documentFiles.map((file) => (
-                        <div key={file.id} className="flex-shrink-0 w-full min-w-[200px] max-w-[320px]">
+                        <div key={file.id} className="flex-shrink-0 w-full min-w-[200px] max-w-[260px]">
                             <FileDisplay 
                                 file={file} 
                                 onFileClick={onImageClick} 
