@@ -16,6 +16,27 @@ interface FileDisplayProps {
   isGemini3?: boolean;
 }
 
+const getDisplayType = (mimeType: string, name: string) => {
+    // Check extension first as it's often more reliable/familiar
+    const ext = name.split('.').pop()?.toUpperCase();
+    if (ext && ext.length > 1 && ext.length < 5) return ext;
+
+    if (mimeType.includes('pdf')) return 'PDF';
+    if (mimeType.includes('word') || mimeType.includes('document')) return 'DOC';
+    if (mimeType.includes('sheet') || mimeType.includes('excel')) return 'XLS';
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'PPT';
+    if (mimeType.includes('zip') || mimeType.includes('compressed')) return 'ZIP';
+    if (mimeType.includes('csv')) return 'CSV';
+    if (mimeType.includes('json')) return 'JSON';
+    if (mimeType.includes('html')) return 'HTML';
+    if (mimeType.includes('javascript')) return 'JS';
+    if (mimeType.includes('python')) return 'PY';
+    
+    // Fallback
+    const subtype = mimeType.split('/').pop()?.toUpperCase() || 'FILE';
+    return subtype.length > 8 ? subtype.substring(0, 8) : subtype;
+};
+
 export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isFromMessageList, isGridView, onConfigure, isGemini3 }) => {
   const [idCopied, setIdCopied] = useState(false);
 
@@ -130,25 +151,25 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
             <p className="text-sm font-medium text-[var(--theme-text-primary)] truncate" title={file.name}>
                 {file.name}
             </p>
-            <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]">
-                <span className="truncate max-w-[100px]">{file.type.split('/').pop()?.toUpperCase() || 'FILE'}</span>
+            <div className="flex items-center gap-1.5 text-xs text-[var(--theme-text-tertiary)]">
+                <span className="truncate">{getDisplayType(file.type, file.name)}</span>
                 {file.size > 0 && (
                     <>
-                        <span className="w-0.5 h-0.5 rounded-full bg-current"></span>
-                        <span>{formatFileSize(file.size)}</span>
+                        <span className="w-0.5 h-0.5 rounded-full bg-current flex-shrink-0 opacity-50"></span>
+                        <span className="flex-shrink-0 whitespace-nowrap">{formatFileSize(file.size)}</span>
                     </>
                 )}
                 {file.videoMetadata && (
-                    <span className="flex items-center gap-0.5 text-[var(--theme-text-link)]" title="Video Clipped">
+                    <span className="flex items-center gap-0.5 text-[var(--theme-text-link)] ml-1 flex-shrink-0" title="Video Clipped">
                         <Scissors size={10} />
                     </span>
                 )}
                 {file.mediaResolution && (
-                    <span className="flex items-center gap-0.5 text-[var(--theme-text-link)]" title={`Resolution: ${file.mediaResolution}`}>
+                    <span className="flex items-center gap-0.5 text-[var(--theme-text-link)] ml-1 flex-shrink-0" title={`Resolution: ${file.mediaResolution}`}>
                         <SlidersHorizontal size={10} />
                     </span>
                 )}
-                {file.error && <span className="text-[var(--theme-text-danger)] ml-1">Error</span>}
+                {file.error && <span className="text-[var(--theme-text-danger)] ml-1 flex-shrink-0">Error</span>}
             </div>
         </div>
 
