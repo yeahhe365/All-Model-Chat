@@ -167,6 +167,10 @@ src/
   <p><b>扫描上方二维码或 <a href="https://afdian.com/a/gemini-nexus" target="_blank">点击此处</a> 前往爱发电支持我</b></p>
 </div>
 
-## 📄 许可证
+## 🌟 Star History
 
-MIT License
+[![Star History Chart](https://api.star-history.com/svg?repos=yeahhe365/All-Model-Chat&type=Date)](https://star-history.com/#yeahhe365/All-Model-Chat&Date)
+
+---
+*感谢所有支持本项目的小伙伴！您的 Star 是我持续更新的最大动力。*
+
