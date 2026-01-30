@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { UploadedFile } from '../../../types';
 import { FileDisplay } from '../FileDisplay';
@@ -36,6 +37,10 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
 
     const isQuadImageView = imageFiles.length === 4 && imageFiles.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
     const marginClass = hasContentOrAudio ? 'mb-2' : '';
+    
+    // Only enable scrolling if there are enough files to form multiple columns (more than 4)
+    // This prevents scrollbars from appearing on single-column layouts where they aren't needed
+    const showDocScroll = documentFiles.length > 4;
 
     return (
         <div className={`flex flex-col gap-2 ${marginClass}`}>
@@ -73,14 +78,14 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
             {/* 2. Documents/Other Files Section (Columnar Layout: Max 4 rows, flow col) */}
             {documentFiles.length > 0 && (
                 <div 
-                    className="grid grid-flow-col gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar w-fit max-w-full"
+                    className={`grid grid-flow-col gap-2 ${showDocScroll ? 'overflow-x-auto pb-2' : ''} -mx-1 px-1 custom-scrollbar w-fit max-w-full`}
                     style={{
                         // Limit to 4 rows max, or fewer if not enough files to fill 4 rows
                         gridTemplateRows: `repeat(${Math.min(documentFiles.length, 4)}, min-content)`
                     }}
                 >
                     {documentFiles.map((file) => (
-                        <div key={file.id} className="flex-shrink-0 w-full min-w-[200px] max-w-[260px]">
+                        <div key={file.id} className="flex-shrink-0 w-full min-w-[240px] max-w-[320px]">
                             <FileDisplay 
                                 file={file} 
                                 onFileClick={onImageClick} 

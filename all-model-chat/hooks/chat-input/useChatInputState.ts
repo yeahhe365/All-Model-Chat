@@ -7,7 +7,7 @@ export const MAX_TEXTAREA_HEIGHT_PX = 150;
 
 export const useChatInputState = (activeSessionId: string | null, isEditing: boolean) => {
     const [inputText, setInputText] = useState('');
-    const [quoteText, setQuoteText] = useState('');
+    const [quotes, setQuotes] = useState<string[]>([]);
     const [isTranslating, setIsTranslating] = useState(false);
     const [isAnimatingSend, setIsAnimatingSend] = useState(false);
     const [fileIdInput, setFileIdInput] = useState('');
@@ -35,7 +35,22 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
             const draftKey = `chatDraft_${activeSessionId}`;
             const savedDraft = localStorage.getItem(draftKey);
             setInputText(savedDraft || '');
-            setQuoteText(''); // Reset quote on session change
+            
+            // Load quotes draft
+            const quoteKey = `chatQuotes_${activeSessionId}`;
+            try {
+                const savedQuotes = localStorage.getItem(quoteKey);
+                if (savedQuotes) {
+                    const parsed = JSON.parse(savedQuotes);
+                    if (Array.isArray(parsed)) {
+                        setQuotes(parsed);
+                    }
+                } else {
+                    setQuotes([]);
+                }
+            } catch (e) {
+                setQuotes([]);
+            }
         }
     }, [activeSessionId, isEditing]);
 
@@ -53,10 +68,21 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         return () => clearTimeout(handler);
     }, [inputText, activeSessionId]);
 
+    // Save quotes to localStorage
+    useEffect(() => {
+        if (!activeSessionId) return;
+        const quoteKey = `chatQuotes_${activeSessionId}`;
+        if (quotes.length > 0) {
+            localStorage.setItem(quoteKey, JSON.stringify(quotes));
+        } else {
+            localStorage.removeItem(quoteKey);
+        }
+    }, [quotes, activeSessionId]);
+
     const clearCurrentDraft = useCallback(() => {
         if (activeSessionId) {
-            const draftKey = `chatDraft_${activeSessionId}`;
-            localStorage.removeItem(draftKey);
+            localStorage.removeItem(`chatDraft_${activeSessionId}`);
+            localStorage.removeItem(`chatQuotes_${activeSessionId}`);
         }
     }, [activeSessionId]);
 
@@ -73,7 +99,7 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
 
     return {
         inputText, setInputText,
-        quoteText, setQuoteText,
+        quotes, setQuotes,
         isTranslating, setIsTranslating,
         isAnimatingSend, setIsAnimatingSend,
         fileIdInput, setFileIdInput,

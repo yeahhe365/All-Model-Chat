@@ -16,10 +16,15 @@ export const useChatArea = (props: ChatAreaProps) => {
       setCommandedInput({ text: text, id: Date.now(), mode: 'quote' });
   }, [setCommandedInput]);
 
+  const handleInsert = useCallback((text: string) => {
+      setCommandedInput({ text: text, id: Date.now(), mode: 'insert' });
+  }, [setCommandedInput]);
+
   return {
     chatInputHeight,
     chatInputContainerRef,
     isImagenModel,
-    handleQuote
+    handleQuote,
+    handleInsert
   };
 };

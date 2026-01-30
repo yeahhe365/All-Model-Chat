@@ -33,6 +33,14 @@ export const MODELS_MANDATORY_THINKING = [
     'gemini-2.5-pro',
 ];
 
+export const MODELS_SUPPORTING_RAW_MODE = [
+    'gemini-3-flash-preview',
+    'gemini-3-pro-preview',
+    'gemini-2.5-pro',
+    'gemini-2.5-flash-preview-09-2025',
+    'gemini-2.5-flash-lite-preview-09-2025',
+];
+
 export const THINKING_LEVELS = [
     { id: 'MINIMAL', name: 'Minimal' },
     { id: 'LOW', name: 'Low' },

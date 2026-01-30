@@ -52,6 +52,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   isLiveConnected,
   isLiveMuted,
   onToggleLiveMute,
+  onFastSendMessage,
 }) => {
   const micIconSize = 20;
   const sendIconSize = 20;
@@ -96,7 +97,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             {isRecording && (
                 <button
                     type="button"
-                    onClick={onCancelRecording}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCancelRecording(); }}
                     className="px-3 py-1.5 text-xs sm:text-sm bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] rounded-md transition-colors"
                     aria-label={t('cancelRecording_aria')}
                     title={t('cancelRecording_aria')}
@@ -194,10 +195,26 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             )}
 
             {isLoading ? ( 
-                <button type="button" onClick={onStopGenerating} className={`${CHAT_INPUT_BUTTON_CLASS} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} aria-label={t('stopGenerating_aria')} title={t('stopGenerating_title')}><IconStop size={12} /></button>
+                <button 
+                    type="button" 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); onStopGenerating(); }} 
+                    className={`${CHAT_INPUT_BUTTON_CLASS} bg-[var(--theme-bg-danger)] hover:bg-[var(--theme-bg-danger-hover)] text-[var(--theme-icon-stop)]`} 
+                    aria-label={t('stopGenerating_aria')} 
+                    title={t('stopGenerating_title')}
+                >
+                    <IconStop size={12} />
+                </button>
             ) : isEditing ? (
                 <>
-                    <button type="button" onClick={onCancelEdit} className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} aria-label={t('cancelEdit_aria')} title={t('cancelEdit_title')}><X size={sendIconSize} strokeWidth={2} /></button>
+                    <button 
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCancelEdit(); }} 
+                        className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`} 
+                        aria-label={t('cancelEdit_aria')} 
+                        title={t('cancelEdit_title')}
+                    >
+                        <X size={sendIconSize} strokeWidth={2} />
+                    </button>
                     <button type="submit" disabled={!canSend} className={`${CHAT_INPUT_BUTTON_CLASS} bg-amber-500 hover:bg-amber-600 text-white disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} aria-label={t('updateMessage_aria')} title={t('updateMessage_title')}>
                         {editMode === 'update' ? <Save size={sendIconSize} strokeWidth={2} /> : <Edit2 size={sendIconSize} strokeWidth={2} />}
                     </button>
@@ -208,7 +225,13 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                     disabled={!canSend || isWaitingForUpload} 
                     className={`${CHAT_INPUT_BUTTON_CLASS} bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] disabled:bg-[var(--theme-bg-tertiary)] disabled:text-[var(--theme-text-tertiary)]`} 
                     aria-label={isWaitingForUpload ? "Waiting for upload..." : t('sendMessage_aria')} 
-                    title={isWaitingForUpload ? "Waiting for upload to complete before sending" : t('sendMessage_title')}
+                    title={isWaitingForUpload ? "Waiting for upload to complete before sending" : (t('sendMessage_title') + (onFastSendMessage ? t('sendMessage_fast_suffix', " (Right-click for Fast Mode ⚡)") : ""))}
+                    onContextMenu={(e) => {
+                        if (onFastSendMessage && !isWaitingForUpload && canSend) {
+                            e.preventDefault();
+                            onFastSendMessage();
+                        }
+                    }}
                 >
                     {isWaitingForUpload ? (
                         <Loader2 size={sendIconSize} className="animate-spin" strokeWidth={2} />

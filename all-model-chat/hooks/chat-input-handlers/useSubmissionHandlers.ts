@@ -12,14 +12,14 @@ interface UseSubmissionHandlersProps {
     editMode: 'update' | 'resend';
     editingMessageId: string | null;
     inputText: string;
-    quoteText: string;
+    quotes: string[];
     setInputText: Dispatch<SetStateAction<string>>;
-    setQuoteText: Dispatch<SetStateAction<string>>;
+    setQuotes: Dispatch<SetStateAction<string[]>>;
     onUpdateMessageContent: (messageId: string, content: string) => void;
     setEditingMessageId: (id: string | null) => void;
     onMessageSent: () => void;
     clearCurrentDraft: () => void;
-    onSendMessage: (text: string) => void;
+    onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
     setIsAnimatingSend: Dispatch<SetStateAction<boolean>>;
     isFullscreen: boolean;
     setIsFullscreen: Dispatch<SetStateAction<boolean>>;
@@ -41,9 +41,9 @@ export const useSubmissionHandlers = ({
     editMode,
     editingMessageId,
     inputText,
-    quoteText,
+    quotes,
     setInputText,
-    setQuoteText,
+    setQuotes,
     onUpdateMessageContent,
     setEditingMessageId,
     onMessageSent,
@@ -60,8 +60,7 @@ export const useSubmissionHandlers = ({
     adjustTextareaHeight,
 }: UseSubmissionHandlersProps) => {
 
-    const handleSubmit = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
+    const performSubmit = useCallback((isFastMode: boolean) => {
         if (canSend) {
             const filesAreStillProcessing = selectedFiles.some(f => f.isProcessing);
             if (filesAreStillProcessing) {
@@ -72,7 +71,7 @@ export const useSubmissionHandlers = ({
                     setEditingMessageId(null);
                     clearCurrentDraft(); // Clear draft to prevent it from reloading when edit mode exits
                     setInputText('');
-                    setQuoteText('');
+                    setQuotes([]);
                     onMessageSent();
                     return;
                 }
@@ -80,14 +79,17 @@ export const useSubmissionHandlers = ({
                 clearCurrentDraft();
                 
                 let textToSend = inputText;
-                if (quoteText) {
-                    const formattedQuote = quoteText.split('\n').map(l => `> ${l}`).join('\n');
-                    textToSend = `${formattedQuote}\n\n${inputText}`;
+                if (quotes.length > 0) {
+                    const formattedQuotes = quotes.map((q, i) => {
+                        const label = quotes.length > 1 ? `**Quote ${i + 1}**:\n` : '';
+                        return `${label}${q.split('\n').map(l => `> ${l}`).join('\n')}`;
+                    }).join('\n\n');
+                    textToSend = `${formattedQuotes}\n\n${inputText}`;
                 }
 
-                onSendMessage(textToSend);
+                onSendMessage(textToSend, { isFastMode });
                 setInputText('');
-                setQuoteText('');
+                setQuotes([]);
                 onMessageSent();
                 setIsAnimatingSend(true);
                 setTimeout(() => setIsAnimatingSend(false), 400);
@@ -96,7 +98,16 @@ export const useSubmissionHandlers = ({
                 }
             }
         }
-    }, [canSend, selectedFiles, isEditing, editMode, editingMessageId, inputText, quoteText, setIsWaitingForUpload, clearCurrentDraft, onSendMessage, setInputText, setQuoteText, onMessageSent, setIsAnimatingSend, isFullscreen, setIsFullscreen, onUpdateMessageContent, setEditingMessageId]);
+    }, [canSend, selectedFiles, isEditing, editMode, editingMessageId, inputText, quotes, setIsWaitingForUpload, clearCurrentDraft, onSendMessage, setInputText, setQuotes, onMessageSent, setIsAnimatingSend, isFullscreen, setIsFullscreen, onUpdateMessageContent, setEditingMessageId]);
+
+    const handleSubmit = useCallback((e: React.FormEvent) => {
+        e.preventDefault();
+        performSubmit(false);
+    }, [performSubmit]);
+
+    const handleFastSubmit = useCallback(() => {
+        performSubmit(true);
+    }, [performSubmit]);
 
     const handleTranslate = useCallback(async () => {
         if (!inputText.trim() || isTranslating) return;
@@ -125,6 +136,7 @@ export const useSubmissionHandlers = ({
 
     return {
         handleSubmit,
+        handleFastSubmit,
         handleTranslate,
     };
 };

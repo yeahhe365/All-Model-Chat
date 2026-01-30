@@ -59,5 +59,27 @@ export const useTextToSpeechHandler = ({
         }
     }, [appSettings, currentChatSettings, ttsMessageId, setTtsMessageId, updateAndPersistSessions]);
 
-    return { handleTextToSpeech };
+    const handleQuickTTS = useCallback(async (text: string): Promise<string | null> => {
+        const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
+        if ('error' in keyResult) {
+            logService.error("Quick TTS failed:", { error: keyResult.error });
+            return null;
+        }
+        const { key } = keyResult;
+
+        logService.info("Requesting Quick TTS for selected text");
+        const modelId = DEFAULT_TTS_MODEL_ID;
+        const voice = appSettings.ttsVoice;
+        const abortController = new AbortController();
+
+        try {
+            const base64Pcm = await geminiServiceInstance.generateSpeech(key, modelId, text, voice, abortController.signal);
+            return pcmBase64ToWavUrl(base64Pcm);
+        } catch (error) {
+            logService.error("Quick TTS generation failed:", { error });
+            return null;
+        }
+    }, [appSettings, currentChatSettings]);
+
+    return { handleTextToSpeech, handleQuickTTS };
 };

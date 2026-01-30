@@ -23,6 +23,8 @@ export interface ChatInputModalsProps {
   initialFilename?: string;
   editingFile?: UploadedFile | null;
   isSystemAudioRecordingEnabled?: boolean;
+  themeId: string;
+  isPasteRichTextAsMarkdownEnabled?: boolean;
 }
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
@@ -40,7 +42,9 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   t,
   initialContent,
   initialFilename,
-  isSystemAudioRecordingEnabled
+  isSystemAudioRecordingEnabled,
+  themeId,
+  isPasteRichTextAsMarkdownEnabled
 }) => {
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
     return null;
@@ -64,6 +68,8 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
             t={t as (key: string) => string} 
             initialContent={initialContent}
             initialFilename={initialFilename}
+            themeId={themeId}
+            isPasteRichTextAsMarkdownEnabled={isPasteRichTextAsMarkdownEnabled}
         />
       )}
       {isHelpModalOpen && <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />}

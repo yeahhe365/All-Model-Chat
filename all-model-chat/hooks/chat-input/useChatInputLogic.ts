@@ -92,12 +92,12 @@ export const useChatInputLogic = (props: ChatInputProps) => {
     const isAnyModalOpen = isModalOpen || modalsState.isHelpModalOpen;
 
     const canSend = (
-        (inputState.inputText.trim() !== '' || props.selectedFiles.length > 0 || inputState.quoteText.trim() !== '')
+        (inputState.inputText.trim() !== '' || props.selectedFiles.length > 0 || inputState.quotes.length > 0)
         && !props.isLoading && !inputState.isAddingById && !isModalOpen && !localFileState.isConverting
     );
 
     // Intercept Send Message for Live API
-    const handleSmartSendMessage = useCallback(async (text: string) => {
+    const handleSmartSendMessage = useCallback(async (text: string, options?: { isFastMode?: boolean }) => {
         if (capabilities.isNativeAudioModel) {
             // Live API Logic: Auto-connect if needed
             if (!liveAPI.isConnected) {
@@ -119,7 +119,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
             }
         } else {
             // Standard Chat
-            onSendMessage(text);
+            onSendMessage(text, options);
         }
     }, [capabilities.isNativeAudioModel, liveAPI.isConnected, liveAPI.connect, liveAPI.sendText, onSendMessage, onAddUserMessage]);
 
@@ -150,7 +150,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
     useChatInputEffects({
         commandedInput,
         setInputText: inputState.setInputText,
-        setQuoteText: inputState.setQuoteText,
+        setQuotes: inputState.setQuotes,
         textareaRef: inputState.textareaRef,
         prevIsProcessingFileRef: inputState.prevIsProcessingFileRef,
         isProcessingFile: props.isProcessingFile,
@@ -161,7 +161,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         selectedFiles: props.selectedFiles,
         clearCurrentDraft: inputState.clearCurrentDraft,
         inputText: inputState.inputText,
-        quoteText: inputState.quoteText,
+        quotes: inputState.quotes,
         onSendMessage: handleSmartSendMessage,
         onMessageSent,
         setIsAnimatingSend: inputState.setIsAnimatingSend,

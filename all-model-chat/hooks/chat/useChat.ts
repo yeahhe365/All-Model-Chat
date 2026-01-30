@@ -217,6 +217,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleRetryMessage: messageHandler.handleRetryMessage,
         handleRetryLastTurn: messageHandler.handleRetryLastTurn,
         handleTextToSpeech: messageHandler.handleTextToSpeech,
+        handleQuickTTS: messageHandler.handleQuickTTS,
         handleEditLastUserMessage: messageHandler.handleEditLastUserMessage,
         handleContinueGeneration: messageHandler.handleContinueGeneration,
         

@@ -49,6 +49,7 @@ interface FactoryParams {
     isNativeAudioModel?: boolean;
     mediaResolution?: MediaResolution;
     setMediaResolution?: (resolution: MediaResolution) => void;
+    themeId: string;
 
     // State from hooks
     fileIdInput: string;
@@ -60,8 +61,8 @@ interface FactoryParams {
     isAddingByUrl: boolean;
     showAddByUrlInput: boolean;
     inputText: string;
-    quoteText: string;
-    setQuoteText: (val: string) => void;
+    quotes: string[];
+    setQuotes: React.Dispatch<React.SetStateAction<string[]>>;
     isTranslating: boolean;
     isFullscreen: boolean;
     isPipActive?: boolean;
@@ -129,13 +130,13 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
         isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch, editMode,
         fileIdInput, setFileIdInput, isAddingById, showAddByIdInput,
         urlInput, setUrlInput, isAddingByUrl, showAddByUrlInput,
-        inputText, quoteText, setQuoteText, isTranslating,
+        inputText, quotes, setQuotes, isTranslating,
         isFullscreen, isPipActive, isAnimatingSend, isMobile, isConverting, isModalOpen,
         slashCommandState, textareaRef, fileInputRef, imageInputRef, folderInputRef, zipInputRef, cameraInputRef,
         handlers,
         setShowAddByIdInput, setShowAddByUrlInput, setShowTokenModal,
         handleAttachmentAction, handleVoiceInputClick, handleCancelRecording, handleToggleFullscreen,
-        showEmptyStateSuggestions, onSuggestionClick, onOrganizeInfoClick
+        showEmptyStateSuggestions, onSuggestionClick, onOrganizeInfoClick, themeId
     } = params;
 
     return {
@@ -234,8 +235,8 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             onFocus: handlers.adjustTextareaHeight,
         },
         quoteProps: {
-            quoteText,
-            onClearQuote: () => setQuoteText('')
+            quotes,
+            onRemoveQuote: (index: number) => setQuotes(prev => prev.filter((_, i) => i !== index))
         },
         layoutProps: {
             isFullscreen,
@@ -263,6 +264,7 @@ export const useChatInputAreaProps = (params: FactoryParams): ChatInputAreaProps
             onSuggestionClick,
             onOrganizeInfoClick
         } : undefined,
-        t: t as any
+        t: t as any,
+        themeId
     };
 };

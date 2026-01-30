@@ -27,8 +27,8 @@ interface UseSlashCommandsProps {
   onTogglePip: () => void;
   setInputText: Dispatch<SetStateAction<string>>;
   currentModelId: string;
-  onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;
-  thinkingLevel?: 'LOW' | 'HIGH';
+  onSetThinkingLevel: (level: 'LOW' | 'HIGH' | 'MINIMAL' | 'MEDIUM') => void;
+  thinkingLevel?: 'LOW' | 'HIGH' | 'MINIMAL' | 'MEDIUM';
 }
 
 export const useSlashCommands = ({
@@ -79,8 +79,12 @@ export const useSlashCommands = ({
     { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
     { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
     { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
-    { name: 'fast', description: t('help_cmd_fast'), icon: 'fast', action: () => onSetThinkingLevel(thinkingLevel === 'LOW' ? 'HIGH' : 'LOW') },
-  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel]);
+    { name: 'fast', description: t('help_cmd_fast'), icon: 'fast', action: () => {
+        const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
+        const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
+        onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
+    }},
+  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
   
   const allCommandsForHelp = useMemo(() => [
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description, icon: c.icon })),

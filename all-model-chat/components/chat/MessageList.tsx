@@ -39,6 +39,7 @@ export interface MessageListProps {
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
+  onQuickTTS: (text: string) => Promise<string | null>;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
   scrollNavVisibility: { up: boolean, down: boolean };
@@ -49,14 +50,15 @@ export interface MessageListProps {
   currentModelId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
   onQuote: (text: string) => void;
+  onInsert?: (text: string) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, sessionTitle, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
     onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, themeColors, baseFontSize,
-    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, t, language, themeId,
+    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
-    chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote
+    chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote, onInsert
 }) => {
   const {
       previewFile,
@@ -94,7 +96,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
       aria-live="polite" 
     >
-      <TextSelectionToolbar onQuote={onQuote} containerRef={scrollContainerRef} />
+      <TextSelectionToolbar onQuote={onQuote} onInsert={onInsert} onTTS={onQuickTTS} containerRef={scrollContainerRef} t={t} />
       
       {messages.length === 0 ? (
         <WelcomeScreen 
