@@ -1,5 +1,4 @@
 
-
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
@@ -32,7 +31,7 @@ export const getRehypePlugins = (allowHtml: boolean) => {
       span: [...(defaultSchema.attributes?.span || []), 'className', 'style'],
       div: [...(defaultSchema.attributes?.div || []), 'className', 'class', 'style', 'align'],
       p: [...(defaultSchema.attributes?.p || []), 'align'],
-      img: [...(defaultSchema.attributes?.img || []), 'align', 'width', 'height'],
+      img: [...(defaultSchema.attributes?.img || []), 'align', 'width', 'height', 'src'],
       math: ['xmlns', 'display', 'alttext'],
       mtext: ['mathvariant'],
       mstyle: ['mathvariant', 'mathcolor', 'mathbackground', 'scriptlevel', 'displaystyle'],
@@ -41,6 +40,10 @@ export const getRehypePlugins = (allowHtml: boolean) => {
       th: ['align', 'colSpan', 'rowSpan', 'valign'],
       details: ['open', 'className'],
       summary: ['className'],
+    },
+    protocols: {
+      ...defaultSchema.protocols,
+      src: ['http', 'https', 'data', 'blob'],
     },
     clobberPrefix: '', 
   };

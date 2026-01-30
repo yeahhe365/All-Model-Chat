@@ -199,6 +199,11 @@ export const useAppLogic = () => {
     if (activeSessionId && setCurrentChatSettings) {
         setCurrentChatSettings(prev => ({ ...prev, thinkingLevel: level }));
     }
+    // Focus input after toggling thinking level
+    setTimeout(() => {
+        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
+        if (textarea) textarea.focus();
+    }, 50);
   }, [setAppSettings, activeSessionId, setCurrentChatSettings]);
 
   const { apiModels, isSwitchingModel } = chatState;

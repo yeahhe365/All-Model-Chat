@@ -1,5 +1,4 @@
 
-
 import React, { useMemo } from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
@@ -25,7 +24,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
-    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, language, scrollNavVisibility,
+    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, language, scrollNavVisibility,
     onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent, onUpdateMessageFile,
     appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, editMode, editingMessageId, setEditingMessageId, onStopGenerating,
@@ -43,7 +42,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     t
   } = props;
 
-  const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote } = useChatArea(props);
+  const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea(props);
   
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
   const pipShortcut = useMemo(() => getShortcutDisplay('general.togglePip', appSettings), [appSettings]);
@@ -110,6 +109,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onGenerateCanvas={onGenerateCanvas}
         onContinueGeneration={onContinueGeneration}
         ttsMessageId={ttsMessageId}
+        onQuickTTS={onQuickTTS}
         t={t}
         language={language}
         scrollNavVisibility={scrollNavVisibility}
@@ -121,6 +121,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onOpenSidePanel={onOpenSidePanel}
         onUpdateMessageFile={onUpdateMessageFile}
         onQuote={handleQuote}
+        onInsert={handleInsert}
       />
 
       <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
@@ -186,6 +187,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onLiveTranscript={onLiveTranscript}
             onToggleBBox={onToggleBBox}
             isBBoxModeActive={isBBoxModeActive}
+            themeId={themeId}
           />
         </div>
       </div>

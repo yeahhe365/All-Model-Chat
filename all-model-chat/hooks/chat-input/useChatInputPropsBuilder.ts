@@ -80,8 +80,8 @@ export const useChatInputPropsBuilder = (
         isAddingByUrl: inputState.isAddingByUrl,
         showAddByUrlInput: modalsState.showAddByUrlInput,
         inputText: inputState.inputText,
-        quoteText: inputState.quoteText,
-        setQuoteText: inputState.setQuoteText,
+        quotes: inputState.quotes,
+        setQuotes: inputState.setQuotes,
         isTranslating: inputState.isTranslating,
         isFullscreen: inputState.isFullscreen,
         isPipActive: props.isPipActive,
@@ -122,15 +122,17 @@ export const useChatInputPropsBuilder = (
         showEmptyStateSuggestions: props.showEmptyStateSuggestions && !capabilities.isImagenModel && !capabilities.isTtsModel && !capabilities.isNativeAudioModel,
         onSuggestionClick: props.onSuggestionClick,
         onOrganizeInfoClick: props.onOrganizeInfoClick,
+
+        // Theme
+        themeId: props.themeId
     });
 
-    // Inject live mute controls into actionsProps
-    // This is done here because useChatInputAreaProps might not have direct access to liveAPI object 
-    // unless we pass it, but it's cleaner to inject the specialized props at this stage
+    // Inject live mute controls and Fast Mode handler into actionsProps
     const extendedActionsProps = {
         ...areaProps.actionsProps,
         isLiveMuted: liveAPI.isMuted,
-        onToggleLiveMute: liveAPI.toggleMute
+        onToggleLiveMute: liveAPI.toggleMute,
+        onFastSendMessage: handlers.handleFastSubmit
     };
     
     // Override the actionsProps in areaProps
@@ -151,6 +153,8 @@ export const useChatInputPropsBuilder = (
         t: props.t,
         editingFile: modalsState.editingFile,
         isSystemAudioRecordingEnabled: props.appSettings.isSystemAudioRecordingEnabled,
+        themeId: props.themeId,
+        isPasteRichTextAsMarkdownEnabled: props.appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
     };
 
     const fileModalsProps = {

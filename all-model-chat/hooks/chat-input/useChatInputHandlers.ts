@@ -12,8 +12,8 @@ interface UseChatInputHandlersProps {
     // State & Setters
     inputText: string;
     setInputText: React.Dispatch<React.SetStateAction<string>>;
-    quoteText: string;
-    setQuoteText: React.Dispatch<React.SetStateAction<string>>;
+    quotes: string[];
+    setQuotes: React.Dispatch<React.SetStateAction<string[]>>;
     fileIdInput: string;
     setFileIdInput: React.Dispatch<React.SetStateAction<string>>;
     urlInput: string;
@@ -74,7 +74,7 @@ interface UseChatInputHandlersProps {
     // Core Actions
     onProcessFiles: (files: FileList | File[]) => Promise<void>;
     onAddFileById: (fileId: string) => Promise<void>;
-    onSendMessage: (text: string) => void;
+    onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
     onMessageSent: () => void;
     onUpdateMessageContent: (messageId: string, content: string) => void;
     adjustTextareaHeight: () => void;
@@ -124,7 +124,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
     });
 
     // 3. Submission & Translation
-    const { handleSubmit, handleTranslate } = useSubmissionHandlers({
+    const { handleSubmit, handleTranslate, handleFastSubmit } = useSubmissionHandlers({
         canSend: props.canSend,
         selectedFiles: props.selectedFiles,
         setIsWaitingForUpload: props.setIsWaitingForUpload,
@@ -132,9 +132,9 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         editMode: props.editMode,
         editingMessageId: props.editingMessageId,
         inputText: props.inputText,
-        quoteText: props.quoteText,
+        quotes: props.quotes,
         setInputText: props.setInputText,
-        setQuoteText: props.setQuoteText,
+        setQuotes: props.setQuotes,
         onUpdateMessageContent: props.onUpdateMessageContent,
         setEditingMessageId: props.setEditingMessageId,
         onMessageSent: props.onMessageSent,
@@ -208,6 +208,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         handlePaste,
         handleInputChange,
         handleSubmit,
+        handleFastSubmit,
         handleTranslate,
         handleKeyDown,
         removeSelectedFile,
@@ -221,7 +222,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
     }), [
         handleFileChange, handleFolderChange, handleZipChange,
         handleAddUrl, handlePaste, handleInputChange,
-        handleSubmit, handleTranslate, handleKeyDown,
+        handleSubmit, handleFastSubmit, handleTranslate, handleKeyDown,
         removeSelectedFile, handleAddFileByIdSubmit,
         handleToggleToolAndFocus, handleSaveFileConfig,
         handlePrevImage, handleNextImage,

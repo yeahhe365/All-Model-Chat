@@ -1,10 +1,8 @@
 
-
-
 import { useCallback } from 'react';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, getKeyForRequest, generateSessionTitle, logService, createNewSession, isGemini3Model } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/baseApi';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { ChatMessage, UploadedFile } from '../../types';
@@ -37,9 +35,23 @@ export const useStandardChat = ({
         filesToUse: UploadedFile[], 
         effectiveEditingId: string | null, 
         activeModelId: string,
-        isContinueMode: boolean = false
+        isContinueMode: boolean = false,
+        isFastMode: boolean = false
     ) => {
-        const sessionToUpdate = currentChatSettings;
+        let sessionToUpdate = { ...currentChatSettings };
+        
+        // Fast Mode Override logic
+        if (isFastMode) {
+            const isGemini3Flash = activeModelId.includes('gemini-3') && activeModelId.includes('flash');
+            const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
+
+            sessionToUpdate.thinkingLevel = targetLevel;
+            // Set budget to 0 to ensure level takes precedence if supported, or disables custom budget
+            // For Gemini 3, budget 0 + level LOW/MINIMAL = Low/Minimal Thinking.
+            // For others, usually means minimal/off thinking if they don't support level.
+            sessionToUpdate.thinkingBudget = 0; 
+            logService.info(`Fast Mode activated: Overriding thinking level to ${targetLevel}.`);
+        }
 
         const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
@@ -82,7 +94,10 @@ export const useStandardChat = ({
         let finalSessionId = activeSessionId;
         
         // Raw Mode Check
-        const isRawMode = (sessionToUpdate.isRawModeEnabled ?? appSettings.isRawModeEnabled) && !isContinueMode;
+        // Only enable if the toggle is ON AND the current model is in the supported list.
+        const isRawMode = (sessionToUpdate.isRawModeEnabled ?? appSettings.isRawModeEnabled) 
+            && !isContinueMode 
+            && MODELS_SUPPORTING_RAW_MODE.some(m => activeModelId.includes(m));
         
         // Prepare Message Objects
         let userMessageContent: ChatMessage | null = null;

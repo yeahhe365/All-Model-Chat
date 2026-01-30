@@ -15,7 +15,8 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
         const ai = await getConfiguredApiClient(apiKey);
         const response = await ai.models.generateContent({
             model: modelId,
-            contents: text,
+            // TTS models do not support chat history roles, just plain content parts
+            contents: [{ parts: [{ text: text }] }],
             config: {
                 responseModalities: ['AUDIO'],
                 speechConfig: {

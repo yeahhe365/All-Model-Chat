@@ -35,7 +35,7 @@ export interface UploadedFile {
 export interface InputCommand {
   text: string;
   id: number;
-  mode?: 'replace' | 'append' | 'quote';
+  mode?: 'replace' | 'append' | 'quote' | 'insert';
 }
 
 export interface ChatMessage {
@@ -197,6 +197,7 @@ export interface ChatInputActionsProps {
   isLiveConnected?: boolean;
   isLiveMuted?: boolean;
   onToggleLiveMute?: () => void;
+  onFastSendMessage?: () => void;
 }
 
 export interface ChatInputProps {
@@ -208,7 +209,7 @@ export interface ChatInputProps {
   onMessageSent: () => void;
   selectedFiles: UploadedFile[]; 
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void; 
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
   isLoading: boolean; 
   isEditing: boolean;
   onStopGenerating: () => void;
@@ -260,6 +261,7 @@ export interface ChatInputProps {
   onLiveTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
   onToggleBBox?: () => void;
   isBBoxModeActive?: boolean;
+  themeId: string;
 }
 
 export type { ThemeColors };

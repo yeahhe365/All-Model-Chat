@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { AttachmentAction } from '../../components/chat/input/AttachmentMenu';
 import { UploadedFile } from '../../types';
+import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
 
 interface UseChatInputModalsProps {
   onProcessFiles: (files: File[]) => Promise<void>;
@@ -119,15 +120,34 @@ export const useChatInputModals = ({
     }
   };
 
-  const handleConfirmCreateTextFile = async (content: string, filename: string) => {
+  const handleConfirmCreateTextFile = async (content: string | Blob, filename: string) => {
     justInitiatedFileOpRef.current = true;
+    
     const sanitizeFilename = (name: string): string => {
-      let saneName = name.trim().replace(/[<>:"/\\|?*]+/g, '_');
-      if (!saneName.toLowerCase().endsWith('.txt')) saneName += '.txt';
-      return saneName;
+      return name.trim().replace(/[<>:"/\\|?*]+/g, '_');
     };
-    const finalFilename = filename.trim() ? sanitizeFilename(filename) : `custom-text-${Date.now()}.txt`;
-    const newFile = new File([content], finalFilename, { type: "text/plain" });
+    
+    let finalFilename = filename.trim() ? sanitizeFilename(filename) : `file-${Date.now()}.txt`;
+    
+    // Ensure extension if missing (fallback logic, though modal usually handles this)
+    if (!finalFilename.includes('.')) {
+        finalFilename += '.md';
+    }
+
+    const extension = `.${finalFilename.split('.').pop()?.toLowerCase()}`;
+    // Determine mime type based on extension
+    let mimeType = EXTENSION_TO_MIME[extension] || 'text/plain';
+    
+    // Explicit overrides for code types not in EXTENSION_TO_MIME or generic map
+    if (['.json'].includes(extension)) mimeType = 'application/json';
+    if (['.js', '.ts', '.jsx', '.tsx'].includes(extension)) mimeType = 'text/javascript';
+    if (['.py'].includes(extension)) mimeType = 'text/x-python';
+    if (['.xml'].includes(extension)) mimeType = 'text/xml';
+    if (['.csv'].includes(extension)) mimeType = 'text/csv';
+
+    // If content is already a Blob (e.g. PDF), use it directly, otherwise treat as string
+    const blobParts = [content];
+    const newFile = new File(blobParts, finalFilename, { type: mimeType });
     
     setShowCreateTextFileEditor(false);
     setEditingFile(null);

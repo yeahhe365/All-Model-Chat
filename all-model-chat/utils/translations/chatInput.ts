@@ -22,7 +22,7 @@ export const chatInputTranslations = {
     attachMenu_recordAudio: { en: 'Record Audio', zh: '录音' },
     attachMenu_addById: { en: 'Add by File ID', zh: '通过文件 ID 添加' },
     attachMenu_addByUrl: { en: 'Add YouTube Video', zh: '添加 YouTube 视频' },
-    attachMenu_createText: { en: 'Create Text File', zh: '创建文本文件' },
+    attachMenu_createText: { en: 'Create Text File', zh: '创建文件' },
     voiceInput_stop_aria: { en: 'Stop recording', zh: '停止录音' },
     cancelRecording_aria: { en: 'Cancel recording', zh: '取消录音' },
     voiceInput_transcribing_aria: { en: 'Transcribing...', zh: '转录中...' },
@@ -36,6 +36,7 @@ export const chatInputTranslations = {
     updateMessage_title: { en: 'Update & Send', zh: '更新并发送' },
     sendMessage_aria: { en: 'Send message', zh: '发送消息' },
     sendMessage_title: { en: 'Send', zh: '发送' },
+    sendMessage_fast_suffix: { en: ' (Right-click for Fast Mode ⚡)', zh: ' (右键开启快速模式 ⚡)' },
     tools_button: { en: 'Tools', zh: '工具' },
     web_search_label: { en: 'Web Search', zh: '联网' },
     web_search_short: { en: 'Search', zh: '联网' },
@@ -64,9 +65,9 @@ export const chatInputTranslations = {
     tokenModal_count: { en: 'Calculate', zh: '计算' },
 
     // Create Text File Modal
-    createText_title: { en: 'Create New Text File', zh: '创建新文本文件' },
-    createText_filename_placeholder: { en: 'Optional: Enter filename (e.g., my_notes.txt)', zh: '可选：输入文件名 (例如 my_notes.txt)' },
-    createText_content_placeholder: { en: 'Type or paste your text content here...', zh: '在此输入或粘贴文本内容...' },
+    createText_title: { en: 'Create New File', zh: '创建新文件' },
+    createText_filename_placeholder: { en: 'Filename', zh: '文件名' },
+    createText_content_placeholder: { en: 'Type or paste content here...', zh: '在此输入或粘贴内容...' },
     createText_create_button: { en: 'Create File', zh: '创建文件' },
 
     // File Settings Modal

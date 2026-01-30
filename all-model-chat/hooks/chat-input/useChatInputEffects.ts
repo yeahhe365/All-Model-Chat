@@ -8,7 +8,7 @@ const PASTE_TEXT_AS_FILE_THRESHOLD = 5000;
 interface UseChatInputEffectsProps {
     commandedInput: InputCommand | null;
     setInputText: React.Dispatch<React.SetStateAction<string>>;
-    setQuoteText: React.Dispatch<React.SetStateAction<string>>;
+    setQuotes: React.Dispatch<React.SetStateAction<string[]>>;
     textareaRef: React.RefObject<HTMLTextAreaElement>;
     prevIsProcessingFileRef: React.MutableRefObject<boolean>;
     isProcessingFile: boolean;
@@ -19,7 +19,7 @@ interface UseChatInputEffectsProps {
     selectedFiles: UploadedFile[];
     clearCurrentDraft: () => void;
     inputText: string;
-    quoteText: string;
+    quotes: string[];
     onSendMessage: (text: string) => void;
     onMessageSent: () => void;
     setIsAnimatingSend: (val: boolean) => void;
@@ -34,7 +34,7 @@ interface UseChatInputEffectsProps {
 export const useChatInputEffects = ({
     commandedInput,
     setInputText,
-    setQuoteText,
+    setQuotes,
     textareaRef,
     prevIsProcessingFileRef,
     isProcessingFile,
@@ -45,7 +45,7 @@ export const useChatInputEffects = ({
     selectedFiles,
     clearCurrentDraft,
     inputText,
-    quoteText,
+    quotes,
     onSendMessage,
     onMessageSent,
     setIsAnimatingSend,
@@ -61,23 +61,46 @@ export const useChatInputEffects = ({
     useEffect(() => {
         if (commandedInput) {
             if (commandedInput.mode === 'quote') {
-                setQuoteText(commandedInput.text);
+                setQuotes(prev => [...prev, commandedInput.text]);
             } else if (commandedInput.mode === 'append') {
                 setInputText(prev => prev + (prev ? '\n' : '') + commandedInput.text);
+            } else if (commandedInput.mode === 'insert') {
+                const textarea = textareaRef.current;
+                if (textarea) {
+                    const start = textarea.selectionStart || 0;
+                    const end = textarea.selectionEnd || 0;
+                    const currentVal = textarea.value;
+                    const insertText = commandedInput.text;
+                    const newVal = currentVal.substring(0, start) + insertText + currentVal.substring(end);
+                    
+                    setInputText(newVal);
+                    
+                    // Re-focus and move cursor
+                    requestAnimationFrame(() => {
+                        textarea.focus();
+                        const newCursorPos = start + insertText.length;
+                        textarea.setSelectionRange(newCursorPos, newCursorPos);
+                    });
+                } else {
+                     // Fallback
+                     setInputText(prev => prev + commandedInput.text);
+                }
             } else {
                 setInputText(commandedInput.text);
             }
 
-            setTimeout(() => {
-                const textarea = textareaRef.current;
-                if (textarea) {
-                    textarea.focus();
-                    const textLength = textarea.value.length;
-                    textarea.setSelectionRange(textLength, textLength);
-                }
-            }, 0);
+            if (commandedInput.mode !== 'insert') {
+                setTimeout(() => {
+                    const textarea = textareaRef.current;
+                    if (textarea) {
+                        textarea.focus();
+                        const textLength = textarea.value.length;
+                        textarea.setSelectionRange(textLength, textLength);
+                    }
+                }, 0);
+            }
         }
-    }, [commandedInput, setInputText, setQuoteText, textareaRef]);
+    }, [commandedInput, setInputText, setQuotes, textareaRef]);
 
     // 2. Restore Focus after File Processing
     useEffect(() => {
@@ -99,14 +122,17 @@ export const useChatInputEffects = ({
                 clearCurrentDraft();
 
                 let textToSend = inputText;
-                if (quoteText) {
-                    const formattedQuote = quoteText.split('\n').map(l => `> ${l}`).join('\n');
-                    textToSend = `${formattedQuote}\n\n${inputText}`;
+                if (quotes.length > 0) {
+                    const formattedQuotes = quotes.map((q, i) => {
+                         const label = quotes.length > 1 ? `**Quote ${i + 1}**:\n` : '';
+                         return `${label}${q.split('\n').map(l => `> ${l}`).join('\n')}`;
+                    }).join('\n\n');
+                    textToSend = `${formattedQuotes}\n\n${inputText}`;
                 }
 
                 onSendMessage(textToSend);
                 setInputText('');
-                setQuoteText('');
+                setQuotes([]);
                 onMessageSent();
                 setIsAnimatingSend(true);
                 setTimeout(() => setIsAnimatingSend(false), 400);
@@ -115,7 +141,7 @@ export const useChatInputEffects = ({
                 }
             }
         }
-    }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, quoteText, onMessageSent, clearCurrentDraft, isFullscreen, setIsAnimatingSend, setIsFullscreen, setInputText, setQuoteText, setIsWaitingForUpload]);
+    }, [isWaitingForUpload, selectedFiles, onSendMessage, inputText, quotes, onMessageSent, clearCurrentDraft, isFullscreen, setIsAnimatingSend, setIsFullscreen, setInputText, setQuotes, setIsWaitingForUpload]);
 
     // 4. Global Paste Handler
     useEffect(() => {

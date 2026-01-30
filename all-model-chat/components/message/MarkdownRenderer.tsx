@@ -1,5 +1,4 @@
 
-
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from './blocks/CodeBlock';
@@ -194,6 +193,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       remarkPlugins={remarkPlugins as any}
       rehypePlugins={rehypePlugins as any}
       components={components}
+      // Explicitly allow all URLs (including data:) because we use rehype-sanitize to filter unsafe protocols.
+      // Default react-markdown URL transform blocks 'data:' which breaks base64 images.
+      urlTransform={(url) => url}
     >
       {processedContent}
     </ReactMarkdown>

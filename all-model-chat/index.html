@@ -23,11 +23,17 @@
     integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" 
     crossorigin="anonymous"
   />
+  <!-- React PDF Styles -->
+  <link rel="stylesheet" href="https://esm.sh/react-pdf@9.1.0/dist/esm/Page/AnnotationLayer.css" />
+  <link rel="stylesheet" href="https://esm.sh/react-pdf@9.1.0/dist/esm/Page/TextLayer.css" />
+
   <!-- Graphviz scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/full.render.js"></script>
   <!-- MP3 Encoder -->
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+  <!-- HTML2PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <style id="theme-variables"></style>
 <script type="importmap">
 {
@@ -57,7 +63,10 @@
     "jszip": "https://aistudiocdn.com/jszip@^3.10.1",
     "turndown": "https://aistudiocdn.com/turndown@^7.2.0",
     "turndown-plugin-gfm": "https://aistudiocdn.com/turndown-plugin-gfm@^1.0.2",
-    "mammoth": "https://aistudiocdn.com/mammoth@^1.6.0"
+    "mammoth": "https://aistudiocdn.com/mammoth@^1.6.0",
+    "react-pdf": "https://esm.sh/react-pdf@9.1.0?external=react,react-dom",
+    "pdfjs-dist": "https://esm.sh/pdfjs-dist@4.4.168",
+    "pdfjs-dist/": "https://esm.sh/pdfjs-dist@4.4.168/"
   }
 }
 </script>

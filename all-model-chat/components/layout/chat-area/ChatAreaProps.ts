@@ -61,6 +61,7 @@ export interface ChatAreaProps {
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
+  onQuickTTS: (text: string) => Promise<string | null>;
   language: 'en' | 'zh';
   scrollNavVisibility: { up: boolean; down: boolean };
   onScrollToPrevTurn: () => void;
@@ -77,7 +78,7 @@ export interface ChatAreaProps {
   onMessageSent: () => void;
   selectedFiles: UploadedFile[];
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
-  onSendMessage: (text: string) => void;
+  onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
   isEditing: boolean;
   editMode: 'update' | 'resend';
   editingMessageId: string | null;

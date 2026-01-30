@@ -8,6 +8,7 @@ import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
+import { PdfViewer } from '../shared/file-preview/PdfViewer';
 
 interface FilePreviewModalProps {
   file: UploadedFile | null;
@@ -150,26 +151,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                   content={textContentLoaded ? editedContent : undefined}
               />
           ) : isPdf ? (
-              <div className="w-full h-full pt-20 pb-20 px-4 sm:px-8 relative group/pdf flex items-center justify-center">
-                  {file.dataUrl && (
-                    <>
-                      <iframe
-                          src={file.dataUrl}
-                          className="w-full h-full rounded-lg shadow-2xl bg-white"
-                          title={`PDF: ${file.name}`}
-                      />
-                      <a 
-                          href={file.dataUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="absolute bottom-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 hover:bg-black/80 text-white text-sm rounded-full backdrop-blur-md transition-opacity opacity-0 group-hover/pdf:opacity-100 flex items-center gap-2 pointer-events-auto"
-                      >
-                          <ExternalLink size={14} />
-                          Open in New Tab
-                      </a>
-                    </>
-                  )}
-              </div>
+             <PdfViewer file={file} />
           ) : isVideo ? (
               <div className="w-full h-full flex items-center justify-center">
                 {file.dataUrl && (

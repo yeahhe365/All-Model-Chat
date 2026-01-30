@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
@@ -67,27 +61,41 @@ export const buildContentParts = async (
             }
         } else {
             // Standard Inline Data (Images, PDFs, Audio, Video if small enough)
-            let base64DataForApi: string | undefined;
             
-            if (fileSource && fileSource instanceof File) {
-                try {
-                    base64DataForApi = await fileToBase64(fileSource);
-                } catch (error) {
-                    logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
+            // STRICT ALLOWLIST for Inline Data to prevent API 400 errors (e.g. for .xlsx)
+            const isSupportedInlineType = 
+                file.type.startsWith('image/') || 
+                file.type.startsWith('audio/') || 
+                file.type.startsWith('video/') || 
+                file.type === 'application/pdf';
+
+            if (isSupportedInlineType) {
+                let base64DataForApi: string | undefined;
+                
+                if (fileSource && fileSource instanceof File) {
+                    try {
+                        base64DataForApi = await fileToBase64(fileSource);
+                    } catch (error) {
+                        logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
+                    }
+                } else if (urlSource) {
+                    try {
+                        const response = await fetch(urlSource);
+                        const blob = await response.blob();
+                        const tempFile = new File([blob], file.name, { type: file.type });
+                        base64DataForApi = await fileToBase64(tempFile);
+                    } catch (error) {
+                        logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
+                    }
                 }
-            } else if (urlSource) {
-                try {
-                    const response = await fetch(urlSource);
-                    const blob = await response.blob();
-                    const tempFile = new File([blob], file.name, { type: file.type });
-                    base64DataForApi = await fileToBase64(tempFile);
-                } catch (error) {
-                    logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
+                
+                if (base64DataForApi) {
+                    part = { inlineData: { mimeType: file.type, data: base64DataForApi } };
                 }
-            }
-            
-            if (base64DataForApi) {
-                part = { inlineData: { mimeType: file.type, data: base64DataForApi } };
+            } else {
+                // Fallback for unsupported binary types that aren't text-readable (e.g. Excel, Zip without extraction)
+                // This prevents the API from rejecting the request with "Unsupported MIME type"
+                part = { text: `[Attachment: ${file.name} (Binary content not supported for direct reading)]` };
             }
         }
     }

@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
@@ -43,8 +42,8 @@ export interface ChatInputAreaProps {
         onFocus: () => void;
     };
     quoteProps?: {
-        quoteText: string;
-        onClearQuote: () => void;
+        quotes: string[];
+        onRemoveQuote: (index: number) => void;
     };
     layoutProps: {
         isFullscreen: boolean;
@@ -82,6 +81,7 @@ export interface ChatInputAreaProps {
         error: string | null;
     };
     t: (key: keyof typeof translations) => string;
+    themeId: string;
 }
 
 export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
@@ -97,6 +97,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     suggestionsProps,
     liveStatusProps,
     t,
+    themeId,
 }) => {
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
     const { isRecording } = actionsProps;
@@ -162,8 +163,10 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
                         {quoteProps && (
                             <ChatQuoteDisplay 
-                                quoteText={quoteProps.quoteText}
-                                onClearQuote={quoteProps.onClearQuote}
+                                quotes={quoteProps.quotes}
+                                onRemoveQuote={quoteProps.onRemoveQuote}
+                                themeId={themeId}
+                                t={t}
                             />
                         )}
                         

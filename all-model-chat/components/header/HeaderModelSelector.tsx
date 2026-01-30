@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { Zap } from 'lucide-react';
 import { ModelOption } from '../../types';
@@ -46,7 +47,15 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   
   // Check for Gemini 3 models (ignoring case) but exclude image models
   const isGemini3 = isGemini3Model(selectedModelId) && !selectedModelId.toLowerCase().includes('image');
-  const isLowThinking = thinkingLevel === 'LOW';
+
+  // Determine the target "Fast" level based on model capabilities
+  // Gemini 3 Flash models support MINIMAL thinking for maximum speed
+  // Other Gemini 3 models (like Pro) typically bottom out at LOW
+  const isFlash = selectedModelId.toLowerCase().includes('flash');
+  const targetFastLevel = isFlash ? 'MINIMAL' : 'LOW';
+  
+  // Consider it "Fast Mode" active if the current level matches the target fast level
+  const isFastState = thinkingLevel === targetFastLevel;
 
   return (
     <ModelPicker
@@ -76,17 +85,17 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                 <button 
                     onClick={(e) => { 
                         e.stopPropagation(); 
-                        onSetThinkingLevel(isLowThinking ? 'HIGH' : 'LOW'); 
+                        onSetThinkingLevel(isFastState ? 'HIGH' : targetFastLevel); 
                     }}
                     className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus:visible:ring-2 focus:visible:ring-offset-2 focus:visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
-                        isLowThinking 
+                        isFastState 
                             ? 'text-yellow-500 hover:bg-[var(--theme-bg-tertiary)]' 
                             : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]'
                     }`}
-                    title={isLowThinking ? "Thinking: Low (Flash Mode)" : "Thinking: High (Pro Mode)"}
+                    title={isFastState ? `Thinking: ${targetFastLevel === 'MINIMAL' ? 'Minimal' : 'Low'} (Fast Mode)` : "Thinking: High (Pro Mode)"}
                     aria-label="Toggle thinking level"
                 >
-                    <Zap size={18} fill={isLowThinking ? "currentColor" : "none"} strokeWidth={2} />
+                    <Zap size={18} fill={isFastState ? "currentColor" : "none"} strokeWidth={2} />
                 </button>
             )}
         </div>

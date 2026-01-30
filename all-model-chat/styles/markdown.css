@@ -50,6 +50,16 @@
   display: list-item !important;
 }
 
+/* Images in Markdown */
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
 /* Highlight.js Overrides for seamless integration */
 .markdown-body pre code.hljs,
 code.hljs {

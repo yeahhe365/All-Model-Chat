@@ -71,12 +71,13 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setLoadingSessionIds,
     });
     
-    const { handleTextToSpeech } = useTextToSpeechHandler(props);
+    const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler(props);
 
     return {
         handleSendMessage,
         handleGenerateCanvas,
         ...messageActions,
         handleTextToSpeech,
+        handleQuickTTS,
     };
 };
