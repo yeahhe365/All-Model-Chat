@@ -16,6 +16,11 @@ export default defineConfig(({ mode }) => {
           // We'll resolve from the current working directory.
           '@': path.resolve('.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          external: ['react-pdf', 'pdfjs-dist']
+        }
       }
     };
 });
