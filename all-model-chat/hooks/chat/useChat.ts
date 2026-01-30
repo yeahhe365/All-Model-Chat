@@ -85,7 +85,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const messageHandler = useMessageHandler({ 
         appSettings, messages, isLoading, currentChatSettings, selectedFiles, 
         setSelectedFiles, editingMessageId, setEditingMessageId, setEditMode, setAppFileError, 
-        aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, 
+        aspectRatio, imageSize, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, 
         setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, 
         setLoadingSessionIds, updateAndPersistSessions, language, 
         scrollContainerRef: scrollHandler.scrollContainerRef,
