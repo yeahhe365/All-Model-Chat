@@ -137,7 +137,10 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
             </div>
 
             <div className={innerContainerClass}>
-                <ChatInputToolbar {...toolbarProps} />
+                {/* Wrap toolbar in z-indexed container to ensure dropdowns render above status banner */}
+                <div className="relative z-50">
+                    <ChatInputToolbar {...toolbarProps} />
+                </div>
                 
                 {liveStatusProps && (
                     <LiveStatusBanner {...liveStatusProps} />

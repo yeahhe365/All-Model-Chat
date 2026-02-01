@@ -25,6 +25,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         editMode, setEditMode,
         commandedInput, setCommandedInput,
         loadingSessionIds, setLoadingSessionIds,
+        setSessionLoading,
         generatingTitleSessionIds, setGeneratingTitleSessionIds,
         activeJobs,
         selectedFiles, setSelectedFiles,
@@ -88,7 +89,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setSelectedFiles, editingMessageId, setEditingMessageId, setEditMode, setAppFileError, 
         aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, 
         setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, 
-        setLoadingSessionIds, updateAndPersistSessions, language, 
+        setSessionLoading, updateAndPersistSessions, language, 
         scrollContainerRef: scrollHandler.scrollContainerRef,
         sessionKeyMapRef
     });

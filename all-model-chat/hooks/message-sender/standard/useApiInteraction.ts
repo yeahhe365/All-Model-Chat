@@ -13,7 +13,7 @@ interface UseApiInteractionProps {
     messages: ChatMessage[];
     getStreamHandlers: GetStreamHandlers;
     handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
 
@@ -22,7 +22,7 @@ export const useApiInteraction = ({
     messages,
     getStreamHandlers,
     handleGenerateCanvas,
-    setLoadingSessionIds,
+    setSessionLoading,
     activeJobs
 }: UseApiInteractionProps) => {
 
@@ -95,7 +95,7 @@ export const useApiInteraction = ({
             
         } else if (promptParts.length === 0) {
             // Guard clause: If no content, abort early
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId); return next; });
+            setSessionLoading(finalSessionId, false);
             activeJobs.current.delete(generationId);
             return;
         }
@@ -138,7 +138,7 @@ export const useApiInteraction = ({
             }
         );
 
-        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId));
+        setSessionLoading(finalSessionId, true);
         activeJobs.current.set(generationId, newAbortController);
 
         // 4. Call Service
@@ -172,7 +172,7 @@ export const useApiInteraction = ({
                 }
             );
         }
-    }, [appSettings, messages, getStreamHandlers, handleGenerateCanvas, setLoadingSessionIds, activeJobs]);
+    }, [appSettings, messages, getStreamHandlers, handleGenerateCanvas, setSessionLoading, activeJobs]);
 
     return { performApiCall };
 };

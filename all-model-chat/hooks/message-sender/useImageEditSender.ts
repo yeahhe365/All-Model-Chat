@@ -11,14 +11,14 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 
 interface ImageEditSenderProps {
     updateAndPersistSessions: SessionsUpdater;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     setActiveSessionId: (id: string | null) => void;
 }
 
 export const useImageEditSender = ({
     updateAndPersistSessions,
-    setLoadingSessionIds,
+    setSessionLoading,
     activeJobs,
     setActiveSessionId,
 }: ImageEditSenderProps) => {
@@ -73,7 +73,7 @@ export const useImageEditSender = ({
             setActiveSessionId(finalSessionId);
         }
 
-        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId));
+        setSessionLoading(finalSessionId, true);
         activeJobs.current.set(generationId, newAbortController);
 
         try {
@@ -146,10 +146,10 @@ export const useImageEditSender = ({
         } catch (error) {
             handleApiError(error, finalSessionId, modelMessageId, "Image Edit Error");
         } finally {
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId); return next; });
+            setSessionLoading(finalSessionId, false);
             activeJobs.current.delete(generationId);
         }
-    }, [updateAndPersistSessions, setLoadingSessionIds, activeJobs, handleApiError, setActiveSessionId]);
+    }, [updateAndPersistSessions, setSessionLoading, activeJobs, handleApiError, setActiveSessionId]);
     
     return { handleImageEditMessage };
 };
