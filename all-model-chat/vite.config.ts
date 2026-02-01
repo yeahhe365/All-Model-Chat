@@ -1,4 +1,3 @@
-
 import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -12,14 +11,13 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          // __dirname is not available in ES modules.
-          // We'll resolve from the current working directory.
           '@': path.resolve('.'),
         }
       },
       build: {
         rollupOptions: {
-          external: ['react-pdf', 'pdfjs-dist']
+          // Un-externalize these to ensure proper React context sharing in standard builds
+          // The importmap in index.html handles the browser/ESM behavior.
         }
       }
     };

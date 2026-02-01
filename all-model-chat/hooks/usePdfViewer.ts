@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { pdfjs } from 'react-pdf';
 import { UploadedFile } from '../types';
 
-// Configure PDF worker globally
+// Configure PDF worker globally using a reliable ESM version
 pdfjs.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
 
 // Determine responsive initial scale
@@ -71,14 +70,10 @@ export const usePdfViewer = (file: UploadedFile) => {
         return () => observer.disconnect();
     }, [numPages, isLoading]);
 
-    // Sync input with current page when scrolling (auto-update input value if not user-focused)
+    // Sync input with current page when scrolling
     useEffect(() => {
-        // We use a simplified check here since we don't have direct access to the input ref in the hook easily 
-        // without passing it back and forth. Instead, we just update the state.
-        // The Toolbar component handles not overwriting if focused via its own logic or simply responding to this state update.
         setPageInput(String(currentPage));
         
-        // Auto-scroll sidebar to keep current page thumbnail in view
         if (showSidebar && sidebarRef.current) {
             const thumbnail = sidebarRef.current.querySelector(`[data-thumbnail-page="${currentPage}"]`);
             if (thumbnail) {
@@ -131,7 +126,6 @@ export const usePdfViewer = (file: UploadedFile) => {
     const handleRotate = () => setRotation(prev => (prev + 90) % 360);
     const toggleSidebar = () => setShowSidebar(prev => !prev);
 
-    // Helper to register page refs
     const setPageRef = useCallback((pageNum: number, element: HTMLDivElement | null) => {
         if (element) {
             pageRefs.current.set(pageNum, element);
