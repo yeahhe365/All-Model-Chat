@@ -3,7 +3,7 @@ import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64 } from '../../utils/appUtils';
+import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 
@@ -50,8 +50,9 @@ export const useTtsImagenSender = ({
         
         // Auto Title if needed (Simple heuristic for these models)
         let newTitle = undefined;
-        if (!activeSessionId && !appSettings.isAutoTitleEnabled) {
-            newTitle = text.length > 20 ? text.substring(0, 20) + '...' : text;
+        if (!activeSessionId) {
+             // Set a temporary placeholder title based on content
+             newTitle = generateSessionTitle([userMessage, modelMessage]);
         }
 
         updateAndPersistSessions(prev => performOptimisticSessionUpdate(prev, {

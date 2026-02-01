@@ -77,6 +77,14 @@ export const useAppLogic = () => {
   const activeChat = chatState.savedSessions.find(s => s.id === chatState.activeSessionId);
   const sessionTitle = activeChat?.title || t('newChat');
 
+  // Dynamic Browser Title
+  useEffect(() => {
+      const statusPrefix = chatState.isLoading 
+          ? (language === 'zh' ? '生成中... | ' : 'Generating... | ')
+          : '';
+      document.title = `${statusPrefix}${sessionTitle}`;
+  }, [sessionTitle, chatState.isLoading, language]);
+
   const dataManagement = useDataManagement({
     appSettings, 
     setAppSettings, 
