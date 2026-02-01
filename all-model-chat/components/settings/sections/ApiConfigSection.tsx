@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { getClient } from '../../../services/api/baseApi';
@@ -23,6 +23,15 @@ interface ApiConfigSectionProps {
   t: (key: string) => string;
 }
 
+const CONNECTION_TEST_MODELS: ModelOption[] = [
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
+    { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro Preview' },
+    { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
+    { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+    { id: 'gemma-3-27b-it', name: 'Gemma 3 27b IT' },
+];
+
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   useCustomApiConfig,
   setUseCustomApiConfig,
@@ -38,10 +47,25 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   // Test connection state
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
-  const [testModelId, setTestModelId] = useState<string>('gemini-2.5-flash-latest');
+  const [testModelId, setTestModelId] = useState<string>('gemini-3-flash-preview');
+  
+  // State to manage overflow visibility during transitions
+  const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!process.env.API_KEY;
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (useCustomApiConfig) {
+      // Delay allowing overflow until transition matches duration (300ms) to prevent clipping artifacts during expansion
+      timer = setTimeout(() => setAllowOverflow(true), 300);
+    } else {
+      // Immediately hide overflow when collapsing to ensure clean animation
+      setAllowOverflow(false);
+    }
+    return () => clearTimeout(timer);
+  }, [useCustomApiConfig]);
 
   const handleTestConnection = async () => {
       // Pick the key that would be used
@@ -84,7 +108,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           // Use the base API helper to get a client with sanitation logic
           const ai = getClient(firstKey, effectiveUrl);
           
-          const modelIdToUse = testModelId || 'gemini-2.5-flash-latest';
+          const modelIdToUse = testModelId || 'gemini-3-flash-preview';
           
           await ai.models.generateContent({
               model: modelIdToUse,
@@ -116,7 +140,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         />
 
         {/* Content - collapsible area */}
-        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${useCustomApiConfig ? 'opacity-100 max-h-[600px] pt-4' : 'opacity-50 max-h-0'}`}>
+        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
             <div className="space-y-5">
                 <ApiKeyInput 
                     apiKey={apiKey} 
@@ -137,7 +161,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                     testStatus={testStatus}
                     testMessage={testMessage}
                     isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig)}
-                    availableModels={availableModels}
+                    availableModels={CONNECTION_TEST_MODELS}
                     testModelId={testModelId}
                     onModelChange={setTestModelId}
                     t={t}
