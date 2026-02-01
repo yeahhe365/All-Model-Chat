@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
@@ -26,7 +25,6 @@ export const useChatState = (appSettings: AppSettings) => {
     const userScrolledUp = useRef<boolean>(false);
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
 
-    // --- Reload Logic for Sync ---
     const refreshSessions = useCallback(async () => {
         try {
             const sessions = await dbService.getAllSessions();
@@ -47,21 +45,19 @@ export const useChatState = (appSettings: AppSettings) => {
         }
     }, []);
 
-    // --- Sync Hook Integration ---
     const { broadcast } = useMultiTabSync({
         onSettingsUpdated: () => {
-            logService.info("[Sync] Reloading settings from DB");
             refreshSessions();
         },
         onSessionsUpdated: () => {
-            logService.debug("[Sync] Sessions updated externally, refreshing...");
             refreshSessions();
         },
         onGroupsUpdated: () => {
-            logService.debug("[Sync] Groups updated externally, refreshing...");
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
+            // Optimization: If THIS tab is currently streaming for this session, ignore the refresh
+            // to avoid state flickering or resetting.
             if (loadingSessionIds.has(id)) {
                 return;
             }
@@ -77,7 +73,6 @@ export const useChatState = (appSettings: AppSettings) => {
         }
     });
 
-    // Centralized helper to toggle loading state and broadcast it
     const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
         setLoadingSessionIds(prev => {
             const next = new Set(prev);

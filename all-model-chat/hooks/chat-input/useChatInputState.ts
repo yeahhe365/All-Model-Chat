@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useIsMobile } from '../useDevice';
 
@@ -54,25 +53,31 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         if (!activeSessionId || isEditing) return;
 
         const draftKey = `chatDraft_${activeSessionId}`;
+        const quoteKey = `chatQuotes_${activeSessionId}`;
 
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === draftKey) {
-                // If another tab updated the draft for the SAME session, sync it here.
                 const newValue = e.newValue || '';
-                // Only update if different to avoid cursor jumping loops if this tab is active
                 if (newValue !== inputText) {
                     setInputText(newValue);
                 }
+            } else if (e.key === quoteKey) {
+                try {
+                    const newValue = e.newValue ? JSON.parse(e.newValue) : [];
+                    if (JSON.stringify(newValue) !== JSON.stringify(quotes)) {
+                        setQuotes(newValue);
+                    }
+                } catch (e) {}
             }
         };
 
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
-    }, [activeSessionId, isEditing, inputText]);
+    }, [activeSessionId, isEditing, inputText, quotes]);
 
     // Save draft to localStorage on input change (debounced)
     useEffect(() => {
-        if (!activeSessionId) return;
+        if (!activeSessionId || isEditing) return;
         const handler = setTimeout(() => {
             const draftKey = `chatDraft_${activeSessionId}`;
             if (inputText.trim()) {
@@ -80,20 +85,20 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
             } else {
                 localStorage.removeItem(draftKey);
             }
-        }, 500);
+        }, 300);
         return () => clearTimeout(handler);
-    }, [inputText, activeSessionId]);
+    }, [inputText, activeSessionId, isEditing]);
 
     // Save quotes to localStorage
     useEffect(() => {
-        if (!activeSessionId) return;
+        if (!activeSessionId || isEditing) return;
         const quoteKey = `chatQuotes_${activeSessionId}`;
         if (quotes.length > 0) {
             localStorage.setItem(quoteKey, JSON.stringify(quotes));
         } else {
             localStorage.removeItem(quoteKey);
         }
-    }, [quotes, activeSessionId]);
+    }, [quotes, activeSessionId, isEditing]);
 
     const clearCurrentDraft = useCallback(() => {
         if (activeSessionId) {
@@ -106,7 +111,6 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         setIsFullscreen(prev => {
             const newState = !prev;
             if (newState) {
-                // Entering fullscreen, we want to focus.
                 setTimeout(() => textareaRef.current?.focus(), 50);
             }
             return newState;
