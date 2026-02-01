@@ -77,13 +77,33 @@ export const useAppLogic = () => {
   const activeChat = chatState.savedSessions.find(s => s.id === chatState.activeSessionId);
   const sessionTitle = activeChat?.title || t('newChat');
 
-  // Dynamic Browser Title
+  // Dynamic Browser Title with Timer
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
   useEffect(() => {
-      const statusPrefix = chatState.isLoading 
-          ? (language === 'zh' ? '生成中... | ' : 'Generating... | ')
-          : '';
-      document.title = `${statusPrefix}${sessionTitle}`;
-  }, [sessionTitle, chatState.isLoading, language]);
+      let intervalId: NodeJS.Timeout;
+
+      if (chatState.isLoading) {
+          // Immediately show start state
+          document.title = `✨ 0s | ${sessionTitle}`;
+          
+          intervalId = setInterval(() => {
+              setElapsedSeconds(prev => {
+                  const newTime = prev + 1;
+                  document.title = `✨ ${newTime}s | ${sessionTitle}`;
+                  return newTime;
+              });
+          }, 1000);
+      } else {
+          setElapsedSeconds(0);
+          // Show checkmark when not loading (idle or finished)
+          document.title = `✅ ${sessionTitle}`;
+      }
+
+      return () => {
+          if (intervalId) clearInterval(intervalId);
+      };
+  }, [chatState.isLoading, sessionTitle]);
 
   const dataManagement = useDataManagement({
     appSettings, 
