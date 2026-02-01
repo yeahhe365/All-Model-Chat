@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         rollupOptions: {
-          external: ['react', 'react-dom', 'react-pdf', 'pdfjs-dist']
+          external: ['react-pdf', 'pdfjs-dist']
         }
       }
     };
