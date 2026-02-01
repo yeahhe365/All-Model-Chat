@@ -1,4 +1,3 @@
-
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
@@ -6,6 +5,7 @@ import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService, showNotification, calculateTokenStats } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { updateMessagesWithPart, updateMessagesWithThought, finalizeMessages } from '../chat-stream/processors';
+import { useMultiTabSync } from '../core/useMultiTabSync';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -14,13 +14,15 @@ interface ChatStreamHandlerProps {
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    broadcast?: (message: any) => void; // New optional prop for broadcasting
 }
 
 export const useChatStreamHandler = ({
     appSettings,
     updateAndPersistSessions,
     setSessionLoading,
-    activeJobs
+    activeJobs,
+    broadcast
 }: ChatStreamHandlerProps) => {
     const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
 
@@ -123,6 +125,16 @@ export const useChatStreamHandler = ({
             if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
                 firstContentPartTime = new Date();
             }
+            
+            // Real-time broadcast for multi-tab sync
+            if (broadcast) {
+                broadcast({ 
+                    type: 'STREAM_PART_RECEIVED', 
+                    sessionId: currentSessionId, 
+                    part, 
+                    generationStartTime: generationStartTime.getTime() 
+                });
+            }
         
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
@@ -147,6 +159,16 @@ export const useChatStreamHandler = ({
         };
         
         const onThoughtChunk = (thoughtChunk: string) => {
+            // Real-time broadcast for multi-tab sync
+            if (broadcast) {
+                broadcast({ 
+                    type: 'STREAM_THOUGHT_RECEIVED', 
+                    sessionId: currentSessionId, 
+                    thoughtChunk, 
+                    generationStartTime: generationStartTime.getTime() 
+                });
+            }
+
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
                 if (sessionIndex === -1) return prev;
@@ -169,7 +191,7 @@ export const useChatStreamHandler = ({
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs, broadcast]);
     
     return { getStreamHandlers };
 };
