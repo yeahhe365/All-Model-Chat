@@ -114,6 +114,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
                         useApiProxy={currentSettings.useApiProxy ?? false}
                         setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
+                        availableModels={availableModels}
                         t={t as any}
                     />
                 </div>

@@ -1,12 +1,17 @@
 
 import React from 'react';
 import { Activity, Loader2, XCircle } from 'lucide-react';
+import { Select } from '../../../shared/Select';
+import { ModelOption } from '../../../../types';
 
 interface ApiConnectionTesterProps {
     onTest: () => void;
     testStatus: 'idle' | 'testing' | 'success' | 'error';
     testMessage: string | null;
     isTestDisabled: boolean;
+    availableModels?: ModelOption[];
+    testModelId?: string;
+    onModelChange?: (id: string) => void;
     t: (key: string) => string;
 }
 
@@ -15,10 +20,30 @@ export const ApiConnectionTester: React.FC<ApiConnectionTesterProps> = ({
     testStatus,
     testMessage,
     isTestDisabled,
+    availableModels,
+    testModelId,
+    onModelChange,
     t
 }) => {
     return (
         <div className="pt-2 flex flex-col gap-2">
+            {/* Optional Model Selector for Testing */}
+            {availableModels && availableModels.length > 0 && onModelChange && testModelId && (
+                <Select
+                    id="api-test-model"
+                    label="Test Model"
+                    layout="horizontal"
+                    value={testModelId}
+                    onChange={(e) => onModelChange(e.target.value)}
+                    labelContent={<span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">Test Model</span>}
+                    className="mb-1"
+                >
+                    {availableModels.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                </Select>
+            )}
+
             <button
                 type="button"
                 onClick={onTest}

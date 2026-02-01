@@ -6,20 +6,23 @@ export type SyncMessage =
     | { type: 'SETTINGS_UPDATED' }
     | { type: 'SESSIONS_UPDATED' } // For list additions/deletions
     | { type: 'GROUPS_UPDATED' }
-    | { type: 'SESSION_CONTENT_UPDATED'; sessionId: string }; // For specific message updates
+    | { type: 'SESSION_CONTENT_UPDATED'; sessionId: string } // For specific message updates
+    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean }; // For sync loading state
 
 interface UseMultiTabSyncProps {
     onSettingsUpdated?: () => void;
     onSessionsUpdated?: () => void;
     onGroupsUpdated?: () => void;
     onSessionContentUpdated?: (sessionId: string) => void;
+    onSessionLoadingUpdated?: (sessionId: string, isLoading: boolean) => void;
 }
 
 export const useMultiTabSync = ({
     onSettingsUpdated,
     onSessionsUpdated,
     onGroupsUpdated,
-    onSessionContentUpdated
+    onSessionContentUpdated,
+    onSessionLoadingUpdated
 }: UseMultiTabSyncProps) => {
     const channelRef = useRef<BroadcastChannel | null>(null);
     const originalTitleRef = useRef<string>(document.title);
@@ -31,7 +34,10 @@ export const useMultiTabSync = ({
 
         channel.onmessage = (event: MessageEvent<SyncMessage>) => {
             const msg = event.data;
-            logService.debug(`[Sync] Received: ${msg.type}`, { category: 'SYSTEM', data: msg });
+            // Reduce log noise for loading updates as they are frequent
+            if (msg.type !== 'SESSION_LOADING') {
+                logService.debug(`[Sync] Received: ${msg.type}`, { category: 'SYSTEM', data: msg });
+            }
 
             switch (msg.type) {
                 case 'SETTINGS_UPDATED':
@@ -47,13 +53,16 @@ export const useMultiTabSync = ({
                     onSessionContentUpdated?.(msg.sessionId);
                     handleTitleNotification();
                     break;
+                case 'SESSION_LOADING':
+                    onSessionLoadingUpdated?.(msg.sessionId, msg.isLoading);
+                    break;
             }
         };
 
         return () => {
             channel.close();
         };
-    }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated]);
+    }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoadingUpdated]);
 
     // Handle Document Title Flashing for Background Tabs
     const handleTitleNotification = useCallback(() => {

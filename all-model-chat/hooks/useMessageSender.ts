@@ -1,7 +1,7 @@
 
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
-import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
+import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
@@ -27,7 +27,7 @@ interface MessageSenderProps {
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     updateAndPersistSessions: SessionsUpdater;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
@@ -50,7 +50,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         activeSessionId,
         setActiveSessionId,
         activeJobs,
-        setLoadingSessionIds,
+        setSessionLoading,
         updateAndPersistSessions,
     } = props;
 
@@ -72,7 +72,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
     const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
     const { handleImageEditMessage } = useImageEditSender({
         updateAndPersistSessions,
-        setLoadingSessionIds,
+        setSessionLoading,
         activeJobs,
         setActiveSessionId,
     });

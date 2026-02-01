@@ -66,8 +66,26 @@ export const useChatState = (appSettings: AppSettings) => {
                 return;
             }
             refreshSessions();
+        },
+        onSessionLoadingUpdated: (id, isLoading) => {
+            setLoadingSessionIds(prev => {
+                const next = new Set(prev);
+                if (isLoading) next.add(id);
+                else next.delete(id);
+                return next;
+            });
         }
     });
+
+    const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
+        setLoadingSessionIds(prev => {
+            const next = new Set(prev);
+            if (isLoading) next.add(sessionId);
+            else next.delete(sessionId);
+            return next;
+        });
+        broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
+    }, [broadcast]);
 
     const updateAndPersistSessions = useCallback(async (
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -150,7 +168,8 @@ export const useChatState = (appSettings: AppSettings) => {
         editingMessageId, setEditingMessageId,
         editMode, setEditMode,
         commandedInput, setCommandedInput,
-        loadingSessionIds, setLoadingSessionIds,
+        loadingSessionIds, setLoadingSessionIds, // Kept for raw usage if needed, but setSessionLoading is preferred
+        setSessionLoading, // Exposed for syncing
         generatingTitleSessionIds, setGeneratingTitleSessionIds,
         activeJobs,
         selectedFiles, setSelectedFiles,

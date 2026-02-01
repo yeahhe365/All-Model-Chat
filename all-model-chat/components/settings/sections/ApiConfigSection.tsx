@@ -8,6 +8,7 @@ import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
+import { ModelOption } from '../../../types';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -18,6 +19,7 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
+  availableModels: ModelOption[];
   t: (key: string) => string;
 }
 
@@ -30,11 +32,13 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
+  availableModels,
   t,
 }) => {
   // Test connection state
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [testModelId, setTestModelId] = useState<string>('gemini-2.5-flash-latest');
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!process.env.API_KEY;
@@ -80,9 +84,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           // Use the base API helper to get a client with sanitation logic
           const ai = getClient(firstKey, effectiveUrl);
           
-          // Using gemini-2.5-flash for a quick, cheap test
+          const modelIdToUse = testModelId || 'gemini-2.5-flash-latest';
+          
           await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
+              model: modelIdToUse,
               contents: 'Hello',
           });
 
@@ -132,6 +137,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                     testStatus={testStatus}
                     testMessage={testMessage}
                     isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig)}
+                    availableModels={availableModels}
+                    testModelId={testModelId}
+                    onModelChange={setTestModelId}
                     t={t}
                 />
             </div>
