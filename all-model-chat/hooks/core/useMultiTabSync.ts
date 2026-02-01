@@ -1,13 +1,12 @@
-
 import { useEffect, useCallback, useRef } from 'react';
 import { logService } from '../../utils/appUtils';
 
 export type SyncMessage =
     | { type: 'SETTINGS_UPDATED' }
-    | { type: 'SESSIONS_UPDATED' } // For list additions/deletions
+    | { type: 'SESSIONS_UPDATED' } 
     | { type: 'GROUPS_UPDATED' }
-    | { type: 'SESSION_CONTENT_UPDATED'; sessionId: string } // For specific message updates
-    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean }; // New: For synchronizing loading dots
+    | { type: 'SESSION_CONTENT_UPDATED'; sessionId: string } 
+    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean };
 
 interface UseMultiTabSyncProps {
     onSettingsUpdated?: () => void;
@@ -27,14 +26,12 @@ export const useMultiTabSync = ({
     const channelRef = useRef<BroadcastChannel | null>(null);
     const originalTitleRef = useRef<string>(document.title);
 
-    // Initialize Channel
     useEffect(() => {
         const channel = new BroadcastChannel('all_model_chat_sync_v1');
         channelRef.current = channel;
 
         channel.onmessage = (event: MessageEvent<SyncMessage>) => {
             const msg = event.data;
-            // Filter out frequent loading logs to reduce noise
             if (msg.type !== 'SESSION_LOADING') {
                 logService.debug(`[Sync] Received: ${msg.type}`, { category: 'SYSTEM', data: msg });
             }
@@ -64,7 +61,6 @@ export const useMultiTabSync = ({
         };
     }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading]);
 
-    // Handle Document Title Flashing for Background Tabs
     const handleTitleNotification = useCallback(() => {
         if (document.hidden) {
             originalTitleRef.current = document.title;
@@ -78,7 +74,6 @@ export const useMultiTabSync = ({
         }
     }, []);
 
-    // Broadcast Function
     const broadcast = useCallback((message: SyncMessage) => {
         if (channelRef.current) {
             channelRef.current.postMessage(message);

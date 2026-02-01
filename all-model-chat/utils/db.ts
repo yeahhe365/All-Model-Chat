@@ -1,9 +1,8 @@
-
 import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 2; // Incremented for logs support
+const DB_VERSION = 2;
 
 const SESSIONS_STORE = 'sessions';
 const GROUPS_STORE = 'groups';
@@ -28,7 +27,6 @@ const getDb = (): Promise<IDBDatabase> => {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         
-        // V1 Stores
         if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
         }
@@ -41,13 +39,9 @@ const getDb = (): Promise<IDBDatabase> => {
         if (!db.objectStoreNames.contains(KEY_VALUE_STORE)) {
           db.createObjectStore(KEY_VALUE_STORE);
         }
-
-        // V2 Store: Logs
         if (!db.objectStoreNames.contains(LOGS_STORE)) {
           const logStore = db.createObjectStore(LOGS_STORE, { keyPath: 'id', autoIncrement: true });
           logStore.createIndex('timestamp', 'timestamp', { unique: false });
-          logStore.createIndex('level', 'level', { unique: false });
-          logStore.createIndex('category', 'category', { unique: false });
         }
       };
     });
@@ -70,13 +64,13 @@ const transactionToPromise = (tx: IDBTransaction): Promise<void> => {
   });
 };
 
-// --- Web Lock Wrapper ---
-// Ensures that write operations across tabs do not interleave and cause data loss (Read-Modify-Write hazards).
+/**
+ * Ensures that write operations across tabs do not interleave and cause data loss.
+ */
 async function withWriteLock<T>(callback: () => Promise<T>): Promise<T> {
     if ('locks' in navigator) {
         return navigator.locks.request(LOCK_NAME, { mode: 'exclusive' }, callback);
     }
-    // Fallback for environments without Web Locks (rare nowadays in modern browsers)
     return callback();
 }
 
@@ -96,7 +90,6 @@ async function setAll<T>(storeName: string, values: T[]): Promise<void> {
   });
 }
 
-// New Atomic Operations
 async function put<T>(storeName: string, value: T): Promise<void> {
   return withWriteLock(async () => {
     const db = await getDb();
@@ -129,104 +122,6 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
   });
 }
 
-// --- Log Specific Methods ---
-// Logs are append-only and high volume, locking might reduce performance slightly but ensures integrity.
-// Given the implementation of LogService buffers, writes are batched, so locking is acceptable.
-
-async function addLogs(logs: LogEntry[]): Promise<void> {
-  return withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction(LOGS_STORE, 'readwrite');
-      const store = tx.objectStore(LOGS_STORE);
-      logs.forEach(log => store.add(log));
-      return transactionToPromise(tx);
-  });
-}
-
-async function getLogs(limit = 500, offset = 0): Promise<LogEntry[]> {
-  const db = await getDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(LOGS_STORE, 'readonly');
-    const store = tx.objectStore(LOGS_STORE);
-    const index = store.index('timestamp');
-    
-    // Open cursor in reverse (prev) to get newest logs first
-    const request = index.openCursor(null, 'prev');
-    const results: LogEntry[] = [];
-    let hasAdvanced = false;
-
-    request.onsuccess = (event) => {
-      const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-      if (!cursor) {
-        resolve(results);
-        return;
-      }
-
-      if (offset > 0 && !hasAdvanced) {
-        hasAdvanced = true;
-        cursor.advance(offset);
-        return;
-      }
-
-      results.push(cursor.value);
-      if (results.length < limit) {
-        cursor.continue();
-      } else {
-        resolve(results);
-      }
-    };
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function clearLogs(): Promise<void> {
-  return withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction(LOGS_STORE, 'readwrite');
-      tx.objectStore(LOGS_STORE).clear();
-      return transactionToPromise(tx);
-  });
-}
-
-async function pruneLogs(olderThan: number): Promise<void> {
-    return withWriteLock(async () => {
-        const db = await getDb();
-        const tx = db.transaction(LOGS_STORE, 'readwrite');
-        const store = tx.objectStore(LOGS_STORE);
-        const index = store.index('timestamp');
-        const range = IDBKeyRange.upperBound(new Date(olderThan));
-        
-        // Efficient delete via range
-        // Note: delete(range) is supported in modern browsers on ObjectStore, checking support implicitly via try/catch
-        // or using cursor for broad compat. Using cursor for safety.
-        const request = index.openKeyCursor(range);
-        
-        request.onsuccess = () => {
-            const cursor = request.result;
-            if (cursor) {
-                store.delete(cursor.primaryKey);
-                cursor.continue();
-            }
-        };
-        return transactionToPromise(tx);
-    });
-}
-
-// --- General ---
-
-async function clearAllData(): Promise<void> {
-  return withWriteLock(async () => {
-      const db = await getDb();
-      const storeNames = [SESSIONS_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
-      const tx = db.transaction(storeNames, 'readwrite');
-      for (const storeName of storeNames) {
-        tx.objectStore(storeName).clear();
-      }
-      return transactionToPromise(tx);
-  });
-}
-
-// Exported methods now strictly use locks for writes
 export const dbService = {
   getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
@@ -245,10 +140,54 @@ export const dbService = {
   getActiveSessionId: () => getKeyValue<string | null>('activeSessionId'),
   setActiveSessionId: (id: string | null) => setKeyValue<string | null>('activeSessionId', id),
   
-  // Log specific
-  addLogs,
-  getLogs,
-  clearLogs,
-  pruneLogs,
-  clearAllData,
+  addLogs: (logs: LogEntry[]) => withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(LOGS_STORE, 'readwrite');
+      const store = tx.objectStore(LOGS_STORE);
+      logs.forEach(log => store.add(log));
+      return transactionToPromise(tx);
+  }),
+  getLogs: (limit = 500, offset = 0): Promise<LogEntry[]> => getDb().then(db => new Promise((resolve, reject) => {
+      const tx = db.transaction(LOGS_STORE, 'readonly');
+      const store = tx.objectStore(LOGS_STORE);
+      const index = store.index('timestamp');
+      const request = index.openCursor(null, 'prev');
+      const results: LogEntry[] = [];
+      let hasAdvanced = false;
+      request.onsuccess = (event) => {
+        const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+        if (!cursor) { resolve(results); return; }
+        if (offset > 0 && !hasAdvanced) { hasAdvanced = true; cursor.advance(offset); return; }
+        results.push(cursor.value);
+        if (results.length < limit) cursor.continue();
+        else resolve(results);
+      };
+      request.onerror = () => reject(request.error);
+  })),
+  clearLogs: () => withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(LOGS_STORE, 'readwrite');
+      tx.objectStore(LOGS_STORE).clear();
+      return transactionToPromise(tx);
+  }),
+  pruneLogs: (olderThan: number) => withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(LOGS_STORE, 'readwrite');
+      const store = tx.objectStore(LOGS_STORE);
+      const index = store.index('timestamp');
+      const range = IDBKeyRange.upperBound(new Date(olderThan));
+      const request = index.openKeyCursor(range);
+      request.onsuccess = () => {
+          const cursor = request.result;
+          if (cursor) { store.delete(cursor.primaryKey); cursor.continue(); }
+      };
+      return transactionToPromise(tx);
+  }),
+  clearAllData: () => withWriteLock(async () => {
+      const db = await getDb();
+      const storeNames = [SESSIONS_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
+      const tx = db.transaction(storeNames, 'readwrite');
+      for (const storeName of storeNames) tx.objectStore(storeName).clear();
+      return transactionToPromise(tx);
+  }),
 };
