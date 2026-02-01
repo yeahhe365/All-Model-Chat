@@ -25,11 +25,10 @@ export interface BaseSenderProps {
     appSettings: AppSettings;
     currentChatSettings: IndividualChatSettings;
     updateAndPersistSessions: SessionsUpdater;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     setAppFileError: (error: string | null) => void;
     language: 'en' | 'zh';
-    setSessionLoading?: (sessionId: string, isLoading: boolean) => void; // New optional prop for Stage 1
 }
 
 export interface CanvasGeneratorProps extends BaseSenderProps {

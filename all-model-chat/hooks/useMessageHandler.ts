@@ -33,7 +33,7 @@ interface MessageHandlerProps {
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
-    setSessionLoading?: (sessionId: string, isLoading: boolean) => void; // New prop
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void; 
 }
 
 export const useMessageHandler = (props: MessageHandlerProps) => {
@@ -50,7 +50,6 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setAppFileError,
         updateAndPersistSessions,
         userScrolledUp,
-        setLoadingSessionIds
     } = props;
     
     const { handleSendMessage, handleGenerateCanvas } = useMessageSender(props);
@@ -69,7 +68,12 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         updateAndPersistSessions,
         userScrolledUp,
         handleSendMessage,
-        setLoadingSessionIds,
+        setLoadingSessionIds: (v: any) => {
+            if (typeof v === 'function' && activeSessionId) {
+                // Compatibility for stop logic
+                props.setSessionLoading(activeSessionId, false);
+            }
+        },
     });
     
     const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler(props);

@@ -2,7 +2,6 @@
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
-import { geminiServiceInstance } from '../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
 import { useTtsImagenSender } from './message-sender/useTtsImagenSender';
@@ -32,7 +31,7 @@ interface MessageSenderProps {
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
-    setSessionLoading?: (sessionId: string, isLoading: boolean) => void; // New prop
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -51,12 +50,17 @@ export const useMessageSender = (props: MessageSenderProps) => {
         activeSessionId,
         setActiveSessionId,
         activeJobs,
-        setLoadingSessionIds,
+        setSessionLoading,
         updateAndPersistSessions,
     } = props;
 
     // Initialize Stream Handler Factory
-    const { getStreamHandlers } = useChatStreamHandler(props);
+    const { getStreamHandlers } = useChatStreamHandler({
+        appSettings,
+        updateAndPersistSessions,
+        setSessionLoading,
+        activeJobs
+    });
 
     // Initialize Sub-Hooks
     const { handleGenerateCanvas } = useCanvasGenerator({ 
@@ -73,13 +77,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
     const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
     const { handleImageEditMessage } = useImageEditSender({
         updateAndPersistSessions,
-        setLoadingSessionIds,
+        setLoadingSessionIds: (v: any) => {}, // Not used, legacy
+        setSessionLoading,
         activeJobs,
-        setActiveSessionId,
-        setSessionLoading: props.setSessionLoading // Pass to sub-hook
+        setActiveSessionId
     });
 
-    // Main Entry Point
     const handleSendMessage = useCallback(async (overrideOptions?: { text?: string; files?: UploadedFile[]; editingId?: string; isContinueMode?: boolean; isFastMode?: boolean }) => {
         const textToUse = overrideOptions?.text ?? '';
         const filesToUse = overrideOptions?.files ?? selectedFiles;
@@ -91,15 +94,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
-        // Exclude gemini-3-pro-image-preview from isImageEditModel to force standard chat flow, 
-        // unless Quad Images are enabled which we handle via edit route
         const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro');
         const isGemini3Image = activeModelId === 'gemini-3-pro-image-preview';
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId, isContinueMode, isFastMode });
 
-        // Basic Validation
-        // Allow empty text if continuing generation (it uses existing model content)
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && !isContinueMode && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
         if ((isTtsModel || isImagenModel || isImageEditModel || isGemini3Image) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
@@ -119,7 +118,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
             return; 
         }
 
-        // Prepare Key
         const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
@@ -132,7 +130,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const { key: keyToUse, isNewKey } = keyResult;
         const shouldLockKey = isNewKey && filesToUse.some(f => f.fileUri && f.uploadState === 'active');
 
-        // Setup common params
         const newAbortController = new AbortController();
         const generationId = generateUniqueId();
         
@@ -141,16 +138,12 @@ export const useMessageSender = (props: MessageSenderProps) => {
         }
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
-        // Route to Specialized Handlers
         if (isTtsModel || isImagenModel) {
             await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, imageSize, { shouldLockKey });
             if (editingMessageId) setEditingMessageId(null);
             return;
         }
         
-        // Use image edit flow for:
-        // 1. Explicit image edit models (e.g. flash-image)
-        // 2. Gemini 3 Pro Image IF Quad Images are enabled (for parallel generation)
         if (isImageEditModel || (isGemini3Image && appSettings.generateQuadImages)) {
             const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
             const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
@@ -159,7 +152,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
             return;
         }
         
-        // Standard Chat Flow
         await sendStandardMessage(textToUse, filesToUse, effectiveEditingId, activeModelId, isContinueMode, isFastMode);
 
     }, [
