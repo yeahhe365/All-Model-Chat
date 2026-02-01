@@ -58,6 +58,8 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
+            // Optimization: If this tab is the one loading, we don't need to refresh from DB
+            // because the state is already being updated by the stream.
             if (loadingSessionIds.has(id)) {
                 return;
             }
@@ -156,7 +158,6 @@ export const useChatState = (appSettings: AppSettings) => {
     }, [activeSessionId, updateAndPersistSessions]);
 
     return {
-        ...chatState, // Spread existing state fields from your manual implementation if needed, but we redefine the essentials below
         savedSessions, setSavedSessions,
         savedGroups, setSavedGroups,
         activeSessionId, setActiveSessionId,

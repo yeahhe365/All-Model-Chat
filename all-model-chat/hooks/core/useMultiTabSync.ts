@@ -33,51 +33,52 @@ export const useMultiTabSync = ({
 
     // Initialize Channel
     useEffect(() => {
-        const channel = new BroadcastChannel('all_model_chat_sync_v1');
-        channelRef.current = channel;
+        try {
+            const channel = new BroadcastChannel('all_model_chat_sync_v1');
+            channelRef.current = channel;
 
-        channel.onmessage = (event: MessageEvent<SyncMessage>) => {
-            const msg = event.data;
-            
-            // Optimization: Ignore messages from self (though BroadcastChannel usually doesn't send to self)
-            // but explicitly useful for loading states tracking sender.
+            channel.onmessage = (event: MessageEvent<SyncMessage>) => {
+                const msg = event.data;
+                if (!msg || typeof msg !== 'object') return;
 
-            switch (msg.type) {
-                case 'SETTINGS_UPDATED':
-                    onSettingsUpdated?.();
-                    break;
-                case 'SESSIONS_UPDATED':
-                    onSessionsUpdated?.();
-                    break;
-                case 'GROUPS_UPDATED':
-                    onGroupsUpdated?.();
-                    break;
-                case 'SESSION_CONTENT_UPDATED':
-                    // Debounce/Sequence protection for content updates
-                    const lastTs = lastProcessedContentUpdateRef.current[msg.sessionId] || 0;
-                    if (msg.timestamp && msg.timestamp <= lastTs) return;
-                    if (msg.timestamp) lastProcessedContentUpdateRef.current[msg.sessionId] = msg.timestamp;
+                switch (msg.type) {
+                    case 'SETTINGS_UPDATED':
+                        onSettingsUpdated?.();
+                        break;
+                    case 'SESSIONS_UPDATED':
+                        onSessionsUpdated?.();
+                        break;
+                    case 'GROUPS_UPDATED':
+                        onGroupsUpdated?.();
+                        break;
+                    case 'SESSION_CONTENT_UPDATED':
+                        // Debounce/Sequence protection for content updates
+                        const lastTs = lastProcessedContentUpdateRef.current[msg.sessionId] || 0;
+                        if (msg.timestamp && msg.timestamp <= lastTs) return;
+                        if (msg.timestamp) lastProcessedContentUpdateRef.current[msg.sessionId] = msg.timestamp;
 
-                    onSessionContentUpdated?.(msg.sessionId);
-                    handleTitleNotification();
-                    break;
-                case 'SESSION_LOADING':
-                    if (msg.senderTabId === TAB_ID) return;
-                    onSessionLoading?.(msg.sessionId, msg.isLoading);
-                    break;
-            }
-        };
+                        onSessionContentUpdated?.(msg.sessionId);
+                        handleTitleNotification();
+                        break;
+                    case 'SESSION_LOADING':
+                        if (msg.senderTabId === TAB_ID) return;
+                        onSessionLoading?.(msg.sessionId, msg.isLoading);
+                        break;
+                }
+            };
 
-        return () => {
-            channel.close();
-        };
+            return () => {
+                channel.close();
+            };
+        } catch (e) {
+            logService.error("[Sync] Failed to initialize BroadcastChannel", { error: e });
+        }
     }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading]);
 
     // Handle Document Title Flashing for Background Tabs
     const handleTitleNotification = useCallback(() => {
         if (document.hidden) {
             originalTitleRef.current = document.title;
-            // Short-lived title notification
             document.title = "New Message! • All Model Chat";
             
             const restoreTitle = () => {
@@ -91,12 +92,16 @@ export const useMultiTabSync = ({
     // Broadcast Function with tab ID and timestamp for better ordering
     const broadcast = useCallback((message: Omit<SyncMessage, 'senderTabId' | 'timestamp'>) => {
         if (channelRef.current) {
-            const enrichedMessage = {
-                ...message,
-                senderTabId: TAB_ID,
-                timestamp: Date.now()
-            } as SyncMessage;
-            channelRef.current.postMessage(enrichedMessage);
+            try {
+                const enrichedMessage = {
+                    ...message,
+                    senderTabId: TAB_ID,
+                    timestamp: Date.now()
+                } as SyncMessage;
+                channelRef.current.postMessage(enrichedMessage);
+            } catch (e) {
+                logService.error("[Sync] Broadcast failed", { error: e, message });
+            }
         }
     }, []);
 
