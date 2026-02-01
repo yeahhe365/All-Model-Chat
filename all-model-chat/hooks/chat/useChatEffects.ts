@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { UploadedFile, SavedChatSession, ChatSettings, ModelOption, ChatMessage } from '../../types';
-import { logService } from '../../utils/appUtils';
+import { logService, cleanupFilePreviewUrls } from '../../utils/appUtils';
 
 interface UseChatEffectsProps {
     activeSessionId: string | null;
@@ -88,21 +88,21 @@ export const useChatEffects = ({
         }
     }, [selectedFiles, appFileError, setAppFileError]);
 
-    // 5. Blob URL Cleanup
-    const messagesForCleanupRef = useRef<ChatMessage[]>([]);
+    // 5. Blob URL Cleanup (Optimized)
+    // Track sessions ref to allow cleanup on unmount without triggering effect on every render
+    const savedSessionsRef = useRef(savedSessions);
     useEffect(() => {
-        const prevFiles = messagesForCleanupRef.current.flatMap(m => m.files || []);
-        const currentFiles = savedSessions.flatMap(s => s.messages).flatMap(m => m.files || []);
-        const removedFiles = prevFiles.filter(prevFile => !currentFiles.some(currentFile => currentFile.id === prevFile.id));
-        removedFiles.forEach(file => { if (file.dataUrl && file.dataUrl.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); });
-        messagesForCleanupRef.current = savedSessions.flatMap(s => s.messages);
+        savedSessionsRef.current = savedSessions;
     }, [savedSessions]);
 
-    // Cleanup on unmount
+    // Cleanup on unmount only
     useEffect(() => () => { 
-        messagesForCleanupRef.current.flatMap(m => m.files || []).forEach(file => { 
-            if (file.dataUrl?.startsWith('blob:')) URL.revokeObjectURL(file.dataUrl); 
-        }); 
+        // Cleanup all file previews when the app unmounts/reloads
+        savedSessionsRef.current.forEach(session => {
+            session.messages.forEach(msg => {
+                cleanupFilePreviewUrls(msg.files);
+            });
+        });
     }, []);
 
     // 6. Model Preference Auto-Correction

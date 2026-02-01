@@ -71,3 +71,11 @@ export const formatFileSize = (sizeInBytes: number): string => {
     const sizeInMb = sizeInKb / 1024;
     return `${sizeInMb.toFixed(2)} MB`;
 };
+
+export const cleanupFilePreviewUrls = (files: { dataUrl?: string }[] | undefined) => {
+    files?.forEach(f => {
+         if (f.dataUrl && f.dataUrl.startsWith('blob:')) {
+             URL.revokeObjectURL(f.dataUrl);
+         }
+    });
+};
