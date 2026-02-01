@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import { translations } from '../../../../utils/appUtils';
 import { ToggleItem } from '../../../shared/ToggleItem';
@@ -61,7 +63,8 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
             )}
 
             <ToggleItem label={t('settings_autoScrollOnSend_label')} checked={settings.isAutoScrollOnSendEnabled ?? true} onChange={(v) => onUpdate('isAutoScrollOnSendEnabled', v)} />
-            <ToggleItem label={t('settings_enableCompletionNotification_label')} checked={settings.isCompletionNotificationEnabled} onChange={handleNotificationToggle} />
+            <ToggleItem label={t('settings_enableCompletionNotification_label')} checked={settings.isCompletionNotificationEnabled} onChange={handleNotificationToggle} tooltip={t('settings_enableCompletionNotification_tooltip')} />
+            <ToggleItem label={t('settings_enableCompletionSound_label')} checked={settings.isCompletionSoundEnabled ?? false} onChange={(v) => onUpdate('isCompletionSoundEnabled', v)} tooltip={t('settings_enableCompletionSound_tooltip')} />
             <ToggleItem label={t('settings_expandCodeBlocksByDefault_label')} checked={settings.expandCodeBlocksByDefault} onChange={(v) => onUpdate('expandCodeBlocksByDefault', v)} />
             <ToggleItem label={t('settings_autoFullscreenHtml_label')} checked={settings.autoFullscreenHtml ?? true} onChange={(v) => onUpdate('autoFullscreenHtml', v)} tooltip={t('settings_autoFullscreenHtml_tooltip')} />
             <ToggleItem label={t('settings_enableMermaidRendering_label')} checked={settings.isMermaidRenderingEnabled} onChange={(v) => onUpdate('isMermaidRenderingEnabled', v)} tooltip={t('settings_enableMermaidRendering_tooltip')} />

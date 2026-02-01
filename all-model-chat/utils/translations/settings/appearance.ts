@@ -1,6 +1,8 @@
 
 
 
+
+
 export const appearanceSettings = {
     settingsAppearance: { en: 'Appearance', zh: '外观' },
     settingsTheme: { en: 'Theme', zh: '主题' },
@@ -24,6 +26,8 @@ export const appearanceSettings = {
     isAutoTitleEnabled_tooltip: { en: 'Automatically generate a title for new chats after the first exchange using a fast model.', zh: '在首次交流后，使用快速模型为新对话自动生成标题。' },
     settings_enableCompletionNotification_label: { en: 'Desktop Notifications', zh: '桌面通知' },
     settings_enableCompletionNotification_tooltip: { en: 'Show a browser notification when a response is finished generating while the tab is in the background.', zh: '当标签页在后台时，在响应生成完毕后显示浏览器通知。' },
+    settings_enableCompletionSound_label: { en: 'Completion Sound', zh: '完成提示音' },
+    settings_enableCompletionSound_tooltip: { en: 'Play a notification sound when a response is finished generating.', zh: '当响应生成完毕时播放提示音。' },
     settings_enableSuggestions_label: { en: 'Enable Smart Replies', zh: '回复建议' },
     settings_enableSuggestions_tooltip: { en: 'Automatically generate smart replies after the model responds. Uses a fast, separate model call.', zh: '在模型回应后自动生成回复建议。此功能会使用一个快速、独立的模型调用。' },
     settings_showWelcomeSuggestions_label: { en: 'Show Welcome Suggestions', zh: '显示欢迎页建议' },

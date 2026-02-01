@@ -1,9 +1,11 @@
 
+
+
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { logService, showNotification, calculateTokenStats } from '../../utils/appUtils';
+import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { updateMessagesWithPart, updateMessagesWithThought, finalizeMessages } from '../chat-stream/processors';
 
@@ -84,6 +86,9 @@ export const useChatStreamHandler = ({
                 newSessions[sessionIndex] = sessionToUpdate;
 
                 if (completedMessageForNotification) {
+                    if (appSettings.isCompletionSoundEnabled) {
+                        playCompletionSound();
+                    }
                     if (appSettings.isCompletionNotificationEnabled && document.hidden) {
                         const notificationBody = (completedMessageForNotification.content || "Media or tool response received").substring(0, 150) + (completedMessageForNotification.content && completedMessageForNotification.content.length > 150 ? '...' : '');
                         showNotification(
@@ -169,7 +174,7 @@ export const useChatStreamHandler = ({
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.isCompletionSoundEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs]);
     
     return { getStreamHandlers };
 };
