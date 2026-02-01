@@ -16,8 +16,33 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         rollupOptions: {
-          // Un-externalize these to ensure proper React context sharing in standard builds
-          // The importmap in index.html handles the browser/ESM behavior.
+          external: [
+            'react',
+            'react-dom',
+            'react-dom/client',
+            'react/jsx-runtime',
+            'lucide-react',
+            'react-pdf',
+            'pdfjs-dist',
+            '@google/genai',
+            'mermaid',
+            'dompurify',
+            'highlight.js',
+            'marked',
+            'jszip',
+            'mammoth',
+            'turndown',
+            'turndown-plugin-gfm',
+            'react-markdown',
+            'remark-gfm',
+            'remark-breaks',
+            'rehype-highlight',
+            'rehype-raw',
+            'remark-math',
+            'rehype-katex',
+            'rehype-sanitize',
+            'html2canvas'
+          ]
         }
       }
     };
