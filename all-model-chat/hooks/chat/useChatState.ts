@@ -1,15 +1,15 @@
+
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
-import { updateMessagesWithPart, updateMessagesWithThought } from './../chat-stream/processors';
 
 export const useChatState = (appSettings: AppSettings) => {
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
     const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
-    const [activeSessionId, setActiveSessionIdState] = useState<string | null>(null);
+    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<'update' | 'resend'>('resend');
     const [commandedInput, setCommandedInput] = useState<InputCommand | null>(null);
@@ -25,6 +25,10 @@ export const useChatState = (appSettings: AppSettings) => {
     const [isSwitchingModel, setIsSwitchingModel] = useState<boolean>(false);
     const userScrolledUp = useRef<boolean>(false);
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
+
+    // Tracks session IDs that are generating *in this specific tab*.
+    // Used to prevent overwriting local streaming state with DB state updates from other tabs.
+    const localLoadingSessionIds = useRef(new Set<string>());
 
     const refreshSessions = useCallback(async () => {
         try {
@@ -57,7 +61,10 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            if (loadingSessionIds.has(id)) {
+            // Optimization: If THIS tab is currently streaming for this session (locally), 
+            // ignore the refresh to avoid overwriting the smooth stream with chunked DB saves.
+            // However, if another tab updated it (and we are not streaming), we DO want to refresh.
+            if (localLoadingSessionIds.current.has(id)) {
                 return;
             }
             refreshSessions();
@@ -69,42 +76,26 @@ export const useChatState = (appSettings: AppSettings) => {
                 else next.delete(sessionId);
                 return next;
             });
-        },
-        onActiveSessionChanged: (sessionId) => {
-            setActiveSessionIdState(sessionId);
-        },
-        onStreamPartReceived: (sessionId, part, startTime) => {
-            setSavedSessions(prev => prev.map(s => {
-                if (s.id !== sessionId) return s;
-                return {
-                    ...s,
-                    messages: updateMessagesWithPart(s.messages, part, startTime, new Set(), null)
-                };
-            }));
-        },
-        onStreamThoughtReceived: (sessionId, thoughtChunk, startTime) => {
-            setSavedSessions(prev => prev.map(s => {
-                if (s.id !== sessionId) return s;
-                return {
-                    ...s,
-                    messages: updateMessagesWithThought(s.messages, thoughtChunk, startTime)
-                };
-            }));
         }
     });
 
-    const setActiveSessionId = useCallback((id: string | null) => {
-        setActiveSessionIdState(id);
-        broadcast({ type: 'ACTIVE_SESSION_CHANGED', sessionId: id });
-    }, [broadcast]);
-
     const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
+        // Update local tracking
+        if (isLoading) {
+            localLoadingSessionIds.current.add(sessionId);
+        } else {
+            localLoadingSessionIds.current.delete(sessionId);
+        }
+
+        // Update UI state
         setLoadingSessionIds(prev => {
             const next = new Set(prev);
             if (isLoading) next.add(sessionId);
             else next.delete(sessionId);
             return next;
         });
+
+        // Broadcast to other tabs so they show the spinner/stop button but know not to overwrite content if they are the ones generating
         broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
     }, [broadcast]);
 
@@ -206,7 +197,6 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading,
-        broadcast 
+        setSessionLoading 
     };
 };

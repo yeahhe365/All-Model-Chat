@@ -1,3 +1,4 @@
+
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
@@ -31,7 +32,6 @@ interface MessageSenderProps {
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    broadcast?: (message: any) => void;
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -52,7 +52,6 @@ export const useMessageSender = (props: MessageSenderProps) => {
         activeJobs,
         setSessionLoading,
         updateAndPersistSessions,
-        broadcast
     } = props;
 
     // Initialize Stream Handler Factory
@@ -60,8 +59,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         appSettings,
         updateAndPersistSessions,
         setSessionLoading,
-        activeJobs,
-        broadcast
+        activeJobs
     });
 
     // Initialize Sub-Hooks
@@ -76,10 +74,15 @@ export const useMessageSender = (props: MessageSenderProps) => {
         handleGenerateCanvas
     });
 
-    const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
+    const { handleTtsImagenMessage } = useTtsImagenSender({ 
+        updateAndPersistSessions,
+        setSessionLoading,
+        activeJobs,
+        setActiveSessionId
+    });
+    
     const { handleImageEditMessage } = useImageEditSender({
         updateAndPersistSessions,
-        setLoadingSessionIds: (v: any) => {}, // Not used, legacy
         setSessionLoading,
         activeJobs,
         setActiveSessionId
