@@ -77,33 +77,47 @@ export const useAppLogic = () => {
   const activeChat = chatState.savedSessions.find(s => s.id === chatState.activeSessionId);
   const sessionTitle = activeChat?.title || t('newChat');
 
-  // Dynamic Browser Title with Timer
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Dynamic Browser Title Logic with Real-time Timer
+  const [generationTime, setGenerationTime] = useState(0);
 
-  useEffect(() => {
-      let intervalId: NodeJS.Timeout;
-
-      if (chatState.isLoading) {
-          // Immediately show start state
-          document.title = `✨ 0s | ${sessionTitle}`;
-          
-          intervalId = setInterval(() => {
-              setElapsedSeconds(prev => {
-                  const newTime = prev + 1;
-                  document.title = `✨ ${newTime}s | ${sessionTitle}`;
-                  return newTime;
-              });
-          }, 1000);
-      } else {
-          setElapsedSeconds(0);
-          // Show checkmark when not loading (idle or finished)
-          document.title = `✅ ${sessionTitle}`;
+  // Determine the start time of the current generation for accurate timing across renders/tabs
+  const currentGenerationStartTime = useMemo(() => {
+      if (!chatState.isLoading) return null;
+      // Find the loading message (usually near the end)
+      const msgs = chatState.messages;
+      for (let i = msgs.length - 1; i >= 0; i--) {
+          const m = msgs[i];
+          if ((m.role === 'model' || m.role === 'error') && m.isLoading) {
+              return m.generationStartTime ? new Date(m.generationStartTime).getTime() : Date.now();
+          }
       }
+      return null;
+  }, [chatState.messages, chatState.isLoading]);
 
-      return () => {
-          if (intervalId) clearInterval(intervalId);
-      };
-  }, [chatState.isLoading, sessionTitle]);
+  // Update timer
+  useEffect(() => {
+      let intervalId: number;
+      if (currentGenerationStartTime) {
+          const update = () => {
+              setGenerationTime(Math.max(0, Math.floor((Date.now() - currentGenerationStartTime) / 1000)));
+          };
+          update(); // Initial update
+          intervalId = window.setInterval(update, 1000);
+      } else {
+          setGenerationTime(0);
+      }
+      return () => clearInterval(intervalId);
+  }, [currentGenerationStartTime]);
+
+  // Apply to Document Title
+  useEffect(() => {
+      let statusPrefix = '';
+      if (chatState.isLoading) {
+          const timeDisplay = ` (${generationTime}s)`;
+          statusPrefix = (language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `);
+      }
+      document.title = `${statusPrefix}${sessionTitle}`;
+  }, [sessionTitle, chatState.isLoading, language, generationTime]);
 
   const dataManagement = useDataManagement({
     appSettings, 
