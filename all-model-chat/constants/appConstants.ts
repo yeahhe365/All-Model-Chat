@@ -1,5 +1,4 @@
 
-
 import { AppSettings, FilesApiConfig } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
@@ -120,6 +119,45 @@ export const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_srt_title', descKey: 'suggestion_srt_desc', shortKey: 'suggestion_srt_short', icon: 'Captions' },
   { titleKey: 'suggestion_explain_title', descKey: 'suggestion_explain_desc', shortKey: 'suggestion_explain_short', icon: 'Lightbulb' },
   { titleKey: 'suggestion_summarize_title', descKey: 'suggestion_summarize_desc', shortKey: 'suggestion_summarize_short', icon: 'FileText' },
+];
+
+export const FEATURE_DEMOS = [
+  {
+    id: 'visual-canvas',
+    title: 'Visual Studio',
+    description: 'Create interactive HTML apps and dashboards with Canvas.',
+    prompt: 'Create a modern, interactive dashboard in HTML/CSS for a hypothetical smart home system. Include toggles for lights and a temperature chart.',
+    icon: 'AppWindow',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10'
+  },
+  {
+    id: 'deep-research',
+    title: 'Deep Research',
+    description: 'Solve complex problems with grounded web search and reasoning.',
+    prompt: 'Perform a deep search on the latest developments in ambient computing for 2025. Compare major players and future trends.',
+    icon: 'Telescope',
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10'
+  },
+  {
+    id: 'creative-studio',
+    title: 'Creative Studio',
+    description: 'Generate high-quality images and conceptual art using Imagen.',
+    prompt: 'Generate a stunning concept art of a futuristic library where the books are holograms, in a cyberpunk-noir style, 16:9.',
+    icon: 'ImageIcon',
+    color: 'text-rose-500',
+    bg: 'bg-rose-500/10'
+  },
+  {
+    id: 'code-analysis',
+    title: 'Code Analysis',
+    description: 'Debug, analyze, and optimize large-scale folder structures.',
+    prompt: 'Analyze a typical React project structure. Explain the role of hooks, components, and services in a clean architecture.',
+    icon: 'FileCode2',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10'
+  }
 ];
 
 export const BBOX_SYSTEM_PROMPT = `**任务：** 请作为一位计算机视觉专家，对这张图片进行通用的目标检测，并利用Python代码生成可视化的标注结果。
