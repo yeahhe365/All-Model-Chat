@@ -15,12 +15,23 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
   onUpdate,
   t,
 }) => {
-  const handleNotificationToggle = (enabled: boolean) => {
-    if (enabled && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission();
-      } else if (Notification.permission === 'denied') {
+  const handleNotificationToggle = async (enabled: boolean) => {
+    if (enabled) {
+      if (!('Notification' in window)) {
+        alert('Desktop notifications are not supported by your browser.');
+        return;
+      }
+      
+      if (Notification.permission === 'denied') {
         alert('Notifications are blocked by your browser. Please enable them in your browser settings to use this feature.');
+        return;
+      }
+
+      if (Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          return;
+        }
       }
     }
     onUpdate('isCompletionNotificationEnabled', enabled);
