@@ -1,4 +1,3 @@
-
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
@@ -14,13 +13,15 @@ interface ChatStreamHandlerProps {
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    broadcast?: any;
 }
 
 export const useChatStreamHandler = ({
     appSettings,
     updateAndPersistSessions,
     setSessionLoading,
-    activeJobs
+    activeJobs,
+    broadcast
 }: ChatStreamHandlerProps) => {
     const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
 
@@ -123,6 +124,18 @@ export const useChatStreamHandler = ({
             if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
                 firstContentPartTime = new Date();
             }
+            
+            // Sync to other tabs
+            if (broadcast) {
+                broadcast({
+                    type: 'SESSION_PART',
+                    sessionId: currentSessionId,
+                    generationId,
+                    generationStartTime: generationStartTime.toISOString(),
+                    part,
+                    firstContentPartTime: firstContentPartTime ? firstContentPartTime.toISOString() : null
+                });
+            }
         
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
@@ -147,6 +160,17 @@ export const useChatStreamHandler = ({
         };
         
         const onThoughtChunk = (thoughtChunk: string) => {
+            // Sync to other tabs
+            if (broadcast) {
+                broadcast({
+                    type: 'SESSION_THOUGHT',
+                    sessionId: currentSessionId,
+                    generationId,
+                    generationStartTime: generationStartTime.toISOString(),
+                    thoughtChunk
+                });
+            }
+
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
                 if (sessionIndex === -1) return prev;
@@ -169,7 +193,7 @@ export const useChatStreamHandler = ({
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs, broadcast]);
     
     return { getStreamHandlers };
 };
