@@ -4,7 +4,6 @@ import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
-import { updateMessagesWithPart, updateMessagesWithThought } from '../chat-stream/processors';
 
 export const useChatState = (appSettings: AppSettings) => {
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
@@ -25,9 +24,6 @@ export const useChatState = (appSettings: AppSettings) => {
     const [isSwitchingModel, setIsSwitchingModel] = useState<boolean>(false);
     const userScrolledUp = useRef<boolean>(false);
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
-
-    // Remote generation tracking for non-active tabs
-    const remoteGenerationIdsRef = useRef<Map<string, Set<string>>>(new Map());
 
     const refreshSessions = useCallback(async () => {
         try {
@@ -71,56 +67,8 @@ export const useChatState = (appSettings: AppSettings) => {
             setLoadingSessionIds(prev => {
                 const next = new Set(prev);
                 if (isLoading) next.add(sessionId);
-                else {
-                    next.delete(sessionId);
-                    remoteGenerationIdsRef.current.delete(sessionId);
-                }
+                else next.delete(sessionId);
                 return next;
-            });
-        },
-        onSessionPart: ({ sessionId, generationId, generationStartTime, part, firstContentPartTime }) => {
-            // Only handle if we aren't the one generating it (handled by BroadcastChannel naturally)
-            // but we use the remote tracker to manage newModelMessageIds set for the processor
-            if (!remoteGenerationIdsRef.current.has(sessionId)) {
-                remoteGenerationIdsRef.current.set(sessionId, new Set());
-            }
-            const generationIds = remoteGenerationIdsRef.current.get(sessionId)!;
-
-            setSavedSessions(prev => {
-                const sessionIndex = prev.findIndex(s => s.id === sessionId);
-                if (sessionIndex === -1) return prev;
-
-                const newSessions = [...prev];
-                const session = { ...newSessions[sessionIndex] };
-                
-                session.messages = updateMessagesWithPart(
-                    session.messages,
-                    part,
-                    generationStartTime,
-                    generationIds,
-                    firstContentPartTime
-                );
-
-                newSessions[sessionIndex] = session;
-                return newSessions;
-            });
-        },
-        onSessionThought: ({ sessionId, generationId, generationStartTime, thoughtChunk }) => {
-            setSavedSessions(prev => {
-                const sessionIndex = prev.findIndex(s => s.id === sessionId);
-                if (sessionIndex === -1) return prev;
-
-                const newSessions = [...prev];
-                const session = { ...newSessions[sessionIndex] };
-                
-                session.messages = updateMessagesWithThought(
-                    session.messages,
-                    thoughtChunk,
-                    generationStartTime
-                );
-
-                newSessions[sessionIndex] = session;
-                return newSessions;
             });
         }
     });
@@ -233,7 +181,6 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading,
-        broadcast // Expose broadcast for direct use by stream handlers
+        setSessionLoading 
     };
 };

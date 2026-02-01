@@ -6,22 +6,7 @@ export type SyncMessage =
     | { type: 'SESSIONS_UPDATED' } 
     | { type: 'GROUPS_UPDATED' }
     | { type: 'SESSION_CONTENT_UPDATED'; sessionId: string } 
-    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean }
-    | { 
-        type: 'SESSION_PART'; 
-        sessionId: string; 
-        generationId: string; 
-        generationStartTime: string; 
-        part: any; 
-        firstContentPartTime: string | null 
-      }
-    | { 
-        type: 'SESSION_THOUGHT'; 
-        sessionId: string; 
-        generationId: string; 
-        generationStartTime: string; 
-        thoughtChunk: string 
-      };
+    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean };
 
 interface UseMultiTabSyncProps {
     onSettingsUpdated?: () => void;
@@ -29,8 +14,6 @@ interface UseMultiTabSyncProps {
     onGroupsUpdated?: () => void;
     onSessionContentUpdated?: (sessionId: string) => void;
     onSessionLoading?: (sessionId: string, isLoading: boolean) => void;
-    onSessionPart?: (data: { sessionId: string; generationId: string; generationStartTime: Date; part: any; firstContentPartTime: Date | null }) => void;
-    onSessionThought?: (data: { sessionId: string; generationId: string; generationStartTime: Date; thoughtChunk: string }) => void;
 }
 
 export const useMultiTabSync = ({
@@ -38,9 +21,7 @@ export const useMultiTabSync = ({
     onSessionsUpdated,
     onGroupsUpdated,
     onSessionContentUpdated,
-    onSessionLoading,
-    onSessionPart,
-    onSessionThought
+    onSessionLoading
 }: UseMultiTabSyncProps) => {
     const channelRef = useRef<BroadcastChannel | null>(null);
     const originalTitleRef = useRef<string>(document.title);
@@ -51,9 +32,7 @@ export const useMultiTabSync = ({
 
         channel.onmessage = (event: MessageEvent<SyncMessage>) => {
             const msg = event.data;
-            
-            // Debug logging for non-verbose events
-            if (msg.type !== 'SESSION_LOADING' && msg.type !== 'SESSION_PART' && msg.type !== 'SESSION_THOUGHT') {
+            if (msg.type !== 'SESSION_LOADING') {
                 logService.debug(`[Sync] Received: ${msg.type}`, { category: 'SYSTEM', data: msg });
             }
 
@@ -74,30 +53,13 @@ export const useMultiTabSync = ({
                 case 'SESSION_LOADING':
                     onSessionLoading?.(msg.sessionId, msg.isLoading);
                     break;
-                case 'SESSION_PART':
-                    onSessionPart?.({
-                        sessionId: msg.sessionId,
-                        generationId: msg.generationId,
-                        generationStartTime: new Date(msg.generationStartTime),
-                        part: msg.part,
-                        firstContentPartTime: msg.firstContentPartTime ? new Date(msg.firstContentPartTime) : null
-                    });
-                    break;
-                case 'SESSION_THOUGHT':
-                    onSessionThought?.({
-                        sessionId: msg.sessionId,
-                        generationId: msg.generationId,
-                        generationStartTime: new Date(msg.generationStartTime),
-                        thoughtChunk: msg.thoughtChunk
-                    });
-                    break;
             }
         };
 
         return () => {
             channel.close();
         };
-    }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading, onSessionPart, onSessionThought]);
+    }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading]);
 
     const handleTitleNotification = useCallback(() => {
         if (document.hidden) {

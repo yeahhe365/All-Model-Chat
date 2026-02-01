@@ -1,3 +1,4 @@
+
 import React, { useRef, useCallback } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { useModels } from '../core/useModels';
@@ -37,8 +38,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setCurrentChatSettings, updateAndPersistSessions, updateAndPersistGroups,
         fileDraftsRef,
         refreshSessions,
-        setSessionLoading,
-        broadcast
+        setSessionLoading 
     } = chatState;
 
     const sessionKeyMapRef = useRef<Map<string, string>>(new Map());
@@ -89,8 +89,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setLoadingSessionIds, updateAndPersistSessions, language, 
         scrollContainerRef: scrollHandler.scrollContainerRef,
         sessionKeyMapRef,
-        setSessionLoading,
-        broadcast
+        setSessionLoading 
     });
 
     useAutoTitling({ appSettings, savedSessions, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
@@ -174,8 +173,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setScrollContainerRef: scrollHandler.setScrollContainerRef,
         scrollNavVisibility: scrollHandler.scrollNavVisibility,
         onScrollContainerScroll: scrollHandler.handleScroll,
-        scrollToPrevTurn: scrollHandler.scrollToNextTurn,
-        scrollToNextTurn: scrollHandler.scrollToPrevTurn,
+        scrollToPrevTurn: scrollHandler.scrollToPrevTurn,
+        scrollToNextTurn: scrollHandler.scrollToNextTurn,
         
         loadChatSession,
         startNewChat,
