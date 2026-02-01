@@ -7,14 +7,14 @@ export type SyncMessage =
     | { type: 'SESSIONS_UPDATED' } // For list additions/deletions
     | { type: 'GROUPS_UPDATED' }
     | { type: 'SESSION_CONTENT_UPDATED'; sessionId: string } // For specific message updates
-    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean }; // For sync loading state
+    | { type: 'SESSION_LOADING'; sessionId: string; isLoading: boolean }; // New: For synchronizing loading dots
 
 interface UseMultiTabSyncProps {
     onSettingsUpdated?: () => void;
     onSessionsUpdated?: () => void;
     onGroupsUpdated?: () => void;
     onSessionContentUpdated?: (sessionId: string) => void;
-    onSessionLoadingUpdated?: (sessionId: string, isLoading: boolean) => void;
+    onSessionLoading?: (sessionId: string, isLoading: boolean) => void;
 }
 
 export const useMultiTabSync = ({
@@ -22,7 +22,7 @@ export const useMultiTabSync = ({
     onSessionsUpdated,
     onGroupsUpdated,
     onSessionContentUpdated,
-    onSessionLoadingUpdated
+    onSessionLoading
 }: UseMultiTabSyncProps) => {
     const channelRef = useRef<BroadcastChannel | null>(null);
     const originalTitleRef = useRef<string>(document.title);
@@ -34,7 +34,7 @@ export const useMultiTabSync = ({
 
         channel.onmessage = (event: MessageEvent<SyncMessage>) => {
             const msg = event.data;
-            // Reduce log noise for loading updates as they are frequent
+            // Filter out frequent loading logs to reduce noise
             if (msg.type !== 'SESSION_LOADING') {
                 logService.debug(`[Sync] Received: ${msg.type}`, { category: 'SYSTEM', data: msg });
             }
@@ -54,7 +54,7 @@ export const useMultiTabSync = ({
                     handleTitleNotification();
                     break;
                 case 'SESSION_LOADING':
-                    onSessionLoadingUpdated?.(msg.sessionId, msg.isLoading);
+                    onSessionLoading?.(msg.sessionId, msg.isLoading);
                     break;
             }
         };
@@ -62,7 +62,7 @@ export const useMultiTabSync = ({
         return () => {
             channel.close();
         };
-    }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoadingUpdated]);
+    }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading]);
 
     // Handle Document Title Flashing for Background Tabs
     const handleTitleNotification = useCallback(() => {

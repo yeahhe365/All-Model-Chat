@@ -28,11 +28,12 @@ interface MessageHandlerProps {
     setCommandedInput: CommandedInputSetter;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     loadingSessionIds: Set<string>;
-    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     updateAndPersistSessions: SessionsUpdater;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
+    setSessionLoading?: (sessionId: string, isLoading: boolean) => void; // New prop
 }
 
 export const useMessageHandler = (props: MessageHandlerProps) => {
@@ -49,7 +50,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setAppFileError,
         updateAndPersistSessions,
         userScrolledUp,
-        setSessionLoading
+        setLoadingSessionIds
     } = props;
     
     const { handleSendMessage, handleGenerateCanvas } = useMessageSender(props);
@@ -68,7 +69,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         updateAndPersistSessions,
         userScrolledUp,
         handleSendMessage,
-        setSessionLoading,
+        setLoadingSessionIds,
     });
     
     const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler(props);

@@ -11,14 +11,14 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 
 interface TtsImagenSenderProps {
     updateAndPersistSessions: SessionsUpdater;
-    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     setActiveSessionId: (id: string | null) => void;
 }
 
 export const useTtsImagenSender = ({
     updateAndPersistSessions,
-    setSessionLoading,
+    setLoadingSessionIds,
     activeJobs,
     setActiveSessionId,
 }: TtsImagenSenderProps) => {
@@ -72,7 +72,7 @@ export const useTtsImagenSender = ({
             setActiveSessionId(finalSessionId);
         }
 
-        setSessionLoading(finalSessionId, true);
+        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId));
         activeJobs.current.set(generationId, newAbortController);
 
         try {
@@ -112,10 +112,10 @@ export const useTtsImagenSender = ({
         } catch (error) {
             handleApiError(error, finalSessionId, modelMessageId, isTtsModel ? "TTS Error" : "Image Gen Error");
         } finally {
-            setSessionLoading(finalSessionId, false);
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId); return next; });
             activeJobs.current.delete(generationId);
         }
-    }, [updateAndPersistSessions, setSessionLoading, activeJobs, handleApiError, setActiveSessionId]);
+    }, [updateAndPersistSessions, setLoadingSessionIds, activeJobs, handleApiError, setActiveSessionId]);
     
     return { handleTtsImagenMessage };
 };

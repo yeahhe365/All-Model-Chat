@@ -12,14 +12,14 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 interface ChatStreamHandlerProps {
     appSettings: AppSettings;
     updateAndPersistSessions: SessionsUpdater;
-    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
 
 export const useChatStreamHandler = ({
     appSettings,
     updateAndPersistSessions,
-    setSessionLoading,
+    setLoadingSessionIds,
     activeJobs
 }: ChatStreamHandlerProps) => {
     const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
@@ -38,7 +38,7 @@ export const useChatStreamHandler = ({
 
         const streamOnError = (error: Error) => {
             handleApiError(error, currentSessionId, generationId);
-            setSessionLoading(currentSessionId, false);
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
         };
 
@@ -102,7 +102,7 @@ export const useChatStreamHandler = ({
                 return newSessions;
             }, { persist: true });
 
-            setSessionLoading(currentSessionId, false);
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
             activeJobs.current.delete(generationId);
 
             // Invoke success callback after state updates
@@ -175,7 +175,7 @@ export const useChatStreamHandler = ({
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
     
     return { getStreamHandlers };
 };

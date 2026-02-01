@@ -27,11 +27,12 @@ interface MessageSenderProps {
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
-    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     updateAndPersistSessions: SessionsUpdater;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
+    setSessionLoading?: (sessionId: string, isLoading: boolean) => void; // New prop
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -50,7 +51,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         activeSessionId,
         setActiveSessionId,
         activeJobs,
-        setSessionLoading,
+        setLoadingSessionIds,
         updateAndPersistSessions,
     } = props;
 
@@ -72,9 +73,10 @@ export const useMessageSender = (props: MessageSenderProps) => {
     const { handleTtsImagenMessage } = useTtsImagenSender({ ...props, setActiveSessionId });
     const { handleImageEditMessage } = useImageEditSender({
         updateAndPersistSessions,
-        setSessionLoading,
+        setLoadingSessionIds,
         activeJobs,
         setActiveSessionId,
+        setSessionLoading: props.setSessionLoading // Pass to sub-hook
     });
 
     // Main Entry Point

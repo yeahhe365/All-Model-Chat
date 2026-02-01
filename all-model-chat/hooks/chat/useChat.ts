@@ -25,7 +25,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         editMode, setEditMode,
         commandedInput, setCommandedInput,
         loadingSessionIds, setLoadingSessionIds,
-        setSessionLoading,
         generatingTitleSessionIds, setGeneratingTitleSessionIds,
         activeJobs,
         selectedFiles, setSelectedFiles,
@@ -39,7 +38,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         activeChat, messages, currentChatSettings, isLoading,
         setCurrentChatSettings, updateAndPersistSessions, updateAndPersistGroups,
         fileDraftsRef,
-        refreshSessions // Exposed from useChatState
+        refreshSessions,
+        setSessionLoading // New prop
     } = chatState;
 
     // Ref to track which API key was last used for a session (for sticky affinity)
@@ -89,9 +89,10 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setSelectedFiles, editingMessageId, setEditingMessageId, setEditMode, setAppFileError, 
         aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId, 
         setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds, 
-        setSessionLoading, updateAndPersistSessions, language, 
+        setLoadingSessionIds, updateAndPersistSessions, language, 
         scrollContainerRef: scrollHandler.scrollContainerRef,
-        sessionKeyMapRef
+        sessionKeyMapRef,
+        setSessionLoading // Pass it down
     });
 
     useAutoTitling({ appSettings, savedSessions, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
