@@ -15,6 +15,17 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
   onUpdate,
   t,
 }) => {
+  const handleNotificationToggle = (enabled: boolean) => {
+    if (enabled && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      } else if (Notification.permission === 'denied') {
+        alert('Notifications are blocked by your browser. Please enable them in your browser settings to use this feature.');
+      }
+    }
+    onUpdate('isCompletionNotificationEnabled', enabled);
+  };
+
   return (
     <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-2">
@@ -39,7 +50,7 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
             )}
 
             <ToggleItem label={t('settings_autoScrollOnSend_label')} checked={settings.isAutoScrollOnSendEnabled ?? true} onChange={(v) => onUpdate('isAutoScrollOnSendEnabled', v)} />
-            <ToggleItem label={t('settings_enableCompletionNotification_label')} checked={settings.isCompletionNotificationEnabled} onChange={(v) => onUpdate('isCompletionNotificationEnabled', v)} />
+            <ToggleItem label={t('settings_enableCompletionNotification_label')} checked={settings.isCompletionNotificationEnabled} onChange={handleNotificationToggle} />
             <ToggleItem label={t('settings_expandCodeBlocksByDefault_label')} checked={settings.expandCodeBlocksByDefault} onChange={(v) => onUpdate('expandCodeBlocksByDefault', v)} />
             <ToggleItem label={t('settings_autoFullscreenHtml_label')} checked={settings.autoFullscreenHtml ?? true} onChange={(v) => onUpdate('autoFullscreenHtml', v)} tooltip={t('settings_autoFullscreenHtml_tooltip')} />
             <ToggleItem label={t('settings_enableMermaidRendering_label')} checked={settings.isMermaidRenderingEnabled} onChange={(v) => onUpdate('isMermaidRenderingEnabled', v)} tooltip={t('settings_enableMermaidRendering_tooltip')} />
