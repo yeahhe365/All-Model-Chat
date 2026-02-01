@@ -37,7 +37,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         userScrolledUp,
         activeChat, messages, currentChatSettings, isLoading,
         setCurrentChatSettings, updateAndPersistSessions, updateAndPersistGroups,
-        fileDraftsRef
+        fileDraftsRef,
+        refreshSessions // Exposed from useChatState
     } = chatState;
 
     // Ref to track which API key was last used for a session (for sticky affinity)

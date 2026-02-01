@@ -1,9 +1,10 @@
 
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
-import { logService } from '../../utils/appUtils';
+import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
+import { useMultiTabSync } from '../core/useMultiTabSync';
 
 export const useChatState = (appSettings: AppSettings) => {
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
@@ -25,24 +26,70 @@ export const useChatState = (appSettings: AppSettings) => {
     const userScrolledUp = useRef<boolean>(false);
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
 
+    // --- Reload Logic for Sync ---
+    const refreshSessions = useCallback(async () => {
+        try {
+            const sessions = await dbService.getAllSessions();
+            const rehydrated = sessions.map(rehydrateSessionFiles);
+            rehydrated.sort((a, b) => b.timestamp - a.timestamp);
+            setSavedSessions(rehydrated);
+        } catch (e) {
+            logService.error("Failed to refresh sessions from DB", { error: e });
+        }
+    }, []);
+
+    const refreshGroups = useCallback(async () => {
+        try {
+            const groups = await dbService.getAllGroups();
+            setSavedGroups(groups);
+        } catch (e) {
+            logService.error("Failed to refresh groups from DB", { error: e });
+        }
+    }, []);
+
+    // --- Sync Hook Integration ---
+    const { broadcast } = useMultiTabSync({
+        onSessionsUpdated: () => {
+            logService.debug("[Sync] Sessions updated externally, refreshing...");
+            refreshSessions();
+        },
+        onGroupsUpdated: () => {
+            logService.debug("[Sync] Groups updated externally, refreshing...");
+            refreshGroups();
+        },
+        onSessionContentUpdated: (id) => {
+            // For now, simple refresh of all sessions ensures consistency.
+            // In a future optimization, we could fetch only the specific ID.
+            if (loadingSessionIds.has(id)) {
+                // If we are currently loading this session in THIS tab, ignore external updates to avoid UI jitter
+                // The local stream handler will manage the state updates.
+                return;
+            }
+            refreshSessions();
+        }
+    });
+
     const updateAndPersistSessions = useCallback(async (
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
+        
         setSavedSessions(prevSessions => {
             const newSessions = updater(prevSessions);
+            
             if (persist) {
                 // Optimization: Granular updates based on reference equality
                 const updates: Promise<void>[] = [];
                 const newSessionsMap = new Map(newSessions.map(s => [s.id, s]));
-                
+                const modifiedSessionIds: string[] = [];
+
                 // 1. Detect Updated or Added sessions
-                // We rely on React immutability: if reference changes, object changed.
                 newSessions.forEach(session => {
                     const prevSession = prevSessions.find(s => s.id === session.id);
                     if (prevSession !== session) {
                         updates.push(dbService.saveSession(session));
+                        modifiedSessionIds.push(session.id);
                     }
                 });
 
@@ -55,21 +102,30 @@ export const useChatState = (appSettings: AppSettings) => {
 
                 if (updates.length > 0) {
                     Promise.all(updates)
-                        // .then(() => logService.debug(`Persisted ${updates.length} session updates atomically.`))
+                        .then(() => {
+                            // Broadcast general update or specific content update
+                            if (modifiedSessionIds.length === 1) {
+                                broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessionIds[0] });
+                            } else {
+                                broadcast({ type: 'SESSIONS_UPDATED' });
+                            }
+                        })
                         .catch(e => logService.error('Failed to persist session updates', { error: e }));
                 }
             }
             return newSessions;
         });
-    }, []);
+    }, [broadcast, loadingSessionIds]);
     
     const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
         setSavedGroups(prevGroups => {
             const newGroups = updater(prevGroups);
-            dbService.setAllGroups(newGroups);
+            dbService.setAllGroups(newGroups)
+                .then(() => broadcast({ type: 'GROUPS_UPDATED' }))
+                .catch(e => logService.error('Failed to persist group updates', { error: e }));
             return newGroups;
         });
-    }, []);
+    }, [broadcast]);
 
     const activeChat = useMemo(() => savedSessions.find(s => s.id === activeSessionId), [savedSessions, activeSessionId]);
     const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
@@ -113,5 +169,8 @@ export const useChatState = (appSettings: AppSettings) => {
         updateAndPersistSessions,
         updateAndPersistGroups,
         fileDraftsRef,
+        // Expose manual refresh logic if needed by other components (e.g. initial loader)
+        refreshSessions,
+        refreshGroups
     };
 };

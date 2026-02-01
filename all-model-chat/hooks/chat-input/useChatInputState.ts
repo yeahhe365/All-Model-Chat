@@ -49,6 +49,27 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         }
     }, [activeSessionId, isEditing]);
 
+    // Cross-Tab Sync for Input Drafts
+    useEffect(() => {
+        if (!activeSessionId || isEditing) return;
+
+        const draftKey = `chatDraft_${activeSessionId}`;
+
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === draftKey) {
+                // If another tab updated the draft for the SAME session, sync it here.
+                const newValue = e.newValue || '';
+                // Only update if different to avoid cursor jumping loops if this tab is active
+                if (newValue !== inputText) {
+                    setInputText(newValue);
+                }
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [activeSessionId, isEditing, inputText]);
+
     // Save draft to localStorage on input change (debounced)
     useEffect(() => {
         if (!activeSessionId) return;
