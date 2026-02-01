@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { translations } from '../../../utils/appUtils';
+import { Sparkles, Box, BarChart3, Search, Wand2, ArrowRight } from 'lucide-react';
 
 interface WelcomeScreenProps {
     t: (key: keyof typeof translations, fallback?: string) => string;
@@ -16,7 +17,6 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
     const [targetPhrase, setTargetPhrase] = useState(text);
     const [isHovering, setIsHovering] = useState(false);
     
-    // Shuffle bag to track unused quotes and prevent repetition
     const unusedQuotesRef = useRef<string[]>([]);
     
     const quotes = useMemo(() => [
@@ -30,13 +30,9 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         "Made on Earth by humans."
     ], []);
 
-    // Sync target phrase when prop changes (e.g. language switch) OR when hover ends to restore greeting
     useEffect(() => {
-        // Only trigger reset if we are NOT currently showing the greeting (targetPhrase !== text)
-        // This prevents the greeting from being re-typed if the user hovers for < 3s and leaves.
         if (!isHovering && targetPhrase !== text) {
             setTargetPhrase(text);
-            // Trigger deletion to transition to new text if we were showing something else
             setStatus('deleting');
         }
     }, [text, isHovering, targetPhrase]);
@@ -56,21 +52,18 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
                 let currentDelay = baseTypeSpeed;
                 const lastChar = displayedText.slice(-1);
                 
-                // 1. Punctuation pauses
                 if ([',', ';', ':'].includes(lastChar)) {
                     currentDelay = 400; 
                 } else if (['.', '?', '!'].includes(lastChar)) {
                     currentDelay = 800; 
                 }
                 
-                // 2. Semantic pauses for dramatic effect
                 if (displayedText.toLowerCase().endsWith("wait")) {
                     currentDelay = 500;
                 } else if (displayedText.toLowerCase().endsWith("i'm sorry")) {
                     currentDelay = 600;
                 }
 
-                // 3. Random variance (simulating keystroke inconsistency)
                 currentDelay += Math.random() * 50 - 10;
 
                 timeout = setTimeout(() => {
@@ -87,35 +80,23 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
             }
         } else if (status === 'paused') {
             if (targetPhrase === text) {
-                // Showing the main greeting
                 if (isHovering) {
-                    // Easter Egg: If hovered for 3 seconds, start deleting to show quotes
                     timeout = setTimeout(() => setStatus('deleting'), 3000); 
                 }
             } else {
-                // Showing a quote
-                // Wait for pause duration then delete (to show next quote or return to greeting)
                 timeout = setTimeout(() => {
                     setStatus('deleting');
                 }, pauseDuration);
             }
         } else if (status === 'blank') {
             timeout = setTimeout(() => {
-                // Determine next phrase based on hover state
                 if (isHovering) {
-                    // Initialize or refill the bag if empty
                     if (unusedQuotesRef.current.length === 0) {
-                        // Refill with all quotes except the current one to prevent immediate repetition on cycle reset
                         unusedQuotesRef.current = quotes.filter(q => q !== targetPhrase);
                     }
-
-                    // Pick a random index from the available bag
                     const randomIndex = Math.floor(Math.random() * unusedQuotesRef.current.length);
                     const nextQuote = unusedQuotesRef.current[randomIndex];
-
-                    // Remove the used quote from the bag
                     unusedQuotesRef.current.splice(randomIndex, 1);
-
                     setTargetPhrase(nextQuote);
                 } else {
                     setTargetPhrase(text);
@@ -141,16 +122,104 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
     );
 };
 
+const DemoCard: React.FC<{ 
+    title: string; 
+    description: string; 
+    icon: React.ReactNode; 
+    color: string;
+    onClick: () => void;
+}> = ({ title, description, icon, color, onClick }) => (
+    <button
+        onClick={onClick}
+        className="flex flex-col items-start p-5 rounded-2xl bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)] transition-all duration-300 group text-left shadow-sm hover:shadow-xl hover:-translate-y-1"
+    >
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 ${color}`}>
+            {icon}
+        </div>
+        <h3 className="text-sm font-bold text-[var(--theme-text-primary)] mb-1 group-hover:text-[var(--theme-text-link)] transition-colors">
+            {title}
+        </h3>
+        <p className="text-xs text-[var(--theme-text-tertiary)] leading-relaxed line-clamp-2">
+            {description}
+        </p>
+        <div className="mt-4 flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[var(--theme-text-link)] opacity-0 group-hover:opacity-100 transition-opacity">
+            Try Demo <ArrowRight size={10} />
+        </div>
+    </button>
+);
+
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ 
-    t, 
+    t,
+    onSuggestionClick,
+    onOrganizeInfoClick,
+    showSuggestions
 }) => {
+    const demos = [
+        {
+            title: "3D Voxel Generator",
+            description: "Create an interactive 3D character using Three.js in the Canvas view.",
+            icon: <Box size={20} />,
+            color: "bg-rose-500/10 text-rose-500",
+            prompt: "Using the Canvas system, create an interactive 3D voxel model of a cyber-cat sitting on a neon base. Use Three.js and OrbitControls.",
+            isCanvas: true
+        },
+        {
+            title: "Smart Data Insights",
+            description: "Turn complex data into an interactive dashboard with charts.",
+            icon: <BarChart3 size={20} />,
+            color: "bg-blue-500/10 text-blue-500",
+            prompt: "Create an interactive sales performance dashboard for a fictional tech company. Include a table of monthly revenue and a pie chart for product categories using pure HTML/CSS or ECharts.",
+            isCanvas: true
+        },
+        {
+            title: "Deep Web Research",
+            description: "A comprehensive report generated using real-time search grounding.",
+            icon: <Search size={20} />,
+            color: "bg-emerald-500/10 text-emerald-500",
+            prompt: "Perform a deep search on the latest breakthroughs in sustainable energy battery tech from late 2024 to today. Provide a cited report with key companies and tech specs.",
+            isCanvas: false
+        }
+    ];
+
+    const handleDemoClick = (demo: typeof demos[0]) => {
+        if (demo.isCanvas && onOrganizeInfoClick) {
+            onOrganizeInfoClick(demo.prompt);
+        } else if (onSuggestionClick) {
+            onSuggestionClick(demo.prompt);
+        }
+    };
+
     return (
         <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl mx-auto px-4 pb-16">
-          <div className="w-full">
-            <h1 className="text-3xl md:text-4xl font-medium text-center text-[var(--theme-text-primary)] mb-6 sm:mb-12 welcome-message-animate tracking-tight min-h-[3rem] flex items-center justify-center">
-              <TypewriterEffect text={t('welcome_greeting')} />
-            </h1>
-          </div>
+            <div className="w-full">
+                <h1 className="text-3xl md:text-4xl font-medium text-center text-[var(--theme-text-primary)] mb-8 sm:mb-12 welcome-message-animate tracking-tight min-h-[3rem] flex items-center justify-center">
+                    <TypewriterEffect text={t('welcome_greeting')} />
+                </h1>
+            </div>
+
+            {showSuggestions && (
+                <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+                    <div className="col-span-full flex items-center gap-2 mb-2 px-1">
+                        <Sparkles size={16} className="text-amber-500" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-[var(--theme-text-tertiary)]">
+                            Featured Demos
+                        </span>
+                    </div>
+                    {demos.map((demo, i) => (
+                        <DemoCard 
+                            key={i}
+                            {...demo}
+                            onClick={() => handleDemoClick(demo)}
+                        />
+                    ))}
+                </div>
+            )}
+            
+            <div className="mt-12 text-center welcome-message-animate delay-500 opacity-60">
+                <p className="text-xs text-[var(--theme-text-tertiary)]">
+                    Type <code className="bg-[var(--theme-bg-tertiary)] px-1.5 py-0.5 rounded border border-[var(--theme-border-secondary)] font-mono">/help</code> to see all available commands.
+                </p>
+            </div>
         </div>
     );
 };

@@ -58,9 +58,6 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            // If we are currently loading this session in THIS tab, ignore external content updates 
-            // to avoid UI jitter (local stream handler manages state).
-            // However, we still want to refresh if we aren't the one generating.
             if (loadingSessionIds.has(id)) {
                 return;
             }
@@ -84,7 +81,8 @@ export const useChatState = (appSettings: AppSettings) => {
             else next.delete(sessionId);
             return next;
         });
-        broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
+        // broadcast helper now automatically adds TAB_ID and timestamp
+        broadcast({ type: 'SESSION_LOADING', sessionId, isLoading } as any);
     }, [broadcast]);
 
     const updateAndPersistSessions = useCallback(async (
@@ -97,12 +95,10 @@ export const useChatState = (appSettings: AppSettings) => {
             const newSessions = updater(prevSessions);
             
             if (persist) {
-                // Optimization: Granular updates based on reference equality
                 const updates: Promise<void>[] = [];
                 const newSessionsMap = new Map(newSessions.map(s => [s.id, s]));
                 const modifiedSessionIds: string[] = [];
 
-                // 1. Detect Updated or Added sessions
                 newSessions.forEach(session => {
                     const prevSession = prevSessions.find(s => s.id === session.id);
                     if (prevSession !== session) {
@@ -111,7 +107,6 @@ export const useChatState = (appSettings: AppSettings) => {
                     }
                 });
 
-                // 2. Detect Deleted sessions
                 prevSessions.forEach(session => {
                     if (!newSessionsMap.has(session.id)) {
                         updates.push(dbService.deleteSession(session.id));
@@ -121,7 +116,6 @@ export const useChatState = (appSettings: AppSettings) => {
                 if (updates.length > 0) {
                     Promise.all(updates)
                         .then(() => {
-                            // Broadcast general update or specific content update
                             if (modifiedSessionIds.length === 1) {
                                 broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessionIds[0] });
                             } else {
@@ -162,6 +156,7 @@ export const useChatState = (appSettings: AppSettings) => {
     }, [activeSessionId, updateAndPersistSessions]);
 
     return {
+        ...chatState, // Spread existing state fields from your manual implementation if needed, but we redefine the essentials below
         savedSessions, setSavedSessions,
         savedGroups, setSavedGroups,
         activeSessionId, setActiveSessionId,
@@ -189,6 +184,6 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading // Export new helper
+        setSessionLoading
     };
 };
