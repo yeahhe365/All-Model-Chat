@@ -1,6 +1,8 @@
 
 import { useMemo } from 'react';
 import { useAppLogic } from '../useAppLogic';
+import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { ChatSettings } from '../../../types';
 
 export const useAppModalsProps = (logic: ReturnType<typeof useAppLogic>) => {
   const {
@@ -20,24 +22,21 @@ export const useAppModalsProps = (logic: ReturnType<typeof useAppLogic>) => {
   // Merge active chat settings into app settings for the modal so controls reflect current session
   const settingsForModal = useMemo(() => {
     if (chatState.activeSessionId && chatState.currentChatSettings) {
-        // Spread global settings first, then overlay current session specific settings
-        // This avoids manually listing every single property and ensures new props are handled automatically.
-        const sessionOverrides = { ...chatState.currentChatSettings };
-
-        // Explicitly remove global-only keys from the override object to prevent stale session data
-        // from overwriting global settings (like API Config).
-        // This is necessary because session settings might contain polluted data from creation time.
-        delete (sessionOverrides as any).useCustomApiConfig;
-        delete (sessionOverrides as any).apiKey;
-        delete (sessionOverrides as any).apiProxyUrl;
-        delete (sessionOverrides as any).useApiProxy;
-        delete (sessionOverrides as any).themeId;
-        delete (sessionOverrides as any).baseFontSize;
-        delete (sessionOverrides as any).language;
+        // Only overlay session settings that are actually part of the ChatSettings schema.
+        // This prevents global-only settings (like isStreamingEnabled, themeId) from being shadowed 
+        // by stale values that might exist in the session object due to initial cloning.
+        const cleanSessionOverrides: any = {};
+        
+        // Use DEFAULT_CHAT_SETTINGS keys as an allowlist for what constitutes a "Chat Setting"
+        (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>).forEach(key => {
+             if (Object.prototype.hasOwnProperty.call(chatState.currentChatSettings, key)) {
+                 cleanSessionOverrides[key] = (chatState.currentChatSettings as any)[key];
+             }
+        });
 
         return { 
             ...appSettings,
-            ...sessionOverrides
+            ...cleanSessionOverrides
         };
     }
     return appSettings;
