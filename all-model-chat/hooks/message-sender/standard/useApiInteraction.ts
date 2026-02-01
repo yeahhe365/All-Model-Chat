@@ -13,7 +13,7 @@ interface UseApiInteractionProps {
     messages: ChatMessage[];
     getStreamHandlers: GetStreamHandlers;
     handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
 
@@ -22,7 +22,7 @@ export const useApiInteraction = ({
     messages,
     getStreamHandlers,
     handleGenerateCanvas,
-    setLoadingSessionIds,
+    setSessionLoading,
     activeJobs
 }: UseApiInteractionProps) => {
 
@@ -40,8 +40,8 @@ export const useApiInteraction = ({
         aspectRatio: string;
         imageSize: string | undefined;
         newAbortController: AbortController;
-        textToUse: string; // Passed for raw mode manual history construction
-        enrichedFiles: UploadedFile[]; // Passed for raw mode
+        textToUse: string; 
+        enrichedFiles: UploadedFile[];
     }) => {
         const {
             finalSessionId, generationId, generationStartTime, keyToUse, activeModelId,
@@ -50,15 +50,11 @@ export const useApiInteraction = ({
             textToUse, enrichedFiles
         } = params;
 
-        // 1. Prepare History (State Slicing)
         let baseMessagesForApi: ChatMessage[] = messages;
 
         if (effectiveEditingId) {
             const index = messages.findIndex(m => m.id === effectiveEditingId);
             if (index !== -1) {
-                // Determine cut-off point based on mode
-                // Standard/Raw Mode: History is everything UP TO user message.
-                // Continue Mode: History is everything UP TO the model message being continued.
                 baseMessagesForApi = messages.slice(0, index);
             }
         }
@@ -79,8 +75,6 @@ export const useApiInteraction = ({
             finalParts = [{ text: prefillContent }];
 
         } else if (isRawMode) {
-            // In raw mode, the user message we just "optimistically" added isn't in `messages` yet (stale closure).
-            // We must manually append it to the history list for the API call.
             const tempUserMsg: ChatMessage = { 
                 id: 'temp-raw-user', 
                 role: 'user', 
@@ -94,8 +88,7 @@ export const useApiInteraction = ({
             finalParts = [{ text: '<thinking>' }];
             
         } else if (promptParts.length === 0) {
-            // Guard clause: If no content, abort early
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId); return next; });
+            setSessionLoading(finalSessionId, false);
             activeJobs.current.delete(generationId);
             return;
         }
@@ -103,7 +96,6 @@ export const useApiInteraction = ({
         const shouldStripThinking = sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;
         const historyForChat = await createChatHistoryForApi(baseMessagesForApi, shouldStripThinking);
 
-        // 2. Build Config
         const config = buildGenerationConfig(
             activeModelId,
             sessionToUpdate.systemInstruction,
@@ -121,7 +113,6 @@ export const useApiInteraction = ({
             sessionToUpdate.mediaResolution
         );
 
-        // 3. Setup Stream Handlers
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
             finalSessionId,
             generationId,
@@ -138,10 +129,9 @@ export const useApiInteraction = ({
             }
         );
 
-        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId));
+        setSessionLoading(finalSessionId, true);
         activeJobs.current.set(generationId, newAbortController);
 
-        // 4. Call Service
         if (appSettings.isStreamingEnabled) {
             await geminiServiceInstance.sendMessageStream(
                 keyToUse,
@@ -172,7 +162,7 @@ export const useApiInteraction = ({
                 }
             );
         }
-    }, [appSettings, messages, getStreamHandlers, handleGenerateCanvas, setLoadingSessionIds, activeJobs]);
+    }, [appSettings, messages, getStreamHandlers, handleGenerateCanvas, setSessionLoading, activeJobs]);
 
     return { performApiCall };
 };

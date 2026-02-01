@@ -12,14 +12,14 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 interface ChatStreamHandlerProps {
     appSettings: AppSettings;
     updateAndPersistSessions: SessionsUpdater;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
 
 export const useChatStreamHandler = ({
     appSettings,
     updateAndPersistSessions,
-    setLoadingSessionIds,
+    setSessionLoading,
     activeJobs
 }: ChatStreamHandlerProps) => {
     const { handleApiError } = useApiErrorHandler(updateAndPersistSessions);
@@ -38,12 +38,11 @@ export const useChatStreamHandler = ({
 
         const streamOnError = (error: Error) => {
             handleApiError(error, currentSessionId, generationId);
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            setSessionLoading(currentSessionId, false);
             activeJobs.current.delete(generationId);
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => {
-            // Use correct language from state
             const lang = appSettings.language === 'system' 
                 ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
                 : appSettings.language;
@@ -52,10 +51,8 @@ export const useChatStreamHandler = ({
                 firstContentPartTime = new Date();
             }
 
-            // Record Token Usage Statistics
             if (usageMetadata) {
                 const { promptTokens, completionTokens } = calculateTokenStats(usageMetadata);
-
                 logService.recordTokenUsage(
                     currentChatSettings.modelId,
                     promptTokens,
@@ -102,12 +99,10 @@ export const useChatStreamHandler = ({
                 return newSessions;
             }, { persist: true });
 
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(currentSessionId); return next; });
+            setSessionLoading(currentSessionId, false);
             activeJobs.current.delete(generationId);
 
-            // Invoke success callback after state updates
             if (onSuccess && !abortController.signal.aborted) {
-                // Use the locally accumulated text to avoid state closure issues
                 setTimeout(() => onSuccess(generationId, accumulatedText), 0);
             }
         };
@@ -136,7 +131,6 @@ export const useChatStreamHandler = ({
                 const newSessions = [...prev];
                 const sessionToUpdate = { ...newSessions[sessionIndex] };
                 
-                // Use pure processor to calculate new messages state
                 const updatedMessages = updateMessagesWithPart(
                     sessionToUpdate.messages,
                     part,
@@ -175,7 +169,7 @@ export const useChatStreamHandler = ({
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };
 
-    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setLoadingSessionIds, activeJobs]);
+    }, [appSettings.isStreamingEnabled, appSettings.isCompletionNotificationEnabled, appSettings.language, updateAndPersistSessions, handleApiError, setSessionLoading, activeJobs]);
     
     return { getStreamHandlers };
 };

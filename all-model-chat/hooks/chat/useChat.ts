@@ -16,7 +16,6 @@ import { useChatEffects } from './useChatEffects';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
     
-    // 1. Core State Management
     const chatState = useChatState(appSettings);
     const {
         savedSessions, setSavedSessions, savedGroups, setSavedGroups,
@@ -39,13 +38,11 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setCurrentChatSettings, updateAndPersistSessions, updateAndPersistGroups,
         fileDraftsRef,
         refreshSessions,
-        setSessionLoading // New prop
+        setSessionLoading 
     } = chatState;
 
-    // Ref to track which API key was last used for a session (for sticky affinity)
     const sessionKeyMapRef = useRef<Map<string, string>>(new Map());
 
-    // 2. Feature Hooks
     const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels();
     
     const historyHandler = useChatHistory({ 
@@ -92,13 +89,12 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setLoadingSessionIds, updateAndPersistSessions, language, 
         scrollContainerRef: scrollHandler.scrollContainerRef,
         sessionKeyMapRef,
-        setSessionLoading // Pass it down
+        setSessionLoading 
     });
 
     useAutoTitling({ appSettings, savedSessions, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
     useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, sessionKeyMapRef });
 
-    // 3. Actions & Handlers
     const { loadChatSession, startNewChat, handleDeleteChatHistorySession } = historyHandler;
 
     const chatActions = useChatActions({
@@ -119,7 +115,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         userScrolledUp
     });
 
-    // 4. Effects (Modularized)
     useChatEffects({
         activeSessionId,
         savedSessions,
@@ -142,7 +137,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     });
 
     return {
-        // State
         messages,
         isLoading,
         loadingSessionIds,
@@ -172,11 +166,9 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setImageSize,
         ttsMessageId,
         
-        // Persistence
         updateAndPersistSessions,
         updateAndPersistGroups,
         
-        // Scroll
         scrollContainerRef: scrollHandler.scrollContainerRef,
         setScrollContainerRef: scrollHandler.setScrollContainerRef,
         scrollNavVisibility: scrollHandler.scrollNavVisibility,
@@ -184,7 +176,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         scrollToPrevTurn: scrollHandler.scrollToPrevTurn,
         scrollToNextTurn: scrollHandler.scrollToNextTurn,
         
-        // History
         loadChatSession,
         startNewChat,
         handleDeleteChatHistorySession,
@@ -199,7 +190,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         clearCacheAndReload: historyHandler.clearCacheAndReload,
         clearAllHistory: historyHandler.clearAllHistory,
         
-        // Files & DragDrop
         isAppDraggingOver: dragDropHandler.isAppDraggingOver,
         isProcessingDrop: dragDropHandler.isProcessingDrop,
         handleProcessAndAddFiles: fileHandler.handleProcessAndAddFiles,
@@ -208,9 +198,9 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleAppDragLeave: dragDropHandler.handleAppDragLeave,
         handleAppDrop: dragDropHandler.handleAppDrop,
         handleCancelFileUpload: fileHandler.handleCancelFileUpload,
+        handleCancelUpload: fileHandler.handleCancelFileUpload,
         handleAddFileById: fileHandler.handleAddFileById,
         
-        // Messaging
         handleSendMessage: messageHandler.handleSendMessage,
         handleGenerateCanvas: messageHandler.handleGenerateCanvas,
         handleStopGenerating: messageHandler.handleStopGenerating,
@@ -224,12 +214,10 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleEditLastUserMessage: messageHandler.handleEditLastUserMessage,
         handleContinueGeneration: messageHandler.handleContinueGeneration,
         
-        // Scenarios
         savedScenarios: scenarioHandler.savedScenarios,
         handleSaveAllScenarios: scenarioHandler.handleSaveAllScenarios,
         handleLoadPreloadedScenario: scenarioHandler.handleLoadPreloadedScenario,
         
-        // Actions (Control)
         handleTranscribeAudio: chatActions.handleTranscribeAudio,
         setCurrentChatSettings,
         handleSelectModelInHeader: chatActions.handleSelectModelInHeader,

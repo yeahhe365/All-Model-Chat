@@ -13,7 +13,7 @@ export const useCanvasGenerator = ({
     messages,
     activeSessionId,
     updateAndPersistSessions,
-    setLoadingSessionIds,
+    setSessionLoading,
     activeJobs,
     getStreamHandlers,
     setAppFileError,
@@ -22,13 +22,8 @@ export const useCanvasGenerator = ({
 }: CanvasGeneratorProps) => {
 
     const handleGenerateCanvas = useCallback(async (sourceMessageId: string, content: string) => {
-        if (activeJobs.current.size > 0 && Array.from(activeJobs.current.keys()).some(id => messages.find(m => m.id === id)?.isLoading)) {
-             // Optional: concurrency check
-        }
-        
         if (!activeSessionId) return;
 
-        // 1. Get Key
         const keyResult = getKeyForRequest(appSettings, currentChatSettings, { skipIncrement: true });
         if ('error' in keyResult) {
             setAppFileError(keyResult.error);
@@ -36,23 +31,20 @@ export const useCanvasGenerator = ({
         }
         const { key: keyToUse } = keyResult;
 
-        // 2. Prepare IDs and State
         const generationId = generateUniqueId();
         const generationStartTime = new Date();
         const newAbortController = new AbortController();
 
-        // 3. Update State (Insert Placeholder immediately after the source message)
         updateAndPersistSessions(prev => prev.map(s => {
             if (s.id === activeSessionId) {
                 const sourceIndex = s.messages.findIndex(m => m.id === sourceMessageId);
-                // If source not found, append to end (fallback)
                 const insertIndex = sourceIndex !== -1 ? sourceIndex + 1 : s.messages.length;
 
                 const newMsg = createMessage('model', '', {
                     id: generationId,
                     isLoading: true,
                     generationStartTime,
-                    excludeFromContext: true // Don't include this generated canvas message in future AI context
+                    excludeFromContext: true 
                 });
                 
                 const newMessages = [...s.messages];
@@ -63,23 +55,20 @@ export const useCanvasGenerator = ({
             return s;
         }));
 
-        setLoadingSessionIds(prev => new Set(prev).add(activeSessionId));
+        setSessionLoading(activeSessionId, true);
         activeJobs.current.set(generationId, newAbortController);
 
-        // Define specific settings for Canvas generation
         const canvasModelId = appSettings.autoCanvasModelId || 'gemini-3-flash-preview';
         const canvasThinkingLevel = 'HIGH';
         
-        // Create a transient settings object for the stream handler to ensure accurate logging
         const canvasSettings = {
             ...currentChatSettings,
             modelId: canvasModelId,
             thinkingLevel: canvasThinkingLevel as 'HIGH',
-            thinkingBudget: 0, // Ensure level is prioritized
-            showThoughts: true, // Generally useful to see reasoning for complex canvas tasks
+            thinkingBudget: 0,
+            showThoughts: true,
         };
 
-        // 4. Prepare Stream Handlers
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
             activeSessionId, 
             generationId, 
@@ -88,14 +77,13 @@ export const useCanvasGenerator = ({
             canvasSettings
         );
 
-        // 5. Build Config
         const config = buildGenerationConfig(
             canvasModelId,
-            CANVAS_SYSTEM_PROMPT, // Use Canvas Prompt
+            CANVAS_SYSTEM_PROMPT,
             { temperature: 0.7, topP: 0.95 },
-            true, // Force showThoughts
-            0, // Force budget 0 to use level
-            false, // Disable tools for canvas generation to focus on HTML output
+            true,
+            0,
+            false,
             false,
             false,
             canvasThinkingLevel,
@@ -103,18 +91,16 @@ export const useCanvasGenerator = ({
             false
         );
 
-        // Prepare prompt with instruction
         const t = getTranslator(language);
         const promptInstruction = t('suggestion_html_desc');
         const finalPrompt = `${promptInstruction}\n\n${content}`;
 
         try {
-            // 6. Call API (Stateless: Only send the source content as user prompt)
             await geminiServiceInstance.sendMessageStream(
                 keyToUse,
-                canvasModelId, // Use configured model
-                [], // Empty history implies independent generation
-                [{ text: finalPrompt }], // Use combined instruction + content
+                canvasModelId,
+                [],
+                [{ text: finalPrompt }],
                 config,
                 newAbortController.signal,
                 streamOnPart,
@@ -126,7 +112,7 @@ export const useCanvasGenerator = ({
             streamOnError(error instanceof Error ? error : new Error(String(error)));
         }
 
-    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setLoadingSessionIds, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, messages, language]);
+    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setSessionLoading, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, messages, language]);
 
     return { handleGenerateCanvas };
 };

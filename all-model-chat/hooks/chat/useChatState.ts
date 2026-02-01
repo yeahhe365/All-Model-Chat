@@ -49,6 +49,10 @@ export const useChatState = (appSettings: AppSettings) => {
 
     // --- Sync Hook Integration ---
     const { broadcast } = useMultiTabSync({
+        onSettingsUpdated: () => {
+            logService.info("[Sync] Reloading settings from DB");
+            refreshSessions();
+        },
         onSessionsUpdated: () => {
             logService.debug("[Sync] Sessions updated externally, refreshing...");
             refreshSessions();
@@ -58,8 +62,6 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            // Optimization: If this tab is the one loading, we don't need to refresh from DB
-            // because the state is already being updated by the stream.
             if (loadingSessionIds.has(id)) {
                 return;
             }
@@ -83,8 +85,7 @@ export const useChatState = (appSettings: AppSettings) => {
             else next.delete(sessionId);
             return next;
         });
-        // broadcast helper now automatically adds TAB_ID and timestamp
-        broadcast({ type: 'SESSION_LOADING', sessionId, isLoading } as any);
+        broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
     }, [broadcast]);
 
     const updateAndPersistSessions = useCallback(async (
@@ -185,6 +186,6 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading
+        setSessionLoading 
     };
 };

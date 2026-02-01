@@ -22,7 +22,7 @@ export const useStandardChat = ({
     activeSessionId,
     setActiveSessionId,
     activeJobs,
-    setLoadingSessionIds,
+    setSessionLoading,
     updateAndPersistSessions,
     getStreamHandlers,
     sessionKeyMapRef,
@@ -42,7 +42,7 @@ export const useStandardChat = ({
         messages,
         getStreamHandlers,
         handleGenerateCanvas,
-        setLoadingSessionIds,
+        setSessionLoading,
         activeJobs
     });
 
@@ -54,13 +54,9 @@ export const useStandardChat = ({
         isContinueMode: boolean = false,
         isFastMode: boolean = false
     ) => {
-        // Prepare separate settings objects:
-        // 1. settingsForPersistence: Keeps the UI state (e.g. High Thinking) intact.
-        // 2. settingsForApi: Applies temporary overrides (e.g. Low Thinking for Fast Mode).
         const settingsForPersistence = { ...currentChatSettings };
         let settingsForApi = { ...currentChatSettings };
         
-        // Fast Mode Override logic (Applied only to API settings)
         if (isFastMode) {
             const isGemini3Flash = activeModelId.includes('gemini-3') && activeModelId.includes('flash');
             const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
@@ -106,7 +102,6 @@ export const useStandardChat = ({
         
         const successfullyProcessedFiles = filesToUse.filter(f => f.uploadState === 'active' && !f.error && !f.isProcessing);
         
-        // Prepare content parts
         const { contentParts: promptParts, enrichedFiles } = await buildContentParts(
             textToUse.trim(), 
             successfullyProcessedFiles,
@@ -120,7 +115,6 @@ export const useStandardChat = ({
             && !isContinueMode 
             && MODELS_SUPPORTING_RAW_MODE.some(m => activeModelId.includes(m));
         
-        // Update Session State Optimistically using PERSISTENCE settings
         updateSessionState({
             activeSessionId,
             finalSessionId,
@@ -131,14 +125,13 @@ export const useStandardChat = ({
             generationStartTime,
             isContinueMode,
             isRawMode,
-            sessionToUpdate: settingsForPersistence, // Keep original settings in DB/UI
+            sessionToUpdate: settingsForPersistence,
             keyToUse,
             shouldLockKey
         });
 
         userScrolledUp.current = false;
         
-        // Execute API Call using API settings (with Fast Mode override)
         await performApiCall({
             finalSessionId,
             generationId,
@@ -149,7 +142,7 @@ export const useStandardChat = ({
             effectiveEditingId,
             isContinueMode,
             isRawMode,
-            sessionToUpdate: settingsForApi, // Use override for generation
+            sessionToUpdate: settingsForApi,
             aspectRatio: aspectRatio,
             imageSize: imageSize,
             newAbortController,
