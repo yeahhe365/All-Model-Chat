@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil, Wand2, CirclePlay } from 'lucide-react';
-import { ChatMessage, ThemeColors } from '../../types';
+import { ChatMessage } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
@@ -45,7 +45,6 @@ interface MessageActionsProps {
     onGenerateCanvas: (messageId: string, text: string) => void;
     onContinueGeneration: (messageId: string) => void;
     ttsMessageId: string | null;
-    themeColors: ThemeColors;
     themeId: string;
     t: (key: keyof typeof translations) => string;
 }
@@ -62,7 +61,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onGenerateCanvas,
     onContinueGeneration,
     ttsMessageId,
-    themeColors,
     themeId,
     t
 }) => {
@@ -164,7 +162,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                             message={message}
                             sessionTitle={sessionTitle}
                             messageIndex={messageIndex}
-                            themeColors={themeColors} 
                             themeId={themeId} 
                             t={t} 
                             className={actionButtonClasses} 

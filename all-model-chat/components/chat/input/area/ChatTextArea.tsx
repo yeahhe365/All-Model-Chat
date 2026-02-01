@@ -10,7 +10,7 @@ interface ChatTextAreaProps {
     onPaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
     onCompositionStart: () => void;
     onCompositionEnd: () => void;
-    onFocus: () => void;
+    onFocus?: () => void;
     placeholder: string;
     disabled: boolean;
     isFullscreen: boolean;

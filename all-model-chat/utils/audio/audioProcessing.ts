@@ -1,16 +1,7 @@
 
-/**
- * Decodes a Base64 string into a Uint8Array.
- */
-export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
-    const binaryString = atob(base64);
-    const len = binaryString.length;
-    const bytes = new Uint8Array(len);
-    for (let i = 0; i < len; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return bytes;
-};
+import { decodeBase64ToArrayBuffer } from '../fileHelpers';
+
+export { decodeBase64ToArrayBuffer };
 
 /**
  * Decodes a raw PCM byte array into an AudioBuffer using the provided AudioContext.
@@ -53,6 +44,48 @@ export const float32ToPCM16Base64 = (data: Float32Array): string => {
 };
 
 /**
+ * Helper to write WAV header and data to an ArrayBuffer
+ */
+const createWavBuffer = (pcmData: Uint8Array, sampleRate: number, numChannels: number): ArrayBuffer => {
+    const bytesPerSample = 2; // 16-bit
+    const blockAlign = numChannels * bytesPerSample;
+    const wav = new ArrayBuffer(44 + pcmData.length);
+    const dv = new DataView(wav);
+
+    let p = 0;
+    const writeStr = (s: string) => [...s].forEach(ch => dv.setUint8(p++, ch.charCodeAt(0)));
+
+    writeStr('RIFF');
+    dv.setUint32(p, 36 + pcmData.length, true); p += 4;
+    writeStr('WAVEfmt ');
+    dv.setUint32(p, 16, true); p += 4;        // fmt length
+    dv.setUint16(p, 1, true);  p += 2;        // PCM
+    dv.setUint16(p, numChannels, true); p += 2;
+    dv.setUint32(p, sampleRate, true); p += 4;
+    dv.setUint32(p, sampleRate * blockAlign, true); p += 4;
+    dv.setUint16(p, blockAlign, true); p += 2;
+    dv.setUint16(p, bytesPerSample * 8, true); p += 2;
+    writeStr('data');
+    dv.setUint32(p, pcmData.length, true); p += 4;
+
+    new Uint8Array(wav, 44).set(pcmData);
+    return wav;
+};
+
+/**
+ * Converts a base64 encoded PCM16 string to a WAV Blob URL.
+ */
+export function pcmBase64ToWavUrl(
+  base64: string,
+  sampleRate = 24_000,
+  numChannels = 1,
+): string {
+  const pcm = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const wavBuffer = createWavBuffer(pcm, sampleRate, numChannels);
+  return URL.createObjectURL(new Blob([wavBuffer], { type: 'audio/wav' }));
+}
+
+/**
  * Combines multiple Base64 PCM16 chunks into a single WAV Blob URL.
  */
 export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000): string | null => {
@@ -76,33 +109,11 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
         offset += chunk.length;
     }
 
-    // 3. Create WAV Header
-    const numChannels = 1;
-    const bytesPerSample = 2; // 16-bit
-    const blockAlign = numChannels * bytesPerSample;
-    const wav = new ArrayBuffer(44 + totalLen);
-    const dv = new DataView(wav);
-
-    let p = 0;
-    const writeStr = (s: string) => [...s].forEach(ch => dv.setUint8(p++, ch.charCodeAt(0)));
-
-    writeStr('RIFF');
-    dv.setUint32(p, 36 + totalLen, true); p += 4;
-    writeStr('WAVEfmt ');
-    dv.setUint32(p, 16, true); p += 4;        // fmt length
-    dv.setUint16(p, 1, true);  p += 2;        // PCM
-    dv.setUint16(p, numChannels, true); p += 2;
-    dv.setUint32(p, sampleRate, true); p += 4;
-    dv.setUint32(p, sampleRate * blockAlign, true); p += 4;
-    dv.setUint16(p, blockAlign, true); p += 2;
-    dv.setUint16(p, bytesPerSample * 8, true); p += 2;
-    writeStr('data');
-    dv.setUint32(p, totalLen, true); p += 4;
-
-    new Uint8Array(wav, 44).set(merged);
+    // 3. Create WAV Buffer using shared helper
+    const wavBuffer = createWavBuffer(merged, sampleRate, 1);
 
     // 4. Create Blob and URL
-    const blob = new Blob([wav], { type: 'audio/wav' });
+    const blob = new Blob([wavBuffer], { type: 'audio/wav' });
     return URL.createObjectURL(blob);
 };
 

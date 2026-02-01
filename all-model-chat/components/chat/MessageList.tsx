@@ -5,7 +5,6 @@ import { Message } from '../message/Message';
 import { translations } from '../../utils/appUtils';
 import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
 import { FilePreviewModal } from '../modals/FilePreviewModal';
-import { ThemeColors } from '../../types/theme';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { MessageListPlaceholder } from './message-list/MessageListPlaceholder';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
@@ -26,7 +25,6 @@ export interface MessageListProps {
   onRetryMessage: (messageId: string) => void;
   onUpdateMessageFile: (messageId: string, fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => void;
   showThoughts: boolean;
-  themeColors: ThemeColors;
   themeId: string;
   baseFontSize: number;
   expandCodeBlocksByDefault: boolean;
@@ -55,7 +53,7 @@ export interface MessageListProps {
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, sessionTitle, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, 
-    onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, themeColors, baseFontSize,
+    onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, t, language, themeId,
     scrollNavVisibility, onScrollToPrevTurn, onScrollToNextTurn,
     chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote, onInsert
@@ -123,7 +121,6 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onImageClick={handleFileClick} 
                         onOpenHtmlPreview={handleOpenHtmlPreview}
                         showThoughts={showThoughts}
-                        themeColors={themeColors}
                         themeId={themeId}
                         baseFontSize={baseFontSize}
                         expandCodeBlocksByDefault={expandCodeBlocksByDefault}

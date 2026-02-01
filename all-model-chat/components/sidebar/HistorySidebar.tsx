@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SavedChatSession, ChatGroup, ThemeColors } from '../../types';
+import { SavedChatSession, ChatGroup } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
@@ -32,7 +32,6 @@ export interface HistorySidebarProps {
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
-  themeColors: ThemeColors;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
   themeId: string;

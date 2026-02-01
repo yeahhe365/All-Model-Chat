@@ -1,5 +1,6 @@
 
 import { triggerDownload } from './core';
+import { createSnapshotContainer, createExportDOMHeader } from './dom';
 
 /**
  * Exports a given HTML element as a PNG image.
@@ -50,6 +51,47 @@ export const exportElementAsPng = async (
             console.error("Canvas to Blob conversion failed");
         }
     }, 'image/png');
+};
+
+/**
+ * Orchestrates the full process of creating a snapshot container, injecting a header,
+ * capturing the content, and downloading the PNG.
+ */
+export const generateSnapshotPng = async (
+    contentElement: HTMLElement,
+    filename: string,
+    themeId: string,
+    headerConfig: { title: string; metaLeft: string; metaRight: string },
+    options: { width?: string; scale?: number } = {}
+) => {
+    let cleanup = () => { };
+    try {
+        const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
+            themeId,
+            options.width || '800px'
+        );
+        cleanup = remove;
+
+        // Create header using shared helper
+        const headerDiv = createExportDOMHeader(headerConfig.title, headerConfig.metaLeft, headerConfig.metaRight);
+        innerContent.appendChild(headerDiv);
+
+        const bodyDiv = document.createElement('div');
+        bodyDiv.style.padding = '0 2rem 2rem 2rem';
+        bodyDiv.appendChild(contentElement);
+        innerContent.appendChild(bodyDiv);
+        
+        // Wait for rendering
+        await new Promise(resolve => setTimeout(resolve, 800)); 
+
+        await exportElementAsPng(container, filename, {
+            backgroundColor: rootBgColor,
+            scale: options.scale || 2, 
+        });
+
+    } finally {
+        cleanup();
+    }
 };
 
 /**

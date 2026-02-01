@@ -64,7 +64,6 @@ export const useChatInputLogic = (props: ChatInputProps) => {
     const voiceState = useVoiceInput({
         onTranscribeAudio,
         setInputText: inputState.setInputText,
-        adjustTextareaHeight: inputState.adjustTextareaHeight,
         isAudioCompressionEnabled: appSettings.isAudioCompressionEnabled,
         isSystemAudioRecordingEnabled: appSettings.isSystemAudioRecordingEnabled,
         textareaRef: inputState.textareaRef,
@@ -144,6 +143,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         onMessageSent, onUpdateMessageContent,
         onStopGenerating, onCancelEdit, onEditLastUserMessage,
         isMobile: inputState.isMobile, isDesktop, canSend,
+        adjustTextareaHeight: () => {} // No-op as it's handled by component now
     });
 
     // 9. Effects

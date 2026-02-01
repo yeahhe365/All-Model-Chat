@@ -30,7 +30,6 @@ interface UseSubmissionHandlersProps {
     setAppFileError: (error: string | null) => void;
     appSettings: AppSettings;
     currentChatSettings: ChatSettings;
-    adjustTextareaHeight: () => void;
 }
 
 export const useSubmissionHandlers = ({
@@ -57,7 +56,6 @@ export const useSubmissionHandlers = ({
     setAppFileError,
     appSettings,
     currentChatSettings,
-    adjustTextareaHeight,
 }: UseSubmissionHandlersProps) => {
 
     const performSubmit = useCallback((isFastMode: boolean) => {
@@ -125,14 +123,13 @@ export const useSubmissionHandlers = ({
         try {
             const translatedText = await geminiServiceInstance.translateText(keyResult.key, inputText);
             setInputText(translatedText);
-            setTimeout(() => adjustTextareaHeight(), 0);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Translation failed.";
             setAppFileError(errorMessage);
         } finally {
             setIsTranslating(false);
         }
-    }, [inputText, isTranslating, setAppFileError, appSettings, currentChatSettings, setInputText, adjustTextareaHeight]);
+    }, [inputText, isTranslating, setAppFileError, appSettings, currentChatSettings, setInputText]);
 
     return {
         handleSubmit,

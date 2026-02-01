@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { AppSettings, ChatMessage, SideViewContent } from '../../types';
-import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, BBOX_SYSTEM_PROMPT } from '../../constants/appConstants';
+import { AppSettings, ChatMessage, SideViewContent, ChatSettings } from '../../types';
+import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, BBOX_SYSTEM_PROMPT, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { useAppSettings } from '../core/useAppSettings';
 import { useChat } from '../chat/useChat';
 import { useAppUI } from '../core/useAppUI';
@@ -115,22 +115,24 @@ export const useAppLogic = () => {
 
   const handleSaveSettings = useCallback((newSettings: AppSettings) => {
     setAppSettings(newSettings);
+    // If there is an active session, sync relevant global settings to it
     if (activeSessionId && setCurrentChatSettings) {
-      setCurrentChatSettings(prevChatSettings => ({
-        ...prevChatSettings,
-        modelId: newSettings.modelId,
-        temperature: newSettings.temperature,
-        topP: newSettings.topP,
-        systemInstruction: newSettings.systemInstruction,
-        showThoughts: newSettings.showThoughts,
-        ttsVoice: newSettings.ttsVoice,
-        thinkingBudget: newSettings.thinkingBudget,
-        thinkingLevel: newSettings.thinkingLevel,
-        lockedApiKey: null,
-        mediaResolution: newSettings.mediaResolution,
-        safetySettings: newSettings.safetySettings,
-        isRawModeEnabled: newSettings.isRawModeEnabled,
-      }));
+      setCurrentChatSettings(prevChatSettings => {
+        // Start with existing session settings and reset lockedApiKey
+        // (Changing global settings usually implies breaking out of a locked key context)
+        const nextSettings = { ...prevChatSettings, lockedApiKey: null };
+        
+        // Dynamically sync all chat-related settings defined in DEFAULT_CHAT_SETTINGS
+        (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>).forEach((key) => {
+             // Skip lockedApiKey as we explicitly set it to null above
+             // Also ensure the key exists in the new settings object (it should, as AppSettings extends ChatSettings)
+             if (key !== 'lockedApiKey' && key in newSettings) {
+                 (nextSettings as any)[key] = (newSettings as any)[key];
+             }
+        });
+        
+        return nextSettings;
+      });
     }
   }, [setAppSettings, activeSessionId, setCurrentChatSettings]);
 

@@ -1,8 +1,9 @@
+
 import { ChatMessage, UploadedFile, ChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
-import { generateUniqueId, base64ToBlobUrl, getExtensionFromMimeType, getTranslator } from '../../utils/appUtils';
+import { generateUniqueId, calculateTokenStats, createMessage, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
 import { isToolMessage } from './utils';
-import { SUPPORTED_GENERATED_MIME_TYPES } from './constants';
+import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
 export const updateMessagesWithPart = (
     messages: ChatMessage[],
@@ -38,18 +39,15 @@ export const updateMessagesWithPart = (
     let lastMessage = newMessages.length > 0 ? newMessages[newMessages.length - 1] : null;
     const lastMessageIndex = newMessages.length - 1;
 
-    const createNewMessage = (content: string): ChatMessage => {
+    const createNewModelMessage = (content: string): ChatMessage => {
         const id = generateUniqueId();
         newModelMessageIds.add(id);
-        return { 
-            id, 
-            role: 'model', 
-            content, 
-            timestamp: new Date(), 
-            isLoading: true, 
+        return createMessage('model', content, {
+            id,
+            isLoading: true,
             generationStartTime: generationStartTime,
             firstTokenTimeMs: now - generationStartTime.getTime() // TTFT for new messages
-        };
+        });
     };
 
     // Update existing message if possible, and capture TTFT if missing
@@ -66,14 +64,14 @@ export const updateMessagesWithPart = (
             newMessages[lastMessageIndex] = { ...lastMessage, ...updates };
         }
     } else if (anyPart.text) {
-        newMessages.push(createNewMessage(anyPart.text));
+        newMessages.push(createNewModelMessage(anyPart.text));
     }
 
     // Handle other parts
     if (anyPart.executableCode) {
         const codePart = anyPart.executableCode as { language: string, code: string };
         const toolContent = `\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\``;
-        newMessages.push(createNewMessage(toolContent));
+        newMessages.push(createNewModelMessage(toolContent));
     } else if (anyPart.codeExecutionResult) {
         const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
         const escapeHtml = (unsafe: string) => {
@@ -85,7 +83,7 @@ export const updateMessagesWithPart = (
             toolContent += `<pre><code class="language-text">${escapeHtml(resultPart.output)}</code></pre>`;
         }
         toolContent += '</div>';
-        newMessages.push(createNewMessage(toolContent));
+        newMessages.push(createNewModelMessage(toolContent));
     } else if (anyPart.inlineData) {
         const { mimeType, data } = anyPart.inlineData;
         
@@ -96,31 +94,19 @@ export const updateMessagesWithPart = (
             SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
 
         if (isSupportedFile) {
-            const dataUrl = base64ToBlobUrl(data, mimeType);
-            
-            let fileName = 'Generated File';
-            const ext = getExtensionFromMimeType(mimeType);
-            if (ext) {
-                fileName = `generated_file_${generateUniqueId().slice(-4)}${ext}`;
-            } else if (mimeType.startsWith('image/')) {
-                fileName = `generated-image-${generateUniqueId().slice(-4)}.png`;
+            let baseName = 'generated-file';
+            if (mimeType.startsWith('image/')) {
+                baseName = 'generated-image';
             }
 
-            const newFile: UploadedFile = {
-                id: generateUniqueId(),
-                name: fileName,
-                type: mimeType,
-                size: data.length,
-                dataUrl: dataUrl,
-                uploadState: 'active'
-            };
+            const newFile = createUploadedFileFromBase64(data, mimeType, baseName);
             
             // Refetch last message as it might have changed in previous steps
             const currentLastMessage = newMessages[newMessages.length - 1];
             if (currentLastMessage && currentLastMessage.role === 'model' && currentLastMessage.isLoading) {
                 newMessages[newMessages.length - 1] = { ...currentLastMessage, files: [...(currentLastMessage.files || []), newFile] };
             } else {
-                const newMessage = createNewMessage('');
+                const newMessage = createNewModelMessage('');
                 newMessage.files = [newFile];
                 newMessages.push(newMessage);
             }
@@ -194,20 +180,12 @@ export const finalizeMessages = (
             }
             const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
             
-            // Token Extraction Logic
-            const totalTokenCount = isLastMessageOfRun ? (usageMetadata?.totalTokenCount || 0) : 0;
-            const promptTokens = isLastMessageOfRun ? (usageMetadata?.promptTokenCount) : undefined;
-            let completionTokens = isLastMessageOfRun ? usageMetadata?.candidatesTokenCount : undefined;
+            // Token Extraction Logic using helper
+            const { promptTokens, completionTokens, totalTokens, thoughtTokens } = calculateTokenStats(isLastMessageOfRun ? usageMetadata : undefined);
             
-            // Fallback calculation
-            if (completionTokens === undefined && promptTokens !== undefined && totalTokenCount > 0) {
-                completionTokens = totalTokenCount - promptTokens;
+            if (isLastMessageOfRun) {
+                cumulativeTotal += totalTokens;
             }
-
-            // @ts-ignore
-            const thoughtTokens = usageMetadata?.thoughtsTokenCount;
-            
-            cumulativeTotal += totalTokenCount;
             
             const completedMessage = {
                 ...m,
@@ -218,11 +196,11 @@ export const finalizeMessages = (
                 thinkingTimeMs: thinkingTime,
                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
                 urlContextMetadata: isLastMessageOfRun ? urlContextMetadata : undefined,
-                promptTokens,
-                completionTokens,
-                totalTokens: totalTokenCount,
-                thoughtTokens, 
-                cumulativeTotalTokens: cumulativeTotal,
+                promptTokens: isLastMessageOfRun ? promptTokens : undefined,
+                completionTokens: isLastMessageOfRun ? completionTokens : undefined,
+                totalTokens: isLastMessageOfRun ? totalTokens : undefined,
+                thoughtTokens: isLastMessageOfRun ? thoughtTokens : undefined, 
+                cumulativeTotalTokens: isLastMessageOfRun ? cumulativeTotal : undefined,
             };
             
             const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc && !completedMessage.thoughts?.trim();

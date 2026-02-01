@@ -1,9 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { InputCommand, UploadedFile } from '../../types';
-import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
-
-const PASTE_TEXT_AS_FILE_THRESHOLD = 5000;
+import { processClipboardData } from '../../utils/clipboardUtils';
 
 interface UseChatInputEffectsProps {
     commandedInput: InputCommand | null;
@@ -155,74 +153,30 @@ export const useChatInputEffects = ({
             
             if (isInput) return;
 
-            const items = e.clipboardData?.items;
-            const pastedText = e.clipboardData?.getData('text/plain');
-            const htmlContent = e.clipboardData?.getData('text/html');
+            const result = processClipboardData(e.clipboardData, {
+                isPasteRichTextAsMarkdownEnabled,
+                isPasteAsTextFileEnabled
+            });
+
+            if (result.type === 'empty') return;
 
             // 4.1 Handle Files
-            if (items) {
-                const filesToProcess: File[] = [];
-                for (let i = 0; i < items.length; i++) {
-                    const item = items[i];
-                    if (item.kind === 'file') {
-                        const file = item.getAsFile();
-                        if (file) filesToProcess.push(file);
-                    }
-                }
-
-                if (filesToProcess.length > 0) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    justInitiatedFileOpRef.current = true;
-                    onProcessFiles(filesToProcess);
-                    textareaRef.current?.focus();
-                    return;
-                }
-            }
-
-            // 4.2 NEW: Handle Large Text Content as File (Global Paste)
-            if (isPasteAsTextFileEnabled && pastedText && pastedText.length > PASTE_TEXT_AS_FILE_THRESHOLD) {
+            if (result.type === 'files' || result.type === 'large-text-file') {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                const timestamp = Math.floor(Date.now() / 1000);
-                const fileName = `pasted_content_${timestamp}.txt`;
-                const file = new File([pastedText], fileName, { type: 'text/plain' });
-                
                 justInitiatedFileOpRef.current = true;
-                onProcessFiles([file]);
+                onProcessFiles(result.files);
                 textareaRef.current?.focus();
                 return;
             }
 
-            // 4.3 Handle Rich Text
-            if (htmlContent && isPasteRichTextAsMarkdownEnabled) {
-                const hasTags = /<[a-z][\s\S]*>/i.test(htmlContent);
-                if (hasTags) {
-                    const markdown = convertHtmlToMarkdown(htmlContent);
-                    if (markdown) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setInputText(prev => prev + markdown);
-                        const textarea = textareaRef.current;
-                        if (textarea) {
-                            textarea.focus();
-                            setTimeout(() => {
-                                const len = textarea.value.length;
-                                textarea.setSelectionRange(len, len);
-                                textarea.scrollTop = textarea.scrollHeight;
-                            }, 0);
-                        }
-                        return;
-                    }
-                }
-            }
+            // 4.2 Handle Text Content (Markdown or Plain)
+            const textToInsert = result.type === 'markdown' ? result.content : (result.type === 'text' ? result.content : '');
 
-            // 4.4 Handle Plain Text
-            if (pastedText) {
+            if (textToInsert) {
                 e.preventDefault();
                 e.stopPropagation();
-                setInputText(prev => prev + pastedText);
+                setInputText(prev => prev + textToInsert);
                 const textarea = textareaRef.current;
                 if (textarea) {
                     textarea.focus();

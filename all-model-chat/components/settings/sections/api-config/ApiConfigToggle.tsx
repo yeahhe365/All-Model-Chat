@@ -16,10 +16,17 @@ export const ApiConfigToggle: React.FC<ApiConfigToggleProps> = ({
     hasEnvKey,
     t
 }) => {
+    const handleRowClick = () => {
+        setUseCustomApiConfig(!useCustomApiConfig);
+    };
+
     return (
-        <div className="flex items-center justify-between py-2">
-            <div className="flex flex-col flex-grow cursor-pointer" onClick={() => setUseCustomApiConfig(!useCustomApiConfig)}>
-                <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2">
+        <div 
+            className="flex items-center justify-between py-3 cursor-pointer group select-none relative z-10"
+            onClick={handleRowClick}
+        >
+            <div className="flex flex-col flex-grow pr-4">
+                <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2 group-hover:text-[var(--theme-text-link)] transition-colors">
                     {t('settingsUseCustomApi')}
                     {hasEnvKey && !useCustomApiConfig && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-600 border border-green-500/20">
@@ -34,11 +41,14 @@ export const ApiConfigToggle: React.FC<ApiConfigToggleProps> = ({
                     }
                 </span>
             </div>
-            <Toggle
-                id="use-custom-api-config-toggle"
-                checked={useCustomApiConfig}
-                onChange={setUseCustomApiConfig}
-            />
+            {/* Prevent double-toggling when clicking the switch directly */}
+            <div onClick={(e) => e.stopPropagation()}>
+                <Toggle
+                    id="use-custom-api-config-toggle"
+                    checked={useCustomApiConfig}
+                    onChange={setUseCustomApiConfig}
+                />
+            </div>
         </div>
     );
 };

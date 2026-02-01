@@ -1,12 +1,11 @@
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { compressAudioToMp3 } from '../utils/audioCompression';
 import { useRecorder } from './core/useRecorder';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   setInputText: React.Dispatch<React.SetStateAction<string>>;
-  adjustTextareaHeight: () => void;
   isAudioCompressionEnabled?: boolean;
   isSystemAudioRecordingEnabled?: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement>;
@@ -15,7 +14,6 @@ interface UseVoiceInputProps {
 export const useVoiceInput = ({
   onTranscribeAudio,
   setInputText,
-  adjustTextareaHeight,
   isAudioCompressionEnabled = true,
   isSystemAudioRecordingEnabled = false,
   textareaRef,
@@ -74,12 +72,10 @@ export const useVoiceInput = ({
                         textarea.focus();
                         const newCursorPos = start + prefix.length + textToInsert.length;
                         textarea.setSelectionRange(newCursorPos, newCursorPos);
-                        adjustTextareaHeight();
                     });
                 } else {
                     // Fallback if ref is missing
                     setInputText(prev => (prev ? `${prev.trim()} ${textToInsert}` : textToInsert).trim());
-                    setTimeout(() => adjustTextareaHeight(), 0);
                 }
             }
         } catch (error) {
@@ -88,7 +84,7 @@ export const useVoiceInput = ({
             setIsTranscribing(false);
         }
     }
-  }, [onTranscribeAudio, setInputText, adjustTextareaHeight, isAudioCompressionEnabled, textareaRef]);
+  }, [onTranscribeAudio, setInputText, isAudioCompressionEnabled, textareaRef]);
 
   const { 
       status, 

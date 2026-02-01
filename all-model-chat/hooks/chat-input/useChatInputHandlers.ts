@@ -77,7 +77,6 @@ interface UseChatInputHandlersProps {
     onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
     onMessageSent: () => void;
     onUpdateMessageContent: (messageId: string, content: string) => void;
-    adjustTextareaHeight: () => void;
     clearCurrentDraft: () => void;
     handleToggleFullscreen: () => void;
     onStopGenerating: () => void;
@@ -148,7 +147,6 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         setAppFileError: props.setAppFileError,
         appSettings: props.appSettings,
         currentChatSettings: props.currentChatSettings,
-        adjustTextareaHeight: props.adjustTextareaHeight,
     });
 
     // 4. Keyboard Handling

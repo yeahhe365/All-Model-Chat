@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { generateUniqueId, getKeyForRequest, getTranslator } from '../../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, getTranslator, createMessage } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { CANVAS_SYSTEM_PROMPT } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/baseApi';
@@ -48,15 +48,12 @@ export const useCanvasGenerator = ({
                 // If source not found, append to end (fallback)
                 const insertIndex = sourceIndex !== -1 ? sourceIndex + 1 : s.messages.length;
 
-                const newMsg: ChatMessage = {
+                const newMsg = createMessage('model', '', {
                     id: generationId,
-                    role: 'model',
-                    content: '',
-                    timestamp: new Date(),
                     isLoading: true,
                     generationStartTime,
                     excludeFromContext: true // Don't include this generated canvas message in future AI context
-                };
+                });
                 
                 const newMessages = [...s.messages];
                 newMessages.splice(insertIndex, 0, newMsg);

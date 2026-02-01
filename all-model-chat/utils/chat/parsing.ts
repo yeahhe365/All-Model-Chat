@@ -1,4 +1,8 @@
 
+import { UploadedFile } from '../../types';
+import { generateUniqueId } from './ids';
+import { base64ToBlob, getExtensionFromMimeType } from '../fileHelpers';
+
 export const parseThoughtProcess = (thoughts: string | undefined) => {
     if (!thoughts) return null;
 
@@ -33,4 +37,41 @@ export const parseThoughtProcess = (thoughts: string | undefined) => {
     const content = contentLines.filter(l => l.trim() !== '').join('\n').trim();
 
     return { title: lastHeading, content, isFallback: false };
+};
+
+/**
+ * Creates a standardized UploadedFile object from Base64 data.
+ * Used for handling generated content from API (images, audio, etc.)
+ */
+export const createUploadedFileFromBase64 = (
+    base64Data: string, 
+    mimeType: string, 
+    baseName: string = 'generated-file'
+): UploadedFile => {
+    const ext = getExtensionFromMimeType(mimeType);
+    
+    // Ensure filename ends with extension
+    let fileName = baseName;
+    if (!fileName.toLowerCase().endsWith(ext)) {
+        // If baseName is generic "generated-file", append random ID
+        if (baseName === 'generated-file' || baseName === 'generated-image') {
+            fileName = `${baseName}-${generateUniqueId().slice(-4)}${ext}`;
+        } else {
+            fileName = `${baseName}${ext}`;
+        }
+    }
+
+    const blob = base64ToBlob(base64Data, mimeType);
+    const file = new File([blob], fileName, { type: mimeType });
+    const dataUrl = URL.createObjectURL(file);
+
+    return {
+        id: generateUniqueId(),
+        name: fileName,
+        type: mimeType,
+        size: blob.size,
+        dataUrl: dataUrl,
+        rawFile: file,
+        uploadState: 'active'
+    };
 };

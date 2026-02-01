@@ -102,7 +102,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
          </h3>
       </div>
 
-      <div className="overflow-hidden">
+      <div>
         <ApiConfigToggle
             useCustomApiConfig={useCustomApiConfig}
             setUseCustomApiConfig={setUseCustomApiConfig}
@@ -110,8 +110,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
             t={t}
         />
 
-        {/* Content */}
-        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[600px] pt-4' : 'opacity-50 max-h-0 overflow-hidden'}`}>
+        {/* Content - collapsible area */}
+        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${useCustomApiConfig ? 'opacity-100 max-h-[600px] pt-4' : 'opacity-50 max-h-0'}`}>
             <div className="space-y-5">
                 <ApiKeyInput 
                     apiKey={apiKey} 

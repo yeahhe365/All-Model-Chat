@@ -3,6 +3,19 @@ import { ChatMessage, SavedChatSession, ChatSettings } from '../../types';
 import { generateUniqueId } from './ids';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
+import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+
+export const createMessage = (
+    role: 'user' | 'model' | 'error',
+    content: string,
+    options: Partial<Exclude<ChatMessage, 'id' | 'role' | 'content' | 'timestamp'>> & { id?: string; timestamp?: Date } = {}
+): ChatMessage => ({
+    id: options.id || generateUniqueId(),
+    role,
+    content,
+    timestamp: options.timestamp || new Date(),
+    ...options
+});
 
 export const createNewSession = (
     settings: ChatSettings,
@@ -100,4 +113,124 @@ export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSe
             };
         })
     };
+};
+
+/**
+ * Core helper to update session list state.
+ * Handles:
+ * 1. Finding or creating session
+ * 2. Rewinding history if editing
+ * 3. Appending new messages
+ * 4. Updating settings/title/keys
+ */
+export const performOptimisticSessionUpdate = (
+    prevSessions: SavedChatSession[],
+    params: {
+        activeSessionId: string | null;
+        newSessionId: string; // The ID to use if creating a new session or identifying the active one
+        newMessages: ChatMessage[];
+        settings: ChatSettings;
+        editingMessageId?: string | null;
+        appSettings: any; // Passed to access defaults for new sessions
+        title?: string;
+        shouldLockKey?: boolean;
+        keyToLock?: string;
+    }
+): SavedChatSession[] => {
+    const { 
+        activeSessionId, newSessionId, newMessages, settings, 
+        editingMessageId, appSettings, title, shouldLockKey, keyToLock 
+    } = params;
+
+    const existingSessionIndex = prevSessions.findIndex(s => s.id === activeSessionId);
+
+    // --- Case 1: Create New Session ---
+    if (existingSessionIndex === -1) {
+        const newSettings = { ...settings };
+        if (shouldLockKey && keyToLock) {
+            newSettings.lockedApiKey = keyToLock;
+        }
+
+        const newSession = createNewSession(
+            newSettings, 
+            newMessages, 
+            title || "New Chat"
+        );
+        newSession.id = newSessionId; // Ensure ID matches what caller expects
+
+        return [newSession, ...prevSessions];
+    }
+
+    // --- Case 2: Update Existing Session ---
+    const updatedSessions = [...prevSessions];
+    const session = updatedSessions[existingSessionIndex];
+    let finalMessages = [...session.messages];
+
+    // Handle Edit/Rewind
+    if (editingMessageId) {
+        const editIndex = finalMessages.findIndex(m => m.id === editingMessageId);
+        if (editIndex !== -1) {
+            finalMessages = finalMessages.slice(0, editIndex);
+        }
+    }
+
+    // Append new messages
+    // Note: If newMessages contains the modified user message + new model message, just append them
+    // Logic: If we rewound, we usually push the "new version" of the user message + model message.
+    finalMessages = [...finalMessages, ...newMessages];
+
+    // Handle Settings Update (Key Locking)
+    let updatedSettings = session.settings;
+    // We might want to merge latest settings from params if they changed, 
+    // but typically we preserve session settings unless explicitly locking a key.
+    // However, for consistency, let's respect the settings passed in which usually merge appSettings + currentChatSettings
+    updatedSettings = { ...updatedSettings, ...settings };
+    
+    if (shouldLockKey && !session.settings.lockedApiKey && keyToLock) {
+        updatedSettings.lockedApiKey = keyToLock;
+    }
+
+    updatedSessions[existingSessionIndex] = {
+        ...session,
+        messages: finalMessages,
+        title: title || session.title,
+        settings: updatedSettings
+    };
+
+    return updatedSessions;
+};
+
+/**
+ * Legacy Helper - retained for backward compatibility if needed, 
+ * but performOptimisticSessionUpdate is preferred for message sending flow.
+ */
+export const updateSessionWithNewMessages = (
+    prevSessions: SavedChatSession[],
+    sessionId: string,
+    newMessages: ChatMessage[],
+    settings: ChatSettings,
+    options: {
+        title?: string;
+        shouldLockKey?: boolean;
+        keyToLock?: string;
+    } = {}
+): SavedChatSession[] => {
+    // Delegates to the new robust handler
+    return performOptimisticSessionUpdate(prevSessions, {
+        activeSessionId: sessionId, // Assume sessionId passed is the active one
+        newSessionId: sessionId,
+        newMessages: [], // We are replacing messages entirely in this legacy signature
+        settings,
+        appSettings: {}, // Legacy fallback
+        title: options.title,
+        shouldLockKey: options.shouldLockKey,
+        keyToLock: options.keyToLock
+    }).map(s => {
+        // Fixup: The legacy function replaced messages entirely, the new one appends.
+        // We override the messages here to match legacy behavior strictly.
+        if (s.id === sessionId) {
+            return { ...s, messages: newMessages };
+        }
+        return s;
+    });
 };

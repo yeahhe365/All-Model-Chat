@@ -24,11 +24,6 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
 
     const isMobile = useIsMobile();
 
-    const adjustTextareaHeight = useCallback(() => {
-        // Height adjustment is now handled reactively within ChatTextArea component
-        // utilizing a shadow DOM element for smooth transitions.
-    }, []);
-
     // Load draft from localStorage when session changes
     useEffect(() => {
         if (activeSessionId && !isEditing) {
@@ -112,7 +107,6 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         justInitiatedFileOpRef,
         prevIsProcessingFileRef,
         isComposingRef,
-        adjustTextareaHeight,
         clearCurrentDraft,
         handleToggleFullscreen,
         isMobile

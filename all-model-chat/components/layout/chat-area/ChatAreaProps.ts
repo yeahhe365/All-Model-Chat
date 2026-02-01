@@ -1,6 +1,5 @@
 
 import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand } from '../../../types';
-import { ThemeColors } from '../../../constants/themeConstants';
 import { translations } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
 
@@ -49,7 +48,6 @@ export interface ChatAreaProps {
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
   showThoughts: boolean;
-  themeColors: ThemeColors;
   baseFontSize: number;
   expandCodeBlocksByDefault: boolean;
   isMermaidRenderingEnabled: boolean;

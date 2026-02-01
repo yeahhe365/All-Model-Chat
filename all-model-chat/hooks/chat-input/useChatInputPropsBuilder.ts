@@ -1,7 +1,8 @@
 
-import { useChatInputAreaProps } from './useChatInputAreaProps';
-import { ChatInputProps } from '../../types';
+import { ChatInputProps, ChatInputActionsProps, ChatInputToolbarProps } from '../../types';
+import { ChatInputAreaProps } from '../../components/chat/input/ChatInputArea';
 import { useChatInputLogic } from './useChatInputLogic';
+import { INITIAL_TEXTAREA_HEIGHT_PX } from './useChatInputState';
 
 export const useChatInputPropsBuilder = (
     logic: ReturnType<typeof useChatInputLogic>, 
@@ -16,127 +17,170 @@ export const useChatInputPropsBuilder = (
         voiceState,
         slashCommandState,
         handlers,
-        isDesktop,
+        // isDesktop, // Used indirectly
         targetDocument,
         canSend,
         isAnyModalOpen
     } = logic;
 
-    const areaProps = useChatInputAreaProps({
-        // Capabilities
+    // Direct construction of props avoids the "FactoryParams" boilerplate layer
+    const toolbarProps: ChatInputToolbarProps = {
         isImagenModel: capabilities.isImagenModel || false,
         isGemini3ImageModel: capabilities.isGemini3ImageModel,
         isTtsModel: capabilities.isTtsModel,
-        isGemini3: capabilities.isGemini3,
-        isNativeAudioModel: capabilities.isNativeAudioModel || false,
-        supportedAspectRatios: capabilities.supportedAspectRatios,
-        supportedImageSizes: capabilities.supportedImageSizes,
-
-        // Settings
         ttsVoice: props.currentChatSettings.ttsVoice,
         setTtsVoice: (voice) => props.setCurrentChatSettings(prev => ({ ...prev, ttsVoice: voice })),
         aspectRatio: props.aspectRatio,
         setAspectRatio: props.setAspectRatio,
         imageSize: props.imageSize,
         setImageSize: props.setImageSize,
-        generateQuadImages: props.generateQuadImages,
-        onToggleQuadImages: props.onToggleQuadImages,
-        mediaResolution: props.currentChatSettings.mediaResolution,
-        setMediaResolution: (res) => props.setCurrentChatSettings(prev => ({ ...prev, mediaResolution: res })),
-        
-        // Status & Config
         fileError: props.fileError,
+        showAddByIdInput: modalsState.showAddByIdInput,
+        fileIdInput: inputState.fileIdInput,
+        setFileIdInput: inputState.setFileIdInput,
+        onAddFileByIdSubmit: handlers.handleAddFileByIdSubmit,
+        onCancelAddById: () => { 
+            modalsState.setShowAddByIdInput(false); 
+            inputState.setFileIdInput(''); 
+            inputState.textareaRef.current?.focus(); 
+        },
+        isAddingById: inputState.isAddingById,
+        showAddByUrlInput: modalsState.showAddByUrlInput,
+        urlInput: inputState.urlInput,
+        setUrlInput: inputState.setUrlInput,
+        onAddUrlSubmit: () => handlers.handleAddUrl(inputState.urlInput),
+        onCancelAddUrl: () => { 
+            modalsState.setShowAddByUrlInput(false); 
+            inputState.setUrlInput(''); 
+            inputState.textareaRef.current?.focus(); 
+        },
+        isAddingByUrl: inputState.isAddingByUrl,
         isLoading: props.isLoading,
         t: props.t,
-        selectedFiles: props.selectedFiles,
-        onCancelUpload: props.onCancelUpload,
+        generateQuadImages: props.generateQuadImages,
+        onToggleQuadImages: props.onToggleQuadImages,
+        supportedAspectRatios: capabilities.supportedAspectRatios,
+        supportedImageSizes: capabilities.supportedImageSizes,
+        isNativeAudioModel: capabilities.isNativeAudioModel || false,
+        mediaResolution: props.currentChatSettings.mediaResolution,
+        setMediaResolution: (res) => props.setCurrentChatSettings(prev => ({ ...prev, mediaResolution: res }))
+    };
+
+    const actionsProps: ChatInputActionsProps = {
+        onAttachmentAction: modalsState.handleAttachmentAction,
+        disabled: inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
+        isGoogleSearchEnabled: props.isGoogleSearchEnabled,
+        onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(props.onToggleGoogleSearch),
+        isCodeExecutionEnabled: props.isCodeExecutionEnabled,
+        onToggleCodeExecution: () => handlers.handleToggleToolAndFocus(props.onToggleCodeExecution),
+        isUrlContextEnabled: props.isUrlContextEnabled,
+        onToggleUrlContext: () => handlers.handleToggleToolAndFocus(props.onToggleUrlContext),
+        isDeepSearchEnabled: props.isDeepSearchEnabled,
+        onToggleDeepSearch: () => handlers.handleToggleToolAndFocus(props.onToggleDeepSearch),
+        onAddYouTubeVideo: () => { 
+            modalsState.setShowAddByUrlInput(true); 
+            inputState.textareaRef.current?.focus(); 
+        },
+        onCountTokens: () => localFileState.setShowTokenModal(true),
+        onRecordButtonClick: voiceState.handleVoiceInputClick,
+        onCancelRecording: voiceState.handleCancelRecording,
         isRecording: voiceState.isRecording,
         isMicInitializing: voiceState.isMicInitializing,
         isTranscribing: voiceState.isTranscribing,
+        isLoading: props.isLoading,
         onStopGenerating: props.onStopGenerating,
         isEditing: props.isEditing,
         onCancelEdit: props.onCancelEdit,
-        canSend,
+        canSend: canSend,
         isWaitingForUpload: inputState.isWaitingForUpload,
-        editMode: props.editMode,
-        
-        // Toggles
-        isGoogleSearchEnabled: props.isGoogleSearchEnabled,
-        onToggleGoogleSearch: props.onToggleGoogleSearch,
-        isCodeExecutionEnabled: props.isCodeExecutionEnabled,
-        onToggleCodeExecution: props.onToggleCodeExecution,
-        isUrlContextEnabled: props.isUrlContextEnabled,
-        onToggleUrlContext: props.onToggleUrlContext,
-        isDeepSearchEnabled: props.isDeepSearchEnabled,
-        onToggleDeepSearch: props.onToggleDeepSearch,
-
-        // Input State
-        fileIdInput: inputState.fileIdInput,
-        setFileIdInput: inputState.setFileIdInput,
-        isAddingById: inputState.isAddingById,
-        showAddByIdInput: modalsState.showAddByIdInput,
-        urlInput: inputState.urlInput,
-        setUrlInput: inputState.setUrlInput,
-        isAddingByUrl: inputState.isAddingByUrl,
-        showAddByUrlInput: modalsState.showAddByUrlInput,
-        inputText: inputState.inputText,
-        quotes: inputState.quotes,
-        setQuotes: inputState.setQuotes,
+        t: props.t as any,
+        onTranslate: handlers.handleTranslate,
         isTranslating: inputState.isTranslating,
+        inputText: inputState.inputText,
+        onToggleFullscreen: inputState.handleToggleFullscreen,
         isFullscreen: inputState.isFullscreen,
-        isPipActive: props.isPipActive,
-        isAnimatingSend: inputState.isAnimatingSend,
-        isMobile: inputState.isMobile,
-        isConverting: localFileState.isConverting,
-        isModalOpen: isAnyModalOpen,
-        slashCommandState: slashCommandState.slashCommandState,
-        
-        // Refs
-        textareaRef: inputState.textareaRef,
-        fileInputRef: modalsState.fileInputRef,
-        imageInputRef: modalsState.imageInputRef,
-        folderInputRef: modalsState.folderInputRef,
-        zipInputRef: modalsState.zipInputRef,
-        cameraInputRef: modalsState.cameraInputRef,
-
-        // Handlers
-        handlers: {
-            ...handlers,
-            onCompositionStart: () => inputState.isComposingRef.current = true,
-            onCompositionEnd: () => inputState.isComposingRef.current = false,
-            onStartLiveSession: liveAPI.isConnected ? liveAPI.disconnect : liveAPI.connect,
-            onConfigureFile: localFileState.handleConfigureFile,
-            onPreviewFile: localFileState.handlePreviewFile
-        },
-
-        // UI Setters
-        setShowAddByIdInput: modalsState.setShowAddByIdInput,
-        setShowAddByUrlInput: modalsState.setShowAddByUrlInput,
-        setShowTokenModal: localFileState.setShowTokenModal,
-        handleAttachmentAction: modalsState.handleAttachmentAction,
-        handleVoiceInputClick: voiceState.handleVoiceInputClick,
-        handleCancelRecording: voiceState.handleCancelRecording,
-        handleToggleFullscreen: inputState.handleToggleFullscreen,
-        
-        // Suggestions
-        showEmptyStateSuggestions: props.showEmptyStateSuggestions && !capabilities.isImagenModel && !capabilities.isTtsModel && !capabilities.isNativeAudioModel,
-        onSuggestionClick: props.onSuggestionClick,
-        onOrganizeInfoClick: props.onOrganizeInfoClick,
-
-        // Theme
-        themeId: props.themeId
-    });
-
-    // Inject live mute controls and Fast Mode handler into actionsProps
-    const extendedActionsProps = {
-        ...areaProps.actionsProps,
+        editMode: props.editMode,
+        isNativeAudioModel: capabilities.isNativeAudioModel || false,
+        onStartLiveSession: liveAPI.connect,
+        // Live specific props injected directly
+        isLiveConnected: liveAPI.isConnected,
         isLiveMuted: liveAPI.isMuted,
         onToggleLiveMute: liveAPI.toggleMute,
         onFastSendMessage: handlers.handleFastSubmit
     };
-    
-    // Override the actionsProps in areaProps
-    areaProps.actionsProps = extendedActionsProps;
+
+    const areaProps: ChatInputAreaProps = {
+        toolbarProps,
+        actionsProps,
+        slashCommandProps: {
+            isOpen: slashCommandState.slashCommandState.isOpen,
+            commands: slashCommandState.slashCommandState.filteredCommands,
+            onSelect: handlers.handleCommandSelect,
+            selectedIndex: slashCommandState.slashCommandState.selectedIndex,
+        },
+        fileDisplayProps: {
+            selectedFiles: props.selectedFiles,
+            onRemove: handlers.removeSelectedFile,
+            onCancelUpload: props.onCancelUpload,
+            onConfigure: localFileState.handleConfigureFile,
+            onPreview: localFileState.handlePreviewFile,
+            isGemini3: capabilities.isGemini3,
+        },
+        inputProps: {
+            value: inputState.inputText,
+            onChange: handlers.handleInputChange,
+            onKeyDown: handlers.handleKeyDown,
+            onPaste: handlers.handlePaste,
+            textareaRef: inputState.textareaRef,
+            placeholder: props.t('chatInputPlaceholder'),
+            // Explicitly excluding isLoading to allow typing during generation
+            disabled: isAnyModalOpen || voiceState.isTranscribing || inputState.isWaitingForUpload || voiceState.isRecording || localFileState.isConverting,
+            onCompositionStart: handlers.onCompositionStart,
+            onCompositionEnd: handlers.onCompositionEnd,
+            onFocus: undefined,
+        },
+        quoteProps: {
+            quotes: inputState.quotes,
+            onRemoveQuote: (index: number) => inputState.setQuotes(prev => prev.filter((_, i) => i !== index))
+        },
+        layoutProps: {
+            isFullscreen: inputState.isFullscreen,
+            isPipActive: props.isPipActive,
+            isAnimatingSend: inputState.isAnimatingSend,
+            isMobile: inputState.isMobile,
+            initialTextareaHeight: INITIAL_TEXTAREA_HEIGHT_PX,
+            isConverting: localFileState.isConverting,
+        },
+        fileInputRefs: {
+            fileInputRef: modalsState.fileInputRef,
+            imageInputRef: modalsState.imageInputRef,
+            folderInputRef: modalsState.folderInputRef,
+            zipInputRef: modalsState.zipInputRef,
+            cameraInputRef: modalsState.cameraInputRef,
+            handleFileChange: handlers.handleFileChange,
+            handleFolderChange: handlers.handleFolderChange,
+            handleZipChange: handlers.handleZipChange,
+        },
+        formProps: {
+            onSubmit: handlers.handleSubmit,
+        },
+        suggestionsProps: (props.showEmptyStateSuggestions && !capabilities.isImagenModel && !capabilities.isTtsModel && !capabilities.isNativeAudioModel && props.onSuggestionClick && props.onOrganizeInfoClick) ? {
+            show: props.showEmptyStateSuggestions,
+            onSuggestionClick: props.onSuggestionClick,
+            onOrganizeInfoClick: props.onOrganizeInfoClick,
+            onToggleBBox: props.onToggleBBox,
+            isBBoxModeActive: props.isBBoxModeActive
+        } : undefined,
+        liveStatusProps: {
+            isConnected: liveAPI.isConnected,
+            isSpeaking: liveAPI.isSpeaking,
+            volume: liveAPI.volume,
+            error: liveAPI.error,
+            onDisconnect: liveAPI.disconnect,
+        },
+        t: props.t as any,
+        themeId: props.themeId
+    };
 
     const modalsProps = {
         showRecorder: modalsState.showRecorder,
@@ -181,12 +225,6 @@ export const useChatInputPropsBuilder = (
             inputImages: handlers.inputImages
         }
     };
-    
-    // Add BBox toggle to suggestions props if available
-    if (areaProps.suggestionsProps && props.onToggleBBox) {
-        (areaProps.suggestionsProps as any).onToggleBBox = props.onToggleBBox;
-        (areaProps.suggestionsProps as any).isBBoxModeActive = props.isBBoxModeActive;
-    }
 
     return {
         areaProps,

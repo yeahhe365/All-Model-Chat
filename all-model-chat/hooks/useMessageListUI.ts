@@ -1,8 +1,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { UploadedFile, ChatMessage, VideoMetadata } from '../types';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../constants/fileConstants';
 import { MediaResolution } from '../types/settings';
+import { useImageNavigation } from './useImageNavigation';
 
 interface UseMessageListUIProps {
     messages: ChatMessage[];
@@ -43,29 +43,18 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
         setPreviewFile(null);
     }, []);
 
-    const allImages = useMemo(() => {
-        if (!previewFile) return [];
-        return messages.flatMap(m => m.files || []).filter(f => 
-            (SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml') && !f.error
-        );
-    }, [messages, previewFile]);
+    // Flatten all files from messages for navigation context
+    const allFiles = useMemo(() => {
+        return messages.flatMap(m => m.files || []);
+    }, [messages]);
 
-    const currentImageIndex = useMemo(() => {
-        if (!previewFile) return -1;
-        return allImages.findIndex(f => f.id === previewFile.id);
-    }, [allImages, previewFile]);
-
-    const handlePrevImage = useCallback(() => {
-        if (currentImageIndex > 0) {
-            setPreviewFile(allImages[currentImageIndex - 1]);
-        }
-    }, [currentImageIndex, allImages]);
-
-    const handleNextImage = useCallback(() => {
-        if (currentImageIndex < allImages.length - 1) {
-            setPreviewFile(allImages[currentImageIndex + 1]);
-        }
-    }, [currentImageIndex, allImages]);
+    // Use unified navigation hook
+    const { 
+        images: allImages, 
+        currentIndex: currentImageIndex, 
+        handlePrev: handlePrevImage, 
+        handleNext: handleNextImage 
+    } = useImageNavigation(allFiles, previewFile, setPreviewFile);
 
     const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
         setHtmlToPreview(htmlContent);

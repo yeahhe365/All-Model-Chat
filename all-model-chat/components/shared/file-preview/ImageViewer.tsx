@@ -2,6 +2,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { UploadedFile } from '../../../types';
+import { FloatingToolbar, ToolbarButton, ToolbarDivider, ToolbarLabel } from './FloatingToolbar';
 
 interface ImageViewerProps {
     file: UploadedFile;
@@ -181,12 +182,10 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t }) => {
     }, [handleWheel]);
 
     const isMermaidDiagram = file.type === 'image/svg+xml';
-    const floatingBarBase = "bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200";
-    const pillButtonClass = "p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-40 disabled:cursor-not-allowed";
 
     return (
         <div 
-            className="w-full h-full relative flex flex-col select-none touch-none" // Added touch-none
+            className="w-full h-full relative flex flex-col select-none touch-none" 
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
@@ -221,25 +220,25 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t }) => {
 
             {/* Bottom Controls */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
-                <div className={`${floatingBarBase} rounded-full p-1.5 flex items-center gap-1`}>
-                    <button onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} className={pillButtonClass} title="Zoom Out">
+                <FloatingToolbar className="p-1.5">
+                    <ToolbarButton onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} title="Zoom Out">
                         <ZoomOut size={16} strokeWidth={1.5} />
-                    </button>
+                    </ToolbarButton>
                     
-                    <div className="min-w-[50px] text-center px-2 font-mono text-xs font-medium text-white/90">
+                    <ToolbarLabel className="min-w-[50px] text-center">
                         {(scale * 100).toFixed(0)}%
-                    </div>
+                    </ToolbarLabel>
 
-                    <button onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} className={pillButtonClass} title="Zoom In">
+                    <ToolbarButton onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} title="Zoom In">
                         <ZoomIn size={16} strokeWidth={1.5} />
-                    </button>
+                    </ToolbarButton>
 
-                    <div className="w-px h-5 bg-white/10 mx-1"></div>
+                    <ToolbarDivider />
 
-                    <button onClick={handleReset} className={pillButtonClass} title="Reset View">
+                    <ToolbarButton onClick={handleReset} title="Reset View">
                         <RotateCw size={16} strokeWidth={1.5} />
-                    </button>
-                </div>
+                    </ToolbarButton>
+                </FloatingToolbar>
             </div>
         </div>
     );

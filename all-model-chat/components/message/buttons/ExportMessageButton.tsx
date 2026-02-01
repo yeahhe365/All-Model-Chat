@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
-import { ThemeColors, ChatMessage } from '../../../types';
+import { ChatMessage } from '../../../types';
 import { translations } from '../../../utils/appUtils';
 import { useMessageExport } from '../../../hooks/useMessageExport';
 import { useResponsiveValue } from '../../../hooks/useDevice';
@@ -11,7 +11,6 @@ interface ExportMessageButtonProps {
     message: ChatMessage;
     sessionTitle?: string;
     messageIndex?: number;
-    themeColors: ThemeColors;
     themeId: string;
     className?: string;
     t: (key: keyof typeof translations, fallback?: string) => string;

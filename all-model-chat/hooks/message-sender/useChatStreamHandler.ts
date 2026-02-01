@@ -1,8 +1,9 @@
+
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { logService, showNotification } from '../../utils/appUtils';
+import { logService, showNotification, calculateTokenStats } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { updateMessagesWithPart, updateMessagesWithThought, finalizeMessages } from '../chat-stream/processors';
 
@@ -53,13 +54,7 @@ export const useChatStreamHandler = ({
 
             // Record Token Usage Statistics
             if (usageMetadata) {
-                let promptTokens = usageMetadata.promptTokenCount || 0;
-                // Fallback if completion count missing
-                let completionTokens = usageMetadata.candidatesTokenCount || 0;
-                const totalTokens = usageMetadata.totalTokenCount || 0;
-                if (!completionTokens && totalTokens > 0 && promptTokens > 0) {
-                    completionTokens = totalTokens - promptTokens;
-                }
+                const { promptTokens, completionTokens } = calculateTokenStats(usageMetadata);
 
                 logService.recordTokenUsage(
                     currentChatSettings.modelId,
