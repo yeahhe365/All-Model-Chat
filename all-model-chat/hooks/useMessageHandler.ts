@@ -1,3 +1,4 @@
+
 import React, { Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, InputCommand } from '../types';
 import { useMessageSender } from './useMessageSender';
@@ -33,7 +34,6 @@ interface MessageHandlerProps {
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
     setSessionLoading: (sessionId: string, isLoading: boolean) => void; 
-    broadcast?: (message: any) => void;
 }
 
 export const useMessageHandler = (props: MessageHandlerProps) => {
@@ -50,6 +50,8 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setAppFileError,
         updateAndPersistSessions,
         userScrolledUp,
+        setLoadingSessionIds,
+        setSessionLoading
     } = props;
     
     const { handleSendMessage, handleGenerateCanvas } = useMessageSender(props);
@@ -68,12 +70,8 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         updateAndPersistSessions,
         userScrolledUp,
         handleSendMessage,
-        setLoadingSessionIds: (v: any) => {
-            if (typeof v === 'function' && activeSessionId) {
-                // Compatibility for stop logic
-                props.setSessionLoading(activeSessionId, false);
-            }
-        },
+        setLoadingSessionIds,
+        setSessionLoading
     });
     
     const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler(props);
