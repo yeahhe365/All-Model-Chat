@@ -41,8 +41,8 @@ export const useMessageActions = ({
     setLoadingSessionIds,
 }: MessageActionsProps) => {
 
-    const handleStopGenerating = useCallback((options: { silent?: boolean } = {}) => {
-        const { silent = false } = options;
+    const handleStopGenerating = useCallback((options: { silent?: boolean, skipLoadingUpdate?: boolean } = {}) => {
+        const { silent = false, skipLoadingUpdate = false } = options;
         if (!activeSessionId || !isLoading) return;
 
         const loadingMessage = messages.find(msg => msg.isLoading);
@@ -69,11 +69,13 @@ export const useMessageActions = ({
                     }));
                 }
                 
-                setLoadingSessionIds(prev => {
-                    const next = new Set(prev);
-                    next.delete(activeSessionId);
-                    return next;
-                });
+                if (!skipLoadingUpdate) {
+                    setLoadingSessionIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(activeSessionId);
+                        return next;
+                    });
+                }
 
                 activeJobs.current.delete(generationId);
             } else {
@@ -83,11 +85,14 @@ export const useMessageActions = ({
         } else {
             logService.warn(`handleStopGenerating called for session ${activeSessionId}, but no loading message was found. Aborting all as a fallback.`);
             activeJobs.current.forEach(c => c.abort());
-            setLoadingSessionIds(prev => {
-                const next = new Set(prev);
-                next.delete(activeSessionId);
-                return next;
-            });
+            
+            if (!skipLoadingUpdate) {
+                setLoadingSessionIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(activeSessionId);
+                    return next;
+                });
+            }
         }
     }, [activeSessionId, isLoading, messages, activeJobs, updateAndPersistSessions, setLoadingSessionIds]);
 
@@ -144,11 +149,17 @@ export const useMessageActions = ({
         const modelMessageIndex = messages.findIndex(m => m.id === modelMessageIdToRetry);
         if (modelMessageIndex < 1) return;
 
+        // Cleanup artifacts (images/audio) from the model message being discarded to prevent memory leaks
+        const modelMessage = messages[modelMessageIndex];
+        if (modelMessage.files) cleanupFilePreviewUrls(modelMessage.files);
+
         const userMessageToResend = messages[modelMessageIndex - 1];
         if (userMessageToResend.role !== 'user') return;
 
         if (isLoading) {
-            handleStopGenerating({ silent: true });
+            // Stop current generation but keep the session marked as "loading" in UI state
+            // because we are about to immediately restart it. This prevents UI flicker.
+            handleStopGenerating({ silent: true, skipLoadingUpdate: true });
         }
         
         await handleSendMessage({

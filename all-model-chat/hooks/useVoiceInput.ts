@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { compressAudioToMp3 } from '../utils/audioCompression';
 import { useRecorder } from './core/useRecorder';
+import { useTextAreaInsert } from './useTextAreaInsert';
 
 interface UseVoiceInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
@@ -19,6 +20,7 @@ export const useVoiceInput = ({
   textareaRef,
 }: UseVoiceInputProps) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const insertText = useTextAreaInsert(textareaRef, setInputText);
 
   const handleRecordingComplete = useCallback(async (audioBlob: Blob) => {
     if (audioBlob.size > 0) {
@@ -40,43 +42,8 @@ export const useVoiceInput = ({
             const transcribedText = await onTranscribeAudio(fileToTranscribe);
             
             if (transcribedText) {
-                const textToInsert = transcribedText.trim();
-                const textarea = textareaRef.current;
-
-                if (textarea) {
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const currentValue = textarea.value;
-
-                    const before = currentValue.substring(0, start);
-                    const after = currentValue.substring(end);
-
-                    let prefix = "";
-                    let suffix = "";
-
-                    // Add space before if not at start and previous char is not whitespace
-                    if (start > 0 && !/\s$/.test(before)) {
-                        prefix = " ";
-                    }
-                    // Add space after if not at end and next char is not whitespace
-                    if (after.length > 0 && !/^\s/.test(after)) {
-                        suffix = " ";
-                    }
-
-                    const newValue = before + prefix + textToInsert + suffix + after;
-
-                    setInputText(newValue);
-
-                    // Restore cursor position after the inserted text
-                    requestAnimationFrame(() => {
-                        textarea.focus();
-                        const newCursorPos = start + prefix.length + textToInsert.length;
-                        textarea.setSelectionRange(newCursorPos, newCursorPos);
-                    });
-                } else {
-                    // Fallback if ref is missing
-                    setInputText(prev => (prev ? `${prev.trim()} ${textToInsert}` : textToInsert).trim());
-                }
+                // Use the shared hook with padding enabled for voice input
+                insertText(transcribedText.trim(), { ensurePadding: true });
             }
         } catch (error) {
             console.error("Error processing/transcribing audio:", error);
@@ -84,7 +51,7 @@ export const useVoiceInput = ({
             setIsTranscribing(false);
         }
     }
-  }, [onTranscribeAudio, setInputText, isAudioCompressionEnabled, textareaRef]);
+  }, [onTranscribeAudio, isAudioCompressionEnabled, insertText]);
 
   const { 
       status, 

@@ -97,8 +97,14 @@ export const useAutoTitling = ({
         if (!appSettings.isAutoTitleEnabled) return;
 
         const candidates = savedSessions.filter(session => {
-            // Only title "New Chat" sessions
-            if (session.title !== 'New Chat') return false;
+            // Check if title is generic or a placeholder
+            // 1. Is it 'New Chat'?
+            const isNewChat = session.title === 'New Chat';
+            // 2. Is it a placeholder derived from the first message?
+            const isPlaceholder = session.title === generateSessionTitle(session.messages);
+
+            // If neither, assume user renamed it or it's already titled properly
+            if (!isNewChat && !isPlaceholder) return false;
             
             // Skip if already generating
             if (generatingTitleSessionIds.has(session.id)) return false;

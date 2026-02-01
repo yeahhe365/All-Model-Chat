@@ -80,7 +80,8 @@ export const useSessionUpdate = ({
                 });
 
                 let newTitle = undefined;
-                if ((!activeSessionId || existingSession?.title === 'New Chat') && !appSettings.isAutoTitleEnabled) {
+                // If it's a new session or the title is generic "New Chat", generate a temporary one from content
+                if (!activeSessionId || existingSession?.title === 'New Chat') {
                     newTitle = generateSessionTitle([userMessageContent, modelMessageContent]);
                 }
 

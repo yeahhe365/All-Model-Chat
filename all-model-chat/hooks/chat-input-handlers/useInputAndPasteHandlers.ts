@@ -2,6 +2,7 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { UploadedFile } from '../../types';
 import { processClipboardData } from '../../utils/clipboardUtils';
+import { useTextAreaInsert } from '../useTextAreaInsert';
 
 interface UseInputAndPasteHandlersProps {
     setInputText: Dispatch<SetStateAction<string>>;
@@ -38,6 +39,8 @@ export const useInputAndPasteHandlers = ({
     isPasteRichTextAsMarkdownEnabled,
     isPasteAsTextFileEnabled,
 }: UseInputAndPasteHandlersProps) => {
+
+    const insertText = useTextAreaInsert(textareaRef, setInputText);
 
     const handleAddUrl = useCallback(async (url: string) => {
         const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
@@ -83,18 +86,7 @@ export const useInputAndPasteHandlers = ({
 
         if (result.type === 'markdown') {
             event.preventDefault();
-            const textarea = textareaRef.current;
-            if (textarea) {
-                const start = textarea.selectionStart;
-                const end = textarea.selectionEnd;
-                const currentValue = textarea.value;
-                const newValue = currentValue.substring(0, start) + result.content + currentValue.substring(end);
-                setInputText(newValue);
-                setTimeout(() => {
-                    textarea.focus();
-                    textarea.selectionStart = textarea.selectionEnd = start + result.content.length;
-                }, 0);
-            }
+            insertText(result.content);
             return;
         }
 
@@ -107,12 +99,10 @@ export const useInputAndPasteHandlers = ({
                 await handleAddUrl(pastedText.trim());
                 return;
             }
-            // Standard text paste is handled natively by the textarea, so we do nothing here 
-            // unless we want to intercept it (e.g. for cleaning).
-            // Default behavior is usually fine for plain text.
+            // Standard text paste is handled natively
         }
 
-    }, [showCreateTextFileEditor, showCamera, showRecorder, isAddingById, handleAddUrl, onProcessFiles, justInitiatedFileOpRef, textareaRef, setInputText, isPasteRichTextAsMarkdownEnabled, isPasteAsTextFileEnabled]);
+    }, [showCreateTextFileEditor, showCamera, showRecorder, isAddingById, handleAddUrl, onProcessFiles, justInitiatedFileOpRef, textareaRef, isPasteRichTextAsMarkdownEnabled, isPasteAsTextFileEnabled, insertText]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         handleSlashInputChange(e.target.value);

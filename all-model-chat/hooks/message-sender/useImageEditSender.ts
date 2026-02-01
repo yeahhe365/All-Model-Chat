@@ -3,7 +3,7 @@ import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64 } from '../../utils/appUtils';
+import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -53,7 +53,8 @@ export const useImageEditSender = ({
         
         let newTitle = undefined;
         if (!activeSessionId || (effectiveEditingId && messages.length === 0)) {
-             newTitle = text.substring(0, 30).trim() || "Image Edit";
+             // Set a temporary placeholder title based on content
+             newTitle = generateSessionTitle([userMessage, modelMessage]);
         }
 
         updateAndPersistSessions(prev => performOptimisticSessionUpdate(prev, {
