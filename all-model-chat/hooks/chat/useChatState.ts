@@ -58,25 +58,25 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            // For now, simple refresh of all sessions ensures consistency.
-            // In a future optimization, we could fetch only the specific ID.
+            // If we are currently loading this session in THIS tab, ignore external content updates 
+            // to avoid UI jitter (local stream handler manages state).
+            // However, we still want to refresh if we aren't the one generating.
             if (loadingSessionIds.has(id)) {
-                // If we are currently loading this session in THIS tab, ignore external updates to avoid UI jitter
-                // The local stream handler will manage the state updates.
                 return;
             }
             refreshSessions();
         },
-        onSessionLoadingUpdated: (id, isLoading) => {
+        onSessionLoading: (sessionId, isLoading) => {
             setLoadingSessionIds(prev => {
                 const next = new Set(prev);
-                if (isLoading) next.add(id);
-                else next.delete(id);
+                if (isLoading) next.add(sessionId);
+                else next.delete(sessionId);
                 return next;
             });
         }
     });
 
+    // Centralized helper to toggle loading state and broadcast it
     const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
         setLoadingSessionIds(prev => {
             const next = new Set(prev);
@@ -133,7 +133,7 @@ export const useChatState = (appSettings: AppSettings) => {
             }
             return newSessions;
         });
-    }, [broadcast, loadingSessionIds]);
+    }, [broadcast]);
     
     const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
         setSavedGroups(prevGroups => {
@@ -168,8 +168,7 @@ export const useChatState = (appSettings: AppSettings) => {
         editingMessageId, setEditingMessageId,
         editMode, setEditMode,
         commandedInput, setCommandedInput,
-        loadingSessionIds, setLoadingSessionIds, // Kept for raw usage if needed, but setSessionLoading is preferred
-        setSessionLoading, // Exposed for syncing
+        loadingSessionIds, setLoadingSessionIds,
         generatingTitleSessionIds, setGeneratingTitleSessionIds,
         activeJobs,
         selectedFiles, setSelectedFiles,
@@ -188,8 +187,8 @@ export const useChatState = (appSettings: AppSettings) => {
         updateAndPersistSessions,
         updateAndPersistGroups,
         fileDraftsRef,
-        // Expose manual refresh logic if needed by other components (e.g. initial loader)
         refreshSessions,
-        refreshGroups
+        refreshGroups,
+        setSessionLoading // Export new helper
     };
 };

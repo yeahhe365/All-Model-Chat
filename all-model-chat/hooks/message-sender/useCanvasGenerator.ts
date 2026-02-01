@@ -13,7 +13,7 @@ export const useCanvasGenerator = ({
     messages,
     activeSessionId,
     updateAndPersistSessions,
-    setSessionLoading,
+    setLoadingSessionIds,
     activeJobs,
     getStreamHandlers,
     setAppFileError,
@@ -63,7 +63,7 @@ export const useCanvasGenerator = ({
             return s;
         }));
 
-        setSessionLoading(activeSessionId, true);
+        setLoadingSessionIds(prev => new Set(prev).add(activeSessionId));
         activeJobs.current.set(generationId, newAbortController);
 
         // Define specific settings for Canvas generation
@@ -126,7 +126,7 @@ export const useCanvasGenerator = ({
             streamOnError(error instanceof Error ? error : new Error(String(error)));
         }
 
-    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setSessionLoading, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, messages, language]);
+    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setLoadingSessionIds, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, messages, language]);
 
     return { handleGenerateCanvas };
 };

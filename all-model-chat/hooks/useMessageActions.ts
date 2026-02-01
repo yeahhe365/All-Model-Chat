@@ -21,7 +21,7 @@ interface MessageActionsProps {
     updateAndPersistSessions: SessionsUpdater;
     userScrolledUp: React.MutableRefObject<boolean>;
     handleSendMessage: SendMessageFunc;
-    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
 }
 
 export const useMessageActions = ({
@@ -38,7 +38,7 @@ export const useMessageActions = ({
     updateAndPersistSessions,
     userScrolledUp,
     handleSendMessage,
-    setSessionLoading,
+    setLoadingSessionIds,
 }: MessageActionsProps) => {
 
     const handleStopGenerating = useCallback((options: { silent?: boolean, skipLoadingUpdate?: boolean } = {}) => {
@@ -70,7 +70,11 @@ export const useMessageActions = ({
                 }
                 
                 if (!skipLoadingUpdate) {
-                    setSessionLoading(activeSessionId, false);
+                    setLoadingSessionIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(activeSessionId);
+                        return next;
+                    });
                 }
 
                 activeJobs.current.delete(generationId);
@@ -83,10 +87,14 @@ export const useMessageActions = ({
             activeJobs.current.forEach(c => c.abort());
             
             if (!skipLoadingUpdate) {
-                setSessionLoading(activeSessionId, false);
+                setLoadingSessionIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(activeSessionId);
+                    return next;
+                });
             }
         }
-    }, [activeSessionId, isLoading, messages, activeJobs, updateAndPersistSessions, setSessionLoading]);
+    }, [activeSessionId, isLoading, messages, activeJobs, updateAndPersistSessions, setLoadingSessionIds]);
 
     const handleCancelEdit = useCallback(() => { 
         logService.info("User cancelled message edit.");
