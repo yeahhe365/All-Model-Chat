@@ -1,9 +1,11 @@
 
+
+
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle } from '../../utils/appUtils';
+import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 
@@ -83,6 +85,10 @@ export const useTtsImagenSender = ({
                 
                 updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: text, audioSrc: wavUrl, audioAutoplay: true, generationEndTime: new Date() } : m) } : s));
                 
+                if (appSettings.isCompletionSoundEnabled) {
+                    playCompletionSound();
+                }
+
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
                     showNotification('Audio Ready', { body: 'Text-to-speech audio has been generated.', icon: APP_LOGO_SVG_DATA_URI });
                 }
@@ -104,6 +110,10 @@ export const useTtsImagenSender = ({
                 });
 
                 updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: `Generated ${generatedFiles.length} image(s) for: "${text}"`, files: generatedFiles, generationEndTime: new Date() } : m) } : s));
+
+                if (appSettings.isCompletionSoundEnabled) {
+                    playCompletionSound();
+                }
 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
                     showNotification('Image Ready', { body: 'Your image has been generated.', icon: APP_LOGO_SVG_DATA_URI });

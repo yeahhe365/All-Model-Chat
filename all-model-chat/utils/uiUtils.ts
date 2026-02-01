@@ -1,4 +1,6 @@
 
+
+
 import React from 'react';
 import { ThemeColors } from '../types/theme';
 import { AppSettings, MediaResolution } from '../types';
@@ -87,6 +89,32 @@ export const showNotification = async (title: string, options?: NotificationOpti
     if (permission === 'granted') {
       show();
     }
+  }
+};
+
+export const playCompletionSound = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    // Gentle "ding" sound
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1); // Drop to A4
+    
+    gain.gain.setValueAtTime(0.05, ctx.currentTime); // Quiet volume
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2); // Fade out quickly
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+  } catch (e) {
+    console.error("Error playing completion sound", e);
   }
 };
 

@@ -1,5 +1,6 @@
 
 
+
 import { AppSettings, FilesApiConfig } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
@@ -97,6 +98,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isMermaidRenderingEnabled: true,
   isGraphvizRenderingEnabled: true,
   isCompletionNotificationEnabled: false,
+  isCompletionSoundEnabled: false,
   isSuggestionsEnabled: true,
   isAutoScrollOnSendEnabled: true,
   isAutoSendOnSuggestionClick: true,
