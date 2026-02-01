@@ -1,9 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { translations } from '../../../utils/appUtils';
-import { FEATURE_DEMOS } from '../../../constants/appConstants';
-import { SuggestionIcon } from '../input/area/SuggestionIcon';
-import { Sparkles, ArrowRight } from 'lucide-react';
 
 interface WelcomeScreenProps {
     t: (key: keyof typeof translations, fallback?: string) => string;
@@ -35,8 +32,11 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
 
     // Sync target phrase when prop changes (e.g. language switch) OR when hover ends to restore greeting
     useEffect(() => {
+        // Only trigger reset if we are NOT currently showing the greeting (targetPhrase !== text)
+        // This prevents the greeting from being re-typed if the user hovers for < 3s and leaves.
         if (!isHovering && targetPhrase !== text) {
             setTargetPhrase(text);
+            // Trigger deletion to transition to new text if we were showing something else
             setStatus('deleting');
         }
     }, [text, isHovering, targetPhrase]);
@@ -56,18 +56,21 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
                 let currentDelay = baseTypeSpeed;
                 const lastChar = displayedText.slice(-1);
                 
+                // 1. Punctuation pauses
                 if ([',', ';', ':'].includes(lastChar)) {
                     currentDelay = 400; 
                 } else if (['.', '?', '!'].includes(lastChar)) {
                     currentDelay = 800; 
                 }
                 
+                // 2. Semantic pauses for dramatic effect
                 if (displayedText.toLowerCase().endsWith("wait")) {
                     currentDelay = 500;
                 } else if (displayedText.toLowerCase().endsWith("i'm sorry")) {
                     currentDelay = 600;
                 }
 
+                // 3. Random variance (simulating keystroke inconsistency)
                 currentDelay += Math.random() * 50 - 10;
 
                 timeout = setTimeout(() => {
@@ -84,23 +87,35 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
             }
         } else if (status === 'paused') {
             if (targetPhrase === text) {
+                // Showing the main greeting
                 if (isHovering) {
+                    // Easter Egg: If hovered for 3 seconds, start deleting to show quotes
                     timeout = setTimeout(() => setStatus('deleting'), 3000); 
                 }
             } else {
+                // Showing a quote
+                // Wait for pause duration then delete (to show next quote or return to greeting)
                 timeout = setTimeout(() => {
                     setStatus('deleting');
                 }, pauseDuration);
             }
         } else if (status === 'blank') {
             timeout = setTimeout(() => {
+                // Determine next phrase based on hover state
                 if (isHovering) {
+                    // Initialize or refill the bag if empty
                     if (unusedQuotesRef.current.length === 0) {
+                        // Refill with all quotes except the current one to prevent immediate repetition on cycle reset
                         unusedQuotesRef.current = quotes.filter(q => q !== targetPhrase);
                     }
+
+                    // Pick a random index from the available bag
                     const randomIndex = Math.floor(Math.random() * unusedQuotesRef.current.length);
                     const nextQuote = unusedQuotesRef.current[randomIndex];
+
+                    // Remove the used quote from the bag
                     unusedQuotesRef.current.splice(randomIndex, 1);
+
                     setTargetPhrase(nextQuote);
                 } else {
                     setTargetPhrase(text);
@@ -128,74 +143,14 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ 
     t, 
-    onSuggestionClick,
-    onOrganizeInfoClick,
-    showSuggestions
 }) => {
     return (
-        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-5xl mx-auto px-4 py-12">
-            <div className="w-full mb-8 sm:mb-16">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-center text-[var(--theme-text-primary)] welcome-message-animate tracking-tighter">
-                    <TypewriterEffect text={t('welcome_greeting')} />
-                </h1>
-            </div>
-
-            {showSuggestions && (
-                <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000 fill-mode-both delay-300">
-                    <div className="flex items-center gap-3 justify-center text-[var(--theme-text-tertiary)] uppercase tracking-widest text-[10px] font-bold">
-                        <Sparkles size={12} className="text-amber-500" />
-                        <span>Featured Demos</span>
-                        <Sparkles size={12} className="text-amber-500" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {FEATURE_DEMOS.map((demo, idx) => (
-                            <button
-                                key={demo.id}
-                                onClick={() => {
-                                    if (demo.id === 'visual-canvas') {
-                                        onOrganizeInfoClick?.(demo.prompt);
-                                    } else {
-                                        onSuggestionClick?.(demo.prompt);
-                                    }
-                                }}
-                                className={`
-                                    group relative flex flex-col text-left p-5 rounded-2xl border border-[var(--theme-border-secondary)] 
-                                    bg-[var(--theme-bg-input)]/40 hover:bg-[var(--theme-bg-tertiary)]/60 
-                                    transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl
-                                    overflow-hidden
-                                `}
-                                style={{ animationDelay: `${500 + idx * 100}ms` }}
-                            >
-                                {/* Glow Effect */}
-                                <div className={`absolute -right-8 -top-8 w-24 h-24 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${demo.bg}`} />
-                                
-                                <div className="flex items-center gap-4 mb-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${demo.bg} ${demo.color} shadow-inner`}>
-                                        <SuggestionIcon iconName={demo.icon} className="transition-transform group-hover:scale-110 duration-300" />
-                                    </div>
-                                    <h3 className="text-lg font-bold text-[var(--theme-text-primary)] group-hover:text-[var(--theme-text-link)] transition-colors">
-                                        {demo.title}
-                                    </h3>
-                                </div>
-                                
-                                <p className="text-sm text-[var(--theme-text-secondary)] leading-relaxed mb-4 flex-grow opacity-80 group-hover:opacity-100 transition-opacity">
-                                    {demo.description}
-                                </p>
-
-                                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] group-hover:text-[var(--theme-text-primary)] transition-colors">
-                                    <span>Try it out</span>
-                                    <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                    
-                    <p className="text-center text-xs text-[var(--theme-text-tertiary)] opacity-60">
-                        Or start by attaching a file or typing your own message below.
-                    </p>
-                </div>
-            )}
+        <div className="flex flex-col items-center justify-center min-h-full w-full max-w-4xl mx-auto px-4 pb-16">
+          <div className="w-full">
+            <h1 className="text-3xl md:text-4xl font-medium text-center text-[var(--theme-text-primary)] mb-6 sm:mb-12 welcome-message-animate tracking-tight min-h-[3rem] flex items-center justify-center">
+              <TypewriterEffect text={t('welcome_greeting')} />
+            </h1>
+          </div>
         </div>
     );
 };

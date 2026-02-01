@@ -4,11 +4,12 @@ import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
+import { updateMessagesWithPart, updateMessagesWithThought } from './../chat-stream/processors';
 
 export const useChatState = (appSettings: AppSettings) => {
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
     const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
-    const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    const [activeSessionId, setActiveSessionIdState] = useState<string | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<'update' | 'resend'>('resend');
     const [commandedInput, setCommandedInput] = useState<InputCommand | null>(null);
@@ -56,8 +57,6 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            // Optimization: If THIS tab is currently streaming for this session, ignore the refresh
-            // to avoid state flickering or resetting.
             if (loadingSessionIds.has(id)) {
                 return;
             }
@@ -70,8 +69,34 @@ export const useChatState = (appSettings: AppSettings) => {
                 else next.delete(sessionId);
                 return next;
             });
+        },
+        onActiveSessionChanged: (sessionId) => {
+            setActiveSessionIdState(sessionId);
+        },
+        onStreamPartReceived: (sessionId, part, startTime) => {
+            setSavedSessions(prev => prev.map(s => {
+                if (s.id !== sessionId) return s;
+                return {
+                    ...s,
+                    messages: updateMessagesWithPart(s.messages, part, startTime, new Set(), null)
+                };
+            }));
+        },
+        onStreamThoughtReceived: (sessionId, thoughtChunk, startTime) => {
+            setSavedSessions(prev => prev.map(s => {
+                if (s.id !== sessionId) return s;
+                return {
+                    ...s,
+                    messages: updateMessagesWithThought(s.messages, thoughtChunk, startTime)
+                };
+            }));
         }
     });
+
+    const setActiveSessionId = useCallback((id: string | null) => {
+        setActiveSessionIdState(id);
+        broadcast({ type: 'ACTIVE_SESSION_CHANGED', sessionId: id });
+    }, [broadcast]);
 
     const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
         setLoadingSessionIds(prev => {
@@ -181,6 +206,7 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading 
+        setSessionLoading,
+        broadcast 
     };
 };
