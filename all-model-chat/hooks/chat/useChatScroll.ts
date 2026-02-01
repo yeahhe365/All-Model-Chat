@@ -48,6 +48,10 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
     useLayoutEffect(() => {
         const container = scrollContainerRef.current;
         if (container) {
+            // Optimization: Do not auto-scroll if the tab is in the background
+            // This prevents the browser from doing heavy layout calculations when not needed
+            if (document.hidden) return;
+
             // If user hasn't scrolled up, keep at bottom
             if (!userScrolledUp.current) {
                 const isNewMessage = messages.length > prevMsgLength.current;
@@ -127,6 +131,9 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
     }, []);
 
     const handleScroll = useCallback(() => {
+        // Optimization: Skip scroll logic if hidden
+        if (document.hidden) return;
+
         const container = scrollContainerRef.current;
         if (container) {
             const { scrollTop, scrollHeight, clientHeight } = container;

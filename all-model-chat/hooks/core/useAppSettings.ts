@@ -1,37 +1,48 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppSettings } from '../../types';
 import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG } from '../../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../../constants/themeConstants';
 import { applyThemeToDocument, logService } from '../../utils/appUtils';
 import { dbService } from '../../utils/db';
+import { useMultiTabSync } from './useMultiTabSync';
 
 export const useAppSettings = () => {
-    const [appSettings, setAppSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
+    const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
-    useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const storedSettings = await dbService.getAppSettings();
-                if (storedSettings) {
-                    const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
-                    
-                    if (storedSettings.filesApiConfig) {
-                        // Ensure new keys are present if structure updated
-                        newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
-                    }
-
-                    setAppSettings(newSettings);
+    const loadSettings = useCallback(async () => {
+        try {
+            const storedSettings = await dbService.getAppSettings();
+            if (storedSettings) {
+                const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
+                
+                if (storedSettings.filesApiConfig) {
+                    // Ensure new keys are present if structure updated
+                    newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
                 }
-            } catch (error) {
-                logService.error("Failed to load settings from IndexedDB", { error });
-            } finally {
-                setIsSettingsLoaded(true);
+
+                setAppSettingsState(newSettings);
             }
-        };
-        loadSettings();
+        } catch (error) {
+            logService.error("Failed to load settings from IndexedDB", { error });
+        } finally {
+            setIsSettingsLoaded(true);
+        }
     }, []);
+
+    // Initial Load
+    useEffect(() => {
+        loadSettings();
+    }, [loadSettings]);
+
+    // Sync Hook
+    const { broadcast } = useMultiTabSync({
+        onSettingsUpdated: () => {
+            logService.info("[Sync] Reloading settings from DB");
+            loadSettings();
+        }
+    });
     
     const [language, setLanguage] = useState<'en' | 'zh'>('en');
 
@@ -42,6 +53,7 @@ export const useAppSettings = () => {
         return appSettings.themeId as 'onyx' | 'pearl';
     });
 
+    // Theme Logic
     useEffect(() => {
         if (appSettings.themeId === 'system') {
             const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -57,12 +69,24 @@ export const useAppSettings = () => {
 
     const currentTheme = AVAILABLE_THEMES.find(t => t.id === resolvedThemeId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
 
-    useEffect(() => {
-        // Only save settings after they've been loaded to prevent overwriting stored settings with defaults.
-        if (isSettingsLoaded) {
-            dbService.setAppSettings(appSettings).catch(e => logService.error("Failed to save settings", { error: e }));
-        }
+    // Apply Side Effects (DOM, Persistence, Broadcasting)
+    const setAppSettings = useCallback((newSettings: AppSettings | ((prev: AppSettings) => AppSettings)) => {
+        setAppSettingsState(prev => {
+            const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
+            
+            // Persist and Broadcast
+            if (isSettingsLoaded) {
+                dbService.setAppSettings(next)
+                    .then(() => broadcast({ type: 'SETTINGS_UPDATED' }))
+                    .catch(e => logService.error("Failed to save settings", { error: e }));
+            }
+            
+            return next;
+        });
+    }, [isSettingsLoaded, broadcast]);
 
+    // Apply styles when settings change
+    useEffect(() => {
         applyThemeToDocument(document, currentTheme, appSettings);
 
         let effectiveLang: 'en' | 'zh' = 'en';
@@ -77,7 +101,7 @@ export const useAppSettings = () => {
         }
         setLanguage(effectiveLang);
 
-    }, [appSettings, currentTheme, isSettingsLoaded]);
+    }, [appSettings, currentTheme]);
 
     return { appSettings, setAppSettings, currentTheme, language };
 };
