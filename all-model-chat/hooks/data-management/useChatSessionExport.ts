@@ -4,15 +4,14 @@ import { SavedChatSession, Theme } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
 import { 
     sanitizeFilename, 
-    exportElementAsPng, 
     exportHtmlStringAsFile, 
     exportTextStringAsFile, 
     gatherPageStyles, 
     triggerDownload,
     generateExportHtmlTemplate,
     generateExportTxtTemplate,
-    embedImagesInClone,
-    createSnapshotContainer
+    prepareElementForExport,
+    generateSnapshotPng
 } from '../../utils/exportUtils';
 import DOMPurify from 'dompurify';
 
@@ -42,108 +41,48 @@ export const useChatSessionExport = ({
         const filename = `chat-${safeTitle}-${isoDate}.${format}`;
         const scrollContainer = scrollContainerRef.current;
 
-        if (format === 'png') {
+        if (format === 'png' || format === 'html') {
             if (!scrollContainer) return;
 
-            let cleanup = () => {};
-            try {
-                const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
+            // Use unified helper to clone, clean, and embed images
+            const chatClone = await prepareElementForExport(scrollContainer);
+
+            if (format === 'png') {
+                await generateSnapshotPng(
+                    chatClone,
+                    filename,
                     currentTheme.id,
-                    '800px'
+                    {
+                        title: activeChat.title,
+                        metaLeft: dateStr,
+                        metaRight: activeChat.settings.modelId
+                    },
+                    {
+                        scale: 2 // Standard 2x scale for full chat
+                    }
                 );
-                cleanup = remove;
+            } else {
+                // HTML Export
+                // Gather Styles & Generate Template
+                const styles = await gatherPageStyles();
+                const bodyClasses = document.body.className;
+                const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
+                const chatHtml = chatClone.innerHTML;
 
-                // Clone the chat container
-                const chatClone = scrollContainer.cloneNode(true) as HTMLElement;
+                const fullHtml = generateExportHtmlTemplate({
+                    title: DOMPurify.sanitize(activeChat.title),
+                    date: dateStr,
+                    model: activeChat.settings.modelId,
+                    contentHtml: chatHtml,
+                    styles,
+                    themeId: currentTheme.id,
+                    language,
+                    rootBgColor,
+                    bodyClasses
+                });
                 
-                // Pre-process the clone
-                chatClone.querySelectorAll('details').forEach(details => {
-                    details.setAttribute('open', '');
-                });
-                chatClone.querySelectorAll('.sticky').forEach(el => el.remove());
-                chatClone.querySelectorAll('[data-message-id]').forEach(el => {
-                    (el as HTMLElement).style.animation = 'none';
-                    (el as HTMLElement).style.opacity = '1';
-                    (el as HTMLElement).style.transform = 'none';
-                });
-
-                // Create header
-                const headerHtml = `
-                    <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
-                        <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">${activeChat.title}</h1>
-                        <div style="font-size: 0.875rem; color: var(--theme-text-tertiary); display: flex; gap: 1rem;">
-                            <span>${dateStr}</span>
-                            <span>•</span>
-                            <span>${activeChat.settings.modelId}</span>
-                        </div>
-                    </div>
-                `;
-
-                innerContent.innerHTML = `
-                    ${headerHtml}
-                    <div style="padding: 0 2rem 2rem 2rem;">
-                        ${chatClone.innerHTML}
-                    </div>
-                `;
-                
-                // Wait for rendering
-                await new Promise(resolve => setTimeout(resolve, 800)); 
-
-                await exportElementAsPng(container, filename, {
-                    backgroundColor: rootBgColor,
-                    scale: 2, 
-                });
-
-            } finally {
-                cleanup();
+                exportHtmlStringAsFile(fullHtml, filename);
             }
-            return;
-        }
-
-        if (format === 'html') {
-            if (!scrollContainer) return;
-
-            // 1. Clone the container to avoid modifying the live UI
-            const chatClone = scrollContainer.cloneNode(true) as HTMLElement;
-
-            // 2. Clean UI elements that shouldn't be in the export
-            const selectorsToRemove = [
-                'button', 
-                '.message-actions', 
-                '.sticky', 
-                'input', 
-                'textarea', 
-                '.code-block-utility-button',
-                '[role="tooltip"]',
-                '.loading-dots-container'
-            ];
-            chatClone.querySelectorAll(selectorsToRemove.join(',')).forEach(el => el.remove());
-            
-            // 3. Expand all details elements (thoughts) so they are visible in export
-            chatClone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
-
-            // 4. Embed Images: Convert blob/url images to Base64 for self-contained HTML
-            await embedImagesInClone(chatClone);
-
-            // 5. Gather Styles & Generate Template
-            const styles = await gatherPageStyles();
-            const bodyClasses = document.body.className;
-            const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-            const chatHtml = chatClone.innerHTML;
-
-            const fullHtml = generateExportHtmlTemplate({
-                title: DOMPurify.sanitize(activeChat.title),
-                date: dateStr,
-                model: activeChat.settings.modelId,
-                contentHtml: chatHtml,
-                styles,
-                themeId: currentTheme.id,
-                language,
-                rootBgColor,
-                bodyClasses
-            });
-            
-            exportHtmlStringAsFile(fullHtml, filename);
         } else if (format === 'txt') {
             const txtContent = generateExportTxtTemplate({
                 title: activeChat.title,

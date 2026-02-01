@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { UploadedFile } from '../../types';
-import { ChevronLeft, ChevronRight, FileCode2, FileAudio, FileVideo, ExternalLink, FileText, Youtube } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileCode2, FileAudio, ExternalLink, FileText } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
@@ -9,6 +9,7 @@ import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
 import { PdfViewer } from '../shared/file-preview/PdfViewer';
+import { IconYoutube } from '../icons/CustomIcons';
 
 interface FilePreviewModalProps {
   file: UploadedFile | null;
@@ -176,7 +177,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                       />
                   ) : (
                       <div className="text-center text-white/50">
-                          <Youtube size={64} className="mx-auto mb-4 opacity-50" />
+                          <IconYoutube size={64} className="mx-auto mb-4 opacity-50" />
                           <p>Invalid YouTube URL</p>
                       </div>
                   )}

@@ -1,11 +1,7 @@
 
 import { useState } from 'react';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
-import hljs from 'highlight.js';
 import { ChatMessage } from '../types';
 import {
-    exportElementAsPng,
     exportHtmlStringAsFile,
     exportTextStringAsFile,
     triggerDownload,
@@ -13,8 +9,8 @@ import {
     generateExportHtmlTemplate,
     generateExportTxtTemplate,
     gatherPageStyles,
-    createSnapshotContainer,
-    embedImagesInClone
+    prepareElementForExport,
+    generateSnapshotPng
 } from '../utils/exportUtils';
 
 interface UseMessageExportProps {
@@ -58,92 +54,63 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
-            if (type === 'png') {
-                // Attempt to find the rendered DOM bubble to preserve Math/Syntax/Diagrams
-                const messageBubble = document.querySelector(`[data-message-id="${message.id}"] > div > .shadow-sm`);
+            // Find the rendered DOM bubble to preserve Math/Syntax/Diagrams
+            // We use the data-message-id attribute which is present in the Message component
+            const messageWrapper = document.querySelector(`[data-message-id="${message.id}"]`);
+            // We want the inner bubble, usually inside the wrapper. 
+            // The structure is Wrapper -> Container -> [Actions, Bubble, Actions]
+            // The Bubble has class "shadow-sm" (user) or just text (model).
+            // A safer bet is grabbing the container that holds the content.
+            const contentNodeSource = messageWrapper?.querySelector('.markdown-body') || messageWrapper?.querySelector('.shadow-sm');
 
-                let contentNode: HTMLElement;
+            if (type === 'png' || type === 'html') {
+                if (!contentNodeSource) {
+                    throw new Error("Could not find message content in DOM. Please ensure the message is visible.");
+                }
 
-                if (messageBubble) {
-                    // Clone the full bubble (includes files, thoughts, and formatted content)
-                    contentNode = messageBubble.cloneNode(true) as HTMLElement;
+                // Use unified helper to clone, clean, and embed images
+                const cleanedContent = await prepareElementForExport(contentNodeSource as HTMLElement);
 
-                    // Embed images to ensure they render in the screenshot (handles CORS/Blob URLs)
-                    await embedImagesInClone(contentNode);
-
-                    // Expand any collapsed details (like thoughts) so they are visible in export.
-                    contentNode.querySelectorAll('details').forEach(details => details.setAttribute('open', 'true'));
+                if (type === 'png') {
+                    await generateSnapshotPng(
+                        cleanedContent, 
+                        `${filenameBase}.png`, 
+                        themeId, 
+                        {
+                            title: "Exported Message",
+                            metaLeft: dateStr,
+                            metaRight: `ID: ${shortId}`
+                        },
+                        {
+                            scale: 2.5 // Use slightly higher scale for single message clarity
+                        }
+                    );
                 } else {
-                    // Fallback to raw markdown parsing if DOM finding fails
-                    const rawHtml = marked.parse(markdownContent);
-                    const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
+                    // HTML Export
+                    const styles = await gatherPageStyles();
+                    const bodyClasses = document.body.className;
+                    const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
+                    
+                    // Wrap the cleaned content
                     const wrapper = document.createElement('div');
                     wrapper.className = 'markdown-body';
-                    wrapper.innerHTML = sanitizedHtml;
+                    wrapper.appendChild(cleanedContent);
+                    const chatHtml = wrapper.outerHTML;
 
-                    wrapper.querySelectorAll('pre code').forEach((block) => {
-                        hljs.highlightElement(block as HTMLElement);
+                    const fullHtml = generateExportHtmlTemplate({
+                        title: `Message ${shortId}`,
+                        date: dateStr,
+                        model: `ID: ${shortId}`,
+                        contentHtml: chatHtml,
+                        styles,
+                        themeId,
+                        language: 'en',
+                        rootBgColor,
+                        bodyClasses
                     });
 
-                    contentNode = wrapper;
+                    exportHtmlStringAsFile(fullHtml, `${filenameBase}.html`);
                 }
-
-                let cleanup = () => { };
-                try {
-                    const { container, innerContent, remove, rootBgColor } = await createSnapshotContainer(
-                        themeId,
-                        '800px'
-                    );
-                    cleanup = remove;
-
-                    const headerHtml = `
-                        <div style="padding: 2rem 2rem 1rem 2rem; border-bottom: 1px solid var(--theme-border-secondary); margin-bottom: 1rem;">
-                            <h1 style="font-size: 1.5rem; font-weight: bold; color: var(--theme-text-primary); margin-bottom: 0.5rem;">Exported Message</h1>
-                            <div style="font-size: 0.875rem; color: var(--theme-text-tertiary); display: flex; gap: 1rem;">
-                                <span>${dateStr}</span>
-                                <span>•</span>
-                                <span>ID: ${shortId}</span>
-                            </div>
-                        </div>
-                    `;
-
-                    const headerDiv = document.createElement('div');
-                    headerDiv.innerHTML = headerHtml;
-                    innerContent.appendChild(headerDiv);
-
-                    const bodyDiv = document.createElement('div');
-                    bodyDiv.style.padding = '0 2rem 2rem 2rem';
-                    bodyDiv.appendChild(contentNode);
-                    innerContent.appendChild(bodyDiv);
-
-                    // Wait for layout/images
-                    await new Promise(resolve => setTimeout(resolve, 800));
-
-                    await exportElementAsPng(container, `${filenameBase}.png`, { backgroundColor: rootBgColor, scale: 2.5 });
-                } finally {
-                    cleanup();
-                }
-
-            } else if (type === 'html') {
-                const rawHtml = marked.parse(markdownContent);
-                const sanitizedHtml = DOMPurify.sanitize(rawHtml as string);
-                const styles = await gatherPageStyles();
-                const bodyClasses = document.body.className;
-                const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-
-                const fullHtml = generateExportHtmlTemplate({
-                    title: `Message ${shortId}`,
-                    date: dateStr,
-                    model: `ID: ${shortId}`,
-                    contentHtml: `<div class="markdown-body">${sanitizedHtml}</div>`,
-                    styles,
-                    themeId,
-                    language: 'en',
-                    rootBgColor,
-                    bodyClasses
-                });
-
-                exportHtmlStringAsFile(fullHtml, `${filenameBase}.html`);
 
             } else if (type === 'txt') {
                 const txtContent = generateExportTxtTemplate({

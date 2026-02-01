@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { AttachmentAction } from '../../components/chat/input/AttachmentMenu';
 import { UploadedFile } from '../../types';
 import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
+import { captureScreenImage } from '../../utils/mediaUtils';
 
 interface UseChatInputModalsProps {
   onProcessFiles: (files: File[]) => Promise<void>;
@@ -29,73 +30,13 @@ export const useChatInputModals = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleScreenshot = async () => {
-    if (!('getDisplayMedia' in navigator.mediaDevices)) {
-        alert("Your browser does not support screen capture.");
-        return;
-    }
-
-    let stream: MediaStream;
-    try {
-        stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { mediaSource: "screen" } as any, 
-            audio: false,
-        });
-    } catch (err) {
-        console.error("Error starting screen capture:", err);
-        if ((err as DOMException).name !== 'NotAllowedError') {
-            alert(`Could not start screen capture: ${(err as Error).message}`);
-        }
-        return;
-    }
+    const blob = await captureScreenImage();
     
-    const track = stream.getVideoTracks()[0];
-    if (!track) {
-        console.error("No video track found in the stream.");
-        stream.getTracks().forEach(t => t.stop());
-        return;
-    }
-    
-    const processBlob = async (blob: Blob | null) => {
-        if (blob) {
-            const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
-            const file = new File([blob], fileName, { type: 'image/png' });
-            justInitiatedFileOpRef.current = true;
-            onProcessFiles([file]);
-        }
-        stream.getTracks().forEach(t => t.stop());
-    };
-
-    try {
-        // @ts-ignore
-        if (typeof ImageCapture !== 'undefined') {
-             // @ts-ignore
-            const imageCapture = new ImageCapture(track);
-            const bitmap = await imageCapture.grabFrame();
-            const canvas = document.createElement('canvas');
-            canvas.width = bitmap.width;
-            canvas.height = bitmap.height;
-            const context = canvas.getContext('2d');
-            context?.drawImage(bitmap, 0, 0);
-            canvas.toBlob(processBlob, 'image/png');
-        } else {
-            const video = document.createElement('video');
-            video.srcObject = stream;
-            video.onloadedmetadata = () => {
-                video.play();
-                setTimeout(() => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const context = canvas.getContext('2d');
-                    context?.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    canvas.toBlob(processBlob, 'image/png');
-                    video.remove();
-                }, 150);
-            };
-        }
-    } catch (err) {
-        console.error("Error processing screen capture frame:", err);
-        stream.getTracks().forEach(t => t.stop());
+    if (blob) {
+        const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
+        const file = new File([blob], fileName, { type: 'image/png' });
+        justInitiatedFileOpRef.current = true;
+        onProcessFiles([file]);
     }
   };
 
@@ -135,15 +76,8 @@ export const useChatInputModals = ({
     }
 
     const extension = `.${finalFilename.split('.').pop()?.toLowerCase()}`;
-    // Determine mime type based on extension
-    let mimeType = EXTENSION_TO_MIME[extension] || 'text/plain';
-    
-    // Explicit overrides for code types not in EXTENSION_TO_MIME or generic map
-    if (['.json'].includes(extension)) mimeType = 'application/json';
-    if (['.js', '.ts', '.jsx', '.tsx'].includes(extension)) mimeType = 'text/javascript';
-    if (['.py'].includes(extension)) mimeType = 'text/x-python';
-    if (['.xml'].includes(extension)) mimeType = 'text/xml';
-    if (['.csv'].includes(extension)) mimeType = 'text/csv';
+    // Determine mime type based on centralized constant
+    const mimeType = EXTENSION_TO_MIME[extension] || 'text/plain';
 
     // If content is already a Blob (e.g. PDF), use it directly, otherwise treat as string
     const blobParts = [content];

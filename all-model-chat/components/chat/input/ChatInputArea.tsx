@@ -39,7 +39,7 @@ export interface ChatInputAreaProps {
         disabled: boolean;
         onCompositionStart: () => void;
         onCompositionEnd: () => void;
-        onFocus: () => void;
+        onFocus?: () => void;
     };
     quoteProps?: {
         quotes: string[];

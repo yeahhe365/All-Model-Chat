@@ -93,6 +93,33 @@ export const ALL_SUPPORTED_MIME_TYPES = [
     ...SUPPORTED_DOC_MIME_TYPES,
 ];
 
+export const SUPPORTED_GENERATED_MIME_TYPES = new Set([
+    // Images
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    // Docs
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'text/csv',
+    'text/plain',
+    'application/json',
+    'text/html',
+    'text/xml',
+    'text/markdown',
+    'text/x-python',
+    // Media
+    'audio/wav',
+    'audio/mp3',
+    'video/mp4',
+    // Other
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/x-7z-compressed',
+    'application/octet-stream'
+]);
+
 export const EXTENSION_TO_MIME: Record<string, string> = {
     '.mp4': 'video/mp4',
     '.mov': 'video/quicktime',
@@ -115,6 +142,32 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
     '.gif': 'image/gif',
     '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     '.doc': 'application/msword',
+    // Code/Text Extensions
+    '.json': 'application/json',
+    '.js': 'text/javascript',
+    '.jsx': 'text/javascript',
+    '.ts': 'text/javascript',
+    '.tsx': 'text/javascript',
+    '.css': 'text/css',
+    '.html': 'text/html',
+    '.py': 'text/x-python',
+    '.java': 'text/x-java-source',
+    '.c': 'text/x-c',
+    '.cpp': 'text/x-c++src',
+    '.h': 'text/x-csrc',
+    '.cs': 'text/plain', // No standard mime, treat as text
+    '.go': 'text/x-go',
+    '.rs': 'text/plain',
+    '.php': 'application/x-httpd-php',
+    '.sh': 'application/x-sh',
+    '.yaml': 'application/yaml',
+    '.yml': 'application/yaml',
+    '.xml': 'text/xml',
+    '.csv': 'text/csv',
+    '.md': 'text/markdown',
+    '.sql': 'application/sql',
+    '.txt': 'text/plain',
+    '.log': 'text/plain'
 };
 
 // Centralized map for generating file extensions from MIME types

@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { ChatMessage, UploadedFile, ThemeColors, AppSettings, SideViewContent } from '../../types';
+import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
 import { MessageActions } from './MessageActions';
@@ -16,7 +16,6 @@ interface MessageProps {
     onImageClick: (file: UploadedFile) => void; // Renamed to onFileClick in logic, kept name for props compat
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     showThoughts: boolean;
-    themeColors: ThemeColors; 
     themeId: string;
     baseFontSize: number;
     expandCodeBlocksByDefault: boolean;

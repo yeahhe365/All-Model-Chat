@@ -3,7 +3,7 @@ import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, buildContentParts, base64ToBlob, createChatHistoryForApi, logService, createNewSession } from '../../utils/appUtils';
+import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64 } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -42,56 +42,52 @@ export const useImageEditSender = ({
         const modelMessageId = generationId;
         const imageFiles = files.filter(f => f.type.startsWith('image/'));
 
-        let finalSessionId = activeSessionId;
-        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, files, timestamp: new Date() };
-        const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
+        const finalSessionId = activeSessionId || generateUniqueId();
         
-        if (!finalSessionId) { // New Chat
-            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-            if (options.shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
-            
-            const newSession = createNewSession(newSessionSettings, [userMessage, modelMessage], "New Image Edit");
-            finalSessionId = newSession.id;
-            
-            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
-            setActiveSessionId(newSession.id);
-        } else { // Existing Chat or Edit
-            updateAndPersistSessions(p => p.map(s => {
-                const isSessionToUpdate = effectiveEditingId ? s.messages.some(m => m.id === effectiveEditingId) : s.id === finalSessionId;
-                if (!isSessionToUpdate) return s;
-
-                const editIndex = effectiveEditingId ? s.messages.findIndex(m => m.id === effectiveEditingId) : -1;
-                const baseMessages = editIndex !== -1 ? s.messages.slice(0, editIndex) : s.messages;
-                
-                const newMessages = [...baseMessages, userMessage, modelMessage];
-                
-                let newTitle = s.title;
-                if (s.title === 'New Chat' || (editIndex !== -1 && s.messages.length < 3)) {
-                     newTitle = text.substring(0, 30).trim() || "Image Edit";
-                }
-                let updatedSettings = s.settings;
-                if (options.shouldLockKey && !s.settings.lockedApiKey) {
-                    updatedSettings = { ...s.settings, lockedApiKey: keyToUse };
-                }
-                return { ...s, messages: newMessages, title: newTitle, settings: updatedSettings };
-            }));
+        const userMessage = createMessage('user', text, { files });
+        const modelMessage = createMessage('model', '', {
+            id: modelMessageId,
+            isLoading: true,
+            generationStartTime: new Date()
+        });
+        
+        let newTitle = undefined;
+        if (!activeSessionId || (effectiveEditingId && messages.length === 0)) {
+             newTitle = text.substring(0, 30).trim() || "Image Edit";
         }
 
-        if (!finalSessionId) {
-            console.error("Error: Could not determine session ID for Image Edit message.");
-            return;
+        updateAndPersistSessions(prev => performOptimisticSessionUpdate(prev, {
+            activeSessionId,
+            newSessionId: finalSessionId,
+            newMessages: [userMessage, modelMessage],
+            settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
+            editingMessageId: effectiveEditingId,
+            appSettings,
+            title: newTitle,
+            shouldLockKey: options.shouldLockKey,
+            keyToLock: keyToUse
+        }));
+
+        if (!activeSessionId) {
+            setActiveSessionId(finalSessionId);
         }
 
-        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
+        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId));
         activeJobs.current.set(generationId, newAbortController);
 
         try {
-            // For image edit, we typically don't apply custom resolution logic yet as it's a specific endpoint/task,
-            // but we can pass the modelId anyway.
             const { contentParts: promptParts } = await buildContentParts(text, imageFiles, currentChatSettings.modelId);
-            // Apply thinking strip logic here too
             const shouldStripThinking = currentChatSettings.hideThinkingInContext ?? appSettings.hideThinkingInContext;
-            const historyForApi = await createChatHistoryForApi(messages, shouldStripThinking);
+            
+            // Note: messages here is current messages *before* update.
+            // If editing, we need to slice it for context.
+            let historyMessages = messages;
+            if (effectiveEditingId) {
+                 const idx = messages.findIndex(m => m.id === effectiveEditingId);
+                 if (idx !== -1) historyMessages = messages.slice(0, idx);
+            }
+            
+            const historyForApi = await createChatHistoryForApi(historyMessages, shouldStripThinking);
             
             const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, imageSize);
 
@@ -119,19 +115,9 @@ export const useImageEditSender = ({
                             hasImagePart = true;
                             successfulImageCount++;
                             const { mimeType, data } = part.inlineData;
-                            const name = `edited-image-${index + 1}.png`;
-                            const blob = base64ToBlob(data, mimeType);
-                            const file = new File([blob], name, { type: mimeType });
-                            const dataUrl = URL.createObjectURL(file);
-                            combinedFiles.push({
-                                id: generateUniqueId(),
-                                name,
-                                type: mimeType,
-                                size: file.size,
-                                dataUrl,
-                                rawFile: file,
-                                uploadState: 'active',
-                            });
+                            
+                            const newFile = createUploadedFileFromBase64(data, mimeType, `edited-image-${index + 1}`);
+                            combinedFiles.push(newFile);
                         }
                     });
 
@@ -157,9 +143,9 @@ export const useImageEditSender = ({
             updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: combinedText.trim(), files: combinedFiles, generationEndTime: new Date() } : m) } : s));
 
         } catch (error) {
-            handleApiError(error, finalSessionId!, modelMessageId, "Image Edit Error");
+            handleApiError(error, finalSessionId, modelMessageId, "Image Edit Error");
         } finally {
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId); return next; });
             activeJobs.current.delete(generationId);
         }
     }, [updateAndPersistSessions, setLoadingSessionIds, activeJobs, handleApiError, setActiveSessionId]);

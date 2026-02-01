@@ -4,20 +4,17 @@ import { ChevronDown, Check } from 'lucide-react';
 import { translations } from '../../../../utils/appUtils';
 import { IconThemeSystem, IconThemeDark, IconThemeLight } from '../../../icons/CustomIcons';
 import { useClickOutside } from '../../../../hooks/useClickOutside';
+import { AppSettings } from '../../../../types';
 
 interface ThemeLanguageSelectorProps {
-  themeId: 'system' | 'onyx' | 'pearl';
-  setThemeId: (value: 'system' | 'onyx' | 'pearl') => void;
-  language: 'en' | 'zh' | 'system';
-  setLanguage: (value: 'en' | 'zh' | 'system') => void;
+  settings: AppSettings;
+  onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   t: (key: keyof typeof translations) => string;
 }
 
 export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
-  themeId,
-  setThemeId,
-  language,
-  setLanguage,
+  settings,
+  onUpdate,
   t
 }) => {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -37,7 +34,7 @@ export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
     { id: 'zh', label: '简体中文' },
   ];
 
-  const currentLanguageDisplay = languageOptions.find(o => o.id === language)?.label;
+  const currentLanguageDisplay = languageOptions.find(o => o.id === settings.language)?.label;
 
   return (
     <div className="grid grid-cols-1 gap-2">
@@ -50,9 +47,9 @@ export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
               {themeOptions.map(option => (
                 <button
                     key={option.id}
-                    onClick={() => setThemeId(option.id)}
+                    onClick={() => onUpdate('themeId', option.id)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
-                        themeId === option.id
+                        settings.themeId === option.id
                         ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] shadow-sm'
                         : 'text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'
                     }`}
@@ -83,11 +80,11 @@ export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
                 {languageOptions.map(option => (
                     <button
                         key={option.id}
-                        onClick={() => { setLanguage(option.id as any); setIsLanguageDropdownOpen(false); }}
-                        className={`w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors ${language === option.id ? 'text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)]/30' : 'text-[var(--theme-text-primary)]'}`}
+                        onClick={() => { onUpdate('language', option.id as any); setIsLanguageDropdownOpen(false); }}
+                        className={`w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-[var(--theme-bg-tertiary)] transition-colors ${settings.language === option.id ? 'text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)]/30' : 'text-[var(--theme-text-primary)]'}`}
                     >
                         {option.label}
-                        {language === option.id && <Check size={14} strokeWidth={1.5} />}
+                        {settings.language === option.id && <Check size={14} strokeWidth={1.5} />}
                     </button>
                 ))}
             </div>

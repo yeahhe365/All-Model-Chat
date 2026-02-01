@@ -24,7 +24,7 @@ const compareVersions = (v1: string, v2: string) => {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = useResponsiveValue(18, 20);
-  const currentVersion = "1.8.4"; 
+  const currentVersion = "1.8.5"; 
   const [stars, setStars] = useState<number | null>(null);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 

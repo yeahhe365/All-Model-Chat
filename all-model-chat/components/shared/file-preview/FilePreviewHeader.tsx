@@ -5,6 +5,7 @@ import { UploadedFile } from '../../../types';
 import { triggerDownload } from '../../../utils/exportUtils';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { formatFileSize } from '../../../utils/domainUtils';
+import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolbar';
 
 interface FilePreviewHeaderProps {
     file: UploadedFile;
@@ -97,17 +98,14 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
         }
     }, [file, isDownloading, isMermaidDiagram]);
 
-    const floatingBarBase = "bg-black/60 backdrop-blur-xl border border-white/10 shadow-2xl transition-all duration-200";
-    const actionButtonClass = "p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-40 disabled:cursor-not-allowed";
-
     return (
         <div className="absolute top-0 left-0 right-0 p-4 sm:p-6 flex flex-row items-start justify-between gap-3 z-50 pointer-events-none">
             {/* File Info */}
-            <div className={`pointer-events-auto ${floatingBarBase} rounded-full pl-2 pr-4 py-1.5 flex items-center gap-3 min-w-0 max-w-[calc(100%-140px)] sm:max-w-md group/info`}>
+            <FloatingToolbar className="pointer-events-auto pl-2 pr-4 py-1.5 max-w-[calc(100%-140px)] sm:max-w-md group/info">
                 <div className="bg-white/10 p-1.5 rounded-full text-white/90 group-hover/info:bg-white/20 transition-colors flex-shrink-0">
                     <FileIcon size={16} strokeWidth={1.5} />
                 </div>
-                <div className="min-w-0 flex flex-col justify-center">
+                <div className="min-w-0 flex flex-col justify-center ml-2">
                     {isEditable && onNameChange ? (
                         <input 
                             type="text"
@@ -129,41 +127,41 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                         </div>
                     )}
                 </div>
-            </div>
+            </FloatingToolbar>
 
             {/* Top Actions */}
-            <div className={`pointer-events-auto ${floatingBarBase} rounded-full p-1 flex items-center gap-1 flex-shrink-0`}>
+            <FloatingToolbar className="pointer-events-auto p-1">
                 {isEditable ? (
-                    <button onClick={onSave} className={`${actionButtonClass} !text-green-400 hover:!bg-green-500/20`} title="Save Changes">
+                    <ToolbarButton onClick={onSave} className="!text-green-400 hover:!bg-green-500/20" title="Save Changes">
                         <Save size={18} strokeWidth={2} />
-                    </button>
+                    </ToolbarButton>
                 ) : (
                     <>
                         {isText && onToggleEdit && (
-                            <button onClick={onToggleEdit} className={actionButtonClass} title="Edit File">
+                            <ToolbarButton onClick={onToggleEdit} title="Edit File">
                                 <Edit3 size={18} strokeWidth={1.5} />
-                            </button>
+                            </ToolbarButton>
                         )}
-                        <button onClick={handleCopy} disabled={isCopied} className={actionButtonClass} title={isCopied ? "Copied!" : "Copy Content"}>
+                        <ToolbarButton onClick={handleCopy} disabled={isCopied} title={isCopied ? "Copied!" : "Copy Content"}>
                             {isCopied ? <Check size={18} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
-                        </button>
-                        <button onClick={handleDownload} disabled={isDownloading} className={actionButtonClass} title={isMermaidDiagram ? "Download SVG" : "Download File"}>
+                        </ToolbarButton>
+                        <ToolbarButton onClick={handleDownload} disabled={isDownloading} title={isMermaidDiagram ? "Download SVG" : "Download File"}>
                             {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <Download size={18} strokeWidth={1.5} />}
-                        </button>
+                        </ToolbarButton>
                     </>
                 )}
                 
-                <div className="w-px h-5 bg-white/10 mx-1"></div>
+                <ToolbarDivider />
                 
-                <button
+                <ToolbarButton
                     onClick={isEditable && onToggleEdit ? onToggleEdit : onClose}
-                    className={`${actionButtonClass} hover:bg-red-500/20 hover:text-red-400`}
+                    danger
                     aria-label={isEditable ? "Cancel Edit" : t('imageZoom_close_aria')}
                     title={isEditable ? "Cancel Edit" : t('imageZoom_close_title')}
                 >
                     <X size={18} strokeWidth={1.5} />
-                </button>
-            </div>
+                </ToolbarButton>
+            </FloatingToolbar>
         </div>
     );
 };

@@ -1,5 +1,4 @@
 
-import { UploadedFile } from '../types';
 import { fileToString } from './domainUtils';
 import JSZip from 'jszip';
 
@@ -21,6 +20,24 @@ interface FileNode {
     children: FileNode[];
     isDirectory: boolean;
 }
+
+interface ProcessingEntry {
+    path: string;
+    // Helper to retrieve content only if the file passes filtering
+    getContent: () => Promise<string>;
+    size?: number;
+}
+
+// Check if a path should be ignored based on directory or extension
+const shouldIgnore = (path: string): boolean => {
+    const parts = path.split('/').filter(p => p);
+    if (parts.some(part => IGNORED_DIRS.has(part) || part.startsWith('.'))) return true;
+
+    const extension = `.${path.split('.').pop()?.toLowerCase()}`;
+    if (IGNORED_EXTENSIONS.has(extension)) return true;
+
+    return false;
+};
 
 function buildASCIITree(treeData: FileNode[], rootName: string = 'root'): string {
     let structure = `${rootName}\n`;
@@ -45,56 +62,24 @@ function buildASCIITree(treeData: FileNode[], rootName: string = 'root'): string
     return structure;
 }
 
-const generateContextContent = (rootName: string, roots: FileNode[], processedFiles: { path: string, content: string }[]): string => {
-    const structureString = buildASCIITree(roots, rootName);
-    
-    let output = "File Structure:\n";
-    output += structureString;
-    output += "\n\nFile Contents:\n";
-
-    // Sort files by path for consistent output
-    processedFiles.sort((a, b) => a.path.localeCompare(b.path));
-
-    for (const file of processedFiles) {
-        output += `\n--- START OF FILE ${file.path} ---\n`;
-        output += file.content;
-        if (file.content && !file.content.endsWith('\n')) {
-            output += '\n';
-        }
-        output += `--- END OF FILE ${file.path} ---\n`;
-    }
-    return output;
-};
-
-export const generateFolderContext = async (files: FileList | File[] | { file: File, path: string }[]): Promise<File> => {
-    // Normalize input to a consistent array
-    const items = Array.isArray(files) ? files : Array.from(files);
-    
+/**
+ * Unified logic to iterate entries, build the tree structure, and read content.
+ */
+const processFileEntries = async (entries: ProcessingEntry[], rootName: string): Promise<File> => {
     const nodeMap = new Map<string, FileNode>();
     const roots: FileNode[] = [];
     const processedFiles: { path: string, content: string }[] = [];
 
-    // Iterate all items to build structure
-    for (const item of items) {
-        let file: File;
-        let path: string;
+    // Max file size for text extraction (2MB)
+    const MAX_TEXT_SIZE = 2 * 1024 * 1024;
 
-        if ('file' in item && 'path' in item && typeof item.path === 'string') {
-             // Custom object from Drag & Drop hook
-             file = item.file;
-             path = item.path;
-        } else {
-             // Standard File object (from input[type=file] webkitdirectory)
-             file = item as File;
-             path = (file as any).webkitRelativePath || file.name;
-        }
+    for (const entry of entries) {
+        // 1. Filtering
+        if (shouldIgnore(entry.path)) continue;
+        if (entry.size !== undefined && entry.size > MAX_TEXT_SIZE) continue;
 
-        const parts = path.split('/').filter((p: string) => p);
-
-        // Check if any part of the path is in IGNORED_DIRS
-        if (parts.some((part: string) => IGNORED_DIRS.has(part))) continue;
-
-        // Tree Building Logic
+        // 2. Tree Building
+        const parts = entry.path.split('/').filter(p => p);
         let parentNode: FileNode | undefined = undefined;
         let currentPath = '';
 
@@ -122,101 +107,88 @@ export const generateFolderContext = async (files: FileList | File[] | { file: F
             parentNode = currentNode;
         }
 
-        // Determine if we should read the content
-        const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-        const shouldReadContent = !IGNORED_EXTENSIONS.has(extension) && file.size < 2 * 1024 * 1024;
-
-        if (shouldReadContent) {
-            try {
-                const content = await fileToString(file);
-                processedFiles.push({ path, content });
-            } catch (e) {
-                console.warn(`Failed to read file ${path}`, e);
-            }
+        // 3. Content Reading (Only for files, i.e., leaf nodes in this iteration context)
+        try {
+            const content = await entry.getContent();
+            processedFiles.push({ path: entry.path, content });
+        } catch (e) {
+            console.warn(`Failed to read content for ${entry.path}`, e);
         }
     }
 
-    // Generate Output String
-    let rootName = "Project";
+    // 4. Output Generation
+    // Optimization: If single root folder, promote its name to rootName to avoid "Project/ProjectName/..." redundancy
+    let effectiveRootName = rootName;
+    let effectiveRoots = roots;
+
     if (roots.length === 1 && roots[0].isDirectory) {
-        // If single root folder, use its name and process children for tree to avoid redundancy
-        rootName = roots[0].name;
+        effectiveRootName = roots[0].name;
+        effectiveRoots = roots[0].children; // Start tree from inside the folder
     }
 
-    const output = generateContextContent(rootName, roots, processedFiles);
+    const structureString = buildASCIITree(effectiveRoots, effectiveRootName);
+    
+    let output = "File Structure:\n";
+    output += structureString;
+    output += "\n\nFile Contents:\n";
+
+    // Sort files by path for consistent output
+    processedFiles.sort((a, b) => a.path.localeCompare(b.path));
+
+    for (const file of processedFiles) {
+        output += `\n--- START OF FILE ${file.path} ---\n`;
+        output += file.content;
+        if (file.content && !file.content.endsWith('\n')) {
+            output += '\n';
+        }
+        output += `--- END OF FILE ${file.path} ---\n`;
+    }
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    return new File([output], `${rootName}-context-${timestamp}.txt`, { type: 'text/plain' });
+    return new File([output], `${effectiveRootName}-context-${timestamp}.txt`, { type: 'text/plain' });
+};
+
+export const generateFolderContext = async (files: FileList | File[] | { file: File, path: string }[]): Promise<File> => {
+    const items = Array.isArray(files) ? files : Array.from(files);
+    
+    const entries: ProcessingEntry[] = items.map(item => {
+        let file: File;
+        let path: string;
+
+        if ('file' in item && 'path' in item && typeof item.path === 'string') {
+             // Custom object from Drag & Drop hook
+             file = item.file;
+             path = item.path;
+        } else {
+             // Standard File object
+             file = item as File;
+             path = (file as any).webkitRelativePath || file.name;
+        }
+        
+        return {
+            path,
+            size: file.size,
+            getContent: () => fileToString(file)
+        };
+    });
+
+    return processFileEntries(entries, "Project");
 };
 
 export const generateZipContext = async (zipFile: File): Promise<File> => {
     const zip = await JSZip.loadAsync(zipFile);
-    const processedFiles: { path: string, content: string }[] = [];
-    const roots: FileNode[] = [];
-    const nodeMap = new Map<string, FileNode>();
-
-    const entries = Object.values(zip.files) as JSZip.JSZipObject[];
-
-    for (const entry of entries) {
-        const path = entry.name;
-        // Ignore directories themselves in this loop if they are explicitly stored, 
-        // we handle structure via path splitting of files/folders. 
-        
-        const parts = path.split('/').filter(p => p);
-        
-        // Filter ignored dirs
-        if (parts.some(part => part.startsWith('.') || IGNORED_DIRS.has(part))) continue;
-
-        // Tree Building Logic
-        let parentNode: FileNode | undefined = undefined;
-        let currentPath = '';
-
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-            currentPath = parts.slice(0, i + 1).join('/');
-
-            let currentNode = nodeMap.get(currentPath);
-
-            if (!currentNode) {
-                // If this is the last part, check if the entry itself is a directory
-                // or if it's an intermediate path
-                const isDir = i < parts.length - 1 || entry.dir;
-                
-                currentNode = {
-                    name: part,
-                    children: [],
-                    isDirectory: isDir,
-                };
-                nodeMap.set(currentPath, currentNode);
-
-                if (parentNode) {
-                    parentNode.children.push(currentNode);
-                } else {
-                    // Only add top-level nodes to roots
-                    if (i === 0) roots.push(currentNode);
-                }
-            }
-            parentNode = currentNode;
-        }
-
-        // Determine content reading
-        if (!entry.dir) {
-            const extension = `.${path.split('.').pop()?.toLowerCase()}`;
-            const shouldReadContent = !IGNORED_EXTENSIONS.has(extension);
-
-            if (shouldReadContent) {
-                try {
-                    const content = await entry.async('string');
-                    processedFiles.push({ path, content });
-                } catch (e) {
-                    console.warn(`Failed to read zip entry ${path}`, e);
-                }
-            }
-        }
-    }
+    const zipObjects = Object.values(zip.files) as JSZip.JSZipObject[];
+    
+    const entries: ProcessingEntry[] = zipObjects
+        .filter(obj => !obj.dir) // Filter out directory entries, structure is implied by paths
+        .map(obj => ({
+            path: obj.name,
+            // Zip objects don't always provide uncompressed size upfront cheaply, 
+            // but we can trust JSZip to handle reading strings efficiently enough for now 
+            // or assume if the zip loaded, the files are manageable.
+            getContent: () => obj.async('string') 
+        }));
 
     let rootName = zipFile.name.replace(/\.zip$/i, '');
-    
-    const output = generateContextContent(rootName, roots, processedFiles);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    return new File([output], `${rootName}-context-${timestamp}.txt`, { type: 'text/plain' });
+    return processFileEntries(entries, rootName);
 };

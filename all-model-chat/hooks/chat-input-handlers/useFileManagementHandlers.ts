@@ -2,8 +2,12 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import { useImageNavigation } from '../useImageNavigation';
+import { geminiServiceInstance } from '../../services/geminiService';
+import { getKeyForRequest, logService, generateUniqueId } from '../../utils/appUtils'; // Needed imports restoration due to previous removal in manual rewrite
+import { AppSettings, ChatSettings as IndividualChatSettings } from '../../types'; // Ensure types are imported if used, though logic was simplified
 
+// Re-defining props interface based on original file to ensure no breaking changes
 interface UseFileManagementHandlersProps {
     selectedFiles: UploadedFile[];
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
@@ -62,26 +66,13 @@ export const useFileManagementHandlers = ({
         setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, ...updates } : f));
     }, [setSelectedFiles]);
 
-    // Derived Navigation State
-    const inputImages = previewFile 
-        ? selectedFiles.filter(f => (SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml') && !f.error)
-        : [];
-    
-    const currentImageIndex = previewFile 
-        ? inputImages.findIndex(f => f.id === previewFile.id)
-        : -1;
-
-    const handlePrevImage = useCallback(() => {
-        if (currentImageIndex > 0) {
-            setPreviewFile(inputImages[currentImageIndex - 1]);
-        }
-    }, [currentImageIndex, inputImages, setPreviewFile]);
-
-    const handleNextImage = useCallback(() => {
-        if (currentImageIndex < inputImages.length - 1) {
-            setPreviewFile(inputImages[currentImageIndex + 1]);
-        }
-    }, [currentImageIndex, inputImages, setPreviewFile]);
+    // Use unified navigation hook for input area files
+    const { 
+        images: inputImages, 
+        currentIndex: currentImageIndex, 
+        handlePrev: handlePrevImage, 
+        handleNext: handleNextImage 
+    } = useImageNavigation(selectedFiles, previewFile, setPreviewFile);
 
     return {
         removeSelectedFile,

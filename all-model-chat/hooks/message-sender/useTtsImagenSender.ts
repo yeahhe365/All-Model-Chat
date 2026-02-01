@@ -1,9 +1,9 @@
 
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
-import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
+import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, generateSessionTitle, pcmBase64ToWavUrl, showNotification, base64ToBlob, createNewSession } from '../../utils/appUtils';
+import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64 } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 
@@ -39,44 +39,39 @@ export const useTtsImagenSender = ({
         const isTtsModel = currentChatSettings.modelId.includes('-tts');
         const modelMessageId = generationId;
         
-        let finalSessionId = activeSessionId;
-
-        // Create user and model message placeholders
-        const userMessage: ChatMessage = { id: generateUniqueId(), role: 'user', content: text, timestamp: new Date() };
-        const modelMessage: ChatMessage = { id: modelMessageId, role: 'model', content: '', timestamp: new Date(), isLoading: true, generationStartTime: new Date() };
+        const finalSessionId = activeSessionId || generateUniqueId();
         
-        // Handle session creation or update in a single atomic operation
-        if (!finalSessionId) { // New Chat
-            let newSessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
-            if (options.shouldLockKey) newSessionSettings.lockedApiKey = keyToUse;
-            
-            const newSession = createNewSession(newSessionSettings, [userMessage, modelMessage], "New Chat");
-            finalSessionId = newSession.id;
-            
-            updateAndPersistSessions(p => [newSession, ...p.filter(s => s.messages.length > 0)]);
-            setActiveSessionId(newSession.id);
-        } else { // Existing Chat
-            updateAndPersistSessions(p => p.map(s => {
-                if (s.id !== finalSessionId) return s;
-                const newMessages = [...s.messages, userMessage, modelMessage];
-                let newTitle = s.title;
-                if (s.title === 'New Chat' && !appSettings.isAutoTitleEnabled) {
-                    newTitle = generateSessionTitle(newMessages);
-                }
-                let updatedSettings = s.settings;
-                if (options.shouldLockKey && !s.settings.lockedApiKey) {
-                    updatedSettings = { ...s.settings, lockedApiKey: keyToUse };
-                }
-                return { ...s, messages: newMessages, title: newTitle, settings: updatedSettings };
-            }));
+        const userMessage = createMessage('user', text);
+        const modelMessage = createMessage('model', '', {
+            id: modelMessageId,
+            isLoading: true,
+            generationStartTime: new Date()
+        });
+        
+        // Auto Title if needed (Simple heuristic for these models)
+        let newTitle = undefined;
+        if (!activeSessionId && !appSettings.isAutoTitleEnabled) {
+            newTitle = text.length > 20 ? text.substring(0, 20) + '...' : text;
         }
 
-        if (!finalSessionId) {
-            console.error("Error: Could not determine session ID for TTS/Imagen message.");
-            return;
+        updateAndPersistSessions(prev => performOptimisticSessionUpdate(prev, {
+            activeSessionId,
+            newSessionId: finalSessionId,
+            newMessages: [userMessage, modelMessage],
+            settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
+            // Editing is less relevant for TTS/Imagen one-offs, but we support it structure-wise
+            editingMessageId: null, 
+            appSettings,
+            title: newTitle,
+            shouldLockKey: options.shouldLockKey,
+            keyToLock: keyToUse
+        }));
+
+        if (!activeSessionId) {
+            setActiveSessionId(finalSessionId);
         }
 
-        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId!));
+        setLoadingSessionIds(prev => new Set(prev).add(finalSessionId));
         activeJobs.current.set(generationId, newAbortController);
 
         try {
@@ -84,7 +79,7 @@ export const useTtsImagenSender = ({
                 const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, currentChatSettings.modelId, text, currentChatSettings.ttsVoice, newAbortController.signal);
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 const wavUrl = pcmBase64ToWavUrl(base64Pcm);
-                // Enable autoplay for direct TTS model usage
+                
                 updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: text, audioSrc: wavUrl, audioAutoplay: true, generationEndTime: new Date() } : m) } : s));
                 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
@@ -102,22 +97,11 @@ export const useTtsImagenSender = ({
                     : await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal);
 
                 if (newAbortController.signal.aborted) throw new Error("aborted");
-                const generatedFiles: UploadedFile[] = imageBase64Array.map((base64Data, index) => {
-                    const name = `generated-image-${index + 1}.png`;
-                    const type = 'image/png';
-                    const blob = base64ToBlob(base64Data, type);
-                    const file = new File([blob], name, { type });
-                    const dataUrl = URL.createObjectURL(file);
-                    return {
-                        id: generateUniqueId(),
-                        name,
-                        type,
-                        size: file.size,
-                        dataUrl,
-                        rawFile: file,
-                        uploadState: 'active'
-                    };
+                
+                const generatedFiles = imageBase64Array.map((base64Data, index) => {
+                    return createUploadedFileFromBase64(base64Data, 'image/png', `generated-image-${index + 1}`);
                 });
+
                 updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: `Generated ${generatedFiles.length} image(s) for: "${text}"`, files: generatedFiles, generationEndTime: new Date() } : m) } : s));
 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
@@ -127,7 +111,7 @@ export const useTtsImagenSender = ({
         } catch (error) {
             handleApiError(error, finalSessionId, modelMessageId, isTtsModel ? "TTS Error" : "Image Gen Error");
         } finally {
-            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId!); return next; });
+            setLoadingSessionIds(prev => { const next = new Set(prev); next.delete(finalSessionId); return next; });
             activeJobs.current.delete(generationId);
         }
     }, [updateAndPersistSessions, setLoadingSessionIds, activeJobs, handleApiError, setActiveSessionId]);

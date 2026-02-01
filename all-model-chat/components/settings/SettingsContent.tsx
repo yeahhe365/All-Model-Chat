@@ -97,46 +97,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             {activeTab === 'interface' && (
                 <div className={animClass}>
                     <AppearanceSection
-                        themeId={currentSettings.themeId}
-                        setThemeId={(val) => updateSetting('themeId', val)}
-                        language={currentSettings.language}
-                        setLanguage={(val) => updateSetting('language', val)}
-                        isCompletionNotificationEnabled={currentSettings.isCompletionNotificationEnabled}
-                        setIsCompletionNotificationEnabled={(val) => updateSetting('isCompletionNotificationEnabled', val)}
-                        baseFontSize={currentSettings.baseFontSize}
-                        setBaseFontSize={(val) => updateSetting('baseFontSize', val)}
-                        expandCodeBlocksByDefault={currentSettings.expandCodeBlocksByDefault}
-                        setExpandCodeBlocksByDefault={(v) => updateSetting('expandCodeBlocksByDefault', v)}
-                        isMermaidRenderingEnabled={currentSettings.isMermaidRenderingEnabled}
-                        setIsMermaidRenderingEnabled={(v) => updateSetting('isMermaidRenderingEnabled', v)}
-                        isGraphvizRenderingEnabled={currentSettings.isGraphvizRenderingEnabled ?? true}
-                        setIsGraphvizRenderingEnabled={(v) => updateSetting('isGraphvizRenderingEnabled', v)}
-                        isAutoScrollOnSendEnabled={currentSettings.isAutoScrollOnSendEnabled ?? true}
-                        setIsAutoScrollOnSendEnabled={(v) => updateSetting('isAutoScrollOnSendEnabled', v)}
-                        isStreamingEnabled={currentSettings.isStreamingEnabled}
-                        setIsStreamingEnabled={(v) => updateSetting('isStreamingEnabled', v)}
-                        isAutoTitleEnabled={currentSettings.isAutoTitleEnabled}
-                        setIsAutoTitleEnabled={(v) => updateSetting('isAutoTitleEnabled', v)}
-                        isSuggestionsEnabled={currentSettings.isSuggestionsEnabled}
-                        setIsSuggestionsEnabled={(v) => updateSetting('isSuggestionsEnabled', v)}
-                        isAutoSendOnSuggestionClick={currentSettings.isAutoSendOnSuggestionClick ?? true}
-                        setIsAutoSendOnSuggestionClick={(v) => updateSetting('isAutoSendOnSuggestionClick', v)}
-                        autoFullscreenHtml={currentSettings.autoFullscreenHtml ?? true}
-                        setAutoFullscreenHtml={(v) => updateSetting('autoFullscreenHtml', v)}
-                        isAudioCompressionEnabled={currentSettings.isAudioCompressionEnabled}
-                        setIsAudioCompressionEnabled={(v) => updateSetting('isAudioCompressionEnabled', v)}
-                        filesApiConfig={currentSettings.filesApiConfig}
-                        setFilesApiConfig={(v) => updateSetting('filesApiConfig', v)}
-                        isPasteRichTextAsMarkdownEnabled={currentSettings.isPasteRichTextAsMarkdownEnabled ?? true}
-                        setIsPasteRichTextAsMarkdownEnabled={(v) => updateSetting('isPasteRichTextAsMarkdownEnabled', v)}
-                        isPasteAsTextFileEnabled={currentSettings.isPasteAsTextFileEnabled ?? true}
-                        setIsPasteAsTextFileEnabled={(v) => updateSetting('isPasteAsTextFileEnabled', v)}
-                        isSystemAudioRecordingEnabled={currentSettings.isSystemAudioRecordingEnabled ?? false}
-                        setIsSystemAudioRecordingEnabled={(v) => updateSetting('isSystemAudioRecordingEnabled', v)}
-                        isRawModeEnabled={currentSettings.isRawModeEnabled ?? false}
-                        setIsRawModeEnabled={(v) => updateSetting('isRawModeEnabled', v)}
-                        hideThinkingInContext={currentSettings.hideThinkingInContext ?? false}
-                        setHideThinkingInContext={(v) => updateSetting('hideThinkingInContext', v)}
+                        settings={currentSettings}
+                        onUpdate={updateSetting}
                         t={t}
                     />
                 </div>

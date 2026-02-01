@@ -58,38 +58,6 @@ export const applyThemeToDocument = (doc: Document, theme: Theme, settings: AppS
   doc.body.style.fontSize = `${settings.baseFontSize}px`;
 };
 
-export function pcmBase64ToWavUrl(
-  base64: string,
-  sampleRate = 24_000,
-  numChannels = 1,
-): string {
-  const pcm = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-  // Write WAV header
-  const bytesPerSample = 2;
-  const blockAlign = numChannels * bytesPerSample;
-  const wav = new ArrayBuffer(44 + pcm.length);
-  const dv = new DataView(wav);
-
-  let p = 0;
-  const writeStr = (s: string) => [...s].forEach(ch => dv.setUint8(p++, ch.charCodeAt(0)));
-
-  writeStr('RIFF');
-  dv.setUint32(p, 36 + pcm.length, true); p += 4;
-  writeStr('WAVEfmt ');
-  dv.setUint32(p, 16, true); p += 4;        // fmt length
-  dv.setUint16(p, 1, true);  p += 2;        // PCM
-  dv.setUint16(p, numChannels, true); p += 2;
-  dv.setUint32(p, sampleRate, true); p += 4;
-  dv.setUint32(p, sampleRate * blockAlign, true); p += 4;
-  dv.setUint16(p, blockAlign, true); p += 2;
-  dv.setUint16(p, bytesPerSample * 8, true); p += 2;
-  writeStr('data');
-  dv.setUint32(p, pcm.length, true); p += 4;
-
-  new Uint8Array(wav, 44).set(pcm);
-  return URL.createObjectURL(new Blob([wav], { type: 'audio/wav' }));
-}
-
 export const showNotification = async (title: string, options?: NotificationOptions) => {
   if (!('Notification' in window)) {
     console.warn('This browser does not support desktop notification');

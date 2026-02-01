@@ -22,7 +22,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onToggleBBox, isBBoxModeActive,
     isKeyLocked, themeId, modelsLoadingError,
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
-    onDeleteMessage, onRetryMessage, showThoughts, themeColors, baseFontSize,
+    onDeleteMessage, onRetryMessage, showThoughts, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
     onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, language, scrollNavVisibility,
     onScrollToPrevTurn, onScrollToNextTurn, onEditMessageContent, onUpdateMessageFile,
@@ -96,7 +96,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onRetryMessage={onRetryMessage}
         onEditMessageContent={onEditMessageContent}
         showThoughts={showThoughts}
-        themeColors={themeColors}
         themeId={themeId}
         baseFontSize={baseFontSize}
         expandCodeBlocksByDefault={expandCodeBlocksByDefault}

@@ -1,3 +1,4 @@
+
 /**
  * Gathers all style and link tags from the current document's head to be inlined.
  * @returns A promise that resolves to a string of HTML style and link tags.
@@ -82,10 +83,6 @@ export const createSnapshotContainer = async (
     const allStyles = await gatherPageStyles();
     const bodyClasses = document.body.className;
     
-    // Explicitly get the background color. 
-    // We trim whitespace and provide a fallback to ensure html2canvas has a valid color.
-    // If we rely solely on transparency + CSS variables in the clone, html2canvas often defaults to white background
-    // but effectively transparent, which looks white in many viewers if the text is white.
     let rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary').trim();
     if (!rootBgColor) {
         rootBgColor = themeId === 'onyx' ? '#09090b' : '#FFFFFF';
@@ -122,4 +119,71 @@ export const createSnapshotContainer = async (
         },
         rootBgColor
     };
+};
+
+/**
+ * Creates a standard header DOM element for exported images.
+ */
+export const createExportDOMHeader = (title: string, metaLeft: string, metaRight: string): HTMLElement => {
+    const headerDiv = document.createElement('div');
+    headerDiv.style.padding = '2rem 2rem 1rem 2rem';
+    headerDiv.style.borderBottom = '1px solid var(--theme-border-secondary)';
+    headerDiv.style.marginBottom = '1rem';
+
+    const titleEl = document.createElement('h1');
+    titleEl.style.fontSize = '1.5rem';
+    titleEl.style.fontWeight = 'bold';
+    titleEl.style.color = 'var(--theme-text-primary)';
+    titleEl.style.marginBottom = '0.5rem';
+    titleEl.textContent = title;
+
+    const metaDiv = document.createElement('div');
+    metaDiv.style.fontSize = '0.875rem';
+    metaDiv.style.color = 'var(--theme-text-tertiary)';
+    metaDiv.style.display = 'flex';
+    metaDiv.style.gap = '1rem';
+
+    metaDiv.innerHTML = `<span>${metaLeft}</span><span>•</span><span>${metaRight}</span>`;
+
+    headerDiv.appendChild(titleEl);
+    headerDiv.appendChild(metaDiv);
+    
+    return headerDiv;
+};
+
+/**
+ * Clones, cleans, and prepares a DOM element for export (HTML or PNG).
+ * Handles removing interactive elements, expanding content, and embedding images.
+ */
+export const prepareElementForExport = async (sourceElement: HTMLElement): Promise<HTMLElement> => {
+    // 1. Clone the container
+    const clone = sourceElement.cloneNode(true) as HTMLElement;
+
+    // 2. Clean UI elements that shouldn't be in the export
+    const selectorsToRemove = [
+        'button', 
+        '.message-actions', 
+        '.sticky', 
+        'input', 
+        'textarea', 
+        '.code-block-utility-button',
+        '[role="tooltip"]',
+        '.loading-dots-container'
+    ];
+    clone.querySelectorAll(selectorsToRemove.join(',')).forEach(el => el.remove());
+    
+    // 3. Reset styles that might interfere with static export
+    clone.querySelectorAll('[data-message-id]').forEach(el => {
+        (el as HTMLElement).style.animation = 'none';
+        (el as HTMLElement).style.opacity = '1';
+        (el as HTMLElement).style.transform = 'none';
+    });
+
+    // 4. Expand all details elements (thoughts/groups) so they are visible
+    clone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
+
+    // 5. Embed Images: Convert blob/url images to Base64
+    await embedImagesInClone(clone);
+
+    return clone;
 };

@@ -1,3 +1,4 @@
+
 // This file is now a central exporter for modularized utilities.
 // Its original content has been moved to the files below.
 
@@ -6,5 +7,6 @@ export * from './domainUtils';
 export * from './translations';
 export * from './uiUtils';
 export * from './db';
+export * from './audio/audioProcessing';
 
 export { logService } from '../services/logService';

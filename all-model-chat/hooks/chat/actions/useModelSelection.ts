@@ -1,8 +1,8 @@
 
 import React, { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
-import { DEFAULT_CHAT_SETTINGS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../constants/appConstants';
-import { createNewSession, cacheModelSettings, getCachedModelSettings } from '../../../utils/appUtils';
+import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { createNewSession, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
 
 interface UseModelSelectionProps {
@@ -52,33 +52,8 @@ export const useModelSelection = ({
         let newThinkingBudget = cached?.thinkingBudget ?? sourceSettings.thinkingBudget;
         const newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
 
-        // 4. Validating range compatibility for the new model
-        const range = THINKING_BUDGET_RANGES[modelId];
-        if (range) {
-            const isGemini3 = modelId.includes('gemini-3');
-            const isMandatory = MODELS_MANDATORY_THINKING.includes(modelId);
-
-            // Case A: Mandatory Thinking Check
-            // If the new model requires thinking but it's currently disabled (0), force it ON.
-            if (isMandatory && newThinkingBudget === 0) {
-                // For Gemini 3, -1 means "Use Level" (Auto), which is a safe default.
-                // For non-Gemini 3 (e.g. 2.5), we default to max capability.
-                newThinkingBudget = isGemini3 ? -1 : range.max;
-            }
-
-            // Case B: Auto (-1) Compatibility for non-G3 models
-            // Non-Gemini 3 models (like 2.5) typically need explicit budgets and don't support "Level".
-            // If carrying over -1 (Auto), convert to a concrete budget (Max).
-            if (!isGemini3 && newThinkingBudget === -1) {
-                newThinkingBudget = range.max;
-            }
-
-            // Case C: Range Clamping for concrete budgets
-            if (newThinkingBudget > 0) {
-                if (newThinkingBudget > range.max) newThinkingBudget = range.max;
-                if (newThinkingBudget < range.min) newThinkingBudget = range.min;
-            }
-        }
+        // 4. Validating range compatibility using shared helper
+        newThinkingBudget = adjustThinkingBudget(modelId, newThinkingBudget);
 
         const newSettingsPartial: Partial<IndividualChatSettings> = {
             modelId,

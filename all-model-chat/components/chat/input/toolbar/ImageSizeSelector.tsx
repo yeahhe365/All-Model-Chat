@@ -1,8 +1,6 @@
 
 import React from 'react';
 
-const defaultSizes = ['1K', '2K', '4K'];
-
 interface ImageSizeSelectorProps {
     imageSize: string;
     setImageSize: (size: string) => void;
@@ -11,7 +9,9 @@ interface ImageSizeSelectorProps {
 }
 
 export const ImageSizeSelector: React.FC<ImageSizeSelectorProps> = ({ imageSize, setImageSize, t, supportedSizes }) => {
-    const sizes = supportedSizes || defaultSizes;
+    const sizes = supportedSizes || [];
+    if (sizes.length === 0) return null;
+
     return (
         <div className="mb-2">
             <div className="flex items-center gap-x-2">
