@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { SavedChatSession } from '../../../types';
-import { createNewSession, logService } from '../../../utils/appUtils';
+import { createNewSession, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
 
 interface UseSessionActionsProps {
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
@@ -18,11 +18,14 @@ export const useSessionActions = ({
         updateAndPersistSessions(prev => {
              const sessionToDelete = prev.find(s => s.id === sessionId);
              if (sessionToDelete) {
+                 // Abort active jobs for this session
                  sessionToDelete.messages.forEach(msg => {
                      if(msg.isLoading && activeJobs.current.has(msg.id)) {
                          activeJobs.current.get(msg.id)?.abort();
                          activeJobs.current.delete(msg.id);
                      }
+                     // Explicitly cleanup file blobs to prevent leaks
+                     cleanupFilePreviewUrls(msg.files);
                  });
              }
              return prev.filter(s => s.id !== sessionId);

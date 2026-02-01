@@ -22,9 +22,22 @@ export const useAppModalsProps = (logic: ReturnType<typeof useAppLogic>) => {
     if (chatState.activeSessionId && chatState.currentChatSettings) {
         // Spread global settings first, then overlay current session specific settings
         // This avoids manually listing every single property and ensures new props are handled automatically.
+        const sessionOverrides = { ...chatState.currentChatSettings };
+
+        // Explicitly remove global-only keys from the override object to prevent stale session data
+        // from overwriting global settings (like API Config).
+        // This is necessary because session settings might contain polluted data from creation time.
+        delete (sessionOverrides as any).useCustomApiConfig;
+        delete (sessionOverrides as any).apiKey;
+        delete (sessionOverrides as any).apiProxyUrl;
+        delete (sessionOverrides as any).useApiProxy;
+        delete (sessionOverrides as any).themeId;
+        delete (sessionOverrides as any).baseFontSize;
+        delete (sessionOverrides as any).language;
+
         return { 
             ...appSettings,
-            ...chatState.currentChatSettings
+            ...sessionOverrides
         };
     }
     return appSettings;

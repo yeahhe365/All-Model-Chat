@@ -1,8 +1,7 @@
 
-
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../types';
-import { logService } from '../utils/appUtils';
+import { logService, cleanupFilePreviewUrls } from '../utils/appUtils';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -123,6 +122,11 @@ export const useMessageActions = ({
         const messageToDelete = messages.find(msg => msg.id === messageId);
         if (messageToDelete?.isLoading) {
             handleStopGenerating();
+        }
+
+        // Cleanup blob URLs for the deleted message
+        if (messageToDelete) {
+            cleanupFilePreviewUrls(messageToDelete.files);
         }
 
         updateAndPersistSessions(prev => prev.map(s => 
