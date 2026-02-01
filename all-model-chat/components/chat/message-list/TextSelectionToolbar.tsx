@@ -1,11 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { translations } from '../../../../utils/appUtils';
+import { translations } from '../../../utils/appUtils';
 
 // Hooks
-import { useSelectionPosition } from '../../../../hooks/text-selection/useSelectionPosition';
-import { useSelectionDrag } from '../../../../hooks/text-selection/useSelectionDrag';
-import { useSelectionAudio } from '../../../../hooks/text-selection/useSelectionAudio';
+import { useSelectionPosition } from '../../../hooks/text-selection/useSelectionPosition';
+import { useSelectionDrag } from '../../../hooks/text-selection/useSelectionDrag';
+import { useSelectionAudio } from '../../../hooks/text-selection/useSelectionAudio';
 
 // Components
 import { ToolbarContainer } from './text-selection/ToolbarContainer';
