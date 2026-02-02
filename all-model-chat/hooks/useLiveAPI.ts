@@ -10,6 +10,7 @@ import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
 import { useLiveConfig } from './live-api/useLiveConfig';
 import { useLiveMessageProcessing } from './live-api/useLiveMessageProcessing';
+import { useBackgroundKeepAlive } from './core/useBackgroundKeepAlive';
 
 interface UseLiveAPIProps {
     appSettings: AppSettings;
@@ -25,6 +26,9 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     const [error, setError] = useState<string | null>(null);
     const sessionRef = useRef<Promise<LiveSession> | null>(null);
     
+    // Prevent background throttling when connected
+    useBackgroundKeepAlive(isConnected);
+
     // Session Resumption State
     const [sessionHandle, setSessionHandle] = useState<string | null>(null);
     const sessionHandleRef = useRef<string | null>(null);
@@ -306,13 +310,13 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         volume, 
         connect, 
         disconnect, 
-        sendText,
-        videoStream,
+        sendText, 
+        videoStream, 
         videoSource, 
         startCamera, 
         startScreenShare, 
-        stopVideo,
-        videoRef,
-        isReconnecting
+        stopVideo, 
+        videoRef, 
+        isReconnecting 
     }), [isConnected, isSpeaking, isMuted, toggleMute, error, volume, connect, disconnect, sendText, videoStream, videoSource, startCamera, startScreenShare, stopVideo, videoRef, isReconnecting]);
 };
