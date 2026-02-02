@@ -15,7 +15,8 @@ export default defineConfig(({ mode }) => {
             tailwindcss({
               content: [
                 "./index.html",
-                "./**/*.{js,ts,jsx,tsx}",
+                "./{components,hooks,services,utils,constants,contexts,types,styles}/**/*.{js,ts,jsx,tsx}",
+                "./*.{js,ts,jsx,tsx}"
               ],
               theme: {
                 extend: {},

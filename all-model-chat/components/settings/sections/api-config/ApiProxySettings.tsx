@@ -20,11 +20,11 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     t
 }) => {
     const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
-    
+
     const defaultBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     const defaultProxyUrl = 'https://api-proxy.de/gemini/v1beta';
     const VERTEX_URL = "https://aiplatform.googleapis.com/v1";
-    
+
     const isVertexExpressActive = useApiProxy && apiProxyUrl === VERTEX_URL;
 
     const handleSetVertexExpress = () => {
@@ -60,11 +60,10 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
                     <button
                         type="button"
                         onClick={handleSetVertexExpress}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border ${
-                            isVertexExpressActive 
-                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-transparent' 
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border ${isVertexExpressActive
+                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-transparent'
                                 : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] border-transparent hover:border-[var(--theme-border-secondary)]'
-                        }`}
+                            }`}
                         title={t('apiConfig_vertexExpress')}
                     >
                         <Sparkles size={10} strokeWidth={isVertexExpressActive ? 2 : 1.5} />
@@ -88,7 +87,7 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
                     }}
                 />
             </div>
-            
+
             <div className={`transition-all duration-200 ${useApiProxy ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
                 <input
                     id="api-proxy-url-input"
@@ -99,7 +98,7 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
                     placeholder={getProxyPlaceholder()}
                     aria-label="API Proxy URL"
                 />
-                
+
                 <div className="mt-3 p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)]">
                     <div className="flex gap-2 text-xs text-[var(--theme-text-tertiary)] mb-1.5">
                         <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />

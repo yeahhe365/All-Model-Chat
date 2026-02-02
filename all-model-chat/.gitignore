@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Generated files
+bundle-stats.html
+stats.html
+
+# Temporary folders
+chat-answer/
+
+# Environment files
+.env
+.env.local
+.env.*.local
