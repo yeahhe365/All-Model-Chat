@@ -30,12 +30,26 @@ export const useChatState = (appSettings: AppSettings) => {
     // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
 
-    // Sync active session ID to sessionStorage for per-tab persistence
+    // Sync active session ID to sessionStorage and URL
     useEffect(() => {
         if (activeSessionId) {
             sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+            
+            // Sync URL: If the current URL doesn't match the active session, update it.
+            const targetPath = `/chat/${activeSessionId}`;
+            if (window.location.pathname !== targetPath) {
+                window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
+            }
         } else {
             sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            
+            // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
+            // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.
+            if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
+                 // Do not overwrite if we are on a specific route that isn't a chat route, 
+                 // but if we were on a chat route and now have no ID, go to root.
+                 window.history.pushState({}, '', '/');
+            }
         }
     }, [activeSessionId]);
 

@@ -1,5 +1,5 @@
 
-import { useCallback, Dispatch, SetStateAction } from 'react';
+import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { createNewSession, rehydrateSessionFiles, logService } from '../../../utils/appUtils';
@@ -89,8 +89,8 @@ export const useSessionLoader = ({
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUp.current = false;
         
-        // Save current files to draft before switching
-        if (activeSessionId) {
+        // Save current files to draft before switching if we are coming from another valid session
+        if (activeSessionId && activeSessionId !== sessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
 
@@ -127,19 +127,51 @@ export const useSessionLoader = ({
             setSavedSessions(rehydratedSessions);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
-            const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            // Priority 1: Check URL for deep linking
+            const urlMatch = window.location.pathname.match(/^\/chat\/([^/]+)$/);
+            const urlSessionId = urlMatch ? urlMatch[1] : null;
 
-            if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
-                loadChatSession(storedActiveId, rehydratedSessions);
+            if (urlSessionId && rehydratedSessions.find(s => s.id === urlSessionId)) {
+                logService.info(`Deep link found for session: ${urlSessionId}`);
+                loadChatSession(urlSessionId, rehydratedSessions);
             } else {
-                logService.info('No active session in tab storage, starting fresh chat.');
-                startNewChat();
+                // Priority 2: Check Session Storage
+                const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+
+                if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
+                    loadChatSession(storedActiveId, rehydratedSessions);
+                } else {
+                    // Fallback: New Chat
+                    logService.info('No active session in URL or storage, starting fresh chat.');
+                    startNewChat();
+                }
             }
         } catch (error) {
             logService.error("Error loading chat history:", error);
             startNewChat();
         }
     }, [setSavedSessions, setSavedGroups, loadChatSession, startNewChat]);
+
+    // Handle Browser Back/Forward navigation
+    useEffect(() => {
+        const handlePopState = () => {
+            const match = window.location.pathname.match(/^\/chat\/([^/]+)$/);
+            const sessionId = match ? match[1] : null;
+            
+            if (sessionId) {
+                // We set ID directly. We can't easily call loadChatSession here because we don't have 
+                // the full session list in closure without adding a heavy dependency.
+                // Setting ID triggers useChatState effects which updates context.
+                // Input drafts might be lost on back button navigation, but chat content is safe.
+                setActiveSessionId(sessionId);
+            } else if (window.location.pathname === '/') {
+                startNewChat();
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [setActiveSessionId, startNewChat]);
 
     return {
         startNewChat,
