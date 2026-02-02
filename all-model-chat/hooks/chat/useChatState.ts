@@ -33,22 +33,38 @@ export const useChatState = (appSettings: AppSettings) => {
     // Sync active session ID to sessionStorage and URL
     useEffect(() => {
         if (activeSessionId) {
-            sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+            try {
+                sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+            } catch (e) {
+                // Ignore storage errors
+            }
             
             // Sync URL: If the current URL doesn't match the active session, update it.
             const targetPath = `/chat/${activeSessionId}`;
-            if (window.location.pathname !== targetPath) {
-                window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
+            try {
+                if (window.location.pathname !== targetPath) {
+                    window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
+                }
+            } catch (e) {
+                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
             }
         } else {
-            sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            try {
+                sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            } catch (e) {
+                // Ignore storage errors
+            }
             
             // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
             // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.
-            if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
-                 // Do not overwrite if we are on a specific route that isn't a chat route, 
-                 // but if we were on a chat route and now have no ID, go to root.
-                 window.history.pushState({}, '', '/');
+            try {
+                // Only attempt to push state if we are not on root and not on a chat route (to avoid loops)
+                // And if the environment allows it.
+                if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
+                     window.history.pushState({}, '', '/');
+                }
+            } catch (e) {
+                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
             }
         }
     }, [activeSessionId]);
