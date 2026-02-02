@@ -33,7 +33,7 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
     onOpenSidePanel
 }) => {
     return (
-        <div className="px-3 pb-3 pt-2 border-t border-[var(--theme-border-secondary)]/50 animate-in fade-in slide-in-from-top-2 duration-300 text-xs relative">
+        <div className="px-3 pb-3 pt-2 border-t border-[var(--theme-border-secondary)]/50 text-xs relative">
             {isLoading && lastThought && thinkingTimeMs === undefined && (
                 <div className="mb-2 p-2 rounded-md bg-[var(--theme-bg-input)]/50 border border-[var(--theme-border-secondary)]/50 flex items-start gap-2">
                     <div className="mt-1 w-1.5 h-1.5 rounded-full bg-[var(--theme-text-success)] text-[var(--theme-text-success)] animate-pulse flex-shrink-0 shadow-[0_0_8px_currentColor]" />

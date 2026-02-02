@@ -194,7 +194,9 @@ export const performOptimisticSessionUpdate = (
         ...session,
         messages: finalMessages,
         title: title || session.title,
-        settings: updatedSettings
+        settings: updatedSettings,
+        // Update timestamp if new messages are added to bump it to the top
+        timestamp: newMessages.length > 0 ? Date.now() : session.timestamp
     };
 
     return updatedSessions;
@@ -229,7 +231,7 @@ export const updateSessionWithNewMessages = (
         // Fixup: The legacy function replaced messages entirely, the new one appends.
         // We override the messages here to match legacy behavior strictly.
         if (s.id === sessionId) {
-            return { ...s, messages: newMessages };
+            return { ...s, messages: newMessages, timestamp: Date.now() };
         }
         return s;
     });

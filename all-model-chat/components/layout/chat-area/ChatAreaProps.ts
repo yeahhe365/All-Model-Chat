@@ -1,4 +1,6 @@
 
+
+
 import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand } from '../../../types';
 import { translations } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
@@ -32,6 +34,8 @@ export interface ChatAreaProps {
   isCanvasPromptActive: boolean;
   onToggleBBox: () => void;
   isBBoxModeActive: boolean;
+  onToggleGuide: () => void;
+  isGuideModeActive: boolean;
   isKeyLocked: boolean;
   themeId: string;
   onSetThinkingLevel: (level: 'LOW' | 'HIGH') => void;

@@ -1,7 +1,7 @@
 
-import { useCallback, Dispatch, SetStateAction } from 'react';
+import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings } from '../../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { createNewSession, rehydrateSessionFiles, logService } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
 
@@ -36,6 +36,15 @@ export const useSessionLoader = ({
 }: UseSessionLoaderProps) => {
 
     const startNewChat = useCallback(() => {
+        // If we are already on an empty chat, just focus input and don't create a duplicate
+        if (activeChat && activeChat.messages.length === 0 && !activeChat.systemInstruction) {
+            logService.info('Already on an empty chat, reusing session.');
+            setTimeout(() => {
+                document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+            }, 0);
+            return;
+        }
+
         logService.info('Starting new chat session.');
         userScrolledUp.current = false;
         
@@ -60,11 +69,12 @@ export const useSessionLoader = ({
 
         const newSession = createNewSession(settingsForNewChat);
 
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        // Crucial Fix: Do NOT filter out other empty sessions (prev.filter(...)). 
+        // Doing so deletes empty "New Chat" sessions created in other tabs, causing them to 
+        // lose their state and auto-switch to this session.
+        updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSession.id);
-        dbService.setActiveSessionId(newSession.id);
-
-        // Don't force clear text (handled by localStorage draft for new ID)
+        
         // Clear files for new chat
         setSelectedFiles([]);
         
@@ -79,15 +89,15 @@ export const useSessionLoader = ({
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUp.current = false;
         
-        // Save current files to draft before switching
-        if (activeSessionId) {
+        // Save current files to draft before switching if we are coming from another valid session
+        if (activeSessionId && activeSessionId !== sessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
 
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
         if (sessionToLoad) {
             setActiveSessionId(sessionToLoad.id);
-            dbService.setActiveSessionId(sessionId);
+            // Note: activeSessionId persistence is now handled by useEffect in useChatState
             
             // Restore files from draft for the target session, or empty if none
             const draftFiles = fileDraftsRef.current[sessionId] || [];
@@ -106,10 +116,9 @@ export const useSessionLoader = ({
     const loadInitialData = useCallback(async () => {
         try {
             logService.info('Attempting to load chat history from IndexedDB.');
-            const [sessions, groups, storedActiveId] = await Promise.all([
+            const [sessions, groups] = await Promise.all([
                 dbService.getAllSessions(),
-                dbService.getAllGroups(),
-                dbService.getActiveSessionId()
+                dbService.getAllGroups()
             ]);
 
             const rehydratedSessions = sessions.map(rehydrateSessionFiles);
@@ -118,20 +127,51 @@ export const useSessionLoader = ({
             setSavedSessions(rehydratedSessions);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
-            if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
-                loadChatSession(storedActiveId, rehydratedSessions);
-            } else if (rehydratedSessions.length > 0) {
-                logService.info('No active session ID, loading most recent session.');
-                loadChatSession(rehydratedSessions[0].id, rehydratedSessions);
+            // Priority 1: Check URL for deep linking
+            const urlMatch = window.location.pathname.match(/^\/chat\/([^/]+)$/);
+            const urlSessionId = urlMatch ? urlMatch[1] : null;
+
+            if (urlSessionId && rehydratedSessions.find(s => s.id === urlSessionId)) {
+                logService.info(`Deep link found for session: ${urlSessionId}`);
+                loadChatSession(urlSessionId, rehydratedSessions);
             } else {
-                logService.info('No history found, starting fresh chat.');
-                startNewChat();
+                // Priority 2: Check Session Storage
+                const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+
+                if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
+                    loadChatSession(storedActiveId, rehydratedSessions);
+                } else {
+                    // Fallback: New Chat
+                    logService.info('No active session in URL or storage, starting fresh chat.');
+                    startNewChat();
+                }
             }
         } catch (error) {
             logService.error("Error loading chat history:", error);
             startNewChat();
         }
     }, [setSavedSessions, setSavedGroups, loadChatSession, startNewChat]);
+
+    // Handle Browser Back/Forward navigation
+    useEffect(() => {
+        const handlePopState = () => {
+            const match = window.location.pathname.match(/^\/chat\/([^/]+)$/);
+            const sessionId = match ? match[1] : null;
+            
+            if (sessionId) {
+                // We set ID directly. We can't easily call loadChatSession here because we don't have 
+                // the full session list in closure without adding a heavy dependency.
+                // Setting ID triggers useChatState effects which updates context.
+                // Input drafts might be lost on back button navigation, but chat content is safe.
+                setActiveSessionId(sessionId);
+            } else if (window.location.pathname === '/') {
+                startNewChat();
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [setActiveSessionId, startNewChat]);
 
     return {
         startNewChat,

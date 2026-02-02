@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { SavedChatSession, ChatGroup } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { SidebarHeader } from './SidebarHeader';
@@ -52,6 +53,29 @@ const MiniSidebarButton = ({ onClick, icon: Icon, title }: { onClick: () => void
     </button>
 );
 
+// Internal component to handle auto-animate for a list of sessions in a category
+const SessionListGroup = ({ 
+    title, 
+    sessions, 
+    sessionItemProps 
+}: { 
+    title: string; 
+    sessions: SavedChatSession[]; 
+    sessionItemProps: any 
+}) => {
+    const [parent] = useAutoAnimate<HTMLUListElement>({ duration: 200 });
+    return (
+        <div>
+            <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{title}</div>
+            <ul ref={parent}>
+                {sessions.map(session => (
+                    <SessionItem key={session.id} session={session} {...sessionItemProps} />
+                ))}
+            </ul>
+        </div>
+    );
+};
+
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const { 
     isOpen, onToggle, sessions, groups, activeSessionId, loadingSessionIds,
@@ -97,10 +121,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
   };
 
+  const [listParentRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });
+
   return (
     <aside
       className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} flex-shrink-0
-                 transition-all duration-300 ease-[cubic-bezier(0.19,1,0.22,1)]
+                 transition-[width,transform] duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] will-change-[width,transform]
                  absolute md:static top-0 left-0 z-50
                  overflow-hidden
                  ${isOpen ? 'w-64 md:w-72 translate-x-0' : 'w-64 md:w-[68px] -translate-x-full md:translate-x-0'}
@@ -109,7 +135,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
       role="complementary" aria-label={t('history_title')}
     >
       {isOpen ? (
-        <div className="w-64 md:w-72 h-full flex flex-col min-w-[16rem] md:min-w-[18rem]">
+        // Fixed width container inside ensures text doesn't reflow/wrap weirdly during the collapse animation
+        <div className="w-64 md:w-72 h-full flex flex-col min-w-[16rem] md:min-w-[18rem] opacity-100 transition-opacity duration-200">
             <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
             <SidebarActions 
                 onNewChat={onNewChat}
@@ -129,6 +156,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                 <p className="p-4 text-xs sm:text-sm text-center text-[var(--theme-text-tertiary)]">{t('history_empty')}</p>
                 ) : (
                 <div 
+                    ref={listParentRef}
                     onDragOver={handleDragOver} 
                     onDrop={(e) => handleDrop(e, 'all-conversations')} 
                     onDragEnter={() => setDragOverId('all-conversations')} 
@@ -154,21 +182,20 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                     ))}
                     
                     {pinnedUngrouped.length > 0 && (
-                        <div>
-                            <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{t('history_pinned')}</div>
-                            <ul>
-                                {pinnedUngrouped.map(session => <SessionItem key={session.id} session={session} {...sessionItemSharedProps} />)}
-                            </ul>
-                        </div>
+                        <SessionListGroup 
+                            title={t('history_pinned')} 
+                            sessions={pinnedUngrouped} 
+                            sessionItemProps={sessionItemSharedProps} 
+                        />
                     )}
                     
                     {categoryOrder.map(categoryName => (
-                        <div key={categoryName}>
-                            <div className="px-3 pt-4 pb-1 text-sm font-medium text-[var(--theme-text-primary)]">{categoryName}</div>
-                            <ul>
-                                {categories[categoryName].map(session => <SessionItem key={session.id} session={session} {...sessionItemSharedProps} />)}
-                            </ul>
-                        </div>
+                        <SessionListGroup 
+                            key={categoryName}
+                            title={categoryName} 
+                            sessions={categories[categoryName]} 
+                            sessionItemProps={sessionItemSharedProps} 
+                        />
                     ))}
                 </div>
                 )}
@@ -186,7 +213,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
         </div>
       ) : (
           <div 
-            className="hidden md:flex flex-col items-center py-4 h-full gap-4 w-full min-w-[68px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors"
+            className="hidden md:flex flex-col items-center py-4 h-full gap-4 w-full min-w-[68px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors animate-in fade-in duration-200"
             onClick={onToggle}
           >
               <MiniSidebarButton onClick={onToggle} icon={IconSidebarToggle} title={t('historySidebarOpen')} />

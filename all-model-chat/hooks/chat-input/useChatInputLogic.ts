@@ -167,10 +167,8 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         setIsAnimatingSend: inputState.setIsAnimatingSend,
         isFullscreen: inputState.isFullscreen,
         setIsFullscreen: inputState.setIsFullscreen,
-        onProcessFiles,
         isModalOpen: isAnyModalOpen,
-        isPasteRichTextAsMarkdownEnabled: appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
-        isPasteAsTextFileEnabled: appSettings.isPasteAsTextFileEnabled ?? true,
+        handlePasteAction: handlers.handlePasteAction,
     });
 
     return {

@@ -1,7 +1,7 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
@@ -30,11 +30,54 @@ export const useChatState = (appSettings: AppSettings) => {
     // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
 
+    // Sync active session ID to sessionStorage and URL
+    useEffect(() => {
+        if (activeSessionId) {
+            try {
+                sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+            } catch (e) {
+                // Ignore storage errors
+            }
+            
+            // Sync URL: If the current URL doesn't match the active session, update it.
+            const targetPath = `/chat/${activeSessionId}`;
+            try {
+                if (window.location.pathname !== targetPath) {
+                    window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
+                }
+            } catch (e) {
+                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
+            }
+        } else {
+            try {
+                sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            } catch (e) {
+                // Ignore storage errors
+            }
+            
+            // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
+            // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.
+            try {
+                // Only attempt to push state if we are not on root and not on a chat route (to avoid loops)
+                // And if the environment allows it.
+                if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
+                     window.history.pushState({}, '', '/');
+                }
+            } catch (e) {
+                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
+            }
+        }
+    }, [activeSessionId]);
+
     const refreshSessions = useCallback(async () => {
         try {
             const sessions = await dbService.getAllSessions();
             const rehydrated = sessions.map(rehydrateSessionFiles);
-            rehydrated.sort((a, b) => b.timestamp - a.timestamp);
+            rehydrated.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.timestamp - a.timestamp;
+            });
             setSavedSessions(rehydrated);
         } catch (e) {
             logService.error("Failed to refresh sessions from DB", { error: e });
@@ -107,6 +150,13 @@ export const useChatState = (appSettings: AppSettings) => {
         
         setSavedSessions(prevSessions => {
             const newSessions = updater(prevSessions);
+            
+            // AUTOMATIC SORTING: Ensure sessions are always sorted by pinned status then timestamp
+            newSessions.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.timestamp - a.timestamp;
+            });
             
             if (persist) {
                 const updates: Promise<void>[] = [];

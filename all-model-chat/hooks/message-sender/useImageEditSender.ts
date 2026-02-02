@@ -1,9 +1,11 @@
 
+
+
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle } from '../../utils/appUtils';
+import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { Part } from '@google/genai';
 
@@ -142,6 +144,10 @@ export const useImageEditSender = ({
             }
 
             updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: combinedText.trim(), files: combinedFiles, generationEndTime: new Date() } : m) } : s));
+            
+            if (appSettings.isCompletionSoundEnabled) {
+                playCompletionSound();
+            }
 
         } catch (error) {
             handleApiError(error, finalSessionId, modelMessageId, "Image Edit Error");

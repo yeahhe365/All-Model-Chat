@@ -114,7 +114,7 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                                       expandCodeBlocksByDefault={true}
                                       isMermaidRenderingEnabled={true}
                                       isGraphvizRenderingEnabled={true}
-                                      allowHtml={false}
+                                      allowHtml={true}
                                       t={t as any}
                                       themeId={themeId}
                                   />

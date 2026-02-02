@@ -20,6 +20,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     currentModelName, availableModels, selectedModelId, onSelectModel,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
     onToggleBBox, isBBoxModeActive,
+    onToggleGuide, isGuideModeActive,
     isKeyLocked, themeId, modelsLoadingError,
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, baseFontSize,
@@ -49,7 +50,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
 
   return (
     <div
-      className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
+      className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement will-change-[width]"
       onDragEnter={handleAppDragEnter}
       onDragOver={handleAppDragOver}
       onDragLeave={handleAppDragLeave}
@@ -186,6 +187,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onLiveTranscript={onLiveTranscript}
             onToggleBBox={onToggleBBox}
             isBBoxModeActive={isBBoxModeActive}
+            onToggleGuide={onToggleGuide}
+            isGuideModeActive={isGuideModeActive}
             themeId={themeId}
           />
         </div>

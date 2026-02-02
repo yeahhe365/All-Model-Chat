@@ -54,7 +54,7 @@ export const ToolResultBlock: React.FC<React.HTMLAttributes<HTMLDivElement>> = (
                     className={`${MESSAGE_BLOCK_BUTTON_CLASS} !bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-sm`}
                     title="Download Output"
                 >
-                    {copied ? <Check size={14} className="text-[var(--theme-text-success)]"/> : <Download size={14} />}
+                    {copied ? <Check size={14} className="text-[var(--theme-text-success)] icon-animate-pop"/> : <Download size={14} />}
                 </button>
             </div>
             {children}
