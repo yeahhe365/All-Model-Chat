@@ -49,7 +49,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, 
         updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
-        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId
+        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
+        savedSessions
     });
     
     const fileHandler = useFileHandling({ 
