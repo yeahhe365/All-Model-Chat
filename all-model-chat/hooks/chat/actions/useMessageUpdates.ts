@@ -90,7 +90,8 @@ export const useMessageUpdates = ({
             if (s.id === currentSessionId) {
                 return {
                     ...s,
-                    messages: [...s.messages, newMessage]
+                    messages: [...s.messages, newMessage],
+                    timestamp: Date.now() // Update timestamp to move to top
                 };
             }
             return s;
@@ -195,7 +196,11 @@ export const useMessageUpdates = ({
                  else liveConversationRefs.current.modelId = null;
             }
 
-            return { ...s, messages };
+            return { 
+                ...s, 
+                messages,
+                timestamp: Date.now() // Update timestamp on live activity to keep session active/top
+            };
         }));
     }, [activeSessionId, updateAndPersistSessions, appSettings, currentChatSettings, setActiveSessionId]);
 

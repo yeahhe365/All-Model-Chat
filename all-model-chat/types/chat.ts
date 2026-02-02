@@ -1,4 +1,6 @@
 
+
+
 import { ChatSettings, MediaResolution } from './settings';
 import { ThemeColors } from './theme';
 import { AppSettings, ModelOption } from './settings';
@@ -261,6 +263,8 @@ export interface ChatInputProps {
   onLiveTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
   onToggleBBox?: () => void;
   isBBoxModeActive?: boolean;
+  onToggleGuide?: () => void;
+  isGuideModeActive?: boolean;
   themeId: string;
 }
 

@@ -64,45 +64,59 @@ export const useInputAndPasteHandlers = ({
         textareaRef.current?.focus();
     }, [setAppFileError, justInitiatedFileOpRef, setSelectedFiles, setUrlInput, setShowAddByUrlInput, textareaRef]);
 
-    const handlePaste = useCallback(async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const handlePasteAction = useCallback(async (clipboardData: DataTransfer | null, options: { forceTextInsertion?: boolean } = {}): Promise<boolean> => {
         const isModalOpen = showCreateTextFileEditor || showCamera || showRecorder;
-        if (isAddingById || isModalOpen) return;
+        if (isAddingById || isModalOpen) return false;
 
-        const result = processClipboardData(event.clipboardData, {
+        const result = processClipboardData(clipboardData, {
             isPasteRichTextAsMarkdownEnabled,
             isPasteAsTextFileEnabled
         });
 
-        if (result.type === 'empty') return;
+        if (result.type === 'empty') return false;
 
+        // 1. Handle Files
         if (result.type === 'files' || result.type === 'large-text-file') {
-            event.preventDefault();
-            event.stopPropagation();
             justInitiatedFileOpRef.current = true;
             await onProcessFiles(result.files);
             textareaRef.current?.focus();
-            return;
+            return true;
         }
 
+        // 2. Handle Markdown
         if (result.type === 'markdown') {
-            event.preventDefault();
             insertText(result.content);
-            return;
+            return true;
         }
 
+        // 3. Handle Text
         if (result.type === 'text') {
             const pastedText = result.content;
-            // Handle YouTube Links specifically for the input area
+            
+            // 3a. Check for YouTube Link
             const youtubeRegex = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
             if (youtubeRegex.test(pastedText.trim())) {
-                event.preventDefault();
                 await handleAddUrl(pastedText.trim());
-                return;
+                return true;
             }
-            // Standard text paste is handled natively
+            
+            // 3b. Force insertion (Global Paste)
+            if (options.forceTextInsertion) {
+                insertText(pastedText);
+                return true;
+            }
         }
 
+        return false;
     }, [showCreateTextFileEditor, showCamera, showRecorder, isAddingById, handleAddUrl, onProcessFiles, justInitiatedFileOpRef, textareaRef, isPasteRichTextAsMarkdownEnabled, isPasteAsTextFileEnabled, insertText]);
+
+    const handlePaste = useCallback(async (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        const didHandle = await handlePasteAction(event.clipboardData);
+        if (didHandle) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }, [handlePasteAction]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         handleSlashInputChange(e.target.value);
@@ -112,6 +126,7 @@ export const useInputAndPasteHandlers = ({
     return {
         handleAddUrl,
         handlePaste,
+        handlePasteAction,
         handleInputChange,
     };
 };

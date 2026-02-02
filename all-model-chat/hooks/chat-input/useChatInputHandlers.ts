@@ -104,7 +104,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
     });
 
     // 2. Input, Paste, URL logic
-    const { handleAddUrl, handlePaste, handleInputChange } = useInputAndPasteHandlers({
+    const { handleAddUrl, handlePaste, handlePasteAction, handleInputChange } = useInputAndPasteHandlers({
         setInputText: props.setInputText,
         setUrlInput: props.setUrlInput,
         setShowAddByUrlInput: props.setShowAddByUrlInput,
@@ -151,7 +151,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
 
     // 4. Keyboard Handling
     const { handleKeyDown } = useKeyboardHandlers({
-        appSettings: props.appSettings, // Pass appSettings
+        appSettings: props.appSettings,
         isComposingRef: props.isComposingRef,
         slashCommandState: props.slashCommandState,
         setSlashCommandState: props.setSlashCommandState,
@@ -204,6 +204,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         handleZipChange,
         handleAddUrl,
         handlePaste,
+        handlePasteAction,
         handleInputChange,
         handleSubmit,
         handleFastSubmit,
@@ -219,7 +220,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         currentImageIndex
     }), [
         handleFileChange, handleFolderChange, handleZipChange,
-        handleAddUrl, handlePaste, handleInputChange,
+        handleAddUrl, handlePaste, handlePasteAction, handleInputChange,
         handleSubmit, handleFastSubmit, handleTranslate, handleKeyDown,
         removeSelectedFile, handleAddFileByIdSubmit,
         handleToggleToolAndFocus, handleSaveFileConfig,

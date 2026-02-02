@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { InputCommand, UploadedFile } from '../../types';
-import { processClipboardData } from '../../utils/clipboardUtils';
+import { useTextAreaInsert } from '../useTextAreaInsert';
 
 interface UseChatInputEffectsProps {
     commandedInput: InputCommand | null;
@@ -23,10 +23,11 @@ interface UseChatInputEffectsProps {
     setIsAnimatingSend: (val: boolean) => void;
     isFullscreen: boolean;
     setIsFullscreen: (val: boolean) => void;
-    onProcessFiles: (files: FileList | File[]) => Promise<void>;
     isModalOpen: boolean;
-    isPasteRichTextAsMarkdownEnabled: boolean;
-    isPasteAsTextFileEnabled: boolean;
+    handlePasteAction: (clipboardData: DataTransfer | null, options?: { forceTextInsertion?: boolean }) => Promise<boolean>;
+    onProcessFiles?: any; // Kept for compatibility but unused directly in paste effect
+    isPasteRichTextAsMarkdownEnabled?: any; // Kept for compatibility
+    isPasteAsTextFileEnabled?: any; // Kept for compatibility
 }
 
 export const useChatInputEffects = ({
@@ -49,11 +50,11 @@ export const useChatInputEffects = ({
     setIsAnimatingSend,
     isFullscreen,
     setIsFullscreen,
-    onProcessFiles,
     isModalOpen,
-    isPasteRichTextAsMarkdownEnabled,
-    isPasteAsTextFileEnabled,
+    handlePasteAction,
 }: UseChatInputEffectsProps) => {
+
+    const insertText = useTextAreaInsert(textareaRef, setInputText);
 
     // 1. Handle Commanded Input
     useEffect(() => {
@@ -63,26 +64,7 @@ export const useChatInputEffects = ({
             } else if (commandedInput.mode === 'append') {
                 setInputText(prev => prev + (prev ? '\n' : '') + commandedInput.text);
             } else if (commandedInput.mode === 'insert') {
-                const textarea = textareaRef.current;
-                if (textarea) {
-                    const start = textarea.selectionStart || 0;
-                    const end = textarea.selectionEnd || 0;
-                    const currentVal = textarea.value;
-                    const insertText = commandedInput.text;
-                    const newVal = currentVal.substring(0, start) + insertText + currentVal.substring(end);
-                    
-                    setInputText(newVal);
-                    
-                    // Re-focus and move cursor
-                    requestAnimationFrame(() => {
-                        textarea.focus();
-                        const newCursorPos = start + insertText.length;
-                        textarea.setSelectionRange(newCursorPos, newCursorPos);
-                    });
-                } else {
-                     // Fallback
-                     setInputText(prev => prev + commandedInput.text);
-                }
+                insertText(commandedInput.text);
             } else {
                 setInputText(commandedInput.text);
             }
@@ -98,7 +80,7 @@ export const useChatInputEffects = ({
                 }, 0);
             }
         }
-    }, [commandedInput, setInputText, setQuotes, textareaRef]);
+    }, [commandedInput, setInputText, setQuotes, textareaRef, insertText]);
 
     // 2. Restore Focus after File Processing
     useEffect(() => {
@@ -143,7 +125,7 @@ export const useChatInputEffects = ({
 
     // 4. Global Paste Handler
     useEffect(() => {
-        const handleGlobalPaste = (e: ClipboardEvent) => {
+        const handleGlobalPaste = async (e: ClipboardEvent) => {
             if (isModalOpen) return;
 
             const target = e.target as HTMLElement;
@@ -153,30 +135,12 @@ export const useChatInputEffects = ({
             
             if (isInput) return;
 
-            const result = processClipboardData(e.clipboardData, {
-                isPasteRichTextAsMarkdownEnabled,
-                isPasteAsTextFileEnabled
-            });
+            const didHandle = await handlePasteAction(e.clipboardData, { forceTextInsertion: true });
 
-            if (result.type === 'empty') return;
-
-            // 4.1 Handle Files
-            if (result.type === 'files' || result.type === 'large-text-file') {
+            if (didHandle) {
                 e.preventDefault();
                 e.stopPropagation();
-                justInitiatedFileOpRef.current = true;
-                onProcessFiles(result.files);
-                textareaRef.current?.focus();
-                return;
-            }
-
-            // 4.2 Handle Text Content (Markdown or Plain)
-            const textToInsert = result.type === 'markdown' ? result.content : (result.type === 'text' ? result.content : '');
-
-            if (textToInsert) {
-                e.preventDefault();
-                e.stopPropagation();
-                setInputText(prev => prev + textToInsert);
+                
                 const textarea = textareaRef.current;
                 if (textarea) {
                     textarea.focus();
@@ -191,7 +155,7 @@ export const useChatInputEffects = ({
 
         document.addEventListener('paste', handleGlobalPaste);
         return () => document.removeEventListener('paste', handleGlobalPaste);
-    }, [onProcessFiles, textareaRef, justInitiatedFileOpRef, isModalOpen, setInputText, isPasteRichTextAsMarkdownEnabled, isPasteAsTextFileEnabled]);
+    }, [handlePasteAction, textareaRef, isModalOpen]);
 
     // 5. Global Keydown Handler
     useEffect(() => {
@@ -233,12 +197,10 @@ export const useChatInputEffects = ({
         return () => document.removeEventListener('keydown', handleGlobalKeyDown);
     }, [isModalOpen, textareaRef, setInputText]);
 
-    // 6. Auto-focus on File Add (Drag & Drop or Selection)
+    // 6. Auto-focus on File Add
     const prevFileCountRef = useRef(selectedFiles.length);
     useEffect(() => {
         if (selectedFiles.length > prevFileCountRef.current) {
-            // Focus textarea when new files are added (e.g. drag & drop, file selection)
-            // Use a small timeout to ensure UI updates and disabled state (if any) clears
             setTimeout(() => {
                 textareaRef.current?.focus();
             }, 50);

@@ -1,4 +1,6 @@
 
+
+
 import React, { useMemo } from 'react';
 import { Header } from '../header/Header';
 import { MessageList } from '../chat/MessageList';
@@ -20,6 +22,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     currentModelName, availableModels, selectedModelId, onSelectModel,
     isSwitchingModel, isHistorySidebarOpen, onLoadCanvasPrompt, isCanvasPromptActive,
     onToggleBBox, isBBoxModeActive,
+    onToggleGuide, isGuideModeActive,
     isKeyLocked, themeId, modelsLoadingError,
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, baseFontSize,
@@ -186,6 +189,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onLiveTranscript={onLiveTranscript}
             onToggleBBox={onToggleBBox}
             isBBoxModeActive={isBBoxModeActive}
+            onToggleGuide={onToggleGuide}
+            isGuideModeActive={isGuideModeActive}
             themeId={themeId}
           />
         </div>

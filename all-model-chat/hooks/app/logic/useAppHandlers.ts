@@ -1,7 +1,9 @@
 
+
+
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings, ModelOption } from '../../../types';
-import { DEFAULT_CHAT_SETTINGS, CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION } from '../../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
 
 interface UseAppHandlersProps {
     setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
@@ -75,6 +77,25 @@ export const useAppHandlers = ({
         }
     }
   }, [currentChatSettings.systemInstruction, setAppSettings, activeSessionId, setCurrentChatSettings]);
+
+  const handleToggleGuideMode = useCallback(() => {
+    const isCurrentlyGuide = currentChatSettings.systemInstruction === HD_GUIDE_SYSTEM_PROMPT;
+    if (isCurrentlyGuide) {
+        setAppSettings(prev => ({...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION, isCodeExecutionEnabled: false}));
+        if (activeSessionId && setCurrentChatSettings) {
+            setCurrentChatSettings(prev => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION, isCodeExecutionEnabled: false }));
+        }
+    } else {
+        setAppSettings(prev => ({...prev, systemInstruction: HD_GUIDE_SYSTEM_PROMPT, isCodeExecutionEnabled: true}));
+        if (activeSessionId && setCurrentChatSettings) {
+            setCurrentChatSettings(prev => ({
+                ...prev,
+                systemInstruction: HD_GUIDE_SYSTEM_PROMPT,
+                isCodeExecutionEnabled: true
+            }));
+        }
+    }
+  }, [currentChatSettings.systemInstruction, setAppSettings, activeSessionId, setCurrentChatSettings]);
   
   const handleSuggestionClick = useCallback((type: 'homepage' | 'organize' | 'follow-up', text: string) => {
     const { isAutoSendOnSuggestionClick } = appSettings;
@@ -128,6 +149,7 @@ export const useAppHandlers = ({
       handleSaveSettings,
       handleLoadCanvasPromptAndSave,
       handleToggleBBoxMode,
+      handleToggleGuideMode,
       handleSuggestionClick,
       handleSetThinkingLevel,
       getCurrentModelDisplayName

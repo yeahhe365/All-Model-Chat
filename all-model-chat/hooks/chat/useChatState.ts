@@ -73,7 +73,11 @@ export const useChatState = (appSettings: AppSettings) => {
         try {
             const sessions = await dbService.getAllSessions();
             const rehydrated = sessions.map(rehydrateSessionFiles);
-            rehydrated.sort((a, b) => b.timestamp - a.timestamp);
+            rehydrated.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.timestamp - a.timestamp;
+            });
             setSavedSessions(rehydrated);
         } catch (e) {
             logService.error("Failed to refresh sessions from DB", { error: e });
@@ -146,6 +150,13 @@ export const useChatState = (appSettings: AppSettings) => {
         
         setSavedSessions(prevSessions => {
             const newSessions = updater(prevSessions);
+            
+            // AUTOMATIC SORTING: Ensure sessions are always sorted by pinned status then timestamp
+            newSessions.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.timestamp - a.timestamp;
+            });
             
             if (persist) {
                 const updates: Promise<void>[] = [];

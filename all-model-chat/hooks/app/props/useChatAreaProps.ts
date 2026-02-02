@@ -1,7 +1,9 @@
 
+
+
 import { useMemo } from 'react';
 import { useAppLogic } from '../useAppLogic';
-import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT } from '../../../constants/appConstants';
+import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
 
 export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
   const {
@@ -15,6 +17,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     sessionTitle,
     handleLoadCanvasPromptAndSave,
     handleToggleBBoxMode,
+    handleToggleGuideMode,
     handleSuggestionClick,
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
@@ -46,7 +49,9 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
     isCanvasPromptActive: chatState.currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT,
     isBBoxModeActive: chatState.currentChatSettings.systemInstruction === BBOX_SYSTEM_PROMPT,
+    isGuideModeActive: chatState.currentChatSettings.systemInstruction === HD_GUIDE_SYSTEM_PROMPT,
     onToggleBBox: handleToggleBBoxMode,
+    onToggleGuide: handleToggleGuideMode,
     isKeyLocked: !!chatState.currentChatSettings.lockedApiKey,
     themeId: currentTheme.id,
     modelsLoadingError: null,
@@ -132,7 +137,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     t,
   }), [
     chatState, uiState, appSettings, currentTheme, language, t, sessionTitle, 
-    pipState, handleLoadCanvasPromptAndSave, handleToggleBBoxMode, handleSuggestionClick, handleSetThinkingLevel, 
+    pipState, handleLoadCanvasPromptAndSave, handleToggleBBoxMode, handleToggleGuideMode, handleSuggestionClick, handleSetThinkingLevel, 
     handleOpenSidePanel, getCurrentModelDisplayName, logic.setAppSettings
   ]);
 };

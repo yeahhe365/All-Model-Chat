@@ -72,6 +72,8 @@ export interface ChatInputAreaProps {
         onOrganizeInfoClick: (suggestion: string) => void;
         onToggleBBox?: () => void;
         isBBoxModeActive?: boolean;
+        onToggleGuide?: () => void;
+        isGuideModeActive?: boolean;
     };
     liveStatusProps?: {
         isConnected: boolean;
@@ -130,6 +132,8 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                         onOrganizeInfoClick={suggestionsProps.onOrganizeInfoClick}
                         onToggleBBox={suggestionsProps.onToggleBBox}
                         isBBoxModeActive={suggestionsProps.isBBoxModeActive}
+                        onToggleGuide={suggestionsProps.onToggleGuide}
+                        isGuideModeActive={suggestionsProps.isGuideModeActive}
                         t={t}
                         isFullscreen={isFullscreen}
                     />

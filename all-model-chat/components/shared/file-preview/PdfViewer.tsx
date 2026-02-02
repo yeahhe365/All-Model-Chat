@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UploadedFile } from '../../../types';
-import { usePdfViewer } from '../../../hooks/usePdfViewer';
+import { usePdfViewer } from '../../../hooks/ui/usePdfViewer';
 import { PdfSidebar } from './pdf-viewer/PdfSidebar';
 import { PdfMainContent } from './pdf-viewer/PdfMainContent';
 import { PdfToolbar } from './pdf-viewer/PdfToolbar';
