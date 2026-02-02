@@ -29,13 +29,9 @@ export const useChatState = (appSettings: AppSettings) => {
     // Tracks session IDs that are generating *in this specific tab*.
     // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
-    
-    // Ref to access the current active session ID inside callbacks without dependencies
-    const activeSessionIdRef = useRef<string | null>(null);
 
     // Sync active session ID to sessionStorage for per-tab persistence
     useEffect(() => {
-        activeSessionIdRef.current = activeSessionId;
         if (activeSessionId) {
             sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
         } else {
@@ -48,23 +44,7 @@ export const useChatState = (appSettings: AppSettings) => {
             const sessions = await dbService.getAllSessions();
             const rehydrated = sessions.map(rehydrateSessionFiles);
             rehydrated.sort((a, b) => b.timestamp - a.timestamp);
-            
-            setSavedSessions(current => {
-                const activeId = activeSessionIdRef.current;
-                // Race Condition Protection:
-                // If we have an active session locally that is NOT in the DB fetch result (e.g. created just now),
-                // we must preserve it. Otherwise, a broadcast from another tab will wipe out our new session,
-                // causing the app to auto-switch to the next available session (the other tab's).
-                if (activeId && !rehydrated.find(s => s.id === activeId)) {
-                    const localActiveSession = current.find(s => s.id === activeId);
-                    if (localActiveSession) {
-                        const merged = [localActiveSession, ...rehydrated];
-                        merged.sort((a, b) => b.timestamp - a.timestamp);
-                        return merged;
-                    }
-                }
-                return rehydrated;
-            });
+            setSavedSessions(rehydrated);
         } catch (e) {
             logService.error("Failed to refresh sessions from DB", { error: e });
         }
@@ -92,6 +72,7 @@ export const useChatState = (appSettings: AppSettings) => {
         onSessionContentUpdated: (id) => {
             // Optimization: If THIS tab is currently streaming for this session (locally), 
             // ignore the refresh to avoid overwriting the smooth stream with chunked DB saves.
+            // However, if another tab updated it (and we are not streaming), we DO want to refresh.
             if (localLoadingSessionIds.current.has(id)) {
                 return;
             }
