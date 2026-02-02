@@ -180,13 +180,24 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
     const zipObjects = Object.values(zip.files) as JSZip.JSZipObject[];
     
     const entries: ProcessingEntry[] = zipObjects
-        .filter(obj => !obj.dir) // Filter out directory entries, structure is implied by paths
+        .filter(obj => !obj.dir) // Filter out directory entries
         .map(obj => ({
             path: obj.name,
-            // Zip objects don't always provide uncompressed size upfront cheaply, 
-            // but we can trust JSZip to handle reading strings efficiently enough for now 
-            // or assume if the zip loaded, the files are manageable.
-            getContent: () => obj.async('string') 
+            getContent: async () => {
+                // Read as Uint8Array first to detect binary content
+                const data = await obj.async('uint8array');
+                
+                // Heuristic: Check for null bytes (0x00) in the first 8KB to detect binary files
+                const checkLimit = Math.min(data.length, 8000);
+                for (let i = 0; i < checkLimit; i++) {
+                    if (data[i] === 0x00) {
+                        return `[Binary content skipped for file: ${obj.name}]`;
+                    }
+                }
+                
+                // If safe, decode as UTF-8 text
+                return new TextDecoder().decode(data);
+            }
         }));
 
     let rootName = zipFile.name.replace(/\.zip$/i, '');
