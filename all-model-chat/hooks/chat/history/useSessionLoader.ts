@@ -36,6 +36,15 @@ export const useSessionLoader = ({
 }: UseSessionLoaderProps) => {
 
     const startNewChat = useCallback(() => {
+        // If we are already on an empty chat, just focus input and don't create a duplicate
+        if (activeChat && activeChat.messages.length === 0 && !activeChat.systemInstruction) {
+            logService.info('Already on an empty chat, reusing session.');
+            setTimeout(() => {
+                document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+            }, 0);
+            return;
+        }
+
         logService.info('Starting new chat session.');
         userScrolledUp.current = false;
         
@@ -60,11 +69,12 @@ export const useSessionLoader = ({
 
         const newSession = createNewSession(settingsForNewChat);
 
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        // Crucial Fix: Do NOT filter out other empty sessions (prev.filter(...)). 
+        // Doing so deletes empty "New Chat" sessions created in other tabs, causing them to 
+        // lose their state and auto-switch to this session.
+        updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSession.id);
-        // Note: activeSessionId persistence is now handled by useEffect in useChatState
-
-        // Don't force clear text (handled by localStorage draft for new ID)
+        
         // Clear files for new chat
         setSelectedFiles([]);
         
