@@ -12,6 +12,7 @@ interface ThinkingHeaderProps {
     generationStartTime?: Date;
     firstTokenTimeMs?: number;
     t: (key: any, fallback?: string) => string;
+    isExpanded: boolean;
 }
 
 export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
@@ -20,7 +21,8 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
     thinkingTimeMs,
     generationStartTime,
     firstTokenTimeMs,
-    t
+    t,
+    isExpanded
 }) => {
     // Determine the effective start time for the timer (to exclude TTFT)
     // If firstTokenTimeMs is available, we start counting from (Start + TTFT)
@@ -83,7 +85,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
 
                 {/* Chevron */}
                 <div className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-[var(--theme-bg-input)] transition-colors flex-shrink-0">
-                    <ChevronDown size={14} className="text-[var(--theme-text-tertiary)] transition-transform duration-300 group-open:rotate-180" strokeWidth={2.5}/>
+                    <ChevronDown size={14} className={`text-[var(--theme-text-tertiary)] transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} strokeWidth={2.5}/>
                 </div>
             </div>
         </div>

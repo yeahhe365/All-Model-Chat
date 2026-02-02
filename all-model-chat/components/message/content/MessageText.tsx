@@ -1,5 +1,4 @@
 
-
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { translations } from '../../../utils/appUtils';
@@ -7,6 +6,7 @@ import { MarkdownRenderer } from '../MarkdownRenderer';
 import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
 import { isLikelyHtml } from '../../../utils/codeUtils';
+import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
 
 interface MessageTextProps {
     message: ChatMessage;
@@ -39,6 +39,10 @@ export const MessageText: React.FC<MessageTextProps> = ({
 }) => {
     const { content, isLoading, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
     
+    // Apply smooth streaming effect only when loading and for model messages
+    const shouldSmooth = isLoading && message.role === 'model';
+    const displayedContent = useSmoothStreaming(content, shouldSmooth);
+
     // Auto Fullscreen HTML Logic
     const prevIsLoadingRef = useRef(isLoading);
     useEffect(() => {
@@ -75,7 +79,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
 
             {(content && (groundingMetadata || urlContextMetadata)) ? (
               <GroundedResponse 
-                text={content} 
+                text={displayedContent} // Use smoothed text
                 metadata={groundingMetadata} 
                 urlContextMetadata={urlContextMetadata}
                 isLoading={isLoading} 
@@ -89,9 +93,9 @@ export const MessageText: React.FC<MessageTextProps> = ({
                 onOpenSidePanel={onOpenSidePanel}
               />
             ) : content ? (
-                <div className="markdown-body" style={{ fontSize: `${baseFontSize}px` }}> 
+                <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer
-                        content={content}
+                        content={displayedContent} // Use smoothed text
                         isLoading={isLoading}
                         onImageClick={onImageClick}
                         onOpenHtmlPreview={onOpenHtmlPreview}

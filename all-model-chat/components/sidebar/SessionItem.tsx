@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
 import { translations } from '../../utils/appUtils';
@@ -40,11 +40,21 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
     toggleMenu, setActiveMenu, handleDragStart, t
   } = props;
 
+  const [isRightClickAnimating, setIsRightClickAnimating] = useState(false);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsRightClickAnimating(true);
+    setActiveMenu(session.id);
+    setTimeout(() => setIsRightClickAnimating(false), 200);
+  };
+
   return (
     <li
       draggable="true"
       onDragStart={(e) => handleDragStart(e, session.id)}
-      className={`group relative rounded-lg my-0.5 cursor-grab active:cursor-grabbing ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${newlyTitledSessionId === session.id ? 'title-update-animate' : ''}`}
+      onContextMenu={handleContextMenu}
+      className={`group relative rounded-lg my-0.5 cursor-grab active:cursor-grabbing transition-transform duration-100 ease-out ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${newlyTitledSessionId === session.id ? 'title-update-animate' : ''} ${isRightClickAnimating ? 'scale-95 bg-[var(--theme-bg-tertiary)]' : ''}`}
     >
       <div className={`w-full flex items-center justify-between text-left px-1 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
         {editingItem?.type === 'session' && editingItem.id === session.id ? (

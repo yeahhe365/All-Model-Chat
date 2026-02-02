@@ -91,7 +91,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
                 onCompositionStart={onCompositionStart}
                 onCompositionEnd={onCompositionEnd}
                 placeholder={placeholder}
-                className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px] transition-[height] duration-200 ease-out"
+                className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px] transition-[height] duration-150 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
                 style={{ 
                     height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px`,
                     overflowY: isFullscreen ? 'auto' : 'hidden'

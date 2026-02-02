@@ -18,5 +18,5 @@ export const MessageCopyButton: React.FC<MessageCopyButtonProps> = ({ textToCopy
     if (textToCopy) copyToClipboard(textToCopy);
   };
 
-  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={isCopied ? t('copied_button_title') : t('copy_button_title')} title={isCopied ? t('copied_button_title') : t('copy_button_title')}>{isCopied ? <Check size={iconSize} className="text-[var(--theme-text-success)]" strokeWidth={1.5} /> : <ClipboardCopy size={iconSize} strokeWidth={1.5} />}</button>;
+  return <button onClick={handleCopy} disabled={!textToCopy} className={`${className}`} aria-label={isCopied ? t('copied_button_title') : t('copy_button_title')} title={isCopied ? t('copied_button_title') : t('copy_button_title')}>{isCopied ? <Check size={iconSize} className="text-[var(--theme-text-success)] icon-animate-pop" strokeWidth={1.5} /> : <ClipboardCopy size={iconSize} strokeWidth={1.5} />}</button>;
 };

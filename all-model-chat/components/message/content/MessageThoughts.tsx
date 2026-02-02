@@ -100,11 +100,13 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
 
     return (
         <div className={`mb-2 ${hasFiles ? 'mt-1' : '-mt-2'}`}>
-            <details 
-                className="group rounded-xl bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 open:bg-[var(--theme-bg-tertiary)]/30 open:shadow-sm"
-                onToggle={(e) => setIsExpanded((e.target as HTMLDetailsElement).open)}
+            <div 
+                className={`group rounded-xl bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 ${isExpanded ? 'bg-[var(--theme-bg-tertiary)]/30 shadow-sm' : ''}`}
             >
-                <summary className="list-none flex select-none items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none">
+                <div 
+                    className="flex select-none items-center justify-between gap-2 px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--theme-bg-tertiary)]/40 focus:outline-none"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                >
                     <ThinkingHeader 
                         isLoading={!!isLoading}
                         lastThought={lastThought}
@@ -112,36 +114,44 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                         generationStartTime={message.generationStartTime}
                         firstTokenTimeMs={message.firstTokenTimeMs}
                         t={t}
+                        isExpanded={isExpanded}
                     />
                     
                     <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-                        <ThinkingActions 
-                            isExpanded={isExpanded}
-                            isShowingTranslation={isShowingTranslation}
-                            isTranslatingThoughts={isTranslatingThoughts}
-                            isCopied={isCopied}
-                            onTranslate={handleTranslateThoughts}
-                            onCopy={handleCopyThoughts}
+                        {/* Stop propagation to prevent toggling when clicking actions */}
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <ThinkingActions 
+                                isExpanded={isExpanded}
+                                isShowingTranslation={isShowingTranslation}
+                                isTranslatingThoughts={isTranslatingThoughts}
+                                isCopied={isCopied}
+                                onTranslate={handleTranslateThoughts}
+                                onCopy={handleCopyThoughts}
+                                t={t}
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div className={`thought-process-accordion ${isExpanded ? 'expanded' : ''}`}>
+                    <div className="thought-process-inner">
+                        <ThoughtContent 
+                            isLoading={!!isLoading}
+                            lastThought={lastThought}
+                            thinkingTimeMs={message.thinkingTimeMs}
+                            content={isShowingTranslation && translatedThoughts ? translatedThoughts : (thoughts || '')}
+                            onImageClick={onImageClick}
+                            onOpenHtmlPreview={onOpenHtmlPreview}
+                            expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+                            isMermaidRenderingEnabled={isMermaidRenderingEnabled}
+                            isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
                             t={t}
+                            themeId={themeId}
+                            onOpenSidePanel={onOpenSidePanel}
                         />
                     </div>
-                </summary>
-
-                <ThoughtContent 
-                    isLoading={!!isLoading}
-                    lastThought={lastThought}
-                    thinkingTimeMs={message.thinkingTimeMs}
-                    content={isShowingTranslation && translatedThoughts ? translatedThoughts : (thoughts || '')}
-                    onImageClick={onImageClick}
-                    onOpenHtmlPreview={onOpenHtmlPreview}
-                    expandCodeBlocksByDefault={expandCodeBlocksByDefault}
-                    isMermaidRenderingEnabled={isMermaidRenderingEnabled}
-                    isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                    t={t}
-                    themeId={themeId}
-                    onOpenSidePanel={onOpenSidePanel}
-                />
-            </details>
+                </div>
+            </div>
         </div>
     );
 };

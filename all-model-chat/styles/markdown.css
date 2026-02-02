@@ -9,8 +9,15 @@
 }
 
 /* Ensure first element doesn't push down the content, aligning text with avatar */
-.markdown-body > *:first-child {
+.markdown-body > *:first-child,
+.is-loading > *:first-child {
   margin-top: 0 !important;
+}
+
+/* Apply optimized fade-in-move animation to block elements */
+.markdown-body > * {
+  animation: fadeInMove 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: left bottom;
 }
 
 .markdown-body p {
