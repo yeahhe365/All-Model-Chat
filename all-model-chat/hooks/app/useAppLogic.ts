@@ -67,6 +67,11 @@ export const useAppLogic = () => {
   const activeChat = chatState.savedSessions.find(s => s.id === chatState.activeSessionId);
   const sessionTitle = activeChat?.title || t('newChat');
 
+  // Helper to navigate cleanly without triggering double-state updates
+  const handleNavigateToSession = useCallback((sessionId: string) => {
+      navigate(`/chat/${sessionId}`);
+  }, [navigate]);
+
   // URL Sync: activeSessionId -> URL
   // We use a ref to prevent loops where URL update triggers a re-load of the same session
   const prevSessionIdRef = useRef<string | null>(null);
@@ -177,6 +182,7 @@ export const useAppLogic = () => {
     handleToggleBBoxMode,
     handleSuggestionClick,
     handleSetThinkingLevel,
-    getCurrentModelDisplayName
+    getCurrentModelDisplayName,
+    handleNavigateToSession // Exported handler
   };
 };

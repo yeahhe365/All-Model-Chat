@@ -12,6 +12,7 @@ export const useSidebarProps = (logic: ReturnType<typeof useAppLogic>) => {
     language,
     t,
     setIsExportModalOpen,
+    handleNavigateToSession, // Use navigation handler
   } = logic;
 
   return useMemo(() => ({
@@ -22,7 +23,8 @@ export const useSidebarProps = (logic: ReturnType<typeof useAppLogic>) => {
     activeSessionId: chatState.activeSessionId,
     loadingSessionIds: chatState.loadingSessionIds,
     generatingTitleSessionIds: chatState.generatingTitleSessionIds,
-    onSelectSession: (id: string) => chatState.loadChatSession(id, chatState.savedSessions),
+    // CHANGED: Use handleNavigateToSession instead of direct loadChatSession
+    onSelectSession: (id: string) => handleNavigateToSession(id),
     onNewChat: () => chatState.startNewChat(),
     onDeleteSession: chatState.handleDeleteChatHistorySession,
     onRenameSession: chatState.handleRenameSession,
@@ -50,7 +52,8 @@ export const useSidebarProps = (logic: ReturnType<typeof useAppLogic>) => {
     chatState.activeSessionId,
     chatState.loadingSessionIds, 
     chatState.generatingTitleSessionIds, 
-    chatState.loadChatSession,
+    // chatState.loadChatSession is no longer a direct dependency for onSelectSession logic changes
+    handleNavigateToSession, 
     chatState.startNewChat,
     chatState.handleDeleteChatHistorySession,
     chatState.handleRenameSession,
