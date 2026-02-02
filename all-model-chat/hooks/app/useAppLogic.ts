@@ -1,51 +1,35 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { AppSettings, ChatMessage, SideViewContent, ChatSettings } from '../../types';
-import { CANVAS_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, BBOX_SYSTEM_PROMPT, DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { useAppSettings } from '../core/useAppSettings';
 import { useChat } from '../chat/useChat';
 import { useAppUI } from '../core/useAppUI';
 import { useAppEvents } from '../core/useAppEvents';
 import { usePictureInPicture } from '../core/usePictureInPicture';
 import { useDataManagement } from '../useDataManagement';
-import { getTranslator, logService, applyThemeToDocument } from '../../utils/appUtils';
-import { networkInterceptor } from '../../services/networkInterceptor';
+import { getTranslator, applyThemeToDocument, logService } from '../../utils/appUtils';
+
+// Import new modularized hooks
+import { useAppInitialization } from './logic/useAppInitialization';
+import { useAppTitle } from './logic/useAppTitle';
+import { useAppSidePanel } from './logic/useAppSidePanel';
+import { useAppHandlers } from './logic/useAppHandlers';
 
 export const useAppLogic = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = useMemo(() => getTranslator(language), [language]);
 
-  // Initialize Network Interceptor
-  useEffect(() => {
-      networkInterceptor.mount();
-  }, []);
-
-  // Update Interceptor Configuration when settings change
-  useEffect(() => {
-      const shouldUseProxy = appSettings.useCustomApiConfig && appSettings.useApiProxy;
-      networkInterceptor.configure(!!shouldUseProxy, appSettings.apiProxyUrl);
-  }, [appSettings.useCustomApiConfig, appSettings.useApiProxy, appSettings.apiProxyUrl]);
+  // 1. Initialization
+  useAppInitialization(appSettings);
 
   const chatState = useChat(appSettings, setAppSettings, language);
   
   const uiState = useAppUI();
   const { setIsHistorySidebarOpen } = uiState;
   
-  // Side Panel State
-  const [sidePanelContent, setSidePanelContent] = useState<SideViewContent | null>(null);
-  
-  const handleOpenSidePanel = useCallback((content: SideViewContent) => {
-      setSidePanelContent(content);
-      // Auto-collapse sidebar on smaller screens if opening side panel to save space
-      if (window.innerWidth < 1280) {
-          setIsHistorySidebarOpen(false);
-      }
-  }, [setIsHistorySidebarOpen]);
+  // 2. Side Panel Logic
+  const { sidePanelContent, handleOpenSidePanel, handleCloseSidePanel } = useAppSidePanel(setIsHistorySidebarOpen);
 
-  const handleCloseSidePanel = useCallback(() => {
-      setSidePanelContent(null);
-  }, []);
-
+  // 3. PiP Logic
   const pipState = usePictureInPicture(uiState.setIsHistorySidebarOpen);
 
   // Sync styles to PiP window when theme changes
@@ -55,6 +39,7 @@ export const useAppLogic = () => {
     }
   }, [pipState.pipWindow, currentTheme, appSettings]);
 
+  // 4. App Events (Shortcuts, PWA)
   const eventsState = useAppEvents({
     appSettings,
     startNewChat: chatState.startNewChat,
@@ -77,48 +62,15 @@ export const useAppLogic = () => {
   const activeChat = chatState.savedSessions.find(s => s.id === chatState.activeSessionId);
   const sessionTitle = activeChat?.title || t('newChat');
 
-  // Dynamic Browser Title Logic with Real-time Timer
-  const [generationTime, setGenerationTime] = useState(0);
+  // 5. Title & Timer Logic
+  useAppTitle({
+      isLoading: chatState.isLoading,
+      messages: chatState.messages,
+      language,
+      sessionTitle
+  });
 
-  // Determine the start time of the current generation for accurate timing across renders/tabs
-  const currentGenerationStartTime = useMemo(() => {
-      if (!chatState.isLoading) return null;
-      // Find the loading message (usually near the end)
-      const msgs = chatState.messages;
-      for (let i = msgs.length - 1; i >= 0; i--) {
-          const m = msgs[i];
-          if ((m.role === 'model' || m.role === 'error') && m.isLoading) {
-              return m.generationStartTime ? new Date(m.generationStartTime).getTime() : Date.now();
-          }
-      }
-      return null;
-  }, [chatState.messages, chatState.isLoading]);
-
-  // Update timer
-  useEffect(() => {
-      let intervalId: number;
-      if (currentGenerationStartTime) {
-          const update = () => {
-              setGenerationTime(Math.max(0, Math.floor((Date.now() - currentGenerationStartTime) / 1000)));
-          };
-          update(); // Initial update
-          intervalId = window.setInterval(update, 1000);
-      } else {
-          setGenerationTime(0);
-      }
-      return () => clearInterval(intervalId);
-  }, [currentGenerationStartTime]);
-
-  // Apply to Document Title
-  useEffect(() => {
-      let statusPrefix = '';
-      if (chatState.isLoading) {
-          const timeDisplay = ` (${generationTime}s)`;
-          statusPrefix = (language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `);
-      }
-      document.title = `${statusPrefix}${sessionTitle}`;
-  }, [sessionTitle, chatState.isLoading, language, generationTime]);
-
+  // 6. Data Management
   const dataManagement = useDataManagement({
     appSettings, 
     setAppSettings, 
@@ -149,120 +101,23 @@ export const useAppLogic = () => {
     }
   }, [activeChat, dataManagement]);
 
-  useEffect(() => {
-    logService.info('App initialized.');
-  }, []);
-  
-  const { activeSessionId, setCurrentChatSettings } = chatState;
-
-  const handleSaveSettings = useCallback((newSettings: AppSettings) => {
-    setAppSettings(newSettings);
-    // If there is an active session, sync relevant global settings to it
-    if (activeSessionId && setCurrentChatSettings) {
-      setCurrentChatSettings(prevChatSettings => {
-        // Start with existing session settings and reset lockedApiKey
-        // (Changing global settings usually implies breaking out of a locked key context)
-        const nextSettings = { ...prevChatSettings, lockedApiKey: null };
-        
-        // Dynamically sync all chat-related settings defined in DEFAULT_CHAT_SETTINGS
-        (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>).forEach((key) => {
-             // Skip lockedApiKey as we explicitly set it to null above
-             // Also ensure the key exists in the new settings object (it should, as AppSettings extends ChatSettings)
-             if (key !== 'lockedApiKey' && key in newSettings) {
-                 (nextSettings as any)[key] = (newSettings as any)[key];
-             }
-        });
-        
-        return nextSettings;
-      });
-    }
-  }, [setAppSettings, activeSessionId, setCurrentChatSettings]);
-
-  const { currentChatSettings } = chatState;
-
-  const handleLoadCanvasPromptAndSave = useCallback(() => {
-    const isCurrentlyCanvasPrompt = currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT;
-    const newSystemInstruction = isCurrentlyCanvasPrompt ? DEFAULT_SYSTEM_INSTRUCTION : CANVAS_SYSTEM_PROMPT;
-    setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
-    if (activeSessionId && setCurrentChatSettings) {
-        setCurrentChatSettings(prevSettings => ({ ...prevSettings, systemInstruction: newSystemInstruction }));
-    }
-    
-    // Focus input after toggling canvas mode
-    setTimeout(() => {
-        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-        if (textarea) textarea.focus();
-    }, 50);
-  }, [currentChatSettings.systemInstruction, setAppSettings, activeSessionId, setCurrentChatSettings]);
-
-  const handleToggleBBoxMode = useCallback(() => {
-    const isCurrentlyBBox = currentChatSettings.systemInstruction === BBOX_SYSTEM_PROMPT;
-    if (isCurrentlyBBox) {
-        setAppSettings(prev => ({...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION, isCodeExecutionEnabled: false}));
-        if (activeSessionId && setCurrentChatSettings) {
-            setCurrentChatSettings(prev => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION, isCodeExecutionEnabled: false }));
-        }
-    } else {
-        setAppSettings(prev => ({...prev, systemInstruction: BBOX_SYSTEM_PROMPT, isCodeExecutionEnabled: true}));
-        if (activeSessionId && setCurrentChatSettings) {
-            setCurrentChatSettings(prev => ({
-                ...prev,
-                systemInstruction: BBOX_SYSTEM_PROMPT,
-                isCodeExecutionEnabled: true // Force enable code execution
-            }));
-        }
-    }
-  }, [currentChatSettings.systemInstruction, setAppSettings, activeSessionId, setCurrentChatSettings]);
-  
-  const { isAutoSendOnSuggestionClick } = appSettings;
-  const { handleSendMessage, setCommandedInput } = chatState;
-
-  const handleSuggestionClick = useCallback((type: 'homepage' | 'organize' | 'follow-up', text: string) => {
-    if (type === 'organize') {
-        if (currentChatSettings.systemInstruction !== CANVAS_SYSTEM_PROMPT) {
-            const newSystemInstruction = CANVAS_SYSTEM_PROMPT;
-            setAppSettings(prev => ({...prev, systemInstruction: newSystemInstruction}));
-            if (activeSessionId && setCurrentChatSettings) {
-                setCurrentChatSettings(prevSettings => ({ ...prevSettings, systemInstruction: newSystemInstruction }));
-            }
-        }
-    }
-    if (type === 'follow-up' && (isAutoSendOnSuggestionClick ?? true)) {
-        handleSendMessage({ text });
-    } else {
-        setCommandedInput({ text: text + '\n', id: Date.now() });
-        setTimeout(() => {
-            const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-            if (textarea) textarea.focus();
-        }, 0);
-    }
-  }, [currentChatSettings.systemInstruction, isAutoSendOnSuggestionClick, handleSendMessage, setCommandedInput, setAppSettings, activeSessionId, setCurrentChatSettings]);
-
-  const handleSetThinkingLevel = useCallback((level: 'LOW' | 'HIGH') => {
-    setAppSettings(prev => ({ ...prev, thinkingLevel: level }));
-    if (activeSessionId && setCurrentChatSettings) {
-        setCurrentChatSettings(prev => ({ ...prev, thinkingLevel: level }));
-    }
-    // Focus input after toggling thinking level
-    setTimeout(() => {
-        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-        if (textarea) textarea.focus();
-    }, 50);
-  }, [setAppSettings, activeSessionId, setCurrentChatSettings]);
-
-  const { apiModels, isSwitchingModel } = chatState;
-
-  const getCurrentModelDisplayName = useCallback(() => {
-    const modelIdToDisplay = currentChatSettings.modelId || appSettings.modelId;
-    if (isSwitchingModel) return t('appSwitchingModel');
-    const model = apiModels.find(m => m.id === modelIdToDisplay);
-    if (model) return model.name;
-    if (modelIdToDisplay) { 
-        let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; 
-        return n.split('-').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');
-    }
-    return apiModels.length === 0 ? t('appNoModelsAvailable') : t('appNoModelSelected');
-  }, [currentChatSettings.modelId, appSettings.modelId, isSwitchingModel, apiModels, t]);
+  // 7. Core Handlers
+  const {
+      handleSaveSettings,
+      handleLoadCanvasPromptAndSave,
+      handleToggleBBoxMode,
+      handleSuggestionClick,
+      handleSetThinkingLevel,
+      getCurrentModelDisplayName
+  } = useAppHandlers({
+      setAppSettings,
+      activeSessionId: chatState.activeSessionId,
+      setCurrentChatSettings: chatState.setCurrentChatSettings,
+      currentChatSettings: chatState.currentChatSettings,
+      appSettings,
+      chatState,
+      t
+  });
 
   return {
     appSettings, setAppSettings, currentTheme, language, t,

@@ -18,6 +18,8 @@ interface UseSessionLoaderProps {
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
+    savedSessions: SavedChatSession[];
+    t: (key: string, fallback?: string) => string;
 }
 
 export const useSessionLoader = ({
@@ -33,6 +35,8 @@ export const useSessionLoader = ({
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
+    savedSessions,
+    t
 }: UseSessionLoaderProps) => {
 
     const startNewChat = useCallback(() => {
@@ -58,7 +62,19 @@ export const useSessionLoader = ({
             };
         }
 
-        const newSession = createNewSession(settingsForNewChat);
+        // Calculate unique title for the new session
+        const baseTitle = t('newChat');
+        const nonEmptySessions = savedSessions.filter(s => s.messages.length > 0);
+        const existingTitles = new Set(nonEmptySessions.map(s => s.title));
+        
+        let newTitle = baseTitle;
+        let counter = 1;
+        while (existingTitles.has(newTitle)) {
+            newTitle = `${baseTitle} ${counter}`;
+            counter++;
+        }
+
+        const newSession = createNewSession(settingsForNewChat, [], newTitle);
 
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
         setActiveSessionId(newSession.id);
@@ -73,7 +89,7 @@ export const useSessionLoader = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, savedSessions, t]);
 
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);

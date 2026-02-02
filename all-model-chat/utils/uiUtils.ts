@@ -1,6 +1,5 @@
 
 
-
 import React from 'react';
 import { ThemeColors } from '../types/theme';
 import { AppSettings, MediaResolution } from '../types';
@@ -103,16 +102,20 @@ export const playCompletionSound = () => {
     osc.connect(gain);
     gain.connect(ctx.destination);
     
-    // Gentle "ding" sound
+    const now = ctx.currentTime;
+    
+    // Clear, pleasant chime (B5)
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
-    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1); // Drop to A4
+    osc.frequency.setValueAtTime(987.77, now);
     
-    gain.gain.setValueAtTime(0.05, ctx.currentTime); // Quiet volume
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2); // Fade out quickly
-    
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.2);
+    // Improved Volume Envelope: Distinct attack and smooth decay
+    // Previous gain of 0.05 was too quiet for many devices
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.25, now + 0.05); // Quick attack to 25% volume
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75); // Longer fade out
+
+    osc.start(now);
+    osc.stop(now + 0.8);
   } catch (e) {
     console.error("Error playing completion sound", e);
   }
