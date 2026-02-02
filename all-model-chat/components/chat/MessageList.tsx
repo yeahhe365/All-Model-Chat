@@ -90,7 +90,7 @@ export const MessageList: React.FC<MessageListProps> = ({
     <div 
       ref={setScrollContainerRef}
       onScroll={onScrollContainerScroll}
-      className={`relative flex-grow overflow-y-auto px-1.5 sm:px-2 md:px-3 py-3 sm:py-4 md:py-6 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
+      className={`relative flex-grow overflow-y-auto px-1.5 sm:px-2 md:px-3 custom-scrollbar ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}
       style={{ paddingBottom: chatInputHeight ? `${chatInputHeight + 16}px` : '160px' }}
       aria-live="polite" 
     >
@@ -105,7 +105,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             themeId={themeId}
         />
       ) : (
-        <div className="w-full max-w-7xl mx-auto">
+        <div className="w-full max-w-7xl mx-auto pt-3 sm:pt-4 md:pt-6">
           {messages.map((msg: ChatMessage, index: number) => {
             if (visibleMessages.has(msg.id)) {
                 return (

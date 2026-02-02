@@ -7,6 +7,25 @@
   100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 
 }
 
+/* User-requested Smooth Reveal Output Animation - OPTIMIZED */
+/* Removed filter:blur and scale() to prevent frame drops during text streaming */
+@keyframes fadeInMove {
+    0% { 
+        opacity: 0; 
+        transform: translateY(8px) scale(0.9); 
+        filter: blur(3px); 
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+        filter: blur(0); 
+    }
+}
+
+.message-smooth-entry {
+  animation: fadeInMove 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
 /* Side Panel Slide In */
 @keyframes slideInRight {
   from { opacity: 0; transform: translateX(100%); }
@@ -54,6 +73,17 @@
 @keyframes loading-dots-pulse { 
   0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 
   40% { transform: scale(1.0); opacity: 1; } 
+}
+
+/* Icon Pop Animation for Copy/Success states */
+@keyframes iconPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.icon-animate-pop {
+  animation: iconPop 0.3s var(--ease-spring) forwards;
 }
 
 /* Authentic Terminal Blink */
@@ -110,8 +140,8 @@
 .mic-recording-animate { animation: micPulse 2s infinite; background-color: var(--theme-bg-danger); color: var(--theme-icon-stop); }
 .title-update-animate { animation: newTitlePulse 1.5s ease-out; }
 
-/* Message animation uses premium cubic-bezier */
-.message-container-animate { animation: fadeInUp 0.6s var(--ease-spring) both; }
+/* Message animation uses user-requested physics */
+.message-container-animate { animation: fadeInMove 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .welcome-message-animate { animation: fadeInUp 0.8s 0.1s var(--ease-out-expo) both; }
 .slide-in-right-animate { animation: slideInRight 0.4s var(--ease-out-expo) both; }
 

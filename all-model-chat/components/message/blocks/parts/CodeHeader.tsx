@@ -33,7 +33,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
     t
 }) => {
     return (
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--theme-border-secondary)]/30 bg-[var(--theme-bg-code-block)]/50 backdrop-blur-sm">
+        <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 border-b border-[var(--theme-border-secondary)]/30 bg-[var(--theme-bg-code-block)]/95 backdrop-blur-md rounded-t-lg transition-all">
             <div className="flex items-center gap-2 pl-1 min-w-0">
                 <LanguageIcon language={language} />
             </div>
@@ -56,7 +56,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
                     <Download size={14} strokeWidth={2} /> 
                 </button>
                  <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={isCopied ? t('copied_button_title') : t('copy_button_title')} onClick={onCopy}>
-                    {isCopied ? <Check size={14} className="text-[var(--theme-text-success)]" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
+                    {isCopied ? <Check size={14} className="text-[var(--theme-text-success)] icon-animate-pop" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                 </button>
                 {isOverflowing && (
                     <button onClick={onToggleExpand} className={MESSAGE_BLOCK_BUTTON_CLASS} aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>

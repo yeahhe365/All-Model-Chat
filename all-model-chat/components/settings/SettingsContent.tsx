@@ -58,7 +58,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     onExportScenarios,
     t
 }) => {
-    const animClass = "animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both";
+    const animClass = "animate-in fade-in zoom-in-95 duration-200 ease-out";
 
     const handleBatchUpdate = (updates: Partial<AppSettings>) => {
         Object.entries(updates).forEach(([key, value]) => {

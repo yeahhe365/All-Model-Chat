@@ -139,3 +139,23 @@ html, body, #root {
 .is-exporting-png *::-webkit-scrollbar {
     display: none !important;
 }
+
+/* Global Theme Transition */
+body, #root, div, header, main, footer, aside, nav, section, article, button, input, textarea, select {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Thinking Process Accordion Animation */
+.thought-process-accordion {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s var(--ease-spring);
+}
+
+.thought-process-accordion.expanded {
+  grid-template-rows: 1fr;
+}
+
+.thought-process-inner {
+  overflow: hidden;
+}
