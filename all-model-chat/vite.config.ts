@@ -28,10 +28,10 @@ export default defineConfig(({ mode }) => {
             'react-dom/client', 
             'react/jsx-runtime',
             'react-pdf', 
-            'pdfjs-dist'
+            'pdfjs-dist',
+            '@formkit/auto-animate/react'
           ]
         }
       }
     };
 });
-    
