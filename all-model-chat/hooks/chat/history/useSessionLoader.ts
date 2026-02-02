@@ -1,7 +1,7 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings } from '../../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { createNewSession, rehydrateSessionFiles, logService } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
 
@@ -18,8 +18,6 @@ interface UseSessionLoaderProps {
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
-    savedSessions: SavedChatSession[];
-    t: (key: string, fallback?: string) => string;
 }
 
 export const useSessionLoader = ({
@@ -35,8 +33,6 @@ export const useSessionLoader = ({
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
-    savedSessions,
-    t
 }: UseSessionLoaderProps) => {
 
     const startNewChat = useCallback(() => {
@@ -62,23 +58,11 @@ export const useSessionLoader = ({
             };
         }
 
-        // Calculate unique title for the new session
-        const baseTitle = t('newChat');
-        const nonEmptySessions = savedSessions.filter(s => s.messages.length > 0);
-        const existingTitles = new Set(nonEmptySessions.map(s => s.title));
-        
-        let newTitle = baseTitle;
-        let counter = 1;
-        while (existingTitles.has(newTitle)) {
-            newTitle = `${baseTitle} ${counter}`;
-            counter++;
-        }
-
-        const newSession = createNewSession(settingsForNewChat, [], newTitle);
+        const newSession = createNewSession(settingsForNewChat);
 
         updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
         setActiveSessionId(newSession.id);
-        dbService.setActiveSessionId(newSession.id);
+        // Note: activeSessionId persistence is now handled by useEffect in useChatState
 
         // Don't force clear text (handled by localStorage draft for new ID)
         // Clear files for new chat
@@ -89,7 +73,7 @@ export const useSessionLoader = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, savedSessions, t]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
 
     const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
@@ -103,7 +87,7 @@ export const useSessionLoader = ({
         const sessionToLoad = allSessions.find(s => s.id === sessionId);
         if (sessionToLoad) {
             setActiveSessionId(sessionToLoad.id);
-            dbService.setActiveSessionId(sessionId);
+            // Note: activeSessionId persistence is now handled by useEffect in useChatState
             
             // Restore files from draft for the target session, or empty if none
             const draftFiles = fileDraftsRef.current[sessionId] || [];
@@ -122,10 +106,9 @@ export const useSessionLoader = ({
     const loadInitialData = useCallback(async () => {
         try {
             logService.info('Attempting to load chat history from IndexedDB.');
-            const [sessions, groups, storedActiveId] = await Promise.all([
+            const [sessions, groups] = await Promise.all([
                 dbService.getAllSessions(),
-                dbService.getAllGroups(),
-                dbService.getActiveSessionId()
+                dbService.getAllGroups()
             ]);
 
             const rehydratedSessions = sessions.map(rehydrateSessionFiles);
@@ -134,13 +117,12 @@ export const useSessionLoader = ({
             setSavedSessions(rehydratedSessions);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
+            const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+
             if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
                 loadChatSession(storedActiveId, rehydratedSessions);
-            } else if (rehydratedSessions.length > 0) {
-                logService.info('No active session ID, loading most recent session.');
-                loadChatSession(rehydratedSessions[0].id, rehydratedSessions);
             } else {
-                logService.info('No history found, starting fresh chat.');
+                logService.info('No active session in tab storage, starting fresh chat.');
                 startNewChat();
             }
         } catch (error) {
