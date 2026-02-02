@@ -1,4 +1,6 @@
 
+
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAppSettings } from '../core/useAppSettings';
 import { useChat } from '../chat/useChat';
@@ -106,6 +108,7 @@ export const useAppLogic = () => {
       handleSaveSettings,
       handleLoadCanvasPromptAndSave,
       handleToggleBBoxMode,
+      handleToggleGuideMode,
       handleSuggestionClick,
       handleSetThinkingLevel,
       getCurrentModelDisplayName
@@ -128,6 +131,7 @@ export const useAppLogic = () => {
     handleSaveSettings,
     handleLoadCanvasPromptAndSave,
     handleToggleBBoxMode,
+    handleToggleGuideMode,
     handleSuggestionClick,
     handleSetThinkingLevel,
     getCurrentModelDisplayName

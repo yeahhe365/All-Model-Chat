@@ -1,5 +1,5 @@
 
-import React, { useRef, useCallback, useState, useLayoutEffect } from 'react';
+import React, { useRef, useCallback, useState, useLayoutEffect, useEffect } from 'react';
 import { ChatMessage } from '../../types';
 
 interface ChatScrollProps {
@@ -76,6 +76,32 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
         }
         prevMsgLength.current = messages.length;
     }, [messages, userScrolledUp]);
+
+    // Handle visibility change: Catch up on scrolling if tab was backgrounded
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                const container = scrollContainerRef.current;
+                // If user hasn't manually scrolled up, snap to bottom to show latest content
+                // that might have been generated while hidden.
+                if (container && !userScrolledUp.current) {
+                    isAutoScrolling.current = true;
+                    container.scrollTo({
+                        top: container.scrollHeight,
+                        behavior: 'auto'
+                    });
+                    
+                    if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
+                    scrollTimeoutRef.current = window.setTimeout(() => {
+                        isAutoScrolling.current = false;
+                    }, 100);
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [userScrolledUp]);
 
     const scrollToNextTurn = useCallback(() => {
         const container = scrollContainerRef.current;

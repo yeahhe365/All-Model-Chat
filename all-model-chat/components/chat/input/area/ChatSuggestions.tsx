@@ -1,6 +1,8 @@
 
+
+
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
 import { SuggestionIcon } from './SuggestionIcon';
 import { translations } from '../../../../utils/appUtils';
@@ -11,11 +13,13 @@ interface ChatSuggestionsProps {
     onOrganizeInfoClick?: (suggestion: string) => void;
     onToggleBBox?: () => void;
     isBBoxModeActive?: boolean;
+    onToggleGuide?: () => void;
+    isGuideModeActive?: boolean;
     t: (key: keyof typeof translations) => string;
     isFullscreen: boolean;
 }
 
-export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, onToggleBBox, isBBoxModeActive, t, isFullscreen }) => {
+export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, onToggleBBox, isBBoxModeActive, onToggleGuide, isGuideModeActive, t, isFullscreen }) => {
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
@@ -83,26 +87,50 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                             <span>{t(s.titleKey as any)}</span>
                         </button>
                         
-                        {/* Insert BBox Button after "Smart Board" (organize action) if available */}
-                        {(s as any).specialAction === 'organize' && onToggleBBox && (
-                            <button
-                                type="button"
-                                onClick={onToggleBBox}
-                                className={`
-                                    flex items-center gap-2 px-4 py-2.5 rounded-xl
-                                    border border-[var(--theme-border-secondary)]
-                                    text-sm font-medium whitespace-nowrap
-                                    transition-all active:scale-95 shadow-sm
-                                    ${isBBoxModeActive 
-                                        ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
-                                        : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}
-                                `}
-                                aria-label={t('bbox_button_title')}
-                                title={t('bbox_button_title')}
-                            >
-                                <SuggestionIcon iconName="Scan" />
-                                <span>Bbox</span>
-                            </button>
+                        {/* Insert BBox and Guide Buttons after "Smart Board" (organize action) if available */}
+                        {(s as any).specialAction === 'organize' && (
+                            <>
+                                {onToggleBBox && (
+                                    <button
+                                        type="button"
+                                        onClick={onToggleBBox}
+                                        className={`
+                                            flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                            border border-[var(--theme-border-secondary)]
+                                            text-sm font-medium whitespace-nowrap
+                                            transition-all active:scale-95 shadow-sm
+                                            ${isBBoxModeActive 
+                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
+                                                : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}
+                                        `}
+                                        aria-label={t('bbox_button_title')}
+                                        title={t('bbox_button_title')}
+                                    >
+                                        <SuggestionIcon iconName="Scan" />
+                                        <span>Bbox</span>
+                                    </button>
+                                )}
+                                {onToggleGuide && (
+                                    <button
+                                        type="button"
+                                        onClick={onToggleGuide}
+                                        className={`
+                                            flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                            border border-[var(--theme-border-secondary)]
+                                            text-sm font-medium whitespace-nowrap
+                                            transition-all active:scale-95 shadow-sm
+                                            ${isGuideModeActive 
+                                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
+                                                : 'bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]'}
+                                        `}
+                                        aria-label={t('guide_button_title')}
+                                        title={t('guide_button_title')}
+                                    >
+                                        <MousePointer2 size={16} />
+                                        <span>Guide</span>
+                                    </button>
+                                )}
+                            </>
                         )}
                     </React.Fragment>
                 ))}

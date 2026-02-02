@@ -1,4 +1,6 @@
 
+
+
 import { ChatInputProps, ChatInputActionsProps, ChatInputToolbarProps } from '../../types';
 import { ChatInputAreaProps } from '../../components/chat/input/ChatInputArea';
 import { useChatInputLogic } from './useChatInputLogic';
@@ -169,7 +171,9 @@ export const useChatInputPropsBuilder = (
             onSuggestionClick: props.onSuggestionClick,
             onOrganizeInfoClick: props.onOrganizeInfoClick,
             onToggleBBox: props.onToggleBBox,
-            isBBoxModeActive: props.isBBoxModeActive
+            isBBoxModeActive: props.isBBoxModeActive,
+            onToggleGuide: props.onToggleGuide,
+            isGuideModeActive: props.isGuideModeActive
         } : undefined,
         liveStatusProps: {
             isConnected: liveAPI.isConnected,

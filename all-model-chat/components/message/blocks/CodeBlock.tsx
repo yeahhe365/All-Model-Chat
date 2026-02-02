@@ -3,7 +3,7 @@ import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { SideViewContent } from '../../../types';
-import { useCodeBlock } from '../../../hooks/useCodeBlock';
+import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
 import { CodeHeader } from './parts/CodeHeader';
 
 interface CodeBlockProps {
