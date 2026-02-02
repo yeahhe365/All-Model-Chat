@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
+import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand, ProjectContext, ProjectContextReadState } from '../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
@@ -26,6 +26,13 @@ export const useChatState = (appSettings: AppSettings) => {
     const userScrolledUp = useRef<boolean>(false);
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
 
+    // Agentic folder access state
+    const [projectContext, setProjectContext] = useState<ProjectContext | null>(null);
+    const [projectContextReadState, setProjectContextReadState] = useState<ProjectContextReadState>({
+        readFiles: new Set(),
+        loadingFile: null,
+    });
+
     // Tracks session IDs that are generating *in this specific tab*.
     // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
@@ -38,7 +45,7 @@ export const useChatState = (appSettings: AppSettings) => {
             } catch (e) {
                 // Ignore storage errors
             }
-            
+
             // Sync URL: If the current URL doesn't match the active session, update it.
             const targetPath = `/chat/${activeSessionId}`;
             try {
@@ -54,14 +61,14 @@ export const useChatState = (appSettings: AppSettings) => {
             } catch (e) {
                 // Ignore storage errors
             }
-            
+
             // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
             // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.
             try {
                 // Only attempt to push state if we are not on root and not on a chat route (to avoid loops)
                 // And if the environment allows it.
                 if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
-                     window.history.pushState({}, '', '/');
+                    window.history.pushState({}, '', '/');
                 }
             } catch (e) {
                 console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
@@ -147,17 +154,17 @@ export const useChatState = (appSettings: AppSettings) => {
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
-        
+
         setSavedSessions(prevSessions => {
             const newSessions = updater(prevSessions);
-            
+
             // AUTOMATIC SORTING: Ensure sessions are always sorted by pinned status then timestamp
             newSessions.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
             });
-            
+
             if (persist) {
                 const updates: Promise<void>[] = [];
                 const newSessionsMap = new Map(newSessions.map(s => [s.id, s]));
@@ -192,7 +199,7 @@ export const useChatState = (appSettings: AppSettings) => {
             return newSessions;
         });
     }, [broadcast]);
-    
+
     const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
         setSavedGroups(prevGroups => {
             const newGroups = updater(prevGroups);
@@ -207,7 +214,7 @@ export const useChatState = (appSettings: AppSettings) => {
     const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
     const currentChatSettings = useMemo(() => activeChat?.settings || DEFAULT_CHAT_SETTINGS, [activeChat]);
     const isLoading = useMemo(() => loadingSessionIds.has(activeSessionId ?? ''), [loadingSessionIds, activeSessionId]);
-    
+
     const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
         if (!activeSessionId) return;
         updateAndPersistSessions(prevSessions =>
@@ -247,6 +254,9 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading 
+        setSessionLoading,
+        // Agentic folder access
+        projectContext, setProjectContext,
+        projectContextReadState, setProjectContextReadState,
     };
 };

@@ -1,16 +1,20 @@
 
 import React, { useState, useCallback } from 'react';
-import { generateFolderContext } from '../utils/folderImportUtils';
-import { UploadedFile } from '../types';
+import { generateFolderContext, buildProjectContext } from '../utils/folderImportUtils';
+import { UploadedFile, ProjectContext } from '../types';
 import { generateUniqueId } from '../utils/appUtils';
 
 interface UseFileDragDropProps {
     onFilesDropped: (files: FileList | File[]) => Promise<void>;
     onAddTempFile: (file: UploadedFile) => void;
     onRemoveTempFile: (id: string) => void;
+    /** Callback when folder is dropped in agentic mode - receives ProjectContext instead of merged file */
+    onProjectContextCreated?: (context: ProjectContext) => void;
+    /** If true, use agentic mode (lazy file loading) instead of context stuffing */
+    useAgenticMode?: boolean;
 }
 
-export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFile }: UseFileDragDropProps) => {
+export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFile, onProjectContextCreated, useAgenticMode = false }: UseFileDragDropProps) => {
     const [isAppDraggingOver, setIsAppDraggingOver] = useState<boolean>(false);
     const [isProcessingDrop, setIsProcessingDrop] = useState<boolean>(false);
 
@@ -56,7 +60,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
         } else if (entry.isDirectory) {
             const dirReader = entry.createReader();
             const allEntries: any[] = [];
-            
+
             const readEntries = async (): Promise<any[]> => {
                 return new Promise((resolve, reject) => {
                     dirReader.readEntries((entries: any[]) => {
@@ -74,7 +78,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
             } catch (e) {
                 console.warn('Error reading directory entries during drop', e);
             }
-            
+
             const filesArrays = await Promise.all(allEntries.map(child => scanEntry(child, path + entry.name + '/')));
             return filesArrays.flat();
         }
@@ -121,16 +125,22 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
                     .filter(item => item.kind === 'file')
                     .map(item => (item as any).webkitGetAsEntry())
                     .filter(Boolean);
-                
+
                 const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));
                 const flatFilesWithPath = filesArrays.flat();
-                
+
                 if (flatFilesWithPath.length > 0) {
-                    // Convert list of file-path objects to a single text context file
-                    const contextFile = await generateFolderContext(flatFilesWithPath);
-                    await onFilesDropped([contextFile]);
+                    if (useAgenticMode && onProjectContextCreated) {
+                        // Agentic mode: Build project context without reading file contents
+                        const projectContext = buildProjectContext(flatFilesWithPath);
+                        onProjectContextCreated(projectContext);
+                    } else {
+                        // Legacy mode: Convert to a single text context file with all contents
+                        const contextFile = await generateFolderContext(flatFilesWithPath);
+                        await onFilesDropped([contextFile]);
+                    }
                 }
-                
+
                 onRemoveTempFile(tempId);
             } else {
                 // Standard file drop
@@ -144,7 +154,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
         } finally {
             setIsProcessingDrop(false);
         }
-    }, [onFilesDropped, onAddTempFile, onRemoveTempFile]);
+    }, [onFilesDropped, onAddTempFile, onRemoveTempFile, onProjectContextCreated, useAgenticMode]);
 
     return {
         isAppDraggingOver,

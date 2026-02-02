@@ -12,6 +12,56 @@ export interface VideoMetadata {
   fps?: number;
 }
 
+// ============ Project Context Types (Agentic Folder Access) ============
+// These types support on-demand file reading via function calling
+
+/** Represents a node in the file tree structure */
+export interface FileTreeNode {
+  name: string;
+  path: string; // Relative path from root
+  isDirectory: boolean;
+  size?: number;
+  children?: FileTreeNode[];
+}
+
+/** Individual file reference with in-memory handle for lazy reading */
+export interface ProjectContextFile {
+  path: string;
+  size: number;
+  /** In-memory File object - lost on page refresh unless using File System Access API */
+  fileRef: File;
+  /** Optional: Persistent handle from showDirectoryPicker (survives refresh if stored in IndexedDB) */
+  directoryHandle?: FileSystemDirectoryHandle;
+}
+
+/** Complete project context for agentic file access */
+export interface ProjectContext {
+  /** Root folder name */
+  rootName: string;
+  /** ASCII tree representation for system prompt injection */
+  fileTree: string;
+  /** Structured tree for UI rendering */
+  treeNodes: FileTreeNode[];
+  /** Map of relative path -> file reference for quick lookup */
+  fileMap: Map<string, ProjectContextFile>;
+  /** Total accessible files count */
+  totalFiles: number;
+  /** Total size in bytes */
+  totalSize: number;
+  /** Whether this context was created via File System Access API (persistent) */
+  isPersistent?: boolean;
+  /** Timestamp when context was created */
+  createdAt: Date;
+}
+
+/** State for tracking which files AI has read during conversation */
+export interface ProjectContextReadState {
+  /** Files that have been read by AI during this conversation */
+  readFiles: Set<string>;
+  /** Currently loading file (for UI feedback) */
+  loadingFile: string | null;
+}
+
 export interface UploadedFile {
   id: string;
   name: string; // Original filename

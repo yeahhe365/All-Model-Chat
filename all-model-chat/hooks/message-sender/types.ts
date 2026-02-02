@@ -1,6 +1,6 @@
 
 import React, { Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, ProjectContext } from '../../types';
 import { UsageMetadata } from '@google/genai';
 
 export type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -52,4 +52,6 @@ export interface StandardChatProps extends BaseSenderProps {
     getStreamHandlers: GetStreamHandlers;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
+    /** Active project context for agentic folder access */
+    projectContext?: ProjectContext | null;
 }

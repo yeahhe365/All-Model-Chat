@@ -26,11 +26,11 @@ const processResponse = (response: GenerateContentResponse) => {
     if (responseParts.length === 0 && response.text) {
         responseParts.push({ text: response.text });
     }
-    
+
     const candidate = response.candidates?.[0];
     const groundingMetadata = candidate?.groundingMetadata;
     const finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
-    
+
     // @ts-ignore - Handle potential snake_case from raw API responses
     const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
 
@@ -68,17 +68,18 @@ export const sendStatelessMessageStreamApi = async (
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any, functionCallPart?: Part) => void,
     role: 'user' | 'model' = 'user'
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContentStream for ${modelId} (Role: ${role})`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
     let finalUrlContextMetadata: any = null;
+    let detectedFunctionCallPart: Part | undefined = undefined;
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
-        
+
         if (abortSignal.aborted) {
             logService.warn("Streaming aborted by signal before start.");
             return;
@@ -99,13 +100,13 @@ export const sendStatelessMessageStreamApi = async (
                 finalUsageMetadata = chunkResponse.usageMetadata;
             }
             const candidate = chunkResponse.candidates?.[0];
-            
+
             if (candidate) {
                 const metadataFromChunk = candidate.groundingMetadata;
                 if (metadataFromChunk) {
                     finalGroundingMetadata = metadataFromChunk;
                 }
-                
+
                 // @ts-ignore
                 const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
                 if (urlMetadata) {
@@ -127,12 +128,21 @@ export const sendStatelessMessageStreamApi = async (
                         }
                     }
                 }
-                
+
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
+                        const anyPart = part as any;
 
-                        if (pAsThoughtSupporting.thought) {
+                        // Check for function call (agentic tool execution)
+                        // IMPORTANT: Preserve the ENTIRE Part including thoughtSignature
+                        if (anyPart.functionCall) {
+                            detectedFunctionCallPart = part; // Keep full Part with thoughtSignature
+                            logService.info(`Function call detected: ${anyPart.functionCall.name}`, {
+                                args: anyPart.functionCall.args,
+                                hasThoughtSignature: !!anyPart.thoughtSignature
+                            });
+                        } else if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
                         } else {
                             onPart(part);
@@ -145,8 +155,8 @@ export const sendStatelessMessageStreamApi = async (
         logService.error("Error sending message (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
-        onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata);
+        logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata, hasFunctionCall: !!detectedFunctionCallPart });
+        onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata, detectedFunctionCallPart);
     }
 };
 
@@ -161,7 +171,7 @@ export const sendStatelessMessageNonStreamApi = async (
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
-    
+
     try {
         const ai = await getConfiguredApiClient(apiKey);
 

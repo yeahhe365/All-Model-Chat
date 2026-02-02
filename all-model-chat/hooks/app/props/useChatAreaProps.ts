@@ -135,9 +135,14 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onAddUserMessage: chatState.handleAddUserMessage,
     onLiveTranscript: chatState.handleLiveTranscript,
     t,
+
+    // Agentic folder access
+    projectContext: chatState.projectContext,
+    projectContextReadState: chatState.projectContextReadState,
+    onClearProjectContext: chatState.handleClearProjectContext,
   }), [
-    chatState, uiState, appSettings, currentTheme, language, t, sessionTitle, 
-    pipState, handleLoadCanvasPromptAndSave, handleToggleBBoxMode, handleToggleGuideMode, handleSuggestionClick, handleSetThinkingLevel, 
+    chatState, uiState, appSettings, currentTheme, language, t, sessionTitle,
+    pipState, handleLoadCanvasPromptAndSave, handleToggleBBoxMode, handleToggleGuideMode, handleSuggestionClick, handleSetThinkingLevel,
     handleOpenSidePanel, getCurrentModelDisplayName, logic.setAppSettings
   ]);
 };

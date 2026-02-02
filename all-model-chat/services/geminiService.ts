@@ -12,16 +12,16 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async uploadFile(
-        apiKey: string, 
-        file: File, 
-        mimeType: string, 
-        displayName: string, 
+        apiKey: string,
+        file: File,
+        mimeType: string,
+        displayName: string,
         signal: AbortSignal,
         onProgress?: (loaded: number, total: number) => void
     ): Promise<GeminiFile> {
         return uploadFileApi(apiKey, file, mimeType, displayName, signal, onProgress);
     }
-    
+
     async getFileMetadata(apiKey: string, fileApiName: string): Promise<GeminiFile | null> {
         return getFileMetadataApi(apiKey, fileApiName);
     }
@@ -67,11 +67,11 @@ class GeminiServiceImpl implements GeminiService {
             const handleError = (error: Error) => {
                 reject(error);
             };
-            
+
             const config: any = {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             };
-            
+
             if (aspectRatio && aspectRatio !== 'Auto') {
                 if (!config.imageConfig) config.imageConfig = {};
                 config.imageConfig.aspectRatio = aspectRatio;
@@ -105,7 +105,7 @@ class GeminiServiceImpl implements GeminiService {
         onPart: (part: Part) => void,
         onThoughtChunk: (chunk: string) => void,
         onError: (error: Error) => void,
-        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any, functionCallPart?: Part) => void,
         role: 'user' | 'model' = 'user'
     ): Promise<void> {
         return sendStatelessMessageStreamApi(
