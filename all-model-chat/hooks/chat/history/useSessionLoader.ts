@@ -127,12 +127,32 @@ export const useSessionLoader = ({
             setSavedSessions(rehydratedSessions);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
-            const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
+            // 1. Check URL first
+            const path = window.location.pathname;
+            const match = path.match(/^\/chat\/([^/]+)/);
+            
+            if (match && match[1]) {
+                const urlSessionId = match[1];
+                if (rehydratedSessions.find(s => s.id === urlSessionId)) {
+                    logService.info(`Loading session from URL: ${urlSessionId}`);
+                    loadChatSession(urlSessionId, rehydratedSessions);
+                    return;
+                }
+            }
 
+            // 2. If explicit root path, load new chat (ignore last active)
+            if (path === '/' || path === '') {
+                 logService.info('Root path detected, starting new chat.');
+                 startNewChat();
+                 return;
+            }
+
+            // 3. Fallback to SessionStorage (last active)
+            const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
             if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
                 loadChatSession(storedActiveId, rehydratedSessions);
             } else {
-                logService.info('No active session in tab storage, starting fresh chat.');
+                logService.info('No active session in URL or storage, starting fresh chat.');
                 startNewChat();
             }
         } catch (error) {
