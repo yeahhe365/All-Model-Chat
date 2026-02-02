@@ -1,7 +1,7 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
@@ -29,6 +29,15 @@ export const useChatState = (appSettings: AppSettings) => {
     // Tracks session IDs that are generating *in this specific tab*.
     // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
+
+    // Sync active session ID to sessionStorage for per-tab persistence
+    useEffect(() => {
+        if (activeSessionId) {
+            sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+        } else {
+            sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+        }
+    }, [activeSessionId]);
 
     const refreshSessions = useCallback(async () => {
         try {
