@@ -13,6 +13,7 @@ import { useSuggestions } from './useSuggestions';
 import { useChatState } from './useChatState';
 import { useChatActions } from './useChatActions';
 import { useChatEffects } from './useChatEffects';
+import { useBackgroundKeepAlive } from '../core/useBackgroundKeepAlive';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
     
@@ -40,6 +41,9 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         refreshSessions,
         setSessionLoading 
     } = chatState;
+
+    // Optimize background performance when loading
+    useBackgroundKeepAlive(isLoading);
 
     const sessionKeyMapRef = useRef<Map<string, string>>(new Map());
 
