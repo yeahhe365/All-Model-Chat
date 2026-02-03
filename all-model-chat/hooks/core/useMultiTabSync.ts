@@ -48,7 +48,6 @@ export const useMultiTabSync = ({
                     break;
                 case 'SESSION_CONTENT_UPDATED':
                     onSessionContentUpdated?.(msg.sessionId);
-                    handleTitleNotification();
                     break;
                 case 'SESSION_LOADING':
                     onSessionLoading?.(msg.sessionId, msg.isLoading);
@@ -60,14 +59,6 @@ export const useMultiTabSync = ({
             channel.close();
         };
     }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading]);
-
-    const handleTitleNotification = useCallback(() => {
-        if (document.hidden) {
-            document.title = "New Message! • All Model Chat";
-            // Note: We do not restore the title here. The main useAppTitle hook handles
-            // restoring the correct state-based title when visibility changes back.
-        }
-    }, []);
 
     const broadcast = useCallback((message: SyncMessage) => {
         if (channelRef.current) {
