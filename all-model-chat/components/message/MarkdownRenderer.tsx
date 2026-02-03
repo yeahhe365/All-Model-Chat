@@ -172,7 +172,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     }
 
     // 2. Split by code blocks to avoid replacing content inside them
-    const parts = text.split(/(```[\s\S]*?```)/g);
+    // Capture both complete code blocks AND unclosed code blocks at the end of the string
+    // This ensures that streaming code isn't treated as normal text which would trigger LaTeX replacement
+    const parts = text.split(/(```[\s\S]*?```|```[\s\S]*$)/g);
     return parts.map(part => {
       if (part.startsWith('```')) {
         return part;

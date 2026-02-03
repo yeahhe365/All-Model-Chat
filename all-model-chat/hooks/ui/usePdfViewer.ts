@@ -3,8 +3,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { pdfjs } from 'react-pdf';
 import { UploadedFile } from '../../types';
 
-// Configure PDF worker globally
-pdfjs.GlobalWorkerOptions.workerSrc = `https://esm.sh/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
+// Configure PDF worker to use the local bundled version via Vite
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 // Determine responsive initial scale
 const getInitialScale = () => {
