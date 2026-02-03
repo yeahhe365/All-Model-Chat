@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from 'react';
 import { logService } from '../../utils/appUtils';
 
@@ -24,7 +25,6 @@ export const useMultiTabSync = ({
     onSessionLoading
 }: UseMultiTabSyncProps) => {
     const channelRef = useRef<BroadcastChannel | null>(null);
-    const originalTitleRef = useRef<string>(document.title);
 
     useEffect(() => {
         const channel = new BroadcastChannel('all_model_chat_sync_v1');
@@ -63,14 +63,9 @@ export const useMultiTabSync = ({
 
     const handleTitleNotification = useCallback(() => {
         if (document.hidden) {
-            originalTitleRef.current = document.title;
             document.title = "New Message! • All Model Chat";
-            
-            const restoreTitle = () => {
-                document.title = originalTitleRef.current;
-                document.removeEventListener('visibilitychange', restoreTitle);
-            };
-            document.addEventListener('visibilitychange', restoreTitle);
+            // Note: We do not restore the title here. The main useAppTitle hook handles
+            // restoring the correct state-based title when visibility changes back.
         }
     }, []);
 

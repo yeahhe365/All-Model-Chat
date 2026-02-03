@@ -126,7 +126,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   return (
     <aside
       className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} flex-shrink-0
-                 transition-[width,transform] duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] will-change-[width,transform]
+                 transition-[width,transform] duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] will-change-[width,transform] transform-gpu
                  absolute md:static top-0 left-0 z-50
                  overflow-hidden
                  ${isOpen ? 'w-64 md:w-72 translate-x-0' : 'w-64 md:w-[68px] -translate-x-full md:translate-x-0'}
@@ -136,7 +136,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     >
       {isOpen ? (
         // Fixed width container inside ensures text doesn't reflow/wrap weirdly during the collapse animation
-        <div className="w-64 md:w-72 h-full flex flex-col min-w-[16rem] md:min-w-[18rem] opacity-100 transition-opacity duration-200">
+        <div className="w-64 md:w-72 h-full flex flex-col shrink-0 min-w-[16rem] md:min-w-[18rem] opacity-100 transition-opacity duration-200">
             <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
             <SidebarActions 
                 onNewChat={onNewChat}

@@ -1,19 +1,23 @@
 
-import React, { useState } from 'react';
-import { Mic, Info } from 'lucide-react';
-import { AVAILABLE_TRANSCRIPTION_MODELS } from '../../../constants/appConstants';
+import React from 'react';
+import { Mic, Info, AudioLines } from 'lucide-react';
+import { AVAILABLE_TRANSCRIPTION_MODELS, AVAILABLE_TTS_VOICES } from '../../../constants/appConstants';
 import { Tooltip } from '../../shared/Tooltip';
 import { Select } from '../../shared/Select';
 
 interface VoiceControlProps {
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
+  ttsVoice?: string;
+  setTtsVoice?: (value: string) => void;
   t: (key: string) => string;
 }
 
 export const VoiceControl: React.FC<VoiceControlProps> = ({
   transcriptionModelId,
   setTranscriptionModelId,
+  ttsVoice,
+  setTtsVoice,
   t
 }) => {
   return (
@@ -23,6 +27,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
         </h4>
         
         <div className="space-y-3">
+            {/* Input Transcription Model */}
             <Select
                 id="transcription-model-select"
                 label=""
@@ -40,6 +45,31 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
             >
                 {AVAILABLE_TRANSCRIPTION_MODELS.map((model) => ( <option key={model.id} value={model.id}>{model.name}</option>))}
             </Select>
+
+            {/* TTS Voice Selector */}
+            {ttsVoice && setTtsVoice && (
+                <Select
+                    id="tts-voice-select"
+                    label=""
+                    layout="horizontal"
+                    labelContent={
+                        <span className='flex items-center'>
+                            {t('settingsTtsVoice')}
+                        </span>
+                    }
+                    value={ttsVoice}
+                    onChange={(e) => setTtsVoice(e.target.value)}
+                >
+                    {AVAILABLE_TTS_VOICES.map((voice) => (
+                        <option key={voice.id} value={voice.id}>
+                            <div className="flex items-center gap-2">
+                                <AudioLines size={14} className="text-purple-500 flex-shrink-0" />
+                                <span>{voice.name}</span>
+                            </div>
+                        </option>
+                    ))}
+                </Select>
+            )}
         </div>
     </div>
   );

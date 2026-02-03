@@ -56,7 +56,7 @@ export const InputBar: React.FC<InputBarProps> = ({
     }, [autoFocus]);
 
     return (
-        <div className="mb-3 animate-in fade-in slide-in-from-bottom-1 duration-200">
+        <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
             <form 
                 onSubmit={handleSubmit} 
                 className="flex items-center gap-2 p-1.5 bg-[var(--theme-bg-secondary)] rounded-xl border border-[var(--theme-border-secondary)] shadow-sm ring-1 ring-black/5 dark:ring-white/5"

@@ -1,5 +1,6 @@
 
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, FolderUp } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { 
@@ -9,7 +10,6 @@ import {
   IconScreenshot, 
   IconMicrophone, 
   IconLink, 
-  IconYoutube, 
   IconFileEdit,
   IconZip
 } from '../../icons/CustomIcons';
@@ -30,45 +30,68 @@ const menuIconSize = 18; // Consistent icon size for menu items
 
 export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
     const [isOpen, setIsOpen] = useState(false);
-    const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+    const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({});
     const containerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     
     const { window: targetWindow } = useWindowContext();
 
     useClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
-    // Dynamic positioning to handle PiP/Small windows
+    // Prevent click-outside logic from firing when interacting with the portaled menu
+    useEffect(() => {
+        if (!isOpen || !menuRef.current) return;
+        
+        const stopProp = (e: Event) => e.stopPropagation();
+        const menuEl = menuRef.current;
+        
+        // Stop bubbling to document so useClickOutside doesn't see it
+        menuEl.addEventListener('mousedown', stopProp);
+        menuEl.addEventListener('touchstart', stopProp);
+        
+        return () => {
+            menuEl.removeEventListener('mousedown', stopProp);
+            menuEl.removeEventListener('touchstart', stopProp);
+        };
+    }, [isOpen]);
+
+    // Dynamic fixed positioning
     useLayoutEffect(() => {
         if (isOpen && buttonRef.current && targetWindow) {
             const buttonRect = buttonRef.current.getBoundingClientRect();
             const viewportWidth = targetWindow.innerWidth;
+            const viewportHeight = targetWindow.innerHeight;
             
-            const MENU_WIDTH = 240; // w-60 equivalent approx
-            const BUTTON_MARGIN = 10; // Safety margin
+            const MENU_WIDTH = 240; 
+            const BUTTON_MARGIN = 10;
+            const GAP = 8;
             
-            const newStyle: React.CSSProperties = {};
+            const newStyle: React.CSSProperties = {
+                position: 'fixed',
+                zIndex: 9999, // Ensure it sits on top of everything including toolbar
+            };
 
-            // Horizontal: Flip to right-aligned if left-aligned would overflow
+            // Horizontal Alignment
             if (buttonRect.left + MENU_WIDTH > viewportWidth - BUTTON_MARGIN) {
-                newStyle.left = 'auto';
-                newStyle.right = '0';
+                // Align right edge of menu with right edge of button
+                newStyle.left = buttonRect.right - MENU_WIDTH;
                 newStyle.transformOrigin = 'bottom right';
             } else {
-                newStyle.left = '0';
-                newStyle.right = 'auto';
+                // Align left
+                newStyle.left = buttonRect.left;
                 newStyle.transformOrigin = 'bottom left';
             }
 
-            // Vertical: Constrain height if window is too short (menu opens upwards)
-            // The menu is positioned 'bottom-full mb-2', so it sits above the button.
-            // Available space is from the top of the button to the top of the viewport.
+            // Vertical Alignment (Anchored to bottom of viewport relative to button top)
+            newStyle.bottom = viewportHeight - buttonRect.top + GAP;
+
+            // Height Constraint
             const availableHeight = buttonRect.top - BUTTON_MARGIN;
-            // Ensure a sensible minimum so it doesn't collapse completely
             newStyle.maxHeight = `${Math.max(150, availableHeight)}px`;
             newStyle.overflowY = 'auto'; // Allow scrolling if constrained
 
-            setMenuStyle(newStyle);
+            setMenuPosition(newStyle);
         }
     }, [isOpen, targetWindow]);
 
@@ -96,7 +119,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={disabled}
-                className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rotate-45' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)] rotate-0'}`}
                 aria-label={t('attachMenu_aria')}
                 title={t('attachMenu_title')}
                 aria-haspopup="true"
@@ -104,10 +127,12 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
             >
                 <Plus size={attachIconSize} strokeWidth={2} />
             </button>
-            {isOpen && (
+            
+            {isOpen && targetWindow && createPortal(
                 <div 
-                    className="absolute bottom-full mb-2 w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium z-20 py-1.5 custom-scrollbar animate-in fade-in zoom-in-95 duration-100" 
-                    style={menuStyle}
+                    ref={menuRef}
+                    className="w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 custom-scrollbar animate-in fade-in zoom-in-95 duration-100" 
+                    style={menuPosition}
                     role="menu"
                 >
                     {menuItems.map(item => (
@@ -116,7 +141,8 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                             <span className="font-medium">{t(item.labelKey)}</span>
                         </button>
                     ))}
-                </div>
+                </div>,
+                targetWindow.document.body
             )}
         </div>
     );
