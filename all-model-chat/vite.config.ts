@@ -20,15 +20,15 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           // Externalize React and ReactDOM to ensure the app uses the same
-          // instance as react-pdf if it were loaded via CDN.
-          // Since we are now bundling react-pdf, we only keep basic React externals if needed for other CDN libs,
-          // but typically for a full local build we shouldn't mix strategies.
-          // However, keeping React external aligns with index.html importmap for React.
+          // instance as react-pdf (which is loaded via CDN/importmap).
+          // This prevents the "Cannot read properties of null (reading 'useReducer')" error.
           external: [
             'react', 
             'react-dom', 
             'react-dom/client', 
             'react/jsx-runtime',
+            'react-pdf', 
+            'pdfjs-dist',
             '@formkit/auto-animate/react'
           ]
         }
