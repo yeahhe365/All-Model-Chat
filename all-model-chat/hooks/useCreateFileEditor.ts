@@ -80,7 +80,8 @@ export const useCreateFileEditor = ({
                 useCORS: true, 
                 logging: false,
                 letterRendering: true,
-                backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff'
+                backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
+                imageTimeout: 15000 // Add timeout to prevent hanging on bad resources
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -141,7 +142,8 @@ export const useCreateFileEditor = ({
           html2canvas: { 
             scale: 2, 
             useCORS: true, 
-            backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff'
+            backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
+            imageTimeout: 15000 // Add timeout
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
