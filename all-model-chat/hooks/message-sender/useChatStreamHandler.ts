@@ -1,13 +1,11 @@
 
-
-
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
-import { updateMessagesWithPart, updateMessagesWithThought, finalizeMessages } from '../chat-stream/processors';
+import { finalizeMessages, updateMessagesWithBatch } from '../chat-stream/processors';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -17,6 +15,8 @@ interface ChatStreamHandlerProps {
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
+
+const UPDATE_THROTTLE_MS = 100;
 
 export const useChatStreamHandler = ({
     appSettings,
@@ -38,13 +38,73 @@ export const useChatStreamHandler = ({
         let firstContentPartTime: Date | null = null;
         let accumulatedText = "";
 
+        // Buffers for Throttling
+        let bufferedParts: Part[] = [];
+        let bufferedThought = "";
+        let lastFlushTime = 0;
+        let flushTimeout: ReturnType<typeof setTimeout> | null = null;
+
+        const flushUpdates = () => {
+            if (flushTimeout) {
+                clearTimeout(flushTimeout);
+                flushTimeout = null;
+            }
+
+            // Only update if there is something to update
+            if (bufferedParts.length === 0 && !bufferedThought) return;
+
+            const partsToProcess = [...bufferedParts];
+            const thoughtToProcess = bufferedThought;
+            
+            // Clear buffers immediately to prevent race conditions or double processing
+            bufferedParts = [];
+            bufferedThought = "";
+            lastFlushTime = Date.now();
+
+            updateAndPersistSessions(prev => {
+                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                if (sessionIndex === -1) return prev;
+
+                const newSessions = [...prev];
+                const sessionToUpdate = { ...newSessions[sessionIndex] };
+                
+                // Use batch processor to update messages efficiently with one state change
+                const updatedMessages = updateMessagesWithBatch(
+                    sessionToUpdate.messages,
+                    partsToProcess,
+                    thoughtToProcess,
+                    generationStartTime,
+                    newModelMessageIds,
+                    firstContentPartTime
+                );
+                
+                sessionToUpdate.messages = updatedMessages;
+                newSessions[sessionIndex] = sessionToUpdate;
+                
+                return newSessions;
+            }, { persist: false });
+        };
+
+        const throttleUpdate = () => {
+            const now = Date.now();
+            if (now - lastFlushTime >= UPDATE_THROTTLE_MS) {
+                flushUpdates();
+            } else if (!flushTimeout) {
+                flushTimeout = setTimeout(flushUpdates, UPDATE_THROTTLE_MS);
+            }
+        };
+
         const streamOnError = (error: Error) => {
+            if (flushTimeout) clearTimeout(flushTimeout); // Clear pending updates on error
             handleApiError(error, currentSessionId, generationId);
             setSessionLoading(currentSessionId, false);
             activeJobs.current.delete(generationId);
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => {
+            // Ensure any pending buffered data is written before finalizing
+            flushUpdates();
+
             const lang = appSettings.language === 'system' 
                 ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
                 : appSettings.language;
@@ -129,47 +189,19 @@ export const useChatStreamHandler = ({
                 firstContentPartTime = new Date();
             }
         
-            updateAndPersistSessions(prev => {
-                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
-                if (sessionIndex === -1) return prev;
-        
-                const newSessions = [...prev];
-                const sessionToUpdate = { ...newSessions[sessionIndex] };
-                
-                const updatedMessages = updateMessagesWithPart(
-                    sessionToUpdate.messages,
-                    part,
-                    generationStartTime,
-                    newModelMessageIds,
-                    firstContentPartTime
-                );
-                
-                sessionToUpdate.messages = updatedMessages;
-                newSessions[sessionIndex] = sessionToUpdate;
-                
-                return newSessions;
-            }, { persist: false });
+            // Buffer the part
+            bufferedParts.push(part);
+            
+            // Trigger throttled update
+            throttleUpdate();
         };
         
         const onThoughtChunk = (thoughtChunk: string) => {
-            updateAndPersistSessions(prev => {
-                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
-                if (sessionIndex === -1) return prev;
-        
-                const newSessions = [...prev];
-                const sessionToUpdate = { ...newSessions[sessionIndex] };
-                
-                const updatedMessages = updateMessagesWithThought(
-                    sessionToUpdate.messages,
-                    thoughtChunk,
-                    generationStartTime
-                );
-
-                sessionToUpdate.messages = updatedMessages;
-                newSessions[sessionIndex] = sessionToUpdate;
-                
-                return newSessions;
-            }, { persist: false });
+            // Buffer the thought
+            bufferedThought += thoughtChunk;
+            
+            // Trigger throttled update
+            throttleUpdate();
         };
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };

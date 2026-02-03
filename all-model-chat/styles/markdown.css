@@ -1,4 +1,5 @@
 
+
 /* Markdown Body Overrides to prevent theme conflicts */
 .markdown-body {
   background-color: transparent !important;
@@ -12,6 +13,11 @@
 .markdown-body > *:first-child,
 .is-loading > *:first-child {
   margin-top: 0 !important;
+}
+
+/* Ensure last element doesn't push bottom content, aligning text with bubble bottom */
+.markdown-body > *:last-child {
+  margin-bottom: 0 !important;
 }
 
 /* Apply optimized fade-in-move animation to block elements */

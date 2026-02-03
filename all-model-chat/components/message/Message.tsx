@@ -58,7 +58,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     if (message.role === 'user') {
         // User Message: Bubble style
         bubbleClasses += "w-fit px-4 py-3 sm:px-5 sm:py-4 shadow-sm ";
-        bubbleClasses += "bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-[24px] rounded-tr-[4px] border border-transparent";
+        bubbleClasses += "bg-[var(--theme-bg-user-message)] text-[var(--theme-bg-user-message-text)] rounded-2xl rounded-tr-sm border border-transparent";
     } else if (message.role === 'model') {
         // Model Message: No bubble style
         // Removed padding (px-4 py-3), background, shadow, border, rounded corners
@@ -67,7 +67,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
     } else {
         // Error Message: Bubble style (Red)
         bubbleClasses += "w-fit px-4 py-3 shadow-sm ";
-        bubbleClasses += "bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-[24px] border border-transparent";
+        bubbleClasses += "bg-[var(--theme-bg-error-message)] text-[var(--theme-bg-error-message-text)] rounded-2xl border border-transparent";
     }
 
     return (
