@@ -21,12 +21,13 @@ export const TtsVoiceSelector: React.FC<TtsVoiceSelectorProps> = ({ ttsVoice, se
             className="mb-0"
             wrapperClassName="relative min-w-[160px] w-auto"
             direction="up"
+            dropdownClassName="!w-auto !min-w-full max-h-[300px]"
         >
             {AVAILABLE_TTS_VOICES.map(voice => (
                 <option key={voice.id} value={voice.id}>
                     <div className="flex items-center gap-2">
                          <AudioLines size={14} className="text-purple-500 flex-shrink-0" />
-                         <span>{voice.name}</span>
+                         <span className="whitespace-nowrap">{voice.name} ({t(voice.styleKey)})</span>
                     </div>
                 </option>
             ))}

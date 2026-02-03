@@ -1,4 +1,6 @@
 
+
+
 import React, { useMemo } from 'react';
 import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings } from '../../types';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
@@ -22,6 +24,7 @@ interface UseChatInputHandlersProps {
     setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
     previewFile: UploadedFile | null;
     setPreviewFile: React.Dispatch<React.SetStateAction<UploadedFile | null>>;
+    ttsContext?: string;
     
     // UI State
     isAddingById: boolean;
@@ -87,6 +90,7 @@ interface UseChatInputHandlersProps {
     isMobile: boolean;
     isDesktop: boolean;
     canSend: boolean;
+    adjustTextareaHeight?: () => void;
 }
 
 export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
@@ -147,6 +151,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
         setAppFileError: props.setAppFileError,
         appSettings: props.appSettings,
         currentChatSettings: props.currentChatSettings,
+        ttsContext: props.ttsContext,
     });
 
     // 4. Keyboard Handling

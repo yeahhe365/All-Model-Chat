@@ -1,6 +1,7 @@
 
 
 
+
 import { ChatInputProps, ChatInputActionsProps, ChatInputToolbarProps } from '../../types';
 import { ChatInputAreaProps } from '../../components/chat/input/ChatInputArea';
 import { useChatInputLogic } from './useChatInputLogic';
@@ -65,7 +66,9 @@ export const useChatInputPropsBuilder = (
         supportedImageSizes: capabilities.supportedImageSizes,
         isNativeAudioModel: capabilities.isNativeAudioModel || false,
         mediaResolution: props.currentChatSettings.mediaResolution,
-        setMediaResolution: (res) => props.setCurrentChatSettings(prev => ({ ...prev, mediaResolution: res }))
+        setMediaResolution: (res) => props.setCurrentChatSettings(prev => ({ ...prev, mediaResolution: res })),
+        ttsContext: inputState.ttsContext,
+        onEditTtsContext: () => modalsState.setShowTtsContextEditor(true)
     };
 
     const actionsProps: ChatInputActionsProps = {
@@ -203,6 +206,10 @@ export const useChatInputPropsBuilder = (
         isSystemAudioRecordingEnabled: props.appSettings.isSystemAudioRecordingEnabled,
         themeId: props.themeId,
         isPasteRichTextAsMarkdownEnabled: props.appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
+        showTtsContextEditor: modalsState.showTtsContextEditor,
+        onCloseTtsContextEditor: () => modalsState.setShowTtsContextEditor(false),
+        ttsContext: inputState.ttsContext,
+        setTtsContext: inputState.setTtsContext,
     };
 
     const fileModalsProps = {

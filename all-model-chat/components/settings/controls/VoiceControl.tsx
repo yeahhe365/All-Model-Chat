@@ -64,7 +64,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
                         <option key={voice.id} value={voice.id}>
                             <div className="flex items-center gap-2">
                                 <AudioLines size={14} className="text-purple-500 flex-shrink-0" />
-                                <span>{voice.name}</span>
+                                <span>{voice.name} ({t(voice.styleKey)})</span>
                             </div>
                         </option>
                     ))}

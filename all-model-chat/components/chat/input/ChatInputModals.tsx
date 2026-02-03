@@ -1,8 +1,11 @@
 
+
+
 import React from 'react';
 import { AudioRecorder } from '../../modals/AudioRecorder';
 import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
 import { HelpModal } from '../../modals/HelpModal';
+import { TextEditorModal } from '../../modals/TextEditorModal';
 import { translations } from '../../../utils/appUtils';
 import { CommandInfo, UploadedFile } from '../../../types';
 
@@ -25,7 +28,17 @@ export interface ChatInputModalsProps {
   isSystemAudioRecordingEnabled?: boolean;
   themeId: string;
   isPasteRichTextAsMarkdownEnabled?: boolean;
+  showTtsContextEditor?: boolean;
+  onCloseTtsContextEditor?: () => void;
+  ttsContext?: string;
+  setTtsContext?: (val: string) => void;
 }
+
+const DEFAULT_TTS_CONTEXT_TEMPLATE = `# AUDIO PROFILE: [Name]
+## THE SCENE: [Description]
+### DIRECTOR'S NOTES
+Style: [e.g. Happy]
+Pace: [e.g. Fast]`;
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   showRecorder,
@@ -44,9 +57,13 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   initialFilename,
   isSystemAudioRecordingEnabled,
   themeId,
-  isPasteRichTextAsMarkdownEnabled
+  isPasteRichTextAsMarkdownEnabled,
+  showTtsContextEditor,
+  onCloseTtsContextEditor,
+  ttsContext,
+  setTtsContext
 }) => {
-  if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen) {
+  if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen && !showTtsContextEditor) {
     return null;
   }
 
@@ -73,6 +90,18 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
         />
       )}
       {isHelpModalOpen && <HelpModal isOpen={isHelpModalOpen} onClose={onHelpModalClose} commands={allCommandsForHelp} t={t} />}
+      
+      {showTtsContextEditor && onCloseTtsContextEditor && setTtsContext && (
+          <TextEditorModal 
+            isOpen={showTtsContextEditor} 
+            onClose={onCloseTtsContextEditor} 
+            title="TTS Director's Notes"
+            value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
+            onChange={setTtsContext}
+            placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
+            t={t as (key: string) => string}
+          />
+      )}
     </>
   );
 };
