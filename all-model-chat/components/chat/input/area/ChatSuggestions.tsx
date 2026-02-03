@@ -1,6 +1,4 @@
 
-
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
@@ -53,14 +51,14 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
 
     return (
         <div 
-            className="relative group/suggestions mb-2"
+            className="relative group/suggestions mb-1"
             onMouseEnter={() => setIsSuggestionsHovered(true)}
             onMouseLeave={() => setIsSuggestionsHovered(false)}
         >
             <div 
                 ref={suggestionsRef}
                 onScroll={checkScroll}
-                className="flex gap-2 overflow-x-auto pb-2 px-1 no-scrollbar fade-mask-x scroll-smooth"
+                className="flex gap-2 overflow-x-auto pb-1 px-1 no-scrollbar fade-mask-x scroll-smooth"
             >
                 {SUGGESTIONS_KEYS.map((s, i) => (
                     <React.Fragment key={i}>

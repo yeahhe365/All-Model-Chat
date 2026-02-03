@@ -7,6 +7,7 @@ export const MAX_TEXTAREA_HEIGHT_PX = 150;
 export const useChatInputState = (activeSessionId: string | null, isEditing: boolean) => {
     const [inputText, setInputText] = useState('');
     const [quotes, setQuotes] = useState<string[]>([]);
+    const [ttsContext, setTtsContext] = useState('');
     const [isTranslating, setIsTranslating] = useState(false);
     const [isAnimatingSend, setIsAnimatingSend] = useState(false);
     const [fileIdInput, setFileIdInput] = useState('');
@@ -45,6 +46,11 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
             } catch (e) {
                 setQuotes([]);
             }
+
+            // Load TTS Context draft
+            const ttsKey = `chatTtsContext_${activeSessionId}`;
+            const savedTtsContext = localStorage.getItem(ttsKey);
+            setTtsContext(savedTtsContext || '');
         }
     }, [activeSessionId, isEditing]);
 
@@ -54,6 +60,7 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
 
         const draftKey = `chatDraft_${activeSessionId}`;
         const quoteKey = `chatQuotes_${activeSessionId}`;
+        const ttsKey = `chatTtsContext_${activeSessionId}`;
 
         const handleStorageChange = (e: StorageEvent) => {
             if (e.key === draftKey) {
@@ -68,12 +75,17 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
                         setQuotes(newValue);
                     }
                 } catch (e) {}
+            } else if (e.key === ttsKey) {
+                const newValue = e.newValue || '';
+                if (newValue !== ttsContext) {
+                    setTtsContext(newValue);
+                }
             }
         };
 
         window.addEventListener('storage', handleStorageChange);
         return () => window.removeEventListener('storage', handleStorageChange);
-    }, [activeSessionId, isEditing, inputText, quotes]);
+    }, [activeSessionId, isEditing, inputText, quotes, ttsContext]);
 
     // Save draft to localStorage on input change (debounced)
     useEffect(() => {
@@ -100,10 +112,22 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         }
     }, [quotes, activeSessionId, isEditing]);
 
+    // Save TTS context to localStorage
+    useEffect(() => {
+        if (!activeSessionId || isEditing) return;
+        const ttsKey = `chatTtsContext_${activeSessionId}`;
+        if (ttsContext.trim()) {
+            localStorage.setItem(ttsKey, ttsContext);
+        } else {
+            localStorage.removeItem(ttsKey);
+        }
+    }, [ttsContext, activeSessionId, isEditing]);
+
     const clearCurrentDraft = useCallback(() => {
         if (activeSessionId) {
             localStorage.removeItem(`chatDraft_${activeSessionId}`);
             localStorage.removeItem(`chatQuotes_${activeSessionId}`);
+            // Note: We deliberately do NOT clear TTS context on send, as it's often a persistent directive for the session
         }
     }, [activeSessionId]);
 
@@ -120,6 +144,7 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
     return {
         inputText, setInputText,
         quotes, setQuotes,
+        ttsContext, setTtsContext,
         isTranslating, setIsTranslating,
         isAnimatingSend, setIsAnimatingSend,
         fileIdInput, setFileIdInput,

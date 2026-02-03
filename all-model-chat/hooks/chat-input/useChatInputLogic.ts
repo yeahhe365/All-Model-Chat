@@ -1,4 +1,6 @@
 
+
+
 import React, { useCallback } from 'react';
 import { ChatInputProps } from '../../types';
 import { useChatInputState } from './useChatInputState';
@@ -87,7 +89,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         thinkingLevel: currentChatSettings.thinkingLevel,
     });
 
-    const isModalOpen = modalsState.showCreateTextFileEditor || modalsState.showRecorder || !!localFileState.configuringFile || !!localFileState.previewFile || localFileState.showTokenModal;
+    const isModalOpen = modalsState.showCreateTextFileEditor || modalsState.showRecorder || !!localFileState.configuringFile || !!localFileState.previewFile || localFileState.showTokenModal || modalsState.showTtsContextEditor;
     const isAnyModalOpen = isModalOpen || modalsState.isHelpModalOpen;
 
     const canSend = (

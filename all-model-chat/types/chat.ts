@@ -161,6 +161,8 @@ export interface ChatInputToolbarProps {
   isNativeAudioModel?: boolean;
   mediaResolution?: MediaResolution;
   setMediaResolution?: (resolution: MediaResolution) => void;
+  ttsContext?: string;
+  onEditTtsContext?: () => void;
 }
 
 export interface ChatInputActionsProps {

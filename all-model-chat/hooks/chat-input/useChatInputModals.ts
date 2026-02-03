@@ -22,6 +22,7 @@ export const useChatInputModals = ({
   const [showAddByIdInput, setShowAddByIdInput] = useState(false);
   const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [showTtsContextEditor, setShowTtsContextEditor] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -113,6 +114,8 @@ export const useChatInputModals = ({
     setShowAddByUrlInput,
     isHelpModalOpen,
     setIsHelpModalOpen,
+    showTtsContextEditor,
+    setShowTtsContextEditor,
     fileInputRef,
     imageInputRef,
     folderInputRef,

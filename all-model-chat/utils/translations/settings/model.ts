@@ -1,5 +1,4 @@
 
-
 export const modelSettings = {
     settingsModelParameters: { en: 'Model Parameters (for New Chats)', zh: '模型参数 (用于新对话)' },
     settingsDefaultModel: { en: 'Default AI Model (for new chats)', zh: '默认 AI 模型' },
@@ -47,4 +46,27 @@ export const modelSettings = {
     settings_autoCanvasVisualization_label: { en: 'Auto-visualize with Canvas', zh: 'Canvas 自动可视化' },
     settings_autoCanvasVisualization_tooltip: { en: 'Automatically trigger "Visualize with Canvas" after the model finishes generating a text response.', zh: '在模型生成文本回复后，自动触发“使用 Canvas 可视化”功能。' },
     settings_autoCanvasModel_label: { en: 'Visualization Model', zh: '可视化模型' },
+    // TTS Voice Styles
+    tts_style_bright: { en: 'Bright', zh: '明亮' },
+    tts_style_upbeat: { en: 'Upbeat', zh: '欢快' },
+    tts_style_informative: { en: 'Informative', zh: '信息丰富' },
+    tts_style_firm: { en: 'Firm', zh: '坚定' },
+    tts_style_excitable: { en: 'Excitable', zh: '激动' },
+    tts_style_youthful: { en: 'Youthful', zh: '年轻' },
+    tts_style_breezy: { en: 'Breezy', zh: '轻快' },
+    tts_style_easy_going: { en: 'Easy-going', zh: '随和' },
+    tts_style_breathy: { en: 'Breathy', zh: '气声' },
+    tts_style_clear: { en: 'Clear', zh: '清晰' },
+    tts_style_smooth: { en: 'Smooth', zh: '平滑' },
+    tts_style_gravelly: { en: 'Gravelly', zh: '沙哑' },
+    tts_style_soft: { en: 'Soft', zh: '温柔' },
+    tts_style_even: { en: 'Even', zh: '平稳' },
+    tts_style_mature: { en: 'Mature', zh: '成熟' },
+    tts_style_forward: { en: 'Forward', zh: '直接' },
+    tts_style_friendly: { en: 'Friendly', zh: '友好' },
+    tts_style_casual: { en: 'Casual', zh: '随意' },
+    tts_style_gentle: { en: 'Gentle', zh: '温和' },
+    tts_style_lively: { en: 'Lively', zh: '活泼' },
+    tts_style_knowledgeable: { en: 'Knowledgeable', zh: '知识渊博' },
+    tts_style_warm: { en: 'Warm', zh: '温暖' },
 };
