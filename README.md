@@ -1,5 +1,4 @@
-
-# 🤖 All Model Chat (v1.8.4)
+# 🤖 All Model Chat
 
 <div align="center">
 
@@ -13,6 +12,9 @@
     </a>
     <a href="https://github.com/yeahhe365/All-Model-Chat/releases" target="_blank">
       <img src="https://img.shields.io/github/v/release/yeahhe365/All-Model-Chat?style=for-the-badge&color=3b82f6" alt="Release">
+    </a>
+    <a href="https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true" target="_blank">
+      <img src="https://img.shields.io/badge/Google%20AI%20Studio-Try_it_now-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Try in AI Studio">
     </a>
     <img src="https://img.shields.io/badge/许可证-MIT-green?style=for-the-badge" alt="License">
   </p>
@@ -128,4 +130,3 @@ src/
   <p>Developed with ❤️ by <strong>从何开始123</strong></p>
   <p>Powered by <strong>Google Gemini 3.0 Ecosystem</strong></p>
 </div>
-
