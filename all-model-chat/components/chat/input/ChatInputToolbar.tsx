@@ -52,8 +52,10 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   // Show Media Resolution selector for Native Audio (Live API) to control stream quality
   const showMediaResolution = isNativeAudioModel && mediaResolution && setMediaResolution;
   
+  const hasVisibleContent = showAspectRatio || showImageSize || showQuadToggle || showTtsVoice || showMediaResolution || fileError || showAddByIdInput || showAddByUrlInput;
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-1.5 ${hasVisibleContent ? 'mb-1' : ''}`}>
       {(showAspectRatio || showImageSize || showQuadToggle || showTtsVoice || showMediaResolution) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {showTtsVoice && <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} t={t as (key: string) => string} />}

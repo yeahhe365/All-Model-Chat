@@ -157,3 +157,25 @@
 .loading-dot { width: 4px; height: 4px; background-color: var(--theme-text-secondary); border-radius: 50%; animation: loading-dots-pulse 1.4s infinite ease-in-out both; }
 .loading-dot:nth-child(1) { animation-delay: -0.32s; }
 .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+/* Ripple Effect */
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.5; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+.animate-ripple {
+  animation: ripple 0.6s linear;
+}
+
+/* Progress Stripe Animation */
+.bg-progress-stripe {
+    background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-stripe 1s linear infinite;
+}
+
+@keyframes progress-stripe {
+    0% { background-position: 1rem 0; }
+    100% { background-position: 0 0; }
+}

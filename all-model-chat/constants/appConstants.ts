@@ -1,6 +1,4 @@
 
-
-
 import { AppSettings, FilesApiConfig } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
 
@@ -9,7 +7,7 @@ export * from './modelConstants';
 export * from './promptConstants';
 export * from './shortcuts';
 
-export const APP_LOGO_SVG_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xNSAxOCAxOCAxOTUgNzUiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2FhMDBmZiIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48bWFzayBpZD0ibSI+PHJlY3QgeD0iLTUwIiB5PSIwIiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSItNTAiIHk9IjQ1IiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjQiIGZpbGw9ImJsYWNrIi8+PHJlY3QgeD0iLTUwIiB5PSI2MCIgd2lkdGg9IjM1MCIgaGVpZ2h0PSIyIiBmaWxsPSJibGFjayIvPjxyZWN0IHg9IjM2IiB5PSI1NSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0iYmxhY2siLz48L21hc2s+PC9kZWZzPjxnIHRyYW5zZm9ybT0ic2tld1goLTE1KSI+PGcgbWFNrPSJ1cmwoI20pIiBmaWxsPSJ1cmwoI2cpIj48cGF0aCBkPSJNMjAsODAgTDQwLDIwIEw2MCw4MCBMNDgsODAgTDQ0LDY4IEwzNiw2OCBMMzIsODAgWiIvPjxwYXRoIGQ9Ik03MCw4MCBMNzAsMjAgTDg1LDIwIEw9NSw1MCBMMTA1LDIwIEwxMjAsMjAgTDEyMCw4MCBMMTEwLDgwIEwxMTAsNDAgTDk4LDcwIEw5Miw3MCBMODAsNDAgTDgwLDgwIFoiLz48cGF0aCBkPSJNMTY1LDI1IEwxNDAsMjUgTDEzNSw0MCBMMTM1LDY1IEwxNDAsODAgTDE2NSw4MCBMMTY1LDcwIEwxNDUsNzAgTDE0NSwzNSBMMTY1LDM1IFoiLz48L2c+PHJlY3QgeD0iMTcwIiB5PSIyMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDBmZmZmIi8+PHJlY3QgeD0iMTAiIHk9Ijg1IiB3aWR0aD0iMjAiIGhlaWdodD0iMyIgZmlsbD0iIzAwZmZmZiIvPjwvZz48L3N2Zz4=';
+export const APP_LOGO_SVG_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xNSAxOCAxOCAxOTUgNzUiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2FhMDBmZiIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48bWFzayBpZD0ibSI+PHJlY3QgeD0iLTUwIiB5PSIwIiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSItNTAiIHk9IjQ1IiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjQiIGZpbGw9ImJsYWNrIi8+PHJlY3QgeD0iLTUwIiB5PSI2MCIgd2lkdGg9IjM1MCIgaGVpZ2h0PSIyIiBmaWxsPSJibGFjayIvPjxyZWN0IHg9IjM2IiB5PSI1NSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0iYmxhY2siLz48L21hc2s+PC9kZWZzPjxnIHRyYW5zZm9ybT0ic2tld1goLTE1KSI+PGcgbWFNrPSJ1cmwoI20pIiBmaWxsPSJ1cmwoI2cpIj48cGF0aCBkPSJNMjAsODAgTDQwLDIwIEw2MCw4MCBMNDgsODAgTDQ0LDY4IEwzNiw2OCBMMzIsODAgWiIvPjxwYXRoIGQ9Ik03MCw4MCBMNzAsMjAgTDg1LDIwIEw5NSw1MCBMMTA1LDIwIEwxMjAsMjAgTDEyMCw4MCBMMTEwLDgwIEwxMTAsNDAgTDk4LDcwIEw5Miw3MCBMODAsNDAgTDgwLDgwIFoiLz48cGF0aCBkPSJNMTY1LDI1IEwxNDAsMjUgTDEzNSw0MCBMMTM1LDY1IEwxNDAsODAgTDE2NSw4MCBMMTY1LDcwIEwxNDUsNzAgTDE0NSwzNSBMMTY1LDM1IFoiLz48L2c+PHJlY3QgeD0iMTcwIiB5PSIyMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDBmZmZmIi8+PHJlY3QgeD0iMTAiIHk9Ijg1IiB3aWR0aD0iMjAiIGhlaWdodD0iMyIgZmlsbD0iIzAwZmZmZiIvPjwvZz48L3N2Zz4=';
 
 // Import specific constants needed to build the default objects
 import { 
@@ -39,7 +37,7 @@ export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
 
 // Shared UI Styles
 export const MESSAGE_BLOCK_BUTTON_CLASS = "p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all duration-200 focus:outline-none opacity-70 hover:opacity-100";
-export const CHAT_INPUT_BUTTON_CLASS = "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] p-0 m-0 border-0 leading-none";
+export const CHAT_INPUT_BUTTON_CLASS = "h-8 w-8 sm:h-9 sm:w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-input)] p-0 m-0 border-0 leading-none active:scale-90 hover:scale-105";
 export const SETTINGS_INPUT_CLASS = "bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)] focus:border-[var(--theme-border-focus)] focus:ring-[var(--theme-border-focus)]/20 text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)]";
 
 export const DEFAULT_SAFETY_SETTINGS: SafetySetting[] = [

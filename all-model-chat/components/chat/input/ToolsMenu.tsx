@@ -1,10 +1,12 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { IconYoutube } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
+import { useWindowContext } from '../../../contexts/WindowContext';
 
 interface ToolsMenuProps {
     isGoogleSearchEnabled: boolean;
@@ -59,9 +61,65 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     disabled, t, isNativeAudioModel
 }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({});
     const containerRef = useRef<HTMLDivElement>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    
+    const { window: targetWindow } = useWindowContext();
 
     useClickOutside(containerRef, () => setIsOpen(false), isOpen);
+
+    // Prevent click-outside logic from firing when interacting with the portaled menu
+    useEffect(() => {
+        if (!isOpen || !menuRef.current) return;
+        
+        const stopProp = (e: Event) => e.stopPropagation();
+        const menuEl = menuRef.current;
+        
+        // Stop bubbling to document so useClickOutside doesn't see it
+        menuEl.addEventListener('mousedown', stopProp);
+        menuEl.addEventListener('touchstart', stopProp);
+        
+        return () => {
+            menuEl.removeEventListener('mousedown', stopProp);
+            menuEl.removeEventListener('touchstart', stopProp);
+        };
+    }, [isOpen]);
+
+    // Dynamic fixed positioning
+    useLayoutEffect(() => {
+        if (isOpen && buttonRef.current && targetWindow) {
+            const buttonRect = buttonRef.current.getBoundingClientRect();
+            const viewportWidth = targetWindow.innerWidth;
+            const viewportHeight = targetWindow.innerHeight;
+            
+            const MENU_WIDTH = 240; // w-60 approx 240px
+            const BUTTON_MARGIN = 10;
+            const GAP = 8;
+            
+            const newStyle: React.CSSProperties = {
+                position: 'fixed',
+                zIndex: 9999, // Ensure it sits on top of everything including toolbar
+            };
+
+            // Horizontal Alignment
+            if (buttonRect.left + MENU_WIDTH > viewportWidth - BUTTON_MARGIN) {
+                // Align right edge of menu with right edge of button
+                newStyle.left = buttonRect.right - MENU_WIDTH;
+                newStyle.transformOrigin = 'bottom right';
+            } else {
+                // Align left
+                newStyle.left = buttonRect.left;
+                newStyle.transformOrigin = 'bottom left';
+            }
+
+            // Vertical Alignment (Anchored to bottom of viewport relative to button top)
+            newStyle.bottom = viewportHeight - buttonRect.top + GAP;
+
+            setMenuPosition(newStyle);
+        }
+    }, [isOpen, targetWindow]);
 
     const handleToggle = (toggleFunc: () => void) => {
         toggleFunc();
@@ -97,6 +155,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       <div className="flex items-center">
         <div className="relative" ref={containerRef}>
             <button
+                ref={buttonRef}
                 type="button"
                 onClick={() => setIsOpen(p => !p)}
                 disabled={disabled}
@@ -108,9 +167,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             >
                 <SlidersHorizontal size={menuIconSize} strokeWidth={2} />
             </button>
-            {isOpen && (
+            {isOpen && targetWindow && createPortal(
                 <div 
-                    className="absolute bottom-full left-0 mb-2 w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium z-20 py-1.5 animate-in fade-in zoom-in-95 duration-100" 
+                    ref={menuRef}
+                    className="fixed w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 animate-in fade-in zoom-in-95 duration-100 custom-scrollbar" 
+                    style={menuPosition}
                     role="menu"
                 >
                     {filteredItems.map(item => (
@@ -127,7 +188,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                         {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
                       </button>
                     ))}
-                </div>
+                </div>,
+                targetWindow.document.body
             )}
         </div>
         {/* Only show badges for tools that are relevant to the current mode */}

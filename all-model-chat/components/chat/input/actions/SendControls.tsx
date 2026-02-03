@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { X, Save, Edit2, Loader2, ArrowUp } from 'lucide-react';
 import { IconStop } from '../../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
@@ -15,6 +16,13 @@ interface SendControlsProps {
     t: (key: string, fallback?: string) => string;
 }
 
+interface Ripple {
+    x: number;
+    y: number;
+    id: number;
+    size: number;
+}
+
 export const SendControls: React.FC<SendControlsProps> = ({
     isLoading,
     isEditing,
@@ -27,6 +35,23 @@ export const SendControls: React.FC<SendControlsProps> = ({
     t
 }) => {
     const iconSize = 20;
+    const [ripples, setRipples] = useState<Ripple[]>([]);
+
+    useEffect(() => {
+        if (ripples.length > 0) {
+            const timeout = setTimeout(() => setRipples([]), 600);
+            return () => clearTimeout(timeout);
+        }
+    }, [ripples]);
+
+    const createRipple = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const button = e.currentTarget;
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        setRipples(prev => [...prev, { x, y, id: Date.now(), size }]);
+    };
 
     // Determine state priorities
     const isStop = isLoading;
@@ -48,12 +73,23 @@ export const SendControls: React.FC<SendControlsProps> = ({
     } else if (isEdit) {
         bgClass = "bg-amber-500 hover:bg-amber-600 text-white";
     } else if (isUpload) {
-        // Active processing state uses accent color with reduced opacity
-        bgClass = "bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] opacity-80 cursor-wait";
+        // Active processing state uses accent color with progress stripes
+        bgClass = "bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] cursor-wait bg-progress-stripe";
     }
 
+    // Determine shape class for morphing
+    // Stop button is squarer (rounded-xl) to match stop icon metaphor
+    // Others are circular (rounded-full)
+    // Using explicit pixel radius or consistent scale ensures smoother transition than mixed units
+    const shapeClass = isStop ? '!rounded-[12px]' : '!rounded-full';
+
     // Handlers
-    const handleClick = (e: React.MouseEvent) => {
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        // Create ripple if button is interactive
+        if (!isDisabled) {
+            createRipple(e);
+        }
+
         if (isStop) {
             e.preventDefault();
             e.stopPropagation();
@@ -64,9 +100,10 @@ export const SendControls: React.FC<SendControlsProps> = ({
         // For submit (send/edit), we let the form handler take over unless blocked
     };
     
-    const handleContextMenu = (e: React.MouseEvent) => {
+    const handleContextMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (isSend && onFastSendMessage && !isDisabled) {
             e.preventDefault();
+            createRipple(e);
             onFastSendMessage();
         }
     };
@@ -90,7 +127,7 @@ export const SendControls: React.FC<SendControlsProps> = ({
 
     const renderIcon = (active: boolean, Icon: React.ElementType, props: any = {}) => (
         <div 
-            className={`absolute inset-0 flex items-center justify-center transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1) ${active ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}
+            className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${active ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}
             aria-hidden={!active}
         >
             <Icon {...props} />
@@ -120,10 +157,24 @@ export const SendControls: React.FC<SendControlsProps> = ({
                 onClick={handleClick}
                 onContextMenu={handleContextMenu}
                 disabled={!isStop && isDisabled}
-                className={`${CHAT_INPUT_BUTTON_CLASS} ${bgClass} relative overflow-hidden transition-all duration-300 ease-out shadow-sm active:scale-95`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} ${bgClass} ${shapeClass} relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm active:scale-95`}
                 aria-label={label}
                 title={title}
             >
+                {/* Ripples */}
+                {ripples.map(ripple => (
+                    <span
+                        key={ripple.id}
+                        className="absolute rounded-full bg-white/30 animate-ripple pointer-events-none"
+                        style={{
+                            left: ripple.x,
+                            top: ripple.y,
+                            width: ripple.size,
+                            height: ripple.size,
+                        }}
+                    />
+                ))}
+
                 {/* Icons stack on top of each other and fade/rotate in/out */}
                 {renderIcon(isStop, IconStop, { size: 12 })}
                 {renderIcon(isUpload, Loader2, { size: iconSize, className: "animate-spin", strokeWidth: 2 })}

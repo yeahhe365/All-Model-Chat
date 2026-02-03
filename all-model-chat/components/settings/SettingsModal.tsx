@@ -76,7 +76,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             isOpen={isOpen} 
             onClose={onClose} 
             noPadding 
-            contentClassName="w-full h-[100dvh] sm:h-[85vh] max-h-[800px] sm:w-[90vw] max-w-6xl sm:rounded-xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-[var(--theme-bg-primary)] transition-all"
+            contentClassName="w-full h-[100dvh] sm:h-[85vh] sm:max-h-[800px] sm:w-[90vw] max-w-6xl sm:rounded-xl overflow-hidden flex flex-col md:flex-row shadow-2xl bg-[var(--theme-bg-primary)] transition-all"
         >
             <SettingsSidebar 
                 tabs={tabs}
