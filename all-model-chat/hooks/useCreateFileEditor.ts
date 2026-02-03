@@ -80,9 +80,7 @@ export const useCreateFileEditor = ({
                 useCORS: true, 
                 logging: false,
                 letterRendering: true,
-                backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
-                imageTimeout: 15000, // Timeout to prevent hanging on bad resources
-                removeContainer: true
+                backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff'
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -115,7 +113,7 @@ export const useCreateFileEditor = ({
                 }
             } catch (error) {
                 console.error("PDF generation error:", error);
-                alert("Error generating PDF. Check console for details.");
+                alert("Error generating PDF.");
             } finally {
                 setIsExportingPdf(false);
             }
@@ -143,11 +141,7 @@ export const useCreateFileEditor = ({
           html2canvas: { 
             scale: 2, 
             useCORS: true, 
-            logging: false,
-            letterRendering: true,
-            backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
-            imageTimeout: 15000, // Timeout to prevent hanging
-            removeContainer: true
+            backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff'
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -163,7 +157,6 @@ export const useCreateFileEditor = ({
           }
         } catch (error) {
           console.error("PDF Export failed:", error);
-          alert("PDF Export failed. Check console.");
         } finally {
           setIsExportingPdf(false);
         }
