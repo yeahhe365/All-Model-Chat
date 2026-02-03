@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>All Model Chat</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com" data-html2canvas-ignore="true"></script>
   <link rel="stylesheet" id="markdown-dark-theme" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" id="markdown-light-theme" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.5.1/github-markdown.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" disabled />
   <link rel="stylesheet" id="hljs-dark-theme" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -23,9 +24,9 @@
     integrity="sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn" 
     crossorigin="anonymous"
   />
-  <!-- React PDF Styles -->
-  <link rel="stylesheet" href="https://unpkg.com/react-pdf@9.1.0/dist/Page/AnnotationLayer.css" />
-  <link rel="stylesheet" href="https://unpkg.com/react-pdf@9.1.0/dist/Page/TextLayer.css" />
+  <!-- React PDF Styles - Ignored by html2canvas to prevent CORS/MIME crashes during export -->
+  <link rel="stylesheet" href="https://unpkg.com/react-pdf@9.1.0/dist/Page/AnnotationLayer.css" data-html2canvas-ignore="true" />
+  <link rel="stylesheet" href="https://unpkg.com/react-pdf@9.1.0/dist/Page/TextLayer.css" data-html2canvas-ignore="true" />
 
   <!-- Graphviz scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/viz.js/2.1.2/viz.js"></script>
