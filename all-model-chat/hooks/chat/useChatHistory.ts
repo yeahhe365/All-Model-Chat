@@ -1,6 +1,6 @@
 
 import React, { Dispatch, SetStateAction } from 'react';
-import { AppSettings, SavedChatSession, UploadedFile, ChatGroup, InputCommand } from '../../types';
+import { AppSettings, SavedChatSession, UploadedFile, ChatGroup, InputCommand, ChatMessage } from '../../types';
 import { getTranslator } from '../../utils/appUtils';
 import { useSessionLoader } from './history/useSessionLoader';
 import { useSessionActions } from './history/useSessionActions';
@@ -16,6 +16,7 @@ interface ChatHistoryProps {
     setSavedSessions: Dispatch<SetStateAction<SavedChatSession[]>>;
     setSavedGroups: Dispatch<SetStateAction<ChatGroup[]>>;
     setActiveSessionId: Dispatch<SetStateAction<string | null>>;
+    setActiveMessages: Dispatch<SetStateAction<ChatMessage[]>>; // Added setter
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
     setCommandedInput: CommandedInputSetter;
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
@@ -35,6 +36,7 @@ export const useChatHistory = ({
     setSavedSessions,
     setSavedGroups,
     setActiveSessionId,
+    setActiveMessages,
     setEditingMessageId,
     setCommandedInput,
     setSelectedFiles,
@@ -55,6 +57,7 @@ export const useChatHistory = ({
         setSavedSessions,
         setSavedGroups,
         setActiveSessionId,
+        setActiveMessages,
         setSelectedFiles,
         setEditingMessageId,
         updateAndPersistSessions,

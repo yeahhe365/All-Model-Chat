@@ -20,7 +20,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const chatState = useChatState(appSettings);
     const {
         savedSessions, setSavedSessions, savedGroups, setSavedGroups,
-        activeSessionId, setActiveSessionId,
+        activeSessionId, setActiveSessionId, setActiveMessages, // Get setter
         editingMessageId, setEditingMessageId,
         editMode, setEditMode,
         commandedInput, setCommandedInput,
@@ -50,7 +50,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels();
     
     const historyHandler = useChatHistory({ 
-        appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
+        appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setActiveMessages, // Pass setter
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, 
         updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
         userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId
