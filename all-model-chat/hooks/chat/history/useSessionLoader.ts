@@ -18,6 +18,7 @@ interface UseSessionLoaderProps {
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
+    setActiveChat?: Dispatch<SetStateAction<SavedChatSession | undefined>>;
 }
 
 export const useSessionLoader = ({
@@ -33,10 +34,11 @@ export const useSessionLoader = ({
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
+    setActiveChat
 }: UseSessionLoaderProps) => {
 
     const startNewChat = useCallback(() => {
-        // If we are already on an empty chat, just focus input and don't create a duplicate
+        // If we are already on an empty chat, just focus input
         if (activeChat && activeChat.messages.length === 0 && !activeChat.systemInstruction) {
             logService.info('Already on an empty chat, reusing session.');
             setTimeout(() => {
@@ -48,7 +50,6 @@ export const useSessionLoader = ({
         logService.info('Starting new chat session.');
         userScrolledUp.current = false;
         
-        // Save current files to draft before switching
         if (activeSessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
@@ -68,78 +69,89 @@ export const useSessionLoader = ({
         }
 
         const newSession = createNewSession(settingsForNewChat);
-
-        // Crucial Fix: Do NOT filter out other empty sessions (prev.filter(...)). 
-        // Doing so deletes empty "New Chat" sessions created in other tabs, causing them to 
-        // lose their state and auto-switch to this session.
+        
+        // Immediate UI Update: Set active session first
+        if (setActiveChat) setActiveChat(newSession);
+        
+        // Then update the list (Metadata will be extracted by updateAndPersistSessions)
         updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSession.id);
         
-        // Clear files for new chat
         setSelectedFiles([]);
-        
         setEditingMessageId(null);
         
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setActiveChat]);
 
-    const loadChatSession = useCallback((sessionId: string, allSessions: SavedChatSession[]) => {
+    const loadChatSession = useCallback(async (sessionId: string, allSessionsMetadata: SavedChatSession[]) => {
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUp.current = false;
         
-        // Save current files to draft before switching if we are coming from another valid session
         if (activeSessionId && activeSessionId !== sessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
 
-        const sessionToLoad = allSessions.find(s => s.id === sessionId);
-        if (sessionToLoad) {
-            setActiveSessionId(sessionToLoad.id);
-            // Note: activeSessionId persistence is now handled by useEffect in useChatState
+        // Lazy Loading: Fetch full session from DB
+        try {
+            const sessionData = await dbService.getSessionById(sessionId);
             
-            // Restore files from draft for the target session, or empty if none
-            const draftFiles = fileDraftsRef.current[sessionId] || [];
-            setSelectedFiles(draftFiles);
-            
-            setEditingMessageId(null);
-            setTimeout(() => {
-                document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
-            }, 0);
-        } else {
-            logService.warn(`Session ${sessionId} not found. Starting new chat.`);
+            if (sessionData) {
+                const rehydrated = rehydrateSessionFiles(sessionData);
+                if (setActiveChat) setActiveChat(rehydrated);
+                setActiveSessionId(sessionData.id);
+
+                const draftFiles = fileDraftsRef.current[sessionId] || [];
+                setSelectedFiles(draftFiles);
+                setEditingMessageId(null);
+                
+                setTimeout(() => {
+                    document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+                }, 0);
+            } else {
+                logService.warn(`Session ${sessionId} not found in DB. Starting new chat.`);
+                startNewChat();
+            }
+        } catch (error) {
+            logService.error(`Failed to load session ${sessionId}`, error);
             startNewChat();
         }
-    }, [setActiveSessionId, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
+    }, [setActiveSessionId, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setActiveChat]);
 
     const loadInitialData = useCallback(async () => {
         try {
-            logService.info('Attempting to load chat history from IndexedDB.');
-            const [sessions, groups] = await Promise.all([
-                dbService.getAllSessions(),
+            logService.info('Attempting to load chat history (metadata) from IndexedDB.');
+            const [sessionsMetadata, groups] = await Promise.all([
+                dbService.getAllSessionsMetadata(),
                 dbService.getAllGroups()
             ]);
 
-            const rehydratedSessions = sessions.map(rehydrateSessionFiles);
-            rehydratedSessions.sort((a,b) => b.timestamp - a.timestamp);
+            // Metadata doesn't need rehydration of files
+            sessionsMetadata.sort((a,b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.timestamp - a.timestamp;
+            });
             
-            setSavedSessions(rehydratedSessions);
+            setSavedSessions(sessionsMetadata);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
             // Priority 1: Check URL for deep linking
             const urlMatch = window.location.pathname.match(/^\/chat\/([^/]+)$/);
             const urlSessionId = urlMatch ? urlMatch[1] : null;
 
-            if (urlSessionId && rehydratedSessions.find(s => s.id === urlSessionId)) {
+            if (urlSessionId) {
+                // We don't check existence in metadata immediately because it might be a new share or just latency.
+                // We try to load it. If loadChatSession fails, it falls back.
                 logService.info(`Deep link found for session: ${urlSessionId}`);
-                loadChatSession(urlSessionId, rehydratedSessions);
+                loadChatSession(urlSessionId, sessionsMetadata);
             } else {
                 // Priority 2: Check Session Storage
                 const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
 
-                if (storedActiveId && rehydratedSessions.find(s => s.id === storedActiveId)) {
-                    loadChatSession(storedActiveId, rehydratedSessions);
+                if (storedActiveId && sessionsMetadata.find(s => s.id === storedActiveId)) {
+                    loadChatSession(storedActiveId, sessionsMetadata);
                 } else {
                     // Fallback: New Chat
                     logService.info('No active session in URL or storage, starting fresh chat.');
@@ -159,11 +171,20 @@ export const useSessionLoader = ({
             const sessionId = match ? match[1] : null;
             
             if (sessionId) {
-                // We set ID directly. We can't easily call loadChatSession here because we don't have 
-                // the full session list in closure without adding a heavy dependency.
-                // Setting ID triggers useChatState effects which updates context.
-                // Input drafts might be lost on back button navigation, but chat content is safe.
-                setActiveSessionId(sessionId);
+                // Since we need to fetch data, we reuse loadChatSession here.
+                // Note: We need access to metadata list, but for simplicity we assume valid ID 
+                // and pass empty array or refetch. 
+                // Better to just call loadChatSession which handles fetch.
+                // But we need the list... 
+                // Let's just try to load by ID.
+                dbService.getSessionById(sessionId).then(session => {
+                    if (session && setActiveChat) {
+                        setActiveChat(rehydrateSessionFiles(session));
+                        setActiveSessionId(sessionId);
+                    } else {
+                        startNewChat();
+                    }
+                });
             } else if (window.location.pathname === '/') {
                 startNewChat();
             }
@@ -171,7 +192,7 @@ export const useSessionLoader = ({
 
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
-    }, [setActiveSessionId, startNewChat]);
+    }, [setActiveSessionId, startNewChat, setActiveChat]);
 
     return {
         startNewChat,

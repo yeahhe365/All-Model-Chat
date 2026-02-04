@@ -28,6 +28,7 @@ interface ChatHistoryProps {
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
+    setActiveChat?: Dispatch<SetStateAction<SavedChatSession | undefined>>;
 }
 
 export const useChatHistory = ({
@@ -47,6 +48,7 @@ export const useChatHistory = ({
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
+    setActiveChat,
 }: ChatHistoryProps) => {
     const t = getTranslator(language);
 
@@ -62,7 +64,8 @@ export const useChatHistory = ({
         userScrolledUp,
         selectedFiles,
         fileDraftsRef,
-        activeSessionId
+        activeSessionId,
+        setActiveChat
     });
 
     const { 

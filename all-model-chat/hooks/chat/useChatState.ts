@@ -7,9 +7,14 @@ import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
 
 export const useChatState = (appSettings: AppSettings) => {
+    // savedSessions now primarily holds metadata (isPartial=true)
     const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
     const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+    
+    // We explicitly track the active chat object here to ensure we have full messages available
+    const [activeChat, setActiveChat] = useState<SavedChatSession | undefined>(undefined);
+
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<'update' | 'resend'>('resend');
     const [commandedInput, setCommandedInput] = useState<InputCommand | null>(null);
@@ -27,7 +32,6 @@ export const useChatState = (appSettings: AppSettings) => {
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
 
     // Tracks session IDs that are generating *in this specific tab*.
-    // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
 
     // Sync active session ID to sessionStorage and URL
@@ -35,50 +39,54 @@ export const useChatState = (appSettings: AppSettings) => {
         if (activeSessionId) {
             try {
                 sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
-            } catch (e) {
-                // Ignore storage errors
-            }
+            } catch (e) {}
             
-            // Sync URL: If the current URL doesn't match the active session, update it.
             const targetPath = `/chat/${activeSessionId}`;
             try {
                 if (window.location.pathname !== targetPath) {
                     window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
                 }
             } catch (e) {
-                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
+                console.warn('Unable to update URL history:', e);
             }
         } else {
             try {
                 sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-            } catch (e) {
-                // Ignore storage errors
-            }
+            } catch (e) {}
             
-            // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
-            // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.
             try {
-                // Only attempt to push state if we are not on root and not on a chat route (to avoid loops)
-                // And if the environment allows it.
                 if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
                      window.history.pushState({}, '', '/');
                 }
             } catch (e) {
-                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
+                console.warn('Unable to update URL history:', e);
             }
         }
     }, [activeSessionId]);
 
+    // Keep activeChat in sync with activeSessionId from the list (if it was just created)
+    useEffect(() => {
+        if (activeSessionId && !activeChat) {
+             const sessionInList = savedSessions.find(s => s.id === activeSessionId);
+             // If we found it in the list AND it is NOT partial (it has messages), we can use it.
+             // This happens when creating a new chat (which inserts a full object into savedSessions temporarily).
+             if (sessionInList && !sessionInList.isPartial) {
+                 setActiveChat(sessionInList);
+             }
+        }
+    }, [activeSessionId, savedSessions, activeChat]);
+
     const refreshSessions = useCallback(async () => {
         try {
-            const sessions = await dbService.getAllSessions();
-            const rehydrated = sessions.map(rehydrateSessionFiles);
-            rehydrated.sort((a, b) => {
+            // Lazy Load: Only fetch metadata to keep memory footprint low
+            const sessions = await dbService.getAllSessionsMetadata();
+            // Note: Metadata doesn't need rehydration of files since files are in messages
+            sessions.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
             });
-            setSavedSessions(rehydrated);
+            setSavedSessions(sessions);
         } catch (e) {
             logService.error("Failed to refresh sessions from DB", { error: e });
         }
@@ -104,12 +112,19 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            // Optimization: If THIS tab is currently streaming for this session (locally), 
-            // ignore the refresh to avoid overwriting the smooth stream with chunked DB saves.
-            // However, if another tab updated it (and we are not streaming), we DO want to refresh.
-            if (localLoadingSessionIds.current.has(id)) {
-                return;
+            // If THIS tab is currently generating content for this session, ignore DB updates to avoid stutter
+            if (localLoadingSessionIds.current.has(id)) return;
+            
+            // If the updated session is the one we are viewing, we must reload it fully
+            if (activeSessionId === id) {
+                dbService.getSessionById(id).then(fullSession => {
+                    if (fullSession) {
+                        const rehydrated = rehydrateSessionFiles(fullSession);
+                        setActiveChat(rehydrated);
+                    }
+                });
             }
+            // Always refresh the sidebar list (metadata)
             refreshSessions();
         },
         onSessionLoading: (sessionId, isLoading) => {
@@ -123,14 +138,12 @@ export const useChatState = (appSettings: AppSettings) => {
     });
 
     const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
-        // Update local tracking
         if (isLoading) {
             localLoadingSessionIds.current.add(sessionId);
         } else {
             localLoadingSessionIds.current.delete(sessionId);
         }
 
-        // Update UI state
         setLoadingSessionIds(prev => {
             const next = new Set(prev);
             if (isLoading) next.add(sessionId);
@@ -138,7 +151,6 @@ export const useChatState = (appSettings: AppSettings) => {
             return next;
         });
 
-        // Broadcast to other tabs so they show the spinner/stop button but know not to overwrite content if they are the ones generating
         broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
     }, [broadcast]);
 
@@ -148,50 +160,91 @@ export const useChatState = (appSettings: AppSettings) => {
     ) => {
         const { persist = true } = options;
         
-        setSavedSessions(prevSessions => {
-            const newSessions = updater(prevSessions);
-            
-            // AUTOMATIC SORTING: Ensure sessions are always sorted by pinned status then timestamp
-            newSessions.sort((a, b) => {
-                if (a.isPinned && !b.isPinned) return -1;
-                if (!a.isPinned && b.isPinned) return 1;
-                return b.timestamp - a.timestamp;
-            });
-            
-            if (persist) {
-                const updates: Promise<void>[] = [];
-                const newSessionsMap = new Map(newSessions.map(s => [s.id, s]));
-                const modifiedSessionIds: string[] = [];
+        // 1. Construct a temporary "view" of sessions that includes the full active chat
+        //    This allows the updater function (which expects full objects) to work correctly on the active chat.
+        let tempPreviousList = savedSessions;
+        if (activeChat) {
+             tempPreviousList = savedSessions.map(s => s.id === activeChat.id ? activeChat : s);
+             // If active chat is new and not in savedSessions yet, append it?
+             // Usually startNewChat adds it. If it's missing, we should probably add it to the temp list.
+             if (!tempPreviousList.find(s => s.id === activeChat.id)) {
+                 tempPreviousList = [activeChat, ...tempPreviousList];
+             }
+        }
 
-                newSessions.forEach(session => {
-                    const prevSession = prevSessions.find(s => s.id === session.id);
-                    if (prevSession !== session) {
-                        updates.push(dbService.saveSession(session));
-                        modifiedSessionIds.push(session.id);
-                    }
-                });
-
-                prevSessions.forEach(session => {
-                    if (!newSessionsMap.has(session.id)) {
-                        updates.push(dbService.deleteSession(session.id));
-                    }
-                });
-
-                if (updates.length > 0) {
-                    Promise.all(updates)
-                        .then(() => {
-                            if (modifiedSessionIds.length === 1) {
-                                broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessionIds[0] });
-                            } else {
-                                broadcast({ type: 'SESSIONS_UPDATED' });
-                            }
-                        })
-                        .catch(e => logService.error('Failed to persist session updates', { error: e }));
-                }
+        // 2. Run the updater
+        const newSessionsFull = updater(tempPreviousList);
+        
+        // 3. Extract the new Active Chat state
+        if (activeChat) {
+            const updatedActive = newSessionsFull.find(s => s.id === activeChat.id);
+            if (updatedActive) {
+                // Update local state immediately
+                setActiveChat(updatedActive);
             }
-            return newSessions;
+        } else {
+             // Edge case: If we just created a new chat, we need to detect which one is active or was just added
+             // The logic in useSessionLoader handles setting activeSessionId, so here we just sync if ID matches
+             if (activeSessionId) {
+                 const match = newSessionsFull.find(s => s.id === activeSessionId);
+                 if (match) setActiveChat(match);
+             }
+        }
+
+        // 4. Update the Sidebar List (Convert back to Metadata)
+        //    We strip messages from all sessions to keep the sidebar list lightweight
+        const newSessionsMetadata = newSessionsFull.map(s => {
+             // If it's already partial, keep it. If it's full, strip it.
+             if (s.isPartial) return s;
+             // eslint-disable-next-line @typescript-eslint/no-unused-vars
+             const { messages, ...meta } = s;
+             return { ...meta, messages: [], isPartial: true };
         });
-    }, [broadcast]);
+
+        // 5. Sort Metadata
+        newSessionsMetadata.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return b.timestamp - a.timestamp;
+        });
+
+        setSavedSessions(newSessionsMetadata);
+            
+        if (persist) {
+            const updates: Promise<void>[] = [];
+            const newSessionsMap = new Map(newSessionsFull.map(s => [s.id, s]));
+            const modifiedSessionIds: string[] = [];
+
+            // Identify changes based on reference equality or ID existence
+            // We compare against `tempPreviousList` which had the full active chat
+            newSessionsFull.forEach(session => {
+                const prevSession = tempPreviousList.find(s => s.id === session.id);
+                if (prevSession !== session) {
+                    // Smart save handles partial vs full automatically
+                    updates.push(dbService.saveSession(session));
+                    modifiedSessionIds.push(session.id);
+                }
+            });
+
+            tempPreviousList.forEach(session => {
+                if (!newSessionsMap.has(session.id)) {
+                    updates.push(dbService.deleteSession(session.id));
+                }
+            });
+
+            if (updates.length > 0) {
+                Promise.all(updates)
+                    .then(() => {
+                        if (modifiedSessionIds.length === 1) {
+                            broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessionIds[0] });
+                        } else {
+                            broadcast({ type: 'SESSIONS_UPDATED' });
+                        }
+                    })
+                    .catch(e => logService.error('Failed to persist session updates', { error: e }));
+            }
+        }
+    }, [broadcast, savedSessions, activeChat, activeSessionId]);
     
     const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
         setSavedGroups(prevGroups => {
@@ -203,7 +256,6 @@ export const useChatState = (appSettings: AppSettings) => {
         });
     }, [broadcast]);
 
-    const activeChat = useMemo(() => savedSessions.find(s => s.id === activeSessionId), [savedSessions, activeSessionId]);
     const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
     const currentChatSettings = useMemo(() => activeChat?.settings || DEFAULT_CHAT_SETTINGS, [activeChat]);
     const isLoading = useMemo(() => loadingSessionIds.has(activeSessionId ?? ''), [loadingSessionIds, activeSessionId]);
@@ -247,6 +299,7 @@ export const useChatState = (appSettings: AppSettings) => {
         fileDraftsRef,
         refreshSessions,
         refreshGroups,
-        setSessionLoading 
+        setSessionLoading,
+        setActiveChat 
     };
 };
