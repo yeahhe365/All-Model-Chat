@@ -17,6 +17,7 @@ interface ChatStreamHandlerProps {
 }
 
 const UPDATE_THROTTLE_MS = 100;
+const DB_PERSIST_INTERVAL_MS = 2000;
 
 export const useChatStreamHandler = ({
     appSettings,
@@ -42,6 +43,7 @@ export const useChatStreamHandler = ({
         let bufferedParts: Part[] = [];
         let bufferedThought = "";
         let lastFlushTime = 0;
+        let lastPersistTime = Date.now();
         let flushTimeout: ReturnType<typeof setTimeout> | null = null;
 
         const flushUpdates = () => {
@@ -60,6 +62,13 @@ export const useChatStreamHandler = ({
             bufferedParts = [];
             bufferedThought = "";
             lastFlushTime = Date.now();
+
+            const now = Date.now();
+            // Persist to DB if enough time has passed since last persistence
+            const shouldPersist = (now - lastPersistTime) >= DB_PERSIST_INTERVAL_MS;
+            if (shouldPersist) {
+                lastPersistTime = now;
+            }
 
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
@@ -82,7 +91,7 @@ export const useChatStreamHandler = ({
                 newSessions[sessionIndex] = sessionToUpdate;
                 
                 return newSessions;
-            }, { persist: false });
+            }, { persist: shouldPersist });
         };
 
         const throttleUpdate = () => {

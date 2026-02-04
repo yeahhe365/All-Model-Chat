@@ -1,4 +1,5 @@
 
+
 import { MIME_TO_EXTENSION_MAP } from '../constants/fileConstants';
 
 export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
@@ -11,21 +12,33 @@ export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
     return bytes;
 };
 
-export const fileToBase64 = (file: File): Promise<string> => {
+/**
+ * Reads a Blob or File and returns it as a Base64 string (without the data URI prefix).
+ * Used primarily just before sending data to the API.
+ */
+export const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
             const result = reader.result as string;
+            // Strip the data:mime/type;base64, prefix
             const base64Data = result.split(',')[1];
             if (base64Data) {
                 resolve(base64Data);
             } else {
-                reject(new Error("Failed to extract base64 data from file."));
+                reject(new Error("Failed to extract base64 data from blob."));
             }
         };
         reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(blob);
     });
+};
+
+/**
+ * @deprecated Use blobToBase64 instead for better clarity that it handles Blobs/Files.
+ */
+export const fileToBase64 = (file: File): Promise<string> => {
+    return blobToBase64(file);
 };
 
 export const fileToString = (file: File): Promise<string> => {
@@ -37,7 +50,7 @@ export const fileToString = (file: File): Promise<string> => {
     });
 };
 
-export const fileToBlobUrl = (file: File): string => {
+export const fileToBlobUrl = (file: File | Blob): string => {
     return URL.createObjectURL(file);
 };
 
