@@ -1,6 +1,5 @@
 
 
-
 import { ChatSettings, MediaResolution } from './settings';
 import { ThemeColors } from './theme';
 import { AppSettings, ModelOption } from './settings';
@@ -17,14 +16,26 @@ export interface UploadedFile {
   name: string; // Original filename
   type: string;
   size: number;
+  
+  // PRIMARY DATA SOURCE:
+  // A standard Blob or File object. 
+  // This is stored in IndexedDB and used for API uploads.
+  // It should ALWAYS be present for binary files.
+  rawFile?: File | Blob; 
+
+  // UI DISPLAY:
+  // A temporary `blob:` URL created via URL.createObjectURL(rawFile).
+  // This is used for <img> tags and previews.
+  // It is ephemeral and revoked on session unload.
+  // It should NOT contain a Base64 data URI string.
   dataUrl?: string;
+
   textContent?: string;
   isProcessing?: boolean;
   progress?: number;
   error?: string;
 
   // Fields for API uploaded files like PDFs
-  rawFile?: File | Blob; // Persisted File/Blob for offline access, used to generate dataUrl on load.
   fileUri?: string; // URI returned by Gemini API (e.g., "files/xxxxxxxx")
   fileApiName?: string; // Full resource name from API (e.g., "files/xxxxxxxx")
   uploadState?: 'pending' | 'uploading' | 'processing_api' | 'active' | 'failed' | 'cancelled'; // State of the file on Gemini API

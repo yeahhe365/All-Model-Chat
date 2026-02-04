@@ -1,9 +1,11 @@
 
+
 import { ChatMessage, SavedChatSession, ChatSettings } from '../../types';
 import { generateUniqueId } from './ids';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
+import { base64ToBlob } from '../fileHelpers';
 
 export const createMessage = (
     role: 'user' | 'model' | 'error',
@@ -52,29 +54,44 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
         if (!message.files?.length) return message;
 
         const newFiles = message.files.map(file => {
-            // Check if it's an image that was stored locally (has rawFile)
-            // Fix for Issue #21: Ensure rawFile is a valid Blob/File before using it.
-            // JSON import may produce plain objects {} for rawFile which causes crashes.
-            const isValidRawFile = file.rawFile && (file.rawFile instanceof Blob || file.rawFile instanceof File);
-
-            if (SUPPORTED_IMAGE_MIME_TYPES.includes(file.type)) {
-                if (isValidRawFile) {
-                    try {
-                        // Create a new blob URL. The browser will handle the old invalid one on page unload.
-                        const dataUrl = URL.createObjectURL(file.rawFile as Blob);
-                        return { ...file, dataUrl: dataUrl };
-                    } catch (error) {
-                        logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
-                        // Keep the file but mark that preview failed
-                        return { ...file, dataUrl: undefined, error: "Preview failed to load" };
-                    }
-                } else if (file.rawFile) {
-                    // It has a rawFile property but it's not a Blob (e.g. {} from JSON). Strip it.
-                    // This prevents re-using invalid file objects.
-                    const { rawFile, ...rest } = file;
-                    return rest;
+            // 1. Check for legacy Base64 stored in dataUrl (Abuse Check)
+            // If dataUrl exists but it's NOT a blob: URI, it might be a base64 string
+            if (file.dataUrl && !file.dataUrl.startsWith('blob:') && !file.dataUrl.startsWith('http')) {
+                // It's likely a base64 string. Convert to Blob to save memory/performance.
+                try {
+                    // Strip prefix if present (data:image/png;base64,...)
+                    const base64Clean = file.dataUrl.includes(',') ? file.dataUrl.split(',')[1] : file.dataUrl;
+                    const blob = base64ToBlob(base64Clean, file.type);
+                    const newFile = new File([blob], file.name, { type: file.type });
+                    const newUrl = URL.createObjectURL(newFile);
+                    
+                    return { ...file, rawFile: newFile, dataUrl: newUrl };
+                } catch (e) {
+                    logService.warn(`Failed to migrate legacy Base64 file: ${file.name}`);
+                    // If migration fails, keep as is, but it might lag
                 }
             }
+
+            // 2. Standard Rehydration from IndexedDB Blob (rawFile)
+            const isValidRawFile = file.rawFile && (file.rawFile instanceof Blob || file.rawFile instanceof File);
+            const isVisualMedia = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type.startsWith('video/') || file.type.startsWith('audio/');
+
+            // Always create Object URL for Blobs if we have the raw file, needed for previewing
+            if (isValidRawFile && (isVisualMedia || file.type === 'application/pdf')) {
+                try {
+                    // Create a new blob URL. The browser will handle the old invalid one on page unload.
+                    const dataUrl = URL.createObjectURL(file.rawFile as Blob);
+                    return { ...file, dataUrl: dataUrl };
+                } catch (error) {
+                    logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
+                    return { ...file, dataUrl: undefined, error: "Preview failed to load" };
+                }
+            } else if (file.rawFile && !isValidRawFile) {
+                // It has a rawFile property but it's not a Blob (e.g. {} from JSON or bad persistence). Strip it.
+                const { rawFile, ...rest } = file;
+                return rest;
+            }
+            
             return file;
         });
 
@@ -117,11 +134,6 @@ export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSe
 
 /**
  * Core helper to update session list state.
- * Handles:
- * 1. Finding or creating session
- * 2. Rewinding history if editing
- * 3. Appending new messages
- * 4. Updating settings/title/keys
  */
 export const performOptimisticSessionUpdate = (
     prevSessions: SavedChatSession[],
@@ -175,15 +187,10 @@ export const performOptimisticSessionUpdate = (
     }
 
     // Append new messages
-    // Note: If newMessages contains the modified user message + new model message, just append them
-    // Logic: If we rewound, we usually push the "new version" of the user message + model message.
     finalMessages = [...finalMessages, ...newMessages];
 
     // Handle Settings Update (Key Locking)
     let updatedSettings = session.settings;
-    // We might want to merge latest settings from params if they changed, 
-    // but typically we preserve session settings unless explicitly locking a key.
-    // However, for consistency, let's respect the settings passed in which usually merge appSettings + currentChatSettings
     updatedSettings = { ...updatedSettings, ...settings };
     
     if (shouldLockKey && !session.settings.lockedApiKey && keyToLock) {
@@ -202,10 +209,6 @@ export const performOptimisticSessionUpdate = (
     return updatedSessions;
 };
 
-/**
- * Legacy Helper - retained for backward compatibility if needed, 
- * but performOptimisticSessionUpdate is preferred for message sending flow.
- */
 export const updateSessionWithNewMessages = (
     prevSessions: SavedChatSession[],
     sessionId: string,

@@ -1,7 +1,8 @@
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
-import { fileToBase64, fileToString } from '../fileHelpers';
+import { blobToBase64, fileToString } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 
@@ -44,14 +45,16 @@ export const buildContentParts = async (
     } else {
         // 2. Files NOT uploaded via API (Inline handling)
         const fileSource = file.rawFile;
-        const urlSource = file.dataUrl?.startsWith('blob:') ? file.dataUrl : undefined;
+        const urlSource = file.dataUrl;
         
         if (isTextLike) {
             // Special handling for text/code: Read content and wrap in text part
             let textContent = '';
-            if (fileSource && fileSource instanceof File) {
-                textContent = await fileToString(fileSource);
+            if (fileSource && (fileSource instanceof File || fileSource instanceof Blob)) {
+                // If it's a File/Blob, read directly
+                textContent = await fileToString(fileSource as File);
             } else if (urlSource) {
+                // Fallback: Fetch from URL if rawFile is missing
                 const response = await fetch(urlSource);
                 textContent = await response.text();
             }
@@ -61,7 +64,6 @@ export const buildContentParts = async (
             }
         } else {
             // Standard Inline Data (Images, PDFs, Audio, Video if small enough)
-            
             // STRICT ALLOWLIST for Inline Data to prevent API 400 errors (e.g. for .xlsx)
             const isSupportedInlineType = 
                 file.type.startsWith('image/') || 
@@ -72,18 +74,24 @@ export const buildContentParts = async (
             if (isSupportedInlineType) {
                 let base64DataForApi: string | undefined;
                 
-                if (fileSource && fileSource instanceof File) {
+                // Prioritize rawFile (Blob/File) for conversion
+                if (fileSource && (fileSource instanceof Blob || fileSource instanceof File)) {
                     try {
-                        base64DataForApi = await fileToBase64(fileSource);
+                        base64DataForApi = await blobToBase64(fileSource);
                     } catch (error) {
                         logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
                     }
                 } else if (urlSource) {
+                    // Fallback: Fetch the blob from the URL (blob: or data:)
                     try {
                         const response = await fetch(urlSource);
                         const blob = await response.blob();
-                        const tempFile = new File([blob], file.name, { type: file.type });
-                        base64DataForApi = await fileToBase64(tempFile);
+                        base64DataForApi = await blobToBase64(blob);
+                        
+                        // Self-repair: If we had to fetch because rawFile was missing, recreate it
+                        if (!newFile.rawFile) {
+                             newFile.rawFile = new File([blob], file.name, { type: file.type });
+                        }
                     } catch (error) {
                         logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
                     }
@@ -93,8 +101,7 @@ export const buildContentParts = async (
                     part = { inlineData: { mimeType: file.type, data: base64DataForApi } };
                 }
             } else {
-                // Fallback for unsupported binary types that aren't text-readable (e.g. Excel, Zip without extraction)
-                // This prevents the API from rejecting the request with "Unsupported MIME type"
+                // Fallback for unsupported binary types
                 part = { text: `[Attachment: ${file.name} (Binary content not supported for direct reading)]` };
             }
         }
@@ -121,11 +128,7 @@ export const buildContentParts = async (
     const effectiveResolution = file.mediaResolution || mediaResolution;
     
     if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED) {
-        // Logic update: 
-        // 1. If it's fileData (File API), we always inject resolution (unless it's YouTube link which uses fileUri but is special).
-        // 2. If it's inlineData, we ensure it's not text-like.
         const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
-
         if (shouldInject) {
             part.mediaResolution = { level: effectiveResolution };
         }
@@ -161,7 +164,6 @@ export const createChatHistoryForApi = async (
         
         if (stripThinking) {
             // Remove <thinking> blocks including tags from the content
-            // Matches <thinking> ... </any-tag> to handle variations and potential hallucinated closing tags
             contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
         }
 
