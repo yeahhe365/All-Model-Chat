@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import mermaid from 'mermaid';
 import { Loader2, AlertTriangle, Download, Maximize, Code, Copy, Check, Sidebar } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
 import { exportSvgAsImage } from '../../../utils/exportUtils';
@@ -33,6 +32,9 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
       if (!code) return;
 
       try {
+        // Dynamic import for lazy loading
+        const { default: mermaid } = await import('mermaid');
+
         const id = `mermaid-svg-${Math.random().toString(36).substring(2, 9)}`;
         
         mermaid.initialize({ 

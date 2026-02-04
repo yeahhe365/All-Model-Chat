@@ -19,6 +19,20 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         rollupOptions: {
+          output: {
+            manualChunks: (id) => {
+              if (id.includes('node_modules')) {
+                if (id.includes('mermaid')) return 'mermaid';
+                if (id.includes('@google/genai')) return 'genai';
+                if (id.includes('highlight.js')) return 'hljs';
+                if (id.includes('katex')) return 'katex';
+                if (id.includes('html2canvas')) return 'html2canvas';
+                if (id.includes('mammoth') || id.includes('turndown') || id.includes('jszip')) return 'file-utils';
+                if (id.includes('rehype') || id.includes('remark') || id.includes('react-markdown')) return 'markdown';
+                if (id.includes('lucide-react')) return 'icons';
+              }
+            }
+          },
           // Externalize React and ReactDOM to ensure the app uses the same
           // instance as react-pdf (which is loaded via CDN/importmap).
           // This prevents the "Cannot read properties of null (reading 'useReducer')" error.
