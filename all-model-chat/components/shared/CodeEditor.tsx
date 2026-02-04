@@ -1,5 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
+import hljs from 'highlight.js';
 
 interface CodeEditorProps {
     value: string;
@@ -21,35 +22,18 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, languag
     };
 
     useEffect(() => {
-        let isMounted = true;
-        
-        const highlight = async () => {
-            if (!preRef.current) return;
-            
+        if (preRef.current) {
             // Handle trailing newlines for visualization consistency
             const content = value.endsWith('\n') ? value + ' ' : value;
-
+            
             try {
-                // Dynamic import
-                const { default: hljs } = await import('highlight.js');
-                
-                if (!isMounted) return;
-
                 const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
                 const result = hljs.highlight(content, { language: validLanguage });
                 preRef.current.innerHTML = result.value;
             } catch (e) {
-                if (isMounted && preRef.current) {
-                    preRef.current.textContent = content;
-                }
+                preRef.current.textContent = content;
             }
-        };
-
-        highlight();
-
-        return () => {
-            isMounted = false;
-        };
+        }
     }, [value, language]);
 
     return (
