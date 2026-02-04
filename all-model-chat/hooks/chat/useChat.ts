@@ -21,6 +21,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const {
         savedSessions, setSavedSessions, savedGroups, setSavedGroups,
         activeSessionId, setActiveSessionId,
+        activeChatSession, setActiveChatSession, // Lazy loading state
         editingMessageId, setEditingMessageId,
         editMode, setEditMode,
         commandedInput, setCommandedInput,
@@ -53,7 +54,10 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, 
         updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
-        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId
+        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
+        // Pass the active session setter for lazy loading injection
+        // @ts-ignore - Injecting extra prop for lazy loader
+        setActiveChatSession
     });
     
     const fileHandler = useFileHandling({ 

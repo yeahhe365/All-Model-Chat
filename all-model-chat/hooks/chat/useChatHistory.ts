@@ -1,6 +1,6 @@
 
 import React, { Dispatch, SetStateAction } from 'react';
-import { AppSettings, SavedChatSession, UploadedFile, ChatGroup, InputCommand } from '../../types';
+import { AppSettings, SavedChatSession, UploadedFile, ChatGroup, InputCommand, ChatSessionMetadata } from '../../types';
 import { getTranslator } from '../../utils/appUtils';
 import { useSessionLoader } from './history/useSessionLoader';
 import { useSessionActions } from './history/useSessionActions';
@@ -13,7 +13,7 @@ type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => Promise<vo
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
-    setSavedSessions: Dispatch<SetStateAction<SavedChatSession[]>>;
+    setSavedSessions: Dispatch<SetStateAction<ChatSessionMetadata[]>>;
     setSavedGroups: Dispatch<SetStateAction<ChatGroup[]>>;
     setActiveSessionId: Dispatch<SetStateAction<string | null>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
@@ -28,6 +28,7 @@ interface ChatHistoryProps {
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
+    setActiveChatSession?: Dispatch<SetStateAction<SavedChatSession | null>>;
 }
 
 export const useChatHistory = ({
@@ -47,6 +48,7 @@ export const useChatHistory = ({
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
+    setActiveChatSession
 }: ChatHistoryProps) => {
     const t = getTranslator(language);
 
@@ -62,7 +64,8 @@ export const useChatHistory = ({
         userScrolledUp,
         selectedFiles,
         fileDraftsRef,
-        activeSessionId
+        activeSessionId,
+        setActiveChatSession
     });
 
     const { 
@@ -88,7 +91,7 @@ export const useChatHistory = ({
     });
 
     const { clearAllHistory, clearCacheAndReload } = useHistoryClearer({
-        setSavedSessions,
+        setSavedSessions: setSavedSessions as any, // Cast for compatibility with clearer which might assume full objects or just arrays
         setSavedGroups,
         startNewChat,
         activeJobs

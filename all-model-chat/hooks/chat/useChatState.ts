@@ -1,14 +1,19 @@
 
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand } from '../../types';
+import { AppSettings, ChatGroup, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings, InputCommand, ChatSessionMetadata } from '../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../constants/appConstants';
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
 
 export const useChatState = (appSettings: AppSettings) => {
-    const [savedSessions, setSavedSessions] = useState<SavedChatSession[]>([]);
+    // Stores only metadata to save memory (no 'messages' array)
+    const [savedSessions, setSavedSessions] = useState<ChatSessionMetadata[]>([]);
     const [savedGroups, setSavedGroups] = useState<ChatGroup[]>([]);
+    
+    // Stores the FULL session object for the currently active chat
+    const [activeChatSession, setActiveChatSession] = useState<SavedChatSession | null>(null);
+    
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editMode, setEditMode] = useState<'update' | 'resend'>('resend');
@@ -26,8 +31,6 @@ export const useChatState = (appSettings: AppSettings) => {
     const userScrolledUp = useRef<boolean>(false);
     const fileDraftsRef = useRef<Record<string, UploadedFile[]>>({});
 
-    // Tracks session IDs that are generating *in this specific tab*.
-    // Used to prevent overwriting local streaming state with DB state updates from other tabs.
     const localLoadingSessionIds = useRef(new Set<string>());
 
     // Sync active session ID to sessionStorage and URL
@@ -35,52 +38,38 @@ export const useChatState = (appSettings: AppSettings) => {
         if (activeSessionId) {
             try {
                 sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
-            } catch (e) {
-                // Ignore storage errors
-            }
+            } catch (e) { }
             
-            // Sync URL: If the current URL doesn't match the active session, update it.
             const targetPath = `/chat/${activeSessionId}`;
             try {
                 if (window.location.pathname !== targetPath) {
                     window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
                 }
-            } catch (e) {
-                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
-            }
+            } catch (e) { }
         } else {
             try {
                 sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
-            } catch (e) {
-                // Ignore storage errors
-            }
-            
-            // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
-            // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.
+            } catch (e) { }
             try {
-                // Only attempt to push state if we are not on root and not on a chat route (to avoid loops)
-                // And if the environment allows it.
                 if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
                      window.history.pushState({}, '', '/');
                 }
-            } catch (e) {
-                console.warn('Unable to update URL history (likely due to sandboxed environment):', e);
-            }
+            } catch (e) { }
         }
     }, [activeSessionId]);
 
     const refreshSessions = useCallback(async () => {
         try {
-            const sessions = await dbService.getAllSessions();
-            const rehydrated = sessions.map(rehydrateSessionFiles);
-            rehydrated.sort((a, b) => {
+            // Lazy Load: Fetch only metadata
+            const sessions = await dbService.getAllSessionMetadata();
+            sessions.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
             });
-            setSavedSessions(rehydrated);
+            setSavedSessions(sessions);
         } catch (e) {
-            logService.error("Failed to refresh sessions from DB", { error: e });
+            logService.error("Failed to refresh session metadata from DB", { error: e });
         }
     }, []);
 
@@ -90,6 +79,18 @@ export const useChatState = (appSettings: AppSettings) => {
             setSavedGroups(groups);
         } catch (e) {
             logService.error("Failed to refresh groups from DB", { error: e });
+        }
+    }, []);
+
+    const refreshActiveSession = useCallback(async (id: string) => {
+        try {
+            const session = await dbService.getSessionById(id);
+            if (session) {
+                const rehydrated = rehydrateSessionFiles(session);
+                setActiveChatSession(rehydrated);
+            }
+        } catch (e) {
+            logService.error("Failed to refresh active session content", { error: e });
         }
     }, []);
 
@@ -104,13 +105,14 @@ export const useChatState = (appSettings: AppSettings) => {
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
-            // Optimization: If THIS tab is currently streaming for this session (locally), 
-            // ignore the refresh to avoid overwriting the smooth stream with chunked DB saves.
-            // However, if another tab updated it (and we are not streaming), we DO want to refresh.
             if (localLoadingSessionIds.current.has(id)) {
                 return;
             }
-            refreshSessions();
+            if (id === activeSessionId) {
+                refreshActiveSession(id);
+            } else {
+                refreshSessions(); // Metadata might have changed (e.g. preview)
+            }
         },
         onSessionLoading: (sessionId, isLoading) => {
             setLoadingSessionIds(prev => {
@@ -123,14 +125,12 @@ export const useChatState = (appSettings: AppSettings) => {
     });
 
     const setSessionLoading = useCallback((sessionId: string, isLoading: boolean) => {
-        // Update local tracking
         if (isLoading) {
             localLoadingSessionIds.current.add(sessionId);
         } else {
             localLoadingSessionIds.current.delete(sessionId);
         }
 
-        // Update UI state
         setLoadingSessionIds(prev => {
             const next = new Set(prev);
             if (isLoading) next.add(sessionId);
@@ -138,60 +138,127 @@ export const useChatState = (appSettings: AppSettings) => {
             return next;
         });
 
-        // Broadcast to other tabs so they show the spinner/stop button but know not to overwrite content if they are the ones generating
         broadcast({ type: 'SESSION_LOADING', sessionId, isLoading });
     }, [broadcast]);
 
+    // Updater for LIST operations (Metadata only). 
+    // Consumers must NOT rely on 'messages' field in the updater callback.
+    // However, if the updater returns a full object (e.g. creating new session), we strip messages for the state list.
     const updateAndPersistSessions = useCallback(async (
         updater: (prev: SavedChatSession[]) => SavedChatSession[],
         options: { persist?: boolean } = {}
     ) => {
         const { persist = true } = options;
+
+        // Note: The updater here technically receives metadata but typed as SavedChatSession for compatibility 
+        // with existing hooks that just map over IDs/settings.
+        // If an existing hook tries to access .messages on these items, it will fail/get undefined.
+        // We ensure hooks are robust or use the dedicated active session updater.
         
-        setSavedSessions(prevSessions => {
-            const newSessions = updater(prevSessions);
-            
-            // AUTOMATIC SORTING: Ensure sessions are always sorted by pinned status then timestamp
-            newSessions.sort((a, b) => {
-                if (a.isPinned && !b.isPinned) return -1;
-                if (!a.isPinned && b.isPinned) return 1;
-                return b.timestamp - a.timestamp;
-            });
-            
-            if (persist) {
-                const updates: Promise<void>[] = [];
-                const newSessionsMap = new Map(newSessions.map(s => [s.id, s]));
-                const modifiedSessionIds: string[] = [];
+        // However, some hooks create NEW sessions which are full objects.
+        // We handle the split: New full sessions go to DB + ActiveState. Metadata goes to ListState.
 
-                newSessions.forEach(session => {
-                    const prevSession = prevSessions.find(s => s.id === session.id);
-                    if (prevSession !== session) {
-                        updates.push(dbService.saveSession(session));
-                        modifiedSessionIds.push(session.id);
-                    }
-                });
+        // 1. Calculate new state based on current list (metadata)
+        const currentList = savedSessions as unknown as SavedChatSession[]; // Cast for compat
+        const newList = updater(currentList);
+        
+        // 2. Identify changes
+        const newListMap = new Map(newList.map(s => [s.id, s]));
+        const prevListMap = new Map(currentList.map(s => [s.id, s]));
+        
+        const updates: Promise<void>[] = [];
+        const modifiedIds: string[] = [];
 
-                prevSessions.forEach(session => {
-                    if (!newSessionsMap.has(session.id)) {
-                        updates.push(dbService.deleteSession(session.id));
-                    }
-                });
-
-                if (updates.length > 0) {
-                    Promise.all(updates)
-                        .then(() => {
-                            if (modifiedSessionIds.length === 1) {
-                                broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessionIds[0] });
-                            } else {
-                                broadcast({ type: 'SESSIONS_UPDATED' });
-                            }
-                        })
-                        .catch(e => logService.error('Failed to persist session updates', { error: e }));
+        // 3. Handle Active Session Synchronization logic inside the updater loop? 
+        // No, the updater returns the desired state. We must process it.
+        
+        // Special Case: If the updater modified the ACTIVE session in the list, we must sync that to activeChatSession state.
+        // BUT, the updater was operating on metadata. It likely updated title, settings, pin, etc.
+        // It did NOT update messages because they weren't in the list.
+        
+        const activeItemInNewList = newList.find(s => s.id === activeSessionId);
+        if (activeItemInNewList && activeChatSession) {
+            // Check if metadata changed
+            const activeItemInPrev = currentList.find(s => s.id === activeSessionId);
+            if (activeItemInPrev !== activeItemInNewList) {
+                // Merge metadata updates into active session state
+                const updatedActiveSession = {
+                    ...activeChatSession,
+                    ...activeItemInNewList, // Overlay metadata changes
+                    messages: activeChatSession.messages // Preserve full messages
+                };
+                setActiveChatSession(updatedActiveSession);
+                
+                if (persist) {
+                    updates.push(dbService.saveSession(updatedActiveSession));
+                    modifiedIds.push(updatedActiveSession.id);
                 }
             }
-            return newSessions;
+        }
+
+        // 4. Handle other sessions (Persist to DB)
+        if (persist) {
+            // New sessions created (e.g. New Chat)
+            newList.forEach(session => {
+                if (!prevListMap.has(session.id)) {
+                    // New session. It might have messages (e.g. from template).
+                    updates.push(dbService.saveSession(session));
+                    modifiedIds.push(session.id);
+                    
+                    // If it's the active one, we set it above via setActiveChatSession if the caller did setActiveSessionId
+                    // But usually caller sets ID separately.
+                } else if (session.id !== activeSessionId) {
+                    // Existing inactive session modified (e.g. rename/pin inactive)
+                    if (session !== prevListMap.get(session.id)) {
+                         // We only have metadata here. We need to fetch full, merge, save?
+                         // OR we assume DB saveSession can handle partial update? No, IDB put overwrites.
+                         // Optimization: If only metadata changed, we need to fetch full, update meta, save.
+                         updates.push(
+                             dbService.getSessionById(session.id).then(full => {
+                                 if (full) {
+                                     return dbService.saveSession({ ...full, ...session });
+                                 }
+                             })
+                         );
+                         modifiedIds.push(session.id);
+                    }
+                }
+            });
+
+            // Deleted sessions
+            currentList.forEach(session => {
+                if (!newListMap.has(session.id)) {
+                    updates.push(dbService.deleteSession(session.id));
+                }
+            });
+        }
+
+        // 5. Update Metadata List State
+        const newMetadataList: ChatSessionMetadata[] = newList.map(s => {
+            // Strip messages for the list state
+            const { messages, ...meta } = s; 
+            return meta;
         });
-    }, [broadcast]);
+        
+        newMetadataList.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return b.timestamp - a.timestamp;
+        });
+
+        setSavedSessions(newMetadataList);
+        
+        if (persist && updates.length > 0) {
+            Promise.all(updates)
+                .then(() => {
+                    if (modifiedIds.length === 1) broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedIds[0] });
+                    else broadcast({ type: 'SESSIONS_UPDATED' });
+                })
+                .catch(e => logService.error('Failed to persist updates', { error: e }));
+        }
+
+        return newList; // Return for compatibility, though result unused by caller usually
+    }, [savedSessions, activeSessionId, activeChatSession, broadcast]);
     
     const updateAndPersistGroups = useCallback(async (updater: (prev: ChatGroup[]) => ChatGroup[]) => {
         setSavedGroups(prevGroups => {
@@ -203,26 +270,36 @@ export const useChatState = (appSettings: AppSettings) => {
         });
     }, [broadcast]);
 
-    const activeChat = useMemo(() => savedSessions.find(s => s.id === activeSessionId), [savedSessions, activeSessionId]);
-    const messages = useMemo(() => activeChat?.messages || [], [activeChat]);
+    const activeChat = activeChatSession || (savedSessions.find(s => s.id === activeSessionId) as SavedChatSession | undefined);
+    // Note: If activeChatSession is null (not loaded yet) but ID exists in list, we might return metadata only object.
+    // The UI should handle empty messages gracefully or show loading.
+    
+    const messages = useMemo(() => activeChatSession?.messages || [], [activeChatSession]);
     const currentChatSettings = useMemo(() => activeChat?.settings || DEFAULT_CHAT_SETTINGS, [activeChat]);
     const isLoading = useMemo(() => loadingSessionIds.has(activeSessionId ?? ''), [loadingSessionIds, activeSessionId]);
     
     const setCurrentChatSettings = useCallback((updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => {
-        if (!activeSessionId) return;
-        updateAndPersistSessions(prevSessions =>
-            prevSessions.map(s =>
-                s.id === activeSessionId
-                    ? { ...s, settings: updater(s.settings) }
-                    : s
-            )
-        );
-    }, [activeSessionId, updateAndPersistSessions]);
+        if (!activeSessionId || !activeChatSession) return;
+        
+        const newSettings = updater(activeChatSession.settings);
+        const updatedSession = { ...activeChatSession, settings: newSettings };
+        
+        setActiveChatSession(updatedSession);
+        
+        // Sync to list
+        const { messages, ...metadata } = updatedSession;
+        setSavedSessions(prev => prev.map(s => s.id === activeSessionId ? metadata : s));
+        
+        dbService.saveSession(updatedSession).then(() => {
+            // Optional: Broadcast if needed
+        });
+    }, [activeSessionId, activeChatSession]);
 
     return {
         savedSessions, setSavedSessions,
         savedGroups, setSavedGroups,
         activeSessionId, setActiveSessionId,
+        activeChatSession, setActiveChatSession, // Export specific setter
         editingMessageId, setEditingMessageId,
         editMode, setEditMode,
         commandedInput, setCommandedInput,

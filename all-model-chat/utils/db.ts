@@ -1,4 +1,5 @@
-import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
+
+import { AppSettings, ChatGroup, SavedChatSession, SavedScenario, ChatSessionMetadata } from '../types';
 import { LogEntry } from '../services/logService';
 
 const DB_NAME = 'AllModelChatDB';
@@ -123,7 +124,37 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
 }
 
 export const dbService = {
+  // Legacy full fetch - kept for export but deprecated for main UI load
   getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
+  
+  // New Lazy Loading Methods
+  getSessionById: async (id: string): Promise<SavedChatSession | undefined> => {
+      const db = await getDb();
+      return requestToPromise(db.transaction(SESSIONS_STORE, 'readonly').objectStore(SESSIONS_STORE).get(id));
+  },
+
+  getAllSessionMetadata: async (): Promise<ChatSessionMetadata[]> => {
+      const db = await getDb();
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(SESSIONS_STORE, 'readonly');
+          const store = tx.objectStore(SESSIONS_STORE);
+          const cursorRequest = store.openCursor();
+          const results: ChatSessionMetadata[] = [];
+          
+          cursorRequest.onsuccess = (e) => {
+              const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+              if (cursor) {
+                  const { messages, ...metadata } = cursor.value as SavedChatSession;
+                  results.push(metadata);
+                  cursor.continue();
+              } else {
+                  resolve(results);
+              }
+          };
+          cursorRequest.onerror = () => reject(cursorRequest.error);
+      });
+  },
+
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
   saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
   deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),

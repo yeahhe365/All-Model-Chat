@@ -102,6 +102,9 @@ export interface SavedChatSession {
   groupId?: string | null;
 }
 
+// Lightweight metadata for sidebar list
+export type ChatSessionMetadata = Omit<SavedChatSession, 'messages'>;
+
 export interface PreloadedMessage {
   id: string;
   role: 'user' | 'model';
