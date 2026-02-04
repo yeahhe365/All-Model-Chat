@@ -29,7 +29,8 @@ export default defineConfig(({ mode }) => {
             'react/jsx-runtime',
             'react-pdf', 
             'pdfjs-dist',
-            '@formkit/auto-animate/react'
+            '@formkit/auto-animate/react',
+            'react-virtuoso'
           ]
         }
       }
