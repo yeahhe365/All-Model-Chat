@@ -6,6 +6,7 @@ import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { finalizeMessages, updateMessagesWithBatch } from '../chat-stream/processors';
+import { streamingStore } from '../../services/streamingStore';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -15,9 +16,6 @@ interface ChatStreamHandlerProps {
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
-
-const UPDATE_THROTTLE_MS = 100;
-const DB_PERSIST_INTERVAL_MS = 2000;
 
 export const useChatStreamHandler = ({
     appSettings,
@@ -38,82 +36,19 @@ export const useChatStreamHandler = ({
         const newModelMessageIds = new Set<string>([generationId]);
         let firstContentPartTime: Date | null = null;
         let accumulatedText = "";
+        let accumulatedThoughts = "";
 
-        // Buffers for Throttling
-        let bufferedParts: Part[] = [];
-        let bufferedThought = "";
-        let lastFlushTime = 0;
-        let lastPersistTime = Date.now();
-        let flushTimeout: ReturnType<typeof setTimeout> | null = null;
-
-        const flushUpdates = () => {
-            if (flushTimeout) {
-                clearTimeout(flushTimeout);
-                flushTimeout = null;
-            }
-
-            // Only update if there is something to update
-            if (bufferedParts.length === 0 && !bufferedThought) return;
-
-            const partsToProcess = [...bufferedParts];
-            const thoughtToProcess = bufferedThought;
-            
-            // Clear buffers immediately to prevent race conditions or double processing
-            bufferedParts = [];
-            bufferedThought = "";
-            lastFlushTime = Date.now();
-
-            const now = Date.now();
-            // Persist to DB if enough time has passed since last persistence
-            const shouldPersist = (now - lastPersistTime) >= DB_PERSIST_INTERVAL_MS;
-            if (shouldPersist) {
-                lastPersistTime = now;
-            }
-
-            updateAndPersistSessions(prev => {
-                const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
-                if (sessionIndex === -1) return prev;
-
-                const newSessions = [...prev];
-                const sessionToUpdate = { ...newSessions[sessionIndex] };
-                
-                // Use batch processor to update messages efficiently with one state change
-                const updatedMessages = updateMessagesWithBatch(
-                    sessionToUpdate.messages,
-                    partsToProcess,
-                    thoughtToProcess,
-                    generationStartTime,
-                    newModelMessageIds,
-                    firstContentPartTime
-                );
-                
-                sessionToUpdate.messages = updatedMessages;
-                newSessions[sessionIndex] = sessionToUpdate;
-                
-                return newSessions;
-            }, { persist: shouldPersist });
-        };
-
-        const throttleUpdate = () => {
-            const now = Date.now();
-            if (now - lastFlushTime >= UPDATE_THROTTLE_MS) {
-                flushUpdates();
-            } else if (!flushTimeout) {
-                flushTimeout = setTimeout(flushUpdates, UPDATE_THROTTLE_MS);
-            }
-        };
+        // Reset store for this new generation
+        streamingStore.clear(generationId);
 
         const streamOnError = (error: Error) => {
-            if (flushTimeout) clearTimeout(flushTimeout); // Clear pending updates on error
             handleApiError(error, currentSessionId, generationId);
             setSessionLoading(currentSessionId, false);
             activeJobs.current.delete(generationId);
+            streamingStore.clear(generationId);
         };
 
         const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => {
-            // Ensure any pending buffered data is written before finalizing
-            flushUpdates();
-
             const lang = appSettings.language === 'system' 
                 ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
                 : appSettings.language;
@@ -131,6 +66,7 @@ export const useChatStreamHandler = ({
                 );
             }
 
+            // Perform the Final Update to State (and DB)
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
                 if (sessionIndex === -1) return prev;
@@ -138,8 +74,27 @@ export const useChatStreamHandler = ({
                 const newSessions = [...prev];
                 const sessionToUpdate = { ...newSessions[sessionIndex] };
                 
-                const { updatedMessages, completedMessageForNotification } = finalizeMessages(
-                    sessionToUpdate.messages,
+                // Construct a virtual "final" part containing the full text from the store
+                // We use updateMessagesWithBatch but we manually inject the accumulated text
+                // because the state messages haven't been updating with text during the stream.
+                
+                // 1. First, make sure the message exists and has basic structure (it was created at start)
+                // 2. Update its content with accumulatedText and accumulatedThoughts
+                
+                let updatedMessages = sessionToUpdate.messages.map(msg => {
+                    if (msg.id === generationId) {
+                        return {
+                            ...msg,
+                            content: (msg.content || '') + accumulatedText,
+                            thoughts: (msg.thoughts || '') + accumulatedThoughts
+                        };
+                    }
+                    return msg;
+                });
+                
+                // 3. Finalize (mark loading false, set stats)
+                const finalizationResult = finalizeMessages(
+                    updatedMessages,
                     generationStartTime,
                     newModelMessageIds,
                     currentChatSettings,
@@ -151,15 +106,16 @@ export const useChatStreamHandler = ({
                     abortController.signal.aborted
                 );
 
-                sessionToUpdate.messages = updatedMessages;
+                sessionToUpdate.messages = finalizationResult.updatedMessages;
                 newSessions[sessionIndex] = sessionToUpdate;
 
-                if (completedMessageForNotification) {
+                if (finalizationResult.completedMessageForNotification) {
                     if (appSettings.isCompletionSoundEnabled) {
                         playCompletionSound();
                     }
                     if (appSettings.isCompletionNotificationEnabled && document.hidden) {
-                        const notificationBody = (completedMessageForNotification.content || "Media or tool response received").substring(0, 150) + (completedMessageForNotification.content && completedMessageForNotification.content.length > 150 ? '...' : '');
+                        const msg = finalizationResult.completedMessageForNotification;
+                        const notificationBody = (msg.content || "Media or tool response received").substring(0, 150) + (msg.content && msg.content.length > 150 ? '...' : '');
                         showNotification(
                             'Response Ready', 
                             {
@@ -175,6 +131,7 @@ export const useChatStreamHandler = ({
 
             setSessionLoading(currentSessionId, false);
             activeJobs.current.delete(generationId);
+            streamingStore.clear(generationId);
 
             if (onSuccess && !abortController.signal.aborted) {
                 setTimeout(() => onSuccess(generationId, accumulatedText), 0);
@@ -184,8 +141,54 @@ export const useChatStreamHandler = ({
         const streamOnPart = (part: Part) => {
             const anyPart = part as any;
             
+            // 1. Accumulate plain text
+            let chunkText = "";
             if (anyPart.text) {
-                accumulatedText += anyPart.text;
+                chunkText = anyPart.text;
+                accumulatedText += chunkText;
+                streamingStore.updateContent(generationId, chunkText);
+            }
+
+            // 2. Handle Tools / Code (Convert to text representation for the store)
+            if (anyPart.executableCode) {
+                const codePart = anyPart.executableCode as { language: string, code: string };
+                const toolContent = `\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\``;
+                accumulatedText += toolContent;
+                streamingStore.updateContent(generationId, toolContent);
+            } else if (anyPart.codeExecutionResult) {
+                const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
+                const escapeHtml = (unsafe: string) => {
+                    if (typeof unsafe !== 'string') return '';
+                    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+                };
+                let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
+                if (resultPart.output) {
+                    toolContent += `<pre><code class="language-text">${escapeHtml(resultPart.output)}</code></pre>`;
+                }
+                toolContent += '</div>';
+                accumulatedText += toolContent;
+                streamingStore.updateContent(generationId, toolContent);
+            } else if (anyPart.inlineData) {
+                // For files, we still MUST update the session state because they are objects, not just text string.
+                // We use a simplified update that ONLY targets the file array for this message.
+                // This will trigger a React update, but it's infrequent (once per image generation usually).
+                updateAndPersistSessions(prev => {
+                     const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                     if (sessionIndex === -1) return prev;
+                     const newSessions = [...prev];
+                     const sessionToUpdate = { ...newSessions[sessionIndex] };
+                     // Only apply parts to messages, assume no thought here
+                     sessionToUpdate.messages = updateMessagesWithBatch(
+                         sessionToUpdate.messages,
+                         [part], 
+                         "", 
+                         generationStartTime, 
+                         newModelMessageIds, 
+                         firstContentPartTime
+                     );
+                     newSessions[sessionIndex] = sessionToUpdate;
+                     return newSessions;
+                }, { persist: false });
             }
 
             const hasMeaningfulContent = 
@@ -197,20 +200,11 @@ export const useChatStreamHandler = ({
             if (appSettings.isStreamingEnabled && !firstContentPartTime && hasMeaningfulContent) {
                 firstContentPartTime = new Date();
             }
-        
-            // Buffer the part
-            bufferedParts.push(part);
-            
-            // Trigger throttled update
-            throttleUpdate();
         };
         
         const onThoughtChunk = (thoughtChunk: string) => {
-            // Buffer the thought
-            bufferedThought += thoughtChunk;
-            
-            // Trigger throttled update
-            throttleUpdate();
+            accumulatedThoughts += thoughtChunk;
+            streamingStore.updateThoughts(generationId, thoughtChunk);
         };
         
         return { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk };

@@ -1,6 +1,6 @@
 
 import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
-import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings } from '../../../types';
+import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { createNewSession, rehydrateSessionFiles, logService } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
@@ -10,6 +10,7 @@ interface UseSessionLoaderProps {
     setSavedSessions: Dispatch<SetStateAction<SavedChatSession[]>>;
     setSavedGroups: Dispatch<SetStateAction<ChatGroup[]>>;
     setActiveSessionId: Dispatch<SetStateAction<string | null>>;
+    setActiveMessages: Dispatch<SetStateAction<ChatMessage[]>>; // Added setter
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
@@ -25,6 +26,7 @@ export const useSessionLoader = ({
     setSavedSessions,
     setSavedGroups,
     setActiveSessionId,
+    setActiveMessages,
     setSelectedFiles,
     setEditingMessageId,
     updateAndPersistSessions,
@@ -69,12 +71,19 @@ export const useSessionLoader = ({
 
         const newSession = createNewSession(settingsForNewChat);
 
-        // Crucial Fix: Do NOT filter out other empty sessions (prev.filter(...)). 
-        // Doing so deletes empty "New Chat" sessions created in other tabs, causing them to 
-        // lose their state and auto-switch to this session.
-        updateAndPersistSessions(prev => [newSession, ...prev]);
+        // Update state: Set Active Messages to empty, Add new session metadata to list
+        setActiveMessages([]);
         setActiveSessionId(newSession.id);
         
+        // Use updateAndPersistSessions to push the new session to state/DB. 
+        // It will handle the split internally (keeping active activeMessages in sync if we passed it in updater, 
+        // but here we set it explicitly above to empty, so the updater logic in useChatState needs to respect that).
+        // Actually, updateAndPersistSessions uses the *current* activeMessagesRef.
+        // We set setActiveMessages([]) but that state update is async. 
+        // So we should pass the new session with empty messages to the updater.
+        
+        updateAndPersistSessions(prev => [newSession, ...prev]);
+
         // Clear files for new chat
         setSelectedFiles([]);
         
@@ -83,13 +92,13 @@ export const useSessionLoader = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUp.current = false;
         
-        // Save current files to draft before switching if we are coming from another valid session
+        // Save current files to draft before switching
         if (activeSessionId && activeSessionId !== sessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
@@ -100,18 +109,25 @@ export const useSessionLoader = ({
             if (sessionToLoad) {
                 const rehydrated = rehydrateSessionFiles(sessionToLoad);
                 
-                // Update state: Set this session as active, and replace its metadata version with full content
-                // Also, clear messages of other sessions to free memory (Lazy Unload)
-                setSavedSessions(prev => prev.map(s => 
-                    s.id === sessionId 
-                        ? rehydrated 
-                        : { ...s, messages: [] } 
-                ));
-
-                setActiveSessionId(sessionToLoad.id);
-                // Note: activeSessionId persistence is now handled by useEffect in useChatState
+                // Set Active Messages and ID
+                setActiveMessages(rehydrated.messages);
+                setActiveSessionId(rehydrated.id);
                 
-                // Restore files from draft for the target session, or empty if none
+                // Ensure metadata list contains this session (metadata only)
+                setSavedSessions(prev => {
+                    const exists = prev.some(s => s.id === sessionId);
+                    if (exists) {
+                         // Update metadata if needed, but strip messages
+                         const { messages, ...metadata } = rehydrated;
+                         return prev.map(s => s.id === sessionId ? { ...s, ...metadata, messages: [] } : s);
+                    } else {
+                         // Add if missing (rare case of direct load)
+                         const { messages, ...metadata } = rehydrated;
+                         return [{ ...metadata, messages: [] } as SavedChatSession, ...prev];
+                    }
+                });
+
+                // Restore files from draft for the target session
                 const draftFiles = fileDraftsRef.current[sessionId] || [];
                 setSelectedFiles(draftFiles);
                 
@@ -127,7 +143,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat session:", error);
             startNewChat();
         }
-    }, [setActiveSessionId, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions]);
+    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions]);
 
     const loadInitialData = useCallback(async () => {
         try {
@@ -153,38 +169,35 @@ export const useSessionLoader = ({
                 }
             }
 
-            // 2. If we have an active ID, fetch its FULL content immediately
-            let fullActiveSession: SavedChatSession | undefined = undefined;
+            // 2. Fetch Active Session Full Data if exists
             if (initialActiveId) {
-                fullActiveSession = await dbService.getSession(initialActiveId);
+                const fullActiveSession = await dbService.getSession(initialActiveId);
                 if (fullActiveSession) {
                     logService.info(`Loaded full content for active session: ${initialActiveId}`);
-                    fullActiveSession = rehydrateSessionFiles(fullActiveSession);
+                    const rehydrated = rehydrateSessionFiles(fullActiveSession);
+                    setActiveMessages(rehydrated.messages);
+                    setActiveSessionId(initialActiveId);
+                    
+                    // Restore files draft
+                    const draftFiles = fileDraftsRef.current[initialActiveId] || [];
+                    setSelectedFiles(draftFiles);
+                } else {
+                    // Fallback if ID invalid
+                    initialActiveId = null; 
                 }
             }
 
-            // 3. Merge metadata list with the single full session
-            // Sort by timestamp
-            const mergedList = metadataList.map(s => {
-                if (fullActiveSession && s.id === fullActiveSession.id) {
-                    return fullActiveSession;
-                }
-                return s; // Keeps messages: []
-            }).sort((a,b) => {
+            // 3. Set List State (Metadata only)
+            const sortedList = metadataList.sort((a,b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
             });
             
-            setSavedSessions(mergedList);
+            setSavedSessions(sortedList);
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
-            if (initialActiveId && fullActiveSession) {
-                setActiveSessionId(initialActiveId);
-                // Restore files draft if any
-                const draftFiles = fileDraftsRef.current[initialActiveId] || [];
-                setSelectedFiles(draftFiles);
-            } else {
+            if (!initialActiveId) {
                 // Fallback: New Chat
                 logService.info('No active session found or invalid, starting fresh chat.');
                 startNewChat();
@@ -194,7 +207,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat history:", error);
             startNewChat();
         }
-    }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setSelectedFiles, fileDraftsRef]);
+    }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setActiveMessages, setSelectedFiles, fileDraftsRef]);
 
     // Handle Browser Back/Forward navigation
     useEffect(() => {

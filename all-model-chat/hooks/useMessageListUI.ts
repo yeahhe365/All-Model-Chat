@@ -16,25 +16,6 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
     const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
     const [configuringFile, setConfiguringFile] = useState<{ file: UploadedFile, messageId: string } | null>(null);
 
-    // Virtualization state
-    const [visibleMessages, setVisibleMessages] = useState<Set<string>>(() => {
-        const initialVisible = new Set<string>();
-        const lastN = 15;
-        for (let i = Math.max(0, messages.length - lastN); i < messages.length; i++) {
-            initialVisible.add(messages[i].id);
-        }
-        return initialVisible;
-    });
-
-    const handleBecameVisible = useCallback((messageId: string) => {
-        setVisibleMessages(prev => {
-            if (prev.has(messageId)) return prev;
-            const newSet = new Set(prev);
-            newSet.add(messageId);
-            return newSet;
-        });
-    }, []);
-
     const handleFileClick = useCallback((file: UploadedFile) => {
         setPreviewFile(file);
     }, []);
@@ -78,22 +59,6 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
         }
     }, [configuringFile, onUpdateMessageFile]);
 
-    const estimateMessageHeight = useCallback((message: ChatMessage, showThoughts: boolean) => {
-        if (!message) return 150;
-        let height = 80;
-        if (message.content) {
-            const lines = message.content.length / 80;
-            height += lines * 24;
-        }
-        if (message.files && message.files.length > 0) {
-            height += message.files.length * 120;
-        }
-        if (message.thoughts && showThoughts) {
-            height += 100;
-        }
-        return Math.min(height, 1200);
-    }, []);
-
     return {
         previewFile,
         setPreviewFile,
@@ -102,8 +67,6 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
         initialTrueFullscreenRequest,
         configuringFile,
         setConfiguringFile,
-        visibleMessages,
-        handleBecameVisible,
         handleFileClick,
         closeFilePreviewModal,
         allImages,
@@ -114,6 +77,5 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
         handleCloseHtmlPreview,
         handleConfigureFile,
         handleSaveFileConfig,
-        estimateMessageHeight
     };
 };
