@@ -7,9 +7,7 @@ import { useState, useEffect, useRef } from 'react';
  */
 export const useSmoothStreaming = (text: string | undefined | null, isStreaming: boolean) => {
     const safeText = text || '';
-    // If we are mounting with existing text and streaming, start from 0 to type it out (or use a heuristic to start closer if desired)
-    // Here we start from '' if streaming to ensure the visual effect is consistent.
-    // If not streaming (e.g. history), we show full text immediately.
+    // If we are mounting with existing text and streaming, start from 0 to type it out
     const [displayedText, setDisplayedText] = useState(isStreaming ? '' : safeText);
     
     const displayedTextRef = useRef(isStreaming ? '' : safeText);
@@ -19,6 +17,13 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
     // Sync target text ref whenever input changes
     useEffect(() => {
         targetTextRef.current = safeText;
+        
+        // Critical Fix: If tab is hidden, bypass animation to prevent backlog/crash
+        // Browser pauses rAF when hidden, but state updates can pile up or be ignored
+        if (document.hidden && isStreaming) {
+            displayedTextRef.current = safeText;
+            setDisplayedText(safeText);
+        }
         
         // If we stopped streaming, snap to full text immediately to ensure consistency
         if (!isStreaming) {
@@ -38,6 +43,12 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
         if (!isStreaming) return;
 
         const animate = () => {
+            // Extra safety: If hidden, stop animating (resumed by effect above)
+            if (document.hidden) {
+                 animationFrameRef.current = requestAnimationFrame(animate);
+                 return;
+            }
+
             const currentLen = displayedTextRef.current.length;
             const targetLen = targetTextRef.current.length;
 
@@ -45,18 +56,13 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
                 const lag = targetLen - currentLen;
                 
                 // Adaptive Typing Speed
-                // If we are far behind (large chunks or paste), speed up significantly.
-                // If we are close, type at a natural reading speed.
                 let charsToAdd = 1;
-                
-                if (lag > 200) charsToAdd = 15;      // Very fast catchup
+                if (lag > 200) charsToAdd = 15;
                 else if (lag > 100) charsToAdd = 8;
                 else if (lag > 50) charsToAdd = 5;
-                else if (lag > 20) charsToAdd = 3;   // Moderate catchup
-                else if (lag > 5) charsToAdd = 2;    // Slight catchup
-                else charsToAdd = 1;                 // Natural typing
+                else if (lag > 20) charsToAdd = 3;
+                else if (lag > 5) charsToAdd = 2;
 
-                // Slice safely to avoid grapheme splitting issues (basic approach)
                 const nextText = targetTextRef.current.slice(0, currentLen + charsToAdd);
                 
                 displayedTextRef.current = nextText;
@@ -64,12 +70,10 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
                 
                 animationFrameRef.current = requestAnimationFrame(animate);
             } else if (currentLen > targetLen) {
-                // If target text shrank (reset or edit), snap immediately
                 displayedTextRef.current = targetTextRef.current;
                 setDisplayedText(targetTextRef.current);
                 animationFrameRef.current = requestAnimationFrame(animate);
             } else {
-                // Caught up, keep polling for new chunks in next frames
                 animationFrameRef.current = requestAnimationFrame(animate);
             }
         };

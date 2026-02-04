@@ -1,8 +1,8 @@
 
 import React, { useState, useCallback } from 'react';
-import { generateFolderContext } from '../utils/folderImportUtils';
-import { UploadedFile } from '../types';
-import { generateUniqueId } from '../utils/appUtils';
+import { generateFolderContext } from '../../utils/folderImportUtils';
+import { UploadedFile } from '../../types';
+import { generateUniqueId } from '../../utils/appUtils';
 
 interface UseFileDragDropProps {
     onFilesDropped: (files: FileList | File[]) => Promise<void>;

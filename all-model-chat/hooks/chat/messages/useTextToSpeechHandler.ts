@@ -1,9 +1,9 @@
 
 import { useCallback } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
-import { getKeyForRequest, logService, pcmBase64ToWavUrl } from '../utils/appUtils';
-import { geminiServiceInstance } from '../services/geminiService';
-import { DEFAULT_TTS_MODEL_ID } from '../constants/appConstants';
+import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
+import { getKeyForRequest, logService, pcmBase64ToWavUrl } from '../../../utils/appUtils';
+import { geminiServiceInstance } from '../../../services/geminiService';
+import { DEFAULT_TTS_MODEL_ID } from '../../../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 

@@ -1,13 +1,12 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { UploadedFile, VideoMetadata } from '../../types';
-import { MediaResolution } from '../../types/settings';
-import { useImageNavigation } from '../useImageNavigation';
-import { geminiServiceInstance } from '../../services/geminiService';
-import { getKeyForRequest, logService, generateUniqueId } from '../../utils/appUtils'; // Needed imports restoration due to previous removal in manual rewrite
-import { AppSettings, ChatSettings as IndividualChatSettings } from '../../types'; // Ensure types are imported if used, though logic was simplified
+import { UploadedFile, VideoMetadata } from '../../../types';
+import { MediaResolution } from '../../../types/settings';
+import { useImageNavigation } from '../../ui/useImageNavigation';
+import { geminiServiceInstance } from '../../../services/geminiService';
+import { getKeyForRequest, logService, generateUniqueId } from '../../../utils/appUtils';
+import { AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
 
-// Re-defining props interface based on original file to ensure no breaking changes
 interface UseFileManagementHandlersProps {
     selectedFiles: UploadedFile[];
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;

@@ -1,7 +1,7 @@
 
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
-import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../types';
-import { logService, cleanupFilePreviewUrls } from '../utils/appUtils';
+import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../../../types';
+import { logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
