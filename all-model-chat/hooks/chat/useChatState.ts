@@ -71,18 +71,33 @@ export const useChatState = (appSettings: AppSettings) => {
 
     const refreshSessions = useCallback(async () => {
         try {
-            const sessions = await dbService.getAllSessions();
-            const rehydrated = sessions.map(rehydrateSessionFiles);
-            rehydrated.sort((a, b) => {
+            // Lazy Load Refresh: Get metadata for list, but re-fetch active session fully
+            const metadataList = await dbService.getAllSessionMetadata();
+            
+            let fullActiveSession: SavedChatSession | undefined = undefined;
+            if (activeSessionId) {
+                fullActiveSession = await dbService.getSession(activeSessionId);
+                if (fullActiveSession) {
+                    fullActiveSession = rehydrateSessionFiles(fullActiveSession);
+                }
+            }
+
+            const mergedList = metadataList.map(s => {
+                // If this is the active session, use the full fetched data
+                if (fullActiveSession && s.id === fullActiveSession.id) return fullActiveSession;
+                // Otherwise use metadata (messages: [])
+                return s;
+            }).sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
             });
-            setSavedSessions(rehydrated);
+            
+            setSavedSessions(mergedList);
         } catch (e) {
             logService.error("Failed to refresh sessions from DB", { error: e });
         }
-    }, []);
+    }, [activeSessionId]);
 
     const refreshGroups = useCallback(async () => {
         try {
@@ -166,6 +181,7 @@ export const useChatState = (appSettings: AppSettings) => {
                 newSessions.forEach(session => {
                     const prevSession = prevSessions.find(s => s.id === session.id);
                     if (prevSession !== session) {
+                        // Persist the FULL session
                         updates.push(dbService.saveSession(session));
                         modifiedSessionIds.push(session.id);
                     }

@@ -19,7 +19,7 @@ interface UseChatEffectsProps {
     aspectRatio: string;
     setAspectRatio: (value: string) => void;
     loadInitialData: () => Promise<void>;
-    loadChatSession: (id: string, sessions: SavedChatSession[]) => void;
+    loadChatSession: (id: string) => void;
     startNewChat: () => void;
     messages: ChatMessage[];
 }
@@ -52,13 +52,16 @@ export const useChatEffects = ({
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
     
     // 2. Session Validation
+    // This effect ensures that if the activeSessionId points to a session that doesn't exist in savedSessions
+    // (e.g. deleted), we switch to another valid session or new chat.
     useEffect(() => {
-        if (activeSessionId && !savedSessions.find(s => s.id === activeSessionId)) {
+        // Only run this check if we have initialized (savedSessions length > 0) or if we strictly expect a session.
+        if (activeSessionId && savedSessions.length > 0 && !savedSessions.find(s => s.id === activeSessionId)) {
             logService.warn(`Active session ${activeSessionId} is no longer available. Switching sessions.`);
             const sortedSessions = [...savedSessions].sort((a,b) => b.timestamp - a.timestamp);
             const nextSession = sortedSessions[0];
             if (nextSession) {
-                loadChatSession(nextSession.id, sortedSessions);
+                loadChatSession(nextSession.id);
             } else {
                 startNewChat();
             }

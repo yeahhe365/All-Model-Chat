@@ -1,3 +1,4 @@
+
 import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
 
@@ -74,6 +75,11 @@ async function withWriteLock<T>(callback: () => Promise<T>): Promise<T> {
     return callback();
 }
 
+async function getItem<T>(storeName: string, key: string): Promise<T | undefined> {
+  const db = await getDb();
+  return requestToPromise(db.transaction(storeName, 'readonly').objectStore(storeName).get(key));
+}
+
 async function getAll<T>(storeName: string): Promise<T[]> {
   const db = await getDb();
   return requestToPromise(db.transaction(storeName, 'readonly').objectStore(storeName).getAll());
@@ -124,6 +130,34 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
 
 export const dbService = {
   getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
+  
+  // New method: Fetches a single session by ID
+  getSession: (id: string) => getItem<SavedChatSession>(SESSIONS_STORE, id),
+
+  // New method: Fetches all sessions but excludes the heavy 'messages' array
+  getAllSessionMetadata: async (): Promise<SavedChatSession[]> => {
+      const db = await getDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(SESSIONS_STORE, 'readonly');
+        const store = tx.objectStore(SESSIONS_STORE);
+        const request = store.openCursor();
+        const results: SavedChatSession[] = [];
+        
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            const { messages, ...rest } = cursor.value;
+            // Return with empty messages to save memory
+            results.push({ ...rest, messages: [] });
+            cursor.continue();
+          } else {
+            resolve(results);
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
+  },
+
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
   saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
   deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),
