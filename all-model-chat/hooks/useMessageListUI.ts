@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UploadedFile, ChatMessage, VideoMetadata } from '../types';
 import { MediaResolution } from '../types/settings';
-import { useImageNavigation } from './useImageNavigation';
+import { useImageNavigation } from './ui/useImageNavigation';
 
 interface UseMessageListUIProps {
     messages: ChatMessage[];

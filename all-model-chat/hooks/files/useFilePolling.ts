@@ -1,9 +1,10 @@
+
 import React, { useEffect, useRef, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
-import { getKeyForRequest } from '../utils/appUtils';
-import { geminiServiceInstance } from '../services/geminiService';
-import { logService } from '../services/logService';
-import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../services/api/baseApi';
+import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
+import { getKeyForRequest } from '../../utils/appUtils';
+import { geminiServiceInstance } from '../../services/geminiService';
+import { logService } from '../../services/logService';
+import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../../services/api/baseApi';
 
 interface UseFilePollingProps {
     appSettings: AppSettings;

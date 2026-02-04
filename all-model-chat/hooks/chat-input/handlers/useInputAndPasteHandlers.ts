@@ -1,8 +1,7 @@
-
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { UploadedFile } from '../../types';
-import { processClipboardData } from '../../utils/clipboardUtils';
-import { useTextAreaInsert } from '../useTextAreaInsert';
+import { UploadedFile } from '../../../types';
+import { processClipboardData } from '../../../utils/clipboardUtils';
+import { useTextAreaInsert } from '../../useTextAreaInsert';
 
 interface UseInputAndPasteHandlersProps {
     setInputText: Dispatch<SetStateAction<string>>;

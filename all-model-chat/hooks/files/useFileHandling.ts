@@ -1,6 +1,6 @@
 
 import { Dispatch, SetStateAction, useEffect } from 'react';
-import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../types';
+import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
 import { useFilePolling } from './useFilePolling';
 import { useFileUpload } from './useFileUpload';
 
