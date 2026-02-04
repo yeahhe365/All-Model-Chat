@@ -1,4 +1,3 @@
-
 import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
 
@@ -123,93 +122,10 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
   });
 }
 
-// Lazy loading specific function
-async function getAllSessionsMetadata(): Promise<SavedChatSession[]> {
-    const db = await getDb();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(SESSIONS_STORE, 'readonly');
-        const store = transaction.objectStore(SESSIONS_STORE);
-        const request = store.openCursor();
-        const results: SavedChatSession[] = [];
-
-        request.onsuccess = (event) => {
-            const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
-            if (cursor) {
-                // Destructure messages out to save memory, mark as partial
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const { messages, ...metadata } = cursor.value as SavedChatSession;
-                results.push({ ...metadata, messages: [], isPartial: true });
-                cursor.continue();
-            } else {
-                resolve(results);
-            }
-        };
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function getSessionById(id: string): Promise<SavedChatSession | undefined> {
-    const db = await getDb();
-    return requestToPromise(db.transaction(SESSIONS_STORE, 'readonly').objectStore(SESSIONS_STORE).get(id));
-}
-
-// Smart save that handles partial updates via merge
-async function saveSessionSmart(session: SavedChatSession): Promise<void> {
-    if (!session.isPartial) {
-        // Full object, safe to put directly
-        return put(SESSIONS_STORE, session);
-    }
-    
-    // Logic for partial objects (Metadata updates):
-    // 1. Fetch existing full object from DB
-    // 2. Merge metadata fields
-    // 3. Put back
-    return withWriteLock(async () => {
-        const db = await getDb();
-        const tx = db.transaction(SESSIONS_STORE, 'readwrite');
-        const store = tx.objectStore(SESSIONS_STORE);
-        
-        try {
-            const existingRequest = store.get(session.id);
-            const existingSession = await new Promise<SavedChatSession>((resolve, reject) => {
-                existingRequest.onsuccess = () => resolve(existingRequest.result);
-                existingRequest.onerror = () => reject(existingRequest.error);
-            });
-
-            if (existingSession) {
-                // Merge: Keep existing messages, update everything else from the partial session
-                // We assume the partial session has the updated title, group, pinned status etc.
-                const mergedSession = {
-                    ...existingSession,
-                    ...session,
-                    messages: existingSession.messages, // RESTORE MESSAGES
-                    isPartial: undefined // Remove partial flag for storage
-                };
-                delete mergedSession.isPartial;
-                
-                store.put(mergedSession);
-            } else {
-                // Edge case: Partial session exists in state but not DB? 
-                // This shouldn't happen unless deleted concurrently.
-                // If it does, we can't save it without losing messages, so we log warning or ignore.
-                console.warn(`Attempted to save partial session ${session.id} but it does not exist in DB.`);
-            }
-            
-            return transactionToPromise(tx);
-        } catch (e) {
-            console.error("Failed to perform smart save", e);
-            throw e;
-        }
-    });
-}
-
-
 export const dbService = {
   getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
-  getAllSessionsMetadata, // Export new lazy method
-  getSessionById,         // Export specific fetcher
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
-  saveSession: saveSessionSmart, // Replace raw put with smart save
+  saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
   deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),
   
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
