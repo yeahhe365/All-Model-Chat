@@ -39,8 +39,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setCurrentChatSettings, updateAndPersistSessions, updateAndPersistGroups,
         fileDraftsRef,
         refreshSessions,
-        setSessionLoading,
-        setActiveChat // New setter exposed from state
+        setSessionLoading 
     } = chatState;
 
     // Optimize background performance when loading
@@ -54,8 +53,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, 
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs, 
         updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
-        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
-        setActiveChat // Pass down to loader
+        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId
     });
     
     const fileHandler = useFileHandling({ 

@@ -83,15 +83,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                 )}
                 {isOverflowing && isExpanded && (
                     <div 
-                        className="absolute bottom-2 left-0 right-0 flex justify-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                        className="w-full border-t border-[var(--theme-border-secondary)]/50 bg-[var(--theme-bg-code-block)] cursor-pointer flex items-center justify-center py-2 group/collapse rounded-b-lg"
+                        onClick={handleToggleExpand}
+                        title="Collapse code block"
                     >
-                        <button
-                            onClick={handleToggleExpand}
-                            className="pointer-events-auto text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)]/90 px-3 py-1.5 rounded-full shadow-md border border-[var(--theme-border-secondary)] backdrop-blur-md transition-all transform hover:scale-105"
-                            title="Collapse code block"
-                        >
+                        <span className="text-xs font-medium text-[var(--theme-text-tertiary)] group-hover/collapse:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)]/80 px-3 py-1 rounded-full shadow-sm border border-[var(--theme-border-secondary)] backdrop-blur-md transition-all transform group-hover/collapse:scale-105">
                             <ChevronUp size={12} /> Show less
-                        </button>
+                        </span>
                     </div>
                 )}
             </div>

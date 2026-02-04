@@ -1,5 +1,6 @@
 
 
+
 import { ChatSettings, MediaResolution } from './settings';
 import { ThemeColors } from './theme';
 import { AppSettings, ModelOption } from './settings';
@@ -99,7 +100,6 @@ export interface SavedChatSession {
   settings: ChatSettings;
   isPinned?: boolean;
   groupId?: string | null;
-  isPartial?: boolean; // Indicates if messages are stripped for lazy loading
 }
 
 export interface PreloadedMessage {
