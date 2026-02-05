@@ -85,9 +85,15 @@ export const sendStatelessMessageStreamApi = async (
             return;
         }
 
+        // Only append parts if non-empty; otherwise use history directly
+        // This handles function call continuation where all context is already in history
+        const contents = parts.length > 0
+            ? [...history, { role: role, parts }]
+            : history;
+
         const result = await ai.models.generateContentStream({
             model: modelId,
-            contents: [...history, { role: role, parts }],
+            contents,
             config: config
         });
 
