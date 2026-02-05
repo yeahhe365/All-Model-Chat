@@ -94,6 +94,9 @@ export const sendStatelessMessageStreamApi = async (
     let finalGroundingMetadata: any = null;
     let finalUrlContextMetadata: any = null;
     let detectedFunctionCallPart: Part | undefined = undefined;
+    let latestToolCallFunction: any = undefined;
+    let latestToolCallSignature: string | undefined = undefined;
+    let latestThoughtSignatureFromParts: string | undefined = undefined;
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
@@ -150,6 +153,17 @@ export const sendStatelessMessageStreamApi = async (
                                 }
                             }
                         }
+
+                        // Capture tool call + potential thought signature for fallback
+                        if (toolCall.functionCall) {
+                            latestToolCallFunction = toolCall.functionCall;
+                            const anyToolCall = toolCall as any;
+                            latestToolCallSignature =
+                                anyToolCall.thoughtSignature ||
+                                anyToolCall.thought_signature ||
+                                anyToolCall.functionCall?.thoughtSignature ||
+                                anyToolCall.functionCall?.thought_signature;
+                        }
                     }
                 }
 
@@ -157,6 +171,11 @@ export const sendStatelessMessageStreamApi = async (
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
                         const anyPart = part as any;
+
+                        const partSignature = anyPart.thoughtSignature || anyPart.thought_signature;
+                        if (partSignature) {
+                            latestThoughtSignatureFromParts = partSignature;
+                        }
 
                         // Check for function call (agentic tool execution)
                         // IMPORTANT: Preserve the ENTIRE Part including thoughtSignature
@@ -179,6 +198,28 @@ export const sendStatelessMessageStreamApi = async (
         logService.error("Error sending message (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
+        // Fallback: tool call may appear only in toolCalls; ensure we return a Part with thoughtSignature if possible
+        if (!detectedFunctionCallPart && latestToolCallFunction) {
+            detectedFunctionCallPart = {
+                functionCall: latestToolCallFunction,
+                ...(latestToolCallSignature || latestThoughtSignatureFromParts
+                    ? {
+                        thoughtSignature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                        thought_signature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                    }
+                    : {})
+            } as any;
+        } else if (detectedFunctionCallPart && (latestToolCallSignature || latestThoughtSignatureFromParts)) {
+            const anyPart = detectedFunctionCallPart as any;
+            if (!anyPart.thoughtSignature && !anyPart.thought_signature) {
+                detectedFunctionCallPart = {
+                    ...detectedFunctionCallPart,
+                    thoughtSignature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                    thought_signature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                } as any;
+            }
+        }
+
         logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata, hasFunctionCall: !!detectedFunctionCallPart });
         onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata, detectedFunctionCallPart);
     }

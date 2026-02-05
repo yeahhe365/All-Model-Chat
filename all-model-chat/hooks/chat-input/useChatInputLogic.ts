@@ -1,17 +1,63 @@
-        onProcessFiles, onProjectContextCreated, t, commandedInput, onSendMessage, onMessageSent, 
-        setEditingMessageId, onTranscribeAudio, onUpdateMessageContent,
-        editingMessageId, editMode, onCancelEdit, onStopGenerating,
-        onProcessFiles: props.onProcessFiles,
+import { useCallback, useMemo } from 'react';
+import { ChatInputProps } from '../../types';
+import { useWindowContext } from '../../contexts/WindowContext';
+import { useIsDesktop } from '../useDevice';
+import { useModelCapabilities } from '../useModelCapabilities';
+import { useLiveAPI } from '../useLiveAPI';
+import { useVoiceInput } from '../useVoiceInput';
+import { useSlashCommands } from '../useSlashCommands';
+import { useChatInputState } from './useChatInputState';
+import { useChatInputModals } from './useChatInputModals';
+import { useChatInputLocalState } from './useChatInputLocalState';
+import { useChatInputEffects } from './useChatInputEffects';
+import { useFileSelectionHandlers } from './handlers/useFileSelectionHandlers';
+import { useInputAndPasteHandlers } from './handlers/useInputAndPasteHandlers';
+import { useSubmissionHandlers } from './handlers/useSubmissionHandlers';
+import { useKeyboardHandlers } from './handlers/useKeyboardHandlers';
+import { useFileManagementHandlers } from './handlers/useFileManagementHandlers';
+
+export const useChatInputLogic = (props: ChatInputProps) => {
+    const {
+        appSettings,
+        currentChatSettings,
+        activeSessionId,
+        commandedInput,
+        onSendMessage,
+        onMessageSent,
+        setEditingMessageId,
+        onTranscribeAudio,
+        onUpdateMessageContent,
+        editingMessageId,
+        editMode,
+        onCancelEdit,
+        onStopGenerating,
+        onProcessFiles,
         onProjectContextCreated,
-        onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
-        onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, 
-        onSelectModel, availableModels, onEditLastUserMessage, onTogglePip,
-        setCurrentChatSettings, onAddUserMessage, onLiveTranscript,
+        onToggleGoogleSearch,
+        onToggleDeepSearch,
+        onToggleCodeExecution,
+        onToggleUrlContext,
+        onClearChat,
+        onNewChat,
+        onOpenSettings,
+        onToggleCanvasPrompt,
+        onTogglePinCurrentSession,
+        onRetryLastTurn,
+        onSelectModel,
+        availableModels,
+        onEditLastUserMessage,
+        onTogglePip,
+        setCurrentChatSettings,
+        onAddUserMessage,
+        onLiveTranscript,
+        isEditing,
+        t,
     } = props;
+
+    const isDesktop = useIsDesktop();
 
     // 1. State Management
     const inputState = useChatInputState(activeSessionId, isEditing);
-    });
     const { document: targetDocument } = useWindowContext();
 
     // 2. Capabilities

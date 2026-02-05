@@ -19,6 +19,7 @@ interface UseApiInteractionProps {
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     /** Active project context for agentic folder access */
     projectContext?: ProjectContext | null;
+    onAutoContinue?: (params: { generationId: string; activeModelId: string; effectiveEditingId: string | null }) => void;
 }
 
 export const useApiInteraction = ({
@@ -29,6 +30,7 @@ export const useApiInteraction = ({
     setSessionLoading,
     activeJobs,
     projectContext,
+    onAutoContinue,
 }: UseApiInteractionProps) => {
 
     const performApiCall = useCallback(async (params: {
@@ -126,19 +128,27 @@ export const useApiInteraction = ({
             projectContext?.fileTree, // Pass file tree to enable read_file tool
         );
 
+        const shouldAutoContinueOnEmpty = !isContinueMode && activeModelId.includes('gemini-3') && activeModelId.includes('flash');
+
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
             finalSessionId,
             generationId,
             newAbortController,
             generationStartTime,
             sessionToUpdate,
-            (msgId, content) => {
+            {
+                onSuccess: (msgId, content) => {
                 if (!isContinueMode && appSettings.autoCanvasVisualization && content && content.length > 50 && !isLikelyHtml(content)) {
                     const trimmed = content.trim();
                     if (trimmed.startsWith('```') && trimmed.endsWith('```')) return;
                     logService.info("Auto-triggering Canvas visualization for message", { msgId });
                     handleGenerateCanvas(msgId, content);
                 }
+                },
+                onEmptyResponse: shouldAutoContinueOnEmpty
+                    ? (msgId) => onAutoContinue?.({ generationId: msgId, activeModelId, effectiveEditingId })
+                    : undefined,
+                suppressEmptyResponseError: shouldAutoContinueOnEmpty,
             }
         );
 

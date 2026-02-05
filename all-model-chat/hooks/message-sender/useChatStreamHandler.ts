@@ -31,12 +31,15 @@ export const useChatStreamHandler = ({
         abortController: AbortController,
         generationStartTime: Date,
         currentChatSettings: IndividualChatSettings,
-        onSuccess?: (generationId: string, finalContent: string) => void
+        options?: { onSuccess?: (generationId: string, finalContent: string) => void; onEmptyResponse?: (generationId: string) => void; suppressEmptyResponseError?: boolean }
     ) => {
         const newModelMessageIds = new Set<string>([generationId]);
         let firstContentPartTime: Date | null = null;
         let accumulatedText = "";
         let accumulatedThoughts = "";
+        const onSuccess = options?.onSuccess;
+        const onEmptyResponse = options?.onEmptyResponse;
+        const suppressEmptyResponseError = options?.suppressEmptyResponseError ?? false;
 
         // Reset store for this new generation
         streamingStore.clear(generationId);
@@ -65,6 +68,14 @@ export const useChatStreamHandler = ({
                     completionTokens
                 );
             }
+
+            const isEmptyResponse = !accumulatedText.trim() && !accumulatedThoughts.trim();
+            const shouldAutoContinue = !!onEmptyResponse && isEmptyResponse && !abortController.signal.aborted;
+            if (shouldAutoContinue) {
+                onEmptyResponse?.(generationId);
+            }
+
+            const shouldSuppressEmptyError = suppressEmptyResponseError || shouldAutoContinue;
 
             // Perform the Final Update to State (and DB)
             updateAndPersistSessions(prev => {
@@ -103,7 +114,7 @@ export const useChatStreamHandler = ({
                     usageMetadata,
                     groundingMetadata,
                     urlContextMetadata,
-                    abortController.signal.aborted
+                    abortController.signal.aborted || shouldSuppressEmptyError
                 );
 
                 sessionToUpdate.messages = finalizationResult.updatedMessages;

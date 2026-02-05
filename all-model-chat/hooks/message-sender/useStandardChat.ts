@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { generateUniqueId, buildContentParts, getKeyForRequest, performOptimisticSessionUpdate, logService } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage } from '../../types';
@@ -29,6 +29,15 @@ export const useStandardChat = ({
     handleGenerateCanvas,
     projectContext,
 }: StandardChatProps) => {
+    const autoContinueAttemptsRef = useRef<Set<string>>(new Set());
+    const sendStandardMessageRef = useRef<((
+        textToUse: string,
+        filesToUse: UploadedFile[],
+        effectiveEditingId: string | null,
+        activeModelId: string,
+        isContinueMode?: boolean,
+        isFastMode?: boolean
+    ) => Promise<void>) | null>(null);
 
     const { updateSessionState } = useSessionUpdate({
         appSettings,
@@ -38,6 +47,19 @@ export const useStandardChat = ({
         sessionKeyMapRef
     });
 
+    const handleAutoContinue = useCallback((params: { generationId: string; activeModelId: string; effectiveEditingId: string | null }) => {
+        const { generationId, activeModelId, effectiveEditingId } = params;
+        if (autoContinueAttemptsRef.current.has(generationId)) return;
+        autoContinueAttemptsRef.current.add(generationId);
+
+        const sender = sendStandardMessageRef.current;
+        if (!sender) return;
+
+        setTimeout(() => {
+            sender('', [], effectiveEditingId || generationId, activeModelId, true, false);
+        }, 0);
+    }, []);
+
     const { performApiCall } = useApiInteraction({
         appSettings,
         messages,
@@ -46,6 +68,7 @@ export const useStandardChat = ({
         setSessionLoading,
         activeJobs,
         projectContext,
+        onAutoContinue: handleAutoContinue,
     });
 
     const sendStandardMessage = useCallback(async (
@@ -156,6 +179,10 @@ export const useStandardChat = ({
         appSettings, currentChatSettings, messages, aspectRatio, imageSize, activeSessionId,
         updateAndPersistSessions, setActiveSessionId, userScrolledUp, updateSessionState, performApiCall
     ]);
+
+    useEffect(() => {
+        sendStandardMessageRef.current = sendStandardMessage;
+    }, [sendStandardMessage]);
 
     return { sendStandardMessage };
 };

@@ -12,13 +12,19 @@ export interface StreamHandlerFunctions {
     onThoughtChunk: (thoughtChunk: string) => void;
 }
 
+export interface StreamHandlerOptions {
+    onSuccess?: (generationId: string, finalContent: string) => void;
+    onEmptyResponse?: (generationId: string) => void;
+    suppressEmptyResponseError?: boolean;
+}
+
 export type GetStreamHandlers = (
     currentSessionId: string,
     generationId: string,
     abortController: AbortController,
     generationStartTime: Date,
     currentChatSettings: IndividualChatSettings,
-    onSuccess?: (generationId: string, finalContent: string) => void
+    options?: StreamHandlerOptions
 ) => StreamHandlerFunctions;
 
 export interface BaseSenderProps {
