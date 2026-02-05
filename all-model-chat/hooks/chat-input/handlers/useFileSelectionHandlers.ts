@@ -1,11 +1,12 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { UploadedFile } from '../../../types';
+import { UploadedFile, ProjectContext } from '../../../types';
 import { generateUniqueId } from '../../../utils/appUtils';
-import { generateFolderContext } from '../../../utils/folderImportUtils';
+import { generateFolderContext, buildProjectContext, buildProjectContextFromZip } from '../../../utils/folderImportUtils';
 
 interface UseFileSelectionHandlersProps {
     onProcessFiles: (files: FileList | File[]) => Promise<void>;
+    onProjectContextCreated?: (context: ProjectContext) => void;
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setAppFileError: (error: string | null) => void;
     setIsConverting: Dispatch<SetStateAction<boolean>>;
@@ -18,6 +19,7 @@ interface UseFileSelectionHandlersProps {
 
 export const useFileSelectionHandlers = ({
     onProcessFiles,
+    onProjectContextCreated,
     setSelectedFiles,
     setAppFileError,
     setIsConverting,
@@ -27,6 +29,60 @@ export const useFileSelectionHandlers = ({
     folderInputRef,
     zipInputRef,
 }: UseFileSelectionHandlersProps) => {
+
+    const handleFolderZipFiles = useCallback(async (files: FileList | File[]) => {
+        const filesArray = Array.isArray(files) ? files : Array.from(files);
+        if (filesArray.length === 0) return;
+
+        const isFolderImport = filesArray.some(file => !!(file as any).webkitRelativePath);
+        const isZipImport = !isFolderImport && filesArray.every(file => file.name.toLowerCase().endsWith('.zip'));
+
+        const tempId = generateUniqueId();
+        setIsConverting(true);
+        setSelectedFiles(prev => [...prev, {
+            id: tempId,
+            name: 'Processing import...',
+            type: isZipImport ? 'application/zip' : 'application/x-directory',
+            size: 0,
+            isProcessing: true,
+            uploadState: 'pending'
+        }]);
+
+        try {
+            justInitiatedFileOpRef.current = true;
+
+            if (onProjectContextCreated) {
+                if (isFolderImport) {
+                    const fileEntries = filesArray.map(file => ({
+                        file,
+                        path: (file as any).webkitRelativePath || file.name
+                    }));
+                    const projectContext = buildProjectContext(fileEntries);
+                    onProjectContextCreated(projectContext);
+                } else if (isZipImport) {
+                    for (const zipFile of filesArray) {
+                        const projectContext = await buildProjectContextFromZip(zipFile);
+                        onProjectContextCreated(projectContext);
+                    }
+                } else {
+                    await onProcessFiles(filesArray);
+                }
+            } else {
+                if (isFolderImport) {
+                    const contextFile = await generateFolderContext(filesArray);
+                    await onProcessFiles([contextFile]);
+                } else {
+                    await onProcessFiles(filesArray);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            setAppFileError(isZipImport ? "Failed to process zip file." : "Failed to process folder structure.");
+        } finally {
+            setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
+            setIsConverting(false);
+        }
+    }, [buildProjectContextFromZip, generateFolderContext, onProcessFiles, onProjectContextCreated, setAppFileError, setIsConverting, setSelectedFiles, justInitiatedFileOpRef]);
 
     const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files?.length) {
@@ -39,41 +95,17 @@ export const useFileSelectionHandlers = ({
 
     const handleFolderChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files?.length) {
-            const tempId = generateUniqueId();
-            setIsConverting(true);
-            setSelectedFiles(prev => [...prev, {
-                id: tempId,
-                name: 'Processing folder...',
-                type: 'application/x-directory',
-                size: 0,
-                isProcessing: true,
-                uploadState: 'pending'
-            }]);
-
-            try {
-                justInitiatedFileOpRef.current = true;
-                const contextFile = await generateFolderContext(event.target.files);
-                setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
-                await onProcessFiles([contextFile]);
-            } catch (e) {
-                console.error(e);
-                setAppFileError("Failed to process folder structure.");
-                setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
-            } finally {
-                setIsConverting(false);
-            }
+            await handleFolderZipFiles(event.target.files);
         }
         if (folderInputRef.current) folderInputRef.current.value = "";
-    }, [setIsConverting, setSelectedFiles, onProcessFiles, setAppFileError, justInitiatedFileOpRef, folderInputRef]);
+    }, [handleFolderZipFiles, folderInputRef]);
 
     const handleZipChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files?.length) {
-            justInitiatedFileOpRef.current = true;
-            // useFileUpload already has logic to auto-detect and convert .zip files
-            await onProcessFiles(event.target.files);
+            await handleFolderZipFiles(event.target.files);
         }
         if (zipInputRef.current) zipInputRef.current.value = "";
-    }, [onProcessFiles, justInitiatedFileOpRef, zipInputRef]);
+    }, [handleFolderZipFiles, zipInputRef]);
 
     return {
         handleFileChange,

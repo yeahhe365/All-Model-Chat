@@ -1,7 +1,7 @@
 
 
 
-import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand } from '../../../types';
+import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand, ProjectContext } from '../../../types';
 import { translations } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
 
@@ -88,6 +88,7 @@ export interface ChatAreaProps {
   onStopGenerating: () => void;
   onCancelEdit: () => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
+  onProjectContextCreated?: (context: ProjectContext) => void;
   onAddFileById: (fileId: string) => Promise<void>;
   onCancelUpload: (fileId: string) => void;
   onTranscribeAudio: (file: File) => Promise<string | null>;

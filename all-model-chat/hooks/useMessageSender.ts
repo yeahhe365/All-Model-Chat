@@ -1,6 +1,6 @@
 
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, ProjectContext } from '../types';
 import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
@@ -32,6 +32,8 @@ interface MessageSenderProps {
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    /** Active project context for agentic folder access */
+    projectContext?: ProjectContext | null;
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
@@ -63,9 +65,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
     });
 
     // Initialize Sub-Hooks
-    const { handleGenerateCanvas } = useCanvasGenerator({ 
-        ...props, 
-        getStreamHandlers 
+    const { handleGenerateCanvas } = useCanvasGenerator({
+        ...props,
+        getStreamHandlers
     });
 
     const { sendStandardMessage } = useStandardChat({
@@ -74,13 +76,13 @@ export const useMessageSender = (props: MessageSenderProps) => {
         handleGenerateCanvas
     });
 
-    const { handleTtsImagenMessage } = useTtsImagenSender({ 
+    const { handleTtsImagenMessage } = useTtsImagenSender({
         updateAndPersistSessions,
         setSessionLoading,
         activeJobs,
         setActiveSessionId
     });
-    
+
     const { handleImageEditMessage } = useImageEditSender({
         updateAndPersistSessions,
         setSessionLoading,
@@ -94,7 +96,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const effectiveEditingId = overrideOptions?.editingId ?? editingMessageId;
         const isContinueMode = overrideOptions?.isContinueMode ?? false;
         const isFastMode = overrideOptions?.isFastMode ?? false;
-        
+
         const sessionToUpdate = currentChatSettings;
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
@@ -106,30 +108,30 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (!textToUse.trim() && !isTtsModel && !isImagenModel && !isContinueMode && filesToUse.filter(f => f.uploadState === 'active').length === 0) return;
         if ((isTtsModel || isImagenModel || isImageEditModel || isGemini3Image) && !textToUse.trim()) return;
-        if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
+        if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error))) {
             logService.warn("Send message blocked: files are still processing.");
-            setAppFileError("Wait for files to finish processing."); 
-            return; 
+            setAppFileError("Wait for files to finish processing.");
+            return;
         }
-        
+
         setAppFileError(null);
 
-        if (!activeModelId) { 
+        if (!activeModelId) {
             logService.error("Send message failed: No model selected.");
             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() };
             const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], "Error");
             updateAndPersistSessions(p => [newSession, ...p]);
             setActiveSessionId(newSession.id);
-            return; 
+            return;
         }
 
         const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
-             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
-             const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], "API Key Error");
-             updateAndPersistSessions(p => [newSession, ...p]);
-             setActiveSessionId(newSession.id);
+            const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
+            const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], "API Key Error");
+            updateAndPersistSessions(p => [newSession, ...p]);
+            setActiveSessionId(newSession.id);
             return;
         }
         const { key: keyToUse, isNewKey } = keyResult;
@@ -137,7 +139,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         const newAbortController = new AbortController();
         const generationId = generateUniqueId();
-        
+
         if (appSettings.isAutoScrollOnSendEnabled) {
             userScrolledUp.current = false;
         }
@@ -148,7 +150,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
             if (editingMessageId) setEditingMessageId(null);
             return;
         }
-        
+
         if (isImageEditModel || (isGemini3Image && appSettings.generateQuadImages)) {
             const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
             const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
@@ -156,7 +158,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
             if (editingMessageId) setEditingMessageId(null);
             return;
         }
-        
+
         await sendStandardMessage(textToUse, filesToUse, effectiveEditingId, activeModelId, isContinueMode, isFastMode);
 
     }, [

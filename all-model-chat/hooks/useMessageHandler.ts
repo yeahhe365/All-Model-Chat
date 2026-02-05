@@ -1,6 +1,6 @@
 
 import React, { Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, InputCommand } from '../types';
+import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession, InputCommand, ProjectContext } from '../types';
 import { useMessageSender } from './useMessageSender';
 import { useMessageActions } from './chat/messages/useMessageActions';
 import { useTextToSpeechHandler } from './chat/messages/useTextToSpeechHandler';
@@ -33,15 +33,17 @@ interface MessageHandlerProps {
     scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
-    setSessionLoading: (sessionId: string, isLoading: boolean) => void; 
+    setSessionLoading: (sessionId: string, isLoading: boolean) => void;
+    /** Active project context for agentic folder access */
+    projectContext?: ProjectContext | null;
 }
 
 export const useMessageHandler = (props: MessageHandlerProps) => {
-    const { 
-        messages, 
-        isLoading, 
-        activeSessionId, 
-        editingMessageId, 
+    const {
+        messages,
+        isLoading,
+        activeSessionId,
+        editingMessageId,
         activeJobs,
         setCommandedInput,
         setSelectedFiles,
@@ -53,9 +55,9 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setLoadingSessionIds,
         setSessionLoading
     } = props;
-    
+
     const { handleSendMessage, handleGenerateCanvas } = useMessageSender(props);
-    
+
     const messageActions = useMessageActions({
         messages,
         isLoading,
@@ -73,7 +75,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setLoadingSessionIds,
         setSessionLoading
     });
-    
+
     const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler(props);
 
     return {

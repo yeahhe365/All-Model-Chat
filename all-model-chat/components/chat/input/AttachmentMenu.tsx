@@ -37,7 +37,9 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
     
     const { window: targetWindow } = useWindowContext();
 
-    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
+    useClickOutside(containerRef, () => {
+        setIsOpen(false);
+    }, isOpen);
 
     // Prevent click-outside logic from firing when interacting with the portaled menu
     useEffect(() => {

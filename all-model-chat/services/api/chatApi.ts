@@ -4,6 +4,24 @@ import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
 
+const normalizeThoughtSignaturePart = (part: Part): Part => {
+    const anyPart = part as any;
+    const thoughtSignature =
+        anyPart.thoughtSignature ||
+        anyPart.thought_signature ||
+        anyPart.functionCall?.thoughtSignature ||
+        anyPart.functionCall?.thought_signature;
+
+    if (!thoughtSignature) return part;
+
+    return {
+        ...part,
+        thoughtSignature,
+        // Preserve snake_case to maximize compatibility with Vertex API serialization
+        thought_signature: thoughtSignature,
+    } as any;
+};
+
 /**
  * Shared helper to parse GenAI responses.
  * Extracts parts, separates thoughts, and merges metadata/citations from tool calls.
@@ -26,11 +44,11 @@ const processResponse = (response: GenerateContentResponse) => {
     if (responseParts.length === 0 && response.text) {
         responseParts.push({ text: response.text });
     }
-    
+
     const candidate = response.candidates?.[0];
     const groundingMetadata = candidate?.groundingMetadata;
     const finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
-    
+
     // @ts-ignore - Handle potential snake_case from raw API responses
     const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
 
@@ -68,25 +86,35 @@ export const sendStatelessMessageStreamApi = async (
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any, functionCallPart?: Part) => void,
     role: 'user' | 'model' = 'user'
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContentStream for ${modelId} (Role: ${role})`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
     let finalUrlContextMetadata: any = null;
+    let detectedFunctionCallPart: Part | undefined = undefined;
+    let latestToolCallFunction: any = undefined;
+    let latestToolCallSignature: string | undefined = undefined;
+    let latestThoughtSignatureFromParts: string | undefined = undefined;
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
-        
+
         if (abortSignal.aborted) {
             logService.warn("Streaming aborted by signal before start.");
             return;
         }
 
+        // Only append parts if non-empty; otherwise use history directly
+        // This handles function call continuation where all context is already in history
+        const contents = parts.length > 0
+            ? [...history, { role: role, parts }]
+            : history;
+
         const result = await ai.models.generateContentStream({
             model: modelId,
-            contents: [...history, { role: role, parts }],
+            contents,
             config: config
         });
 
@@ -99,13 +127,13 @@ export const sendStatelessMessageStreamApi = async (
                 finalUsageMetadata = chunkResponse.usageMetadata;
             }
             const candidate = chunkResponse.candidates?.[0];
-            
+
             if (candidate) {
                 const metadataFromChunk = candidate.groundingMetadata;
                 if (metadataFromChunk) {
                     finalGroundingMetadata = metadataFromChunk;
                 }
-                
+
                 // @ts-ignore
                 const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
                 if (urlMetadata) {
@@ -125,14 +153,39 @@ export const sendStatelessMessageStreamApi = async (
                                 }
                             }
                         }
+
+                        // Capture tool call + potential thought signature for fallback
+                        if (toolCall.functionCall) {
+                            latestToolCallFunction = toolCall.functionCall;
+                            const anyToolCall = toolCall as any;
+                            latestToolCallSignature =
+                                anyToolCall.thoughtSignature ||
+                                anyToolCall.thought_signature ||
+                                anyToolCall.functionCall?.thoughtSignature ||
+                                anyToolCall.functionCall?.thought_signature;
+                        }
                     }
                 }
-                
+
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
+                        const anyPart = part as any;
 
-                        if (pAsThoughtSupporting.thought) {
+                        const partSignature = anyPart.thoughtSignature || anyPart.thought_signature;
+                        if (partSignature) {
+                            latestThoughtSignatureFromParts = partSignature;
+                        }
+
+                        // Check for function call (agentic tool execution)
+                        // IMPORTANT: Preserve the ENTIRE Part including thoughtSignature
+                        if (anyPart.functionCall) {
+                            detectedFunctionCallPart = normalizeThoughtSignaturePart(part); // Ensure thoughtSignature is preserved
+                            logService.info(`Function call detected: ${anyPart.functionCall.name}`, {
+                                args: anyPart.functionCall.args,
+                                hasThoughtSignature: !!(anyPart.thoughtSignature || anyPart.thought_signature)
+                            });
+                        } else if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
                         } else {
                             onPart(part);
@@ -145,8 +198,30 @@ export const sendStatelessMessageStreamApi = async (
         logService.error("Error sending message (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata });
-        onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata);
+        // Fallback: tool call may appear only in toolCalls; ensure we return a Part with thoughtSignature if possible
+        if (!detectedFunctionCallPart && latestToolCallFunction) {
+            detectedFunctionCallPart = {
+                functionCall: latestToolCallFunction,
+                ...(latestToolCallSignature || latestThoughtSignatureFromParts
+                    ? {
+                        thoughtSignature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                        thought_signature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                    }
+                    : {})
+            } as any;
+        } else if (detectedFunctionCallPart && (latestToolCallSignature || latestThoughtSignatureFromParts)) {
+            const anyPart = detectedFunctionCallPart as any;
+            if (!anyPart.thoughtSignature && !anyPart.thought_signature) {
+                detectedFunctionCallPart = {
+                    ...detectedFunctionCallPart,
+                    thoughtSignature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                    thought_signature: latestToolCallSignature || latestThoughtSignatureFromParts,
+                } as any;
+            }
+        }
+
+        logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata, hasFunctionCall: !!detectedFunctionCallPart });
+        onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata, detectedFunctionCallPart);
     }
 };
 
@@ -161,7 +236,7 @@ export const sendStatelessMessageNonStreamApi = async (
     onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
 ): Promise<void> => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
-    
+
     try {
         const ai = await getConfiguredApiClient(apiKey);
 

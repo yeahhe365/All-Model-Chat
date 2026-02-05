@@ -7,7 +7,7 @@ export const dataSettings = {
     settingsClearHistory_confirm: { en: 'Are you sure you want to delete all chat history and groups? This action cannot be undone.', zh: '您确定要删除所有聊天记录和分组吗？此操作无法撤销。' },
     settingsClearCache: { en: 'Clear All App Data', zh: '清除所有应用数据' },
     settingsClearCache_aria: { en: 'Clear all application settings and data', zh: '清除所有应用设置和数据' },
-    settingsClearCache_confirm: { en: "Are you sure you want to clear all application data?\n\nThis will remove:\n- Saved settings\n- Chat history\n- Preloaded scenarios\n\nThis action cannot be undone.", zh: '您确定要清除所有应用数据吗？\n\n这将删除：\n- 已保存的设置\n- 聊天记录\n- 预加载的场景\n\n此操作无法撤销。'},
+    settingsClearCache_confirm: { en: "Are you sure you want to clear all application data?\n\nThis will remove:\n- Saved settings\n- Chat history\n- Preloaded scenarios\n\nThis action cannot be undone.", zh: '您确定要清除所有应用数据吗？\n\n这将删除：\n- 已保存的设置\n- 聊天记录\n- 预加载的场景\n\n此操作无法撤销。' },
     settingsInstallApp: { en: 'Install App', zh: '安装应用' },
     settingsInstallApp_aria: { en: 'Install Progressive Web App', zh: '安装渐进式网络应用' },
     settingsInstallApp_available_title: { en: 'Install Progressive Web App', zh: '安装渐进式网络应用' },
@@ -31,4 +31,8 @@ export const dataSettings = {
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
     settingsClearLogs: { en: 'Clear Logs', zh: '清空日志' },
     settingsClearLogs_confirm: { en: 'Are you sure you want to clear all system logs?', zh: '您确定要清空所有系统日志吗？' },
+    settingsUnsavedChanges: { en: 'Unsaved Changes', zh: '未保存的更改' },
+    settingsUnsavedChanges_confirm: { en: 'You have unsaved changes. Do you want to save them before closing?', zh: '您有未保存的更改。关闭前是否要保存？' },
+    settingsSaveChanges: { en: 'Save Changes', zh: '保存更改' },
+    settingsDiscardChanges: { en: 'Discard', zh: '放弃更改' },
 };

@@ -1,20 +1,22 @@
 
 import { fileToString } from './domainUtils';
 import JSZip from 'jszip';
+import { ProjectContext, ProjectContextFile, FileTreeNode } from '../types/chat';
 
 const IGNORED_EXTENSIONS = new Set([
-  '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp',
-  '.mp3', '.wav', '.ogg', '.mp4', '.mov', '.avi', '.webm',
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.zip', '.rar', '.7z', '.tar', '.gz',
-  '.exe', '.dll', '.so', '.o', '.a', '.obj',
-  '.class', '.jar', '.pyc', '.pyd',
-  '.ds_store',
-  '.eot', '.ttf', '.woff', '.woff2',
+    '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp',
+    '.mp3', '.wav', '.ogg', '.mp4', '.mov', '.avi', '.webm',
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+    '.zip', '.rar', '.7z', '.tar', '.gz',
+    '.exe', '.dll', '.so', '.o', '.a', '.obj',
+    '.class', '.jar', '.pyc', '.pyd',
+    '.ds_store',
+    '.eot', '.ttf', '.woff', '.woff2',
 ]);
 
 const IGNORED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.vscode', '.idea', 'dist', 'build', 'out', 'target', 'coverage', '.next', '.nuxt']);
 
+// Internal node type for legacy tree building (kept for backward compat)
 interface FileNode {
     name: string;
     children: FileNode[];
@@ -26,6 +28,13 @@ interface ProcessingEntry {
     // Helper to retrieve content only if the file passes filtering
     getContent: () => Promise<string>;
     size?: number;
+}
+
+// Entry type for agentic mode (stores File ref instead of content getter)
+interface AgenticEntry {
+    path: string;
+    file: File;
+    size: number;
 }
 
 // Check if a path should be ignored based on directory or extension
@@ -86,9 +95,9 @@ const processFileEntries = async (entries: ProcessingEntry[], rootName: string):
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
             currentPath = parts.slice(0, i + 1).join('/');
-            
+
             let currentNode = nodeMap.get(currentPath);
-            
+
             if (!currentNode) {
                 const isDir = i < parts.length - 1;
                 currentNode = {
@@ -127,7 +136,7 @@ const processFileEntries = async (entries: ProcessingEntry[], rootName: string):
     }
 
     const structureString = buildASCIITree(effectiveRoots, effectiveRootName);
-    
+
     let output = "File Structure:\n";
     output += structureString;
     output += "\n\nFile Contents:\n";
@@ -150,21 +159,21 @@ const processFileEntries = async (entries: ProcessingEntry[], rootName: string):
 
 export const generateFolderContext = async (files: FileList | File[] | { file: File, path: string }[]): Promise<File> => {
     const items = Array.isArray(files) ? files : Array.from(files);
-    
+
     const entries: ProcessingEntry[] = items.map(item => {
         let file: File;
         let path: string;
 
         if ('file' in item && 'path' in item && typeof item.path === 'string') {
-             // Custom object from Drag & Drop hook
-             file = item.file;
-             path = item.path;
+            // Custom object from Drag & Drop hook
+            file = item.file;
+            path = item.path;
         } else {
-             // Standard File object
-             file = item as File;
-             path = (file as any).webkitRelativePath || file.name;
+            // Standard File object
+            file = item as File;
+            path = (file as any).webkitRelativePath || file.name;
         }
-        
+
         return {
             path,
             size: file.size,
@@ -178,7 +187,7 @@ export const generateFolderContext = async (files: FileList | File[] | { file: F
 export const generateZipContext = async (zipFile: File): Promise<File> => {
     const zip = await JSZip.loadAsync(zipFile);
     const zipObjects = Object.values(zip.files) as JSZip.JSZipObject[];
-    
+
     const entries: ProcessingEntry[] = zipObjects
         .filter(obj => !obj.dir) // Filter out directory entries
         .map(obj => ({
@@ -186,7 +195,7 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
             getContent: async () => {
                 // Read as Uint8Array first to detect binary content
                 const data = await obj.async('uint8array');
-                
+
                 // Heuristic: Check for null bytes (0x00) in the first 8KB to detect binary files
                 const checkLimit = Math.min(data.length, 8000);
                 for (let i = 0; i < checkLimit; i++) {
@@ -194,7 +203,7 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
                         return `[Binary content skipped for file: ${obj.name}]`;
                     }
                 }
-                
+
                 // If safe, decode as UTF-8 text
                 return new TextDecoder().decode(data);
             }
@@ -202,4 +211,202 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
 
     let rootName = zipFile.name.replace(/\.zip$/i, '');
     return processFileEntries(entries, rootName);
+};
+
+/**
+ * Build a ProjectContext from a ZIP file (agentic mode).
+ * This avoids converting content into a single text file and instead
+ * creates file references for on-demand reading via read_file.
+ */
+export const buildProjectContextFromZip = async (zipFile: File): Promise<ProjectContext> => {
+    const zip = await JSZip.loadAsync(zipFile);
+    const zipObjects = Object.values(zip.files).filter(obj => !obj.dir);
+
+    const entries: { file: File, path: string }[] = [];
+
+    for (const obj of zipObjects) {
+        const blob = await obj.async('blob');
+        const filename = obj.name.split('/').pop() || obj.name;
+        const file = new File([blob], filename, { type: blob.type || '' });
+        entries.push({ file, path: obj.name });
+    }
+
+    const context = buildProjectContext(entries);
+
+    // If no explicit root folder exists, use zip filename as root
+    if (context.rootName === 'Project') {
+        const zipRootName = zipFile.name.replace(/\.zip$/i, '') || 'Project';
+        if (zipRootName !== context.rootName) {
+            context.rootName = zipRootName;
+            const lines = context.fileTree.split('\n');
+            context.fileTree = lines.length > 1
+                ? `${zipRootName}\n${lines.slice(1).join('\n')}`
+                : zipRootName;
+        }
+    }
+
+    return context;
+};
+
+// ============ Agentic Folder Access Functions ============
+
+/**
+ * Build a ProjectContext for agentic file access.
+ * Unlike generateFolderContext, this does NOT read file contents.
+ * It only builds the tree structure and stores file references for on-demand reading.
+ */
+export const buildProjectContext = (files: { file: File, path: string }[]): ProjectContext => {
+    const fileMap = new Map<string, ProjectContextFile>();
+    const nodeMap = new Map<string, FileTreeNode>();
+    const roots: FileTreeNode[] = [];
+
+    let totalSize = 0;
+    let totalFiles = 0;
+
+    // Max file size for text extraction (2MB)
+    const MAX_TEXT_SIZE = 2 * 1024 * 1024;
+
+    for (const { file, path } of files) {
+        // Apply same filtering as legacy mode
+        if (shouldIgnore(path)) continue;
+        if (file.size > MAX_TEXT_SIZE) continue;
+
+        totalSize += file.size;
+        totalFiles++;
+
+        // Store file reference for later reading
+        fileMap.set(path, {
+            path,
+            size: file.size,
+            fileRef: file,
+        });
+
+        // Build tree structure
+        const parts = path.split('/').filter(p => p);
+        let currentPath = '';
+        let parentNode: FileTreeNode | undefined = undefined;
+
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            currentPath = parts.slice(0, i + 1).join('/');
+
+            let currentNode = nodeMap.get(currentPath);
+
+            if (!currentNode) {
+                const isDir = i < parts.length - 1;
+                currentNode = {
+                    name: part,
+                    path: currentPath,
+                    isDirectory: isDir,
+                    children: isDir ? [] : undefined,
+                    size: isDir ? undefined : file.size,
+                };
+                nodeMap.set(currentPath, currentNode);
+
+                if (parentNode && parentNode.children) {
+                    parentNode.children.push(currentNode);
+                } else if (!parentNode) {
+                    roots.push(currentNode);
+                }
+            }
+            parentNode = currentNode;
+        }
+    }
+
+    // Determine effective root
+    let effectiveRootName = 'Project';
+    let effectiveRoots = roots;
+
+    if (roots.length === 1 && roots[0].isDirectory) {
+        effectiveRootName = roots[0].name;
+        effectiveRoots = roots[0].children || [];
+    }
+
+    // Sort tree nodes (directories first, then alphabetically)
+    const sortNodes = (nodes: FileTreeNode[]) => {
+        nodes.sort((a, b) => {
+            if (a.isDirectory === b.isDirectory) return a.name.localeCompare(b.name);
+            return a.isDirectory ? -1 : 1;
+        });
+        nodes.forEach(node => {
+            if (node.children) sortNodes(node.children);
+        });
+    };
+    sortNodes(effectiveRoots);
+
+    // Build ASCII tree for system prompt injection
+    const buildTree = (nodes: FileTreeNode[], prefix: string): string => {
+        let result = '';
+        nodes.forEach((node, index) => {
+            const isLast = index === nodes.length - 1;
+            const connector = isLast ? '└── ' : '├── ';
+            result += `${prefix}${connector}${node.name}\n`;
+            if (node.isDirectory && node.children && node.children.length > 0) {
+                const newPrefix = prefix + (isLast ? '    ' : '│   ');
+                result += buildTree(node.children, newPrefix);
+            }
+        });
+        return result;
+    };
+
+    const fileTree = `${effectiveRootName}\n${buildTree(effectiveRoots, '')}`;
+
+    return {
+        rootName: effectiveRootName,
+        fileTree,
+        treeNodes: effectiveRoots,
+        fileMap,
+        totalFiles,
+        totalSize,
+        isPersistent: false,
+        createdAt: new Date(),
+    };
+};
+
+/**
+ * Read a single file from a ProjectContext.
+ * This is the function called when AI uses the read_file tool.
+ * Handles path normalization to match fileMap keys.
+ */
+export const readProjectFile = async (context: ProjectContext, filepath: string): Promise<string> => {
+    // Normalize: remove leading/trailing slashes and './'
+    let normalizedPath = filepath.replace(/^\.?\/*/, '').replace(/\/*$/, '');
+
+    // Try exact match first
+    let fileEntry = context.fileMap.get(normalizedPath);
+
+    // If not found and path starts with rootName, try without it
+    if (!fileEntry && normalizedPath.startsWith(context.rootName + '/')) {
+        const withoutRoot = normalizedPath.slice(context.rootName.length + 1);
+        fileEntry = context.fileMap.get(withoutRoot);
+    }
+
+    // If still not found, try adding rootName prefix (reverse case)
+    if (!fileEntry) {
+        const withRoot = `${context.rootName}/${normalizedPath}`;
+        fileEntry = context.fileMap.get(withRoot);
+    }
+
+    // If still not found, try partial path matching (last segments)
+    if (!fileEntry) {
+        const pathParts = normalizedPath.split('/');
+        for (const [key, value] of context.fileMap.entries()) {
+            if (key.endsWith(normalizedPath) || key.endsWith('/' + pathParts.slice(-2).join('/'))) {
+                fileEntry = value;
+                break;
+            }
+        }
+    }
+
+    if (!fileEntry) {
+        // Provide helpful error with available paths
+        const availablePaths = Array.from(context.fileMap.keys()).slice(0, 10);
+        throw new Error(`File not found: ${filepath}. Available paths include: ${availablePaths.join(', ')}`);
+    }
+
+    try {
+        return await fileToString(fileEntry.fileRef);
+    } catch (e) {
+        throw new Error(`Failed to read file: ${filepath}`);
+    }
 };

@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect, useMemo, useCallback } from 'react';
 import { AppSettings } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { translations, logService, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget } from '../../utils/appUtils';
@@ -7,6 +7,9 @@ import { MediaResolution } from '../../types/settings';
 import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
 
 export type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'shortcuts' | 'about';
+
+// Tabs that require confirmation to save
+const CONFIRM_REQUIRED_TABS: SettingsTab[] = ['model', 'interface', 'account'];
 
 const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 
@@ -45,6 +48,25 @@ export const useSettingsLogic = ({
         }
         return 'model';
     });
+
+    // Pending settings state - stores uncommitted changes
+    const [pendingSettings, setPendingSettings] = useState<AppSettings>(currentSettings);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    // Sync pending settings when currentSettings changes (e.g., from external updates)
+    useEffect(() => {
+        if (!hasUnsavedChanges) {
+            setPendingSettings(currentSettings);
+        }
+    }, [currentSettings, hasUnsavedChanges]);
+
+    // Reset pending state when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setPendingSettings(currentSettings);
+            setHasUnsavedChanges(false);
+        }
+    }, [isOpen, currentSettings]);
 
     const [confirmConfig, setConfirmConfig] = useState<{
         isOpen: boolean;
@@ -97,7 +119,11 @@ export const useSettingsLogic = ({
             isOpen: true,
             title: t('settingsReset'),
             message: t('settingsReset_confirm'),
-            onConfirm: () => onSave(DEFAULT_APP_SETTINGS),
+            onConfirm: () => {
+                onSave(DEFAULT_APP_SETTINGS);
+                setPendingSettings(DEFAULT_APP_SETTINGS);
+                setHasUnsavedChanges(false);
+            },
             isDanger: true,
             confirmLabel: t('settingsReset')
         });
@@ -147,37 +173,107 @@ export const useSettingsLogic = ({
         });
     };
 
+    // Check if current tab requires confirmation
+    const requiresConfirmation = CONFIRM_REQUIRED_TABS.includes(activeTab);
+
+    // Update pending settings (for tabs that require confirmation)
     const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-        onSave({ ...currentSettings, [key]: value });
+        if (requiresConfirmation) {
+            // Update pending settings, not actual settings
+            setPendingSettings(prev => ({ ...prev, [key]: value }));
+            setHasUnsavedChanges(true);
+        } else {
+            // For other tabs (data, shortcuts, about), save immediately
+            onSave({ ...currentSettings, [key]: value });
+        }
     };
 
+    // Save pending changes
+    const savePendingChanges = useCallback(() => {
+        onSave(pendingSettings);
+
+        // Sync thinking settings to cache
+        if (pendingSettings.modelId && (
+            pendingSettings.thinkingBudget !== currentSettings.thinkingBudget ||
+            pendingSettings.thinkingLevel !== currentSettings.thinkingLevel
+        )) {
+            const currentCache = getCachedModelSettings(pendingSettings.modelId) || {};
+            cacheModelSettings(pendingSettings.modelId, {
+                ...currentCache,
+                thinkingBudget: pendingSettings.thinkingBudget,
+                thinkingLevel: pendingSettings.thinkingLevel
+            });
+        }
+
+        setHasUnsavedChanges(false);
+    }, [pendingSettings, currentSettings, onSave]);
+
+    // Discard pending changes
+    const discardPendingChanges = useCallback(() => {
+        setPendingSettings(currentSettings);
+        setHasUnsavedChanges(false);
+    }, [currentSettings]);
+
+    // Handle close with unsaved changes warning
+    const handleClose = useCallback(() => {
+        if (hasUnsavedChanges) {
+            setConfirmConfig({
+                isOpen: true,
+                title: t('settingsUnsavedChanges') || 'Unsaved Changes',
+                message: t('settingsUnsavedChanges_confirm') || 'You have unsaved changes. Do you want to save them before closing?',
+                onConfirm: () => {
+                    savePendingChanges();
+                    onClose();
+                },
+                isDanger: false,
+                confirmLabel: t('save') || 'Save'
+            });
+        } else {
+            onClose();
+        }
+    }, [hasUnsavedChanges, savePendingChanges, onClose, t]);
+
+    // Handle discard and close
+    const handleDiscardAndClose = useCallback(() => {
+        discardPendingChanges();
+        onClose();
+    }, [discardPendingChanges, onClose]);
+
     const handleModelChange = (newModelId: string) => {
-        // 1. Cache current model settings
-        if (currentSettings.modelId) {
-            cacheModelSettings(currentSettings.modelId, {
-                mediaResolution: currentSettings.mediaResolution,
-                thinkingBudget: currentSettings.thinkingBudget,
-                thinkingLevel: currentSettings.thinkingLevel
+        // 1. Cache current model settings (from pending if we have unsaved changes)
+        const settingsToCache = hasUnsavedChanges ? pendingSettings : currentSettings;
+        if (settingsToCache.modelId) {
+            cacheModelSettings(settingsToCache.modelId, {
+                mediaResolution: settingsToCache.mediaResolution,
+                thinkingBudget: settingsToCache.thinkingBudget,
+                thinkingLevel: settingsToCache.thinkingLevel
             });
         }
 
         // 2. Load cached settings for new model
         const cached = getCachedModelSettings(newModelId);
 
-        let newThinkingBudget = cached?.thinkingBudget ?? currentSettings.thinkingBudget;
-        const newThinkingLevel = cached?.thinkingLevel ?? currentSettings.thinkingLevel;
-        const newMediaResolution = cached?.mediaResolution ?? currentSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+        let newThinkingBudget = cached?.thinkingBudget ?? settingsToCache.thinkingBudget;
+        const newThinkingLevel = cached?.thinkingLevel ?? settingsToCache.thinkingLevel;
+        const newMediaResolution = cached?.mediaResolution ?? settingsToCache.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
         // 3. Apply defaults/clamping logic using shared helper
         newThinkingBudget = adjustThinkingBudget(newModelId, newThinkingBudget);
 
-        onSave({
-            ...currentSettings,
+        const newSettings = {
+            ...settingsToCache,
             modelId: newModelId,
             thinkingBudget: newThinkingBudget,
             thinkingLevel: newThinkingLevel,
             mediaResolution: newMediaResolution,
-        });
+        };
+
+        if (requiresConfirmation) {
+            setPendingSettings(newSettings);
+            setHasUnsavedChanges(true);
+        } else {
+            onSave(newSettings);
+        }
     };
 
     const tabs = useMemo(() => [
@@ -205,6 +301,14 @@ export const useSettingsLogic = ({
         handleRequestImportHistory,
         updateSetting,
         handleModelChange,
-        tabs
+        tabs,
+        // New exports for pending state management
+        pendingSettings,
+        hasUnsavedChanges,
+        savePendingChanges,
+        discardPendingChanges,
+        handleClose,
+        handleDiscardAndClose,
+        requiresConfirmation
     };
 };

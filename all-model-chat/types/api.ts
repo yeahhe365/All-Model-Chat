@@ -4,15 +4,15 @@ import { ModelOption } from './settings';
 
 export interface GeminiService {
   uploadFile: (
-    apiKey: string, 
-    file: File, 
-    mimeType: string, 
-    displayName: string, 
+    apiKey: string,
+    file: File,
+    mimeType: string,
+    displayName: string,
     signal: AbortSignal,
     onProgress?: (loaded: number, total: number) => void
   ) => Promise<GeminiFile>;
   getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
-  
+
   // Stateless Message Sending
   sendMessageStream: (
     apiKey: string,
@@ -24,7 +24,7 @@ export interface GeminiService {
     onPart: (part: Part) => void,
     onThoughtChunk: (chunk: string) => void,
     onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
+    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any, functionCallPart?: Part) => void,
     role?: 'user' | 'model'
   ) => Promise<void>;
 
@@ -50,5 +50,5 @@ export interface GeminiService {
 }
 
 export interface ThoughtSupportingPart extends Part {
-    thought?: any;
+  thought?: any;
 }
