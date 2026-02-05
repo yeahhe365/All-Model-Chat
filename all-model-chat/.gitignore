@@ -15,6 +15,7 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+.github/
 .idea
 .DS_Store
 *.suo
@@ -29,6 +30,8 @@ stats.html
 
 # Temporary folders
 chat-answer/
+.agent/
+chat/
 
 # Environment files
 .env
