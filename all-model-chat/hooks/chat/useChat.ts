@@ -259,6 +259,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         // Agentic folder access
         projectContext,
         projectContextReadState,
+        handleProjectContextCreated,
         handleClearProjectContext,
     };
 };

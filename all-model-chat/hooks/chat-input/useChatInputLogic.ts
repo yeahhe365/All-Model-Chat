@@ -16,7 +16,7 @@ import { useLiveAPI } from '../useLiveAPI';
 export const useChatInputLogic = (props: ChatInputProps) => {
     const {
         appSettings, currentChatSettings, activeSessionId, isEditing,
-        onProcessFiles, t, commandedInput, onSendMessage, onMessageSent, 
+        onProcessFiles, onProjectContextCreated, t, commandedInput, onSendMessage, onMessageSent, 
         setEditingMessageId, onTranscribeAudio, onUpdateMessageContent,
         editingMessageId, editMode, onCancelEdit, onStopGenerating,
         onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, 
@@ -138,7 +138,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError: props.setAppFileError,
         ...slashCommandState,
         handleSlashInputChange: slashCommandState.handleInputChange,
-        onProcessFiles, onAddFileById: props.onAddFileById, 
+        onProcessFiles, onProjectContextCreated, onAddFileById: props.onAddFileById, 
         onSendMessage: handleSmartSendMessage,
         onMessageSent, onUpdateMessageContent,
         onStopGenerating, onCancelEdit, onEditLastUserMessage,

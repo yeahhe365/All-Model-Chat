@@ -139,6 +139,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     // Agentic folder access
     projectContext: chatState.projectContext,
     projectContextReadState: chatState.projectContextReadState,
+    onProjectContextCreated: chatState.handleProjectContextCreated,
     onClearProjectContext: chatState.handleClearProjectContext,
   }), [
     chatState, uiState, appSettings, currentTheme, language, t, sessionTitle,

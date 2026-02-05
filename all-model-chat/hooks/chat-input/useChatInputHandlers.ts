@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings } from '../../types';
+import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings, ProjectContext } from '../../types';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
 import { useFileSelectionHandlers } from '../chat-input-handlers/useFileSelectionHandlers';
 import { useInputAndPasteHandlers } from '../chat-input-handlers/useInputAndPasteHandlers';
@@ -73,6 +73,7 @@ interface UseChatInputHandlersProps {
     
     // Core Actions
     onProcessFiles: (files: FileList | File[]) => Promise<void>;
+    onProjectContextCreated?: (context: ProjectContext) => void;
     onAddFileById: (fileId: string) => Promise<void>;
     onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
     onMessageSent: () => void;
@@ -93,6 +94,7 @@ export const useChatInputHandlers = (props: UseChatInputHandlersProps) => {
     // 1. File Selection Logic
     const { handleFileChange, handleFolderChange, handleZipChange } = useFileSelectionHandlers({
         onProcessFiles: props.onProcessFiles,
+        onProjectContextCreated: props.onProjectContextCreated,
         setSelectedFiles: props.setSelectedFiles,
         setAppFileError: props.setAppFileError,
         setIsConverting: props.setIsConverting,

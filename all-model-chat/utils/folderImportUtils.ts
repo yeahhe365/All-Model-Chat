@@ -213,6 +213,41 @@ export const generateZipContext = async (zipFile: File): Promise<File> => {
     return processFileEntries(entries, rootName);
 };
 
+/**
+ * Build a ProjectContext from a ZIP file (agentic mode).
+ * This avoids converting content into a single text file and instead
+ * creates file references for on-demand reading via read_file.
+ */
+export const buildProjectContextFromZip = async (zipFile: File): Promise<ProjectContext> => {
+    const zip = await JSZip.loadAsync(zipFile);
+    const zipObjects = Object.values(zip.files).filter(obj => !obj.dir);
+
+    const entries: { file: File, path: string }[] = [];
+
+    for (const obj of zipObjects) {
+        const blob = await obj.async('blob');
+        const filename = obj.name.split('/').pop() || obj.name;
+        const file = new File([blob], filename, { type: blob.type || '' });
+        entries.push({ file, path: obj.name });
+    }
+
+    const context = buildProjectContext(entries);
+
+    // If no explicit root folder exists, use zip filename as root
+    if (context.rootName === 'Project') {
+        const zipRootName = zipFile.name.replace(/\.zip$/i, '') || 'Project';
+        if (zipRootName !== context.rootName) {
+            context.rootName = zipRootName;
+            const lines = context.fileTree.split('\n');
+            context.fileTree = lines.length > 1
+                ? `${zipRootName}\n${lines.slice(1).join('\n')}`
+                : zipRootName;
+        }
+    }
+
+    return context;
+};
+
 // ============ Agentic Folder Access Functions ============
 
 /**

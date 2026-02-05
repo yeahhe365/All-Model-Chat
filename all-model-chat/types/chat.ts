@@ -267,6 +267,7 @@ export interface ChatInputProps {
   onStopGenerating: () => void;
   onCancelEdit: () => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;
+  onProjectContextCreated?: (context: ProjectContext) => void;
   onAddFileById: (fileId: string) => Promise<void>;
   onCancelUpload: (fileId: string) => void;
   onTranscribeAudio: (file: File) => Promise<string | null>;

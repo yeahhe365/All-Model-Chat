@@ -36,7 +36,9 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
     
     const { window: targetWindow } = useWindowContext();
 
-    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
+    useClickOutside(containerRef, () => {
+        setIsOpen(false);
+    }, isOpen);
 
     // Dynamic positioning to handle PiP/Small windows
     useLayoutEffect(() => {
