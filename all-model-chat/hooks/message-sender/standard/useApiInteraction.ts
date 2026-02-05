@@ -153,11 +153,29 @@ export const useApiInteraction = ({
             urlContextMetadata: any,
             functionCallPart?: any // Part object containing functionCall and thoughtSignature
         ) => {
-            const functionCall = functionCallPart?.functionCall;
+            const normalizedFunctionCallPart = (() => {
+                if (!functionCallPart) return functionCallPart;
+                const anyPart = functionCallPart as any;
+                const thoughtSignature =
+                    anyPart.thoughtSignature ||
+                    anyPart.thought_signature ||
+                    anyPart.functionCall?.thoughtSignature ||
+                    anyPart.functionCall?.thought_signature;
+
+                if (!thoughtSignature) return functionCallPart;
+
+                return {
+                    ...functionCallPart,
+                    thoughtSignature,
+                    thought_signature: thoughtSignature,
+                } as any;
+            })();
+
+            const functionCall = normalizedFunctionCallPart?.functionCall;
             if (functionCall && functionCall.name === 'read_file' && projectContext) {
                 logService.info(`Executing function call: ${functionCall.name}`, {
                     args: functionCall.args,
-                    hasThoughtSignature: !!functionCallPart.thoughtSignature
+                    hasThoughtSignature: !!(normalizedFunctionCallPart?.thoughtSignature || normalizedFunctionCallPart?.thought_signature)
                 });
 
                 try {
@@ -177,7 +195,7 @@ export const useApiInteraction = ({
                         { role: 'user' as const, parts: finalParts },
                         {
                             role: 'model' as const,
-                            parts: [functionCallPart] // Use complete Part with thoughtSignature
+                            parts: [normalizedFunctionCallPart] // Use complete Part with thoughtSignature
                         },
                         {
                             role: 'user' as const,

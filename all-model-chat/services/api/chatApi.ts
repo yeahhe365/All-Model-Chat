@@ -4,6 +4,24 @@ import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
 
+const normalizeThoughtSignaturePart = (part: Part): Part => {
+    const anyPart = part as any;
+    const thoughtSignature =
+        anyPart.thoughtSignature ||
+        anyPart.thought_signature ||
+        anyPart.functionCall?.thoughtSignature ||
+        anyPart.functionCall?.thought_signature;
+
+    if (!thoughtSignature) return part;
+
+    return {
+        ...part,
+        thoughtSignature,
+        // Preserve snake_case to maximize compatibility with Vertex API serialization
+        thought_signature: thoughtSignature,
+    } as any;
+};
+
 /**
  * Shared helper to parse GenAI responses.
  * Extracts parts, separates thoughts, and merges metadata/citations from tool calls.
@@ -143,10 +161,10 @@ export const sendStatelessMessageStreamApi = async (
                         // Check for function call (agentic tool execution)
                         // IMPORTANT: Preserve the ENTIRE Part including thoughtSignature
                         if (anyPart.functionCall) {
-                            detectedFunctionCallPart = part; // Keep full Part with thoughtSignature
+                            detectedFunctionCallPart = normalizeThoughtSignaturePart(part); // Ensure thoughtSignature is preserved
                             logService.info(`Function call detected: ${anyPart.functionCall.name}`, {
                                 args: anyPart.functionCall.args,
-                                hasThoughtSignature: !!anyPart.thoughtSignature
+                                hasThoughtSignature: !!(anyPart.thoughtSignature || anyPart.thought_signature)
                             });
                         } else if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
