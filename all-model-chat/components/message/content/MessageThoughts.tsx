@@ -8,6 +8,7 @@ import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { ThinkingHeader } from './thoughts/ThinkingHeader';
 import { ThinkingActions } from './thoughts/ThinkingActions';
 import { ThoughtContent } from './thoughts/ThoughtContent';
+import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 
 interface MessageThoughtsProps {
     message: ChatMessage;
@@ -36,8 +37,13 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     isGraphvizRenderingEnabled,
     onOpenSidePanel
 }) => {
-    const { thoughts, isLoading, role } = message;
-    const areThoughtsVisible = role === 'model' && thoughts && showThoughts;
+    const { thoughts, isLoading, role, id: messageId } = message;
+    
+    // Subscribe to live thoughts if loading to check visibility
+    const { streamThoughts } = useMessageStream(messageId, !!isLoading && role === 'model');
+    const effectiveThoughts = streamThoughts || thoughts;
+    
+    const areThoughtsVisible = role === 'model' && effectiveThoughts && showThoughts;
     
     // UI State
     const [isExpanded, setIsExpanded] = useState(false);
@@ -48,7 +54,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     // Copy Hook
     const { isCopied, copyToClipboard } = useCopyToClipboard(2000);
 
-    const lastThought = useMemo(() => parseThoughtProcess(thoughts), [thoughts]);
+    const lastThought = useMemo(() => parseThoughtProcess(effectiveThoughts), [effectiveThoughts]);
 
     if (!areThoughtsVisible) return null;
 
@@ -66,7 +72,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
             return;
         }
 
-        if (!thoughts || isTranslatingThoughts) return;
+        if (!effectiveThoughts || isTranslatingThoughts) return;
 
         setIsTranslatingThoughts(true);
         try {
@@ -77,7 +83,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                 return;
             }
 
-            const result = await geminiServiceInstance.translateText(keyResult.key, thoughts, 'Chinese');
+            const result = await geminiServiceInstance.translateText(keyResult.key, effectiveThoughts, 'Chinese');
             setTranslatedThoughts(result);
             setIsShowingTranslation(true);
         } catch (error) {
@@ -90,7 +96,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     const handleCopyThoughts = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
-        const textToCopy = isShowingTranslation && translatedThoughts ? translatedThoughts : thoughts;
+        const textToCopy = isShowingTranslation && translatedThoughts ? translatedThoughts : effectiveThoughts;
         if (textToCopy) {
             copyToClipboard(textToCopy);
         }
@@ -136,6 +142,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                 <div className={`thought-process-accordion ${isExpanded ? 'expanded' : ''}`}>
                     <div className="thought-process-inner">
                         <ThoughtContent 
+                            messageId={messageId}
                             isLoading={!!isLoading}
                             lastThought={lastThought}
                             thinkingTimeMs={message.thinkingTimeMs}

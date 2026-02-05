@@ -2,11 +2,11 @@
 import React, { useMemo } from 'react';
 import { UploadedFile, AppSettings, ChatSettings as IndividualChatSettings, ProjectContext } from '../../types';
 import { Command } from '../../components/chat/input/SlashCommandMenu';
-import { useFileSelectionHandlers } from '../chat-input-handlers/useFileSelectionHandlers';
-import { useInputAndPasteHandlers } from '../chat-input-handlers/useInputAndPasteHandlers';
-import { useSubmissionHandlers } from '../chat-input-handlers/useSubmissionHandlers';
-import { useKeyboardHandlers } from '../chat-input-handlers/useKeyboardHandlers';
-import { useFileManagementHandlers } from '../chat-input-handlers/useFileManagementHandlers';
+import { useFileSelectionHandlers } from './handlers/useFileSelectionHandlers';
+import { useInputAndPasteHandlers } from './handlers/useInputAndPasteHandlers';
+import { useSubmissionHandlers } from './handlers/useSubmissionHandlers';
+import { useKeyboardHandlers } from './handlers/useKeyboardHandlers';
+import { useFileManagementHandlers } from './handlers/useFileManagementHandlers';
 
 interface UseChatInputHandlersProps {
     // State & Setters

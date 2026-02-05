@@ -7,6 +7,7 @@ import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
 import { isLikelyHtml } from '../../../utils/codeUtils';
 import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
+import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 
 interface MessageTextProps {
     message: ChatMessage;
@@ -39,17 +40,24 @@ export const MessageText: React.FC<MessageTextProps> = ({
 }) => {
     const { content, isLoading, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
     
+    // Subscribe to live stream updates if loading
+    const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
+    
+    // Use streamed content if available, otherwise fall back to persisted content
+    const effectiveContent = streamContent || content;
+    const effectiveThoughts = streamThoughts || thoughts;
+
     // Apply smooth streaming effect only when loading and for model messages
     const shouldSmooth = isLoading && message.role === 'model';
-    const displayedContent = useSmoothStreaming(content, shouldSmooth);
+    const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
 
     // Auto Fullscreen HTML Logic
     const prevIsLoadingRef = useRef(isLoading);
     useEffect(() => {
         if (prevIsLoadingRef.current && !isLoading) {
-            if (appSettings.autoFullscreenHtml && message.role === 'model' && message.content) {
+            if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
                 const regex = /```html\s*([\s\S]*?)\s*```/m;
-                const match = message.content.match(regex);
+                const match = effectiveContent.match(regex);
                 if (match && match[1]) {
                     const htmlContent = match[1].trim();
                     // Validate that it looks like a full page before auto-opening
@@ -62,9 +70,15 @@ export const MessageText: React.FC<MessageTextProps> = ({
             }
         }
         prevIsLoadingRef.current = isLoading;
-    }, [isLoading, appSettings.autoFullscreenHtml, message.content, message.role, onOpenHtmlPreview]);
+    }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
 
-    const showPrimaryThinkingIndicator = isLoading && !content && !audioSrc && (!showThoughts || !thoughts);
+    // Only show the primary thinking indicator (spinner) if:
+    // 1. It is loading
+    // 2. There is no content yet
+    // 3. There is no audio yet
+    // 4. AND either thoughts are disabled OR there are no thoughts (even streamed ones) yet.
+    // This prevents showing the spinner here when the MessageThoughts component is already showing it.
+    const showPrimaryThinkingIndicator = isLoading && !effectiveContent && !audioSrc && (!showThoughts || !effectiveThoughts);
 
     return (
         <>
@@ -77,7 +91,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                 </div>
             )}
 
-            {(content && (groundingMetadata || urlContextMetadata)) ? (
+            {(effectiveContent && (groundingMetadata || urlContextMetadata)) ? (
               <GroundedResponse 
                 text={displayedContent} // Use smoothed text
                 metadata={groundingMetadata} 
@@ -92,7 +106,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                 themeId={themeId} 
                 onOpenSidePanel={onOpenSidePanel}
               />
-            ) : content ? (
+            ) : effectiveContent ? (
                 <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
                     <MarkdownRenderer
                         content={displayedContent} // Use smoothed text

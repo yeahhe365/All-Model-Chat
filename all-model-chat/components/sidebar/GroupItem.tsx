@@ -31,6 +31,8 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
     setEditingItem, onDeleteGroup, t, ...sessionItemProps
   } = props;
   
+  const isMenuOpenInGroup = props.activeMenu === group.id || sessions?.some(s => s.id === props.activeMenu);
+
   return (
     <div 
       onDragOver={(e) => {
@@ -51,7 +53,7 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
           if (e.currentTarget.contains(e.relatedTarget as Node)) return;
           setDragOverId(null);
       }} 
-      className={`rounded-lg transition-all duration-200 mb-1 ${dragOverId === group.id ? 'bg-[var(--theme-bg-accent)] bg-opacity-20 ring-2 ring-[var(--theme-bg-accent)] ring-inset ring-opacity-50' : ''}`}
+      className={`rounded-lg transition-all duration-200 mb-1 ${dragOverId === group.id ? 'bg-[var(--theme-bg-accent)] bg-opacity-20 ring-2 ring-[var(--theme-bg-accent)] ring-inset ring-opacity-50' : ''} ${isMenuOpenInGroup ? 'relative z-20' : 'relative z-0'}`}
     >
       <details open={group.isExpanded ?? true} className="group/details">
         <summary 

@@ -1,25 +1,8 @@
-
-import React, { useCallback } from 'react';
-import { ChatInputProps } from '../../types';
-import { useChatInputState } from './useChatInputState';
-import { useIsDesktop } from '../useDevice';
-import { useWindowContext } from '../../contexts/WindowContext';
-import { useModelCapabilities } from '../useModelCapabilities';
-import { useChatInputModals } from './useChatInputModals';
-import { useVoiceInput } from '../useVoiceInput';
-import { useSlashCommands } from '../useSlashCommands';
-import { useChatInputHandlers } from './useChatInputHandlers';
-import { useChatInputEffects } from './useChatInputEffects';
-import { useChatInputLocalState } from './useChatInputLocalState';
-import { useLiveAPI } from '../useLiveAPI';
-
-export const useChatInputLogic = (props: ChatInputProps) => {
-    const {
-        appSettings, currentChatSettings, activeSessionId, isEditing,
         onProcessFiles, onProjectContextCreated, t, commandedInput, onSendMessage, onMessageSent, 
         setEditingMessageId, onTranscribeAudio, onUpdateMessageContent,
         editingMessageId, editMode, onCancelEdit, onStopGenerating,
-        onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, 
+        onProcessFiles: props.onProcessFiles,
+        onProjectContextCreated,
         onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
         onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, 
         onSelectModel, availableModels, onEditLastUserMessage, onTogglePip,
@@ -28,8 +11,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
 
     // 1. State Management
     const inputState = useChatInputState(activeSessionId, isEditing);
-    
-    const isDesktop = useIsDesktop();
+    });
     const { document: targetDocument } = useWindowContext();
 
     // 2. Capabilities
@@ -87,7 +69,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         thinkingLevel: currentChatSettings.thinkingLevel,
     });
 
-    const isModalOpen = modalsState.showCreateTextFileEditor || modalsState.showRecorder || !!localFileState.configuringFile || !!localFileState.previewFile || localFileState.showTokenModal;
+    const isModalOpen = modalsState.showCreateTextFileEditor || modalsState.showRecorder || !!localFileState.configuringFile || !!localFileState.previewFile || localFileState.showTokenModal || modalsState.showTtsContextEditor;
     const isAnyModalOpen = isModalOpen || modalsState.isHelpModalOpen;
 
     const canSend = (
@@ -109,8 +91,6 @@ export const useChatInputLogic = (props: ChatInputProps) => {
             }
             
             // Check again if connected (in case connect failed gracefully or was aborted)
-            // Note: isConnected state might not update immediately in React render cycle, 
-            // but connect() is async and sessionRef in useLiveAPI should be ready.
             liveAPI.sendText(text);
             
             if (onAddUserMessage) {
@@ -122,29 +102,112 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         }
     }, [capabilities.isNativeAudioModel, liveAPI.isConnected, liveAPI.connect, liveAPI.sendText, onSendMessage, onAddUserMessage]);
 
-    // 8. Handlers
-    const handlers = useChatInputHandlers({
-        ...inputState,
-        selectedFiles: props.selectedFiles, setSelectedFiles: props.setSelectedFiles, 
-        previewFile: localFileState.previewFile, setPreviewFile: localFileState.setPreviewFile,
-        isConverting: localFileState.isConverting, setIsConverting: localFileState.setIsConverting,
-        isLoading: props.isLoading, 
-        isEditing, editMode, editingMessageId, setEditingMessageId,
-        showCreateTextFileEditor: modalsState.showCreateTextFileEditor, 
-        showCamera: false, 
-        showRecorder: modalsState.showRecorder, 
-        setShowAddByUrlInput: modalsState.setShowAddByUrlInput, 
-        setShowAddByIdInput: modalsState.setShowAddByIdInput,
-        appSettings, currentChatSettings, setCurrentChatSettings, setAppFileError: props.setAppFileError,
-        ...slashCommandState,
-        handleSlashInputChange: slashCommandState.handleInputChange,
-        onProcessFiles, onProjectContextCreated, onAddFileById: props.onAddFileById, 
-        onSendMessage: handleSmartSendMessage,
-        onMessageSent, onUpdateMessageContent,
-        onStopGenerating, onCancelEdit, onEditLastUserMessage,
-        isMobile: inputState.isMobile, isDesktop, canSend,
-        adjustTextareaHeight: () => {} // No-op as it's handled by component now
+    // 8. Handlers (Instantiated directly instead of via useChatInputHandlers)
+    
+    const fileSelectionHandlers = useFileSelectionHandlers({
+        onProcessFiles: props.onProcessFiles,
+        onProjectContextCreated,
+        setSelectedFiles: props.setSelectedFiles,
+        setAppFileError: props.setAppFileError,
+        setIsConverting: localFileState.setIsConverting,
+        justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+        fileInputRef: modalsState.fileInputRef,
+        imageInputRef: modalsState.imageInputRef,
+        folderInputRef: modalsState.folderInputRef,
+        zipInputRef: modalsState.zipInputRef,
     });
+
+    const inputHandlers = useInputAndPasteHandlers({
+        setInputText: inputState.setInputText,
+        setUrlInput: inputState.setUrlInput,
+        setShowAddByUrlInput: modalsState.setShowAddByUrlInput,
+        setAppFileError: props.setAppFileError,
+        setSelectedFiles: props.setSelectedFiles,
+        textareaRef: inputState.textareaRef,
+        justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+        onProcessFiles: props.onProcessFiles,
+        isAddingById: inputState.isAddingById,
+        showCreateTextFileEditor: modalsState.showCreateTextFileEditor,
+        showCamera: false,
+        showRecorder: modalsState.showRecorder,
+        handleSlashInputChange: slashCommandState.handleInputChange,
+        isPasteRichTextAsMarkdownEnabled: appSettings.isPasteRichTextAsMarkdownEnabled ?? true,
+        isPasteAsTextFileEnabled: appSettings.isPasteAsTextFileEnabled ?? true,
+    });
+
+    const submissionHandlers = useSubmissionHandlers({
+        canSend,
+        selectedFiles: props.selectedFiles,
+        setIsWaitingForUpload: inputState.setIsWaitingForUpload,
+        isEditing,
+        editMode: props.editMode,
+        editingMessageId: props.editingMessageId,
+        inputText: inputState.inputText,
+        quotes: inputState.quotes,
+        setInputText: inputState.setInputText,
+        setQuotes: inputState.setQuotes,
+        onUpdateMessageContent,
+        setEditingMessageId,
+        onMessageSent,
+        clearCurrentDraft: inputState.clearCurrentDraft,
+        onSendMessage: handleSmartSendMessage,
+        setIsAnimatingSend: inputState.setIsAnimatingSend,
+        isFullscreen: inputState.isFullscreen,
+        setIsFullscreen: inputState.setIsFullscreen,
+        isTranslating: inputState.isTranslating,
+        setIsTranslating: inputState.setIsTranslating,
+        setAppFileError: props.setAppFileError,
+        appSettings,
+        currentChatSettings,
+        ttsContext: inputState.ttsContext,
+    });
+
+    const keyboardHandlers = useKeyboardHandlers({
+        appSettings,
+        isComposingRef: inputState.isComposingRef,
+        slashCommandState: slashCommandState.slashCommandState,
+        setSlashCommandState: slashCommandState.setSlashCommandState,
+        handleCommandSelect: slashCommandState.handleCommandSelect,
+        inputText: inputState.inputText,
+        setInputText: inputState.setInputText,
+        isMobile: inputState.isMobile,
+        isDesktop,
+        handleSlashCommandExecution: slashCommandState.handleSlashCommandExecution,
+        canSend,
+        handleSubmit: submissionHandlers.handleSubmit,
+        isFullscreen: inputState.isFullscreen,
+        handleToggleFullscreen: inputState.handleToggleFullscreen,
+        isLoading: props.isLoading,
+        onStopGenerating,
+        isEditing,
+        onCancelEdit,
+        onEditLastUserMessage,
+    });
+
+    const fileManagementHandlers = useFileManagementHandlers({
+        selectedFiles: props.selectedFiles,
+        setSelectedFiles: props.setSelectedFiles,
+        fileIdInput: inputState.fileIdInput,
+        isAddingById: inputState.isAddingById,
+        isLoading: props.isLoading,
+        setIsAddingById: inputState.setIsAddingById,
+        justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+        onAddFileById: props.onAddFileById,
+        setFileIdInput: inputState.setFileIdInput,
+        textareaRef: inputState.textareaRef,
+        previewFile: localFileState.previewFile,
+        setPreviewFile: localFileState.setPreviewFile,
+    });
+
+    const handlers = useMemo(() => ({
+        ...fileSelectionHandlers,
+        ...inputHandlers,
+        ...submissionHandlers,
+        ...keyboardHandlers,
+        ...fileManagementHandlers,
+        // Helper specifically for useChatInputPropsBuilder compatibility
+        adjustTextareaHeight: () => {}
+    }), [fileSelectionHandlers, inputHandlers, submissionHandlers, keyboardHandlers, fileManagementHandlers]);
 
     // 9. Effects
     useChatInputEffects({

@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from 'react';
 import { logService } from '../../utils/appUtils';
 
@@ -24,7 +25,6 @@ export const useMultiTabSync = ({
     onSessionLoading
 }: UseMultiTabSyncProps) => {
     const channelRef = useRef<BroadcastChannel | null>(null);
-    const originalTitleRef = useRef<string>(document.title);
 
     useEffect(() => {
         const channel = new BroadcastChannel('all_model_chat_sync_v1');
@@ -48,7 +48,6 @@ export const useMultiTabSync = ({
                     break;
                 case 'SESSION_CONTENT_UPDATED':
                     onSessionContentUpdated?.(msg.sessionId);
-                    handleTitleNotification();
                     break;
                 case 'SESSION_LOADING':
                     onSessionLoading?.(msg.sessionId, msg.isLoading);
@@ -60,19 +59,6 @@ export const useMultiTabSync = ({
             channel.close();
         };
     }, [onSettingsUpdated, onSessionsUpdated, onGroupsUpdated, onSessionContentUpdated, onSessionLoading]);
-
-    const handleTitleNotification = useCallback(() => {
-        if (document.hidden) {
-            originalTitleRef.current = document.title;
-            document.title = "New Message! • All Model Chat";
-            
-            const restoreTitle = () => {
-                document.title = originalTitleRef.current;
-                document.removeEventListener('visibilitychange', restoreTitle);
-            };
-            document.addEventListener('visibilitychange', restoreTitle);
-        }
-    }, []);
 
     const broadcast = useCallback((message: SyncMessage) => {
         if (channelRef.current) {

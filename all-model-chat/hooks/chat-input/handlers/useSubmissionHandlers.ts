@@ -1,8 +1,7 @@
-
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatSettings, UploadedFile } from '../../types';
-import { getKeyForRequest } from '../../utils/appUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { AppSettings, ChatSettings, UploadedFile } from '../../../types';
+import { getKeyForRequest } from '../../../utils/appUtils';
+import { geminiServiceInstance } from '../../../services/geminiService';
 
 interface UseSubmissionHandlersProps {
     canSend: boolean;
@@ -30,6 +29,7 @@ interface UseSubmissionHandlersProps {
     setAppFileError: (error: string | null) => void;
     appSettings: AppSettings;
     currentChatSettings: ChatSettings;
+    ttsContext?: string;
 }
 
 export const useSubmissionHandlers = ({
@@ -56,6 +56,7 @@ export const useSubmissionHandlers = ({
     setAppFileError,
     appSettings,
     currentChatSettings,
+    ttsContext
 }: UseSubmissionHandlersProps) => {
 
     const performSubmit = useCallback((isFastMode: boolean) => {
@@ -77,12 +78,24 @@ export const useSubmissionHandlers = ({
                 clearCurrentDraft();
                 
                 let textToSend = inputText;
+
+                // Handle TTS Context Wrapping
+                const isTts = currentChatSettings.modelId.includes('tts');
+                if (isTts && ttsContext && ttsContext.trim()) {
+                    textToSend = `${ttsContext.trim()}\n\n#### TRANSCRIPT\n${inputText}`;
+                }
+
                 if (quotes.length > 0) {
                     const formattedQuotes = quotes.map((q, i) => {
                         const label = quotes.length > 1 ? `**Quote ${i + 1}**:\n` : '';
                         return `${label}${q.split('\n').map(l => `> ${l}`).join('\n')}`;
                     }).join('\n\n');
-                    textToSend = `${formattedQuotes}\n\n${inputText}`;
+                    
+                    if (isTts && ttsContext && ttsContext.trim()) {
+                         textToSend = `${ttsContext.trim()}\n\n#### TRANSCRIPT\n${formattedQuotes}\n\n${inputText}`;
+                    } else {
+                         textToSend = `${formattedQuotes}\n\n${inputText}`;
+                    }
                 }
 
                 onSendMessage(textToSend, { isFastMode });
@@ -96,7 +109,7 @@ export const useSubmissionHandlers = ({
                 }
             }
         }
-    }, [canSend, selectedFiles, isEditing, editMode, editingMessageId, inputText, quotes, setIsWaitingForUpload, clearCurrentDraft, onSendMessage, setInputText, setQuotes, onMessageSent, setIsAnimatingSend, isFullscreen, setIsFullscreen, onUpdateMessageContent, setEditingMessageId]);
+    }, [canSend, selectedFiles, isEditing, editMode, editingMessageId, inputText, quotes, setIsWaitingForUpload, clearCurrentDraft, onSendMessage, setInputText, setQuotes, onMessageSent, setIsAnimatingSend, isFullscreen, setIsFullscreen, onUpdateMessageContent, setEditingMessageId, ttsContext, currentChatSettings.modelId]);
 
     const handleSubmit = useCallback((e: React.FormEvent) => {
         e.preventDefault();

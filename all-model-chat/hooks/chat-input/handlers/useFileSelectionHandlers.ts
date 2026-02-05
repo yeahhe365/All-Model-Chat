@@ -1,8 +1,8 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { UploadedFile, ProjectContext } from '../../types';
-import { generateUniqueId } from '../../utils/appUtils';
-import { generateFolderContext, buildProjectContext, buildProjectContextFromZip } from '../../utils/folderImportUtils';
+import { UploadedFile, ProjectContext } from '../../../types';
+import { generateUniqueId } from '../../../utils/appUtils';
+import { generateFolderContext, buildProjectContext, buildProjectContextFromZip } from '../../../utils/folderImportUtils';
 
 interface UseFileSelectionHandlersProps {
     onProcessFiles: (files: FileList | File[]) => Promise<void>;

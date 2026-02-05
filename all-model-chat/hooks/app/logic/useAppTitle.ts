@@ -42,11 +42,30 @@ export const useAppTitle = ({ isLoading, messages, language, sessionTitle }: Use
 
     // Apply to Document Title
     useEffect(() => {
-        let statusPrefix = '';
-        if (isLoading) {
-            const timeDisplay = ` (${generationTime}s)`;
-            statusPrefix = (language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `);
-        }
-        document.title = `${statusPrefix}${sessionTitle}`;
+        const updateTitle = () => {
+            let statusPrefix = '';
+            if (isLoading) {
+                const timeDisplay = ` (${generationTime}s)`;
+                statusPrefix = (language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `);
+            }
+            
+            // If the title is generic or empty, append app name for context
+            const suffix = sessionTitle === 'All Model Chat' ? '' : ' • All Model Chat';
+            const cleanTitle = sessionTitle || 'New Chat';
+            
+            document.title = `${statusPrefix}${cleanTitle}${suffix}`;
+        };
+
+        updateTitle();
+
+        // Restore title when user returns to the tab (fixing issues where notifications overwrote it)
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                updateTitle();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [sessionTitle, isLoading, language, generationTime]);
 };

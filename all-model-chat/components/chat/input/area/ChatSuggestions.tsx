@@ -1,6 +1,4 @@
 
-
-
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
@@ -53,14 +51,14 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
 
     return (
         <div 
-            className="relative group/suggestions mb-2"
+            className="relative group/suggestions mb-1"
             onMouseEnter={() => setIsSuggestionsHovered(true)}
             onMouseLeave={() => setIsSuggestionsHovered(false)}
         >
             <div 
                 ref={suggestionsRef}
                 onScroll={checkScroll}
-                className="flex gap-2 overflow-x-auto pb-2 px-1 no-scrollbar fade-mask-x scroll-smooth"
+                className="flex gap-2 overflow-x-auto pb-1 px-1 no-scrollbar fade-mask-x scroll-smooth"
             >
                 {SUGGESTIONS_KEYS.map((s, i) => (
                     <React.Fragment key={i}>
@@ -75,11 +73,11 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                 }
                             }}
                             className="
-                                flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
                                 bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-tertiary)]
                                 border border-[var(--theme-border-secondary)]
                                 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)]
-                                text-sm font-medium whitespace-nowrap
+                                text-xs sm:text-sm font-medium whitespace-nowrap
                                 transition-all active:scale-95 shadow-sm
                             "
                         >
@@ -95,9 +93,9 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         type="button"
                                         onClick={onToggleBBox}
                                         className={`
-                                            flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                            flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
                                             border border-[var(--theme-border-secondary)]
-                                            text-sm font-medium whitespace-nowrap
+                                            text-xs sm:text-sm font-medium whitespace-nowrap
                                             transition-all active:scale-95 shadow-sm
                                             ${isBBoxModeActive 
                                                 ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 
@@ -115,9 +113,9 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         type="button"
                                         onClick={onToggleGuide}
                                         className={`
-                                            flex items-center gap-2 px-4 py-2.5 rounded-xl
+                                            flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg sm:rounded-xl
                                             border border-[var(--theme-border-secondary)]
-                                            text-sm font-medium whitespace-nowrap
+                                            text-xs sm:text-sm font-medium whitespace-nowrap
                                             transition-all active:scale-95 shadow-sm
                                             ${isGuideModeActive 
                                                 ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)]' 

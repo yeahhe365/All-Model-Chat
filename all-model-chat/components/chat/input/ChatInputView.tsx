@@ -52,6 +52,10 @@ export const ChatInputView: React.FC<ControllerResult> = ({
                 t={modalsProps.t}
                 initialContent={modalsProps.editingFile?.textContent || ''}
                 initialFilename={modalsProps.editingFile?.name || ''}
+                showTtsContextEditor={modalsProps.showTtsContextEditor}
+                onCloseTtsContextEditor={modalsProps.onCloseTtsContextEditor}
+                ttsContext={modalsProps.ttsContext}
+                setTtsContext={modalsProps.setTtsContext}
             />
 
             <ChatInputFileModals {...fileModalsProps} />

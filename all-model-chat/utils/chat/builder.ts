@@ -1,7 +1,8 @@
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
-import { fileToBase64, fileToString } from '../fileHelpers';
+import { blobToBase64, fileToString } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 
@@ -44,24 +45,22 @@ export const buildContentParts = async (
         } else {
             // 2. Files NOT uploaded via API (Inline handling)
             const fileSource = file.rawFile;
-            const urlSource = file.dataUrl?.startsWith('blob:') ? file.dataUrl : undefined;
+            const urlSource = file.dataUrl;
 
             if (isTextLike) {
                 // Special handling for text/code: Read content and wrap in text part
                 let textContent = '';
-                if (fileSource && fileSource instanceof File) {
-                    textContent = await fileToString(fileSource);
+                if (fileSource && (fileSource instanceof File || fileSource instanceof Blob)) {
+                    textContent = await fileToString(fileSource as File);
                 } else if (urlSource) {
                     const response = await fetch(urlSource);
                     textContent = await response.text();
                 }
                 if (textContent) {
-                    // Format as a pseudo-file block for the model
                     part = { text: `\n--- START OF FILE ${file.name} ---\n${textContent}\n--- END OF FILE ${file.name} ---\n` };
                 }
             } else {
                 // Standard Inline Data (Images, PDFs, Audio, Video if small enough)
-
                 // STRICT ALLOWLIST for Inline Data to prevent API 400 errors (e.g. for .xlsx)
                 const isSupportedInlineType =
                     file.type.startsWith('image/') ||
@@ -72,9 +71,9 @@ export const buildContentParts = async (
                 if (isSupportedInlineType) {
                     let base64DataForApi: string | undefined;
 
-                    if (fileSource && fileSource instanceof File) {
+                    if (fileSource && (fileSource instanceof Blob || fileSource instanceof File)) {
                         try {
-                            base64DataForApi = await fileToBase64(fileSource);
+                            base64DataForApi = await blobToBase64(fileSource);
                         } catch (error) {
                             logService.error(`Failed to convert rawFile to base64 for ${file.name}`, { error });
                         }
@@ -82,8 +81,12 @@ export const buildContentParts = async (
                         try {
                             const response = await fetch(urlSource);
                             const blob = await response.blob();
-                            const tempFile = new File([blob], file.name, { type: file.type });
-                            base64DataForApi = await fileToBase64(tempFile);
+                            base64DataForApi = await blobToBase64(blob);
+
+                            // Self-repair: If we had to fetch because rawFile was missing, recreate it
+                            if (!newFile.rawFile) {
+                                newFile.rawFile = new File([blob], file.name, { type: file.type });
+                            }
                         } catch (error) {
                             logService.error(`Failed to fetch blob and convert to base64 for ${file.name}`, { error });
                         }

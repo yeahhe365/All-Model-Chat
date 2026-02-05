@@ -1,17 +1,16 @@
-
 import { useCallback } from 'react';
-import { Command } from '../../components/chat/input/SlashCommandMenu';
-import { AppSettings } from '../../types';
-import { isShortcutPressed } from '../../utils/shortcutUtils';
+import { Command } from '../../../components/chat/input/SlashCommandMenu';
+import { AppSettings } from '../../../types';
+import { isShortcutPressed } from '../../../utils/shortcutUtils';
 
 interface UseKeyboardHandlersProps {
-    appSettings: AppSettings; // Added
+    appSettings: AppSettings;
     isComposingRef: React.MutableRefObject<boolean>;
     slashCommandState: { isOpen: boolean; filteredCommands: Command[]; selectedIndex: number; };
     setSlashCommandState: React.Dispatch<React.SetStateAction<any>>;
     handleCommandSelect: (command: Command) => void;
     inputText: string;
-    setInputText: React.Dispatch<React.SetStateAction<string>>; // Added for new line insertion
+    setInputText: React.Dispatch<React.SetStateAction<string>>;
     isMobile: boolean;
     isDesktop: boolean;
     handleSlashCommandExecution: (text: string) => void;

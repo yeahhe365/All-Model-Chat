@@ -3,8 +3,8 @@ import React, { useRef, useCallback } from 'react';
 import { AppSettings, UploadedFile, ProjectContext } from '../../types';
 import { useModels } from '../core/useModels';
 import { useChatHistory } from './useChatHistory';
-import { useFileHandling } from '../useFileHandling';
-import { useFileDragDrop } from '../useFileDragDrop';
+import { useFileHandling } from '../files/useFileHandling';
+import { useFileDragDrop } from '../files/useFileDragDrop';
 import { usePreloadedScenarios } from '../usePreloadedScenarios';
 import { useMessageHandler } from '../useMessageHandler';
 import { useChatScroll } from './useChatScroll';
@@ -20,7 +20,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const chatState = useChatState(appSettings);
     const {
         savedSessions, setSavedSessions, savedGroups, setSavedGroups,
-        activeSessionId, setActiveSessionId,
+        activeSessionId, setActiveSessionId, setActiveMessages, // Get setter
         editingMessageId, setEditingMessageId,
         editMode, setEditMode,
         commandedInput, setCommandedInput,
@@ -51,9 +51,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const sessionKeyMapRef = useRef<Map<string, string>>(new Map());
 
     const { apiModels, isModelsLoading, modelsLoadingError, setApiModels } = useModels();
-
-    const historyHandler = useChatHistory({
-        appSettings, setSavedSessions, setSavedGroups, setActiveSessionId,
+    const historyHandler = useChatHistory({ 
+        appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setActiveMessages,
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs,
         updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
         userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId

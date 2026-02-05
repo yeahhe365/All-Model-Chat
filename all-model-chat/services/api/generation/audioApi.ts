@@ -1,8 +1,9 @@
 
+
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import { Part } from "@google/genai";
-import { fileToBase64 } from "../../../utils/appUtils";
+import { blobToBase64 } from "../../../utils/appUtils";
 
 export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> => {
     logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
@@ -63,7 +64,8 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     
     try {
         const ai = await getConfiguredApiClient(apiKey);
-        const audioBase64 = await fileToBase64(audioFile);
+        // Use blobToBase64 which is efficient and handles Blobs/Files
+        const audioBase64 = await blobToBase64(audioFile);
 
         const audioPart: Part = {
             inlineData: {
