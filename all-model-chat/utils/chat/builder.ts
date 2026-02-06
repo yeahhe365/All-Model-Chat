@@ -1,8 +1,8 @@
 
+
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
-import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
-import { blobToBase64, fileToString } from '../fileHelpers';
+import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 
@@ -31,8 +31,7 @@ export const buildContentParts = async (
     const isVideo = file.type.startsWith('video/');
     const isYoutube = file.type === 'video/youtube-link';
     // Check if file should be treated as text content (not base64 inlineData)
-    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-    const isTextLike = SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension) || file.type === 'text/plain';
+    const isTextLike = isTextFile(file);
 
     if (file.fileUri) {
         // 1. Files uploaded via API (or YouTube links)

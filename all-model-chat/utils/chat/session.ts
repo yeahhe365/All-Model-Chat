@@ -1,5 +1,4 @@
 
-
 import { ChatMessage, SavedChatSession, ChatSettings } from '../../types';
 import { generateUniqueId } from './ids';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
@@ -143,7 +142,6 @@ export const performOptimisticSessionUpdate = (
         newMessages: ChatMessage[];
         settings: ChatSettings;
         editingMessageId?: string | null;
-        appSettings: any; // Passed to access defaults for new sessions
         title?: string;
         shouldLockKey?: boolean;
         keyToLock?: string;
@@ -151,7 +149,7 @@ export const performOptimisticSessionUpdate = (
 ): SavedChatSession[] => {
     const { 
         activeSessionId, newSessionId, newMessages, settings, 
-        editingMessageId, appSettings, title, shouldLockKey, keyToLock 
+        editingMessageId, title, shouldLockKey, keyToLock 
     } = params;
 
     const existingSessionIndex = prevSessions.findIndex(s => s.id === activeSessionId);
@@ -226,7 +224,6 @@ export const updateSessionWithNewMessages = (
         newSessionId: sessionId,
         newMessages: [], // We are replacing messages entirely in this legacy signature
         settings,
-        appSettings: {}, // Legacy fallback
         title: options.title,
         shouldLockKey: options.shouldLockKey,
         keyToLock: options.keyToLock

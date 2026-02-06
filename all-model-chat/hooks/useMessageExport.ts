@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react';
 import { ChatMessage } from '../types';
 import {
@@ -59,9 +60,8 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
             const messageWrapper = document.querySelector(`[data-message-id="${message.id}"]`);
             // We want the inner bubble, usually inside the wrapper. 
             // The structure is Wrapper -> Container -> [Actions, Bubble, Actions]
-            // The Bubble has class "shadow-sm" (user) or just text (model).
-            // A safer bet is grabbing the container that holds the content.
-            const contentNodeSource = messageWrapper?.querySelector('.markdown-body') || messageWrapper?.querySelector('.shadow-sm');
+            // We prioritize the new specific container class, falling back to older selectors if needed
+            const contentNodeSource = messageWrapper?.querySelector('.message-content-container') || messageWrapper?.querySelector('.markdown-body') || messageWrapper?.querySelector('.shadow-sm');
 
             if (type === 'png' || type === 'html') {
                 if (!contentNodeSource) {
@@ -69,7 +69,8 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 }
 
                 // Use unified helper to clone, clean, and embed images
-                const cleanedContent = await prepareElementForExport(contentNodeSource as HTMLElement);
+                // For PNG, we want expanded details visible. For HTML, we want them collapsed by default but interactive.
+                const cleanedContent = await prepareElementForExport(contentNodeSource as HTMLElement, { expandDetails: type === 'png' });
 
                 if (type === 'png') {
                     await generateSnapshotPng(

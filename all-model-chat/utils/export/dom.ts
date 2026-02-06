@@ -1,4 +1,5 @@
 
+
 /**
  * Gathers all style and link tags from the current document's head to be inlined.
  * @returns A promise that resolves to a string of HTML style and link tags.
@@ -155,7 +156,9 @@ export const createExportDOMHeader = (title: string, metaLeft: string, metaRight
  * Clones, cleans, and prepares a DOM element for export (HTML or PNG).
  * Handles removing interactive elements, expanding content, and embedding images.
  */
-export const prepareElementForExport = async (sourceElement: HTMLElement): Promise<HTMLElement> => {
+export const prepareElementForExport = async (sourceElement: HTMLElement, options: { expandDetails?: boolean } = {}): Promise<HTMLElement> => {
+    const { expandDetails = true } = options;
+
     // 1. Clone the container
     const clone = sourceElement.cloneNode(true) as HTMLElement;
 
@@ -179,10 +182,67 @@ export const prepareElementForExport = async (sourceElement: HTMLElement): Promi
         (el as HTMLElement).style.transform = 'none';
     });
 
-    // 4. Expand all details elements (thoughts/groups) so they are visible
-    clone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
+    if (expandDetails) {
+        // 4. Expand all details elements (thoughts/groups) so they are visible
+        clone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
+        
+        // 5. Expand custom thought accordions since toggle buttons are removed
+        clone.querySelectorAll('.thought-process-accordion').forEach(el => el.classList.add('expanded'));
+    } else {
+        // 4. Ensure native details are collapsed by default (remove 'open' if present from clone)
+        clone.querySelectorAll('details').forEach(el => el.removeAttribute('open'));
 
-    // 5. Embed Images: Convert blob/url images to Base64
+        // 5. Convert custom thought accordions to native details for interactive collapse/expand
+        clone.querySelectorAll('.thought-process-accordion').forEach(accordion => {
+            const parent = accordion.parentElement;
+            if (!parent) return;
+
+            const header = parent.firstElementChild as HTMLElement;
+            if (!header || header === accordion) return;
+
+            // Create new <details> structure
+            const details = document.createElement('details');
+            details.className = parent.className; // Preserve layout styling
+            
+            const summary = document.createElement('summary');
+            summary.className = header.className;
+            summary.style.cursor = 'pointer';
+            summary.style.listStyle = 'none';
+
+            // Hide default webkit marker
+            const style = document.createElement('style');
+            style.textContent = 'summary::-webkit-details-marker { display: none; }';
+            summary.appendChild(style);
+
+            // Move header content to summary
+            while (header.firstChild) {
+                summary.appendChild(header.firstChild);
+            }
+
+            // Fix Chevron Rotation logic: Replace fixed state with group-open modifier
+            const svg = summary.querySelector('svg');
+            if (svg && svg.classList.contains('transition-transform')) {
+                svg.classList.remove('rotate-180'); // Ensure start closed
+                svg.classList.add('group-open:rotate-180'); // Use Tailwind peer/group modifier for native state
+            }
+
+            // Move Content
+            const inner = accordion.querySelector('.thought-process-inner') || accordion;
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = inner.className;
+
+            while (inner.firstChild) {
+                contentWrapper.appendChild(inner.firstChild);
+            }
+
+            details.appendChild(summary);
+            details.appendChild(contentWrapper);
+
+            parent.replaceWith(details);
+        });
+    }
+
+    // 6. Embed Images: Convert blob/url images to Base64
     await embedImagesInClone(clone);
 
     return clone;

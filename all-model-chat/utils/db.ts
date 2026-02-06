@@ -158,6 +158,37 @@ export const dbService = {
       });
   },
 
+  searchSessions: async (query: string): Promise<string[]> => {
+      const db = await getDb();
+      const lowerQuery = query.toLowerCase();
+      return new Promise((resolve, reject) => {
+          const tx = db.transaction(SESSIONS_STORE, 'readonly');
+          const store = tx.objectStore(SESSIONS_STORE);
+          const request = store.openCursor();
+          const results: string[] = [];
+          
+          request.onsuccess = (event) => {
+              const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+              if (cursor) {
+                  const session = cursor.value as SavedChatSession;
+                  const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
+                  const contentMatch = session.messages?.some(m => 
+                      (m.content && m.content.toLowerCase().includes(lowerQuery)) || 
+                      (m.thoughts && m.thoughts.toLowerCase().includes(lowerQuery))
+                  );
+                  
+                  if (titleMatch || contentMatch) {
+                      results.push(session.id);
+                  }
+                  cursor.continue();
+              } else {
+                  resolve(results);
+              }
+          };
+          request.onerror = () => reject(request.error);
+      });
+  },
+
   setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
   saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
   deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),

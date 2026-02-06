@@ -1,6 +1,16 @@
 
 
-import { MIME_TO_EXTENSION_MAP } from '../constants/fileConstants';
+import { MIME_TO_EXTENSION_MAP, SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../constants/fileConstants';
+import { UploadedFile } from '../types';
+
+export const isTextFile = (file: File | UploadedFile | { name: string; type: string }): boolean => {
+    const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    return (
+        SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || 
+        TEXT_BASED_EXTENSIONS.includes(fileExtension) || 
+        file.type === 'text/plain'
+    );
+};
 
 export const decodeBase64ToArrayBuffer = (base64: string): Uint8Array => {
     const binaryString = atob(base64);

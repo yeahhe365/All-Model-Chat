@@ -1,4 +1,5 @@
 
+
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
@@ -44,8 +45,10 @@ export const useChatSessionExport = ({
         if (format === 'png' || format === 'html') {
             if (!scrollContainer) return;
 
-            // Use unified helper to clone, clean, and embed images
-            const chatClone = await prepareElementForExport(scrollContainer);
+            // Use unified helper to clone, clean, and embed images.
+            // For PNG, force expand details to ensure visibility in static image.
+            // For HTML, allow details to be collapsed by default (interactive).
+            const chatClone = await prepareElementForExport(scrollContainer, { expandDetails: format === 'png' });
 
             if (format === 'png') {
                 await generateSnapshotPng(
