@@ -120,7 +120,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
     const inputContainerClass = isFullscreen
         ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200 relative"
-        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-[border-color,box-shadow,background-color] duration-300 focus-within:border-[var(--theme-border-focus)] relative";
+        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
 
     return (
         <div className={wrapperClass} aria-hidden={isUIBlocked}>
