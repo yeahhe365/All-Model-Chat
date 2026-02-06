@@ -16,6 +16,8 @@ interface FilePreviewHeaderProps {
     onSave?: () => void;
     editedName?: string;
     onNameChange?: (name: string) => void;
+    onCopy?: () => void;
+    isCopied?: boolean;
 }
 
 export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ 
@@ -26,10 +28,15 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
     onToggleEdit,
     onSave,
     editedName,
-    onNameChange
+    onNameChange,
+    onCopy,
+    isCopied: externalIsCopied
 }) => {
     const [isDownloading, setIsDownloading] = useState(false);
-    const [isCopied, setIsCopied] = useState(false);
+    const [internalIsCopied, setInternalIsCopied] = useState(false);
+    
+    // Use external copy state if provided, otherwise use internal
+    const isCopied = externalIsCopied !== undefined ? externalIsCopied : internalIsCopied;
 
     const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type === 'image/svg+xml';
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
@@ -41,6 +48,11 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
     const FileIcon = isImage ? ImageIcon : isPdf ? FileText : isVideo ? FileVideo : isAudio ? FileAudio : FileCode2;
 
     const handleCopy = useCallback(async () => {
+        if (onCopy) {
+            onCopy();
+            return;
+        }
+
         if (!file.dataUrl || isCopied) return;
         try {
             // Fetch content to copy
@@ -60,13 +72,13 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                     })
                 ]);
             }
-            setIsCopied(true);
-            setTimeout(() => setIsCopied(false), 2000);
+            setInternalIsCopied(true);
+            setTimeout(() => setInternalIsCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy content:', err);
             alert('Failed to copy to clipboard. Your browser might not support this feature or require permissions.');
         }
-    }, [file, isCopied]);
+    }, [file, isCopied, onCopy]);
 
     const handleDownload = useCallback(async () => {
         if (!file.dataUrl || isDownloading) return;

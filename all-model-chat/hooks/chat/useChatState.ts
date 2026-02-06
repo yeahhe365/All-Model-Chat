@@ -51,7 +51,14 @@ export const useChatState = (appSettings: AppSettings) => {
             const targetPath = `/chat/${activeSessionId}`;
             try {
                 if (window.location.pathname !== targetPath) {
-                    window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
+                    // If we are navigating from one chat to another, REPLACE history to keep the stack flat.
+                    // This ensures that pressing "Back" from any chat session returns to the root ('/'),
+                    // which triggers the "New Chat" logic defined in the session loader.
+                    if (window.location.pathname.startsWith('/chat/')) {
+                        window.history.replaceState({ sessionId: activeSessionId }, '', targetPath);
+                    } else {
+                        window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
+                    }
                 }
             } catch (e) {
                 console.warn('Unable to update URL history:', e);
