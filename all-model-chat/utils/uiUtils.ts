@@ -91,31 +91,51 @@ export const showNotification = async (title: string, options?: NotificationOpti
   }
 };
 
+let sharedAudioContext: AudioContext | null = null;
+
+const getAudioContext = () => {
+    if (!sharedAudioContext) {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+            sharedAudioContext = new AudioContextClass();
+        }
+    }
+    return sharedAudioContext;
+};
+
 export const playCompletionSound = () => {
   try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    const now = ctx.currentTime;
-    
-    // Clear, pleasant chime (B5)
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(987.77, now);
-    
-    // Improved Volume Envelope: Distinct attack and smooth decay
-    // Previous gain of 0.05 was too quiet for many devices
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.25, now + 0.05); // Quick attack to 25% volume
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75); // Longer fade out
+    const ctx = getAudioContext();
+    if (!ctx) return;
 
-    osc.start(now);
-    osc.stop(now + 0.8);
+    // Ensure audio context is running (it might be suspended if no user interaction yet)
+    if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+    }
+
+    const playNote = (frequency: number, startTime: number, duration: number) => {
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        oscillator.type = 'sine'; // Pure sine wave
+        oscillator.frequency.setValueAtTime(frequency, ctx.currentTime + startTime);
+
+        // Volume envelope: Prevent popping and create fade out effect
+        gainNode.gain.setValueAtTime(0, ctx.currentTime + startTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, ctx.currentTime + startTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + startTime + duration);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        oscillator.start(ctx.currentTime + startTime);
+        oscillator.stop(ctx.currentTime + startTime + duration);
+    };
+
+    // Play two notes to create "Ding-Dong" effect
+    playNote(659.25, 0, 0.15);    // First high note (E5)
+    playNote(523.25, 0.15, 0.2);  // Second low note (C5)
+
   } catch (e) {
     console.error("Error playing completion sound", e);
   }
