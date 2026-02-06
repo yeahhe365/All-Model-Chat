@@ -8,7 +8,6 @@ import { useAudioActions } from './actions/useAudioActions';
 
 interface UseChatActionsProps {
     appSettings: AppSettings;
-    setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
     activeSessionId: string | null;
     isLoading: boolean;
     currentChatSettings: IndividualChatSettings;
@@ -31,7 +30,6 @@ interface UseChatActionsProps {
 
 export const useChatActions = ({
     appSettings,
-    setAppSettings,
     activeSessionId,
     isLoading,
     currentChatSettings,
@@ -50,7 +48,6 @@ export const useChatActions = ({
 
     const { handleSelectModelInHeader } = useModelSelection({
         appSettings,
-        setAppSettings,
         activeSessionId,
         currentChatSettings,
         isLoading,
@@ -72,10 +69,8 @@ export const useChatActions = ({
     } = useChatSessionActions({
         activeSessionId,
         isLoading,
-        currentChatSettings,
         updateAndPersistSessions,
         setCurrentChatSettings,
-        setAppSettings,
         setSelectedFiles,
         handleStopGenerating,
         startNewChat,
