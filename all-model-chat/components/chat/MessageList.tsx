@@ -170,6 +170,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           showDown={showScrollDown}
           onScrollToPrev={scrollToPrevTurn}
           onScrollToNext={scrollToNextTurn}
+          bottomOffset={chatInputHeight}
         />
       </div>
     
