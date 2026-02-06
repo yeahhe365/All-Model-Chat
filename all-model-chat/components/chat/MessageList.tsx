@@ -78,7 +78,7 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [atBottom, setAtBottom] = useState(true);
-  const [scrollerRef, setScrollerRef] = useState<HTMLElement | null>(null);
+  const [scrollerRef, setSetScrollerRef] = useState<HTMLElement | null>(null);
 
   // Sync internal scroller ref with parent's expectations
   useEffect(() => {
@@ -87,28 +87,39 @@ export const MessageList: React.FC<MessageListProps> = ({
     }
   }, [scrollerRef, setScrollContainerRef]);
 
+  // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
+  const prevMsgCount = useRef(messages.length);
+  useEffect(() => {
+    if (messages.length > prevMsgCount.current) {
+        // Find the index of the newly added Model message (placeholder)
+        let targetIndex = -1;
+        // Search backwards starting from the end of the previous message count
+        for (let i = messages.length - 1; i >= Math.max(0, prevMsgCount.current - 1); i--) {
+            if (messages[i].role === 'model') {
+                targetIndex = i;
+                break;
+            }
+        }
+
+        if (targetIndex !== -1) {
+            // Anchor view to the top of the model message (start of response)
+            // Timeout ensures render cycle is complete including footer height adjustment
+            setTimeout(() => {
+                virtuosoRef.current?.scrollToIndex({
+                    index: targetIndex,
+                    align: 'start',
+                    behavior: 'smooth'
+                });
+            }, 50);
+        }
+    }
+    prevMsgCount.current = messages.length;
+  }, [messages.length]);
+
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => {
       return isGemini3Model(currentModelId);
   }, [currentModelId]);
-
-  // Virtualized Scroll Navigation Logic
-  const handleScrollToPrevTurn = useCallback(() => {
-    if (!virtuosoRef.current) return;
-    
-    // Simple heuristic: Find the index of the last user message visible or above
-    // Since we don't know exactly what is visible without querying Virtuoso state intricately,
-    // we'll scan efficiently from the bottom-ish or current position.
-    // For simplicity with Virtuoso: we can just find the index in the data.
-    
-    // NOTE: True "current view" index detection is complex. 
-    // We will use a simplified approach: find the last model message index and scroll to it.
-    // A better UX might be tracking the *current* top index via `rangeChanged` prop.
-    
-    // Using simple "Scroll to Top" for now if logic is complex, OR implement `rangeChanged` tracking.
-    // Let's implement basic range tracking:
-    virtuosoRef.current.scrollToIndex({ index: Math.max(0, messages.length - 2), align: 'start', behavior: 'smooth' });
-  }, [messages.length]);
 
   // Advanced scroll navigation using range tracking
   const visibleRangeRef = useRef({ startIndex: 0, endIndex: 0 });
@@ -144,7 +155,6 @@ export const MessageList: React.FC<MessageListProps> = ({
       let targetIndex = -1;
 
       // Find the first model message BELOW the current view
-      // Start searching a bit below current index to avoid jumping to the one currently at top
       for (let i = currentIndex + 1; i < messages.length; i++) {
           const msg = messages[i];
           const prevMsg = messages[i - 1];
@@ -166,6 +176,21 @@ export const MessageList: React.FC<MessageListProps> = ({
   const showScrollDown = !atBottom;
   const showScrollUp = messages.length > 2 && visibleRangeRef.current.startIndex > 0;
 
+  // Determine if the last message is loading to increase footer space
+  const lastMsg = messages[messages.length - 1];
+  const isLastMessageLoading = lastMsg?.role === 'model' && lastMsg?.isLoading;
+
+  const Footer = useMemo(() => {
+      return () => (
+          <div style={{ 
+              height: isLastMessageLoading 
+                  ? '85vh' 
+                  : (chatInputHeight ? `${chatInputHeight + 20}px` : '160px'),
+              transition: 'height 0.3s ease-out'
+          }} />
+      );
+  }, [isLastMessageLoading, chatInputHeight]);
+
   return (
     <>
       <div 
@@ -183,15 +208,14 @@ export const MessageList: React.FC<MessageListProps> = ({
           <Virtuoso
             ref={virtuosoRef}
             data={messages}
-            scrollerRef={setScrollerRef}
+            scrollerRef={setSetScrollerRef}
             atBottomStateChange={setAtBottom}
-            followOutput={(isAtBottom) => isAtBottom ? 'auto' : false}
+            followOutput={false} // Disable auto-scroll to bottom during streaming
             rangeChanged={onRangeChanged}
-            increaseViewportBy={400} // Pre-render more content for smoother scrolling
+            increaseViewportBy={800} 
             className="custom-scrollbar"
             components={{
-                // Add padding to bottom to account for input area
-                Footer: () => <div style={{ height: chatInputHeight ? `${chatInputHeight + 20}px` : '160px' }} />
+                Footer: Footer
             }}
             itemContent={(index, msg) => (
                 <div className="px-1.5 sm:px-2 md:px-3 max-w-7xl mx-auto w-full">
@@ -233,7 +257,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onQuote={onQuote} 
             onInsert={onInsert} 
             onTTS={onQuickTTS} 
-            containerRef={scrollerRef as any} // Pass the raw DOM element from Virtuoso
+            containerRef={scrollerRef as any} 
             t={t} 
         />
 

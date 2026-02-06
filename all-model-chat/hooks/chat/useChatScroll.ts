@@ -1,5 +1,5 @@
 
-import React, { useRef, useCallback, useState, useLayoutEffect, useEffect } from 'react';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { ChatMessage } from '../../types';
 
 interface ChatScrollProps {
@@ -12,14 +12,14 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
     const [scrollNavVisibility, setScrollNavVisibility] = useState({ up: false, down: false });
     const savedScrollTop = useRef<number>(0);
     
-    // Track previous message count to distinguish between "New Message" (auto scroll) and "Streaming" (smooth scroll)
+    // Track previous message count to identify new turns
     const prevMsgLength = useRef(messages.length);
     const isAutoScrolling = useRef(false);
     const scrollTimeoutRef = useRef<number | null>(null);
 
     // Handler to detect explicit user interaction
     const handleUserInteraction = useCallback(() => {
-        // If the user interacts via wheel or touch, immediately break the auto-scroll lock
+        // If the user interacts via wheel or touch, they are manually controlling the view
         isAutoScrolling.current = false;
     }, []);
     
@@ -43,65 +43,6 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
             node.addEventListener('touchmove', handleUserInteraction, { passive: true });
         }
     }, [handleUserInteraction]);
-
-    // Scroll to bottom logic
-    useLayoutEffect(() => {
-        const container = scrollContainerRef.current;
-        if (container) {
-            // Optimization: Do not auto-scroll if the tab is in the background
-            // This prevents the browser from doing heavy layout calculations when not needed
-            if (document.hidden) return;
-
-            // If user hasn't scrolled up, keep at bottom
-            if (!userScrolledUp.current) {
-                const isNewMessage = messages.length > prevMsgLength.current;
-                
-                // Use 'auto' (instant) for both new messages and streaming to ensure stability.
-                // CSS scroll-behavior: smooth can conflict with rapid JS scroll updates.
-                // We handle smooth scrolling manually for navigation buttons only.
-                const behavior = 'auto';
-                
-                isAutoScrolling.current = true;
-                container.scrollTo({
-                    top: container.scrollHeight,
-                    behavior
-                });
-
-                if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
-                // Shorter timeout since 'auto' is instant
-                scrollTimeoutRef.current = window.setTimeout(() => {
-                    isAutoScrolling.current = false;
-                }, 100);
-            }
-        }
-        prevMsgLength.current = messages.length;
-    }, [messages, userScrolledUp]);
-
-    // Handle visibility change: Catch up on scrolling if tab was backgrounded
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                const container = scrollContainerRef.current;
-                // If user hasn't manually scrolled up, snap to bottom to show latest content
-                // that might have been generated while hidden.
-                if (container && !userScrolledUp.current) {
-                    isAutoScrolling.current = true;
-                    container.scrollTo({
-                        top: container.scrollHeight,
-                        behavior: 'auto'
-                    });
-                    
-                    if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
-                    scrollTimeoutRef.current = window.setTimeout(() => {
-                        isAutoScrolling.current = false;
-                    }, 100);
-                }
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [userScrolledUp]);
 
     const scrollToNextTurn = useCallback(() => {
         const container = scrollContainerRef.current;
@@ -175,10 +116,7 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
                 down: !isAtBottom,
             });
             
-            // Logic:
-            // 1. If code is scrolling (isAutoScrolling), ignore the event unless we hit bottom.
-            // 2. If we hit bottom, reset userScrolledUp to false (re-attach).
-            // 3. If code is NOT scrolling, the user moved. If not at bottom, mark as scrolled up (detach).
+            // If the user moved and is not at bottom, mark as scrolled up
             if (isAtBottom) {
                 userScrolledUp.current = false;
             } else if (!isAutoScrolling.current) {

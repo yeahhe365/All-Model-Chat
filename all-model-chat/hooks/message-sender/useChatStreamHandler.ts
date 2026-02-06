@@ -35,11 +35,38 @@ export const useChatStreamHandler = ({
     ) => {
         const newModelMessageIds = new Set<string>([generationId]);
         let firstContentPartTime: Date | null = null;
+        let firstTokenTime: Date | null = null; // Track first token (thought or content) for TTFT
         let accumulatedText = "";
         let accumulatedThoughts = "";
 
         // Reset store for this new generation
         streamingStore.clear(generationId);
+        
+        // Helper to record TTFT immediately on first activity
+        const recordFirstToken = () => {
+            if (!firstTokenTime) {
+                firstTokenTime = new Date();
+                const ttft = firstTokenTime.getTime() - generationStartTime.getTime();
+                
+                updateAndPersistSessions(prev => {
+                    const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                    if (sessionIndex === -1) return prev;
+                    const newSessions = [...prev];
+                    const sessionToUpdate = { ...newSessions[sessionIndex] };
+                    
+                    // Update only the specific message with TTFT to trigger UI update
+                    sessionToUpdate.messages = sessionToUpdate.messages.map(m => {
+                        if (m.id === generationId) {
+                            return { ...m, firstTokenTimeMs: ttft };
+                        }
+                        return m;
+                    });
+                    
+                    newSessions[sessionIndex] = sessionToUpdate;
+                    return newSessions;
+                }, { persist: false });
+            }
+        };
 
         const streamOnError = (error: Error) => {
             handleApiError(error, currentSessionId, generationId);
@@ -139,6 +166,8 @@ export const useChatStreamHandler = ({
         };
 
         const streamOnPart = (part: Part) => {
+            recordFirstToken(); // Capture TTFT
+            
             const anyPart = part as any;
             
             // 1. Accumulate plain text
@@ -203,6 +232,8 @@ export const useChatStreamHandler = ({
         };
         
         const onThoughtChunk = (thoughtChunk: string) => {
+            recordFirstToken(); // Capture TTFT (thoughts usually come first)
+            
             accumulatedThoughts += thoughtChunk;
             streamingStore.updateThoughts(generationId, thoughtChunk);
         };

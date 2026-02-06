@@ -32,6 +32,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   const [editedContent, setEditedContent] = useState('');
   const [editedName, setEditedName] = useState('');
   const [textContentLoaded, setTextContentLoaded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
       if (file) {
@@ -39,13 +40,52 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
           setEditedName(file.name);
           setEditedContent(''); // Will be populated by onLoad from viewer
           setTextContentLoaded(false);
+          setIsCopied(false);
       }
   }, [file, initialEditMode]);
 
-  // Keyboard navigation
+  const handleCopy = useCallback(async () => {
+      if (!file || !file.dataUrl || isCopied) return;
+      try {
+          // Fetch content to copy
+          const response = await fetch(file.dataUrl);
+          const blob = await response.blob();
+          
+          if (file.type.startsWith('text/') || file.type === 'application/json' || file.type.includes('javascript') || file.type.includes('xml')) {
+              const text = await blob.text();
+              await navigator.clipboard.writeText(text);
+          } else {
+              if (!navigator.clipboard || !navigator.clipboard.write) {
+                  console.error("Clipboard API not available.");
+                  return;
+              }
+              await navigator.clipboard.write([
+                  new ClipboardItem({
+                      [blob.type]: blob
+                  })
+              ]);
+          }
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+      } catch (err) {
+          console.error('Failed to copy content:', err);
+      }
+  }, [file, isCopied]);
+
+  // Keyboard navigation and shortcuts
   useEffect(() => {
       const handleKeyDown = (e: KeyboardEvent) => {
-          if (!file || isEditing) return; // Disable nav when editing
+          if (!file) return;
+          
+          if (isEditing) return; // Disable nav when editing
+
+          // Copy Shortcut (Ctrl+C or Cmd+C)
+          if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+              e.preventDefault();
+              handleCopy();
+              return;
+          }
+
           if (e.key === 'ArrowLeft' && hasPrev && onPrev) {
               e.preventDefault();
               onPrev();
@@ -56,7 +96,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [file, hasPrev, hasNext, onPrev, onNext, isEditing]);
+  }, [file, hasPrev, hasNext, onPrev, onNext, isEditing, handleCopy]);
 
   const handleSave = useCallback(() => {
       if (file && onSaveText) {
@@ -118,6 +158,8 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
             onSave={handleSave}
             editedName={editedName}
             onNameChange={setEditedName}
+            onCopy={handleCopy}
+            isCopied={isCopied}
         />
 
         {/* Navigation Buttons - Hide in Edit Mode */}

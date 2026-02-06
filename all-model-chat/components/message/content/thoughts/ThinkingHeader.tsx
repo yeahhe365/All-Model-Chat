@@ -24,13 +24,14 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
     t,
     isExpanded
 }) => {
-    // Determine the effective start time for the timer (to exclude TTFT)
-    // If firstTokenTimeMs is available, we start counting from (Start + TTFT)
-    const effectiveTimerStart = (generationStartTime && firstTokenTimeMs !== undefined)
-        ? new Date(new Date(generationStartTime).getTime() + firstTokenTimeMs)
+    // Determine the effective start time for the timer
+    // If firstTokenTimeMs is available, we start counting from (Start + TTFT) to show "Pure Thinking Time" (excluding latency)
+    // If NOT available yet (during initial connection), we count from generationStartTime (Total Time)
+    const effectiveTimerStart = generationStartTime
+        ? new Date(new Date(generationStartTime).getTime() + (firstTokenTimeMs || 0))
         : null;
 
-    // Calculate final duration excluding TTFT
+    // Calculate final duration excluding TTFT if thinkingTimeMs is set (completed)
     const finalDuration = thinkingTimeMs !== undefined
         ? Math.max(0, thinkingTimeMs - (firstTokenTimeMs || 0))
         : 0;
