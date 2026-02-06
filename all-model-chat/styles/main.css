@@ -119,18 +119,7 @@ html, body, #root {
    EXPORT STYLES 
    Target specific elements to hide during PNG export
 */
-.is-exporting-png .message-actions,
-.is-exporting-png button:not(.code-block-dummy-btn), /* Keep code buttons structure but hide logic below */
-.is-exporting-png .code-block-utility-button,
-.is-exporting-png [aria-label*="Scroll to"], 
-.is-exporting-png .sticky {
-  display: none !important;
-}
-
-/* Hide suggestion chips in export */
-.is-exporting-png button[class*="rounded-xl"] {
-    display: none !important;
-}
+/* Note: UI elements (buttons, inputs) are removed via JS in prepareElementForExport. */
 
 /* Hide scrollbars in export */
 .is-exporting-png * {

@@ -53,7 +53,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
         ? "max-w-[80%] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl"
         : "max-w-[calc(100%-2.5rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl";
 
-    let bubbleClasses = `flex flex-col min-w-0 transition-all duration-200 ${widthConstraints} `;
+    let bubbleClasses = `flex flex-col min-w-0 transition-all duration-200 ${widthConstraints} message-content-container `;
 
     if (message.role === 'user') {
         // User Message: Bubble style

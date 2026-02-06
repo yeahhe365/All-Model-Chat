@@ -91,7 +91,6 @@ export const useSessionUpdate = ({
                     newMessages: [userMessageContent, modelMessageContent],
                     settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...sessionToUpdate },
                     editingMessageId: effectiveEditingId,
-                    appSettings,
                     title: newTitle,
                     shouldLockKey,
                     keyToLock: keyToUse

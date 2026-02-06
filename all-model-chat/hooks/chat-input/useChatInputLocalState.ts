@@ -1,6 +1,8 @@
 
+
 import { useState } from 'react';
 import { UploadedFile } from '../../types';
+import { isTextFile } from '../../utils/appUtils';
 
 interface UseChatInputLocalStateProps {
     setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
@@ -59,8 +61,7 @@ export const useChatInputLocalState = ({
     };
 
     const handleConfigureFile = (file: UploadedFile) => {
-        const isText = file.type.startsWith('text/') || file.name.endsWith('.txt') || file.type === 'application/json' || file.type.includes('xml') || file.type.includes('javascript') || file.name.endsWith('.md');
-        if (isText) {
+        if (isTextFile(file)) {
             setPreviewFile(file);
             setIsPreviewEditable(true);
         } else {

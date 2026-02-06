@@ -1,10 +1,10 @@
 
+
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
-import { generateUniqueId, logService, fileToString } from '../../utils/appUtils';
+import { generateUniqueId, logService, isTextFile } from '../../utils/appUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
-import { SUPPORTED_TEXT_MIME_TYPES, TEXT_BASED_EXTENSIONS } from '../../constants/fileConstants';
 import mammoth from 'mammoth';
 
 interface UseFilePreProcessingProps {
@@ -19,13 +19,12 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
         for (const file of rawFilesArray) {
             const fileNameLower = file.name.toLowerCase();
-            const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
             
             // Expanded audio detection
             const isAudio = file.type.startsWith('audio/') || 
                 ['.mp3', '.wav', '.m4a', '.ogg', '.flac', '.aac', '.webm', '.wma', '.aiff'].some(ext => fileNameLower.endsWith(ext));
             
-            const isText = SUPPORTED_TEXT_MIME_TYPES.includes(file.type) || TEXT_BASED_EXTENSIONS.includes(fileExtension) || file.type === 'text/plain';
+            const isText = isTextFile(file);
 
             if (fileNameLower.endsWith('.zip')) {
                 const tempId = generateUniqueId();

@@ -1,7 +1,6 @@
 
+
 import { 
-    SUPPORTED_TEXT_MIME_TYPES, 
-    TEXT_BASED_EXTENSIONS, 
     EXTENSION_TO_MIME,
     ALL_SUPPORTED_MIME_TYPES,
     SUPPORTED_IMAGE_MIME_TYPES,
@@ -11,6 +10,7 @@ import {
     SUPPORTED_DOC_MIME_TYPES
 } from '../../constants/fileConstants';
 import { AppSettings } from '../../types';
+import { isTextFile } from '../../utils/appUtils';
 
 export const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
 
@@ -26,7 +26,7 @@ export const getEffectiveMimeType = (file: File): string => {
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
     // 1. Force text/plain for code/text extensions
-    if (TEXT_BASED_EXTENSIONS.includes(fileExtension) || SUPPORTED_TEXT_MIME_TYPES.includes(file.type)) {
+    if (isTextFile(file)) {
         return 'text/plain';
     }
 

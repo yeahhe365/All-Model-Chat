@@ -25,9 +25,6 @@ interface UseChatInputEffectsProps {
     setIsFullscreen: (val: boolean) => void;
     isModalOpen: boolean;
     handlePasteAction: (clipboardData: DataTransfer | null, options?: { forceTextInsertion?: boolean }) => Promise<boolean>;
-    onProcessFiles?: any; // Kept for compatibility but unused directly in paste effect
-    isPasteRichTextAsMarkdownEnabled?: any; // Kept for compatibility
-    isPasteAsTextFileEnabled?: any; // Kept for compatibility
 }
 
 export const useChatInputEffects = ({

@@ -1,6 +1,6 @@
 
 import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
-import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage } from '../../../types';
+import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage, InputCommand } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { createNewSession, rehydrateSessionFiles, logService } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
@@ -13,6 +13,7 @@ interface UseSessionLoaderProps {
     setActiveMessages: Dispatch<SetStateAction<ChatMessage[]>>; // Added setter
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
+    setCommandedInput: Dispatch<SetStateAction<InputCommand | null>>;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
     activeChat: SavedChatSession | undefined;
     userScrolledUp: React.MutableRefObject<boolean>;
@@ -29,6 +30,7 @@ export const useSessionLoader = ({
     setActiveMessages,
     setSelectedFiles,
     setEditingMessageId,
+    setCommandedInput,
     updateAndPersistSessions,
     activeChat,
     userScrolledUp,
@@ -41,6 +43,12 @@ export const useSessionLoader = ({
         // If we are already on an empty chat, just focus input and don't create a duplicate
         if (activeChat && activeChat.messages.length === 0 && !activeChat.systemInstruction) {
             logService.info('Already on an empty chat, reusing session.');
+            
+            // Clear input text, files, and editing state to ensure a "fresh" start visual
+            setCommandedInput({ text: '', id: Date.now(), mode: 'replace' });
+            setSelectedFiles([]);
+            setEditingMessageId(null);
+
             setTimeout(() => {
                 document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
             }, 0);
@@ -92,7 +100,7 @@ export const useSessionLoader = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
         logService.info(`Loading chat session: ${sessionId}`);

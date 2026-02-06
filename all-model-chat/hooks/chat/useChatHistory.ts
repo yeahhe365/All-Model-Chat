@@ -60,6 +60,7 @@ export const useChatHistory = ({
         setActiveMessages,
         setSelectedFiles,
         setEditingMessageId,
+        setCommandedInput,
         updateAndPersistSessions,
         activeChat,
         userScrolledUp,

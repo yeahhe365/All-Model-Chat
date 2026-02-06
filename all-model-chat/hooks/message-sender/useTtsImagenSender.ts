@@ -1,6 +1,4 @@
 
-
-
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
@@ -64,7 +62,6 @@ export const useTtsImagenSender = ({
             settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
             // Editing is less relevant for TTS/Imagen one-offs, but we support it structure-wise
             editingMessageId: null, 
-            appSettings,
             title: newTitle,
             shouldLockKey: options.shouldLockKey,
             keyToLock: keyToUse
