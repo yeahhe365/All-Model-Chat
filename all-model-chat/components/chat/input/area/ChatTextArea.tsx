@@ -65,7 +65,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
     }, [value, isFullscreen, isMobile, initialTextareaHeight, textareaRef]);
 
     return (
-        <div className="relative w-full flex-grow flex flex-col min-h-0">
+        <div className="relative w-full flex flex-col">
             {/* Shadow Textarea for Height Calculation */}
             <textarea
                 ref={shadowRef}
