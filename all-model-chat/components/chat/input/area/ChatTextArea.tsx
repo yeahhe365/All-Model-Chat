@@ -52,11 +52,12 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
         } else {
              const scrollHeight = shadow.scrollHeight;
              const baseHeight = isMobile ? 24 : initialTextareaHeight;
-             const newHeight = Math.max(baseHeight, Math.min(scrollHeight, MAX_TEXTAREA_HEIGHT_PX));
+             const maxHeight = isMobile ? 120 : MAX_TEXTAREA_HEIGHT_PX;
+             const newHeight = Math.max(baseHeight, Math.min(scrollHeight, maxHeight));
              target.style.height = `${newHeight}px`;
 
-             // Only show scrollbar if content exceeds MAX_TEXTAREA_HEIGHT_PX
-             if (scrollHeight > MAX_TEXTAREA_HEIGHT_PX) {
+             // Only show scrollbar if content exceeds max height
+             if (scrollHeight > maxHeight) {
                  target.style.overflowY = 'auto';
              } else {
                  target.style.overflowY = 'hidden';
@@ -65,7 +66,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
     }, [value, isFullscreen, isMobile, initialTextareaHeight, textareaRef]);
 
     return (
-        <div className="relative w-full flex flex-col">
+        <div className="relative w-full flex-grow flex flex-col min-h-0">
             {/* Shadow Textarea for Height Calculation */}
             <textarea
                 ref={shadowRef}
