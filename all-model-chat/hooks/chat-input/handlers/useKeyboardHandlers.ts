@@ -1,3 +1,4 @@
+
 import { useCallback } from 'react';
 import { Command } from '../../../components/chat/input/SlashCommandMenu';
 import { AppSettings } from '../../../types';
@@ -47,6 +48,14 @@ export const useKeyboardHandlers = ({
     onEditLastUserMessage,
 }: UseKeyboardHandlersProps) => {
 
+    const onCompositionStart = useCallback(() => {
+        isComposingRef.current = true;
+    }, [isComposingRef]);
+
+    const onCompositionEnd = useCallback(() => {
+        isComposingRef.current = false;
+    }, [isComposingRef]);
+
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         // 1. Slash Menu Navigation (Highest Priority for Arrows/Enter when Open)
         if (slashCommandState.isOpen) {
@@ -74,8 +83,8 @@ export const useKeyboardHandlers = ({
             }
         }
 
-        // 2. Composition Guard
-        if (isComposingRef.current) return;
+        // 2. Composition Guard (Fix for IME/Pinyin Input)
+        if (isComposingRef.current || e.nativeEvent.isComposing) return;
 
         // 3. Stop / Cancel (Custom Shortcut or default Escape)
         if (isShortcutPressed(e, 'global.stopCancel', appSettings)) {
@@ -197,5 +206,5 @@ export const useKeyboardHandlers = ({
         onEditLastUserMessage
     ]);
 
-    return { handleKeyDown };
+    return { handleKeyDown, onCompositionStart, onCompositionEnd };
 };
