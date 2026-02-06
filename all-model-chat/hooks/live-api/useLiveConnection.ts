@@ -44,6 +44,14 @@ export const useLiveConnection = ({
     const [error, setError] = useState<string | null>(null);
     const [isReconnecting, setIsReconnecting] = useState(false);
 
+    // Ref to track connection state synchronously for audio callbacks
+    const isConnectedRef = useRef(false);
+
+    // Sync Ref with State
+    useEffect(() => {
+        isConnectedRef.current = isConnected;
+    }, [isConnected]);
+
     // Reconnection Refs
     const retryCountRef = useRef(0);
     const isUserDisconnectRef = useRef(false);
@@ -101,15 +109,23 @@ export const useLiveConnection = ({
             // Initialize Audio (Mic & Worklet)
             // We pass a callback that sends the encoded audio to the session
             await initializeAudio((pcmData) => {
+                // IMPORTANT: If connection is closed/closing, stop sending immediately to prevent WebSocket flood errors
+                if (!isConnectedRef.current) return;
+
                 const base64Data = float32ToPCM16Base64(pcmData);
                 if (sessionRef.current) {
                     sessionRef.current.then(session => {
-                        session.sendRealtimeInput({
-                            media: {
-                                mimeType: 'audio/pcm;rate=16000',
-                                data: base64Data
-                            }
-                        });
+                        try {
+                            session.sendRealtimeInput({
+                                media: {
+                                    mimeType: 'audio/pcm;rate=16000',
+                                    data: base64Data
+                                }
+                            });
+                        } catch (e) {
+                            // Catch synchronous send errors (e.g. if socket closed between checks)
+                            console.warn("Failed to send audio frame:", e);
+                        }
                     });
                 }
             });
