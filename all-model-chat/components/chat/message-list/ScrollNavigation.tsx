@@ -21,7 +21,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
 
     return (
         <div
-            className="absolute z-20 right-3 sm:right-6 flex flex-col items-end gap-3 pointer-events-none transition-all duration-300 ease-out"
+            className="absolute z-30 right-3 sm:right-6 flex flex-col items-end gap-3 pointer-events-none transition-all duration-300 ease-out"
             style={{ 
                 bottom: `${bottomOffset + 20}px`,
                 animation: 'fadeIn 0.3s ease-out both' 
@@ -32,7 +32,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                     onClick={onScrollToPrev}
                     className="
                         p-2.5 rounded-full 
-                        bg-[var(--theme-bg-secondary)] 
+                        bg-[var(--theme-bg-secondary)]/90 backdrop-blur-sm
                         border border-[var(--theme-border-secondary)] 
                         text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] 
                         hover:bg-[var(--theme-bg-primary)] hover:border-[var(--theme-border-focus)]
@@ -41,8 +41,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                         pointer-events-auto
                         shadow-md
                     "
-                    aria-label="Scroll to previous turn"
-                    title="Scroll to previous turn"
+                    aria-label="Scroll to previous message"
+                    title="Scroll to previous message"
                 >
                     <ArrowUp size={18} strokeWidth={2.5} />
                 </button>
@@ -52,7 +52,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                     onClick={onScrollToNext}
                     className="
                         p-2.5 rounded-full 
-                        bg-[var(--theme-bg-secondary)] 
+                        bg-[var(--theme-bg-secondary)]/90 backdrop-blur-sm
                         border border-[var(--theme-border-secondary)] 
                         text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] 
                         hover:bg-[var(--theme-bg-primary)] hover:border-[var(--theme-border-focus)]
@@ -61,8 +61,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                         pointer-events-auto
                         shadow-md
                     "
-                    aria-label="Scroll to next turn or bottom"
-                    title="Scroll to next turn or bottom"
+                    aria-label="Scroll down"
+                    title="Scroll down"
                 >
                     <ArrowDown size={18} strokeWidth={2.5} />
                 </button>
