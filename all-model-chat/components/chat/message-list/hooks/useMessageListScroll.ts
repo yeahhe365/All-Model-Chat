@@ -56,48 +56,60 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMes
     }, [messages.length, messages]); // Depend on messages content to ensure role checks are fresh
 
     const scrollToPrevTurn = useCallback(() => {
-        const currentIndex = visibleRangeRef.current.startIndex;
-        let targetIndex = -1;
-
-        // Find the first model message ABOVE the current view
-        for (let i = currentIndex - 1; i >= 0; i--) {
-            const msg = messages[i];
-            const prevMsg = messages[i - 1];
-            // Turn boundary: Model message preceded by User message
-            if (msg.role === 'model' && prevMsg?.role === 'user') {
-                targetIndex = i;
-                break;
-            }
-        }
+        // Fix: Simply jump to the previous item index regardless of role.
+        // This prevents skipping long user messages.
+        const currentStartIndex = visibleRangeRef.current.startIndex;
+        const targetIndex = Math.max(0, currentStartIndex - 1);
         
-        if (targetIndex === -1 && currentIndex > 0) targetIndex = 0;
-
-        if (targetIndex !== -1) {
-            virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
-        }
-    }, [messages]);
+        virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+    }, []);
 
     const scrollToNextTurn = useCallback(() => {
-        const currentIndex = visibleRangeRef.current.startIndex;
-        let targetIndex = -1;
+        const container = scrollerRef;
+        if (!container) return;
 
-        // Find the first model message BELOW the current view
-        for (let i = currentIndex + 1; i < messages.length; i++) {
-            const msg = messages[i];
-            const prevMsg = messages[i - 1];
-            // Turn boundary
-            if (msg.role === 'model' && prevMsg?.role === 'user') {
-                targetIndex = i;
-                break;
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+        
+        // Fix: "Page Down" logic for reading long messages.
+        // If we are far from the bottom (> 1.5 screens), just scroll down one screen.
+        // This prevents the jarring "Jump to Bottom" effect when reading history.
+        if (distanceToBottom > clientHeight * 1.5) {
+             container.scrollBy({ top: clientHeight * 0.8, behavior: 'smooth' });
+        } else {
+             // If reasonably close, snap to the true bottom to see the latest
+             virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+        }
+    }, [messages.length, scrollerRef]);
+
+    // Note: This handleScroll is primarily used to update the Visibility state for the floating buttons.
+    // Virtuoso handles the actual 'atBottom' state internally which we capture via setAtBottom.
+    const handleScroll = useCallback(() => {
+        // Optimization: Skip scroll logic if hidden
+        if (document.hidden) return;
+
+        const container = scrollerRef;
+        if (container) {
+            const { scrollTop, scrollHeight, clientHeight } = container;
+            
+            // Increased threshold to 150px to prevent button flickering during rapid streaming/growth
+            const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
+            
+            // Manually update atBottom if we diverged from Virtuoso's internal state due to threshold diff
+            if (isAtBottom !== atBottom) {
+                setAtBottom(isAtBottom);
             }
         }
+    }, [scrollerRef, atBottom]);
 
-        if (targetIndex !== -1) {
-            virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
-        } else {
-            virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+    // Attach listener manually to the scroller ref since Virtuoso's onScroll doesn't always fire for programmatic scrolls
+    useEffect(() => {
+        const container = scrollerRef;
+        if (container) {
+            container.addEventListener('scroll', handleScroll, { passive: true });
+            return () => container.removeEventListener('scroll', handleScroll);
         }
-    }, [messages]);
+    }, [scrollerRef, handleScroll]);
 
     // Determine nav visibility based on `atBottom` and list length
     const showScrollDown = !atBottom;
@@ -112,6 +124,7 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMes
         scrollToNextTurn,
         showScrollDown,
         showScrollUp,
-        scrollerRef
+        scrollerRef,
+        handleScroll // Exported for ChatArea if needed, though internal listener handles most
     };
 };
