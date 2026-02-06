@@ -103,6 +103,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
 
     const chatActions = useChatActions({
         appSettings,
+        setAppSettings,
         activeSessionId,
         isLoading,
         currentChatSettings,
