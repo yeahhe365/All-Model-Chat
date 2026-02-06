@@ -20,6 +20,7 @@ interface UseSessionLoaderProps {
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
+    savedSessions: SavedChatSession[];
 }
 
 export const useSessionLoader = ({
@@ -37,9 +38,10 @@ export const useSessionLoader = ({
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
+    savedSessions,
 }: UseSessionLoaderProps) => {
 
-    const startNewChat = useCallback(() => {
+    const startNewChat = useCallback((explicitTemplateSession?: SavedChatSession) => {
         // If we are already on an empty chat, just focus input and don't create a duplicate
         if (activeChat && activeChat.messages.length === 0 && !activeChat.systemInstruction) {
             logService.info('Already on an empty chat, reusing session.');
@@ -63,17 +65,23 @@ export const useSessionLoader = ({
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
 
-        // Start with default/global settings
+        // Determine settings for new chat
         let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
         
-        // If there is an active session (even if not empty), carry over its settings to the new chat
-        // This ensures continuity of Model, Tools, System Instructions, etc.
-        if (activeChat) {
+        // Inherit from explicit template (initial load) or top of sidebar (user action)
+        const templateSession = explicitTemplateSession || (savedSessions.length > 0 ? savedSessions[0] : undefined);
+        
+        if (templateSession) {
             settingsForNewChat = {
                 ...settingsForNewChat,
-                ...activeChat.settings,
-                // Explicitly reset fields that should NOT persist across sessions
-                lockedApiKey: null, // Reset API key lock to allow rotation
+                modelId: templateSession.settings.modelId,
+                isGoogleSearchEnabled: templateSession.settings.isGoogleSearchEnabled,
+                isCodeExecutionEnabled: templateSession.settings.isCodeExecutionEnabled,
+                isUrlContextEnabled: templateSession.settings.isUrlContextEnabled,
+                isDeepSearchEnabled: templateSession.settings.isDeepSearchEnabled,
+                thinkingBudget: templateSession.settings.thinkingBudget,
+                thinkingLevel: templateSession.settings.thinkingLevel,
+                ttsVoice: templateSession.settings.ttsVoice,
             };
         }
 
@@ -93,7 +101,7 @@ export const useSessionLoader = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
         logService.info(`Loading chat session: ${sessionId}`);
@@ -201,7 +209,8 @@ export const useSessionLoader = ({
             if (!initialActiveId) {
                 // Fallback: New Chat
                 logService.info('No active session found or invalid, starting fresh chat.');
-                startNewChat();
+                // Pass the top session (if any) as template for inheritance
+                startNewChat(sortedList.length > 0 ? sortedList[0] : undefined);
             }
 
         } catch (error) {
