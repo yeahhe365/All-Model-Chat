@@ -47,7 +47,8 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMes
                     virtuosoRef.current?.scrollToIndex({
                         index: targetIndex,
                         align: 'start',
-                        behavior: 'smooth'
+                        behavior: 'smooth',
+                        offset: -10 // Negative offset pushes content up, hiding previous message residue/margin
                     });
                 }, 50);
             }
@@ -73,7 +74,12 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMes
         if (targetIndex === -1 && currentIndex > 0) targetIndex = 0;
 
         if (targetIndex !== -1) {
-            virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+            virtuosoRef.current?.scrollToIndex({ 
+                index: targetIndex, 
+                align: 'start', 
+                behavior: 'smooth',
+                offset: -10 
+            });
         }
     }, [messages]);
 
@@ -93,7 +99,12 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMes
         }
 
         if (targetIndex !== -1) {
-            virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+            virtuosoRef.current?.scrollToIndex({ 
+                index: targetIndex, 
+                align: 'start', 
+                behavior: 'smooth',
+                offset: -10
+            });
         } else {
             virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
         }
