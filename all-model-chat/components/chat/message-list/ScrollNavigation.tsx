@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 
@@ -6,15 +7,25 @@ interface ScrollNavigationProps {
     showDown: boolean;
     onScrollToPrev: () => void;
     onScrollToNext: () => void;
+    bottomOffset: number;
 }
 
-export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({ showUp, showDown, onScrollToPrev, onScrollToNext }) => {
+export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({ 
+    showUp, 
+    showDown, 
+    onScrollToPrev, 
+    onScrollToNext, 
+    bottomOffset 
+}) => {
     if (!showUp && !showDown) return null;
 
     return (
         <div
-            className="sticky z-20 bottom-4 w-full flex flex-col items-end gap-3 pointer-events-none pr-1"
-            style={{ animation: 'fadeIn 0.3s ease-out both' }}
+            className="absolute z-20 right-3 sm:right-6 flex flex-col items-end gap-3 pointer-events-none transition-all duration-300 ease-out"
+            style={{ 
+                bottom: `${bottomOffset + 20}px`,
+                animation: 'fadeIn 0.3s ease-out both' 
+            }}
         >
             {showUp && (
                 <button
@@ -28,6 +39,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({ showUp, show
                         transition-colors duration-200
                         focus:outline-none
                         pointer-events-auto
+                        shadow-md
                     "
                     aria-label="Scroll to previous turn"
                     title="Scroll to previous turn"
@@ -47,6 +59,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({ showUp, show
                         transition-colors duration-200
                         focus:outline-none
                         pointer-events-auto
+                        shadow-md
                     "
                     aria-label="Scroll to next turn or bottom"
                     title="Scroll to next turn or bottom"
