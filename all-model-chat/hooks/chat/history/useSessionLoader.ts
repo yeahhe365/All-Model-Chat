@@ -63,17 +63,17 @@ export const useSessionLoader = ({
             fileDraftsRef.current[activeSessionId] = selectedFiles;
         }
 
+        // Start with default/global settings
         let settingsForNewChat: ChatSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings };
+        
+        // If there is an active session (even if not empty), carry over its settings to the new chat
+        // This ensures continuity of Model, Tools, System Instructions, etc.
         if (activeChat) {
             settingsForNewChat = {
                 ...settingsForNewChat,
-                modelId: activeChat.settings.modelId,
-                thinkingBudget: activeChat.settings.thinkingBudget,
-                thinkingLevel: activeChat.settings.thinkingLevel,
-                isGoogleSearchEnabled: activeChat.settings.isGoogleSearchEnabled,
-                isCodeExecutionEnabled: activeChat.settings.isCodeExecutionEnabled,
-                isUrlContextEnabled: activeChat.settings.isUrlContextEnabled,
-                isDeepSearchEnabled: activeChat.settings.isDeepSearchEnabled,
+                ...activeChat.settings,
+                // Explicitly reset fields that should NOT persist across sessions
+                lockedApiKey: null, // Reset API key lock to allow rotation
             };
         }
 
@@ -82,13 +82,6 @@ export const useSessionLoader = ({
         // Update state: Set Active Messages to empty, Add new session metadata to list
         setActiveMessages([]);
         setActiveSessionId(newSession.id);
-        
-        // Use updateAndPersistSessions to push the new session to state/DB. 
-        // It will handle the split internally (keeping active activeMessages in sync if we passed it in updater, 
-        // but here we set it explicitly above to empty, so the updater logic in useChatState needs to respect that).
-        // Actually, updateAndPersistSessions uses the *current* activeMessagesRef.
-        // We set setActiveMessages([]) but that state update is async. 
-        // So we should pass the new session with empty messages to the updater.
         
         updateAndPersistSessions(prev => [newSession, ...prev]);
 

@@ -7,7 +7,6 @@ import { MediaResolution } from '../../../types/settings';
 
 interface UseModelSelectionProps {
     appSettings: AppSettings;
-    setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
     activeSessionId: string | null;
     currentChatSettings: IndividualChatSettings;
     isLoading: boolean;
@@ -21,7 +20,6 @@ interface UseModelSelectionProps {
 
 export const useModelSelection = ({
     appSettings,
-    setAppSettings,
     activeSessionId,
     currentChatSettings,
     isLoading,
@@ -63,9 +61,6 @@ export const useModelSelection = ({
             thinkingLevel: newThinkingLevel,
             mediaResolution: newMediaResolution,
         };
-        
-        // Persist sticky settings globally so next new chat/tab uses them
-        setAppSettings(prev => ({ ...prev, ...newSettingsPartial }));
 
         if (!activeSessionId) {
             const sessionSettings = { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...newSettingsPartial };
@@ -98,7 +93,7 @@ export const useModelSelection = ({
                 textarea.focus();
             }
         }, 50);
-    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel, setAppSettings]);
+    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
 
     return { handleSelectModelInHeader };
 };
