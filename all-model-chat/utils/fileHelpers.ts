@@ -34,13 +34,6 @@ export const blobToBase64 = (blob: Blob): Promise<string> => {
     });
 };
 
-/**
- * @deprecated Use blobToBase64 instead for better clarity that it handles Blobs/Files.
- */
-export const fileToBase64 = (file: File): Promise<string> => {
-    return blobToBase64(file);
-};
-
 export const fileToString = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
