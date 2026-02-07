@@ -44,18 +44,31 @@ export const useChatState = (appSettings: AppSettings) => {
     // Refs to access latest state inside the heavy updater without adding dependencies
     const activeMessagesRef = useRef<ChatMessage[]>([]);
     const activeSessionIdRef = useRef<string | null>(null);
+    const hasInitializedActiveSessionSync = useRef(false);
 
     useEffect(() => { activeMessagesRef.current = activeMessages; }, [activeMessages]);
     useEffect(() => { activeSessionIdRef.current = activeSessionId; }, [activeSessionId]);
 
-    // Sync active session ID to sessionStorage and URL
+    // Sync active session ID to sessionStorage, URL and IndexedDB
     useEffect(() => {
+        // Avoid wiping a previously persisted active session before initial history hydration finishes.
+        if (!hasInitializedActiveSessionSync.current) {
+            hasInitializedActiveSessionSync.current = true;
+            if (!activeSessionId) {
+                return;
+            }
+        }
+
         if (activeSessionId) {
             try {
                 sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
             } catch (e) {
                 // Ignore storage errors
             }
+
+            dbService.setActiveSessionId(activeSessionId).catch(error => {
+                logService.error('Failed to persist active session ID', { error });
+            });
 
             // Sync URL: If the current URL doesn't match the active session, update it.
             const targetPath = `/chat/${activeSessionId}`;
@@ -72,6 +85,10 @@ export const useChatState = (appSettings: AppSettings) => {
             } catch (e) {
                 // Ignore storage errors
             }
+
+            dbService.setActiveSessionId(null).catch(error => {
+                logService.error('Failed to clear active session ID', { error });
+            });
 
             // If explicit "no session" (which usually means landing page or new chat pending), revert to root if not already
             // Note: The app usually auto-creates a session ID for "New Chat", so this might run transiently.

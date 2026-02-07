@@ -166,6 +166,11 @@ export const useSessionLoader = ({
                 const storedActiveId = sessionStorage.getItem(ACTIVE_CHAT_SESSION_ID_KEY);
                 if (storedActiveId && metadataList.some(s => s.id === storedActiveId)) {
                     initialActiveId = storedActiveId;
+                } else {
+                    const dbActiveId = await dbService.getActiveSessionId();
+                    if (dbActiveId && metadataList.some(s => s.id === dbActiveId)) {
+                        initialActiveId = dbActiveId;
+                    }
                 }
             }
 
@@ -198,9 +203,26 @@ export const useSessionLoader = ({
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
             if (!initialActiveId) {
-                // Fallback: New Chat
-                logService.info('No active session found or invalid, starting fresh chat.');
-                startNewChat();
+                if (sortedList.length > 0) {
+                    const fallbackSessionId = sortedList[0].id;
+                    const fullFallbackSession = await dbService.getSession(fallbackSessionId);
+
+                    if (fullFallbackSession) {
+                        const rehydrated = rehydrateSessionFiles(fullFallbackSession);
+                        setActiveMessages(rehydrated.messages);
+                        setActiveSessionId(fallbackSessionId);
+                        const draftFiles = fileDraftsRef.current[fallbackSessionId] || [];
+                        setSelectedFiles(draftFiles);
+                        logService.info(`Recovered latest session as active: ${fallbackSessionId}`);
+                    } else {
+                        logService.info('No recoverable active session found, starting fresh chat.');
+                        startNewChat();
+                    }
+                } else {
+                    // Fallback: New Chat (truly first launch / empty database)
+                    logService.info('No session history found, starting fresh chat.');
+                    startNewChat();
+                }
             }
 
         } catch (error) {

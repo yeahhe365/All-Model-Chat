@@ -114,9 +114,12 @@ export const usePreloadedScenarios = ({ appSettings, setAppSettings, updateAndPe
         
         const newSession = createNewSession(sessionSettings, messages, title);
 
-        updateAndPersistSessions(prev => [newSession, ...prev.filter(s => s.messages.length > 0)]);
+        // Keep existing sessions intact to avoid accidental history loss.
+        updateAndPersistSessions(prev => [newSession, ...prev]);
         setActiveSessionId(newSession.id);
-        dbService.setActiveSessionId(newSession.id);
+        dbService.setActiveSessionId(newSession.id).catch(error => {
+            logService.error('Failed to persist active session after loading scenario', { error });
+        });
 
         // Also update the global/default system prompt in app settings
         setAppSettings(prev => ({
