@@ -154,7 +154,8 @@ export const createExportDOMHeader = (title: string, metaLeft: string, metaRight
 
 /**
  * Clones, cleans, and prepares a DOM element for export (HTML or PNG).
- * Handles removing interactive elements, expanding content, and embedding images.
+ * Handles removing interactive elements, expanding content, embedding images, 
+ * and normalizing layout artifacts from virtualization.
  */
 export const prepareElementForExport = async (sourceElement: HTMLElement, options: { expandDetails?: boolean } = {}): Promise<HTMLElement> => {
     const { expandDetails = true } = options;
@@ -162,7 +163,23 @@ export const prepareElementForExport = async (sourceElement: HTMLElement, option
     // 1. Clone the container
     const clone = sourceElement.cloneNode(true) as HTMLElement;
 
-    // 2. Clean UI elements that shouldn't be in the export
+    // 2. Fix Layout/Virtualization Artifacts
+    // Ensure the container itself can grow to fit content
+    clone.style.height = 'auto';
+    clone.style.overflow = 'visible';
+    clone.style.maxHeight = 'none';
+
+    // Locate and fix the inner list wrapper which often has large padding-top from virtualization
+    const potentialLists = Array.from(clone.children) as HTMLElement[];
+    potentialLists.forEach(child => {
+        // Reset common virtualization offset techniques to ensure content starts at the top
+        if (child.style.paddingTop) child.style.paddingTop = '0px';
+        if (child.style.marginTop) child.style.marginTop = '0px';
+        if (child.style.transform) child.style.transform = 'none';
+        if (child.style.position === 'absolute') child.style.position = 'static';
+    });
+
+    // 3. Clean UI elements that shouldn't be in the export
     const selectorsToRemove = [
         'button', 
         '.message-actions', 
@@ -175,7 +192,7 @@ export const prepareElementForExport = async (sourceElement: HTMLElement, option
     ];
     clone.querySelectorAll(selectorsToRemove.join(',')).forEach(el => el.remove());
     
-    // 3. Reset styles that might interfere with static export
+    // 4. Reset styles that might interfere with static export
     clone.querySelectorAll('[data-message-id]').forEach(el => {
         (el as HTMLElement).style.animation = 'none';
         (el as HTMLElement).style.opacity = '1';
@@ -183,16 +200,16 @@ export const prepareElementForExport = async (sourceElement: HTMLElement, option
     });
 
     if (expandDetails) {
-        // 4. Expand all details elements (thoughts/groups) so they are visible
+        // 5. Expand all details elements (thoughts/groups) so they are visible
         clone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
         
-        // 5. Expand custom thought accordions since toggle buttons are removed
+        // 6. Expand custom thought accordions since toggle buttons are removed
         clone.querySelectorAll('.thought-process-accordion').forEach(el => el.classList.add('expanded'));
     } else {
-        // 4. Ensure native details are collapsed by default (remove 'open' if present from clone)
+        // 5. Ensure native details are collapsed by default (remove 'open' if present from clone)
         clone.querySelectorAll('details').forEach(el => el.removeAttribute('open'));
 
-        // 5. Convert custom thought accordions to native details for interactive collapse/expand
+        // 6. Convert custom thought accordions to native details for interactive collapse/expand
         clone.querySelectorAll('.thought-process-accordion').forEach(accordion => {
             const parent = accordion.parentElement;
             if (!parent) return;
@@ -242,7 +259,7 @@ export const prepareElementForExport = async (sourceElement: HTMLElement, option
         });
     }
 
-    // 6. Embed Images: Convert blob/url images to Base64
+    // 7. Embed Images: Convert blob/url images to Base64
     await embedImagesInClone(clone);
 
     return clone;

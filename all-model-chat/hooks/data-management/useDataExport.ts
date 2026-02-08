@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/exportUtils';
+import { dbService } from '../../utils/db';
 
 interface UseDataExportProps {
     appSettings: AppSettings;
@@ -34,11 +35,15 @@ export const useDataExport = ({
         }
     }, [appSettings, t]);
 
-    const handleExportHistory = useCallback(() => {
+    const handleExportHistory = useCallback(async () => {
         logService.info(`Exporting chat history.`);
         try {
+            // Fetch full sessions from DB to ensure messages are included
+            // The state 'savedSessions' only contains metadata
+            const fullSessions = await dbService.getAllSessions();
+            
             // Sanitize all sessions before export to remove rawFile/Blobs/AbortControllers
-            const sanitizedSessions = savedSessions.map(sanitizeSessionForExport);
+            const sanitizedSessions = fullSessions.map(sanitizeSessionForExport);
             
             const dataToExport = { type: 'AllModelChat-History', version: 1, history: sanitizedSessions, groups: savedGroups };
             const jsonString = JSON.stringify(dataToExport, null, 2);
@@ -49,7 +54,7 @@ export const useDataExport = ({
             logService.error('Failed to export history', { error });
             alert(t('export_failed_title'));
         }
-    }, [savedSessions, savedGroups, t]);
+    }, [savedGroups, t]);
 
     const handleExportAllScenarios = useCallback(() => {
         logService.info(`Exporting all scenarios.`);
