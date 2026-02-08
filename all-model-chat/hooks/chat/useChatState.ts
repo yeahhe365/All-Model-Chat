@@ -36,7 +36,8 @@ export const useChatState = (appSettings: AppSettings) => {
     }, [sessionData.savedSessions, sessionData.activeSessionId, sessionData.activeMessages]);
 
     // Fallback/Default settings
-    const currentChatSettings = useMemo(() => activeChat?.settings || DEFAULT_CHAT_SETTINGS, [activeChat]);
+    // Use appSettings as fallback to ensure UI reflects global state (like Canvas mode) in New Chat
+    const currentChatSettings = useMemo(() => activeChat?.settings || appSettings, [activeChat, appSettings]);
     
     const isLoading = useMemo(() => 
         auxState.loadingSessionIds.has(sessionData.activeSessionId ?? ''), 
