@@ -136,8 +136,11 @@ export const useKeyboardHandlers = ({
 
         // Priority resolution: if both match (unlikely/bad config), prefer Send?
         if (isSendPressed) {
-            // If on mobile (without desktop override), we might want to respect soft keyboard behavior?
-            // But if user set a shortcut, we should honor it.
+            // On mobile devices, "Enter" usually implies inserting a newline, while the UI button handles sending.
+            // We ignore the send shortcut if it's a raw Enter key on mobile.
+            if (isMobile && e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                return; // Allow default behavior (newline insertion)
+            }
             
             // Allow Slash Command execution on Send
             const trimmedInput = inputText.trim();
