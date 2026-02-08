@@ -1,7 +1,7 @@
 
 // Web Worker code embedded as string to avoid extra file management
 const WORKER_CODE = `
-importScripts('https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js');
+importScripts('/lame.min.js');
 
 self.onmessage = function(e) {
     try {
