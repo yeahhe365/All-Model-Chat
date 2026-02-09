@@ -1,4 +1,3 @@
-
 import { translations } from '../utils/appUtils';
 
 export interface ShortcutDefinition {
@@ -21,7 +20,7 @@ export const SHORTCUT_REGISTRY: ShortcutDefinition[] = [
     { id: 'input.editLast', labelKey: 'shortcuts_edit_last', defaultKey: 'arrowup', category: 'input' },
     { id: 'input.cycleModels', labelKey: 'shortcuts_cycle_models', defaultKey: 'tab', category: 'input' },
     { id: 'input.slashCommands', labelKey: 'shortcuts_slash_commands', defaultKey: '/', category: 'input' },
-    { id: 'input.clearDraft', labelKey: 'shortcuts_clear_input_draft', defaultKey: 'delete', category: 'input' },
+    { id: 'input.clearDraft', labelKey: 'shortcuts_clear_input_draft', defaultKey: '', category: 'input' },
 
     // Global / Dialogs
     { id: 'global.stopCancel', labelKey: 'shortcuts_stop_cancel', defaultKey: 'escape', category: 'global' },
