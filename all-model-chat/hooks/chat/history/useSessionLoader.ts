@@ -207,10 +207,34 @@ export const useSessionLoader = ({
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
             if (!initialActiveId) {
-                // Fallback: New Chat
-                logService.info('No active session found or invalid, starting fresh chat.');
-                // Pass the top session (if any) as template for inheritance
-                startNewChat(sortedList.length > 0 ? sortedList[0] : undefined);
+                // Check if the most recent session is empty. If so, reuse it.
+                const mostRecent = sortedList[0];
+                let reused = false;
+
+                if (mostRecent) {
+                    // We need to verify if it's truly empty. Metadata has messages stripped.
+                    // Also check systemInstruction: if it's a specific scenario, don't reuse it as a generic "New Chat"
+                    const fullSession = await dbService.getSession(mostRecent.id);
+                    if (fullSession && fullSession.messages.length === 0 && !fullSession.systemInstruction) {
+                        logService.info(`Reusing empty recent session: ${mostRecent.id}`);
+                        const rehydrated = rehydrateSessionFiles(fullSession);
+                        setActiveMessages(rehydrated.messages);
+                        setActiveSessionId(rehydrated.id);
+                        
+                        // Restore files draft
+                        const draftFiles = fileDraftsRef.current[rehydrated.id] || [];
+                        setSelectedFiles(draftFiles);
+                        
+                        reused = true;
+                    }
+                }
+
+                if (!reused) {
+                    // Fallback: New Chat
+                    logService.info('No active session found or empty session to reuse, starting fresh chat.');
+                    // Pass the top session (if any) as template for inheritance
+                    startNewChat(sortedList.length > 0 ? sortedList[0] : undefined);
+                }
             }
 
         } catch (error) {

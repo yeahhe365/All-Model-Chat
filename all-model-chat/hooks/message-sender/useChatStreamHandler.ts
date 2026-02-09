@@ -69,7 +69,8 @@ export const useChatStreamHandler = ({
         };
 
         const streamOnError = (error: Error) => {
-            handleApiError(error, currentSessionId, generationId);
+            // Pass accumulated content so it can be saved even on error/abort
+            handleApiError(error, currentSessionId, generationId, "Error", accumulatedText, accumulatedThoughts);
             setSessionLoading(currentSessionId, false);
             activeJobs.current.delete(generationId);
             streamingStore.clear(generationId);
