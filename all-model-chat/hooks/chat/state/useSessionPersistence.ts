@@ -1,5 +1,5 @@
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { SavedChatSession, ChatGroup, ChatMessage } from '../../../types';
 import { dbService } from '../../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../../utils/appUtils';
@@ -25,6 +25,9 @@ export const useSessionPersistence = ({
     
     // Tracks session IDs that are generating *in this specific tab*
     const localLoadingSessionIds = useRef(new Set<string>());
+    
+    // Tracks if data became stale while the tab was hidden
+    const isDirtyRef = useRef(false);
 
     const refreshSessions = useCallback(async () => {
         try {
@@ -61,14 +64,41 @@ export const useSessionPersistence = ({
         }
     }, [setSavedGroups]);
 
+    // Re-sync when tab becomes visible if data is dirty
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && isDirtyRef.current) {
+                logService.info('[Sync] Tab visible, syncing pending updates from DB.');
+                refreshSessions();
+                refreshGroups();
+                isDirtyRef.current = false;
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [refreshSessions, refreshGroups]);
+
     const { broadcast } = useMultiTabSync({
         onSettingsUpdated: () => {
+            if (document.hidden) {
+                isDirtyRef.current = true;
+                return;
+            }
             refreshSessions();
         },
         onSessionsUpdated: () => {
+            if (document.hidden) {
+                isDirtyRef.current = true;
+                return;
+            }
             refreshSessions();
         },
         onGroupsUpdated: () => {
+            if (document.hidden) {
+                isDirtyRef.current = true;
+                return;
+            }
             refreshGroups();
         },
         onSessionContentUpdated: (id) => {
@@ -76,6 +106,12 @@ export const useSessionPersistence = ({
             if (localLoadingSessionIds.current.has(id)) {
                 return;
             }
+
+            if (document.hidden) {
+                isDirtyRef.current = true;
+                return;
+            }
+
             // If the updated session is the active one, reload it fully. 
             if (id === activeSessionIdRef.current) {
                  dbService.getSession(id).then(s => {
@@ -91,6 +127,9 @@ export const useSessionPersistence = ({
             }
         },
         onSessionLoading: (sessionId, isLoading) => {
+            // Loading state is ephemeral and visual, we can skip it if hidden or let it update (low cost)
+            // But usually we want to know if something is loading even if hidden (e.g. title/favicon updates?)
+            // For now, we allow loading state updates as they don't hit DB.
             setLoadingSessionIds(prev => {
                 const next = new Set(prev);
                 if (isLoading) next.add(sessionId);
