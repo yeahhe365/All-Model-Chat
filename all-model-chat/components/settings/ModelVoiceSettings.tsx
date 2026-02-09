@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModelOption } from '../../types';
 import { Info, Maximize2, Image as ImageIcon } from 'lucide-react';
 import { Tooltip } from '../shared/Tooltip';
@@ -58,8 +58,36 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
 
+  // Local state for the large textarea to prevent re-render lag and IME issues
+  const [localPrompt, setLocalPrompt] = useState(systemInstruction);
+
+  // Sync local state when the global prop changes (e.g. session switch or scenario load)
+  useEffect(() => {
+    setLocalPrompt(systemInstruction);
+  }, [systemInstruction]);
+
+  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalPrompt(e.target.value);
+    // We do NOT update the parent on every keystroke to prevent heavy global re-renders
+  };
+
+  const handlePromptBlur = () => {
+    // Commit changes to global state only when the user finishes typing
+    if (localPrompt !== systemInstruction) {
+      setSystemInstruction(localPrompt);
+    }
+  };
+
+  const handleOpenExpand = () => {
+    // Sync current local edits before opening the separate editor modal
+    if (localPrompt !== systemInstruction) {
+      setSystemInstruction(localPrompt);
+    }
+    setIsSystemPromptExpanded(true);
+  };
+
   const inputBaseClasses = "w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm";
-  const isSystemPromptSet = systemInstruction && systemInstruction.trim() !== "";
+  const isSystemPromptSet = localPrompt && localPrompt.trim() !== "";
   
   const isNativeAudio = modelId.toLowerCase().includes('native-audio');
 
@@ -95,7 +123,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     </label>
                     <button
                         type="button"
-                        onClick={() => setIsSystemPromptExpanded(true)}
+                        onClick={handleOpenExpand}
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
                         title="Expand Editor"
                     >
@@ -103,8 +131,12 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     </button>
                 </div>
                 <textarea
-                  id="system-prompt-input" value={systemInstruction} onChange={(e) => setSystemInstruction(e.target.value)}
-                  rows={3} className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] custom-scrollbar`}
+                  id="system-prompt-input" 
+                  value={localPrompt} 
+                  onChange={handlePromptChange}
+                  onBlur={handlePromptBlur}
+                  rows={3} 
+                  className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] custom-scrollbar`}
                   placeholder={t('chatBehavior_systemPrompt_placeholder')}
                   aria-label="System prompt text area"
                 />
