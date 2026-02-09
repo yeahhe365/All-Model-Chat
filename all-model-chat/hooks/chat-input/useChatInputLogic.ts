@@ -1,4 +1,3 @@
-
 import React, { useCallback, useMemo } from 'react';
 import { ChatInputProps } from '../../types';
 import { useChatInputState } from './useChatInputState';
@@ -255,6 +254,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         setIsFullscreen: inputState.setIsFullscreen,
         isModalOpen: isAnyModalOpen,
         handlePasteAction: handlers.handlePasteAction,
+        appSettings,
     });
 
     return {

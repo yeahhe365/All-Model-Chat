@@ -1,7 +1,7 @@
-
 import { useEffect, useRef } from 'react';
-import { InputCommand, UploadedFile } from '../../types';
+import { InputCommand, UploadedFile, AppSettings } from '../../types';
 import { useTextAreaInsert } from '../useTextAreaInsert';
+import { isShortcutPressed } from '../../utils/shortcutUtils';
 
 interface UseChatInputEffectsProps {
     commandedInput: InputCommand | null;
@@ -25,6 +25,7 @@ interface UseChatInputEffectsProps {
     setIsFullscreen: (val: boolean) => void;
     isModalOpen: boolean;
     handlePasteAction: (clipboardData: DataTransfer | null, options?: { forceTextInsertion?: boolean }) => Promise<boolean>;
+    appSettings: AppSettings;
 }
 
 export const useChatInputEffects = ({
@@ -49,6 +50,7 @@ export const useChatInputEffects = ({
     setIsFullscreen,
     isModalOpen,
     handlePasteAction,
+    appSettings,
 }: UseChatInputEffectsProps) => {
 
     const insertText = useTextAreaInsert(textareaRef, setInputText);
@@ -165,8 +167,9 @@ export const useChatInputEffects = ({
                             target.tagName === 'SELECT' ||
                             target.isContentEditable;
             
-            if (e.key === 'Delete') {
+            if (isShortcutPressed(e as any, 'input.clearDraft', appSettings)) {
                 if (isInput && target !== textareaRef.current) return;
+                e.preventDefault();
                 setInputText('');
                 textareaRef.current?.focus();
                 return;
@@ -192,7 +195,7 @@ export const useChatInputEffects = ({
 
         document.addEventListener('keydown', handleGlobalKeyDown);
         return () => document.removeEventListener('keydown', handleGlobalKeyDown);
-    }, [isModalOpen, textareaRef, setInputText]);
+    }, [isModalOpen, textareaRef, setInputText, appSettings]);
 
     // 6. Auto-focus on File Add
     const prevFileCountRef = useRef(selectedFiles.length);
