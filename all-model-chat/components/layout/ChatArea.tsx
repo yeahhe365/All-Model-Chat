@@ -122,6 +122,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onUpdateMessageFile={onUpdateMessageFile}
         onQuote={handleQuote}
         onInsert={handleInsert}
+        activeSessionId={activeSessionId}
       />
 
       <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
