@@ -1,4 +1,5 @@
 
+
 export const commonTranslations = {
     cancel: { en: 'Cancel', zh: '取消' },
     save: { en: 'Save', zh: '保存' },
@@ -19,4 +20,6 @@ export const commonTranslations = {
     canvasHelperToggle: { en: 'Toggle Canvas', zh: '切换 Canvas' },
     pipEnter: { en: 'Enter Picture-in-Picture', zh: '进入画中画' },
     pipExit: { en: 'Exit Picture-in-Picture', zh: '退出画中画' },
+    exportToCSV: { en: 'Export to CSV', zh: '导出为 CSV' },
+    exportToExcel: { en: 'Export to Excel', zh: '导出为 Excel' },
 };

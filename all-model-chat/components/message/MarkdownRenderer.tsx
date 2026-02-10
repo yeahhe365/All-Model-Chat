@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from './blocks/CodeBlock';
@@ -48,7 +49,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     code: (props: any) => {
         return <InlineCode {...props} />;
     },
-    table: (props: any) => <TableBlock {...props} />,
+    table: (props: any) => <TableBlock {...props} t={t} />,
     a: (props: any) => {
         const { href, children, ...rest } = props;
         const isInternal = href && (href.startsWith('#') || href.startsWith('/'));
