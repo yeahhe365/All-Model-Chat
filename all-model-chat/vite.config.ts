@@ -30,7 +30,8 @@ export default defineConfig(({ mode }) => {
             'react-pdf', 
             'pdfjs-dist',
             '@formkit/auto-animate/react',
-            'react-virtuoso'
+            'react-virtuoso',
+            'xlsx'
           ]
         }
       }
