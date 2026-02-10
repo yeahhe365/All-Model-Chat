@@ -51,13 +51,14 @@ export interface MessageListProps {
   onOpenSidePanel: (content: SideViewContent) => void;
   onQuote: (text: string) => void;
   onInsert?: (text: string) => void;
+  activeSessionId: string | null;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, sessionTitle, setScrollContainerRef, onScrollContainerScroll,
     onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, t, themeId,
-    chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote, onInsert
+    chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote, onInsert, activeSessionId
 }) => {
   
   // UI Logic (Modals, Previews, Configuration)
@@ -91,7 +92,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       showScrollDown,
       showScrollUp,
       scrollerRef
-  } = useMessageListScroll({ messages, setScrollContainerRef });
+  } = useMessageListScroll({ messages, setScrollContainerRef, activeSessionId });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => isGemini3Model(currentModelId), [currentModelId]);

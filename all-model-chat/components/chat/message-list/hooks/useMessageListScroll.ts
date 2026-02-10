@@ -6,13 +6,17 @@ import { ChatMessage } from '../../../types';
 interface UseMessageListScrollProps {
     messages: ChatMessage[];
     setScrollContainerRef: (node: HTMLDivElement | null) => void;
+    activeSessionId: string | null;
 }
 
-export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMessageListScrollProps) => {
+export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSessionId }: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [atBottom, setAtBottom] = useState(true);
     const [scrollerRef, setInternalScrollerRef] = useState<HTMLElement | null>(null);
     const visibleRangeRef = useRef({ startIndex: 0, endIndex: 0 });
+    
+    const scrollSaveTimeoutRef = useRef<number | null>(null);
+    const lastRestoredSessionIdRef = useRef<string | null>(null);
 
     // Sync internal scroller ref with parent's expectations
     useEffect(() => {
@@ -99,8 +103,42 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef }: UseMes
             if (isAtBottom !== atBottom) {
                 setAtBottom(isAtBottom);
             }
+
+            // Save scroll position for active session
+            if (activeSessionId) {
+                if (scrollSaveTimeoutRef.current) {
+                    clearTimeout(scrollSaveTimeoutRef.current);
+                }
+                scrollSaveTimeoutRef.current = window.setTimeout(() => {
+                    localStorage.setItem(`chat_scroll_pos_${activeSessionId}`, scrollTop.toString());
+                }, 300);
+            }
         }
-    }, [scrollerRef, atBottom]);
+    }, [scrollerRef, atBottom, activeSessionId]);
+
+    // Restore scroll position on session change
+    useEffect(() => {
+        if (!activeSessionId) return;
+
+        // If we haven't restored for this session yet, or if messages just loaded (length > 0)
+        // We check messages.length > 0 to avoid trying to scroll on an empty list
+        if (messages.length > 0 && lastRestoredSessionIdRef.current !== activeSessionId) {
+            const savedPos = localStorage.getItem(`chat_scroll_pos_${activeSessionId}`);
+            
+            // Use setTimeout to allow Virtuoso to layout the items first
+            setTimeout(() => {
+                if (savedPos !== null) {
+                    const top = parseInt(savedPos, 10);
+                    virtuosoRef.current?.scrollTo({ top });
+                } else {
+                    // Default to bottom for new/unvisited sessions
+                    virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end' });
+                }
+            }, 50);
+
+            lastRestoredSessionIdRef.current = activeSessionId;
+        }
+    }, [activeSessionId, messages.length]);
 
     // Attach listener manually to the scroller ref since Virtuoso's onScroll doesn't always fire for programmatic scrolls
     useEffect(() => {
