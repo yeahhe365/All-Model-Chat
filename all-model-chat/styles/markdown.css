@@ -117,68 +117,74 @@ code.hljs {
   line-height: 1.4; /* Slightly tighter for inline code tags */
 }
 
-/* Table Styles - Clean Transparent Style with NO Black Backgrounds */
+/* Table Styles - Clean Minimalist Style (No Grid Borders) */
 .markdown-body table {
   border-collapse: collapse;
   width: 100%;
   margin: 0; /* Handled by TableBlock wrapper */
   background-color: transparent !important;
-  line-height: 1.5 !important; /* Keep tables compact */
+  border: none !important;
+  table-layout: auto;
 }
 
 .markdown-body thead {
   background-color: transparent !important;
+  border-bottom: 1px solid var(--theme-border-secondary) !important;
 }
 
-/* Explicitly target thead tr to remove any black background on the first row */
 .markdown-body thead tr {
   background-color: transparent !important;
+  border: none !important;
 }
 
 .markdown-body thead th {
-  background-color: transparent !important; /* Removed solid background */
-  color: var(--theme-text-primary) !important; /* Ensure header text is visible */
-  font-weight: 600;
-  padding: 0.75rem 1rem;
+  background-color: transparent !important;
+  color: var(--theme-text-primary) !important;
+  font-weight: 700; /* Bolder header */
+  padding: 1rem 1rem 1rem 0; /* Reduced left padding, increased vertical */
   text-align: left;
-  border: 1px solid var(--theme-border-secondary) !important;
-  border-bottom: 2px solid var(--theme-border-secondary) !important; /* Distinct separation */
+  border: none !important; /* Remove individual cell borders */
   white-space: nowrap;
+  font-size: 0.95em;
+  opacity: 0.9;
 }
 
 .markdown-body tbody {
   background-color: transparent !important;
 }
 
-.markdown-body tbody td {
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--theme-border-secondary) !important;
-  color: var(--theme-text-secondary) !important;
-  vertical-align: middle;
-  background-color: transparent !important;
-}
-
-/* Removed zebra striping to avoid "black effect" on dark themes */
+/* Horizontal lines between rows */
 .markdown-body tbody tr {
   background-color: transparent !important;
+  border-bottom: 1px solid var(--theme-border-secondary) !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
 }
 
-.markdown-body tbody tr:nth-child(2n) {
-  background-color: transparent !important;
-}
-
-.markdown-body tbody tr:nth-child(odd) {
-  background-color: transparent !important;
+/* Remove border from last row to avoid double border with container bottom if present, or just clean look */
+.markdown-body tbody tr:last-child {
+  border-bottom: none !important;
 }
 
 .markdown-body tbody tr:hover {
-  background-color: var(--theme-bg-tertiary) !important;
+  background-color: transparent !important; /* No hover effect for cleaner look, or maybe subtle */
 }
 
-/* Highlight the last row typically used for Totals */
-.markdown-body tbody tr:last-child td {
-  font-weight: 600;
+.markdown-body tbody td {
+  padding: 1.25rem 1rem 1.25rem 0; /* Generous padding matches the design */
+  border: none !important; /* No vertical borders */
+  color: var(--theme-text-secondary) !important;
+  vertical-align: top;
+  background-color: transparent !important;
+  line-height: 1.6;
+}
+
+/* First Column Emphasis (Key Column) */
+.markdown-body tbody td:first-child {
   color: var(--theme-text-primary) !important;
+  font-weight: 500;
+  min-width: 100px; /* Ensure label column has some width */
 }
 
 /* Citation Styles */
