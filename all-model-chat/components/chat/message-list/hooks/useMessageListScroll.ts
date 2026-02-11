@@ -137,7 +137,8 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
             }
 
             // Save scroll position for active session
-            if (activeSessionId) {
+            // Guard Clause: Only save if we have finished restoring the session (ids match) AND we have actual content
+            if (activeSessionId && lastRestoredSessionIdRef.current === activeSessionId && messages.length > 0) {
                 if (scrollSaveTimeoutRef.current) {
                     clearTimeout(scrollSaveTimeoutRef.current);
                 }
@@ -146,7 +147,7 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
                 }, 300);
             }
         }
-    }, [scrollerRef, atBottom, activeSessionId]);
+    }, [scrollerRef, atBottom, activeSessionId, messages.length]);
 
     // Restore scroll position on session change
     useEffect(() => {
@@ -166,9 +167,9 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
                     // Default to bottom for new/unvisited sessions
                     virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end' });
                 }
+                // Mark restoration as complete for this session ID
+                lastRestoredSessionIdRef.current = activeSessionId;
             }, 50);
-
-            lastRestoredSessionIdRef.current = activeSessionId;
         }
     }, [activeSessionId, messages.length]);
 
