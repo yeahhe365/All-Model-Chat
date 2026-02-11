@@ -105,7 +105,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     const hasFiles = message.files && message.files.length > 0;
 
     return (
-        <div className={`mb-2 ${hasFiles ? 'mt-1' : '-mt-2'}`}>
+        <div className={`mb-2 ${hasFiles ? 'mt-1' : '-mt-2'} message-thoughts-block`}>
             <div 
                 className={`group rounded-xl bg-[var(--theme-bg-tertiary)]/20 overflow-hidden transition-all duration-200 ${isExpanded ? 'bg-[var(--theme-bg-tertiary)]/30 shadow-sm' : ''}`}
             >
