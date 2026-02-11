@@ -69,15 +69,26 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     }, []);
 
     const scrollToNextTurn = useCallback(() => {
-        // Consistently message-based scrolling
+        // 获取当前视窗中最上面一条消息的索引
         const currentStartIndex = visibleRangeRef.current.startIndex;
         
-        if (currentStartIndex < messages.length - 1) {
-             // Jump to start of next message
-             virtuosoRef.current?.scrollToIndex({ index: currentStartIndex + 1, align: 'start', behavior: 'smooth' });
+        // 目标是下一条消息
+        let targetIndex = currentStartIndex + 1;
+
+        // 如果已经是最后一条，则确保对齐到底部
+        if (targetIndex >= messages.length) {
+            virtuosoRef.current?.scrollToIndex({ 
+                index: messages.length - 1, 
+                align: 'end', 
+                behavior: 'smooth' 
+            });
         } else {
-             // If on the last message but not at bottom, scroll to end
-             virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+            // 否则跳转到下一条消息的顶部
+            virtuosoRef.current?.scrollToIndex({ 
+                index: targetIndex, 
+                align: 'start', 
+                behavior: 'smooth' 
+            });
         }
     }, [messages.length]);
 
