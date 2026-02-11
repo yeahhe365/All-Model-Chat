@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { IconProps, defaultSize, defaultStroke, defaultColor } from '../iconUtils';
 
@@ -52,5 +53,27 @@ export const IconHtml5: React.FC<IconProps> = ({ size = defaultSize, className }
     <path fill="#EF652A" d="M256,472 L405,431 440,37 256,37"/>
     <path fill="#EBEBEB" d="M256,208 L181,208 176,150 256,150 256,94 255,94 114,94 115,109 129,265 256,265zM256,355 L255,355 192,338 188,293 132,293 139,382 256,414z"/>
     <path fill="#FFFFFF" d="M255,208 L255,265 325,265 318,338 255,355 255,414 371,382 372,372 385,223 387,208zM256,94 L256,129 256,150 256,150 389,150 390,150 391,150 392,150 393,150 396,109 397,94z"/>
+  </svg>
+);
+
+// Python Icon
+export const IconPython: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
+  <svg 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke={color} 
+    strokeWidth={strokeWidth} 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M12 2c-3.1 0-5.5 2.3-5.5 5.5v2.8h11v-2.8C17.5 4.3 15.1 2 12 2z" />
+    <path d="M6.5 10.3h-2C3.1 10.3 2 11.4 2 12.8v4.9c0 1.4 1.1 2.5 2.5 2.5h2" />
+    <path d="M17.5 13.7h2c1.4 0 2.5-1.1 2.5-2.5v-4.9c0-1.4-1.1-2.5-2.5-2.5h-2" />
+    <path d="M12 22c3.1 0 5.5-2.3 5.5-5.5v-2.8H6.5v2.8C6.5 19.7 8.9 22 12 22z" />
+    <circle cx="10" cy="5" r=".5" fill="currentColor" stroke="none" />
+    <circle cx="14" cy="19" r=".5" fill="currentColor" stroke="none" />
   </svg>
 );

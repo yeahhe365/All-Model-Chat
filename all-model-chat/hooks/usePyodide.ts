@@ -58,9 +58,16 @@ export const usePyodide = () => {
         });
     }, []);
 
+    // While we can't easily hard-reset the worker without re-initializing the service,
+    // we can provide a UI reset to clear the visual state.
+    const resetState = useCallback(() => {
+        clearOutput();
+    }, [clearOutput]);
+
     return {
         ...state,
         runCode,
-        clearOutput
+        clearOutput,
+        resetState
     };
 };

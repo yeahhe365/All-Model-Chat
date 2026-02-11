@@ -1,7 +1,7 @@
 
 
-
-
+import React from 'react';
+import { translations } from '../../utils/appUtils';
 
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
@@ -48,8 +48,8 @@ export const chatInputTranslations = {
     deep_search_short: { en: 'Deep', zh: '深度' },
     code_execution_label: { en: 'Code Execution', zh: '代码执行' },
     code_execution_short: { en: 'Code', zh: '代码' },
-    local_python_label: { en: 'Local Python', zh: '本地 Python' },
-    local_python_short: { en: 'Pyodide', zh: '本地 Python' },
+    local_python_label: { en: 'Pyodide', zh: 'Pyodide' },
+    local_python_short: { en: 'Pyodide', zh: 'Pyodide' },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
     url_context_short: { en: 'URL', zh: 'URL' },
     tools_token_count_label: { en: 'Token Calculator', zh: 'Token 计算器' },

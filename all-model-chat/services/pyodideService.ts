@@ -1,5 +1,6 @@
 
 import { logService } from "../utils/appUtils";
+import { UploadedFile } from "../types";
 
 // Worker code template. __PYODIDE_BASE_URL__ will be replaced at runtime.
 const WORKER_CODE_TEMPLATE = `
@@ -14,7 +15,8 @@ async function loadPyodideAndPackages() {
     pyodide = await loadPyodide({
         indexURL: PYODIDE_BASE_URL,
     });
-    await pyodide.loadPackage(["micropip", "pandas", "numpy"]); // Pre-load common data packages
+    // Pre-load common data packages for speed
+    await pyodide.loadPackage(["micropip", "pandas", "numpy", "matplotlib"]); 
   }
   return pyodide;
 }
@@ -50,8 +52,34 @@ function getMimeType(filename) {
     return mimeMap[ext] || 'application/octet-stream';
 }
 
+async function installDependencies(code) {
+    try {
+        await pyodide.loadPackagesFromImports(code);
+        
+        // Manual mapping for common packages that might be missed or named differently
+        const micropip = pyodide.pyimport("micropip");
+        const packagesToInstall = [];
+        
+        if (code.includes('sklearn') || code.includes('scikit-learn')) {
+            packagesToInstall.push('scikit-learn');
+        }
+        if (code.includes('scipy')) {
+            packagesToInstall.push('scipy');
+        }
+        if (code.includes('seaborn')) {
+            packagesToInstall.push('seaborn');
+        }
+        
+        if (packagesToInstall.length > 0) {
+            await micropip.install(packagesToInstall);
+        }
+    } catch (e) {
+        console.warn("Dependency resolution warning:", e);
+    }
+}
+
 self.onmessage = async (event) => {
-  const { id, code } = event.data;
+  const { type, id, code, files } = event.data;
 
   try {
     if (!pyodideReadyPromise) {
@@ -59,11 +87,22 @@ self.onmessage = async (event) => {
     }
     await pyodideReadyPromise;
 
+    if (type === 'MOUNT_FILES') {
+        if (files && Array.isArray(files)) {
+            for (const file of files) {
+                // file.data is ArrayBuffer transferred
+                pyodide.FS.writeFile(file.name, new Uint8Array(file.data));
+            }
+        }
+        self.postMessage({ id, status: 'success', type: 'MOUNT_COMPLETE' });
+        return;
+    }
+
     // Capture initial file state
     const initialFiles = new Set();
     try {
-        const files = pyodide.FS.readdir('.');
-        for (const f of files) initialFiles.add(f);
+        const fsFiles = pyodide.FS.readdir('.');
+        for (const f of fsFiles) initialFiles.add(f);
     } catch (e) { /* ignore */ }
 
     // Reset stdout/stderr capture
@@ -72,11 +111,7 @@ self.onmessage = async (event) => {
     pyodide.setStderr({ batched: (msg) => stdout.push(msg) });
 
     // Auto-install packages detected in imports
-    try {
-      await pyodide.loadPackagesFromImports(code);
-    } catch (e) {
-      // Ignore package loading errors (might be standard libs)
-    }
+    await installDependencies(code);
 
     // Setup matplotlib backend if needed
     await pyodide.runPythonAsync(\`
@@ -195,17 +230,62 @@ class PyodideService {
     }
 
     private handleMessage(event: MessageEvent) {
-        const { id, status, output, image, files, result, error } = event.data;
+        const { id, status, output, image, files, result, error, type } = event.data;
         const promise = this.pendingPromises.get(id);
         
         if (promise) {
             if (status === 'success') {
-                promise.resolve({ output, image, files, result });
+                if (type === 'MOUNT_COMPLETE') {
+                    promise.resolve(true);
+                } else {
+                    promise.resolve({ output, image, files, result });
+                }
             } else {
                 promise.reject(error);
             }
             this.pendingPromises.delete(id);
         }
+    }
+
+    public async mountFiles(files: UploadedFile[]): Promise<void> {
+        this.initWorker();
+        const id = Math.random().toString(36).substring(7);
+
+        // Filter and read files that have raw data
+        const filesToMount = await Promise.all(files.map(async (f) => {
+            if (!f.rawFile) return null;
+            // Only mount text or basic data types, avoid massive videos unless necessary
+            // For now we assume if it's passed here, it's intended for analysis
+            const buffer = await f.rawFile.arrayBuffer();
+            return { name: f.name, data: buffer };
+        }));
+
+        const validFiles = filesToMount.filter((f): f is { name: string, data: ArrayBuffer } => f !== null);
+
+        if (validFiles.length === 0) return;
+
+        return new Promise<void>((resolve, reject) => {
+             this.pendingPromises.set(id, { resolve, reject });
+             
+             // Use transferables for efficiency to avoid copying large buffers
+             const buffers = validFiles.map(f => f.data);
+             
+             this.worker?.postMessage({ 
+                 type: 'MOUNT_FILES', 
+                 id, 
+                 files: validFiles 
+             }, buffers);
+
+             // Shorter timeout for mounting
+             setTimeout(() => {
+                if (this.pendingPromises.has(id)) {
+                    this.pendingPromises.delete(id);
+                    // Don't reject, just warn, as execution might still work if files weren't critical
+                    console.warn("File mount timed out");
+                    resolve(); 
+                }
+            }, 10000);
+        });
     }
 
     public async runPython(code: string): Promise<ExecutionResult> {
