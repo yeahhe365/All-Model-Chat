@@ -37,6 +37,14 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
     const prevMsgCount = useRef(messages.length);
     useEffect(() => {
+        // GUARD: Do not run anchoring logic if we are in the middle of loading/restoring a session.
+        // This prevents the view from jumping to the bottom when switching chats (bulk message load).
+        // Only run this logic if the session ID has stabilized (restoration effect has processed it).
+        if (lastRestoredSessionIdRef.current !== activeSessionId) {
+            prevMsgCount.current = messages.length;
+            return;
+        }
+
         if (messages.length > prevMsgCount.current) {
             // Find the index of the newly added Model message (placeholder)
             let targetIndex = -1;
@@ -62,7 +70,7 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
             }
         }
         prevMsgCount.current = messages.length;
-    }, [messages]); // Depend on messages content to ensure role checks are fresh
+    }, [messages, activeSessionId]); // Added activeSessionId dependency
 
     // Enhanced Navigation Logic: Search data array instead of DOM
     const scrollToPrevTurn = useCallback(() => {
