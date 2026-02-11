@@ -42,9 +42,6 @@ export interface MessageListProps {
   onQuickTTS: (text: string) => Promise<string | null>;
   t: (key: keyof typeof translations, fallback?: string) => string;
   language: 'en' | 'zh';
-  scrollNavVisibility: { up: boolean, down: boolean };
-  onScrollToPrevTurn: () => void;
-  onScrollToNextTurn: () => void;
   chatInputHeight: number;
   appSettings: AppSettings;
   currentModelId: string;

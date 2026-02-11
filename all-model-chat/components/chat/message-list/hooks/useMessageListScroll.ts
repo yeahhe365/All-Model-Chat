@@ -17,6 +17,10 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     
     const scrollSaveTimeoutRef = useRef<number | null>(null);
     const lastRestoredSessionIdRef = useRef<string | null>(null);
+    
+    // Track the last index we programmatically scrolled to, to prevent "getting stuck" 
+    // if the startIndex reports slightly off or if we want to force advance.
+    const lastScrollTarget = useRef<number | null>(null);
 
     // Sync internal scroller ref with parent's expectations
     useEffect(() => {
@@ -53,44 +57,66 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
                         align: 'start',
                         behavior: 'smooth'
                     });
+                    lastScrollTarget.current = targetIndex;
                 }, 50);
             }
         }
         prevMsgCount.current = messages.length;
-    }, [messages.length, messages]); // Depend on messages content to ensure role checks are fresh
+    }, [messages]); // Depend on messages content to ensure role checks are fresh
 
+    // Enhanced Navigation Logic: Search data array instead of DOM
     const scrollToPrevTurn = useCallback(() => {
-        // Fix: Simply jump to the previous item index regardless of role.
-        // This prevents skipping long user messages.
         const currentStartIndex = visibleRangeRef.current.startIndex;
-        const targetIndex = Math.max(0, currentStartIndex - 1);
+        let targetIndex = -1;
         
-        virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
-    }, []);
+        // Search backwards from currentStartIndex - 1 to find the start of the previous user message
+        for (let i = Math.max(0, currentStartIndex - 1); i >= 0; i--) {
+             if (messages[i].role === 'user') {
+                 targetIndex = i;
+                 break;
+             }
+        }
+        
+        if (targetIndex !== -1) {
+             lastScrollTarget.current = targetIndex;
+             virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+        } else {
+             // If no previous user message found (e.g. at top), scroll to 0
+             virtuosoRef.current?.scrollToIndex({ index: 0, align: 'start', behavior: 'smooth' });
+        }
+    }, [messages]);
 
     const scrollToNextTurn = useCallback(() => {
-        // 获取当前视窗中最上面一条消息的索引
         const currentStartIndex = visibleRangeRef.current.startIndex;
+        let targetIndex = -1;
         
-        // 目标是下一条消息
-        let targetIndex = currentStartIndex + 1;
-
-        // 如果已经是最后一条，则确保对齐到底部
-        if (targetIndex >= messages.length) {
-            virtuosoRef.current?.scrollToIndex({ 
-                index: messages.length - 1, 
-                align: 'end', 
-                behavior: 'smooth' 
-            });
-        } else {
-            // 否则跳转到下一条消息的顶部
-            virtuosoRef.current?.scrollToIndex({ 
-                index: targetIndex, 
-                align: 'start', 
-                behavior: 'smooth' 
-            });
+        let startSearchIndex = currentStartIndex + 1;
+        
+        // Anti-stuck logic: If we are effectively at the last target we programmatically scrolled to,
+        // start searching from AFTER it to avoid finding the same message again.
+        // We check if current visible range start is close to the last target (within 1 item tolerance).
+        if (lastScrollTarget.current !== null && 
+            Math.abs(currentStartIndex - lastScrollTarget.current) <= 1) {
+             startSearchIndex = Math.max(startSearchIndex, lastScrollTarget.current + 1);
         }
-    }, [messages.length]);
+        
+        // Search forwards from calculated start index
+        for (let i = startSearchIndex; i < messages.length; i++) {
+             if (messages[i].role === 'user') {
+                 targetIndex = i;
+                 break;
+             }
+        }
+        
+        if (targetIndex !== -1) {
+             lastScrollTarget.current = targetIndex;
+             virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+        } else {
+             // If no next user message found (at bottom), scroll to end
+             lastScrollTarget.current = messages.length - 1;
+             virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+        }
+    }, [messages]);
 
     // Note: This handleScroll is primarily used to update the Visibility state for the floating buttons.
     // Virtuoso handles the actual 'atBottom' state internally which we capture via setAtBottom.
