@@ -8,13 +8,13 @@ export const countTokensApi = async (apiKey: string, modelId: string, parts: Par
     try {
         const ai = await getConfiguredApiClient(apiKey);
         
-        // Sanitize parts to remove custom properties that might cause API errors in countTokens.
-        // Properties like mediaResolution, videoMetadata, or thoughtSignature might not be supported in the countTokens endpoint payload 
-        // or strictly validated, causing 400 errors.
+        // Sanitize parts to remove custom internal properties.
+        // We MUST retain mediaResolution and videoMetadata as they significantly affect token counts
+        // for Gemini 3.0 models (resolution) and video inputs (cropping).
         const sanitizedParts = parts.map(p => {
             // Create a shallow copy to avoid mutating the original array elements
-            // Explicitly exclude known custom extended fields
-            const { mediaResolution, videoMetadata, thoughtSignature, ...rest } = p as any;
+            // Only exclude internal app fields like thoughtSignature
+            const { thoughtSignature, ...rest } = p as any;
             return rest as Part;
         });
 

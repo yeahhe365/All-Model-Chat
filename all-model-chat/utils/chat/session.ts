@@ -73,10 +73,10 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
 
             // 2. Standard Rehydration from IndexedDB Blob (rawFile)
             const isValidRawFile = file.rawFile && (file.rawFile instanceof Blob || file.rawFile instanceof File);
-            const isVisualMedia = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type.startsWith('video/') || file.type.startsWith('audio/');
-
-            // Always create Object URL for Blobs if we have the raw file, needed for previewing
-            if (isValidRawFile && (isVisualMedia || file.type === 'application/pdf')) {
+            
+            // Always create Object URL for Blobs if we have the raw file, needed for previewing (text, images, media, etc.)
+            // Previously this logic was restricted to visual media/PDFs, causing text files to have stale/invalid dataUrls on reload.
+            if (isValidRawFile) {
                 try {
                     // Create a new blob URL. The browser will handle the old invalid one on page unload.
                     const dataUrl = URL.createObjectURL(file.rawFile as Blob);
