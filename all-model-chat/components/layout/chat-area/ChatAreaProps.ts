@@ -1,6 +1,4 @@
 
-
-
 import { ChatSettings, ChatMessage, UploadedFile, AppSettings, ModelOption, SideViewContent, VideoMetadata, InputCommand } from '../../../types';
 import { translations } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
@@ -65,9 +63,6 @@ export interface ChatAreaProps {
   ttsMessageId: string | null;
   onQuickTTS: (text: string) => Promise<string | null>;
   language: 'en' | 'zh';
-  scrollNavVisibility: { up: boolean; down: boolean };
-  onScrollToPrevTurn: () => void;
-  onScrollToNextTurn: () => void;
   
   // Edit Content
   onEditMessageContent: (message: ChatMessage) => void;

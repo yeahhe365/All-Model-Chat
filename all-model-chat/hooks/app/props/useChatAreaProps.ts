@@ -1,6 +1,4 @@
 
-
-
 import { useMemo } from 'react';
 import { useAppLogic } from '../useAppLogic';
 import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
@@ -78,9 +76,6 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     ttsMessageId: chatState.ttsMessageId,
     onQuickTTS: chatState.handleQuickTTS,
     language,
-    scrollNavVisibility: chatState.scrollNavVisibility,
-    onScrollToPrevTurn: chatState.scrollToPrevTurn,
-    onScrollToNextTurn: chatState.scrollToNextTurn,
     appSettings,
     commandedInput: chatState.commandedInput,
     setCommandedInput: chatState.setCommandedInput,

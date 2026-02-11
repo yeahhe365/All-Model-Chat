@@ -176,10 +176,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         
         scrollContainerRef: scrollHandler.scrollContainerRef,
         setScrollContainerRef: scrollHandler.setScrollContainerRef,
-        scrollNavVisibility: scrollHandler.scrollNavVisibility,
         onScrollContainerScroll: scrollHandler.handleScroll,
-        scrollToPrevTurn: scrollHandler.scrollToPrevTurn,
-        scrollToNextTurn: scrollHandler.scrollToNextTurn,
         
         loadChatSession,
         startNewChat,
