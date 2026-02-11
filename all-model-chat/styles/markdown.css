@@ -34,7 +34,7 @@
 
 /* Apply optimized fade-in-move animation to block elements */
 .markdown-body > * {
-  animation: fadeInMove 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  /* Animation removed to prevent re-triggering during virtualization scroll */
   transform-origin: left bottom;
 }
 

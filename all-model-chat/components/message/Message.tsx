@@ -72,8 +72,7 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
 
     return (
         <div 
-            className="relative message-smooth-entry"
-            style={{ animationDelay: `${Math.min(messageIndex * 50, 500)}ms` }}
+            className="relative"
             data-message-id={message.id} 
             data-message-role={message.role}
         >
