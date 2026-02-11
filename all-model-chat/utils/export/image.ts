@@ -15,7 +15,7 @@ export const exportElementAsPng = async (
 ) => {
     const html2canvas = (await import('html2canvas')).default;
 
-    // Pre-load images to ensure they render
+    // 1. Pre-load images to ensure they render
     const images = Array.from(element.querySelectorAll('img'));
     await Promise.all(images.map(img => {
         if (img.complete) return Promise.resolve();
@@ -28,33 +28,72 @@ export const exportElementAsPng = async (
     // Force a layout recalc/paint wait to ensure styles are applied in the detached container
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    const canvas = await html2canvas(element, {
-        height: element.scrollHeight,
-        width: element.scrollWidth,
-        useCORS: true, // Important for cross-origin images
-        allowTaint: false, // Changed to false to prevent tainting the canvas which blocks toBlob()
-        logging: false,
-        backgroundColor: options?.backgroundColor ?? null,
-        scale: options?.scale ?? 2, // Default to 2x for Retina sharpness
-        ignoreElements: (el) => {
-            // Fallback check for ignoring elements if CSS fails
-            return el.classList.contains('no-export'); 
-        }
-    });
+    // 2. Smart Scale Calculation
+    // Chrome/Safari canvas limits are around 32767px height or 268MP area.
+    // We set safe thresholds to avoid crashes or empty results.
+    const MAX_CANVAS_HEIGHT = 30000; 
+    const MAX_CANVAS_AREA = 100 * 1000 * 1000; // ~100MP safe limit
+
+    const width = element.scrollWidth;
+    const height = element.scrollHeight;
+    let targetScale = options?.scale ?? 2;
+
+    // Reduce scale if height is too large
+    if ((height * targetScale) > MAX_CANVAS_HEIGHT) {
+        targetScale = MAX_CANVAS_HEIGHT / height;
+        console.warn(`[Export] Content too tall, reducing scale to ${targetScale.toFixed(2)}`);
+    }
     
-    // Convert to Blob to handle larger images better than data URI
-    return new Promise<void>((resolve, reject) => {
+    // Reduce scale if total area is too large
+    if ((width * targetScale) * (height * targetScale) > MAX_CANVAS_AREA) {
+        const areaRatio = MAX_CANVAS_AREA / (width * height);
+        targetScale = Math.min(targetScale, Math.sqrt(areaRatio));
+        console.warn(`[Export] Area too large, reducing scale to ${targetScale.toFixed(2)}`);
+    }
+    
+    // Minimum scale floor
+    targetScale = Math.max(targetScale, 0.5);
+
+    try {
+        const canvas = await html2canvas(element, {
+            height: height,
+            width: width,
+            useCORS: true, // Important for cross-origin images
+            allowTaint: false, // Must be false to allow export
+            logging: false,
+            backgroundColor: options?.backgroundColor ?? null,
+            scale: targetScale, 
+            ignoreElements: (el) => {
+                // Fallback check for ignoring elements if CSS fails
+                return el.classList.contains('no-export'); 
+            },
+            // Stability settings
+            imageTimeout: 15000,
+            onclone: (clonedDoc) => {
+                // Ensure the cloned container is visible for rendering
+                const clonedElement = clonedDoc.querySelector('.is-exporting-png') as HTMLElement;
+                if (clonedElement) {
+                    clonedElement.style.transform = 'none';
+                    clonedElement.style.maxHeight = 'none';
+                }
+            }
+        });
+        
+        // Convert to Blob to handle larger images better than data URI
         canvas.toBlob((blob) => {
             if (blob) {
                 const url = URL.createObjectURL(blob);
                 triggerDownload(url, filename);
-                resolve();
             } else {
-                console.error("Canvas to Blob conversion failed");
-                reject(new Error("Image export failed. The content may be too large or contain protected images."));
+                console.error("Canvas to Blob conversion failed (Result is null). The chat may be too long.");
+                alert("Export failed: The image is too large for the browser to handle. Please try exporting as HTML or Text.");
             }
         }, 'image/png');
-    });
+
+    } catch (error) {
+        console.error("html2canvas error:", error);
+        alert(`Export failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
 };
 
 /**
