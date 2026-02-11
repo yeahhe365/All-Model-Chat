@@ -1,16 +1,19 @@
 
 import { logService } from "../utils/appUtils";
 
-// We use a Blob for the worker to avoid complex build configuration for worker files.
-const WORKER_CODE = `
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js");
+// Worker code template. __PYODIDE_BASE_URL__ will be replaced at runtime.
+const WORKER_CODE_TEMPLATE = `
+const PYODIDE_BASE_URL = "__PYODIDE_BASE_URL__";
+importScripts(PYODIDE_BASE_URL + "pyodide.js");
 
 let pyodide = null;
 let pyodideReadyPromise = null;
 
 async function loadPyodideAndPackages() {
   if (!pyodide) {
-    pyodide = await loadPyodide();
+    pyodide = await loadPyodide({
+        indexURL: PYODIDE_BASE_URL,
+    });
     await pyodide.loadPackage(["micropip", "pandas", "numpy"]); // Pre-load common data packages
   }
   return pyodide;
@@ -171,12 +174,23 @@ class PyodideService {
 
     private initWorker() {
         if (!this.worker) {
-            const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
+            // Dynamically construct the base URL for Pyodide based on the current location.
+            // This ensures it works both in dev (localhost) and production (domain.com/base/pyodide/).
+            const basePath = import.meta.env.BASE_URL || '/';
+            const cleanBasePath = basePath.endsWith('/') ? basePath : basePath + '/';
+            const pyodideBaseUrl = `${window.location.origin}${cleanBasePath}pyodide/`;
+
+            const workerCode = WORKER_CODE_TEMPLATE.replace(/__PYODIDE_BASE_URL__/g, pyodideBaseUrl);
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
             const url = URL.createObjectURL(blob);
+            
             this.worker = new Worker(url);
             this.worker.onmessage = this.handleMessage.bind(this);
+            
+            // Clean up the object URL after worker creation
             URL.revokeObjectURL(url);
-            logService.info("Pyodide Worker initialized");
+            
+            logService.info("Pyodide Worker initialized (Local Mode)", { baseUrl: pyodideBaseUrl });
         }
     }
 

@@ -1,7 +1,4 @@
 
-
-
-
 import { ChatInputProps, ChatInputActionsProps, ChatInputToolbarProps } from '../../types';
 import { ChatInputAreaProps } from '../../components/chat/input/ChatInputArea';
 import { useChatInputLogic } from './useChatInputLogic';
@@ -78,6 +75,8 @@ export const useChatInputPropsBuilder = (
         onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(props.onToggleGoogleSearch),
         isCodeExecutionEnabled: props.isCodeExecutionEnabled,
         onToggleCodeExecution: () => handlers.handleToggleToolAndFocus(props.onToggleCodeExecution),
+        isLocalPythonEnabled: props.isLocalPythonEnabled,
+        onToggleLocalPython: props.onToggleLocalPython ? () => handlers.handleToggleToolAndFocus(props.onToggleLocalPython!) : undefined,
         isUrlContextEnabled: props.isUrlContextEnabled,
         onToggleUrlContext: () => handlers.handleToggleToolAndFocus(props.onToggleUrlContext),
         isDeepSearchEnabled: props.isDeepSearchEnabled,

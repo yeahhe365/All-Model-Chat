@@ -1,5 +1,4 @@
 
-
 import { ChatSettings, MediaResolution } from './settings';
 import { ThemeColors } from './theme';
 import { AppSettings, ModelOption } from './settings';
@@ -183,6 +182,8 @@ export interface ChatInputActionsProps {
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
   onToggleCodeExecution: () => void;
+  isLocalPythonEnabled?: boolean;
+  onToggleLocalPython?: () => void;
   isUrlContextEnabled: boolean;
   onToggleUrlContext: () => void;
   isDeepSearchEnabled: boolean;
@@ -246,6 +247,8 @@ export interface ChatInputProps {
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
   onToggleCodeExecution: () => void;
+  isLocalPythonEnabled?: boolean;
+  onToggleLocalPython?: () => void;
   isUrlContextEnabled: boolean;
   onToggleUrlContext: () => void;
   isDeepSearchEnabled: boolean;

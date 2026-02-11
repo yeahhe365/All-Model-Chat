@@ -146,7 +146,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
             {/* Execution Console */}
             {hasRun && (
                 <div className="border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] rounded-b-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--theme-bg-tertiary)]/50 border-b border-[var(--theme-border-secondary)]/50">
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--theme-bg-tertiary)]/50">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
                             <Terminal size={12} /> Console Output
                         </span>

@@ -32,6 +32,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
     isProcessingFile, fileError, isImageEditModel, aspectRatio, setAspectRatio, imageSize, setImageSize,
     isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
+    isLocalPythonEnabled, onToggleLocalPython,
     isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch,
     onClearChat, onOpenSettings, onToggleCanvasPrompt,
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
@@ -158,6 +159,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onToggleGoogleSearch={onToggleGoogleSearch}
             isCodeExecutionEnabled={isCodeExecutionEnabled}
             onToggleCodeExecution={onToggleCodeExecution}
+            isLocalPythonEnabled={isLocalPythonEnabled}
+            onToggleLocalPython={onToggleLocalPython}
             isUrlContextEnabled={isUrlContextEnabled}
             onToggleUrlContext={onToggleUrlContext}
             isDeepSearchEnabled={isDeepSearchEnabled}

@@ -1,4 +1,6 @@
 
+
+
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { createChatHistoryForApi, isGemini3Model, logService } from '../../../utils/appUtils';
@@ -110,7 +112,8 @@ export const useApiInteraction = ({
             sessionToUpdate.isDeepSearchEnabled,
             imageSize,
             sessionToUpdate.safetySettings,
-            sessionToUpdate.mediaResolution
+            sessionToUpdate.mediaResolution,
+            !!sessionToUpdate.isLocalPythonEnabled
         );
 
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(

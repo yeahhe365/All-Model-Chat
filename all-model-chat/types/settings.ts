@@ -54,6 +54,7 @@ export interface ChatSettings {
   lockedApiKey?: string | null;
   isGoogleSearchEnabled?: boolean;
   isCodeExecutionEnabled?: boolean;
+  isLocalPythonEnabled?: boolean;
   isUrlContextEnabled?: boolean;
   isDeepSearchEnabled?: boolean;
   isRawModeEnabled?: boolean;
