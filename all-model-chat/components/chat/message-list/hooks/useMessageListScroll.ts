@@ -69,22 +69,12 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     }, []);
 
     const scrollToNextTurn = useCallback(() => {
-        const container = scrollerRef;
-        if (!container) return;
-
-        const { scrollTop, scrollHeight, clientHeight } = container;
-        const distanceToBottom = scrollHeight - scrollTop - clientHeight;
+        // Unified behavior: Scroll to the next message unit
+        const currentStartIndex = visibleRangeRef.current.startIndex;
+        const targetIndex = Math.min(messages.length - 1, currentStartIndex + 1);
         
-        // Fix: "Page Down" logic for reading long messages.
-        // If we are far from the bottom (> 1.5 screens), just scroll down one screen.
-        // This prevents the jarring "Jump to Bottom" effect when reading history.
-        if (distanceToBottom > clientHeight * 1.5) {
-             container.scrollBy({ top: clientHeight * 0.8, behavior: 'smooth' });
-        } else {
-             // If reasonably close, snap to the true bottom to see the latest
-             virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
-        }
-    }, [messages.length, scrollerRef]);
+        virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+    }, [messages.length]);
 
     // Note: This handleScroll is primarily used to update the Visibility state for the floating buttons.
     // Virtuoso handles the actual 'atBottom' state internally which we capture via setAtBottom.
