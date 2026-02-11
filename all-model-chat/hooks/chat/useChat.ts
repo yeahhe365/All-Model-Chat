@@ -226,6 +226,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleClearCurrentChat: chatActions.handleClearCurrentChat,
         toggleGoogleSearch: chatActions.toggleGoogleSearch,
         toggleCodeExecution: chatActions.toggleCodeExecution,
+        toggleLocalPython: chatActions.toggleLocalPython,
         toggleUrlContext: chatActions.toggleUrlContext,
         toggleDeepSearch: chatActions.toggleDeepSearch,
         handleTogglePinCurrentSession: chatActions.handleTogglePinCurrentSession,

@@ -105,6 +105,8 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onToggleGoogleSearch: chatState.toggleGoogleSearch,
     isCodeExecutionEnabled: !!chatState.currentChatSettings.isCodeExecutionEnabled,
     onToggleCodeExecution: chatState.toggleCodeExecution,
+    isLocalPythonEnabled: !!chatState.currentChatSettings.isLocalPythonEnabled,
+    onToggleLocalPython: chatState.toggleLocalPython,
     isUrlContextEnabled: !!chatState.currentChatSettings.isUrlContextEnabled,
     onToggleUrlContext: chatState.toggleUrlContext,
     isDeepSearchEnabled: !!chatState.currentChatSettings.isDeepSearchEnabled,

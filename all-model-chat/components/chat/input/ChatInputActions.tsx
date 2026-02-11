@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AttachmentMenu } from './AttachmentMenu';
 import { ToolsMenu } from './ToolsMenu';
@@ -24,6 +25,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onToggleGoogleSearch,
   isCodeExecutionEnabled,
   onToggleCodeExecution,
+  isLocalPythonEnabled,
+  onToggleLocalPython,
   isUrlContextEnabled,
   onToggleUrlContext,
   isDeepSearchEnabled,
@@ -74,6 +77,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 onToggleGoogleSearch={onToggleGoogleSearch}
                 isCodeExecutionEnabled={isCodeExecutionEnabled}
                 onToggleCodeExecution={onToggleCodeExecution}
+                isLocalPythonEnabled={isLocalPythonEnabled}
+                onToggleLocalPython={onToggleLocalPython}
                 isUrlContextEnabled={isUrlContextEnabled}
                 onToggleUrlContext={onToggleUrlContext}
                 isDeepSearchEnabled={isDeepSearchEnabled}

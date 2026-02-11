@@ -98,6 +98,8 @@ export interface ChatAreaProps {
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
   onToggleCodeExecution: () => void;
+  isLocalPythonEnabled?: boolean;
+  onToggleLocalPython?: () => void;
   isUrlContextEnabled: boolean;
   onToggleUrlContext: () => void;
   isDeepSearchEnabled: boolean;

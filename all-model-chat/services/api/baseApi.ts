@@ -1,8 +1,10 @@
 
+
+
 import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
-import { DEEP_SEARCH_SYSTEM_PROMPT } from "../../constants/promptConstants";
+import { DEEP_SEARCH_SYSTEM_PROMPT, LOCAL_PYTHON_SYSTEM_PROMPT } from "../../constants/promptConstants";
 import { SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model } from "../../utils/appUtils";
 
@@ -93,7 +95,8 @@ export const buildGenerationConfig = (
     isDeepSearchEnabled?: boolean,
     imageSize?: string,
     safetySettings?: SafetySetting[],
-    mediaResolution?: MediaResolution
+    mediaResolution?: MediaResolution,
+    isLocalPythonEnabled?: boolean
 ): any => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: any = {};
@@ -136,6 +139,12 @@ export const buildGenerationConfig = (
         finalSystemInstruction = finalSystemInstruction 
             ? `${finalSystemInstruction}\n\n${DEEP_SEARCH_SYSTEM_PROMPT}`
             : DEEP_SEARCH_SYSTEM_PROMPT;
+    }
+
+    if (isLocalPythonEnabled) {
+        finalSystemInstruction = finalSystemInstruction 
+            ? `${finalSystemInstruction}\n\n${LOCAL_PYTHON_SYSTEM_PROMPT}`
+            : LOCAL_PYTHON_SYSTEM_PROMPT;
     }
 
     const generationConfig: any = {
@@ -197,7 +206,8 @@ export const buildGenerationConfig = (
     if (isGoogleSearchEnabled || isDeepSearchEnabled) {
         tools.push({ googleSearch: {} });
     }
-    if (isCodeExecutionEnabled) {
+    // Only allow server code execution if local python is DISABLED
+    if (isCodeExecutionEnabled && !isLocalPythonEnabled) {
         tools.push({ codeExecution: {} });
     }
     if (isUrlContextEnabled) {

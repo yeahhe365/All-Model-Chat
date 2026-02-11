@@ -66,7 +66,23 @@ export const useChatSessionActions = ({
     const toggleCodeExecution = useCallback(() => {
         if (!activeSessionId) return;
         if (isLoading) handleStopGenerating();
-        setCurrentChatSettings(prev => ({ ...prev, isCodeExecutionEnabled: !prev.isCodeExecutionEnabled }));
+        // Mutually exclusive: Disable Local Python if enabling Server Code Execution
+        setCurrentChatSettings(prev => ({ 
+            ...prev, 
+            isCodeExecutionEnabled: !prev.isCodeExecutionEnabled,
+            isLocalPythonEnabled: !prev.isCodeExecutionEnabled ? false : prev.isLocalPythonEnabled
+        }));
+    }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
+
+    const toggleLocalPython = useCallback(() => {
+        if (!activeSessionId) return;
+        if (isLoading) handleStopGenerating();
+        // Mutually exclusive: Disable Server Code Execution if enabling Local Python
+        setCurrentChatSettings(prev => ({ 
+            ...prev, 
+            isLocalPythonEnabled: !prev.isLocalPythonEnabled,
+            isCodeExecutionEnabled: !prev.isLocalPythonEnabled ? false : prev.isCodeExecutionEnabled
+        }));
     }, [activeSessionId, isLoading, setCurrentChatSettings, handleStopGenerating]);
 
     const toggleUrlContext = useCallback(() => {
@@ -86,6 +102,7 @@ export const useChatSessionActions = ({
         handleTogglePinCurrentSession,
         toggleGoogleSearch,
         toggleCodeExecution,
+        toggleLocalPython,
         toggleUrlContext,
         toggleDeepSearch
     };

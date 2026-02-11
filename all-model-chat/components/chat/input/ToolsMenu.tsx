@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
+import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator, FileCode2 } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { IconYoutube } from '../../icons/CustomIcons';
@@ -13,6 +13,8 @@ interface ToolsMenuProps {
     onToggleGoogleSearch: () => void;
     isCodeExecutionEnabled: boolean;
     onToggleCodeExecution: () => void;
+    isLocalPythonEnabled?: boolean;
+    onToggleLocalPython?: () => void;
     isUrlContextEnabled: boolean;
     onToggleUrlContext: () => void;
     isDeepSearchEnabled: boolean;
@@ -55,6 +57,7 @@ const ActiveToolBadge: React.FC<{
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
+    isLocalPythonEnabled, onToggleLocalPython,
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
     onAddYouTubeVideo, onCountTokens,
@@ -121,9 +124,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         }
     }, [isOpen, targetWindow]);
 
-    const handleToggle = (toggleFunc: () => void) => {
-        toggleFunc();
-        setIsOpen(false);
+    const handleToggle = (toggleFunc?: () => void) => {
+        if (toggleFunc) {
+            toggleFunc();
+            setIsOpen(false);
+        }
     };
     
     // Matched icon size to other toolbar buttons (Attachment, Mic, etc.)
@@ -133,6 +138,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'deep_search_label', icon: <Telescope size={18} strokeWidth={2} />, isEnabled: isDeepSearchEnabled, action: () => handleToggle(onToggleDeepSearch) },
       { labelKey: 'web_search_label', icon: <Globe size={18} strokeWidth={2} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
       { labelKey: 'code_execution_label', icon: <Terminal size={18} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
+      { labelKey: 'local_python_label', icon: <FileCode2 size={18} strokeWidth={2} />, isEnabled: !!isLocalPythonEnabled, action: () => handleToggle(onToggleLocalPython) },
       { labelKey: 'url_context_label', icon: <Link size={18} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) },
       { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } },
       { labelKey: 'tools_token_count_label', icon: <Calculator size={18} strokeWidth={2} />, isEnabled: false, action: () => { onCountTokens(); setIsOpen(false); } }
@@ -144,6 +150,10 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             // 1. Code Execution is NOT supported.
             // 2. Web Search is supported but moved to the main toolbar.
             // 3. Other tools are not explicitly supported/tested in this mode yet.
+            return false;
+        }
+        // Only show Local Python if handler is provided (it's new feature)
+        if (item.labelKey === 'local_python_label' && !onToggleLocalPython) {
             return false;
         }
         return true;
@@ -199,6 +209,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         {!isNativeAudioModel && isGoogleSearchEnabled && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
         
         {!isNativeAudioModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
+
+        {!isNativeAudioModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<FileCode2 size={14} strokeWidth={2} />} />}
         
         {!isNativeAudioModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
       </div>

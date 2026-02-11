@@ -1,4 +1,6 @@
 
+
+
 import { useCallback } from 'react';
 import { generateUniqueId, getKeyForRequest, getTranslator, createMessage } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
@@ -88,7 +90,11 @@ export const useCanvasGenerator = ({
             false,
             canvasThinkingLevel,
             aspectRatio,
-            false
+            false,
+            undefined,
+            undefined,
+            undefined,
+            false // isLocalPythonEnabled explicitly false for Canvas
         );
 
         const t = getTranslator(language);

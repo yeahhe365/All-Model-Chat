@@ -64,6 +64,7 @@ export const useChatActions = ({
         handleTogglePinCurrentSession,
         toggleGoogleSearch,
         toggleCodeExecution,
+        toggleLocalPython,
         toggleUrlContext,
         toggleDeepSearch
     } = useChatSessionActions({
@@ -105,6 +106,7 @@ export const useChatActions = ({
         handleTranscribeAudio,
         toggleGoogleSearch,
         toggleCodeExecution,
+        toggleLocalPython,
         toggleUrlContext,
         toggleDeepSearch,
         handleTogglePinCurrentSession,

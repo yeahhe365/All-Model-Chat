@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar, Play, Loader2 } from 'lucide-react';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../../constants/appConstants';
@@ -40,7 +39,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
     onRun
 }) => {
     return (
-        <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[var(--theme-bg-code-block)]/95 backdrop-blur-md rounded-t-lg transition-all border-b border-[var(--theme-border-primary)]/50">
+        <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[var(--theme-bg-code-block)]/95 backdrop-blur-md rounded-t-lg transition-all">
             <div className="flex items-center gap-2 pl-1 min-w-0">
                 <LanguageIcon language={language} />
             </div>
