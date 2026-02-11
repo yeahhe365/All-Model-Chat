@@ -1,5 +1,6 @@
 
 
+
 /**
  * Gathers all style and link tags from the current document's head to be inlined.
  * @returns A promise that resolves to a string of HTML style and link tags.
@@ -211,12 +212,26 @@ export const prepareElementForExport = async (sourceElement: HTMLElement, option
     });
 
     if (expandDetails) {
-        // 5. Expand all details elements (thoughts/groups) so they are visible
-        clone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
+        // Image Export Specifics
         
-        // 6. Expand custom thought accordions since toggle buttons are removed
-        clone.querySelectorAll('.thought-process-accordion').forEach(el => el.classList.add('expanded'));
+        // 5a. Remove thought process blocks entirely (as requested)
+        clone.querySelectorAll('.message-thoughts-block').forEach(el => el.remove());
+        
+        // 5b. Remove code block expansion controls
+        clone.querySelectorAll('.code-block-expand-overlay').forEach(el => el.remove());
+
+        // 5c. Force expand all code blocks (show full content)
+        clone.querySelectorAll('pre').forEach(el => {
+            (el as HTMLElement).style.maxHeight = 'none';
+            (el as HTMLElement).style.height = 'auto';
+            (el as HTMLElement).style.overflow = 'visible';
+        });
+
+        // 5d. Expand other native details elements so they are visible in snapshot
+        clone.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
     } else {
+        // HTML Export Specifics
+        
         // 5. Ensure native details are collapsed by default (remove 'open' if present from clone)
         clone.querySelectorAll('details').forEach(el => el.removeAttribute('open'));
 

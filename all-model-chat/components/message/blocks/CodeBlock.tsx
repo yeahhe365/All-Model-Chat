@@ -73,7 +73,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                 </pre>
                 {isOverflowing && !isExpanded && (
                     <div 
-                        className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--theme-bg-code-block)] to-transparent cursor-pointer flex items-end justify-center pb-2 group/expand rounded-b-lg"
+                        className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[var(--theme-bg-code-block)] to-transparent cursor-pointer flex items-end justify-center pb-2 group/expand rounded-b-lg code-block-expand-overlay"
                         onClick={handleToggleExpand}
                     >
                         <span className="text-xs font-medium text-[var(--theme-text-tertiary)] group-hover/expand:text-[var(--theme-text-primary)] flex items-center gap-1 bg-[var(--theme-bg-primary)]/80 px-3 py-1 rounded-full shadow-sm border border-[var(--theme-border-secondary)] backdrop-blur-md transition-all transform group-hover/expand:scale-105">
@@ -83,7 +83,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                 )}
                 {isOverflowing && isExpanded && (
                     <div 
-                        className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10"
+                        className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none z-10 code-block-expand-overlay"
                     >
                          <button 
                             onClick={handleToggleExpand}
