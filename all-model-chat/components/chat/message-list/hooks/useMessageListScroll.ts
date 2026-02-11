@@ -69,11 +69,16 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     }, []);
 
     const scrollToNextTurn = useCallback(() => {
-        // Unified behavior: Scroll to the next message unit
+        // Consistently message-based scrolling
         const currentStartIndex = visibleRangeRef.current.startIndex;
-        const targetIndex = Math.min(messages.length - 1, currentStartIndex + 1);
         
-        virtuosoRef.current?.scrollToIndex({ index: targetIndex, align: 'start', behavior: 'smooth' });
+        if (currentStartIndex < messages.length - 1) {
+             // Jump to start of next message
+             virtuosoRef.current?.scrollToIndex({ index: currentStartIndex + 1, align: 'start', behavior: 'smooth' });
+        } else {
+             // If on the last message but not at bottom, scroll to end
+             virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
+        }
     }, [messages.length]);
 
     // Note: This handleScroll is primarily used to update the Visibility state for the floating buttons.
