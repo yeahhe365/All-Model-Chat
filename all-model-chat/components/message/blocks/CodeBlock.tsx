@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { ChevronDown, ChevronUp, X, Terminal, AlertTriangle, FileOutput } from 'lucide-react';
+import { ChevronDown, ChevronUp, X, Terminal, AlertTriangle, FileOutput, RotateCcw } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { SideViewContent, UploadedFile } from '../../../types';
 import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
@@ -44,7 +44,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
         error,
         hasRun,
         runCode,
-        clearOutput
+        clearOutput,
+        resetState
     } = usePyodide();
 
     const isPython = finalLanguage.toLowerCase() === 'python' || finalLanguage.toLowerCase() === 'py';
@@ -148,15 +149,24 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                 <div className="border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] rounded-b-lg overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--theme-bg-tertiary)]/50">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                            <Terminal size={12} /> Console Output
+                            <Terminal size={12} /> Local Python Output
                         </span>
-                        <button 
-                            onClick={clearOutput} 
-                            className="p-1 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-secondary)] transition-colors"
-                            title="Clear Output"
-                        >
-                            <X size={12} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                            <button 
+                                onClick={resetState}
+                                className="p-1 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-secondary)] transition-colors"
+                                title="Reset View"
+                            >
+                                <RotateCcw size={12} />
+                            </button>
+                            <button 
+                                onClick={clearOutput} 
+                                className="p-1 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-secondary)] transition-colors"
+                                title="Close Console"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
                     </div>
                     
                     <div className="p-3 max-h-[400px] overflow-auto custom-scrollbar">
@@ -190,7 +200,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                                             key={file.id} 
                                             file={file} 
                                             isFromMessageList={true} 
-                                            isGemini3={false} // Disable extra edit controls
+                                            isGemini3={false} // Disable extra edit controls for generated files
                                         />
                                     ))}
                                 </div>

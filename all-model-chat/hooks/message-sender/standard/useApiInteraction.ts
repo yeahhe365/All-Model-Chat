@@ -1,11 +1,10 @@
 
-
-
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { createChatHistoryForApi, isGemini3Model, logService } from '../../../utils/appUtils';
 import { buildGenerationConfig } from '../../../services/api/baseApi';
 import { geminiServiceInstance } from '../../../services/geminiService';
+import { pyodideService } from '../../../services/pyodideService';
 import { isLikelyHtml } from '../../../utils/codeUtils';
 import { GetStreamHandlers } from '../types';
 import { ContentPart } from '../../../types/chat';
@@ -93,6 +92,21 @@ export const useApiInteraction = ({
             setSessionLoading(finalSessionId, false);
             activeJobs.current.delete(generationId);
             return;
+        }
+
+        // Mount files to Pyodide if Local Python is enabled
+        if (sessionToUpdate.isLocalPythonEnabled && enrichedFiles.length > 0) {
+            try {
+                // Determine files to mount - exclude YouTube links or non-file items
+                const filesToMount = enrichedFiles.filter(f => f.rawFile && !f.type.includes('youtube'));
+                if (filesToMount.length > 0) {
+                    logService.info(`Mounting ${filesToMount.length} files for Local Python execution.`);
+                    await pyodideService.mountFiles(filesToMount);
+                }
+            } catch (e) {
+                logService.error("Failed to mount files to Pyodide:", e);
+                // We don't block the API call if mounting fails, but we log it
+            }
         }
 
         const shouldStripThinking = sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;

@@ -14,6 +14,7 @@ import { useChatState } from './useChatState';
 import { useChatActions } from './useChatActions';
 import { useChatEffects } from './useChatEffects';
 import { useBackgroundKeepAlive } from '../core/useBackgroundKeepAlive';
+import { useLocalPythonAgent } from '../features/useLocalPythonAgent';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
     
@@ -118,6 +119,17 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         startNewChat,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
         userScrolledUp
+    });
+
+    // Auto-Agent for Local Python
+    useLocalPythonAgent({
+        messages,
+        appSettings,
+        currentChatSettings,
+        isLoading,
+        activeSessionId,
+        updateMessageContent: chatActions.handleUpdateMessageContent,
+        onContinueGeneration: messageHandler.handleContinueGeneration
     });
 
     useChatEffects({

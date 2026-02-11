@@ -1,10 +1,11 @@
 
+
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator, FileCode2 } from 'lucide-react';
+import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
-import { IconYoutube } from '../../icons/CustomIcons';
+import { IconYoutube, IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { useWindowContext } from '../../../contexts/WindowContext';
 
@@ -138,7 +139,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'deep_search_label', icon: <Telescope size={18} strokeWidth={2} />, isEnabled: isDeepSearchEnabled, action: () => handleToggle(onToggleDeepSearch) },
       { labelKey: 'web_search_label', icon: <Globe size={18} strokeWidth={2} />, isEnabled: isGoogleSearchEnabled, action: () => handleToggle(onToggleGoogleSearch) },
       { labelKey: 'code_execution_label', icon: <Terminal size={18} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
-      { labelKey: 'local_python_label', icon: <FileCode2 size={18} strokeWidth={2} />, isEnabled: !!isLocalPythonEnabled, action: () => handleToggle(onToggleLocalPython) },
+      { labelKey: 'local_python_label', icon: <IconPython size={18} strokeWidth={2} />, isEnabled: !!isLocalPythonEnabled, action: () => handleToggle(onToggleLocalPython) },
       { labelKey: 'url_context_label', icon: <Link size={18} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) },
       { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } },
       { labelKey: 'tools_token_count_label', icon: <Calculator size={18} strokeWidth={2} />, isEnabled: false, action: () => { onCountTokens(); setIsOpen(false); } }
@@ -210,7 +211,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         
         {!isNativeAudioModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
 
-        {!isNativeAudioModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<FileCode2 size={14} strokeWidth={2} />} />}
+        {!isNativeAudioModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<IconPython size={14} strokeWidth={2} />} />}
         
         {!isNativeAudioModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
       </div>
