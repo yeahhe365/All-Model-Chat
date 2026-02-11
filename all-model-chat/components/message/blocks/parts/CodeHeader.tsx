@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar } from 'lucide-react';
+import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar, Play, Loader2 } from 'lucide-react';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../../constants/appConstants';
 import { LanguageIcon } from '../../code-block/LanguageIcon';
 import { translations } from '../../../../utils/appUtils';
@@ -17,6 +17,10 @@ interface CodeHeaderProps {
     onOpenSide: () => void;
     onFullscreen: (trueFullscreen: boolean) => void;
     t: (key: keyof typeof translations) => string;
+    // New props for execution
+    canRun?: boolean;
+    isRunning?: boolean;
+    onRun?: () => void;
 }
 
 export const CodeHeader: React.FC<CodeHeaderProps> = ({
@@ -30,15 +34,33 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
     onDownload,
     onOpenSide,
     onFullscreen,
-    t
+    t,
+    canRun,
+    isRunning,
+    onRun
 }) => {
     return (
-        <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[var(--theme-bg-code-block)]/95 backdrop-blur-md rounded-t-lg transition-all">
+        <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2 bg-[var(--theme-bg-code-block)]/95 backdrop-blur-md rounded-t-lg transition-all border-b border-[var(--theme-border-primary)]/50">
             <div className="flex items-center gap-2 pl-1 min-w-0">
                 <LanguageIcon language={language} />
             </div>
             
-            <div className="flex items-center gap-0.5 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
+                {canRun && onRun && (
+                    <button 
+                        className={`
+                            ${MESSAGE_BLOCK_BUTTON_CLASS} 
+                            ${isRunning ? 'text-[var(--theme-text-link)]' : 'text-green-500 hover:text-green-600'}
+                            bg-[var(--theme-bg-tertiary)]/50 mr-2
+                        `} 
+                        title="Run Python Code" 
+                        onClick={onRun}
+                        disabled={isRunning}
+                    > 
+                        {isRunning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} strokeWidth={2.5} fill="currentColor" />} 
+                    </button>
+                )}
+                
                 {showPreview && (
                     <>
                         <button className={MESSAGE_BLOCK_BUTTON_CLASS} title="Open in Side Panel" onClick={onOpenSide}>
