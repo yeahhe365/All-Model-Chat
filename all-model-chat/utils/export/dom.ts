@@ -6,24 +6,35 @@
  */
 export const gatherPageStyles = async (): Promise<string> => {
     const stylePromises = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
-        .map(el => {
+        .map(async el => {
             if (el.tagName === 'STYLE') {
-                return Promise.resolve(`<style>${el.innerHTML}</style>`);
+                return `<style>${el.innerHTML}</style>`;
             }
             if (el.tagName === 'LINK' && (el as HTMLLinkElement).rel === 'stylesheet') {
-                // Fetch external stylesheets to inline them
-                return fetch((el as HTMLLinkElement).href)
-                    .then(res => {
-                        if (!res.ok) throw new Error(`Failed to fetch stylesheet: ${res.statusText}`);
-                        return res.text();
-                    })
-                    .then(css => `<style>${css}</style>`)
-                    .catch(err => {
-                        console.warn('Could not fetch stylesheet for export:', (el as HTMLLinkElement).href, err);
-                        return el.outerHTML; // Fallback to linking the stylesheet
-                    });
+                const href = (el as HTMLLinkElement).href;
+                
+                try {
+                    const res = await fetch(href);
+                    if (!res.ok) throw new Error(res.statusText);
+
+                    // Check Content-Type to avoid inlining HTML error pages as CSS
+                    const contentType = res.headers.get('content-type');
+                    if (contentType && !contentType.includes('text/css') && !contentType.includes('application/octet-stream')) {
+                        console.warn(`Skipping stylesheet ${href} due to invalid MIME: ${contentType}`);
+                        return '';
+                    }
+
+                    const css = await res.text();
+                    return `<style>${css}</style>`;
+                } catch (err) {
+                    console.warn('Could not fetch stylesheet for export:', href, err);
+                    // Fallback: If we can't fetch it, we ignore it rather than linking it, 
+                    // because cross-origin links often cause taint issues in html2canvas.
+                    // Or we could return empty string.
+                    return ''; 
+                }
             }
-            return Promise.resolve('');
+            return '';
         });
 
     return (await Promise.all(stylePromises)).join('\n');
