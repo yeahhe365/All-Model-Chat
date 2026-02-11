@@ -32,7 +32,7 @@ export const exportElementAsPng = async (
         height: element.scrollHeight,
         width: element.scrollWidth,
         useCORS: true, // Important for cross-origin images
-        allowTaint: true,
+        allowTaint: false, // Changed to false to prevent tainting the canvas which blocks toBlob()
         logging: false,
         backgroundColor: options?.backgroundColor ?? null,
         scale: options?.scale ?? 2, // Default to 2x for Retina sharpness
@@ -43,14 +43,18 @@ export const exportElementAsPng = async (
     });
     
     // Convert to Blob to handle larger images better than data URI
-    canvas.toBlob((blob) => {
-        if (blob) {
-            const url = URL.createObjectURL(blob);
-            triggerDownload(url, filename);
-        } else {
-            console.error("Canvas to Blob conversion failed");
-        }
-    }, 'image/png');
+    return new Promise<void>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                triggerDownload(url, filename);
+                resolve();
+            } else {
+                console.error("Canvas to Blob conversion failed");
+                reject(new Error("Image export failed. The content may be too large or contain protected images."));
+            }
+        }, 'image/png');
+    });
 };
 
 /**
