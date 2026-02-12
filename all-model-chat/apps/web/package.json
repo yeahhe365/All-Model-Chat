@@ -1,0 +1,11 @@
+{
+  "name": "@all-model-chat/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"Web app migration is scheduled for Commit 2.\"",
+    "build": "echo \"Web app migration is scheduled for Commit 2.\"",
+    "preview": "echo \"Web app migration is scheduled for Commit 2.\""
+  }
+}

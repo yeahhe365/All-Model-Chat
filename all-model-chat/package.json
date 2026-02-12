@@ -3,10 +3,16 @@
   "private": true,
   "version": "1.8.5",
   "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:workspaces": "npm run dev --workspaces --if-present",
+    "build:workspaces": "npm run build --workspaces --if-present"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.9.0",

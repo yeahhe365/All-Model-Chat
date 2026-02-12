@@ -1,0 +1,11 @@
+{
+  "name": "@all-model-chat/bff",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"BFF bootstrap is scheduled for Commit 3.\"",
+    "build": "echo \"BFF bootstrap is scheduled for Commit 3.\"",
+    "start": "echo \"BFF bootstrap is scheduled for Commit 3.\""
+  }
+}
