@@ -11,6 +11,10 @@
     "dev": "npm run dev --workspace @all-model-chat/web",
     "build": "npm run build --workspace @all-model-chat/web",
     "preview": "npm run preview --workspace @all-model-chat/web",
+    "lint": "node scripts/lint-guards.mjs",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "ci:check": "npm run lint && npm run typecheck && npm run test && npm run build:workspaces",
     "dev:workspaces": "npm run dev --workspaces --if-present",
     "build:workspaces": "npm run build --workspaces --if-present"
   },

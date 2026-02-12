@@ -8,7 +8,9 @@
     "dev": "npm run build && npm run start",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test"
   },
   "dependencies": {
     "@google/genai": "^1.2.0"
