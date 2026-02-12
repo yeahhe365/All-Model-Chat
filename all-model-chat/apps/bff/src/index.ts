@@ -3,6 +3,7 @@ import { loadBffConfig } from './config/env.js';
 import { createHealthPayload } from './routes/health.js';
 import { ProviderKeyPool } from './providers/keyPool.js';
 import { GeminiProviderClient } from './providers/geminiClient.js';
+import { handleChatStreamRoute } from './routes/chatStream.js';
 
 const config = loadBffConfig();
 const keyPool = new ProviderKeyPool(config.providerApiKeys, {
@@ -24,6 +25,36 @@ const server = createServer((request, response) => {
     const payload = createHealthPayload(config, geminiProviderClient.getKeyPoolSnapshot());
     response.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
     response.end(JSON.stringify(payload));
+    return;
+  }
+
+  if (path === '/api/chat/stream') {
+    if (method !== 'POST') {
+      response.writeHead(405, {
+        'content-type': 'application/json; charset=utf-8',
+        allow: 'POST',
+      });
+      response.end(JSON.stringify({ error: 'Method Not Allowed' }));
+      return;
+    }
+
+    handleChatStreamRoute(request, response, geminiProviderClient).catch((error) => {
+      if (response.writableEnded) {
+        return;
+      }
+
+      const message = error instanceof Error ? error.message : 'Unexpected stream proxy failure.';
+      response.writeHead(500, { 'content-type': 'application/json; charset=utf-8' });
+      response.end(
+        JSON.stringify({
+          error: {
+            code: 'internal_error',
+            message,
+            status: 500,
+          },
+        })
+      );
+    });
     return;
   }
 
