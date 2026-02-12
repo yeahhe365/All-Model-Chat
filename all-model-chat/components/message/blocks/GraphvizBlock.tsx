@@ -8,6 +8,10 @@ import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 
 declare var Viz: any;
 
+// Global cache to store rendered SVGs. 
+// Key: `${themeId}:${layout}:${code}` -> Value: SVG String
+const graphvizCache = new Map<string, string>();
+
 interface GraphvizBlockProps {
   code: string;
   onImageClick: (file: UploadedFile) => void;
@@ -17,20 +21,8 @@ interface GraphvizBlockProps {
 }
 
 export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
-  const [svgContent, setSvgContent] = useState('');
-  const [error, setError] = useState('');
-  const [isRendering, setIsRendering] = useState(true);
-  
   // Use null to indicate "auto" (follow code), otherwise force override
   const [manualLayout, setManualLayout] = useState<'LR' | 'TB' | null>(null);
-  
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
-  const [showSource, setShowSource] = useState(false);
-  const { isCopied, copyToClipboard } = useCopyToClipboard();
-
-  const diagramContainerRef = useRef<HTMLDivElement>(null);
-  const vizInstanceRef = useRef<any>(null);
 
   // Determine effective layout based on code content or manual override
   const effectiveLayout = useMemo(() => {
@@ -49,6 +41,22 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       return 'LR';
   }, [code, manualLayout]);
 
+  // Generate a unique cache key based on visual inputs
+  const cacheKey = useMemo(() => `${themeId}::${effectiveLayout}::${code}`, [themeId, effectiveLayout, code]);
+
+  // Initialize state from cache if available
+  const [svgContent, setSvgContent] = useState(() => graphvizCache.get(cacheKey) || '');
+  const [error, setError] = useState('');
+  const [isRendering, setIsRendering] = useState(() => !graphvizCache.has(cacheKey));
+  
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
+  const [showSource, setShowSource] = useState(false);
+  const { isCopied, copyToClipboard } = useCopyToClipboard();
+
+  const diagramContainerRef = useRef<HTMLDivElement>(null);
+  const vizInstanceRef = useRef<any>(null);
+
   // Initialize Viz instance once
   useEffect(() => {
       if (typeof Viz !== 'undefined' && !vizInstanceRef.current) {
@@ -60,11 +68,31 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       }
   }, []);
 
-  const renderGraph = useCallback(async (currentLayout: 'LR' | 'TB') => {
+  const renderGraph = useCallback(async () => {
+    // If we have a cached version, ensure state matches and skip render
+    if (graphvizCache.has(cacheKey)) {
+        const cachedSvg = graphvizCache.get(cacheKey)!;
+        setSvgContent(cachedSvg);
+        setIsRendering(false);
+        setError('');
+        
+        // Re-generate file object for zoom/download functionality
+        const id = `graphviz-svg-${Math.random().toString(36).substring(2, 9)}`;
+        const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(cachedSvg)))}`;
+        setDiagramFile({
+            id: id,
+            name: 'graphviz-diagram.svg',
+            type: 'image/svg+xml',
+            size: cachedSvg.length,
+            dataUrl: svgDataUrl,
+            uploadState: 'active'
+        });
+        return;
+    }
+
     if (!vizInstanceRef.current || !code) return;
     
-    // Note: We don't set setIsRendering(true) immediately here to avoid flashing spinner on every keystroke
-    // unless the render takes time or fails.
+    setIsRendering(true);
 
     try {
       let processedCode = code;
@@ -74,11 +102,11 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       const rankdirRegex = /(rankdir\s*=\s*)(["']?)(LR|TB|RL|BT)\2/gi;
       
       if (rankdirRegex.test(processedCode)) {
-          processedCode = processedCode.replace(rankdirRegex, `$1"${currentLayout}"`);
+          processedCode = processedCode.replace(rankdirRegex, `$1"${effectiveLayout}"`);
       } else {
           const digraphMatch = processedCode.match(/(\s*(?:di)?graph\s+[\w\d_"]*\s*\{)/i);
           if (digraphMatch) {
-              processedCode = processedCode.replace(digraphMatch[0], `${digraphMatch[0]}\n  rankdir="${currentLayout}";`);
+              processedCode = processedCode.replace(digraphMatch[0], `${digraphMatch[0]}\n  rankdir="${effectiveLayout}";`);
           }
       }
 
@@ -106,6 +134,10 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       svgElement.style.display = "block";
 
       const svgString = svgElement.outerHTML;
+      
+      // Update Cache
+      graphvizCache.set(cacheKey, svgString);
+      
       setSvgContent(svgString);
 
       const id = `graphviz-svg-${Math.random().toString(36).substring(2, 9)}`;
@@ -134,7 +166,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
             setIsRendering(false);
         }
     }
-  }, [code, themeId, isMessageLoading]);
+  }, [code, effectiveLayout, themeId, isMessageLoading, cacheKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -150,7 +182,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
                  return; // Script not loaded yet, polling below handles init
              }
         }
-        await renderGraph(effectiveLayout);
+        await renderGraph();
     };
 
     // Debounce rendering
@@ -172,7 +204,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         clearTimeout(timeoutId);
         if (pollInterval) clearInterval(pollInterval);
     };
-  }, [renderGraph, effectiveLayout]);
+  }, [renderGraph]);
 
   const handleToggleLayout = () => {
     setManualLayout(effectiveLayout === 'LR' ? 'TB' : 'LR');
