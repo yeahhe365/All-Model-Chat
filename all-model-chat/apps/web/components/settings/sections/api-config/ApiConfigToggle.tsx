@@ -1,19 +1,16 @@
 
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
 import { Toggle } from '../../../shared/Toggle';
 
 interface ApiConfigToggleProps {
     useCustomApiConfig: boolean;
     setUseCustomApiConfig: (value: boolean) => void;
-    hasEnvKey: boolean;
     t: (key: string) => string;
 }
 
 export const ApiConfigToggle: React.FC<ApiConfigToggleProps> = ({
     useCustomApiConfig,
     setUseCustomApiConfig,
-    hasEnvKey,
     t
 }) => {
     const handleRowClick = () => {
@@ -28,16 +25,11 @@ export const ApiConfigToggle: React.FC<ApiConfigToggleProps> = ({
             <div className="flex flex-col flex-grow pr-4">
                 <span className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center gap-2 group-hover:text-[var(--theme-text-link)] transition-colors">
                     {t('settingsUseCustomApi')}
-                    {hasEnvKey && !useCustomApiConfig && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-600 border border-green-500/20">
-                            <ShieldCheck size={10} /> Env Key Active
-                        </span>
-                    )}
                 </span>
                 <span className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">
                     {useCustomApiConfig
-                        ? (hasEnvKey ? 'Overriding environment API key' : 'Using your own API keys')
-                        : (hasEnvKey ? t('apiConfig_default_info') : 'No API key found in environment. Enable custom key to proceed.')
+                        ? 'Using your own API configuration from this panel.'
+                        : 'Using backend API configuration (server-managed).'
                     }
                 </span>
             </div>

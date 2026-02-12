@@ -4,6 +4,7 @@ import { KeyRound } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { getClient } from '../../../services/api/baseApi';
 import { parseApiKeys } from '../../../utils/apiUtils';
+import { resolveBffEndpoint } from '../../../services/api/bffApi';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
@@ -53,7 +54,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
 
   const iconSize = useResponsiveValue(18, 20);
-  const hasEnvKey = !!process.env.API_KEY;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -68,24 +68,37 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   }, [useCustomApiConfig]);
 
   const handleTestConnection = async () => {
-    // Pick the key that would be used
-    let keyToTest = apiKey;
+    if (!useCustomApiConfig) {
+      setTestStatus('testing');
+      setTestMessage(null);
+      try {
+        const healthResponse = await fetch(resolveBffEndpoint('/health'), {
+          method: 'GET',
+        });
+        if (!healthResponse.ok) {
+          throw new Error(`BFF health check failed with status ${healthResponse.status}.`);
+        }
 
-    // If custom config is OFF, or ON but no key provided, we might fall back to env key if available.
-    // But for explicit testing, if custom config is ON, we should test what's in the box.
-    if (!useCustomApiConfig && hasEnvKey) {
-      keyToTest = process.env.API_KEY || null;
-    }
+        const payload = (await healthResponse.json()) as {
+          provider?: { configuredKeyCount?: number };
+        };
+        const configuredKeyCount = Number(payload?.provider?.configuredKeyCount || 0);
+        if (configuredKeyCount <= 0) {
+          throw new Error('Backend API key is not configured.');
+        }
 
-    if (useCustomApiConfig && !keyToTest) {
-      setTestStatus('error');
-      setTestMessage("No API Key provided to test.");
+        setTestStatus('success');
+      } catch (error) {
+        setTestStatus('error');
+        setTestMessage(error instanceof Error ? error.message : String(error));
+      }
       return;
     }
 
+    const keyToTest = apiKey;
     if (!keyToTest) {
       setTestStatus('error');
-      setTestMessage("No API Key available.");
+      setTestMessage("No API Key provided to test.");
       return;
     }
 
@@ -135,7 +148,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
         <ApiConfigToggle
           useCustomApiConfig={useCustomApiConfig}
           setUseCustomApiConfig={setUseCustomApiConfig}
-          hasEnvKey={hasEnvKey}
           t={t}
         />
 

@@ -9,6 +9,7 @@ import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
 import { parseBffErrorResponse, resolveBffEndpoint } from './bffApi';
+import { BACKEND_MANAGED_KEY_SENTINEL } from '../../utils/apiUtils';
 
 interface ParsedSseEvent {
     eventName: string;
@@ -294,6 +295,36 @@ export const sendStatelessMessageNonStreamApi = async (
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
 
     try {
+        // In backend-managed mode we still need BFF transport, even when UI streaming is disabled.
+        if (apiKey === BACKEND_MANAGED_KEY_SENTINEL) {
+            const bufferedParts: Part[] = [];
+            let bufferedThoughts = '';
+
+            await sendStatelessMessageStreamApi(
+                apiKey,
+                modelId,
+                history,
+                parts,
+                config,
+                abortSignal,
+                (part) => bufferedParts.push(part),
+                (chunk) => {
+                    bufferedThoughts += chunk;
+                },
+                onError,
+                (usageMetadata, groundingMetadata, urlContextMetadata) => {
+                    onComplete(
+                        bufferedParts,
+                        bufferedThoughts || undefined,
+                        usageMetadata,
+                        groundingMetadata,
+                        urlContextMetadata
+                    );
+                }
+            );
+            return;
+        }
+
         const ai = await getConfiguredApiClient(apiKey);
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }

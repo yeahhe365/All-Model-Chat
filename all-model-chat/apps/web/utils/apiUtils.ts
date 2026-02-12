@@ -3,6 +3,8 @@ import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
 
+export const BACKEND_MANAGED_KEY_SENTINEL = '__BFF_BACKEND_MANAGED_KEY__';
+
 export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
         return {
@@ -10,7 +12,8 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
         };
     }
     return {
-        apiKeysString: process.env.API_KEY || null,
+        // Backend-managed mode: key material lives on BFF. Keep a sentinel so callers can proceed.
+        apiKeysString: BACKEND_MANAGED_KEY_SENTINEL,
     };
 };
 
