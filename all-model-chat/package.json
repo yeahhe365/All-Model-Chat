@@ -8,9 +8,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "npm run dev --workspace @all-model-chat/web",
+    "build": "npm run build --workspace @all-model-chat/web",
+    "preview": "npm run preview --workspace @all-model-chat/web",
     "dev:workspaces": "npm run dev --workspaces --if-present",
     "build:workspaces": "npm run build --workspaces --if-present"
   },

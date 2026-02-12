@@ -34,9 +34,9 @@ stats.html
 __pycache__/
 
 # Temporary folders
-chat-answer/
-.agent/
-chat/
+/chat-answer/
+/.agent/
+/chat/
 
 # Environment files
 .env
