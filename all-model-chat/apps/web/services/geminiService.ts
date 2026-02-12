@@ -1,8 +1,8 @@
 
 import { GeminiService, ModelOption } from '../types';
-import { Part, UsageMetadata, File as GeminiFile, ChatHistoryItem, Modality } from "@google/genai";
+import { Part, UsageMetadata, File as GeminiFile, ChatHistoryItem } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
-import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi, countTokensApi } from './api/generationApi';
+import { generateImagesApi, editImageApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi, countTokensApi } from './api/generationApi';
 import { sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
 import { logService } from "./logService";
 
@@ -55,44 +55,7 @@ class GeminiServiceImpl implements GeminiService {
     }
 
     async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, imageSize?: string): Promise<Part[]> {
-        return new Promise((resolve, reject) => {
-            if (abortSignal.aborted) {
-                const abortError = new Error("aborted");
-                abortError.name = "AbortError";
-                return reject(abortError);
-            }
-            const handleComplete = (responseParts: Part[]) => {
-                resolve(responseParts);
-            };
-            const handleError = (error: Error) => {
-                reject(error);
-            };
-
-            const config: any = {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            };
-
-            if (aspectRatio && aspectRatio !== 'Auto') {
-                if (!config.imageConfig) config.imageConfig = {};
-                config.imageConfig.aspectRatio = aspectRatio;
-            }
-
-            if (modelId === 'gemini-3-pro-image-preview' && imageSize) {
-                if (!config.imageConfig) config.imageConfig = {};
-                config.imageConfig.imageSize = imageSize;
-            }
-
-            sendStatelessMessageNonStreamApi(
-                apiKey,
-                modelId,
-                history,
-                parts,
-                config,
-                abortSignal,
-                handleError,
-                (responseParts, thoughts, usage, grounding) => handleComplete(responseParts)
-            );
-        });
+        return editImageApi(apiKey, modelId, history, parts, abortSignal, aspectRatio, imageSize);
     }
 
     async sendMessageStream(

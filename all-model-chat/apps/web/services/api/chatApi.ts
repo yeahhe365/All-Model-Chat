@@ -3,6 +3,7 @@ import { GenerateContentResponse, Part, UsageMetadata, ChatHistoryItem } from "@
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
+import { parseBffErrorResponse, resolveBffEndpoint } from './bffApi';
 
 interface ParsedSseEvent {
     eventName: string;
@@ -16,17 +17,7 @@ interface BffStreamErrorPayload {
     retryable?: boolean;
 }
 
-const resolveBffStreamEndpoint = (): string => {
-    const env = (import.meta as ImportMeta & { env?: Record<string, unknown> }).env;
-    const configuredBaseUrl =
-        typeof env?.VITE_BFF_BASE_URL === 'string' ? env.VITE_BFF_BASE_URL.trim() : '';
-
-    if (!configuredBaseUrl) {
-        return '/api/chat/stream';
-    }
-
-    return `${configuredBaseUrl.replace(/\/$/, '')}/api/chat/stream`;
-};
+const resolveBffStreamEndpoint = (): string => resolveBffEndpoint('/api/chat/stream');
 
 const parseSseEventBlock = (rawBlock: string): ParsedSseEvent | null => {
     const normalized = rawBlock.replace(/\r\n/g, '\n').trim();
@@ -110,27 +101,6 @@ const createBffStreamError = (payload: BffStreamErrorPayload | null | undefined)
     (error as any).code = payload?.code || 'bff_stream_error';
     (error as any).status = payload?.status;
     (error as any).retryable = payload?.retryable;
-    return error;
-};
-
-const parseNonOkResponseError = async (response: Response): Promise<Error> => {
-    let message = `BFF stream request failed with status ${response.status}.`;
-
-    try {
-        const text = await response.text();
-        if (text) {
-            const parsed = JSON.parse(text);
-            const errorPayload = parsed?.error as BffStreamErrorPayload | undefined;
-            if (errorPayload?.message) {
-                message = errorPayload.message;
-            }
-        }
-    } catch {
-        // Use fallback message above
-    }
-
-    const error = new Error(message);
-    (error as any).status = response.status;
     return error;
 };
 
@@ -248,7 +218,7 @@ export const sendStatelessMessageStreamApi = async (
         });
 
         if (!response.ok) {
-            throw await parseNonOkResponseError(response);
+            throw await parseBffErrorResponse(response);
         }
 
         await consumeSseStream(response, abortSignal, (event) => {

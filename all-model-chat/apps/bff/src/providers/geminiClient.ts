@@ -42,7 +42,9 @@ export class GeminiProviderClient {
       this.keyPool.reportSuccess(keyId);
       return result;
     } catch (error) {
-      this.keyPool.reportFailure(keyId);
+      if (this.shouldReportKeyFailure(error)) {
+        this.keyPool.reportFailure(keyId);
+      }
       throw error;
     }
   }
@@ -61,5 +63,34 @@ export class GeminiProviderClient {
       baseUrl: this.options.baseUrl || null,
       apiVersion: this.options.apiVersion || null,
     };
+  }
+
+  private shouldReportKeyFailure(error: unknown): boolean {
+    const message = error instanceof Error ? error.message : '';
+    if (message.includes('does not support uploading files')) {
+      return false;
+    }
+    if (message.includes('only supported by the Gemini Developer API')) {
+      return false;
+    }
+
+    const status = this.readNumericStatus(error);
+    if (status === 400 || status === 404) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private readNumericStatus(error: unknown): number | null {
+    if (!error || typeof error !== 'object') return null;
+
+    const status = (error as Record<string, unknown>).status;
+    if (typeof status === 'number' && Number.isFinite(status)) return status;
+
+    const statusCode = (error as Record<string, unknown>).statusCode;
+    if (typeof statusCode === 'number' && Number.isFinite(statusCode)) return statusCode;
+
+    return null;
   }
 }

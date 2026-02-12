@@ -1,6 +1,6 @@
 
 import { File as GeminiFile } from "@google/genai";
-import { getConfiguredApiClient } from './baseApi';
+import { fetchBffJson, parseBffErrorResponse, resolveBffEndpoint } from './bffApi';
 import { logService } from "../logService";
 
 /**
@@ -15,7 +15,8 @@ export const uploadFileApi = async (
     signal: AbortSignal,
     onProgress?: (loaded: number, total: number) => void
 ): Promise<GeminiFile> => {
-    logService.info(`Uploading file (SDK): ${displayName}`, { mimeType, size: file.size });
+    void apiKey;
+    logService.info(`Uploading file via BFF: ${displayName}`, { mimeType, size: file.size });
     
     if (signal.aborted) {
         const abortError = new Error("Upload cancelled by user.");
@@ -24,17 +25,28 @@ export const uploadFileApi = async (
     }
 
     try {
-        // Get configured SDK client (handles proxy settings automatically)
-        const ai = await getConfiguredApiClient(apiKey);
-
-        // Use official SDK for upload, which is more stable for Auth and CORS
-        const uploadResult = await ai.files.upload({
-            file: file,
-            config: {
-                displayName: displayName,
-                mimeType: mimeType,
-            },
+        const params = new URLSearchParams({
+            displayName,
+            mimeType,
         });
+
+        const endpoint = resolveBffEndpoint(`/api/files/upload?${params.toString()}`);
+        const binaryBody = await file.arrayBuffer();
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/octet-stream',
+            },
+            body: binaryBody,
+            signal,
+        });
+
+        if (!response.ok) {
+            throw await parseBffErrorResponse(response);
+        }
+
+        const payload = (await response.json()) as { file: GeminiFile };
+        const uploadResult = payload.file;
 
         // Since SDK doesn't provide progress, call 100% on completion to satisfy UI
         if (onProgress) {
@@ -58,17 +70,23 @@ export const uploadFileApi = async (
 };
 
 export const getFileMetadataApi = async (apiKey: string, fileApiName: string): Promise<GeminiFile | null> => {
+    void apiKey;
     if (!fileApiName || !fileApiName.startsWith('files/')) {
         logService.error(`Invalid fileApiName format: ${fileApiName}. Must start with "files/".`);
         throw new Error('Invalid file ID format. Expected "files/your_file_id".');
     }
     try {
         logService.info(`Fetching metadata for file: ${fileApiName}`);
-        const ai = await getConfiguredApiClient(apiKey);
-        const file = await ai.files.get({ name: fileApiName });
-        return file;
+        const params = new URLSearchParams({ name: fileApiName });
+        const payload = await fetchBffJson<{ file: GeminiFile | null }>(
+            `/api/files/metadata?${params.toString()}`,
+            {
+                method: 'GET',
+            }
+        );
+        return payload.file;
     } catch (error) {
-        logService.error(`Failed to get metadata for file "${fileApiName}" from Gemini API:`, error);
+        logService.error(`Failed to get metadata for file "${fileApiName}" from BFF:`, error);
         if (error instanceof Error && (error.message.includes('NOT_FOUND') || error.message.includes('404'))) {
             return null; // File not found is a valid outcome we want to handle
         }
