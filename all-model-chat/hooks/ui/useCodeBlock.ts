@@ -8,6 +8,45 @@ import { SideViewContent } from '../../types';
 
 const COLLAPSE_THRESHOLD_PX = 320;
 
+const LANGUAGE_EXTENSION_MAP: Record<string, string> = {
+    'javascript': 'js', 'js': 'js', 'node': 'js',
+    'typescript': 'ts', 'ts': 'ts',
+    'python': 'py', 'py': 'py', 'py3': 'py',
+    'java': 'java',
+    'c': 'c',
+    'cpp': 'cpp', 'c++': 'cpp',
+    'csharp': 'cs', 'cs': 'cs', 'c#': 'cs',
+    'go': 'go', 'golang': 'go',
+    'rust': 'rs', 'rs': 'rs',
+    'php': 'php',
+    'ruby': 'rb', 'rb': 'rb',
+    'swift': 'swift',
+    'kotlin': 'kt', 'kt': 'kt',
+    'html': 'html', 'htm': 'html',
+    'css': 'css',
+    'scss': 'scss',
+    'sass': 'sass',
+    'less': 'less',
+    'json': 'json',
+    'xml': 'xml',
+    'svg': 'svg',
+    'yaml': 'yaml', 'yml': 'yaml',
+    'sql': 'sql',
+    'shell': 'sh', 'bash': 'sh', 'sh': 'sh', 'zsh': 'sh',
+    'markdown': 'md', 'md': 'md',
+    'react': 'jsx', 'jsx': 'jsx',
+    'tsx': 'tsx',
+    'vue': 'vue',
+    'lua': 'lua',
+    'r': 'r',
+    'dart': 'dart',
+    'perl': 'pl', 'pl': 'pl',
+    'powershell': 'ps1', 'ps1': 'ps1',
+    'dockerfile': 'dockerfile', 'docker': 'dockerfile',
+    'batch': 'bat', 'bat': 'bat',
+    'text': 'txt', 'txt': 'txt', 'plaintext': 'txt'
+};
+
 interface UseCodeBlockProps {
     children: React.ReactNode;
     className?: string;
@@ -136,7 +175,7 @@ export const useCodeBlock = ({
 
     // Language processing
     const langMatch = className?.match(/language-(\S+)/);
-    let language = langMatch ? langMatch[1] : 'txt';
+    let language = langMatch ? langMatch[1].toLowerCase() : 'txt';
 
     let mimeType = 'text/plain';
     if (['html', 'xml', 'svg'].includes(language)) mimeType = 'text/html';
@@ -146,7 +185,7 @@ export const useCodeBlock = ({
     else if (['markdown', 'md'].includes(language)) mimeType = 'text/markdown';
 
     const contentLooksLikeHtml = isLikelyHtml(codeText.current);
-    const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language.toLowerCase());
+    const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language);
     
     const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
     const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (showPreview ? 'text/html' : 'text/plain');
@@ -177,8 +216,10 @@ export const useCodeBlock = ({
     };
 
     const handleDownload = () => {
-        let filename = `snippet.${finalLanguage}`;
-        if (downloadMimeType === 'text/html') {
+        let ext = LANGUAGE_EXTENSION_MAP[finalLanguage.toLowerCase()] || finalLanguage;
+        let filename = `snippet.${ext}`;
+        
+        if (downloadMimeType === 'text/html' || ext === 'html') {
             const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 let saneTitle = sanitizeFilename(titleMatch[1].trim());
