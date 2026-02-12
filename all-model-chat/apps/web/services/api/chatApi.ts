@@ -4,6 +4,136 @@ import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
 
+interface ParsedSseEvent {
+    eventName: string;
+    payload: unknown;
+}
+
+interface BffStreamErrorPayload {
+    code?: string;
+    message?: string;
+    status?: number;
+    retryable?: boolean;
+}
+
+const resolveBffStreamEndpoint = (): string => {
+    const env = (import.meta as ImportMeta & { env?: Record<string, unknown> }).env;
+    const configuredBaseUrl =
+        typeof env?.VITE_BFF_BASE_URL === 'string' ? env.VITE_BFF_BASE_URL.trim() : '';
+
+    if (!configuredBaseUrl) {
+        return '/api/chat/stream';
+    }
+
+    return `${configuredBaseUrl.replace(/\/$/, '')}/api/chat/stream`;
+};
+
+const parseSseEventBlock = (rawBlock: string): ParsedSseEvent | null => {
+    const normalized = rawBlock.replace(/\r\n/g, '\n').trim();
+    if (!normalized) return null;
+
+    let eventName = 'message';
+    const dataLines: string[] = [];
+
+    for (const line of normalized.split('\n')) {
+        if (line.startsWith('event:')) {
+            eventName = line.slice(6).trim();
+            continue;
+        }
+
+        if (line.startsWith('data:')) {
+            dataLines.push(line.slice(5).trimStart());
+        }
+    }
+
+    if (dataLines.length === 0) return null;
+
+    const rawPayload = dataLines.join('\n');
+    try {
+        return {
+            eventName,
+            payload: JSON.parse(rawPayload),
+        };
+    } catch {
+        return {
+            eventName,
+            payload: rawPayload,
+        };
+    }
+};
+
+const consumeSseStream = async (
+    response: Response,
+    abortSignal: AbortSignal,
+    onEvent: (event: ParsedSseEvent) => void
+): Promise<void> => {
+    if (!response.body) {
+        throw new Error('BFF stream response body is empty.');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (abortSignal.aborted) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        while (true) {
+            const separatorIndex = buffer.indexOf('\n\n');
+            if (separatorIndex < 0) break;
+
+            const rawBlock = buffer.slice(0, separatorIndex);
+            buffer = buffer.slice(separatorIndex + 2);
+
+            const parsed = parseSseEventBlock(rawBlock);
+            if (parsed) {
+                onEvent(parsed);
+            }
+        }
+    }
+
+    if (buffer.trim().length > 0) {
+        const parsed = parseSseEventBlock(buffer);
+        if (parsed) {
+            onEvent(parsed);
+        }
+    }
+};
+
+const createBffStreamError = (payload: BffStreamErrorPayload | null | undefined): Error => {
+    const message = payload?.message || 'BFF stream proxy returned an error.';
+    const error = new Error(message);
+    (error as any).code = payload?.code || 'bff_stream_error';
+    (error as any).status = payload?.status;
+    (error as any).retryable = payload?.retryable;
+    return error;
+};
+
+const parseNonOkResponseError = async (response: Response): Promise<Error> => {
+    let message = `BFF stream request failed with status ${response.status}.`;
+
+    try {
+        const text = await response.text();
+        if (text) {
+            const parsed = JSON.parse(text);
+            const errorPayload = parsed?.error as BffStreamErrorPayload | undefined;
+            if (errorPayload?.message) {
+                message = errorPayload.message;
+            }
+        }
+    } catch {
+        // Use fallback message above
+    }
+
+    const error = new Error(message);
+    (error as any).status = response.status;
+    return error;
+};
+
 const normalizeThoughtSignaturePart = (part: Part): Part => {
     const anyPart = part as any;
     const thoughtSignature =
@@ -89,137 +219,85 @@ export const sendStatelessMessageStreamApi = async (
     onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any, functionCallPart?: Part) => void,
     role: 'user' | 'model' = 'user'
 ): Promise<void> => {
-    logService.info(`Sending message via stateless generateContentStream for ${modelId} (Role: ${role})`);
+    logService.info(`Sending message via BFF /api/chat/stream for ${modelId} (Role: ${role})`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
     let finalGroundingMetadata: any = null;
     let finalUrlContextMetadata: any = null;
     let detectedFunctionCallPart: Part | undefined = undefined;
-    let latestToolCallFunction: any = undefined;
-    let latestToolCallSignature: string | undefined = undefined;
-    let latestThoughtSignatureFromParts: string | undefined = undefined;
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
-
         if (abortSignal.aborted) {
             logService.warn("Streaming aborted by signal before start.");
             return;
         }
 
-        // Only append parts if non-empty; otherwise use history directly
-        // This handles function call continuation where all context is already in history
-        const contents = parts.length > 0
-            ? [...history, { role: role, parts }]
-            : history;
-
-        const result = await ai.models.generateContentStream({
-            model: modelId,
-            contents,
-            config: config
+        const endpoint = resolveBffStreamEndpoint();
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+            },
+            signal: abortSignal,
+            body: JSON.stringify({
+                model: modelId,
+                history,
+                parts,
+                config,
+                role,
+            }),
         });
 
-        for await (const chunkResponse of result) {
-            if (abortSignal.aborted) {
-                logService.warn("Streaming aborted by signal.");
-                break;
-            }
-            if (chunkResponse.usageMetadata) {
-                finalUsageMetadata = chunkResponse.usageMetadata;
-            }
-            const candidate = chunkResponse.candidates?.[0];
-
-            if (candidate) {
-                const metadataFromChunk = candidate.groundingMetadata;
-                if (metadataFromChunk) {
-                    finalGroundingMetadata = metadataFromChunk;
-                }
-
-                // @ts-ignore
-                const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
-                if (urlMetadata) {
-                    finalUrlContextMetadata = urlMetadata;
-                }
-
-                const toolCalls = candidate.toolCalls;
-                if (toolCalls) {
-                    for (const toolCall of toolCalls) {
-                        if (toolCall.functionCall?.args?.urlContextMetadata) {
-                            if (!finalGroundingMetadata) finalGroundingMetadata = {};
-                            if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
-                            const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
-                            for (const newCitation of newCitations) {
-                                if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                                    finalGroundingMetadata.citations.push(newCitation);
-                                }
-                            }
-                        }
-
-                        // Capture tool call + potential thought signature for fallback
-                        if (toolCall.functionCall) {
-                            latestToolCallFunction = toolCall.functionCall;
-                            const anyToolCall = toolCall as any;
-                            latestToolCallSignature =
-                                anyToolCall.thoughtSignature ||
-                                anyToolCall.thought_signature ||
-                                anyToolCall.functionCall?.thoughtSignature ||
-                                anyToolCall.functionCall?.thought_signature;
-                        }
-                    }
-                }
-
-                if (candidate.content?.parts?.length) {
-                    for (const part of candidate.content.parts) {
-                        const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                        const anyPart = part as any;
-
-                        const partSignature = anyPart.thoughtSignature || anyPart.thought_signature;
-                        if (partSignature) {
-                            latestThoughtSignatureFromParts = partSignature;
-                        }
-
-                        // Check for function call (agentic tool execution)
-                        // IMPORTANT: Preserve the ENTIRE Part including thoughtSignature
-                        if (anyPart.functionCall) {
-                            detectedFunctionCallPart = normalizeThoughtSignaturePart(part); // Ensure thoughtSignature is preserved
-                            logService.info(`Function call detected: ${anyPart.functionCall.name}`, {
-                                args: anyPart.functionCall.args,
-                                hasThoughtSignature: !!(anyPart.thoughtSignature || anyPart.thought_signature)
-                            });
-                        } else if (pAsThoughtSupporting.thought) {
-                            onThoughtChunk(part.text || '');
-                        } else {
-                            onPart(part);
-                        }
-                    }
-                }
-            }
+        if (!response.ok) {
+            throw await parseNonOkResponseError(response);
         }
+
+        await consumeSseStream(response, abortSignal, (event) => {
+            const payload = event.payload as any;
+
+            if (event.eventName === 'part') {
+                if (payload?.part) {
+                    onPart(payload.part as Part);
+                }
+                return;
+            }
+
+            if (event.eventName === 'thought') {
+                if (typeof payload?.chunk === 'string') {
+                    onThoughtChunk(payload.chunk);
+                }
+                return;
+            }
+
+            if (event.eventName === 'complete') {
+                if (payload?.usageMetadata) {
+                    finalUsageMetadata = payload.usageMetadata as UsageMetadata;
+                }
+                if (payload?.groundingMetadata) {
+                    finalGroundingMetadata = payload.groundingMetadata;
+                }
+                if (payload?.urlContextMetadata) {
+                    finalUrlContextMetadata = payload.urlContextMetadata;
+                }
+                if (payload?.functionCallPart) {
+                    detectedFunctionCallPart = normalizeThoughtSignaturePart(payload.functionCallPart as Part);
+                }
+                return;
+            }
+
+            if (event.eventName === 'error') {
+                throw createBffStreamError(payload?.error as BffStreamErrorPayload | undefined);
+            }
+        });
     } catch (error) {
+        const isAborted = abortSignal.aborted || (error instanceof Error && error.name === 'AbortError');
+        if (isAborted) {
+            logService.warn("Streaming aborted by signal.");
+            return;
+        }
+
         logService.error("Error sending message (stream):", error);
         onError(error instanceof Error ? error : new Error(String(error) || "Unknown error during streaming."));
     } finally {
-        // Fallback: tool call may appear only in toolCalls; ensure we return a Part with thoughtSignature if possible
-        if (!detectedFunctionCallPart && latestToolCallFunction) {
-            detectedFunctionCallPart = {
-                functionCall: latestToolCallFunction,
-                ...(latestToolCallSignature || latestThoughtSignatureFromParts
-                    ? {
-                        thoughtSignature: latestToolCallSignature || latestThoughtSignatureFromParts,
-                        thought_signature: latestToolCallSignature || latestThoughtSignatureFromParts,
-                    }
-                    : {})
-            } as any;
-        } else if (detectedFunctionCallPart && (latestToolCallSignature || latestThoughtSignatureFromParts)) {
-            const anyPart = detectedFunctionCallPart as any;
-            if (!anyPart.thoughtSignature && !anyPart.thought_signature) {
-                detectedFunctionCallPart = {
-                    ...detectedFunctionCallPart,
-                    thoughtSignature: latestToolCallSignature || latestThoughtSignatureFromParts,
-                    thought_signature: latestToolCallSignature || latestThoughtSignatureFromParts,
-                } as any;
-            }
-        }
-
         logService.info("Streaming complete.", { usage: finalUsageMetadata, hasGrounding: !!finalGroundingMetadata, hasFunctionCall: !!detectedFunctionCallPart });
         onComplete(finalUsageMetadata, finalGroundingMetadata, finalUrlContextMetadata, detectedFunctionCallPart);
     }
