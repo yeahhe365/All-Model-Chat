@@ -27,6 +27,11 @@ dist-ssr
 # Generated files
 bundle-stats.html
 stats.html
+*.png
+*.pdf
+*.csv
+*.pkl
+__pycache__/
 
 # Temporary folders
 chat-answer/
