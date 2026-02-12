@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Loader2, AlertTriangle, Download, Maximize, Repeat, Code, Copy, Check, Sidebar } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
 import { exportSvgAsImage } from '../../../utils/exportUtils';
@@ -20,7 +20,10 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   const [svgContent, setSvgContent] = useState('');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(true);
-  const [layout, setLayout] = useState<'LR' | 'TB'>('LR');
+  
+  // Use null to indicate "auto" (follow code), otherwise force override
+  const [manualLayout, setManualLayout] = useState<'LR' | 'TB' | null>(null);
+  
   const [isDownloading, setIsDownloading] = useState(false);
   const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
   const [showSource, setShowSource] = useState(false);
@@ -28,6 +31,23 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const vizInstanceRef = useRef<any>(null);
+
+  // Determine effective layout based on code content or manual override
+  const effectiveLayout = useMemo(() => {
+      if (manualLayout) return manualLayout;
+      
+      // Try to detect existing rankdir in the code
+      const match = code.match(/rankdir\s*=\s*(["']?)(LR|TB|RL|BT)\1/i);
+      if (match) {
+          const dir = match[2].toUpperCase();
+          // Map to supported toggle states (LR/TB)
+          if (dir === 'TB' || dir === 'BT') return 'TB';
+          if (dir === 'LR' || dir === 'RL') return 'LR';
+      }
+      
+      // Default fallback
+      return 'LR';
+  }, [code, manualLayout]);
 
   // Initialize Viz instance once
   useEffect(() => {
@@ -50,6 +70,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       let processedCode = code;
       
       // 1. Layout Injection - Robust Regex
+      // Replaces existing rankdir or injects it if missing, enforcing the current effective layout
       const rankdirRegex = /(rankdir\s*=\s*)(["']?)(LR|TB|RL|BT)\2/gi;
       
       if (rankdirRegex.test(processedCode)) {
@@ -129,7 +150,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
                  return; // Script not loaded yet, polling below handles init
              }
         }
-        await renderGraph(layout);
+        await renderGraph(effectiveLayout);
     };
 
     // Debounce rendering
@@ -151,11 +172,10 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         clearTimeout(timeoutId);
         if (pollInterval) clearInterval(pollInterval);
     };
-  }, [renderGraph, layout]);
+  }, [renderGraph, effectiveLayout]);
 
   const handleToggleLayout = () => {
-    const newLayout = layout === 'LR' ? 'TB' : 'LR';
-    setLayout(newLayout);
+    setManualLayout(effectiveLayout === 'LR' ? 'TB' : 'LR');
   };
   
   const handleDownloadJpg = async () => {
@@ -210,7 +230,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
              <button onClick={() => setShowSource(!showSource)} className={MESSAGE_BLOCK_BUTTON_CLASS} title={showSource ? "Hide Source" : "Show Source"}>
                 <Code size={14} />
              </button>
-             <button onClick={handleToggleLayout} disabled={isRendering} className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Toggle Layout (Current: ${layout})`}>
+             <button onClick={handleToggleLayout} disabled={isRendering} className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Toggle Layout (Current: ${effectiveLayout})`}>
                 {isRendering ? <Loader2 size={14} className="animate-spin"/> : <Repeat size={14} />}
              </button>
              <button 
