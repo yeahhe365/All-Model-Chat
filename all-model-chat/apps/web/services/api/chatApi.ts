@@ -207,6 +207,7 @@ export const sendStatelessMessageStreamApi = async (
             parts,
             config,
             role,
+            apiKeyOverride: apiKey !== BACKEND_MANAGED_KEY_SENTINEL ? apiKey : undefined,
         };
 
         const response = await fetch(endpoint, {

@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
-import { Part, UsageMetadata } from '@google/genai';
+import { GoogleGenAI, Part, UsageMetadata } from '@google/genai';
 import { GeminiProviderClient } from '../providers/geminiClient.js';
 import type { ApiErrorPayload, ChatHistoryTurn, ChatStreamRequestPayload } from '@all-model-chat/shared-api';
 import type { ChatRole } from '@all-model-chat/shared-types';
@@ -238,6 +238,14 @@ const parseChatStreamPayload = (rawBody: string): ChatStreamRequestPayload => {
 
   const roleRaw = parsed.role;
   const role: ChatRole = roleRaw === 'model' ? 'model' : 'user';
+  const apiKeyOverrideRaw = parsed.apiKeyOverride;
+  let apiKeyOverride: string | undefined;
+  if (typeof apiKeyOverrideRaw === 'string') {
+    const trimmed = apiKeyOverrideRaw.trim();
+    if (trimmed.length > 0) {
+      apiKeyOverride = trimmed;
+    }
+  }
   const history = normalizeHistory(parsed.history);
   const parts = normalizePartArray(parsed.parts, '`parts`', false);
 
@@ -255,6 +263,7 @@ const parseChatStreamPayload = (rawBody: string): ChatStreamRequestPayload => {
     parts,
     config: parsed.config,
     role,
+    apiKeyOverride,
   };
 };
 
@@ -371,7 +380,7 @@ export const handleChatStreamRoute = async (
   response.on('close', onClientDisconnect);
 
   try {
-    await geminiProviderClient.withClient(async ({ client, keyId }) => {
+    const streamWithClient = async (client: GoogleGenAI, keyId: string): Promise<void> => {
       writeSseEvent(response, 'meta', {
         provider: 'gemini',
         keyId,
@@ -495,7 +504,30 @@ export const handleChatStreamRoute = async (
           functionCallPart: detectedFunctionCallPart,
         });
       }
-    });
+    };
+
+    if (payload.apiKeyOverride) {
+      const providerConfig = geminiProviderClient.getProviderConfigSnapshot();
+      const clientOptions: Record<string, unknown> = {
+        apiKey: payload.apiKeyOverride,
+        vertexai: providerConfig.useVertexAi,
+      };
+      if (providerConfig.apiVersion) {
+        clientOptions.apiVersion = providerConfig.apiVersion;
+      }
+      if (providerConfig.baseUrl) {
+        clientOptions.httpOptions = {
+          baseUrl: providerConfig.baseUrl,
+        };
+      }
+
+      const overrideClient = new GoogleGenAI(clientOptions as any);
+      await streamWithClient(overrideClient, 'custom-key');
+    } else {
+      await geminiProviderClient.withClient(async ({ client, keyId }) => {
+        await streamWithClient(client, keyId);
+      });
+    }
   } catch (error) {
     if (!abortController.signal.aborted) {
       writeSseEvent(response, 'error', { error: mapProviderError(error) });

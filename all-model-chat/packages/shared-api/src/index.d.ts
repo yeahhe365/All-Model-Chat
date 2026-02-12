@@ -26,6 +26,7 @@ export interface ChatStreamRequestPayload {
   parts: Part[];
   config?: unknown;
   role: ChatRole;
+  apiKeyOverride?: string;
 }
 
 export interface ChatStreamMetaEventPayload {
