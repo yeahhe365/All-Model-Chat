@@ -2,6 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
+      "@all-model-chat/shared-api": [
+        "../../packages/shared-api/src/index.d.ts"
+      ],
+      "@all-model-chat/shared-types": [
+        "../../packages/shared-types/src/index.d.ts"
+      ],
       "@/*": [
         "./*"
       ]

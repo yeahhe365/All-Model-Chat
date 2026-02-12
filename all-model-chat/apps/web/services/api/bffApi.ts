@@ -1,9 +1,4 @@
-export interface BffErrorPayload {
-  code?: string;
-  message?: string;
-  status?: number;
-  retryable?: boolean;
-}
+import type { BffErrorPayload } from '@all-model-chat/shared-api';
 
 export const resolveBffEndpoint = (path: string): string => {
   const env = (import.meta as ImportMeta & { env?: Record<string, unknown> }).env;

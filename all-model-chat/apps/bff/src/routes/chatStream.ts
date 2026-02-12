@@ -1,28 +1,8 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { Part, UsageMetadata } from '@google/genai';
 import { GeminiProviderClient } from '../providers/geminiClient.js';
-
-type ChatRole = 'user' | 'model';
-
-interface ChatHistoryTurn {
-  role: ChatRole;
-  parts: Part[];
-}
-
-interface ChatStreamRequestPayload {
-  model: string;
-  history: ChatHistoryTurn[];
-  parts: Part[];
-  config?: unknown;
-  role: ChatRole;
-}
-
-interface ErrorPayload {
-  code: string;
-  message: string;
-  status: number;
-  retryable: boolean;
-}
+import type { ApiErrorPayload, ChatHistoryTurn, ChatStreamRequestPayload } from '@all-model-chat/shared-api';
+import type { ChatRole } from '@all-model-chat/shared-types';
 
 interface ValidationErrorShape {
   code: string;
@@ -302,7 +282,7 @@ const readNumericStatus = (error: unknown): number | null => {
   return null;
 };
 
-const mapProviderError = (error: unknown): ErrorPayload => {
+const mapProviderError = (error: unknown): ApiErrorPayload => {
   const status = readNumericStatus(error) ?? 500;
   const message = error instanceof Error ? error.message : 'Provider stream failed.';
 

@@ -1,3 +1,11 @@
+import type {
+    SuggestionsRequest,
+    SuggestionsResponse,
+    TitleRequest,
+    TitleResponse,
+    TranslateRequest,
+    TranslateResponse,
+} from '@all-model-chat/shared-api';
 import { fetchBffJson } from '../bffApi';
 import { logService } from "../../logService";
 
@@ -6,17 +14,18 @@ export const translateTextApi = async (apiKey: string, text: string, targetLangu
     logService.info(`Translating text to ${targetLanguage}...`);
 
     try {
-        const response = await fetchBffJson<{ text: string }>(
+        const requestPayload: TranslateRequest = {
+            text,
+            targetLanguage,
+        };
+        const response = await fetchBffJson<TranslateResponse>(
             '/api/generation/translate',
             {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify({
-                    text,
-                    targetLanguage,
-                }),
+                body: JSON.stringify(requestPayload),
             }
         );
 
@@ -36,18 +45,19 @@ export const generateSuggestionsApi = async (apiKey: string, userContent: string
     logService.info(`Generating suggestions in ${language}...`);
 
     try {
-        const response = await fetchBffJson<{ suggestions: string[] }>(
+        const requestPayload: SuggestionsRequest = {
+            userContent,
+            modelContent,
+            language,
+        };
+        const response = await fetchBffJson<SuggestionsResponse>(
             '/api/generation/suggestions',
             {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify({
-                    userContent,
-                    modelContent,
-                    language,
-                }),
+                body: JSON.stringify(requestPayload),
             }
         );
 
@@ -63,18 +73,19 @@ export const generateTitleApi = async (apiKey: string, userContent: string, mode
     logService.info(`Generating title in ${language}...`);
 
     try {
-        const response = await fetchBffJson<{ title: string }>(
+        const requestPayload: TitleRequest = {
+            userContent,
+            modelContent,
+            language,
+        };
+        const response = await fetchBffJson<TitleResponse>(
             '/api/generation/title',
             {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify({
-                    userContent,
-                    modelContent,
-                    language,
-                }),
+                body: JSON.stringify(requestPayload),
             }
         );
 

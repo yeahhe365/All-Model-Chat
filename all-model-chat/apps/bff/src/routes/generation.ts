@@ -1,6 +1,16 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { Part, Type } from '@google/genai';
 import { GeminiProviderClient } from '../providers/geminiClient.js';
+import type {
+  CountTokensRequest,
+  EditImageRequest,
+  ImageGenerationRequest,
+  SpeechGenerationRequest,
+  SuggestionsRequest,
+  TitleRequest,
+  TranscribeAudioRequest,
+  TranslateRequest,
+} from '@all-model-chat/shared-api';
 import {
   RequestValidationError,
   isObject,
@@ -8,55 +18,6 @@ import {
   readJsonBody,
   sendJson,
 } from './routeCommon.js';
-
-interface ImageGenerationRequest {
-  model: string;
-  prompt: string;
-  aspectRatio: string;
-  imageSize?: string;
-}
-
-interface SpeechGenerationRequest {
-  model: string;
-  text: string;
-  voice: string;
-}
-
-interface TranscribeAudioRequest {
-  model: string;
-  mimeType: string;
-  audioBase64: string;
-}
-
-interface TranslateRequest {
-  text: string;
-  targetLanguage?: string;
-}
-
-interface TitleRequest {
-  userContent: string;
-  modelContent: string;
-  language: 'en' | 'zh';
-}
-
-interface SuggestionsRequest {
-  userContent: string;
-  modelContent: string;
-  language: 'en' | 'zh';
-}
-
-interface CountTokensRequest {
-  model: string;
-  parts: Part[];
-}
-
-interface EditImageRequest {
-  model: string;
-  history: Array<{ role: 'user' | 'model'; parts: Part[] }>;
-  parts: Part[];
-  aspectRatio?: string;
-  imageSize?: string;
-}
 
 const parseString = (
   value: unknown,

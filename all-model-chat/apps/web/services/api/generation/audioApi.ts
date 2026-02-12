@@ -1,4 +1,10 @@
 
+import type {
+    SpeechGenerationRequest,
+    SpeechGenerationResponse,
+    TranscribeAudioRequest,
+    TranscribeAudioResponse,
+} from '@all-model-chat/shared-api';
 import { fetchBffJson } from '../bffApi';
 import { logService } from "../../logService";
 import { blobToBase64 } from "../../../utils/appUtils";
@@ -12,18 +18,20 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
     }
 
     try {
-        const response = await fetchBffJson<{ audioData: string }>(
+        const requestPayload: SpeechGenerationRequest = {
+            model: modelId,
+            text,
+            voice,
+        };
+
+        const response = await fetchBffJson<SpeechGenerationResponse>(
             '/api/generation/speech',
             {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify({
-                    model: modelId,
-                    text,
-                    voice,
-                }),
+                body: JSON.stringify(requestPayload),
             },
             abortSignal
         );
@@ -55,18 +63,19 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
     try {
         // Use blobToBase64 which is efficient and handles Blobs/Files
         const audioBase64 = await blobToBase64(audioFile);
-        const response = await fetchBffJson<{ text: string }>(
+        const requestPayload: TranscribeAudioRequest = {
+            model: modelId,
+            mimeType: audioFile.type,
+            audioBase64,
+        };
+        const response = await fetchBffJson<TranscribeAudioResponse>(
             '/api/generation/transcribe',
             {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify({
-                    model: modelId,
-                    mimeType: audioFile.type,
-                    audioBase64,
-                }),
+                body: JSON.stringify(requestPayload),
             }
         );
 

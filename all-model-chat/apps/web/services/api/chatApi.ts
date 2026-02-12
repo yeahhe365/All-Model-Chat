@@ -1,5 +1,10 @@
 
 import { GenerateContentResponse, Part, UsageMetadata, ChatHistoryItem } from "@google/genai";
+import type {
+    BffErrorPayload as BffStreamErrorPayload,
+    ChatStreamMetaEventPayload,
+    ChatStreamRequestPayload,
+} from '@all-model-chat/shared-api';
 import { ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
@@ -8,13 +13,6 @@ import { parseBffErrorResponse, resolveBffEndpoint } from './bffApi';
 interface ParsedSseEvent {
     eventName: string;
     payload: unknown;
-}
-
-interface BffStreamErrorPayload {
-    code?: string;
-    message?: string;
-    status?: number;
-    retryable?: boolean;
 }
 
 const resolveBffStreamEndpoint = (): string => resolveBffEndpoint('/api/chat/stream');
@@ -202,19 +200,21 @@ export const sendStatelessMessageStreamApi = async (
         }
 
         const endpoint = resolveBffStreamEndpoint();
+        const requestPayload: ChatStreamRequestPayload = {
+            model: modelId,
+            history,
+            parts,
+            config,
+            role,
+        };
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
             },
             signal: abortSignal,
-            body: JSON.stringify({
-                model: modelId,
-                history,
-                parts,
-                config,
-                role,
-            }),
+            body: JSON.stringify(requestPayload),
         });
 
         if (!response.ok) {
@@ -225,8 +225,9 @@ export const sendStatelessMessageStreamApi = async (
             const payload = event.payload as any;
 
             if (event.eventName === 'meta') {
-                if (typeof payload?.keyId === 'string') {
-                    logService.recordApiKeyUsage(payload.keyId, { source: 'server' });
+                const metaPayload = payload as ChatStreamMetaEventPayload | undefined;
+                if (typeof metaPayload?.keyId === 'string') {
+                    logService.recordApiKeyUsage(metaPayload.keyId, { source: 'server' });
                 }
                 return;
             }

@@ -1,5 +1,6 @@
 
 import { File as GeminiFile } from "@google/genai";
+import type { FileMetadataResponse, FileUploadResponse } from '@all-model-chat/shared-api';
 import { fetchBffJson, parseBffErrorResponse, resolveBffEndpoint } from './bffApi';
 import { logService } from "../logService";
 
@@ -45,7 +46,7 @@ export const uploadFileApi = async (
             throw await parseBffErrorResponse(response);
         }
 
-        const payload = (await response.json()) as { file: GeminiFile };
+        const payload = (await response.json()) as FileUploadResponse<GeminiFile>;
         const uploadResult = payload.file;
 
         // Since SDK doesn't provide progress, call 100% on completion to satisfy UI
@@ -78,7 +79,7 @@ export const getFileMetadataApi = async (apiKey: string, fileApiName: string): P
     try {
         logService.info(`Fetching metadata for file: ${fileApiName}`);
         const params = new URLSearchParams({ name: fileApiName });
-        const payload = await fetchBffJson<{ file: GeminiFile | null }>(
+        const payload = await fetchBffJson<FileMetadataResponse<GeminiFile>>(
             `/api/files/metadata?${params.toString()}`,
             {
                 method: 'GET',

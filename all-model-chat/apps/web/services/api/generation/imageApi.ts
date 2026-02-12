@@ -1,4 +1,10 @@
 import { ChatHistoryItem, Part } from '@google/genai';
+import type {
+    EditImageRequest,
+    EditImageResponse,
+    ImageGenerationRequest,
+    ImageGenerationResponse,
+} from '@all-model-chat/shared-api';
 import { fetchBffJson } from '../bffApi';
 import { logService } from "../../logService";
 
@@ -17,19 +23,21 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
     }
 
     try {
-        const response = await fetchBffJson<{ images: string[] }>(
+        const requestPayload: ImageGenerationRequest = {
+            model: modelId,
+            prompt,
+            aspectRatio,
+            imageSize,
+        };
+
+        const response = await fetchBffJson<ImageGenerationResponse>(
             '/api/generation/images',
             {
                 method: 'POST',
                 headers: {
                     'content-type': 'application/json',
                 },
-                body: JSON.stringify({
-                    model: modelId,
-                    prompt,
-                    aspectRatio,
-                    imageSize,
-                }),
+                body: JSON.stringify(requestPayload),
             },
             abortSignal
         );
@@ -64,20 +72,22 @@ export const editImageApi = async (
 ): Promise<Part[]> => {
     void apiKey;
 
-    const response = await fetchBffJson<{ parts: Part[] }>(
+    const requestPayload: EditImageRequest = {
+        model: modelId,
+        history,
+        parts,
+        aspectRatio,
+        imageSize,
+    };
+
+    const response = await fetchBffJson<EditImageResponse>(
         '/api/generation/edit-image',
         {
             method: 'POST',
             headers: {
                 'content-type': 'application/json',
             },
-            body: JSON.stringify({
-                model: modelId,
-                history,
-                parts,
-                aspectRatio,
-                imageSize,
-            }),
+            body: JSON.stringify(requestPayload),
         },
         abortSignal
     );

@@ -1,5 +1,6 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
 import { GeminiProviderClient } from '../providers/geminiClient.js';
+import type { FileMetadataResponse, FileUploadResponse } from '@all-model-chat/shared-api';
 import {
   RequestValidationError,
   mapProviderError,
@@ -45,7 +46,8 @@ const handleFileUpload = async (
     });
   });
 
-  sendJson(response, 200, { file: uploadedFile });
+  const payload: FileUploadResponse = { file: uploadedFile };
+  sendJson(response, 200, payload);
 };
 
 const handleFileMetadata = async (
@@ -65,10 +67,12 @@ const handleFileMetadata = async (
       return client.files.get({ name });
     });
 
-    sendJson(response, 200, { file });
+    const payload: FileMetadataResponse = { file };
+    sendJson(response, 200, payload);
   } catch (error) {
     if (isFileNotFoundError(error)) {
-      sendJson(response, 200, { file: null });
+      const payload: FileMetadataResponse = { file: null };
+      sendJson(response, 200, payload);
       return;
     }
 

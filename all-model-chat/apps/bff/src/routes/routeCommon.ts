@@ -1,11 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
-
-export interface ApiErrorPayload {
-  code: string;
-  message: string;
-  status: number;
-  retryable: boolean;
-}
+import type { ApiErrorPayload } from '@all-model-chat/shared-api';
 
 export const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' };
 
