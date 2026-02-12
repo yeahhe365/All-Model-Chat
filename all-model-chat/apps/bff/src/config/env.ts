@@ -5,6 +5,9 @@ export interface BffConfig {
   serviceName: string;
   providerApiKeys: string[];
   providerKeyFailureCooldownMs: number;
+  providerUseVertexAi: boolean;
+  providerBaseUrl?: string;
+  providerApiVersion?: string;
 }
 
 const parsePort = (rawPort: string | undefined, fallback: number): number => {
@@ -29,6 +32,27 @@ const parsePositiveInteger = (rawValue: string | undefined, fallback: number, fi
   return parsed;
 };
 
+const parseBoolean = (rawValue: string | undefined, fallback: boolean, fieldName: string): boolean => {
+  if (!rawValue) return fallback;
+
+  const normalized = rawValue.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === 'false' || normalized === '0' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+
+  throw new Error(`Invalid ${fieldName} value: ${rawValue}`);
+};
+
+const parseOptionalString = (rawValue: string | undefined): string | undefined => {
+  if (!rawValue) return undefined;
+
+  const trimmed = rawValue.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
 const parseProviderApiKeys = (rawList: string | undefined, rawSingle: string | undefined): string[] => {
   const merged = [rawList || '', rawSingle || ''].join('\n');
 
@@ -50,5 +74,8 @@ export const loadBffConfig = (): BffConfig => {
       30000,
       'BFF_KEY_FAILURE_COOLDOWN_MS'
     ),
+    providerUseVertexAi: parseBoolean(process.env.BFF_PROVIDER_VERTEXAI, false, 'BFF_PROVIDER_VERTEXAI'),
+    providerBaseUrl: parseOptionalString(process.env.BFF_PROVIDER_BASE_URL),
+    providerApiVersion: parseOptionalString(process.env.BFF_PROVIDER_API_VERSION),
   };
 };
