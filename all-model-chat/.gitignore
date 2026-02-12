@@ -39,6 +39,7 @@ __pycache__/
 /chat-answer/
 /.agent/
 /chat/
+/setup/
 
 # Environment files
 .env
