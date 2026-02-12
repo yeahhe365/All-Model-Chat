@@ -6,6 +6,7 @@ import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../../constants/themeConstan
 import { applyThemeToDocument, logService } from '../../utils/appUtils';
 import { dbService } from '../../utils/db';
 import { useMultiTabSync } from './useMultiTabSync';
+import { sanitizeAppSettingsForStorage } from '../../utils/security/sensitiveData';
 
 export const useAppSettings = () => {
     const [appSettings, setAppSettingsState] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
@@ -15,14 +16,24 @@ export const useAppSettings = () => {
         try {
             const storedSettings = await dbService.getAppSettings();
             if (storedSettings) {
-                const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
+                const sanitizedStoredSettings = sanitizeAppSettingsForStorage(storedSettings);
+                const newSettings = { ...DEFAULT_APP_SETTINGS, ...sanitizedStoredSettings };
                 
-                if (storedSettings.filesApiConfig) {
+                if (sanitizedStoredSettings.filesApiConfig) {
                     // Ensure new keys are present if structure updated
-                    newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
+                    newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...sanitizedStoredSettings.filesApiConfig };
                 }
 
                 setAppSettingsState(newSettings);
+
+                const hadPersistedSensitiveValues =
+                    (typeof storedSettings.apiKey === 'string' && storedSettings.apiKey.trim().length > 0) ||
+                    (typeof storedSettings.lockedApiKey === 'string' && storedSettings.lockedApiKey.trim().length > 0);
+                if (hadPersistedSensitiveValues) {
+                    dbService
+                        .setAppSettings(sanitizedStoredSettings)
+                        .catch(e => logService.error("Failed to sanitize persisted settings", { error: e }));
+                }
             }
         } catch (error) {
             logService.error("Failed to load settings from IndexedDB", { error });
@@ -73,10 +84,11 @@ export const useAppSettings = () => {
     const setAppSettings = useCallback((newSettings: AppSettings | ((prev: AppSettings) => AppSettings)) => {
         setAppSettingsState(prev => {
             const next = typeof newSettings === 'function' ? newSettings(prev) : newSettings;
+            const sanitizedForStorage = sanitizeAppSettingsForStorage(next);
             
             // Persist and Broadcast
             if (isSettingsLoaded) {
-                dbService.setAppSettings(next)
+                dbService.setAppSettings(sanitizedForStorage)
                     .then(() => broadcast({ type: 'SETTINGS_UPDATED' }))
                     .catch(e => logService.error("Failed to save settings", { error: e }));
             }

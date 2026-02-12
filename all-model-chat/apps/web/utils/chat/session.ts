@@ -6,6 +6,7 @@ import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { base64ToBlob } from '../fileHelpers';
+import { sanitizeChatSettingsForStorage } from '../security/sensitiveData';
 
 export const createMessage = (
     role: 'user' | 'model' | 'error',
@@ -108,6 +109,7 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
 export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession => {
     return {
         ...session,
+        settings: sanitizeChatSettingsForStorage(session.settings),
         messages: session.messages.map(msg => {
             if (!msg.files) return msg;
             return {

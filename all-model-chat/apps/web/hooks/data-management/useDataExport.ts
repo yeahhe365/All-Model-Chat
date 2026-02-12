@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/exportUtils';
+import { sanitizeAppSettingsForStorage } from '../../utils/security/sensitiveData';
 
 interface UseDataExportProps {
     appSettings: AppSettings;
@@ -23,7 +24,11 @@ export const useDataExport = ({
     const handleExportSettings = useCallback(() => {
         logService.info(`Exporting settings.`);
         try {
-            const dataToExport = { type: 'AllModelChat-Settings', version: 1, settings: appSettings };
+            const dataToExport = {
+                type: 'AllModelChat-Settings',
+                version: 1,
+                settings: sanitizeAppSettingsForStorage(appSettings),
+            };
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const date = new Date().toISOString().slice(0, 10);

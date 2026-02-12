@@ -5,6 +5,7 @@ import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../constan
 import { dbService } from '../../utils/db';
 import { logService, rehydrateSessionFiles } from '../../utils/appUtils';
 import { useMultiTabSync } from '../core/useMultiTabSync';
+import { sanitizeSessionForStorage } from '../../utils/security/sensitiveData';
 
 export const useChatState = (appSettings: AppSettings) => {
     // Session Metadata List (messages field is always empty [] in this array to save memory/renders)
@@ -245,7 +246,7 @@ export const useChatState = (appSettings: AppSettings) => {
                 newFullSessions.forEach(session => {
                     const prevSession = virtualFullSessions.find(ps => ps.id === session.id);
                     if (prevSession !== session) {
-                        updates.push(dbService.saveSession(session));
+                        updates.push(dbService.saveSession(sanitizeSessionForStorage(session)));
                         modifiedSessionIds.push(session.id);
                     }
                 });

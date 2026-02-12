@@ -3,6 +3,7 @@ import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { logService } from '../../utils/appUtils';
+import { sanitizeAppSettingsForStorage, sanitizeSessionForStorage } from '../../utils/security/sensitiveData';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
@@ -15,6 +16,13 @@ interface UseDataImportProps {
     t: (key: string) => string;
 }
 
+const isImportTypeCompatible = (importedValue: unknown, defaultValue: unknown): boolean => {
+    if (defaultValue === null) {
+        return importedValue === null;
+    }
+    return typeof importedValue === typeof defaultValue;
+};
+
 export const useDataImport = ({
     setAppSettings,
     updateAndPersistSessions,
@@ -22,7 +30,6 @@ export const useDataImport = ({
     handleSaveAllScenarios,
     t
 }: UseDataImportProps) => {
-
     const handleImportFile = useCallback((file: File, expectedType: string, onValid: (data: any) => void) => {
         logService.info(`Importing ${expectedType} from file: ${file.name}`);
         const reader = new FileReader();
@@ -55,14 +62,14 @@ export const useDataImport = ({
                 if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
                     const importedValue = importedSettings[key];
                     const defaultValue = DEFAULT_APP_SETTINGS[key];
-                    if (typeof importedValue === typeof defaultValue || (['apiKey', 'apiProxyUrl', 'lockedApiKey'].includes(key) && (typeof importedValue === 'string' || importedValue === null))) {
+                    if (isImportTypeCompatible(importedValue, defaultValue)) {
                         (newSettings as any)[key] = importedValue;
                     } else {
                         logService.warn(`Type mismatch for setting "${key}" during import. Using default.`);
                     }
                 }
             }
-            setAppSettings(newSettings);
+            setAppSettings(sanitizeAppSettingsForStorage(newSettings));
             alert(t('settingsImport_success'));
         });
     }, [handleImportFile, setAppSettings, t]);
@@ -70,9 +77,12 @@ export const useDataImport = ({
     const handleImportHistory = useCallback((file: File) => {
         handleImportFile(file, 'AllModelChat-History', (data) => {
             if (data.history && Array.isArray(data.history)) {
+                const sanitizedImportedSessions = data.history.map((session: SavedChatSession) =>
+                    sanitizeSessionForStorage(session)
+                );
                 updateAndPersistSessions((prev) => {
                     const existingIds = new Set(prev.map(s => s.id));
-                    const newSessions = data.history.filter((s: SavedChatSession) => !existingIds.has(s.id));
+                    const newSessions = sanitizedImportedSessions.filter((s: SavedChatSession) => !existingIds.has(s.id));
                     return [...prev, ...newSessions];
                 });
 
