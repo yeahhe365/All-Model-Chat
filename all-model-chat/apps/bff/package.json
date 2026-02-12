@@ -1,11 +1,13 @@
 {
   "name": "@all-model-chat/bff",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.8.5",
   "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "dev": "echo \"BFF bootstrap is scheduled for Commit 3.\"",
-    "build": "echo \"BFF bootstrap is scheduled for Commit 3.\"",
-    "start": "echo \"BFF bootstrap is scheduled for Commit 3.\""
+    "dev": "npm run build && npm run start",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }
