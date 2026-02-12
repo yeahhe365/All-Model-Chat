@@ -33,12 +33,6 @@ export const getKeyForRequest = (
 ): { key: string; isNewKey: boolean } | { error: string } => {
     const { skipIncrement = false } = options;
 
-    const logUsage = (key: string) => {
-        if (appSettings.useCustomApiConfig) {
-            logService.recordApiKeyUsage(key);
-        }
-    };
-
     const { apiKeysString } = getActiveApiConfig(appSettings);
     if (!apiKeysString) {
         return { error: "API Key not configured." };
@@ -57,7 +51,6 @@ export const getKeyForRequest = (
         // For environment keys, we assume they are valid if availableKeys contains them or if we just trust the lock.
         // Here we check if the locked key is in the available list.
         if (availableKeys.includes(currentChatSettings.lockedApiKey)) {
-            logUsage(currentChatSettings.lockedApiKey);
             return { key: currentChatSettings.lockedApiKey, isNewKey: false };
         } else {
             logService.warn(`Locked key not found in current configuration. Falling back to rotation.`);
@@ -67,7 +60,6 @@ export const getKeyForRequest = (
 
     if (availableKeys.length === 1) {
         const key = availableKeys[0];
-        logUsage(key);
         // If we fell through from an invalid locked key, isNewKey should be true to update the session
         const isNewKey = currentChatSettings.lockedApiKey !== key;
         return { key, isNewKey };
@@ -105,7 +97,6 @@ export const getKeyForRequest = (
     }
 
     const nextKey = availableKeys[targetIndex];
-    logUsage(nextKey);
     
     // If we are here, we are providing a rotated key. 
     // If there was a locked key that was invalid, this is definitely a new key.

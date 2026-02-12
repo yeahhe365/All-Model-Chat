@@ -64,11 +64,10 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && appSettings.useCustomApiConfig) {
-        const unsubscribe = logService.subscribeToApiKeys(setApiKeyUsage);
-        return () => unsubscribe();
-    }
-  }, [isOpen, appSettings.useCustomApiConfig]);
+    if (!isOpen) return;
+    const unsubscribe = logService.subscribeToApiKeys(setApiKeyUsage);
+    return () => unsubscribe();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -110,11 +109,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
             <button onClick={() => setActiveTab('tokens')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'tokens' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                 <Coins size={14} /> Token Usage
             </button>
-            {appSettings.useCustomApiConfig && (
-                <button onClick={() => setActiveTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
-                    <KeyRound size={14} /> API Usage
-                </button>
-            )}
+            <button onClick={() => setActiveTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                <KeyRound size={14} /> API Usage
+            </button>
           </nav>
         </div>
         
@@ -135,7 +132,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
           )}
 
           {activeTab === 'api' && (
-            <ApiUsageTab apiKeyUsage={apiKeyUsage} appSettings={appSettings} currentChatSettings={currentChatSettings} />
+            <ApiUsageTab apiKeyUsage={apiKeyUsage} />
           )}
         </div>
       </div>

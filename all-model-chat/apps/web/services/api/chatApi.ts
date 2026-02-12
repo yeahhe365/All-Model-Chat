@@ -224,6 +224,13 @@ export const sendStatelessMessageStreamApi = async (
         await consumeSseStream(response, abortSignal, (event) => {
             const payload = event.payload as any;
 
+            if (event.eventName === 'meta') {
+                if (typeof payload?.keyId === 'string') {
+                    logService.recordApiKeyUsage(payload.keyId, { source: 'server' });
+                }
+                return;
+            }
+
             if (event.eventName === 'part') {
                 if (payload?.part) {
                     onPart(payload.part as Part);

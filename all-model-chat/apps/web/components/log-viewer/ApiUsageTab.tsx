@@ -1,51 +1,52 @@
 
 import React from 'react';
-import { KeyRound, CheckCircle } from 'lucide-react';
-import { AppSettings, ChatSettings } from '../../types';
-import { ObfuscatedApiKey } from './ObfuscatedApiKey';
-import { parseApiKeys } from '../../utils/apiUtils';
+import { KeyRound } from 'lucide-react';
 
 interface ApiUsageTabProps {
     apiKeyUsage: Map<string, number>;
-    appSettings: AppSettings;
-    currentChatSettings: ChatSettings;
 }
 
-export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettings, currentChatSettings }) => {
-    // Sanitize keys to match how they are logged in utils/apiUtils.ts (strip quotes, split by newlines/commas)
-    const allApiKeys = parseApiKeys(appSettings.apiKey);
+const parseUsageKeyId = (usageKeyId: string): { source: string; keyId: string } => {
+    const separatorIndex = usageKeyId.indexOf(':');
+    if (separatorIndex <= 0) {
+        return { source: 'unknown', keyId: usageKeyId };
+    }
 
-    const displayApiKeyUsage = new Map<string, number>();
-    
-    // 1. Add keys from settings, checking usage logs
-    allApiKeys.forEach(key => displayApiKeyUsage.set(key, apiKeyUsage.get(key) || 0));
-    
-    // 2. Add any keys found in usage logs that aren't currently in settings (historical keys)
-    apiKeyUsage.forEach((count, key) => { 
-        if (!displayApiKeyUsage.has(key)) {
-            displayApiKeyUsage.set(key, count); 
-        }
-    });
+    return {
+        source: usageKeyId.slice(0, separatorIndex),
+        keyId: usageKeyId.slice(separatorIndex + 1),
+    };
+};
 
-    const totalApiUsage = Array.from(displayApiKeyUsage.values()).reduce((sum, count) => sum + count, 0);
+export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage }) => {
+    const entries = Array.from(apiKeyUsage.entries())
+        .map(([usageKeyId, count]) => ({ usageKeyId, count, ...parseUsageKeyId(usageKeyId) }))
+        .sort((a, b) => b.count - a.count);
+    const totalApiUsage = entries.reduce((sum, entry) => sum + entry.count, 0);
 
     return (
         <div className="p-4 overflow-y-auto custom-scrollbar h-full">
-            <h4 className="font-semibold text-lg text-[var(--theme-text-primary)] mb-4 flex items-center gap-2"><KeyRound size={20} /> API Key Usage Statistics</h4>
+            <h4 className="font-semibold text-lg text-[var(--theme-text-primary)] mb-4 flex items-center gap-2"><KeyRound size={20} /> Provider Key Usage Statistics</h4>
+            {entries.length === 0 && (
+                <p className="text-sm text-[var(--theme-text-tertiary)]">
+                    No provider key usage has been recorded yet.
+                </p>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from(displayApiKeyUsage.entries())
-                .sort(([, a], [, b]) => b - a)
-                .map(([key, count], index) => {
+            {entries.map(({ usageKeyId, keyId, source, count }, index) => {
                 const percentage = totalApiUsage > 0 ? (count / totalApiUsage) * 100 : 0;
-                const isActive = currentChatSettings.lockedApiKey === key;
                 return (
-                    <div key={key} className={`p-4 rounded-xl border transition-all relative overflow-hidden ${isActive ? 'bg-[var(--theme-bg-accent)]/10 border-[var(--theme-border-focus)]' : 'bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)]'}`}>
+                    <div key={usageKeyId} className="p-4 rounded-xl border transition-all relative overflow-hidden bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)]">
                     <div className="flex justify-between items-start mb-2">
                         <span className="font-mono text-xs text-[var(--theme-text-tertiary)]">#{index + 1}</span>
-                        {isActive && <span className="text-[10px] font-bold uppercase bg-green-900 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle size={10} /> Active</span>}
+                        <span className="text-[10px] font-bold uppercase bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-secondary)] px-2 py-0.5 rounded-full">
+                            {source}
+                        </span>
                     </div>
                     <div className="mb-4">
-                        <ObfuscatedApiKey apiKey={key} />
+                        <code className="font-mono text-xs text-[var(--theme-text-secondary)] break-all">
+                            {keyId}
+                        </code>
                     </div>
                     <div className="flex items-end justify-between">
                         <div className="flex flex-col">

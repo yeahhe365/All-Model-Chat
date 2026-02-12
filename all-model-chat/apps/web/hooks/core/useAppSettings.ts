@@ -6,6 +6,7 @@ import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../../constants/themeConstan
 import { applyThemeToDocument, logService } from '../../utils/appUtils';
 import { dbService } from '../../utils/db';
 import { useMultiTabSync } from './useMultiTabSync';
+import { runSensitiveDataCleanupMigration } from '../../utils/security/legacy_cleanup';
 import { sanitizeAppSettingsForStorage } from '../../utils/security/sensitiveData';
 
 export const useAppSettings = () => {
@@ -14,6 +15,7 @@ export const useAppSettings = () => {
 
     const loadSettings = useCallback(async () => {
         try {
+            await runSensitiveDataCleanupMigration();
             const storedSettings = await dbService.getAppSettings();
             if (storedSettings) {
                 const sanitizedStoredSettings = sanitizeAppSettingsForStorage(storedSettings);
@@ -25,15 +27,6 @@ export const useAppSettings = () => {
                 }
 
                 setAppSettingsState(newSettings);
-
-                const hadPersistedSensitiveValues =
-                    (typeof storedSettings.apiKey === 'string' && storedSettings.apiKey.trim().length > 0) ||
-                    (typeof storedSettings.lockedApiKey === 'string' && storedSettings.lockedApiKey.trim().length > 0);
-                if (hadPersistedSensitiveValues) {
-                    dbService
-                        .setAppSettings(sanitizedStoredSettings)
-                        .catch(e => logService.error("Failed to sanitize persisted settings", { error: e }));
-                }
             }
         } catch (error) {
             logService.error("Failed to load settings from IndexedDB", { error });

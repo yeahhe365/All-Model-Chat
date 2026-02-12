@@ -21,8 +21,10 @@ export interface TokenUsageStats {
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
 type TokenUsageListener = (usage: Map<string, TokenUsageStats>) => void;
+type ApiKeyUsageSource = 'server' | 'client';
 
-const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
+const API_USAGE_STORAGE_KEY = 'chatApiUsageDataV2';
+const LEGACY_API_USAGE_STORAGE_KEY = 'chatApiUsageData';
 const TOKEN_USAGE_STORAGE_KEY = 'chatTokenUsageData';
 const LOG_RETENTION_MS = 2 * 24 * 60 * 60 * 1000; // 2 days
 const FLUSH_INTERVAL_MS = 2000; // 2 seconds
@@ -130,15 +132,46 @@ class LogServiceImpl {
 
   // --- API Usage Tracking (Kept in LocalStorage for speed/simplicity) ---
 
+  private normalizeApiUsageKeyId(keyId: string, source: ApiKeyUsageSource): string | null {
+      const normalizedKeyId = keyId.trim();
+      if (!normalizedKeyId) return null;
+      if (!/^[a-zA-Z0-9._-]+$/.test(normalizedKeyId)) return null;
+      return `${source}:${normalizedKeyId}`;
+  }
+
+  private parseStoredApiUsageKey(rawKey: unknown): string | null {
+      if (typeof rawKey !== 'string') return null;
+      const trimmed = rawKey.trim();
+      if (!trimmed) return null;
+      const separatorIndex = trimmed.indexOf(':');
+      if (separatorIndex <= 0) return null;
+      const source = trimmed.slice(0, separatorIndex);
+      const keyId = trimmed.slice(separatorIndex + 1);
+      if (source !== 'server' && source !== 'client') return null;
+      return this.normalizeApiUsageKeyId(keyId, source);
+  }
+
   private loadApiKeyUsage() {
       try {
           const storedUsage = localStorage.getItem(API_USAGE_STORAGE_KEY);
           if (storedUsage) {
               const parsed = JSON.parse(storedUsage);
               if (Array.isArray(parsed)) {
-                  this.apiKeyUsage = new Map(parsed);
+                  const sanitizedUsage = new Map<string, number>();
+                  for (const entry of parsed) {
+                      if (!Array.isArray(entry) || entry.length < 2) continue;
+                      const normalizedKeyId = this.parseStoredApiUsageKey(entry[0]);
+                      const count = Number(entry[1]);
+                      if (!normalizedKeyId || !Number.isFinite(count) || count <= 0) continue;
+                      sanitizedUsage.set(normalizedKeyId, (sanitizedUsage.get(normalizedKeyId) || 0) + Math.floor(count));
+                  }
+                  this.apiKeyUsage = sanitizedUsage;
+                  localStorage.setItem(API_USAGE_STORAGE_KEY, JSON.stringify(Array.from(sanitizedUsage.entries())));
               }
           }
+
+          // Legacy data may contain raw keys. Purge it after v2 usage map is loaded.
+          localStorage.removeItem(LEGACY_API_USAGE_STORAGE_KEY);
       } catch (e) {
           console.error("Failed to load API key usage:", e);
       }
@@ -248,10 +281,12 @@ class LogServiceImpl {
       return error;
   }
 
-  public recordApiKeyUsage(apiKey: string) {
-    if (!apiKey) return;
-    const currentCount = this.apiKeyUsage.get(apiKey) || 0;
-    this.apiKeyUsage.set(apiKey, currentCount + 1);
+  public recordApiKeyUsage(keyId: string, options: { source?: ApiKeyUsageSource } = {}) {
+    const source = options.source || 'server';
+    const usageKeyId = this.normalizeApiUsageKeyId(keyId, source);
+    if (!usageKeyId) return;
+    const currentCount = this.apiKeyUsage.get(usageKeyId) || 0;
+    this.apiKeyUsage.set(usageKeyId, currentCount + 1);
     this.saveApiKeyUsage();
     this.notifyApiKeyListeners();
   }
