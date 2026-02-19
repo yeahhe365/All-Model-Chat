@@ -2,8 +2,20 @@
 import { ChatMessage, UploadedFile, ChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { generateUniqueId, calculateTokenStats, createMessage, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
-import { isToolMessage } from './utils';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
+
+export const appendApiPart = (parts: any[] = [], newPart: any) => {
+    const newParts = [...parts];
+    if (newPart.text) {
+        const lastPart = newParts[newParts.length - 1];
+        if (lastPart && typeof lastPart.text === 'string' && !lastPart.thought) {
+            newParts[newParts.length - 1] = { ...lastPart, text: lastPart.text + newPart.text };
+            return newParts;
+        }
+    }
+    newParts.push({ ...newPart });
+    return newParts;
+};
 
 /**
  * Core logic to mutate the messages array with a new part.
@@ -20,72 +32,31 @@ const applyPartToMessages = (
     const anyPart = part as any;
     const now = Date.now();
     
+    let lastMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
+            lastMessageIndex = i;
+            break;
+        }
+    }
+
+    if (lastMessageIndex === -1) return;
+    let lastMessage = messages[lastMessageIndex];
+
     // Update thinking time on the first content part if applicable
-    if (firstContentPartTime) {
-        // Find the loading message for this generation to update its thinking time
-        // Search backwards as it's likely the last one
-        for (let i = messages.length - 1; i >= 0; i--) {
-            const msg = messages[i];
-            if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
-                // Only set if not already set (to preserve the start of thinking)
-                if (msg.thinkingTimeMs === undefined) {
-                    const thinkingTime = (firstContentPartTime.getTime() - generationStartTime.getTime());
-                    messages[i] = { ...msg, thinkingTimeMs: thinkingTime };
-                }
-                break;
-            }
-        }
+    if (firstContentPartTime && lastMessage.thinkingTimeMs === undefined) {
+        const thinkingTime = (firstContentPartTime.getTime() - generationStartTime.getTime());
+        lastMessage = { ...lastMessage, thinkingTimeMs: thinkingTime };
+        messages[lastMessageIndex] = lastMessage;
     }
 
-    let lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-    const lastMessageIndex = messages.length - 1;
-
-    const createNewModelMessage = (content: string): ChatMessage => {
-        const id = generateUniqueId();
-        newModelMessageIds.add(id);
-        return createMessage('model', content, {
-            id,
-            isLoading: true,
-            generationStartTime: generationStartTime,
-            firstTokenTimeMs: now - generationStartTime.getTime() // TTFT for new messages
-        });
-    };
-
-    // Update existing message if possible, and capture TTFT if missing
-    if (lastMessage && lastMessage.role === 'model' && lastMessage.isLoading && !isToolMessage(lastMessage)) {
-        const updates: Partial<ChatMessage> = {};
-        if (anyPart.text) {
-            updates.content = (lastMessage.content || '') + anyPart.text;
-        }
-        if (lastMessage.firstTokenTimeMs === undefined) {
-            updates.firstTokenTimeMs = now - generationStartTime.getTime();
-        }
-        
-        if (anyPart.text || Object.keys(updates).length > 0) {
-            messages[lastMessageIndex] = { ...lastMessage, ...updates };
-        }
-    } else if (anyPart.text) {
-        messages.push(createNewModelMessage(anyPart.text));
+    if (lastMessage.firstTokenTimeMs === undefined) {
+        lastMessage = { ...lastMessage, firstTokenTimeMs: now - generationStartTime.getTime() };
+        messages[lastMessageIndex] = lastMessage;
     }
 
-    // Handle other parts
-    if (anyPart.executableCode) {
-        const codePart = anyPart.executableCode as { language: string, code: string };
-        const toolContent = `\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\``;
-        messages.push(createNewModelMessage(toolContent));
-    } else if (anyPart.codeExecutionResult) {
-        const resultPart = anyPart.codeExecutionResult as { outcome: string, output?: string };
-        const escapeHtml = (unsafe: string) => {
-            if (typeof unsafe !== 'string') return '';
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        };
-        let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
-        if (resultPart.output) {
-            toolContent += `<pre><code class="language-text">${escapeHtml(resultPart.output)}</code></pre>`;
-        }
-        toolContent += '</div>';
-        messages.push(createNewModelMessage(toolContent));
-    } else if (anyPart.inlineData) {
+    if (anyPart.inlineData) {
         const { mimeType, data } = anyPart.inlineData;
         
         const isSupportedFile = 
@@ -101,29 +72,20 @@ const applyPartToMessages = (
             }
 
             const newFile = createUploadedFileFromBase64(data, mimeType, baseName);
-            
-            // Refetch last message as it might have changed in previous steps
-            const currentLastMessage = messages[messages.length - 1];
-            if (currentLastMessage && currentLastMessage.role === 'model' && currentLastMessage.isLoading) {
-                messages[messages.length - 1] = { ...currentLastMessage, files: [...(currentLastMessage.files || []), newFile] };
-            } else {
-                const newMessage = createNewModelMessage('');
-                newMessage.files = [newFile];
-                messages.push(newMessage);
-            }
+            messages[lastMessageIndex] = { 
+                ...lastMessage, 
+                files: [...(lastMessage.files || []), newFile]
+            };
         }
     }
 
     // Capture thought signatures
     const thoughtSignature = anyPart.thoughtSignature || anyPart.thought_signature;
     if (thoughtSignature) {
-        const currentLastMsg = messages[messages.length - 1];
-        if (currentLastMsg && currentLastMsg.role === 'model' && currentLastMsg.isLoading) {
-            const newSignatures = [...(currentLastMsg.thoughtSignatures || [])];
-            if (!newSignatures.includes(thoughtSignature)) {
-                newSignatures.push(thoughtSignature);
-                messages[messages.length - 1] = { ...currentLastMsg, thoughtSignatures: newSignatures };
-            }
+        const newSignatures = [...(lastMessage.thoughtSignatures || [])];
+        if (!newSignatures.includes(thoughtSignature)) {
+            newSignatures.push(thoughtSignature);
+            messages[lastMessageIndex] = { ...messages[lastMessageIndex], thoughtSignatures: newSignatures };
         }
     }
 };
@@ -138,20 +100,25 @@ const applyThoughtToMessages = (
     generationStartTime: Date
 ) => {
     const now = Date.now();
-    const lastMessageIndex = messages.length - 1;
     
-    if (lastMessageIndex >= 0) {
-        const lastMessage = messages[lastMessageIndex];
-        // Identify message by matching start time
-        if (lastMessage.role === 'model' && lastMessage.isLoading && lastMessage.generationStartTime && lastMessage.generationStartTime.getTime() === generationStartTime.getTime()) {
-            const updates: Partial<ChatMessage> = {
-                thoughts: (lastMessage.thoughts || '') + thoughtChunk,
-            };
-            if (lastMessage.firstTokenTimeMs === undefined) {
-                updates.firstTokenTimeMs = now - generationStartTime.getTime();
-            }
-            messages[lastMessageIndex] = { ...lastMessage, ...updates };
+    let lastMessageIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
+            lastMessageIndex = i;
+            break;
         }
+    }
+
+    if (lastMessageIndex !== -1) {
+        const lastMessage = messages[lastMessageIndex];
+        const updates: Partial<ChatMessage> = {
+            thoughts: (lastMessage.thoughts || '') + thoughtChunk,
+        };
+        if (lastMessage.firstTokenTimeMs === undefined) {
+            updates.firstTokenTimeMs = now - generationStartTime.getTime();
+        }
+        messages[lastMessageIndex] = { ...lastMessage, ...updates };
     }
 };
 

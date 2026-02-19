@@ -5,7 +5,7 @@ import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
-import { finalizeMessages, updateMessagesWithBatch } from '../chat-stream/processors';
+import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
@@ -38,6 +38,7 @@ export const useChatStreamHandler = ({
         let firstTokenTime: Date | null = null; // Track first token (thought or content) for TTFT
         let accumulatedText = "";
         let accumulatedThoughts = "";
+        let accumulatedApiParts: any[] = [];
 
         // Reset store for this new generation
         streamingStore.clear(generationId);
@@ -102,25 +103,19 @@ export const useChatStreamHandler = ({
                 const newSessions = [...prev];
                 const sessionToUpdate = { ...newSessions[sessionIndex] };
                 
-                // Construct a virtual "final" part containing the full text from the store
-                // We use updateMessagesWithBatch but we manually inject the accumulated text
-                // because the state messages haven't been updating with text during the stream.
-                
-                // 1. First, make sure the message exists and has basic structure (it was created at start)
-                // 2. Update its content with accumulatedText and accumulatedThoughts
-                
                 let updatedMessages = sessionToUpdate.messages.map(msg => {
                     if (msg.id === generationId) {
                         return {
                             ...msg,
                             content: (msg.content || '') + accumulatedText,
-                            thoughts: (msg.thoughts || '') + accumulatedThoughts
+                            thoughts: (msg.thoughts || '') + accumulatedThoughts,
+                            apiParts: msg.apiParts ? [...msg.apiParts, ...accumulatedApiParts] : accumulatedApiParts
                         };
                     }
                     return msg;
                 });
                 
-                // 3. Finalize (mark loading false, set stats)
+                // Finalize (mark loading false, set stats)
                 const finalizationResult = finalizeMessages(
                     updatedMessages,
                     generationStartTime,
@@ -169,6 +164,8 @@ export const useChatStreamHandler = ({
         const streamOnPart = (part: Part) => {
             recordFirstToken(); // Capture TTFT
             
+            accumulatedApiParts = appendApiPart(accumulatedApiParts, part);
+            
             const anyPart = part as any;
             
             // 1. Accumulate plain text
@@ -182,7 +179,7 @@ export const useChatStreamHandler = ({
             // 2. Handle Tools / Code (Convert to text representation for the store)
             if (anyPart.executableCode) {
                 const codePart = anyPart.executableCode as { language: string, code: string };
-                const toolContent = `\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\``;
+                const toolContent = `\n\n\`\`\`${codePart.language.toLowerCase() || 'python'}\n${codePart.code}\n\`\`\`\n\n`;
                 accumulatedText += toolContent;
                 streamingStore.updateContent(generationId, toolContent);
             } else if (anyPart.codeExecutionResult) {
@@ -191,11 +188,11 @@ export const useChatStreamHandler = ({
                     if (typeof unsafe !== 'string') return '';
                     return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
                 };
-                let toolContent = `<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
+                let toolContent = `\n\n<div class="tool-result outcome-${resultPart.outcome.toLowerCase()}"><strong>Execution Result (${resultPart.outcome}):</strong>`;
                 if (resultPart.output) {
                     toolContent += `<pre><code class="language-text">${escapeHtml(resultPart.output)}</code></pre>`;
                 }
-                toolContent += '</div>';
+                toolContent += '</div>\n\n';
                 accumulatedText += toolContent;
                 streamingStore.updateContent(generationId, toolContent);
             } else if (anyPart.inlineData) {

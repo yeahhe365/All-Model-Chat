@@ -76,6 +76,7 @@ export interface ChatMessage {
   stoppedByUser?: boolean;
   thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
   excludeFromContext?: boolean; // Added to exclude message from API history context
+  apiParts?: any[]; // Natively preserves API parts like executableCode and codeExecutionResult
 }
 
 // Defines the structure for a part of a content message
