@@ -6,10 +6,12 @@ export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-3-flash-preview',
     'gemini-3-pro-preview',
+    'gemini-3.1-pro-preview',
 ];
 
 export const INITIAL_PINNED_MODELS: string[] = [
     'gemini-3-flash-preview',
+    'gemini-3.1-pro-preview',
     'gemini-3-pro-preview',
     'gemini-2.5-pro',
     'gemini-2.5-flash-preview-09-2025',
@@ -21,6 +23,8 @@ export const INITIAL_PINNED_MODELS: string[] = [
 export const GEMINI_3_RO_MODELS: string[] = [
     'gemini-3-pro-preview', 
     'models/gemini-3-pro-preview',
+    'gemini-3.1-pro-preview',
+    'models/gemini-3.1-pro-preview',
     'gemini-3-flash-preview',
     'models/gemini-3-flash-preview',
 ];
@@ -28,6 +32,8 @@ export const GEMINI_3_RO_MODELS: string[] = [
 export const MODELS_MANDATORY_THINKING = [
     'gemini-3-pro-preview',
     'models/gemini-3-pro-preview',
+    'gemini-3.1-pro-preview',
+    'models/gemini-3.1-pro-preview',
     'gemini-3-flash-preview',
     'models/gemini-3-flash-preview',
     'gemini-2.5-pro',
@@ -36,6 +42,7 @@ export const MODELS_MANDATORY_THINKING = [
 export const MODELS_SUPPORTING_RAW_MODE = [
     'gemini-3-flash-preview',
     'gemini-3-pro-preview',
+    'gemini-3.1-pro-preview',
     'gemini-2.5-pro',
     'gemini-2.5-flash-preview-09-2025',
     'gemini-2.5-flash-lite-preview-09-2025',
@@ -55,6 +62,8 @@ export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number
     'gemini-2.5-pro': { min: 128, max: 32768 },
     'gemini-3-pro-preview': { min: 128, max: 32768 }, 
     'models/gemini-3-pro-preview': { min: 128, max: 32768 },
+    'gemini-3.1-pro-preview': { min: 128, max: 32768 },
+    'models/gemini-3.1-pro-preview': { min: 128, max: 32768 },
     'gemini-3-flash-preview': { min: 128, max: 32768 },
     'models/gemini-3-flash-preview': { min: 128, max: 32768 },
     'gemini-2.5-flash-lite-preview-09-2025': { min: 512, max: 24576 },
@@ -86,6 +95,7 @@ export const STATIC_IMAGEN_MODELS: ModelOption[] = [
 export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
     { id: 'gemini-3-flash-preview', name: 'Gemini 3.0 Flash (Fastest)' },
     { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro' },
+    { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro' },
     { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
     { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
