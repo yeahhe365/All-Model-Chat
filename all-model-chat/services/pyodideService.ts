@@ -1,4 +1,5 @@
 
+
 import { logService } from "../utils/appUtils";
 import { UploadedFile } from "../types";
 
@@ -75,6 +76,7 @@ async function installDependencies(code) {
         }
     } catch (e) {
         console.warn("Dependency resolution warning:", e);
+        throw new Error("Failed to install dependencies: " + e.message);
     }
 }
 
