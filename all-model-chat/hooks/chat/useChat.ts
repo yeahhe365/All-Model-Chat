@@ -1,4 +1,3 @@
-
 import React, { useRef, useCallback } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { useModels } from '../core/useModels';
@@ -98,7 +97,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setSessionLoading 
     });
 
-    useAutoTitling({ appSettings, savedSessions, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
+    useAutoTitling({ appSettings, activeChat, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
     useSuggestions({ appSettings, activeChat, isLoading, updateAndPersistSessions, language, sessionKeyMapRef });
 
     const { loadChatSession, startNewChat, handleDeleteChatHistorySession } = historyHandler;

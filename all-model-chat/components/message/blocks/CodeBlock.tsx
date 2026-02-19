@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { ChevronDown, ChevronUp, X, Terminal, AlertTriangle, FileOutput, RotateCcw } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
@@ -35,6 +36,17 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
         COLLAPSE_THRESHOLD_PX
     } = useCodeBlock(props);
 
+    const isPython = finalLanguage.toLowerCase() === 'python' || finalLanguage.toLowerCase() === 'py';
+    
+    // Extract raw code for execution
+    const rawCode = useMemo(() => {
+        if (!isPython) return '';
+        if (codeElement) {
+            return extractTextFromNode(codeElement.props.children);
+        }
+        return extractTextFromNode(props.children);
+    }, [codeElement, props.children, isPython]);
+
     // Pyodide Execution Logic
     const {
         isRunning,
@@ -46,18 +58,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
         runCode,
         clearOutput,
         resetState
-    } = usePyodide();
-
-    const isPython = finalLanguage.toLowerCase() === 'python' || finalLanguage.toLowerCase() === 'py';
-    
-    // Extract raw code for execution
-    const rawCode = useMemo(() => {
-        if (!isPython) return '';
-        if (codeElement) {
-            return extractTextFromNode(codeElement.props.children);
-        }
-        return extractTextFromNode(props.children);
-    }, [codeElement, props.children, isPython]);
+    } = usePyodide(rawCode);
 
     const handleRun = () => {
         if (rawCode) runCode(rawCode);

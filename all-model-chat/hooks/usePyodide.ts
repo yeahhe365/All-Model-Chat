@@ -1,4 +1,5 @@
 
+
 import { useState, useCallback } from 'react';
 import { pyodideService, PyodideFile } from '../services/pyodideService';
 
@@ -11,55 +12,74 @@ export interface PyodideState {
     hasRun: boolean;
 }
 
-export const usePyodide = () => {
-    const [state, setState] = useState<PyodideState>({
-        isRunning: false,
-        output: null,
-        image: null,
-        files: [],
-        error: null,
-        hasRun: false
-    });
+// Global cache to persist manual execution results across virtual list unmounts
+const pyodideResultCache = new Map<string, PyodideState>();
 
-    const runCode = useCallback(async (code: string) => {
-        setState(prev => ({ ...prev, isRunning: true, error: null, output: null, image: null, files: [] }));
-        
-        try {
-            const result = await pyodideService.runPython(code);
-            
-            setState({
-                isRunning: false,
-                output: result.output || result.result || (result.image || (result.files && result.files.length > 0) ? null : "No output"),
-                image: result.image || null,
-                files: result.files || [],
-                error: null,
-                hasRun: true
-            });
-        } catch (err) {
-            setState({
-                isRunning: false,
-                output: null,
-                image: null,
-                files: [],
-                error: err instanceof Error ? err.message : String(err),
-                hasRun: true
-            });
+export const usePyodide = (codeKey?: string) => {
+    const [state, setState] = useState<PyodideState>(() => {
+        if (codeKey && pyodideResultCache.has(codeKey)) {
+            return pyodideResultCache.get(codeKey)!;
         }
-    }, []);
-
-    const clearOutput = useCallback(() => {
-        setState({
+        return {
             isRunning: false,
             output: null,
             image: null,
             files: [],
             error: null,
             hasRun: false
-        });
-    }, []);
+        };
+    });
 
-    // While we can't easily hard-reset the worker without re-initializing the service,
-    // we can provide a UI reset to clear the visual state.
+    const runCode = useCallback(async (code: string) => {
+        const key = codeKey || code; // Use provided key or the code itself
+        const runningState: PyodideState = { isRunning: true, error: null, output: null, image: null, files: [], hasRun: false };
+        setState(runningState);
+        pyodideResultCache.set(key, runningState);
+        
+        try {
+            const result = await pyodideService.runPython(code);
+            
+            const finalState: PyodideState = {
+                isRunning: false,
+                output: result.output || result.result || (result.image || (result.files && result.files.length > 0) ? null : "No output"),
+                image: result.image || null,
+                files: result.files || [],
+                error: null,
+                hasRun: true
+            };
+            setState(finalState);
+            pyodideResultCache.set(key, finalState);
+            return finalState;
+        } catch (err) {
+            const errorState: PyodideState = {
+                isRunning: false,
+                output: null,
+                image: null,
+                files: [],
+                error: err instanceof Error ? err.message : String(err),
+                hasRun: true
+            };
+            setState(errorState);
+            pyodideResultCache.set(key, errorState);
+            return errorState;
+        }
+    }, [codeKey]);
+
+    const clearOutput = useCallback(() => {
+        const clearedState: PyodideState = {
+            isRunning: false,
+            output: null,
+            image: null,
+            files: [],
+            error: null,
+            hasRun: false
+        };
+        setState(clearedState);
+        if (codeKey) {
+            pyodideResultCache.delete(codeKey);
+        }
+    }, [codeKey]);
+
     const resetState = useCallback(() => {
         clearOutput();
     }, [clearOutput]);
