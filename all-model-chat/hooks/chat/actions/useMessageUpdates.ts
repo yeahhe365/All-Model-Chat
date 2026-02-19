@@ -43,7 +43,7 @@ export const useMessageUpdates = ({
             if (s.id === activeSessionId) {
                 return {
                     ...s,
-                    messages: s.messages.map(m => m.id === messageId ? { ...m, content: newContent } : m)
+                    messages: s.messages.map(m => m.id === messageId ? { ...m, content: newContent, apiParts: undefined } : m)
                 };
             }
             return s;

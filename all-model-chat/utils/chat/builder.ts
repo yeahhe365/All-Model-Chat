@@ -1,5 +1,4 @@
 
-
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { logService } from '../../services/logService';
 import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
@@ -156,29 +155,46 @@ export const createChatHistoryForApi = async (
     msgs: ChatMessage[],
     stripThinking: boolean = false
 ): Promise<ChatHistoryItem[]> => {
-    const historyItemsPromises = msgs
-      .filter(msg => (msg.role === 'user' || msg.role === 'model') && !msg.excludeFromContext)
-      .map(async (msg) => {
-        let contentToUse = msg.content;
-        
-        if (stripThinking) {
-            // Remove <thinking> blocks including tags from the content
-            contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
-        }
+    const historyItems: ChatHistoryItem[] = [];
+    
+    for (const msg of msgs) {
+        if (msg.excludeFromContext) continue;
+        if (msg.role !== 'user' && msg.role !== 'model') continue;
 
-        // Use buildContentParts for both user and model messages to handle text and files consistently.
-        const { contentParts } = await buildContentParts(contentToUse, msg.files);
+        let parts: ContentPart[] = [];
         
-        // Attach Thought Signatures if present (Crucial for Gemini 3 Pro)
-        if (msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0) {
-            if (contentParts.length > 0) {
-                const lastPart = contentParts[contentParts.length - 1];
-                lastPart.thoughtSignature = msg.thoughtSignatures[msg.thoughtSignatures.length - 1];
+        if (msg.role === 'model' && msg.apiParts && msg.apiParts.length > 0) {
+            // Use natively saved parts to retain executableCode and codeExecutionResult exactly as the API provided
+            // Create deep copies to avoid accidental mutation
+            parts = JSON.parse(JSON.stringify(msg.apiParts.filter(p => {
+                if (stripThinking && p.thought) return false;
+                return true;
+            })));
+        } else {
+            let contentToUse = msg.content;
+            if (stripThinking) {
+                // Remove <thinking> blocks including tags from the content
+                contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
             }
+            const { contentParts } = await buildContentParts(contentToUse, msg.files);
+            parts = contentParts;
         }
 
-        return { role: msg.role as 'user' | 'model', parts: contentParts };
-      });
-      
-    return Promise.all(historyItemsPromises);
+        // Attach Thought Signatures (Crucial for Gemini 3 Pro reasoning continuity)
+        if (msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0 && parts.length > 0) {
+            parts[parts.length - 1].thoughtSignature = msg.thoughtSignatures[msg.thoughtSignatures.length - 1];
+        }
+
+        const role = msg.role as 'user' | 'model';
+
+        // Merge consecutive messages of the same role to prevent API 400 errors
+        const lastHistoryItem = historyItems[historyItems.length - 1];
+        if (lastHistoryItem && lastHistoryItem.role === role) {
+            lastHistoryItem.parts = lastHistoryItem.parts.concat(parts);
+        } else {
+            historyItems.push({ role, parts });
+        }
+    }
+    
+    return historyItems;
 };
