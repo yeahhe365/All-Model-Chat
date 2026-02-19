@@ -50,7 +50,11 @@ export const useModelSelection = ({
         // 3. Determine new settings
         const newMediaResolution = cached?.mediaResolution ?? sourceSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
         let newThinkingBudget = cached?.thinkingBudget ?? sourceSettings.thinkingBudget;
-        const newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
+        let newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
+
+        if ((modelId === 'gemini-3-pro-preview' || modelId === 'models/gemini-3-pro-preview') && newThinkingLevel === 'MEDIUM') {
+            newThinkingLevel = 'HIGH';
+        }
 
         // 4. Validating range compatibility using shared helper
         newThinkingBudget = adjustThinkingBudget(modelId, newThinkingBudget);
