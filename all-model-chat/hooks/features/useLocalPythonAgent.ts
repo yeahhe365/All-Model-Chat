@@ -1,9 +1,11 @@
-
-
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { ChatMessage, AppSettings, SavedChatSession } from '../../types';
 import { usePyodide } from '../usePyodide';
 import { logService, createUploadedFileFromBase64 } from '../../utils/appUtils';
+
+// Global Set to persist processed message IDs across React component remounts 
+// (e.g., when toggling Picture-in-Picture or resizing triggering re-renders)
+const globalProcessedMessageIds = new Set<string>();
 
 interface UseLocalPythonAgentProps {
     messages: ChatMessage[];
@@ -27,9 +29,6 @@ export const useLocalPythonAgent = ({
     updateAndPersistSessions
 }: UseLocalPythonAgentProps) => {
     const { runCode } = usePyodide();
-    
-    // Track messages that have already been auto-executed to prevent loops
-    const processedMessageIds = useRef<Set<string>>(new Set());
 
     const isLocalPythonEnabled = currentChatSettings.isLocalPythonEnabled || appSettings.isLocalPythonEnabled;
 
@@ -41,8 +40,8 @@ export const useLocalPythonAgent = ({
         // 1. Target Condition: Last message is from Model, not loading, and contains Python code
         if (lastMessage.role === 'model' && !lastMessage.isLoading && !lastMessage.stoppedByUser) {
             
-            // Check if we already processed this message
-            if (processedMessageIds.current.has(lastMessage.id)) return;
+            // Check if we already processed this message globally
+            if (globalProcessedMessageIds.has(lastMessage.id)) return;
 
             // Check content for Python block
             // We match ```python or ```py. 
@@ -55,7 +54,7 @@ export const useLocalPythonAgent = ({
                 const code = match[1];
                 
                 logService.info('[LocalPython] Auto-executing Python code...', { messageId: lastMessage.id });
-                processedMessageIds.current.add(lastMessage.id);
+                globalProcessedMessageIds.add(lastMessage.id);
 
                 runCode(code).then((result) => {
                     // Construct HTML result block
@@ -110,6 +109,9 @@ export const useLocalPythonAgent = ({
                     setTimeout(() => {
                         onContinueGeneration(lastMessage.id);
                     }, 100);
+                }).catch((err) => {
+                    logService.error('[LocalPython] Execution failed catastrophically', err);
+                    // On complete failure, we still leave it in the processed set to avoid infinite loops
                 });
             }
         }

@@ -40,6 +40,8 @@ export const uploadFileItem = async ({
         if (!keyToUse) {
             const errorMsg = 'API key was not available for file upload.';
             logService.error(errorMsg);
+            // Cleanup on early rejection
+            if (dataUrl.startsWith('blob:')) URL.revokeObjectURL(dataUrl);
             setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: false, progress: 0, error: errorMsg, uploadState: 'failed' }]);
             return;
         }
@@ -130,13 +132,30 @@ export const uploadFileItem = async ({
         } catch (uploadError) {
             let errorMsg = `Upload failed: ${uploadError instanceof Error ? uploadError.message : String(uploadError)}`;
             let uploadStateUpdate: UploadedFile['uploadState'] = 'failed';
+            
             if (uploadError instanceof Error && uploadError.name === 'AbortError') {
                 errorMsg = "Upload cancelled by user.";
                 uploadStateUpdate = 'cancelled';
                 logService.warn(`File upload cancelled by user: ${file.name}`);
+            } else {
+                logService.error(`File upload failed for ${file.name}`, { error: uploadError });
             }
-            logService.error(`File upload failed for ${file.name}`, { error: uploadError });
-            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { ...f, isProcessing: false, error: errorMsg, rawFile: undefined, uploadState: uploadStateUpdate, abortController: undefined, uploadSpeed: undefined } : f));
+
+            // Fix Memory Leak: Revoke Blob URL when upload fails or aborts mid-flight
+            if (dataUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(dataUrl);
+            }
+
+            setSelectedFiles(prev => prev.map(f => f.id === fileId ? { 
+                ...f, 
+                isProcessing: false, 
+                error: errorMsg, 
+                uploadState: uploadStateUpdate, 
+                abortController: undefined, 
+                uploadSpeed: undefined,
+                dataUrl: undefined, // Clear dataUrl so UI renders fallback icon
+                rawFile: undefined  // Free memory
+            } : f));
         } finally {
             uploadStatsRef.current.delete(fileId);
         }

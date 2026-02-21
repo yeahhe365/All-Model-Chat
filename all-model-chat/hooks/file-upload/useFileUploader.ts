@@ -63,15 +63,36 @@ export const useFileUploader = ({
 
     const cancelUpload = useCallback((fileIdToCancel: string) => {
         logService.warn(`User cancelled file upload: ${fileIdToCancel}`);
+        
         setSelectedFiles(prevFiles =>
             prevFiles.map(file => {
-                if (file.id === fileIdToCancel && file.abortController) {
-                    file.abortController.abort();
-                    return { ...file, isProcessing: false, error: "Cancelling...", uploadState: 'failed', uploadSpeed: undefined };
+                if (file.id === fileIdToCancel) {
+                    // 1. Abort the actual network request
+                    if (file.abortController) {
+                        file.abortController.abort();
+                    }
+                    
+                    // 2. Fix Memory Leak: Revoke the local Blob URL to free up browser memory
+                    if (file.dataUrl && file.dataUrl.startsWith('blob:')) {
+                        URL.revokeObjectURL(file.dataUrl);
+                    }
+                    
+                    // 3. Update state to reflect cancellation and clear heavy object references
+                    return { 
+                        ...file, 
+                        isProcessing: false, 
+                        error: "Upload cancelled.", 
+                        uploadState: 'cancelled', 
+                        uploadSpeed: undefined,
+                        dataUrl: undefined, // Clear URL so UI gracefully falls back to a file type icon
+                        rawFile: undefined  // Clear the actual File/Blob reference from memory
+                    };
                 }
                 return file;
             })
         );
+        
+        // Clean up speed calculation stats
         uploadStatsRef.current.delete(fileIdToCancel);
     }, [setSelectedFiles]);
 
