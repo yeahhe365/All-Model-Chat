@@ -1,5 +1,3 @@
-
-
 import { ChatMessage, UploadedFile, ChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { generateUniqueId, calculateTokenStats, createMessage, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
@@ -14,7 +12,19 @@ export const appendApiPart = (parts: any[] = [], newPart: any) => {
             return newParts;
         }
     }
-    newParts.push({ ...newPart });
+    
+    // --- MEMORY OPTIMIZATION ---
+    // 剔除巨大的 Base64 数据以防内存泄漏。UI 渲染依赖的是已生成的 UploadedFile (Blob URL)，
+    // 保留原始 apiParts 中的 base64 会导致内存翻倍且无法回收。
+    const partToStore = { ...newPart };
+    if (partToStore.inlineData && partToStore.inlineData.data) {
+        partToStore.inlineData = {
+            ...partToStore.inlineData,
+            data: "" // 清空 Base64 数据，释放内存
+        };
+    }
+    
+    newParts.push(partToStore);
     return newParts;
 };
 

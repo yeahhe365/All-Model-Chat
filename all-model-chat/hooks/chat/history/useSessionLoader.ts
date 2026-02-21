@@ -1,8 +1,7 @@
-
 import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage, InputCommand } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
-import { createNewSession, rehydrateSessionFiles, logService } from '../../../utils/appUtils';
+import { createNewSession, rehydrateSessionFiles, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
 
 interface UseSessionLoaderProps {
@@ -63,6 +62,12 @@ export const useSessionLoader = ({
         // Save current files to draft before switching
         if (activeSessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
+            
+            // --- MEMORY OPTIMIZATION ---
+            // Actively release Blob URLs mapped to the outgoing session to prevent memory leaks
+            if (activeChat && activeChat.messages) {
+                activeChat.messages.forEach(msg => cleanupFilePreviewUrls(msg.files));
+            }
         }
 
         // Determine settings for new chat
@@ -110,6 +115,12 @@ export const useSessionLoader = ({
         // Save current files to draft before switching
         if (activeSessionId && activeSessionId !== sessionId) {
             fileDraftsRef.current[activeSessionId] = selectedFiles;
+            
+            // --- MEMORY OPTIMIZATION ---
+            // Actively release Blob URLs mapped to the outgoing session to prevent memory leaks
+            if (activeChat && activeChat.messages) {
+                activeChat.messages.forEach(msg => cleanupFilePreviewUrls(msg.files));
+            }
         }
 
         try {
@@ -152,7 +163,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat session:", error);
             startNewChat();
         }
-    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions]);
+    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat]);
 
     const loadInitialData = useCallback(async () => {
         try {

@@ -173,21 +173,15 @@ export const createChatHistoryForApi = async (
             parts = filteredParts.map(p => {
                 const partCopy = JSON.parse(JSON.stringify(p));
 
-                // Intercept and handle generated files that are not supported as history input (e.g., .docx, .zip, .xlsx)
+                // --- MEMORY OPTIMIZATION & API COMPATIBILITY ---
+                // Intercept and handle generated files (inlineData)
+                // Since we stripped the base64 data to save memory in `appendApiPart`, we MUST convert this
+                // into a text note. Furthermore, passing model-generated media back into history is generally discouraged/rejected.
                 if (partCopy.inlineData) {
-                    const mimeType = partCopy.inlineData.mimeType || '';
-                    const isSupportedInlineType = 
-                        mimeType.startsWith('image/') || 
-                        mimeType.startsWith('audio/') || 
-                        mimeType.startsWith('video/') || 
-                        mimeType === 'application/pdf';
-
-                    // If unsupported, replace the binary data with a text placeholder to prevent API 400 errors
-                    if (!isSupportedInlineType) {
-                        return { 
-                            text: `[System Note: The model previously generated a file of type '${mimeType}'. Binary content omitted from history to preserve context window.]` 
-                        };
-                    }
+                    const mimeType = partCopy.inlineData.mimeType || 'unknown';
+                    return { 
+                        text: `[System Note: The model previously generated a media file of type '${mimeType}'. Content omitted from history to preserve memory and context window.]` 
+                    };
                 }
                 return partCopy;
             });
