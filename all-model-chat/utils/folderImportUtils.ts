@@ -1,6 +1,5 @@
-
+// utils/folderImportUtils.ts
 import { fileToString } from './domainUtils';
-import JSZip from 'jszip';
 
 const IGNORED_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp',
@@ -175,31 +174,150 @@ export const generateFolderContext = async (files: FileList | File[] | { file: F
     return processFileEntries(entries, "Project");
 };
 
-export const generateZipContext = async (zipFile: File): Promise<File> => {
-    const zip = await JSZip.loadAsync(zipFile);
-    const zipObjects = Object.values(zip.files) as JSZip.JSZipObject[];
-    
-    const entries: ProcessingEntry[] = zipObjects
-        .filter(obj => !obj.dir) // Filter out directory entries
-        .map(obj => ({
-            path: obj.name,
-            getContent: async () => {
-                // Read as Uint8Array first to detect binary content
-                const data = await obj.async('uint8array');
-                
-                // Heuristic: Check for null bytes (0x00) in the first 8KB to detect binary files
-                const checkLimit = Math.min(data.length, 8000);
-                for (let i = 0; i < checkLimit; i++) {
-                    if (data[i] === 0x00) {
-                        return `[Binary content skipped for file: ${obj.name}]`;
-                    }
-                }
-                
-                // If safe, decode as UTF-8 text
-                return new TextDecoder().decode(data);
-            }
-        }));
+// Web Worker string for offloading JSZip operations
+const ZIP_WORKER_CODE = `
+const IGNORED_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp', '.mp3', '.wav', '.ogg', '.mp4', '.mov', '.avi', '.webm', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.rar', '.7z', '.tar', '.gz', '.exe', '.dll', '.so', '.o', '.a', '.obj', '.class', '.jar', '.pyc', '.pyd', '.ds_store', '.eot', '.ttf', '.woff', '.woff2']);
+const IGNORED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.vscode', '.idea', 'dist', 'build', 'out', 'target', 'coverage', '.next', '.nuxt']);
 
+const shouldIgnore = (path) => {
+    const parts = path.split('/').filter(p => p);
+    if (parts.some(part => IGNORED_DIRS.has(part) || part.startsWith('.'))) return true;
+    const extension = '.' + (path.split('.').pop() || '').toLowerCase();
+    if (IGNORED_EXTENSIONS.has(extension)) return true;
+    return false;
+};
+
+function buildASCIITree(treeData, rootName = 'root') {
+    let structure = rootName + '\\n';
+    const generateLines = (nodes, prefix) => {
+        nodes.sort((a, b) => {
+            if (a.isDirectory === b.isDirectory) return a.name.localeCompare(b.name);
+            return a.isDirectory ? -1 : 1;
+        });
+        nodes.forEach((node, index) => {
+            const isLast = index === nodes.length - 1;
+            const connector = isLast ? '└── ' : '├── ';
+            structure += prefix + connector + node.name + '\\n';
+            if (node.isDirectory && node.children.length > 0) {
+                const newPrefix = prefix + (isLast ? '    ' : '│   ');
+                generateLines(node.children, newPrefix);
+            }
+        });
+    };
+    generateLines(treeData, '');
+    return structure;
+}
+
+self.onmessage = async function(e) {
+    try {
+        const { file, rootName } = e.data;
+        // Dynamically import JSZip from esm.sh to avoid bundling in worker string
+        const JSZipModule = await import('https://esm.sh/jszip@3.10.1');
+        const JSZip = JSZipModule.default || JSZipModule;
+        
+        const zip = await JSZip.loadAsync(file);
+        const zipObjects = Object.values(zip.files);
+        
+        const processedFiles = [];
+        const nodeMap = new Map();
+        const roots = [];
+
+        for (const obj of zipObjects) {
+            if (obj.dir) continue;
+            if (shouldIgnore(obj.name)) continue;
+
+            // Build Tree
+            const parts = obj.name.split('/').filter(p => p);
+            let parentNode = undefined;
+            let currentPath = '';
+
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                currentPath = parts.slice(0, i + 1).join('/');
+                let currentNode = nodeMap.get(currentPath);
+                
+                if (!currentNode) {
+                    const isDir = i < parts.length - 1;
+                    currentNode = { name: part, children: [], isDirectory: isDir };
+                    nodeMap.set(currentPath, currentNode);
+                    if (parentNode) parentNode.children.push(currentNode);
+                    else roots.push(currentNode);
+                }
+                parentNode = currentNode;
+            }
+            
+            // Read content
+            const data = await obj.async('uint8array');
+            
+            // Binary heuristic
+            const checkLimit = Math.min(data.length, 8000);
+            let isBinary = false;
+            for (let i = 0; i < checkLimit; i++) {
+                if (data[i] === 0x00) {
+                    isBinary = true;
+                    break;
+                }
+            }
+            
+            const content = isBinary ? '[Binary content skipped for file: ' + obj.name + ']' : new TextDecoder().decode(data);
+            processedFiles.push({ path: obj.name, content });
+        }
+
+        let effectiveRootName = rootName;
+        let effectiveRoots = roots;
+
+        if (roots.length === 1 && roots[0].isDirectory) {
+            effectiveRootName = roots[0].name;
+            effectiveRoots = roots[0].children;
+        }
+
+        const structureString = buildASCIITree(effectiveRoots, effectiveRootName);
+        
+        let output = "File Structure:\\n" + structureString + "\\n\\nFile Contents:\\n";
+        processedFiles.sort((a, b) => a.path.localeCompare(b.path));
+
+        for (const f of processedFiles) {
+            output += "\\n--- START OF FILE " + f.path + " ---\\n";
+            output += f.content;
+            if (f.content && !f.content.endsWith('\\n')) output += '\\n';
+            output += "--- END OF FILE " + f.path + " ---\\n";
+        }
+
+        self.postMessage({ type: 'success', output });
+    } catch (err) {
+        self.postMessage({ type: 'error', error: err.message });
+    }
+};
+`;
+
+export const generateZipContext = async (zipFile: File): Promise<File> => {
     let rootName = zipFile.name.replace(/\.zip$/i, '');
-    return processFileEntries(entries, rootName);
+    
+    return new Promise<File>((resolve, reject) => {
+        const blob = new Blob([ZIP_WORKER_CODE], { type: 'application/javascript' });
+        const workerUrl = URL.createObjectURL(blob);
+        // Important: type 'module' allows dynamic imports inside the worker
+        const worker = new Worker(workerUrl, { type: 'module' });
+
+        worker.onmessage = (e) => {
+            if (e.data.type === 'success') {
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                const file = new File([e.data.output], `${rootName}-context-${timestamp}.txt`, { type: 'text/plain' });
+                resolve(file);
+            } else {
+                reject(new Error(e.data.error));
+            }
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+        };
+
+        worker.onerror = (err) => {
+            reject(err);
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+        };
+
+        // Pass the file directly to the worker
+        worker.postMessage({ file: zipFile, rootName });
+    });
 };
