@@ -1,11 +1,28 @@
-
-
+// hooks/file-upload/useFilePreProcessing.ts
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { generateUniqueId, logService, isTextFile } from '../../utils/appUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
-import mammoth from 'mammoth';
+
+// Web Worker code for offloading mammoth.js DOCX extraction
+const DOCX_WORKER_CODE = `
+self.onmessage = async function(e) {
+    try {
+        const file = e.data;
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Dynamically import mammoth from esm.sh to avoid bundling in main thread
+        const mammothModule = await import('https://esm.sh/mammoth@1.6.0');
+        const mammoth = mammothModule.default || mammothModule;
+        
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        self.postMessage({ type: 'success', text: result.value, messages: result.messages });
+    } catch (err) {
+        self.postMessage({ type: 'error', error: err.message });
+    }
+};
+`;
 
 interface UseFilePreProcessingProps {
     appSettings: AppSettings;
@@ -39,6 +56,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
                 try {
                     logService.info(`Auto-converting ZIP file: ${file.name}`);
+                    // generateZipContext now internally offloads to a Web Worker
                     const contextFile = await generateZipContext(file);
                     processedFiles.push(contextFile);
                 } catch (error) {
@@ -59,15 +77,36 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
                 }]);
 
                 try {
-                    logService.info(`Extracting text from Word file: ${file.name}`);
-                    const arrayBuffer = await file.arrayBuffer();
-                    const result = await mammoth.extractRawText({ arrayBuffer });
+                    logService.info(`Extracting text from Word file via Worker: ${file.name}`);
                     
-                    if (result.messages && result.messages.length > 0) {
-                        logService.warn("Mammoth extraction warnings:", { messages: result.messages });
-                    }
+                    const textContent = await new Promise<string>((resolve, reject) => {
+                        const blob = new Blob([DOCX_WORKER_CODE], { type: 'application/javascript' });
+                        const workerUrl = URL.createObjectURL(blob);
+                        // type: 'module' is required for dynamic import() inside the worker
+                        const worker = new Worker(workerUrl, { type: 'module' });
 
-                    const textContent = result.value;
+                        worker.onmessage = (e) => {
+                            if (e.data.type === 'success') {
+                                if (e.data.messages && e.data.messages.length > 0) {
+                                    logService.warn("Mammoth extraction warnings:", { messages: e.data.messages });
+                                }
+                                resolve(e.data.text);
+                            } else {
+                                reject(new Error(e.data.error));
+                            }
+                            worker.terminate();
+                            URL.revokeObjectURL(workerUrl);
+                        };
+
+                        worker.onerror = (err) => {
+                            reject(err);
+                            worker.terminate();
+                            URL.revokeObjectURL(workerUrl);
+                        };
+
+                        worker.postMessage(file);
+                    });
+
                     const newFileName = file.name.replace(/\.docx$/i, '.txt');
                     const textFile = new File([textContent], newFileName, { type: 'text/plain' });
                     
