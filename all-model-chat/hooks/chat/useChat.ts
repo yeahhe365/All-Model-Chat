@@ -1,3 +1,5 @@
+
+
 import React, { useRef, useCallback } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { useModels } from '../core/useModels';
@@ -128,7 +130,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         isLoading,
         activeSessionId,
         updateMessageContent: chatActions.handleUpdateMessageContent,
-        onContinueGeneration: messageHandler.handleContinueGeneration
+        onContinueGeneration: messageHandler.handleContinueGeneration,
+        updateAndPersistSessions
     });
 
     useChatEffects({

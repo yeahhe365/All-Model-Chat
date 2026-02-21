@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { UploadedFile } from '../../../types';
 import { FileDisplay } from '../FileDisplay';
@@ -6,6 +7,7 @@ import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 
 interface MessageFilesProps {
     files: UploadedFile[];
+    content?: string;
     onImageClick: (file: UploadedFile) => void;
     onConfigureFile?: (file: UploadedFile, messageId: string) => void;
     messageId: string;
@@ -15,6 +17,7 @@ interface MessageFilesProps {
 
 export const MessageFiles: React.FC<MessageFilesProps> = ({ 
     files, 
+    content,
     onImageClick, 
     onConfigureFile, 
     messageId,
@@ -23,17 +26,26 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
 }) => {
     if (!files || files.length === 0) return null;
 
+    // Check if the message contains a tool execution result block
+    const hasToolResult = content?.includes('class="tool-result"');
+
     // Separate images from other documents to handle layouts differently
     const { imageFiles, documentFiles } = useMemo(() => {
         const imgs: UploadedFile[] = [];
         const docs: UploadedFile[] = [];
         files.forEach(f => {
+            // Prevent duplicate display of auto-generated execution files at the top
+            // if they will be rendered inside the ToolResultBlock at the bottom.
+            if (hasToolResult && (f.name.startsWith('generated-plot') || f.name.startsWith('generated-file'))) {
+                return;
+            }
+
             const isImg = SUPPORTED_IMAGE_MIME_TYPES.includes(f.type) || f.type === 'image/svg+xml';
             if (isImg) imgs.push(f);
             else docs.push(f);
         });
         return { imageFiles: imgs, documentFiles: docs };
-    }, [files]);
+    }, [files, hasToolResult]);
 
     const isQuadImageView = imageFiles.length === 4 && imageFiles.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
     const marginClass = hasContentOrAudio ? 'mb-2' : '';
@@ -41,6 +53,8 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     // Only enable scrolling if there are enough files to form multiple columns (more than 4)
     // This prevents scrollbars from appearing on single-column layouts where they aren't needed
     const showDocScroll = documentFiles.length > 4;
+
+    if (imageFiles.length === 0 && documentFiles.length === 0) return null;
 
     return (
         <div className={`flex flex-col gap-2 ${marginClass}`}>

@@ -1,4 +1,5 @@
 
+
 import React, { useMemo } from 'react';
 import { UploadedFile, SideViewContent } from '../../types';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -21,6 +22,7 @@ interface GroundedResponseProps {
   t: (key: keyof typeof translations) => string;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
+  files?: UploadedFile[];
 }
 
 export const GroundedResponse: React.FC<GroundedResponseProps> = ({ 
@@ -35,7 +37,8 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
     isGraphvizRenderingEnabled, 
     t, 
     themeId, 
-    onOpenSidePanel 
+    onOpenSidePanel,
+    files
 }) => {
   
   const content = useMemo(() => insertCitations(text, metadata), [text, metadata]);
@@ -61,6 +64,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
           t={t}
           themeId={themeId}
           onOpenSidePanel={onOpenSidePanel}
+          files={files}
         />
       </div>
       

@@ -1,5 +1,4 @@
 
-
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from './blocks/CodeBlock';
@@ -26,6 +25,7 @@ interface MarkdownRendererProps {
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
   hideThinkingInContext?: boolean;
+  files?: UploadedFile[];
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
@@ -40,7 +40,8 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   t,
   themeId,
   onOpenSidePanel,
-  hideThinkingInContext
+  hideThinkingInContext,
+  files
 }) => {
 
   const rehypePlugins = useMemo(() => getRehypePlugins(allowHtml), [allowHtml]);
@@ -48,6 +49,42 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   const components = useMemo(() => ({
     code: (props: any) => {
         return <InlineCode {...props} />;
+    },
+    img: (props: any) => {
+        const { src, alt, className, ...rest } = props;
+        return (
+            <img 
+                src={src} 
+                alt={alt} 
+                className={`${className || ''} cursor-pointer hover:opacity-90 transition-opacity`} 
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (src && src.startsWith('data:image/')) {
+                        const mimeType = src.split(';')[0].split(':')[1];
+                        const file: UploadedFile = {
+                            id: `inline-img-${Date.now()}`,
+                            name: alt || 'generated-plot.png',
+                            type: mimeType,
+                            size: 0,
+                            dataUrl: src,
+                            uploadState: 'active'
+                        };
+                        onImageClick(file);
+                    } else if (src) {
+                        const file: UploadedFile = {
+                            id: `inline-img-${Date.now()}`,
+                            name: alt || 'image',
+                            type: 'image/jpeg',
+                            size: 0,
+                            dataUrl: src,
+                            uploadState: 'active'
+                        };
+                        onImageClick(file);
+                    }
+                }}
+                {...rest} 
+            />
+        );
     },
     table: (props: any) => <TableBlock {...props} t={t} />,
     a: (props: any) => {
@@ -68,7 +105,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
     div: (props: any) => {
       const { className, children, ...rest } = props;
       if (className?.includes('tool-result')) {
-        return <ToolResultBlock className={className} {...rest}>{children}</ToolResultBlock>;
+        return <ToolResultBlock className={className} files={files} onImageClick={onImageClick} {...rest}>{children}</ToolResultBlock>;
       }
       return <div className={className} {...rest}>{children}</div>;
     },
@@ -125,7 +162,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         </CodeBlock>
       );
     }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel]);
+  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files]);
 
   const processedContent = useMemo(() => {
     if (!content) return '';

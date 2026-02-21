@@ -1,4 +1,5 @@
 
+
 import React, { Dispatch, SetStateAction, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
@@ -7,6 +8,7 @@ import { logService, showNotification, calculateTokenStats, playCompletionSound 
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
+import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -196,26 +198,34 @@ export const useChatStreamHandler = ({
                 accumulatedText += toolContent;
                 streamingStore.updateContent(generationId, toolContent);
             } else if (anyPart.inlineData) {
-                // For files, we still MUST update the session state because they are objects, not just text string.
-                // We use a simplified update that ONLY targets the file array for this message.
-                // This will trigger a React update, but it's infrequent (once per image generation usually).
-                updateAndPersistSessions(prev => {
-                     const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
-                     if (sessionIndex === -1) return prev;
-                     const newSessions = [...prev];
-                     const sessionToUpdate = { ...newSessions[sessionIndex] };
-                     // Only apply parts to messages, assume no thought here
-                     sessionToUpdate.messages = updateMessagesWithBatch(
-                         sessionToUpdate.messages,
-                         [part], 
-                         "", 
-                         generationStartTime, 
-                         newModelMessageIds, 
-                         firstContentPartTime
-                     );
-                     newSessions[sessionIndex] = sessionToUpdate;
-                     return newSessions;
-                }, { persist: false });
+                const { mimeType } = anyPart.inlineData;
+                
+                const isSupportedFile = 
+                    mimeType.startsWith('image/') || 
+                    mimeType.startsWith('audio/') ||
+                    mimeType.startsWith('video/') ||
+                    SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
+
+                if (isSupportedFile) {
+                    // Save to files array instead of hardcoding base64 into text to prevent critical performance issues
+                    updateAndPersistSessions(prev => {
+                         const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                         if (sessionIndex === -1) return prev;
+                         const newSessions = [...prev];
+                         const sessionToUpdate = { ...newSessions[sessionIndex] };
+                         
+                         sessionToUpdate.messages = updateMessagesWithBatch(
+                             sessionToUpdate.messages,
+                             [part], 
+                             "", 
+                             generationStartTime, 
+                             newModelMessageIds, 
+                             firstContentPartTime
+                         );
+                         newSessions[sessionIndex] = sessionToUpdate;
+                         return newSessions;
+                    }, { persist: false });
+                }
             }
 
             const hasMeaningfulContent = 

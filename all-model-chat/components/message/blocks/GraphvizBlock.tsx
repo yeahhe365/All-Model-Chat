@@ -1,15 +1,12 @@
-
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { Loader2, AlertTriangle, Download, Maximize, Repeat, Code, Copy, Check, Sidebar } from 'lucide-react';
+import { Loader2, Repeat } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
 import { exportSvgAsImage } from '../../../utils/exportUtils';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
+import { DiagramWrapper } from './parts/DiagramWrapper';
 
 declare var Viz: any;
 
-// Global cache to store rendered SVGs. 
-// Key: `${themeId}:${layout}:${code}` -> Value: SVG String
 const graphvizCache = new Map<string, string>();
 
 interface GraphvizBlockProps {
@@ -21,30 +18,21 @@ interface GraphvizBlockProps {
 }
 
 export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
-  // Use null to indicate "auto" (follow code), otherwise force override
   const [manualLayout, setManualLayout] = useState<'LR' | 'TB' | null>(null);
 
-  // Determine effective layout based on code content or manual override
   const effectiveLayout = useMemo(() => {
       if (manualLayout) return manualLayout;
-      
-      // Try to detect existing rankdir in the code
       const match = code.match(/rankdir\s*=\s*(["']?)(LR|TB|RL|BT)\1/i);
       if (match) {
           const dir = match[2].toUpperCase();
-          // Map to supported toggle states (LR/TB)
           if (dir === 'TB' || dir === 'BT') return 'TB';
           if (dir === 'LR' || dir === 'RL') return 'LR';
       }
-      
-      // Default fallback
       return 'LR';
   }, [code, manualLayout]);
 
-  // Generate a unique cache key based on visual inputs
   const cacheKey = useMemo(() => `${themeId}::${effectiveLayout}::${code}`, [themeId, effectiveLayout, code]);
 
-  // Initialize state from cache if available
   const [svgContent, setSvgContent] = useState(() => graphvizCache.get(cacheKey) || '');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(() => !graphvizCache.has(cacheKey));
@@ -52,12 +40,10 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   const [isDownloading, setIsDownloading] = useState(false);
   const [diagramFile, setDiagramFile] = useState<UploadedFile | null>(null);
   const [showSource, setShowSource] = useState(false);
-  const { isCopied, copyToClipboard } = useCopyToClipboard();
 
   const diagramContainerRef = useRef<HTMLDivElement>(null);
   const vizInstanceRef = useRef<any>(null);
 
-  // Initialize Viz instance once
   useEffect(() => {
       if (typeof Viz !== 'undefined' && !vizInstanceRef.current) {
           try {
@@ -69,14 +55,12 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   }, []);
 
   const renderGraph = useCallback(async () => {
-    // If we have a cached version, ensure state matches and skip render
     if (graphvizCache.has(cacheKey)) {
         const cachedSvg = graphvizCache.get(cacheKey)!;
         setSvgContent(cachedSvg);
         setIsRendering(false);
         setError('');
         
-        // Re-generate file object for zoom/download functionality
         const id = `graphviz-svg-${Math.random().toString(36).substring(2, 9)}`;
         const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(cachedSvg)))}`;
         setDiagramFile({
@@ -97,8 +81,6 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
     try {
       let processedCode = code;
       
-      // 1. Layout Injection - Robust Regex
-      // Replaces existing rankdir or injects it if missing, enforcing the current effective layout
       const rankdirRegex = /(rankdir\s*=\s*)(["']?)(LR|TB|RL|BT)\2/gi;
       
       if (rankdirRegex.test(processedCode)) {
@@ -110,9 +92,8 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
           }
       }
 
-      // 2. Theme Injection
       const isDark = themeId === 'onyx';
-      const color = isDark ? '#e4e4e7' : '#374151'; // zinc-200 : gray-700
+      const color = isDark ? '#e4e4e7' : '#374151';
       const themeDefaults = `
         graph [bgcolor="transparent" fontcolor="${color}" margin="0"];
         node [color="${color}" fontcolor="${color}"];
@@ -126,7 +107,6 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
       const svgElement = await vizInstanceRef.current.renderSVGElement(processedCode);
       
-      // 3. Post-process SVG
       svgElement.removeAttribute('width');
       svgElement.removeAttribute('height');
       svgElement.style.maxWidth = "100%";
@@ -134,10 +114,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
       svgElement.style.display = "block";
 
       const svgString = svgElement.outerHTML;
-      
-      // Update Cache
       graphvizCache.set(cacheKey, svgString);
-      
       setSvgContent(svgString);
 
       const id = `graphviz-svg-${Math.random().toString(36).substring(2, 9)}`;
@@ -157,7 +134,6 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
     } catch (e) {
         if (isMessageLoading) {
-            // Still streaming, assume partial code -> spinner
             setIsRendering(true);
         } else {
             const errorMessage = e instanceof Error ? e.message : 'Failed to render Graphviz diagram.';
@@ -174,21 +150,18 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
     const performRender = async () => {
         if (!isMounted) return;
-        
         if (!vizInstanceRef.current) {
              if (typeof Viz !== 'undefined') {
                  vizInstanceRef.current = new Viz();
              } else {
-                 return; // Script not loaded yet, polling below handles init
+                 return;
              }
         }
         await renderGraph();
     };
 
-    // Debounce rendering
     timeoutId = setTimeout(performRender, 500);
 
-    // Initial polling fallback if Viz script is lazy loaded
     let pollInterval: number;
     if (typeof Viz === 'undefined') {
         pollInterval = window.setInterval(() => {
@@ -222,97 +195,30 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
     }
   };
 
-  const handleCopyCode = () => {
-      copyToClipboard(code);
-  };
-
-  const containerClasses = "p-2 border border-[var(--theme-border-secondary)] rounded-md shadow-inner overflow-auto custom-scrollbar flex items-center justify-center min-h-[100px] transition-colors duration-300";
-  const bgClass = themeId === 'onyx' ? 'bg-[var(--theme-bg-secondary)]' : 'bg-white';
-
-  if (isRendering) {
-      return (
-        <div className={`${containerClasses} bg-[var(--theme-bg-tertiary)] my-2`}>
-            <Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" />
-        </div>
-      );
-  }
-
-  if (error) {
-      return (
-        <div className="my-2">
-            <div className={`${containerClasses} bg-red-900/20 mb-2`}>
-                <div className="text-center text-red-400">
-                    <AlertTriangle className="mx-auto mb-2" />
-                    <strong className="font-semibold">Graphviz Error</strong>
-                    <pre className="mt-1 text-xs text-left whitespace-pre-wrap">{error}</pre>
-                </div>
-            </div>
-            <div className="relative rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] p-4 overflow-auto">
-                <pre className="text-xs font-mono text-[var(--theme-text-secondary)]">{code}</pre>
-            </div>
-        </div>
-      );
-  }
+  const layoutToggleBtn = (
+    <button onClick={handleToggleLayout} disabled={isRendering} className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Toggle Layout (Current: ${effectiveLayout})`}>
+        {isRendering ? <Loader2 size={14} className="animate-spin"/> : <Repeat size={14} />}
+    </button>
+  );
 
   return (
-    <div className="relative group my-3">
-      <div className="flex items-center justify-between px-3 py-2 border border-[var(--theme-border-secondary)] border-b-0 rounded-t-lg bg-[var(--theme-bg-tertiary)]/30 backdrop-blur-sm">
-          <span className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">Graphviz</span>
-          <div className="flex items-center gap-1 flex-shrink-0">
-             <button onClick={() => setShowSource(!showSource)} className={MESSAGE_BLOCK_BUTTON_CLASS} title={showSource ? "Hide Source" : "Show Source"}>
-                <Code size={14} />
-             </button>
-             <button onClick={handleToggleLayout} disabled={isRendering} className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Toggle Layout (Current: ${effectiveLayout})`}>
-                {isRendering ? <Loader2 size={14} className="animate-spin"/> : <Repeat size={14} />}
-             </button>
-             <button 
-                onClick={() => onOpenSidePanel({ type: 'graphviz', content: code, title: 'Graphviz Diagram' })}
-                className={MESSAGE_BLOCK_BUTTON_CLASS}
-                title="Open in Side Panel"
-             >
-                <Sidebar size={14} />
-             </button>
-             {diagramFile && (
-                <>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); onImageClick(diagramFile); }}
-                        className={MESSAGE_BLOCK_BUTTON_CLASS} 
-                        title="Zoom Diagram"
-                    >
-                        <Maximize size={14} />
-                    </button>
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); handleDownloadJpg(); }}
-                        disabled={isDownloading} 
-                        className={MESSAGE_BLOCK_BUTTON_CLASS} 
-                        title="Download as JPG"
-                    >
-                        {isDownloading ? <Loader2 size={14} className="animate-spin"/> : <Download size={14} />}
-                    </button>
-                </>
-             )}
-          </div>
-      </div>
-
-      <div 
-        ref={diagramContainerRef} 
-        className={`${containerClasses} ${bgClass} ${diagramFile ? 'cursor-pointer' : ''} ${showSource ? 'rounded-b-none border-b-0' : 'rounded-b-lg'} !my-0 !border-t-0`}
-        dangerouslySetInnerHTML={{ __html: svgContent }} 
-        onClick={() => diagramFile && onImageClick(diagramFile)}
-      />
-
-      {showSource && (
-          <div className="relative rounded-b-lg border border-[var(--theme-border-secondary)] border-t-0 bg-[var(--theme-bg-code-block)] overflow-hidden">
-              <div className="absolute top-2 right-2 z-10">
-                  <button onClick={handleCopyCode} className={MESSAGE_BLOCK_BUTTON_CLASS} title="Copy Code">
-                      {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                  </button>
-              </div>
-              <pre className="p-4 text-xs font-mono !text-[var(--theme-text-primary)] !bg-[var(--theme-bg-code-block)] overflow-auto max-h-[300px] custom-scrollbar outline-none">
-                  {code}
-              </pre>
-          </div>
-      )}
-    </div>
+    <DiagramWrapper
+        title="Graphviz"
+        code={code}
+        error={error}
+        isRendering={isRendering}
+        isDownloading={isDownloading}
+        diagramFile={diagramFile}
+        showSource={showSource}
+        setShowSource={setShowSource}
+        onImageClick={onImageClick}
+        onDownloadJpg={handleDownloadJpg}
+        onOpenSidePanel={() => onOpenSidePanel({ type: 'graphviz', content: code, title: 'Graphviz Diagram' })}
+        themeId={themeId}
+        containerRef={diagramContainerRef}
+        extraActions={layoutToggleBtn}
+    >
+        <div dangerouslySetInnerHTML={{ __html: svgContent }} />
+    </DiagramWrapper>
   );
 };

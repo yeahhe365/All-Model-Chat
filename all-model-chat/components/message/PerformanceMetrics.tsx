@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import { ChatMessage } from '../../types';
@@ -56,8 +55,9 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
 
     const showTokens = typeof promptTokens === 'number' || typeof completionTokens === 'number' || typeof totalTokens === 'number';
     const showTimer = (isLoading && !hideTimer) || (generationStartTime && generationEndTime);
+    const showTtft = firstTokenTimeMs !== undefined;
 
-    if (!showTokens && !showTimer) return null;
+    if (!showTokens && !showTimer && !showTtft) return null;
 
     return (
         <div className="mt-2 flex justify-end items-center flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-[var(--theme-text-primary)] font-mono select-none">
@@ -85,6 +85,12 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
                 <div className="flex items-center gap-1" title="Generation Speed (excluding TTFT)">
                     <Zap size={11} className="text-amber-400 fill-amber-400/20" strokeWidth={2} />
                     <span>{tokensPerSecond.toFixed(1)} t/s</span>
+                </div>
+            )}
+
+            {showTtft && (
+                <div className="tabular-nums opacity-75" title="Time to First Token (Latency)">
+                    {t('metrics_ttft' as any)}: {(firstTokenTimeMs! / 1000).toFixed(2)}s
                 </div>
             )}
 

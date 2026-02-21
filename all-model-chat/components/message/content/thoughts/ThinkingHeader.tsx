@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { GoogleSpinner } from '../../../icons/GoogleSpinner';
@@ -61,11 +60,6 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                                         ? <ThinkingTimer startTime={effectiveTimerStart} t={t} /> 
                                         : <span className="animate-pulse">{t('thinking_text')}</span>
                                 )}
-                                {firstTokenTimeMs !== undefined && (
-                                    <span className="ml-1 opacity-75">
-                                        ({t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s)
-                                    </span>
-                                )}
                             </span>
                         </>
                     ) : (
@@ -75,11 +69,6 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                                     ? t('thinking_took_time').replace('{duration}', formatDuration(Math.round(finalDuration / 1000)))
                                     : 'Thought Process'}
                             </span>
-                            {firstTokenTimeMs !== undefined && (
-                                <span className="text-xs text-[var(--theme-text-tertiary)] truncate font-mono flex-shrink-0">
-                                    ({t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s)
-                                </span>
-                            )}
                         </div>
                     )}
                 </div>

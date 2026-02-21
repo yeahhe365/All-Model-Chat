@@ -1,4 +1,3 @@
-
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { logService } from '../../services/logService';
 import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
@@ -166,10 +165,32 @@ export const createChatHistoryForApi = async (
         if (msg.role === 'model' && msg.apiParts && msg.apiParts.length > 0) {
             // Use natively saved parts to retain executableCode and codeExecutionResult exactly as the API provided
             // Create deep copies to avoid accidental mutation
-            parts = JSON.parse(JSON.stringify(msg.apiParts.filter(p => {
+            const filteredParts = msg.apiParts.filter(p => {
                 if (stripThinking && p.thought) return false;
                 return true;
-            })));
+            });
+
+            parts = filteredParts.map(p => {
+                const partCopy = JSON.parse(JSON.stringify(p));
+
+                // Intercept and handle generated files that are not supported as history input (e.g., .docx, .zip, .xlsx)
+                if (partCopy.inlineData) {
+                    const mimeType = partCopy.inlineData.mimeType || '';
+                    const isSupportedInlineType = 
+                        mimeType.startsWith('image/') || 
+                        mimeType.startsWith('audio/') || 
+                        mimeType.startsWith('video/') || 
+                        mimeType === 'application/pdf';
+
+                    // If unsupported, replace the binary data with a text placeholder to prevent API 400 errors
+                    if (!isSupportedInlineType) {
+                        return { 
+                            text: `[System Note: The model previously generated a file of type '${mimeType}'. Binary content omitted from history to preserve context window.]` 
+                        };
+                    }
+                }
+                return partCopy;
+            });
         } else {
             let contentToUse = msg.content;
             if (stripThinking) {

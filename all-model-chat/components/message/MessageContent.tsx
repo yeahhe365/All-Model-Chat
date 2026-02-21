@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { translations } from '../../utils/appUtils';
@@ -39,6 +40,7 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo((props) 
         <>
             <MessageFiles 
                 files={message.files || []} 
+                content={message.content}
                 onImageClick={onImageClick} 
                 onConfigureFile={onConfigureFile} 
                 messageId={message.id} 
