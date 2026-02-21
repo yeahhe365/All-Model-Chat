@@ -175,6 +175,7 @@ export const generateFolderContext = async (files: FileList | File[] | { file: F
 };
 
 // Web Worker string for offloading JSZip operations
+// COMPLETELY REWRITTEN FOR HIGH PERFORMANCE CONCURRENCY
 const ZIP_WORKER_CODE = `
 const IGNORED_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp', '.mp3', '.wav', '.ogg', '.mp4', '.mov', '.avi', '.webm', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.rar', '.7z', '.tar', '.gz', '.exe', '.dll', '.so', '.o', '.a', '.obj', '.class', '.jar', '.pyc', '.pyd', '.ds_store', '.eot', '.ttf', '.woff', '.woff2']);
 const IGNORED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.vscode', '.idea', 'dist', 'build', 'out', 'target', 'coverage', '.next', '.nuxt']);
@@ -221,10 +222,11 @@ self.onmessage = async function(e) {
         const processedFiles = [];
         const nodeMap = new Map();
         const roots = [];
+        const validFiles = [];
 
+        // 1. Synchronous phase: Filter files and build tree structure immediately
         for (const obj of zipObjects) {
-            if (obj.dir) continue;
-            if (shouldIgnore(obj.name)) continue;
+            if (obj.dir || shouldIgnore(obj.name)) continue;
 
             // Build Tree
             const parts = obj.name.split('/').filter(p => p);
@@ -246,23 +248,38 @@ self.onmessage = async function(e) {
                 parentNode = currentNode;
             }
             
-            // Read content
-            const data = await obj.async('uint8array');
-            
-            // Binary heuristic
-            const checkLimit = Math.min(data.length, 8000);
-            let isBinary = false;
-            for (let i = 0; i < checkLimit; i++) {
-                if (data[i] === 0x00) {
-                    isBinary = true;
-                    break;
-                }
-            }
-            
-            const content = isBinary ? '[Binary content skipped for file: ' + obj.name + ']' : new TextDecoder().decode(data);
-            processedFiles.push({ path: obj.name, content });
+            validFiles.push(obj);
         }
 
+        // 2. Asynchronous phase: Concurrent extraction using Promise.all in batches
+        const BATCH_SIZE = 50; // Prevent memory overflow on huge zips
+        for (let i = 0; i < validFiles.length; i += BATCH_SIZE) {
+            const batch = validFiles.slice(i, i + BATCH_SIZE);
+            
+            const batchResults = await Promise.all(batch.map(async (obj) => {
+                const data = await obj.async('uint8array');
+                
+                // Fast binary heuristic
+                const checkLimit = Math.min(data.length, 1000);
+                let isBinary = false;
+                for (let j = 0; j < checkLimit; j += 10) {
+                    if (data[j] === 0x00) {
+                        isBinary = true;
+                        break;
+                    }
+                }
+                
+                const content = isBinary 
+                    ? '[Binary content skipped for file: ' + obj.name + ']' 
+                    : new TextDecoder().decode(data);
+                    
+                return { path: obj.name, content };
+            }));
+
+            processedFiles.push(...batchResults);
+        }
+
+        // 3. Output Generation phase
         let effectiveRootName = rootName;
         let effectiveRoots = roots;
 
@@ -273,17 +290,24 @@ self.onmessage = async function(e) {
 
         const structureString = buildASCIITree(effectiveRoots, effectiveRootName);
         
-        let output = "File Structure:\\n" + structureString + "\\n\\nFile Contents:\\n";
+        // Fast string array join instead of += string concatenation
+        const outputLines = [
+            "File Structure:",
+            structureString,
+            "",
+            "File Contents:"
+        ];
+
         processedFiles.sort((a, b) => a.path.localeCompare(b.path));
 
         for (const f of processedFiles) {
-            output += "\\n--- START OF FILE " + f.path + " ---\\n";
-            output += f.content;
-            if (f.content && !f.content.endsWith('\\n')) output += '\\n';
-            output += "--- END OF FILE " + f.path + " ---\\n";
+            outputLines.push("");
+            outputLines.push("--- START OF FILE " + f.path + " ---");
+            outputLines.push(f.content);
+            outputLines.push("--- END OF FILE " + f.path + " ---");
         }
 
-        self.postMessage({ type: 'success', output });
+        self.postMessage({ type: 'success', output: outputLines.join('\\n') });
     } catch (err) {
         self.postMessage({ type: 'error', error: err.message });
     }
