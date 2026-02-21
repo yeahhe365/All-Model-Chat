@@ -1,4 +1,5 @@
 
+
 import { ChatMessage, UploadedFile, ChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { generateUniqueId, calculateTokenStats, createMessage, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
@@ -68,7 +69,7 @@ const applyPartToMessages = (
         if (isSupportedFile) {
             let baseName = 'generated-file';
             if (mimeType.startsWith('image/')) {
-                baseName = 'generated-image';
+                baseName = `generated-plot-${generateUniqueId().slice(-4)}`;
             }
 
             const newFile = createUploadedFileFromBase64(data, mimeType, baseName);
@@ -221,7 +222,7 @@ export const finalizeMessages = (
                 cumulativeTotalTokens: isLastMessageOfRun ? cumulativeTotal : undefined,
             };
             
-            const isEmpty = !completedMessage.content.trim() && !completedMessage.files?.length && !completedMessage.audioSrc && !completedMessage.thoughts?.trim();
+            const isEmpty = !completedMessage.content?.trim() && !completedMessage.files?.length && !completedMessage.audioSrc && !completedMessage.thoughts?.trim();
             
             if (isEmpty && !isAborted) {
                 completedMessage.role = 'error';
@@ -237,7 +238,7 @@ export const finalizeMessages = (
     });
 
     if (!isAborted) {
-        finalMessages = finalMessages.filter(m => m.role !== 'model' || m.content.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc || (m.thoughts && m.thoughts.trim() !== ''));
+        finalMessages = finalMessages.filter(m => m.role !== 'model' || m.content?.trim() !== '' || (m.files && m.files.length > 0) || m.audioSrc || (m.thoughts && m.thoughts.trim() !== ''));
     }
 
     return { updatedMessages: finalMessages, completedMessageForNotification };

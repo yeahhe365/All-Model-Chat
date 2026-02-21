@@ -1,8 +1,9 @@
 
+
 import { useEffect, useRef } from 'react';
-import { ChatMessage, AppSettings } from '../../types';
+import { ChatMessage, AppSettings, SavedChatSession } from '../../types';
 import { usePyodide } from '../usePyodide';
-import { logService } from '../../utils/appUtils';
+import { logService, createUploadedFileFromBase64 } from '../../utils/appUtils';
 
 interface UseLocalPythonAgentProps {
     messages: ChatMessage[];
@@ -12,6 +13,7 @@ interface UseLocalPythonAgentProps {
     activeSessionId: string | null;
     updateMessageContent: (messageId: string, content: string) => void;
     onContinueGeneration: (messageId: string) => void;
+    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 }
 
 export const useLocalPythonAgent = ({
@@ -21,7 +23,8 @@ export const useLocalPythonAgent = ({
     isLoading,
     activeSessionId,
     updateMessageContent,
-    onContinueGeneration
+    onContinueGeneration,
+    updateAndPersistSessions
 }: UseLocalPythonAgentProps) => {
     const { runCode } = usePyodide();
     
@@ -45,8 +48,8 @@ export const useLocalPythonAgent = ({
             // We match ```python or ```py. 
             // We also check that the message DOES NOT already have an Execution Result (to handle re-renders)
             const pythonRegex = /```(?:python|py)\s*([\s\S]*?)\s*```/i;
-            const match = lastMessage.content.match(pythonRegex);
-            const alreadyHasResult = lastMessage.content.includes('class="tool-result"');
+            const match = lastMessage.content?.match(pythonRegex);
+            const alreadyHasResult = lastMessage.content?.includes('class="tool-result"');
 
             if (match && !alreadyHasResult) {
                 const code = match[1];
@@ -68,9 +71,6 @@ export const useLocalPythonAgent = ({
                         const safeOutput = result.output.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                         resultHtml += `<pre>${safeOutput}</pre>`;
                     }
-                    if (result.image) {
-                        resultHtml += `<img src="data:image/png;base64,${result.image}" alt="Plot" />`;
-                    }
                     if (result.error) {
                         const safeError = result.error.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                         resultHtml += `<pre class="text-red-500">${safeError}</pre>`;
@@ -80,11 +80,31 @@ export const useLocalPythonAgent = ({
                         resultHtml += `<span class="text-xs italic opacity-70">(Code executed successfully with no output)</span>`;
                     }
 
-                    resultHtml += `</div>`;
+                    resultHtml += `</div>\n\n`;
 
-                    // Update message and Trigger Continue
-                    const newContent = lastMessage.content + resultHtml;
-                    updateMessageContent(lastMessage.id, newContent);
+                    const newFiles = [...(lastMessage.files || [])];
+
+                    if (result.image) {
+                        newFiles.push(createUploadedFileFromBase64(result.image, 'image/png', `generated-plot-${Date.now()}`));
+                    }
+                    
+                    if (result.files && result.files.length > 0) {
+                        result.files.forEach((f: any) => {
+                            newFiles.push(createUploadedFileFromBase64(f.data, f.type, f.name));
+                        });
+                    }
+
+                    const newContent = (lastMessage.content || '') + resultHtml;
+                    
+                    updateAndPersistSessions(prev => prev.map(s => {
+                        if (s.id === activeSessionId) {
+                            return {
+                                ...s,
+                                messages: s.messages.map(m => m.id === lastMessage.id ? { ...m, content: newContent, files: newFiles, apiParts: undefined } : m)
+                            };
+                        }
+                        return s;
+                    }));
                     
                     // Small delay to ensure state update propagates before continue triggers
                     setTimeout(() => {
@@ -93,5 +113,5 @@ export const useLocalPythonAgent = ({
                 });
             }
         }
-    }, [messages, isLoading, isLocalPythonEnabled, activeSessionId, runCode, updateMessageContent, onContinueGeneration]);
+    }, [messages, isLoading, isLocalPythonEnabled, activeSessionId, runCode, updateMessageContent, onContinueGeneration, updateAndPersistSessions]);
 };

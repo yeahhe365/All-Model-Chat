@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { translations } from '../../../utils/appUtils';
@@ -105,6 +106,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                 t={t} 
                 themeId={themeId} 
                 onOpenSidePanel={onOpenSidePanel}
+                files={message.files}
               />
             ) : effectiveContent ? (
                 <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
@@ -121,6 +123,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                         themeId={themeId}
                         onOpenSidePanel={onOpenSidePanel}
                         hideThinkingInContext={appSettings.hideThinkingInContext}
+                        files={message.files}
                     />
                 </div>
             ) : null}
