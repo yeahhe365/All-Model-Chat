@@ -20,6 +20,7 @@ interface MessageHandlerProps {
     setEditMode: (mode: 'update' | 'resend') => void;
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
+    imageSize?: string;
     userScrolledUp: React.MutableRefObject<boolean>;
     ttsMessageId: string | null;
     setTtsMessageId: (id: string | null) => void;
