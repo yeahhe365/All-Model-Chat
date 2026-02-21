@@ -1,4 +1,3 @@
-
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { SavedChatSession, ChatGroup } from '../../../types';
 import { dbService } from '../../../utils/db';
@@ -30,6 +29,28 @@ export const useHistoryClearer = ({
             });
             return [];
         });
+
+        // --- Fix: LocalStorage fragmentation & infinite growth ---
+        // 清理所有 localStorage 中的会话状态缓存
+        try {
+            const keysToRemove: string[] = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (
+                    key.startsWith('chatDraft_') ||
+                    key.startsWith('chatQuotes_') ||
+                    key.startsWith('chatTtsContext_') ||
+                    key.startsWith('chat_scroll_pos_')
+                )) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            logService.info(`Cleaned up ${keysToRemove.length} orphaned LocalStorage entries.`);
+        } catch (e) {
+            console.error("Failed to clean up localStorage:", e);
+        }
+        // ---------------------------------------------------------
 
         Promise.all([dbService.setAllSessions([]), dbService.setAllGroups([]), dbService.setActiveSessionId(null)]);
         setSavedGroups([]);

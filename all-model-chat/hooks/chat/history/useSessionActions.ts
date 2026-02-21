@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { SavedChatSession } from '../../../types';
 import { createNewSession, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
@@ -15,6 +14,19 @@ export const useSessionActions = ({
 
     const handleDeleteChatHistorySession = useCallback((sessionId: string) => {
         logService.info(`Deleting session: ${sessionId}`);
+        
+        // --- Fix: LocalStorage fragmentation & infinite growth ---
+        // 精准清理特定 session 的 LocalStorage 缓存
+        try {
+            localStorage.removeItem(`chatDraft_${sessionId}`);
+            localStorage.removeItem(`chatQuotes_${sessionId}`);
+            localStorage.removeItem(`chatTtsContext_${sessionId}`);
+            localStorage.removeItem(`chat_scroll_pos_${sessionId}`);
+        } catch (e) {
+            console.error("Failed to clean up session localStorage:", e);
+        }
+        // ---------------------------------------------------------
+
         updateAndPersistSessions(prev => {
              const sessionToDelete = prev.find(s => s.id === sessionId);
              if (sessionToDelete) {

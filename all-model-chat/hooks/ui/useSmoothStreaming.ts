@@ -1,9 +1,10 @@
-
 import { useState, useEffect, useRef } from 'react';
 
 /**
  * A hook that provides a "typing effect" for streaming text.
  * It catches up to the target text smoothly instead of jumping in large chunks.
+ * OPTIMIZED: Implements a render throttle to prevent ReactMarkdown parsing 
+ * from blocking the main thread 60 times per second.
  */
 export const useSmoothStreaming = (text: string | undefined | null, isStreaming: boolean) => {
     const safeText = text || '';
@@ -13,6 +14,9 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
     const displayedTextRef = useRef(isStreaming ? '' : safeText);
     const targetTextRef = useRef(safeText);
     const animationFrameRef = useRef<number | null>(null);
+    
+    // Throttle reference to limit React state updates (UI rendering)
+    const lastRenderTimeRef = useRef<number>(0);
 
     // Sync target text ref whenever input changes
     useEffect(() => {
@@ -42,7 +46,7 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
     useEffect(() => {
         if (!isStreaming) return;
 
-        const animate = () => {
+        const animate = (time: DOMHighResTimeStamp) => {
             // Extra safety: If hidden, stop animating (resumed by effect above)
             if (document.hidden) {
                  animationFrameRef.current = requestAnimationFrame(animate);
@@ -65,13 +69,24 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
 
                 const nextText = targetTextRef.current.slice(0, currentLen + charsToAdd);
                 
+                // Always update the internal ref to keep tracking progress
                 displayedTextRef.current = nextText;
-                setDisplayedText(nextText);
+                
+                // THROTTLE LOGIC: Limit React re-renders to ~16fps (approx every 60ms).
+                // Markdown AST parsing is heavy; doing it at 60fps causes severe UI jank.
+                // We force a render if we reached the very end of the current target string.
+                const isFinishedCatchingUp = nextText.length >= targetLen;
+                
+                if (isFinishedCatchingUp || time - lastRenderTimeRef.current > 60) {
+                    setDisplayedText(nextText);
+                    lastRenderTimeRef.current = time;
+                }
                 
                 animationFrameRef.current = requestAnimationFrame(animate);
             } else if (currentLen > targetLen) {
                 displayedTextRef.current = targetTextRef.current;
                 setDisplayedText(targetTextRef.current);
+                lastRenderTimeRef.current = time;
                 animationFrameRef.current = requestAnimationFrame(animate);
             } else {
                 animationFrameRef.current = requestAnimationFrame(animate);
