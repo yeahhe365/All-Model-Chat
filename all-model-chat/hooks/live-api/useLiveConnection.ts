@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { LiveSession, Tool } from '@google/genai';
 import { AppSettings, ChatSettings } from '../../types';
@@ -47,7 +46,7 @@ export const useLiveConnection = ({
     // Ref to track connection state synchronously for audio callbacks
     const isConnectedRef = useRef(false);
 
-    // Sync Ref with State
+    // Sync Ref with State (Keep as a fallback for external state changes)
     useEffect(() => {
         isConnectedRef.current = isConnected;
     }, [isConnected]);
@@ -66,7 +65,11 @@ export const useLiveConnection = ({
             logService.error("Max reconnection attempts reached.");
             setError("Connection lost. Please try again.");
             setIsReconnecting(false);
+            
+            // 同步修改 Ref 以立即拦截发送
+            isConnectedRef.current = false;
             setIsConnected(false);
+            
             cleanupAudio();
             stopVideo();
             return;
@@ -137,6 +140,12 @@ export const useLiveConnection = ({
                 callbacks: {
                     onopen: () => {
                         logService.info("Live API Connected", { tools: tools?.length ?? 0, resumed: !!sessionHandleRef.current });
+                        
+                        // 【核心修复】：在连接建立的瞬间，立即同步修改 Ref 为 true。
+                        // 确保 initializeAudio 回调中的 `!isConnectedRef.current` 检查能立即通过，
+                        // 从而防止首个音频缓冲帧因为 React 渲染周期延迟而被丢弃。
+                        isConnectedRef.current = true;
+                        
                         setIsConnected(true);
                         setIsReconnecting(false);
                         setError(null);
@@ -145,6 +154,9 @@ export const useLiveConnection = ({
                     onmessage: handleMessage,
                     onclose: (e) => {
                         logService.info("Live API Closed", e);
+                        
+                        // 同步修改 Ref 防止报错
+                        isConnectedRef.current = false;
                         setIsConnected(false);
                         
                         // Finalize any open transcripts
@@ -162,6 +174,9 @@ export const useLiveConnection = ({
                     },
                     onerror: (err) => {
                         logService.error("Live API Error", err);
+                        
+                        // 同步修改 Ref
+                        isConnectedRef.current = false;
                         setIsConnected(false);
                         
                         // Finalize any open transcripts
@@ -184,7 +199,11 @@ export const useLiveConnection = ({
 
         } catch (err: any) {
             logService.error("Failed to connect to Live API", err);
+            
+            // 同步修改 Ref
+            isConnectedRef.current = false;
             setIsConnected(false);
+            
             if (!isUserDisconnectRef.current) {
                 triggerReconnect();
             } else {
@@ -221,6 +240,8 @@ export const useLiveConnection = ({
         cleanupAudio();
         stopVideo(); // Stop video stream if active
 
+        // 同步修改 Ref
+        isConnectedRef.current = false;
         setIsConnected(false);
         setIsReconnecting(false);
         setSessionHandle(null); // Clear session handle on manual disconnect to start fresh next time
