@@ -1,3 +1,4 @@
+
 import { UploadedFile } from '../../types';
 import { generateUniqueId } from './ids';
 import { base64ToBlob, getExtensionFromMimeType } from '../fileHelpers';
@@ -70,8 +71,7 @@ export const createUploadedFileFromBase64 = (
         type: mimeType,
         size: blob.size,
         dataUrl: dataUrl,
-        // MEMORY OPTIMIZATION: Do not retain rawFile in memory for generated files
-        rawFile: undefined,
+        rawFile: file,
         uploadState: 'active'
     };
 };
