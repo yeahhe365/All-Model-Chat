@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
@@ -61,14 +60,24 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
         {editingItem?.type === 'session' && editingItem.id === session.id ? (
           <input ref={editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
         ) : (
-          <button onClick={() => onSelectSession(session.id)} className="flex items-center flex-grow min-w-0" aria-current={session.id === activeSessionId ? "page" : undefined}>
+          <a 
+            href={`/chat/${session.id}`} 
+            onClick={(e) => {
+              if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                e.preventDefault();
+                onSelectSession(session.id);
+              }
+            }} 
+            className="flex items-center flex-grow min-w-0 no-underline text-inherit" 
+            aria-current={session.id === activeSessionId ? "page" : undefined}
+          >
             {session.isPinned && <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" strokeWidth={2} />}
             <span className="font-medium truncate" title={session.title}>
               {generatingTitleSessionIds.has(session.id) ? (
                 <div className="flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)]"><LoadingDots /><span>{t('generatingTitle')}</span></div>
               ) : (session.title)}
             </span>
-          </button>
+          </a>
         )}
         {loadingSessionIds.has(session.id) ? (
           <LoadingDots />

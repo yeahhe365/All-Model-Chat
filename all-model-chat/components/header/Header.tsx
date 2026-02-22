@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Wand2, PictureInPicture, PictureInPicture2 } from 'lucide-react'; 
 import { ModelOption } from '../../types';
@@ -139,21 +138,27 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={onTogglePip}
               className={`${headerButtonBase} ${headerButtonInactive}`}
               aria-label={isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
-              title={`${isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'} ${pipShortcut ? `(${pipShortcut})` : ''}`}
+              title={(isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture') + (pipShortcut ? ` (${pipShortcut})` : '')}
             >
               {isPipActive ? <PictureInPicture2 size={iconSize} strokeWidth={strokeWidth} /> : <PictureInPicture size={iconSize} strokeWidth={strokeWidth} />}
             </button>
         )}
 
         {/* 4. New Chat Button (formerly Settings) */}
-        <button
-          onClick={onNewChat} 
-          className={`${headerButtonBase} ${headerButtonInactive} md:hidden`}
+        <a
+          href="/"
+          onClick={(e) => {
+            if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+              e.preventDefault();
+              onNewChat();
+            }
+          }} 
+          className={`${headerButtonBase} ${headerButtonInactive} md:hidden no-underline`}
           aria-label={t('headerNewChat_aria')}
-          title={`${t('newChat')} ${newChatShortcut ? `(${newChatShortcut})` : ''}`}
+          title={t('newChat') + (newChatShortcut ? ` (${newChatShortcut})` : '')}
         >
           <IconNewChat size={iconSize} strokeWidth={strokeWidth} />
-        </button>
+        </a>
       </div>
     </header>
   );
