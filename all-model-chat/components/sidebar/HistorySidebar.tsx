@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { SavedChatSession, ChatGroup } from '../../types';
@@ -39,19 +38,40 @@ export interface HistorySidebarProps {
   newChatShortcut?: string;
 }
 
-const MiniSidebarButton = ({ onClick, icon: Icon, title }: { onClick: () => void, icon: React.ElementType, title: string }) => (
-    <button 
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-        className="p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
-        title={title}
-        aria-label={title}
-    >
-        <Icon size={20} strokeWidth={2} />
-    </button>
-);
+const MiniSidebarButton = ({ onClick, icon: Icon, title, href }: { onClick: () => void, icon: React.ElementType, title: string, href?: string }) => {
+    if (href) {
+        return (
+            <a 
+                href={href}
+                onClick={(e) => {
+                  if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClick();
+                  }
+                }}
+                className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] no-underline"
+                title={title}
+                aria-label={title}
+            >
+                <Icon size={20} strokeWidth={2} />
+            </a>
+        );
+    }
+    return (
+        <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              onClick();
+            }}
+            className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
+            title={title}
+            aria-label={title}
+        >
+            <Icon size={20} strokeWidth={2} />
+        </button>
+    );
+};
 
 // Internal component to handle auto-animate for a list of sessions in a category
 const SessionListGroup = ({ 
@@ -220,7 +240,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
               
               <div className="w-8 h-px bg-[var(--theme-border-primary)] my-1"></div>
               
-              <MiniSidebarButton onClick={onNewChat} icon={IconNewChat} title={`${t('newChat')} ${newChatShortcut ? `(${newChatShortcut})` : ''}`} />
+              <MiniSidebarButton href="/" onClick={onNewChat} icon={IconNewChat} title={t('newChat') + (newChatShortcut ? ` (${newChatShortcut})` : '')} />
               <MiniSidebarButton onClick={handleMiniSearchClick} icon={Search} title={t('history_search_button')} />
               
               <div className="mt-auto">
