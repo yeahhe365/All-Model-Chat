@@ -1,12 +1,11 @@
+
 import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
 
 const DB_NAME = 'AllModelChatDB';
-// 将版本号从 2 升级到 3，触发 onupgradeneeded 进行数据拆表迁移
-const DB_VERSION = 3; 
+const DB_VERSION = 2;
 
-const SESSIONS_STORE = 'sessions';         // V3后：仅存储元数据 (ID, 标题, 设置等)
-const MESSAGES_STORE = 'session_messages'; // NEW V3：存储沉重的聊天记录和附件 Blob { id: string, messages: ChatMessage[] }
+const SESSIONS_STORE = 'sessions';
 const GROUPS_STORE = 'groups';
 const SCENARIOS_STORE = 'scenarios';
 const KEY_VALUE_STORE = 'keyValueStore';
@@ -28,8 +27,6 @@ const getDb = (): Promise<IDBDatabase> => {
       
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        const oldVersion = event.oldVersion;
-        const tx = (event.target as IDBOpenDBRequest).transaction!;
         
         if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
@@ -46,30 +43,6 @@ const getDb = (): Promise<IDBDatabase> => {
         if (!db.objectStoreNames.contains(LOGS_STORE)) {
           const logStore = db.createObjectStore(LOGS_STORE, { keyPath: 'id', autoIncrement: true });
           logStore.createIndex('timestamp', 'timestamp', { unique: false });
-        }
-
-        // --- V3 核心升级逻辑：拆分臃肿的 Messages 数据 ---
-        if (!db.objectStoreNames.contains(MESSAGES_STORE)) {
-            const messagesStore = db.createObjectStore(MESSAGES_STORE, { keyPath: 'id' });
-            
-            // 如果是从 v1 或 v2 升级上来的旧用户，进行数据迁移剥离
-            if (oldVersion > 0 && oldVersion < 3) {
-                const sessionsStore = tx.objectStore(SESSIONS_STORE);
-                sessionsStore.openCursor().onsuccess = (e) => {
-                    const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
-                    if (cursor) {
-                        const session = cursor.value;
-                        if (session.messages !== undefined) {
-                            // 1. 将海量对话记录转移到新表
-                            messagesStore.put({ id: session.id, messages: session.messages });
-                            // 2. 从原表中删除 messages 属性，使其变成轻量级元数据表
-                            delete session.messages;
-                            cursor.update(session);
-                        }
-                        cursor.continue();
-                    }
-                };
-            }
         }
       };
     });
@@ -102,6 +75,11 @@ async function withWriteLock<T>(callback: () => Promise<T>): Promise<T> {
     return callback();
 }
 
+async function getItem<T>(storeName: string, key: string): Promise<T | undefined> {
+  const db = await getDb();
+  return requestToPromise(db.transaction(storeName, 'readonly').objectStore(storeName).get(key));
+}
+
 async function getAll<T>(storeName: string): Promise<T[]> {
   const db = await getDb();
   return requestToPromise(db.transaction(storeName, 'readonly').objectStore(storeName).getAll());
@@ -115,6 +93,24 @@ async function setAll<T>(storeName: string, values: T[]): Promise<void> {
     store.clear();
     values.forEach(value => store.put(value));
     return transactionToPromise(tx);
+  });
+}
+
+async function put<T>(storeName: string, value: T): Promise<void> {
+  return withWriteLock(async () => {
+    const db = await getDb();
+    const tx = db.transaction(storeName, 'readwrite');
+    tx.objectStore(storeName).put(value);
+    return transactionToPromise(tx);
+  });
+}
+
+async function deleteItem(storeName: string, key: string): Promise<void> {
+  return withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).delete(key);
+      return transactionToPromise(tx);
   });
 }
 
@@ -133,147 +129,69 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
 }
 
 export const dbService = {
-  // 注意：这个方法用于导出全量数据，需要合并两张表
-  getAllSessions: async (): Promise<SavedChatSession[]> => {
-      const db = await getDb();
-      return new Promise((resolve, reject) => {
-          const tx = db.transaction([SESSIONS_STORE, MESSAGES_STORE], 'readonly');
-          const metaReq = tx.objectStore(SESSIONS_STORE).getAll();
-          const msgReq = tx.objectStore(MESSAGES_STORE).getAll();
-          
-          tx.oncomplete = () => {
-              const metas = metaReq.result as any[];
-              const msgs = msgReq.result as any[];
-              const msgMap = new Map(msgs.map(m => [m.id, m.messages]));
-              
-              const fullSessions = metas.map(meta => ({
-                  ...meta,
-                  messages: msgMap.get(meta.id) || []
-              }));
-              resolve(fullSessions);
-          };
-          tx.onerror = () => reject(tx.error);
-      });
-  },
+  getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
   
-  // 组装合并 Session
-  getSession: async (id: string): Promise<SavedChatSession | undefined> => {
-      const db = await getDb();
-      return new Promise((resolve, reject) => {
-          const tx = db.transaction([SESSIONS_STORE, MESSAGES_STORE], 'readonly');
-          const metadataReq = tx.objectStore(SESSIONS_STORE).get(id);
-          const messagesReq = tx.objectStore(MESSAGES_STORE).get(id);
+  // New method: Fetches a single session by ID
+  getSession: (id: string) => getItem<SavedChatSession>(SESSIONS_STORE, id),
 
-          tx.oncomplete = () => {
-              const metadata = metadataReq.result;
-              const messageData = messagesReq.result;
-
-              if (!metadata) {
-                  resolve(undefined);
-                  return;
-              }
-
-              resolve({
-                  ...metadata,
-                  messages: messageData?.messages || []
-              });
-          };
-          tx.onerror = () => reject(tx.error);
-      });
-  },
-
-  // ✨ 最重要的修复：极速加载侧边栏！仅从轻量表拉取。
+  // New method: Fetches all sessions but excludes the heavy 'messages' array
   getAllSessionMetadata: async (): Promise<SavedChatSession[]> => {
       const db = await getDb();
-      // SESSIONS_STORE 里面现在没有任何 Blob 和长文本，getAll 将在几毫秒内完成
-      const metadataList = await requestToPromise(db.transaction(SESSIONS_STORE, 'readonly').objectStore(SESSIONS_STORE).getAll());
-      // 返回时补充一个空的 messages 数组，以满足 Typescript 类型和 UI 组件解构的要求
-      return metadataList.map((meta: any) => ({ ...meta, messages: [] }));
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(SESSIONS_STORE, 'readonly');
+        const store = tx.objectStore(SESSIONS_STORE);
+        const request = store.openCursor();
+        const results: SavedChatSession[] = [];
+        
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            const { messages, ...rest } = cursor.value;
+            // Return with empty messages to save memory
+            results.push({ ...rest, messages: [] });
+            cursor.continue();
+          } else {
+            resolve(results);
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
   },
 
-  // 搜索逻辑：先搜元数据，没搜到再去重型消息表搜
   searchSessions: async (query: string): Promise<string[]> => {
       const db = await getDb();
       const lowerQuery = query.toLowerCase();
-      
       return new Promise((resolve, reject) => {
-          const tx = db.transaction([SESSIONS_STORE, MESSAGES_STORE], 'readonly');
-          const sessionStore = tx.objectStore(SESSIONS_STORE);
-          const messageStore = tx.objectStore(MESSAGES_STORE);
-          const results = new Set<string>();
+          const tx = db.transaction(SESSIONS_STORE, 'readonly');
+          const store = tx.objectStore(SESSIONS_STORE);
+          const request = store.openCursor();
+          const results: string[] = [];
           
-          // 1. 先搜索标题
-          sessionStore.openCursor().onsuccess = (e) => {
-              const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+          request.onsuccess = (event) => {
+              const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
               if (cursor) {
-                  if (cursor.value.title?.toLowerCase().includes(lowerQuery)) {
-                      results.add(cursor.value.id);
+                  const session = cursor.value as SavedChatSession;
+                  const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
+                  const contentMatch = session.messages?.some(m => 
+                      (m.content && m.content.toLowerCase().includes(lowerQuery)) || 
+                      (m.thoughts && m.thoughts.toLowerCase().includes(lowerQuery))
+                  );
+                  
+                  if (titleMatch || contentMatch) {
+                      results.push(session.id);
                   }
                   cursor.continue();
               } else {
-                  // 2. 然后搜索内容体（即使这样也比之前全量反序列化到 JS 里进行 find 要节省海量内存）
-                  messageStore.openCursor().onsuccess = (msgE) => {
-                      const msgCursor = (msgE.target as IDBRequest<IDBCursorWithValue>).result;
-                      if (msgCursor) {
-                          if (!results.has(msgCursor.value.id)) {
-                              const msgs = msgCursor.value.messages || [];
-                              const match = msgs.some((m: any) => 
-                                  (m.content && m.content.toLowerCase().includes(lowerQuery)) || 
-                                  (m.thoughts && m.thoughts.toLowerCase().includes(lowerQuery))
-                              );
-                              if (match) results.add(msgCursor.value.id);
-                          }
-                          msgCursor.continue();
-                      } else {
-                          resolve(Array.from(results));
-                      }
-                  };
+                  resolve(results);
               }
           };
-          tx.onerror = () => reject(tx.error);
+          request.onerror = () => reject(request.error);
       });
   },
 
-  // 覆盖写入双表
-  setAllSessions: (sessions: SavedChatSession[]) => withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction([SESSIONS_STORE, MESSAGES_STORE], 'readwrite');
-      const sStore = tx.objectStore(SESSIONS_STORE);
-      const mStore = tx.objectStore(MESSAGES_STORE);
-      
-      sStore.clear();
-      mStore.clear();
-      
-      sessions.forEach(session => {
-          const { messages, ...metadata } = session;
-          sStore.put(metadata);
-          mStore.put({ id: session.id, messages: messages || [] });
-      });
-      
-      return transactionToPromise(tx);
-  }),
-
-  // 单个保存
-  saveSession: (session: SavedChatSession) => withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction([SESSIONS_STORE, MESSAGES_STORE], 'readwrite');
-      
-      const { messages, ...metadata } = session;
-      
-      tx.objectStore(SESSIONS_STORE).put(metadata);
-      tx.objectStore(MESSAGES_STORE).put({ id: session.id, messages: messages || [] });
-      
-      return transactionToPromise(tx);
-  }),
-
-  // 同步删除双表
-  deleteSession: (id: string) => withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction([SESSIONS_STORE, MESSAGES_STORE], 'readwrite');
-      tx.objectStore(SESSIONS_STORE).delete(id);
-      tx.objectStore(MESSAGES_STORE).delete(id);
-      return transactionToPromise(tx);
-  }),
+  setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
+  saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
+  deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),
   
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
   setAllGroups: (groups: ChatGroup[]) => setAll<ChatGroup>(GROUPS_STORE, groups),
@@ -332,8 +250,7 @@ export const dbService = {
   }),
   clearAllData: () => withWriteLock(async () => {
       const db = await getDb();
-      // 加入了新表 MESSAGES_STORE
-      const storeNames = [SESSIONS_STORE, MESSAGES_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
+      const storeNames = [SESSIONS_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
       const tx = db.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) tx.objectStore(storeName).clear();
       return transactionToPromise(tx);
