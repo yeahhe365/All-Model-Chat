@@ -107,8 +107,11 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
       const svgElement = await vizInstanceRef.current.renderSVGElement(processedCode);
       
-      svgElement.removeAttribute('width');
-      svgElement.removeAttribute('height');
+      // 【修复关键点 1】：不要移除原生的 width 和 height，以防止在 Flexbox 中被压缩为 0
+      // svgElement.removeAttribute('width');
+      // svgElement.removeAttribute('height');
+      
+      // 依靠 max-width 依然可以保持图片在小屏幕的响应式缩小（不会撑破容器）
       svgElement.style.maxWidth = "100%";
       svgElement.style.height = "auto";
       svgElement.style.display = "block";
@@ -218,7 +221,8 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         containerRef={diagramContainerRef}
         extraActions={layoutToggleBtn}
     >
-        <div dangerouslySetInnerHTML={{ __html: svgContent }} />
+        {/* 【修复关键点 2】：添加 w-full 占满空间，并加上 custom-scrollbar 防止超宽图溢出 */}
+        <div className="w-full flex justify-center overflow-x-auto custom-scrollbar" dangerouslySetInnerHTML={{ __html: svgContent }} />
     </DiagramWrapper>
   );
 };
