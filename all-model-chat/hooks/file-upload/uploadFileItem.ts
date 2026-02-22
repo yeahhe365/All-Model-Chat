@@ -9,7 +9,7 @@ interface UploadFileItemParams {
     file: File;
     keyToUse: string | null;
     defaultResolution: MediaResolution | undefined;
-    appSettings: any; // Using any to avoid circular dep issues with types if strictly typed, but AppSettings is imported in types
+    appSettings: any; 
     setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
     uploadStatsRef: React.MutableRefObject<Map<string, { lastLoaded: number; lastTime: number }>>;
 }
@@ -40,14 +40,12 @@ export const uploadFileItem = async ({
         if (!keyToUse) {
             const errorMsg = 'API key was not available for file upload.';
             logService.error(errorMsg);
-            // Cleanup on early rejection
             if (dataUrl.startsWith('blob:')) URL.revokeObjectURL(dataUrl);
             setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: effectiveMimeType, size: file.size, isProcessing: false, progress: 0, error: errorMsg, uploadState: 'failed' }]);
             return;
         }
         const controller = new AbortController();
 
-        // Initialize with 'uploading' state to show progress UI immediately
         const initialFileState: UploadedFile = { 
             id: fileId, 
             name: file.name, 
@@ -56,14 +54,13 @@ export const uploadFileItem = async ({
             isProcessing: true, 
             progress: 0, 
             rawFile: file, 
-            dataUrl: dataUrl, // Add local preview URL
+            dataUrl: dataUrl, 
             uploadState: 'uploading', 
             abortController: controller,
             uploadSpeed: 'Starting...',
             mediaResolution: defaultResolution
         };
         
-        // Initialize tracking for speed calculation
         uploadStatsRef.current.set(fileId, { lastLoaded: 0, lastTime: Date.now() });
         
         setSelectedFiles(prev => [...prev, initialFileState]);
@@ -75,13 +72,10 @@ export const uploadFileItem = async ({
             let speedStr = '';
             if (stats) {
                 const timeDiff = now - stats.lastTime;
-                // Only update speed every ~500ms to prevent flickering
                 if (timeDiff > 500) {
                     const bytesDiff = loaded - stats.lastLoaded;
-                    const speed = bytesDiff / (timeDiff / 1000); // Bytes per second
+                    const speed = bytesDiff / (timeDiff / 1000); 
                     speedStr = formatSpeed(speed);
-                    
-                    // Update stored stats
                     uploadStatsRef.current.set(fileId, { lastLoaded: loaded, lastTime: now });
                 }
             }
@@ -93,7 +87,7 @@ export const uploadFileItem = async ({
                     return { 
                         ...f, 
                         progress: percent, 
-                        uploadSpeed: speedStr || f.uploadSpeed // Keep old speed if not updated this tick
+                        uploadSpeed: speedStr || f.uploadSpeed 
                     };
                 }
                 return f;
@@ -107,7 +101,7 @@ export const uploadFileItem = async ({
                 effectiveMimeType, 
                 file.name, 
                 controller.signal,
-                handleProgress // Pass progress callback
+                handleProgress 
             );
             
             logService.info(`File uploaded, initial state: ${uploadedFileInfo.state}`, { fileInfo: uploadedFileInfo });
@@ -118,15 +112,16 @@ export const uploadFileItem = async ({
 
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? {
                 ...f,
-                isProcessing: uploadState === 'processing_api', // Only false if active or failed
+                isProcessing: uploadState === 'processing_api', 
                 progress: 100,
                 fileUri: uploadedFileInfo.uri,
                 fileApiName: uploadedFileInfo.name,
-                rawFile: file, // Preserve local file reference for preview
+                // MEMORY OPTIMIZATION: File is in Google Cloud now. Free local memory!
+                rawFile: undefined, 
                 uploadState: uploadState,
                 error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined),
                 abortController: undefined,
-                uploadSpeed: undefined, // Clear speed on complete
+                uploadSpeed: undefined, 
             } : f));
 
         } catch (uploadError) {
@@ -141,7 +136,6 @@ export const uploadFileItem = async ({
                 logService.error(`File upload failed for ${file.name}`, { error: uploadError });
             }
 
-            // Fix Memory Leak: Revoke Blob URL when upload fails or aborts mid-flight
             if (dataUrl.startsWith('blob:')) {
                 URL.revokeObjectURL(dataUrl);
             }
@@ -153,14 +147,14 @@ export const uploadFileItem = async ({
                 uploadState: uploadStateUpdate, 
                 abortController: undefined, 
                 uploadSpeed: undefined,
-                dataUrl: undefined, // Clear dataUrl so UI renders fallback icon
-                rawFile: undefined  // Free memory
+                dataUrl: undefined, 
+                rawFile: undefined  
             } : f));
         } finally {
             uploadStatsRef.current.delete(fileId);
         }
     } else {
-        // Inline processing (Base64 or Text content)
+        // Inline processing
         const initialFileState: UploadedFile = { 
             id: fileId, 
             name: file.name, 
@@ -175,7 +169,6 @@ export const uploadFileItem = async ({
         };
         setSelectedFiles(prev => [...prev, initialFileState]);
 
-        // Mark active immediately
         setSelectedFiles(p => p.map(f => f.id === fileId ? { ...f, isProcessing: false, progress: 100, uploadState: 'active' } : f));
     }
 };
