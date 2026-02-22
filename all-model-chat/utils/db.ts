@@ -1,9 +1,8 @@
-
 import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 2;
+const DB_VERSION = 3; // 已从 2 修改为 3，以匹配浏览器中已存在的较新版本
 
 const SESSIONS_STORE = 'sessions';
 const GROUPS_STORE = 'groups';
