@@ -1,10 +1,12 @@
-import React, { useCallback } from 'react';
-import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
+
+
+import React, { Dispatch, SetStateAction, useCallback } from 'react';
+import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { logService, showNotification, calculateTokenStats, playCompletionSound, generateUniqueId, createUploadedFileFromBase64 } from '../../utils/appUtils';
+import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
-import { finalizeMessages, appendApiPart } from '../chat-stream/processors';
+import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
@@ -39,15 +41,11 @@ export const useChatStreamHandler = ({
         let accumulatedText = "";
         let accumulatedThoughts = "";
         let accumulatedApiParts: any[] = [];
-        
-        // 核心优化：将生成的图片/文件缓存在闭包内，在流期间拒绝任何针对生成媒体的全局重渲染，以防止巨量 GC 卡顿
-        let accumulatedFiles: UploadedFile[] = [];
 
         // Reset store for this new generation
         streamingStore.clear(generationId);
         
         // Helper to record TTFT immediately on first activity
-        // 整个流周期只触发一次，更新首字渲染时间
         const recordFirstToken = () => {
             if (!firstTokenTime) {
                 firstTokenTime = new Date();
@@ -100,7 +98,6 @@ export const useChatStreamHandler = ({
             }
 
             // Perform the Final Update to State (and DB)
-            // 核心优化：只有在此刻（流完成时），才把在这期间收集的文本、想法、文件一次性合入 React 全局状态
             updateAndPersistSessions(prev => {
                 const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
                 if (sessionIndex === -1) return prev;
@@ -114,8 +111,6 @@ export const useChatStreamHandler = ({
                             ...msg,
                             content: (msg.content || '') + accumulatedText,
                             thoughts: (msg.thoughts || '') + accumulatedThoughts,
-                            // 合并流传输期间生成的文件缓存
-                            files: msg.files ? [...msg.files, ...accumulatedFiles] : accumulatedFiles,
                             apiParts: msg.apiParts ? [...msg.apiParts, ...accumulatedApiParts] : accumulatedApiParts
                         };
                     }
@@ -203,7 +198,7 @@ export const useChatStreamHandler = ({
                 accumulatedText += toolContent;
                 streamingStore.updateContent(generationId, toolContent);
             } else if (anyPart.inlineData) {
-                const { mimeType, data } = anyPart.inlineData;
+                const { mimeType } = anyPart.inlineData;
                 
                 const isSupportedFile = 
                     mimeType.startsWith('image/') || 
@@ -212,15 +207,24 @@ export const useChatStreamHandler = ({
                     SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
 
                 if (isSupportedFile) {
-                    // 核心优化：不再在收到文件分块时立刻触发 updateAndPersistSessions 重新克隆并渲染整棵节点树。
-                    // 改为创建独立 File 引用并推入局部数组，依靠最后的流完成时统一整合。
-                    let baseName = 'generated-file';
-                    if (mimeType.startsWith('image/')) {
-                        baseName = `generated-plot-${generateUniqueId().slice(-4)}`;
-                    }
-
-                    const newFile = createUploadedFileFromBase64(data, mimeType, baseName);
-                    accumulatedFiles.push(newFile);
+                    // Save to files array instead of hardcoding base64 into text to prevent critical performance issues
+                    updateAndPersistSessions(prev => {
+                         const sessionIndex = prev.findIndex(s => s.id === currentSessionId);
+                         if (sessionIndex === -1) return prev;
+                         const newSessions = [...prev];
+                         const sessionToUpdate = { ...newSessions[sessionIndex] };
+                         
+                         sessionToUpdate.messages = updateMessagesWithBatch(
+                             sessionToUpdate.messages,
+                             [part], 
+                             "", 
+                             generationStartTime, 
+                             newModelMessageIds, 
+                             firstContentPartTime
+                         );
+                         newSessions[sessionIndex] = sessionToUpdate;
+                         return newSessions;
+                    }, { persist: false });
                 }
             }
 
