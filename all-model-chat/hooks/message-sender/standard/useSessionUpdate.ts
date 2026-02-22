@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../../types';
 import { generateUniqueId, generateSessionTitle, performOptimisticSessionUpdate, createMessage } from '../../../utils/appUtils';
@@ -42,7 +41,6 @@ export const useSessionUpdate = ({
 
         updateAndPersistSessions(prev => {
             if (isContinueMode) {
-                // Continue Mode: Update status of existing message
                 return prev.map(s => {
                     if (s.id === finalSessionId) {
                         return {
@@ -57,9 +55,6 @@ export const useSessionUpdate = ({
                     return s;
                 });
             } else {
-                // Standard Flow: Add User + Model messages
-                
-                // Carry forward cumulative token count if possible
                 const existingSession = prev.find(s => s.id === activeSessionId);
                 let cumulativeTotalTokens = 0;
                 if (existingSession && existingSession.messages.length > 0) {
@@ -67,8 +62,14 @@ export const useSessionUpdate = ({
                     cumulativeTotalTokens = lastMsg.cumulativeTotalTokens || 0;
                 }
 
+                // MEMORY OPTIMIZATION: Strip rawFile before pushing to long-term history state
+                const optimizedFiles = enrichedFiles.length ? enrichedFiles.map(f => {
+                    const { rawFile, abortController, ...rest } = f;
+                    return rest as UploadedFile;
+                }) : undefined;
+
                 const userMessageContent = createMessage('user', textToUse.trim(), {
-                    files: enrichedFiles.length ? enrichedFiles : undefined,
+                    files: optimizedFiles,
                     cumulativeTotalTokens: cumulativeTotalTokens > 0 ? cumulativeTotalTokens : undefined
                 });
 
@@ -80,7 +81,6 @@ export const useSessionUpdate = ({
                 });
 
                 let newTitle = undefined;
-                // If it's a new session or the title is generic "New Chat", generate a temporary one from content
                 if (!activeSessionId || existingSession?.title === 'New Chat') {
                     newTitle = generateSessionTitle([userMessageContent, modelMessageContent]);
                 }
@@ -98,7 +98,6 @@ export const useSessionUpdate = ({
             }
         });
 
-        // Side Effects
         if (!activeSessionId) {
             setActiveSessionId(finalSessionId);
         }
