@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { convertHtmlToMarkdown } from '../utils/htmlToMarkdown';
 
@@ -64,34 +63,107 @@ export const useCreateFileEditor = ({
         };
     }, []);
 
-    // Logic: PDF Generation
-    const generatePdfBlob = async (): Promise<Blob | null> => {
+    // --- PDF Fix: Create off-screen container ---
+    const createPdfContainer = (): HTMLElement | null => {
         if (!printRef.current) {
             console.error("Print reference not found for PDF generation.");
             return null;
         }
-        
-        const opt = {
-            margin: [10, 15, 10, 15],
-            filename: 'temp.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                logging: false,
-                letterRendering: true,
-                backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff'
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
 
-        // @ts-ignore
-        if (window.html2pdf) {
+        // 1. Deep clone the content
+        const clone = printRef.current.cloneNode(true) as HTMLElement;
+
+        // 2. Remove any constraints that might cut off content (Fix overflow issues)
+        clone.style.height = 'auto';
+        clone.style.minHeight = '100px';
+        clone.style.maxHeight = 'none';
+        clone.style.overflow = 'visible';
+        clone.style.display = 'block'; 
+        clone.style.position = 'static'; // 修复点：恢复标准文档流
+
+        // 3. Create a wrapper to hold the clone
+        const tempContainer = document.createElement('div');
+        tempContainer.className = `theme-${themeId} html2pdf-export-container`;
+        
+        // 修复点：将其水平移出屏幕，而不是使用负 z-index 藏在背后，更安全
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px'; 
+        tempContainer.style.top = '0px';
+        tempContainer.style.width = '800px'; // A4-like width
+        tempContainer.style.height = 'auto'; // 修复点：强制高度自适应
+        tempContainer.style.opacity = '1'; 
+        tempContainer.style.visibility = 'visible'; 
+        tempContainer.style.pointerEvents = 'none';
+
+        const isDark = themeId === 'onyx';
+        tempContainer.style.backgroundColor = isDark ? '#09090b' : '#ffffff';
+        tempContainer.style.color = isDark ? '#f4f4f5' : '#000000';
+
+        tempContainer.appendChild(clone);
+        document.body.appendChild(tempContainer);
+
+        // Force layout calculation so it gets an actual height in DOM
+        tempContainer.getBoundingClientRect();
+
+        return tempContainer;
+    };
+
+    // Shared html2canvas options
+    const getPdfOpt = (finalName: string) => ({
+        margin: [10, 15, 10, 15],
+        filename: `${finalName}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true, 
+            logging: false, // 关闭日志
+            letterRendering: true,
+            backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
+            windowWidth: 800,
+            scrollY: 0,
+            onclone: (clonedDoc: Document) => {
+                // 【核心修复】：解除克隆文档中全局的溢出隐藏限制，这是导致空白的根本原因
+                if (clonedDoc.documentElement) {
+                    clonedDoc.documentElement.style.overflow = 'visible';
+                    clonedDoc.documentElement.style.height = 'auto';
+                }
+                if (clonedDoc.body) {
+                    clonedDoc.body.style.overflow = 'visible';
+                    clonedDoc.body.style.height = 'auto';
+                }
+
+                // 将用于导出的容器在克隆体中重置回原位，以便截图被正确截取
+                const el = clonedDoc.querySelector('.html2pdf-export-container') as HTMLElement;
+                if (el) {
+                    el.style.position = 'static';
+                    el.style.left = '0';
+                    el.style.zIndex = 'auto';
+                    el.style.display = 'block';
+                    el.style.height = 'auto';
+                }
+            }
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    });
+
+    // Logic: PDF Generation
+    const generatePdfBlob = async (): Promise<Blob | null> => {
+        const container = createPdfContainer();
+        if (!container) return null;
+        
+        try {
             // @ts-ignore
-            return await window.html2pdf().set(opt).from(printRef.current).output('blob');
+            if (window.html2pdf) {
+                // @ts-ignore
+                return await window.html2pdf().set(getPdfOpt('temp')).from(container).output('blob');
+            }
+            return null;
+        } finally {
+            if (document.body.contains(container)) {
+                document.body.removeChild(container);
+            }
         }
-        return null;
     };
 
     const handleSave = async (isProcessing: boolean) => {
@@ -105,6 +177,9 @@ export const useCreateFileEditor = ({
         if (isPdf) {
             setIsExportingPdf(true);
             try {
+                // Wait briefly to ensure any recent state changes are painted
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
                 const pdfBlob = await generatePdfBlob();
                 if (pdfBlob) {
                     onConfirm(pdfBlob, finalName);
@@ -129,35 +204,29 @@ export const useCreateFileEditor = ({
     };
 
     const handleDownloadPdf = async () => {
-        if (!printRef.current) return;
+        const container = createPdfContainer();
+        if (!container) return;
+        
         setIsExportingPdf(true);
-        
         let finalName = filenameBase.trim() || 'document';
-        
-        const opt = {
-          margin: [10, 15, 10, 15],
-          filename: `${finalName}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { 
-            scale: 2, 
-            useCORS: true, 
-            backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff'
-          },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        };
     
         try {
+          // Wait briefly for fonts/images to stabilize in the clone
+          await new Promise(resolve => setTimeout(resolve, 300));
+
           // @ts-ignore
           if (window.html2pdf) {
             // @ts-ignore
-            await window.html2pdf().set(opt).from(printRef.current).save();
+            await window.html2pdf().set(getPdfOpt(finalName)).from(container).save();
           } else {
             alert("PDF generator not loaded.");
           }
         } catch (error) {
           console.error("PDF Export failed:", error);
         } finally {
+          if (document.body.contains(container)) {
+              document.body.removeChild(container);
+          }
           setIsExportingPdf(false);
         }
     };
