@@ -77,7 +77,7 @@ class GeminiServiceImpl implements GeminiService {
                 config.imageConfig.aspectRatio = aspectRatio;
             }
 
-            if (modelId === 'gemini-3-pro-image-preview' && imageSize) {
+            if ((modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') && imageSize) {
                 if (!config.imageConfig) config.imageConfig = {};
                 config.imageConfig.imageSize = imageSize;
             }

@@ -64,7 +64,7 @@ export const getDefaultModelOptions = (): ModelOption[] => {
 export const isGemini3Model = (modelId: string): boolean => {
     if (!modelId) return false;
     const lowerId = modelId.toLowerCase();
-    return GEMINI_3_RO_MODELS.some(m => lowerId.includes(m)) || lowerId.includes('gemini-3-pro');
+    return GEMINI_3_RO_MODELS.some(m => lowerId.includes(m)) || lowerId.includes('gemini-3-pro') || lowerId.includes('gemini-3.1-flash');
 };
 
 // --- Model Settings Cache ---
