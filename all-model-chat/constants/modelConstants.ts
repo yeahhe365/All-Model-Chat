@@ -7,6 +7,7 @@ export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview';
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-3-flash-preview',
     'gemini-3.1-pro-preview',
+    'gemini-3.1-flash-lite-preview',
 ];
 
 export const INITIAL_PINNED_MODELS: string[] = [
