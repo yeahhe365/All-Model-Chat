@@ -111,7 +111,7 @@ export const buildGenerationConfig = (
         return config;
     }
 
-    if (modelId === 'gemini-3-pro-image-preview') {
+    if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
          const imageConfig: any = {
             imageSize: imageSize || '1K',
          };

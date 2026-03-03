@@ -5,7 +5,7 @@ import { isGemini3Model } from '../utils/appUtils';
 export const useModelCapabilities = (modelId: string) => {
     return useMemo(() => {
         const lowerId = modelId.toLowerCase();
-        const isGemini3ImageModel = modelId === 'gemini-3-pro-image-preview';
+        const isGemini3ImageModel = modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview';
         const isFlashImageModel = lowerId.includes('gemini-2.5-flash-image');
         const isRealImagen = lowerId.includes('imagen');
         const isGemini3 = isGemini3Model(modelId);

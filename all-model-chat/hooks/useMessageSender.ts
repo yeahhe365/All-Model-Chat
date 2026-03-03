@@ -99,8 +99,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const activeModelId = sessionToUpdate.modelId;
         const isTtsModel = activeModelId.includes('-tts');
         const isImagenModel = activeModelId.includes('imagen');
-        const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro');
-        const isGemini3Image = activeModelId === 'gemini-3-pro-image-preview';
+        const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro') && !activeModelId.includes('gemini-3.1-flash');
+        const isGemini3Image = activeModelId === 'gemini-3-pro-image-preview' || activeModelId === 'gemini-3.1-flash-image-preview';
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId, isContinueMode, isFastMode });
 
