@@ -187,3 +187,4 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     handleOpenSidePanel
   ]);
 };
+
