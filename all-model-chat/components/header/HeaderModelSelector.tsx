@@ -5,6 +5,7 @@ import { ModelOption } from '../../types';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
 import { ModelPicker } from '../shared/ModelPicker';
 import { isGemini3Model } from '../../utils/appUtils';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 interface HeaderModelSelectorProps {
   currentModelName?: string;
@@ -13,7 +14,6 @@ interface HeaderModelSelectorProps {
   onSelectModel: (modelId: string) => void;
   isSwitchingModel: boolean;
   isLoading: boolean;
-  t: (key: string) => string;
   thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
   onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
 }
@@ -25,10 +25,10 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   onSelectModel,
   isSwitchingModel,
   isLoading,
-  t,
   thinkingLevel,
   onSetThinkingLevel,
 }) => {
+  const { t } = useTranslation();
   const displayModelName = currentModelName;
 
   const abbreviatedModelName = useMemo(() => {
@@ -62,7 +62,6 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       models={availableModels}
       selectedId={selectedModelId}
       onSelect={onSelectModel}
-      t={t}
       dropdownClassName="w-[calc(100vw-2rem)] max-w-[240px] sm:w-[240px] sm:max-w-none max-h-96"
       renderTrigger={({ isOpen, setIsOpen }) => (
         <div className="relative flex items-center gap-1">

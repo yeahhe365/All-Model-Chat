@@ -8,6 +8,7 @@ import { LiveControls } from './actions/LiveControls';
 import { RecordControls } from './actions/RecordControls';
 import { UtilityControls } from './actions/UtilityControls';
 import { SendControls } from './actions/SendControls';
+import { useTranslation } from '../../../contexts/TranslationContext';
 
 export interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
     editMode?: 'update' | 'resend';
@@ -43,7 +44,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onCancelEdit,
   canSend,
   isWaitingForUpload,
-  t,
   onCancelRecording,
   onTranslate,
   isTranslating,
@@ -58,6 +58,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onToggleLiveMute,
   onFastSendMessage,
 }) => {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">

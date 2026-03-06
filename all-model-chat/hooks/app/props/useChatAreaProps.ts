@@ -21,8 +21,6 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     uiState,
     pipState,
     currentTheme,
-    language,
-    t,
     sessionTitle,
     handleLoadCanvasPromptAndSave,
     handleToggleBBoxMode,
@@ -47,8 +45,8 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
   const onEditMessage = useStableCallback(chatState.handleEditMessage);
   const onDeleteMessage = useStableCallback(chatState.handleDeleteMessage);
   const onRetryMessage = useStableCallback(chatState.handleRetryMessage);
-  const onEditMessageContent = useStableCallback(chatState.handleUpdateMessageContent);
   const onUpdateMessageFile = useStableCallback(chatState.handleUpdateMessageFile);
+  const onUpdateMessageContent = useStableCallback(chatState.handleUpdateMessageContent);
   
   const onSuggestionClickStable = useStableCallback((text: string) => handleSuggestionClick('homepage', text));
   const onOrganizeInfoClickStable = useStableCallback((text: string) => handleSuggestionClick('organize', text));
@@ -144,7 +142,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
-    onEditMessageContent, 
+    onUpdateMessageContent,
     onUpdateMessageFile,
     showThoughts: chatState.currentChatSettings.showThoughts,
     baseFontSize: appSettings.baseFontSize,
@@ -213,7 +211,6 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onOpenSidePanel,
     onAddUserMessage,
     onLiveTranscript,
-    t,
   }), [
     // 现在的依赖数组中只剩下纯粹的数据和状态，排除了所有函数
     chatState.activeSessionId, 
@@ -242,8 +239,6 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     
     appSettings, 
     currentTheme.id, 
-    language, 
-    t,
     currentModelName,
 
     // 依然需要将这些稳定的回调传入依赖数组以满足 React Hook 规则的检测
@@ -252,7 +247,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar,
     onSelectModel, onLoadCanvasPrompt, onToggleBBox, onToggleGuide,
     setScrollContainerRef, onScrollContainerScroll, onEditMessage, onDeleteMessage, onRetryMessage,
-    onEditMessageContent, onUpdateMessageFile, onSuggestionClickStable, onOrganizeInfoClickStable, onFollowUpSuggestionClickStable,
+    onUpdateMessageContent, onUpdateMessageFile, onSuggestionClickStable, onOrganizeInfoClickStable, onFollowUpSuggestionClickStable,
     onTextToSpeech, onGenerateCanvas, onContinueGeneration, onQuickTTS, setCommandedInput, onMessageSent,
     setSelectedFiles, onSendMessage, setEditingMessageId, onStopGenerating, onCancelEdit, onProcessFiles,
     onAddFileById, onCancelUpload, onTranscribeAudio, setAspectRatio, setImageSize, onToggleGoogleSearch,

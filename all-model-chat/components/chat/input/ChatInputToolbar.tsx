@@ -10,6 +10,7 @@ import { TtsVoiceSelector } from './toolbar/TtsVoiceSelector';
 import { MediaResolutionSelector } from './toolbar/MediaResolutionSelector';
 import { ChatInputToolbarProps } from '../../../types';
 import { Clapperboard } from 'lucide-react';
+import { useTranslation } from '../../../contexts/TranslationContext';
 
 export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   isImagenModel,
@@ -35,7 +36,6 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   onCancelAddUrl,
   isAddingByUrl,
   isLoading,
-  t,
   generateQuadImages,
   onToggleQuadImages,
   supportedAspectRatios,
@@ -46,6 +46,7 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   ttsContext,
   onEditTtsContext
 }) => {
+  const { t } = useTranslation();
   const showAspectRatio = (isImagenModel || isGemini3ImageModel) && setAspectRatio && aspectRatio;
   const showImageSize = supportedImageSizes && supportedImageSizes.length > 0 && setImageSize && imageSize;
   const showQuadToggle = (isImagenModel || isGemini3ImageModel) && onToggleQuadImages && generateQuadImages !== undefined;

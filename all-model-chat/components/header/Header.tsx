@@ -4,6 +4,7 @@ import { ModelOption } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 interface HeaderProps {
   onNewChat: () => void;
@@ -19,7 +20,6 @@ interface HeaderProps {
   isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  t: (key: keyof typeof translations) => string;
   isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
@@ -45,7 +45,6 @@ export const Header: React.FC<HeaderProps> = ({
   isHistorySidebarOpen,
   onLoadCanvasPrompt,
   isCanvasPromptActive,
-  t,
   isKeyLocked,
   isPipSupported,
   isPipActive,
@@ -56,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   newChatShortcut,
   pipShortcut,
 }) => {
+  const { t } = useTranslation();
   
   const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95";
   const headerButtonInactive = "bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] active:bg-[var(--theme-bg-tertiary)] active:text-[var(--theme-text-primary)]";
@@ -100,7 +100,6 @@ export const Header: React.FC<HeaderProps> = ({
             onSelectModel={onSelectModel}
             isSwitchingModel={isSwitchingModel}
             isLoading={isLoading}
-            t={t}
             thinkingLevel={thinkingLevel}
             onSetThinkingLevel={onSetThinkingLevel}
         />
