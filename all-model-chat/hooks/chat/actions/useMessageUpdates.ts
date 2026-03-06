@@ -47,7 +47,7 @@ export const useMessageUpdates = ({
                 };
             }
             return s;
-        }), { persist: true });
+        }));
     }, [activeSessionId, updateAndPersistSessions]);
 
     const handleUpdateMessageFile = useCallback((messageId: string, fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => {
