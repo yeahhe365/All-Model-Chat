@@ -164,6 +164,7 @@ export interface ChatInputToolbarProps {
   onCancelAddUrl: () => void;
   isAddingByUrl: boolean;
   isLoading: boolean;
+  t: (key: string) => string;
   generateQuadImages?: boolean;
   onToggleQuadImages?: () => void;
   supportedAspectRatios?: string[];
@@ -199,6 +200,7 @@ export interface ChatInputActionsProps {
   onCancelEdit: () => void;
   canSend: boolean;
   isWaitingForUpload: boolean;
+  t: (key: string) => string;
   onCancelRecording: () => void;
   onTranslate: () => void;
   isTranslating: boolean;
@@ -235,6 +237,7 @@ export interface ChatInputProps {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   isProcessingFile: boolean; 
   fileError: string | null;
+  t: (key: keyof typeof translations) => string;
   isImagenModel?: boolean;
   isImageEditModel?: boolean;
   aspectRatio?: string;

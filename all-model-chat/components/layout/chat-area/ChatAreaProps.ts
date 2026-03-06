@@ -62,8 +62,10 @@ export interface ChatAreaProps {
   onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
   onQuickTTS: (text: string) => Promise<string | null>;
+  language: 'en' | 'zh';
   
   // Edit Content
+  onEditMessageContent: (message: ChatMessage) => void;
   onUpdateMessageFile: (messageId: string, fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => void;
 
   // ChatInput Props
@@ -127,4 +129,6 @@ export interface ChatAreaProps {
 
   // Side Panel
   onOpenSidePanel: (content: SideViewContent) => void;
+
+  t: (key: keyof typeof translations, fallback?: string) => string;
 }

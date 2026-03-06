@@ -6,7 +6,6 @@ import { ChatInputModals } from './ChatInputModals';
 import { ChatInputFileModals } from './ChatInputFileModals';
 import { ChatInputArea, ChatInputAreaProps } from './ChatInputArea';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
-import { useTranslation } from '../../../contexts/TranslationContext';
 
 export type { ChatInputProps };
 
@@ -26,8 +25,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isAnyModalOpen,
         handleSmartSendMessage
     } = useChatInputLogic(props);
-
-    const { t } = useTranslation();
 
     // 2. 组装 Toolbar 参数
     const toolbarProps: ChatInputToolbarProps = {
@@ -62,6 +59,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         },
         isAddingByUrl: inputState.isAddingByUrl,
         isLoading: props.isLoading,
+        t: props.t,
         generateQuadImages: props.generateQuadImages,
         onToggleQuadImages: props.onToggleQuadImages,
         supportedAspectRatios: capabilities.supportedAspectRatios,
@@ -103,6 +101,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         onCancelEdit: props.onCancelEdit,
         canSend: canSend,
         isWaitingForUpload: inputState.isWaitingForUpload,
+        t: props.t as any,
         onTranslate: handlers.handleTranslate,
         isTranslating: inputState.isTranslating,
         inputText: inputState.inputText,
@@ -124,7 +123,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         slashCommandProps: {
             isOpen: slashCommandState.slashCommandState.isOpen,
             commands: slashCommandState.slashCommandState.filteredCommands,
-            onSelect: slashCommandState.handleCommandSelect,
+            onSelect: handlers.handleCommandSelect,
             selectedIndex: slashCommandState.slashCommandState.selectedIndex,
         },
         fileDisplayProps: {
@@ -141,7 +140,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             onKeyDown: handlers.handleKeyDown,
             onPaste: handlers.handlePaste,
             textareaRef: inputState.textareaRef,
-            placeholder: t('chatInputPlaceholder'),
+            placeholder: props.t('chatInputPlaceholder'),
             disabled: isAnyModalOpen || voiceState.isTranscribing || inputState.isWaitingForUpload || voiceState.isRecording || localFileState.isConverting,
             onCompositionStart: handlers.onCompositionStart,
             onCompositionEnd: handlers.onCompositionEnd,
@@ -187,6 +186,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             error: liveAPI.error,
             onDisconnect: liveAPI.disconnect,
         },
+        t: props.t as any,
         themeId: props.themeId
     };
 
@@ -207,6 +207,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 allCommandsForHelp={slashCommandState.allCommandsForHelp}
                 isProcessingFile={props.isProcessingFile}
                 isLoading={props.isLoading}
+                t={props.t}
                 initialContent={modalsState.editingFile?.textContent || ''}
                 initialFilename={modalsState.editingFile?.name || ''}
                 isSystemAudioRecordingEnabled={props.appSettings.isSystemAudioRecordingEnabled}
@@ -230,6 +231,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 appSettings={props.appSettings}
                 availableModels={props.availableModels}
                 currentModelId={props.currentChatSettings.modelId}
+                t={props.t}
                 isGemini3={capabilities.isGemini3}
                 isPreviewEditable={localFileState.isPreviewEditable}
                 onSaveTextFile={localFileState.handleSavePreviewTextFile}
