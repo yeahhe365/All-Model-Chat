@@ -2,13 +2,14 @@ import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../type
 import { LogEntry } from '../services/logService';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 3; // 已从 2 修改为 3，以匹配浏览器中已存在的较新版本
+const DB_VERSION = 4; // Bumped to 4 for messages separation
 
 const SESSIONS_STORE = 'sessions';
 const GROUPS_STORE = 'groups';
 const SCENARIOS_STORE = 'scenarios';
 const KEY_VALUE_STORE = 'keyValueStore';
 const LOGS_STORE = 'logs';
+const MESSAGES_STORE = 'messages';
 
 const LOCK_NAME = 'all_model_chat_db_write_lock';
 
@@ -26,6 +27,7 @@ const getDb = (): Promise<IDBDatabase> => {
       
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const tx = (event.target as IDBOpenDBRequest).transaction;
         
         if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
@@ -42,6 +44,31 @@ const getDb = (): Promise<IDBDatabase> => {
         if (!db.objectStoreNames.contains(LOGS_STORE)) {
           const logStore = db.createObjectStore(LOGS_STORE, { keyPath: 'id', autoIncrement: true });
           logStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+        if (!db.objectStoreNames.contains(MESSAGES_STORE)) {
+          const msgStore = db.createObjectStore(MESSAGES_STORE, { keyPath: 'id' });
+          msgStore.createIndex('sessionId', 'sessionId', { unique: false });
+        }
+
+        // Migrate existing sessions to separate messages
+        if (event.oldVersion < 4 && tx) {
+          const sessionStore = tx.objectStore(SESSIONS_STORE);
+          const msgStore = tx.objectStore(MESSAGES_STORE);
+          
+          sessionStore.openCursor().onsuccess = (e) => {
+            const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+            if (cursor) {
+              const session = cursor.value;
+              if (session.messages && Array.isArray(session.messages)) {
+                session.messages.forEach((msg: any) => {
+                  msgStore.put({ ...msg, sessionId: session.id });
+                });
+                delete session.messages;
+                cursor.update(session);
+              }
+              cursor.continue();
+            }
+          };
         }
       };
     });
@@ -128,10 +155,52 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
 }
 
 export const dbService = {
-  getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
+  getAllSessions: async () => {
+    const sessions = await getAll<SavedChatSession>(SESSIONS_STORE);
+    const allMessages = await getAll<any>(MESSAGES_STORE);
+    
+    // Group messages by sessionId
+    const messagesBySession = new Map<string, any[]>();
+    allMessages.forEach(msg => {
+      if (!messagesBySession.has(msg.sessionId)) {
+        messagesBySession.set(msg.sessionId, []);
+      }
+      messagesBySession.get(msg.sessionId)!.push(msg);
+    });
+
+    // Attach and sort messages
+    return sessions.map(s => {
+      const msgs = messagesBySession.get(s.id) || [];
+      msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      return { ...s, messages: msgs };
+    });
+  },
   
   // New method: Fetches a single session by ID
-  getSession: (id: string) => getItem<SavedChatSession>(SESSIONS_STORE, id),
+  getSession: async (id: string) => {
+    const session = await getItem<SavedChatSession>(SESSIONS_STORE, id);
+    if (session) {
+      const messages = await dbService.getMessagesBySession(id);
+      session.messages = messages;
+    }
+    return session;
+  },
+
+  getMessagesBySession: async (sessionId: string): Promise<any[]> => {
+    const db = await getDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(MESSAGES_STORE, 'readonly');
+      const store = tx.objectStore(MESSAGES_STORE);
+      const index = store.index('sessionId');
+      const request = index.getAll(sessionId);
+      request.onsuccess = () => {
+        const msgs = request.result || [];
+        msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        resolve(msgs);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  },
 
   // New method: Fetches all sessions but excludes the heavy 'messages' array
   getAllSessionMetadata: async (): Promise<SavedChatSession[]> => {
@@ -160,7 +229,9 @@ export const dbService = {
   searchSessions: async (query: string): Promise<string[]> => {
       const db = await getDb();
       const lowerQuery = query.toLowerCase();
-      return new Promise((resolve, reject) => {
+      
+      // First search metadata
+      const metadataResults = await new Promise<string[]>((resolve, reject) => {
           const tx = db.transaction(SESSIONS_STORE, 'readonly');
           const store = tx.objectStore(SESSIONS_STORE);
           const request = store.openCursor();
@@ -170,13 +241,7 @@ export const dbService = {
               const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
               if (cursor) {
                   const session = cursor.value as SavedChatSession;
-                  const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
-                  const contentMatch = session.messages?.some(m => 
-                      (m.content && m.content.toLowerCase().includes(lowerQuery)) || 
-                      (m.thoughts && m.thoughts.toLowerCase().includes(lowerQuery))
-                  );
-                  
-                  if (titleMatch || contentMatch) {
+                  if (session.title?.toLowerCase().includes(lowerQuery)) {
                       results.push(session.id);
                   }
                   cursor.continue();
@@ -186,11 +251,100 @@ export const dbService = {
           };
           request.onerror = () => reject(request.error);
       });
+
+      // Then search messages
+      const messageResults = await new Promise<string[]>((resolve, reject) => {
+          const tx = db.transaction(MESSAGES_STORE, 'readonly');
+          const store = tx.objectStore(MESSAGES_STORE);
+          const request = store.openCursor();
+          const results: Set<string> = new Set();
+          
+          request.onsuccess = (event) => {
+              const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
+              if (cursor) {
+                  const msg = cursor.value;
+                  if ((msg.content && msg.content.toLowerCase().includes(lowerQuery)) || 
+                      (msg.thoughts && msg.thoughts.toLowerCase().includes(lowerQuery))) {
+                      results.add(msg.sessionId);
+                  }
+                  cursor.continue();
+              } else {
+                  resolve(Array.from(results));
+              }
+          };
+          request.onerror = () => reject(request.error);
+      });
+
+      return Array.from(new Set([...metadataResults, ...messageResults]));
   },
 
-  setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
-  saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
-  deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),
+  setAllSessions: async (sessions: SavedChatSession[]) => {
+    const metadata = sessions.map(({ messages, ...rest }) => rest);
+    await setAll(SESSIONS_STORE, metadata);
+    
+    // Clear and set messages
+    await withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(MESSAGES_STORE, 'readwrite');
+      const store = tx.objectStore(MESSAGES_STORE);
+      store.clear();
+      sessions.forEach(session => {
+        if (session.messages) {
+          session.messages.forEach(msg => {
+            store.put({ ...msg, sessionId: session.id });
+          });
+        }
+      });
+      return transactionToPromise(tx);
+    });
+  },
+  
+  saveSession: async (session: SavedChatSession) => {
+    const { messages, ...metadata } = session;
+    await put(SESSIONS_STORE, metadata);
+    if (messages && messages.length > 0) {
+      await withWriteLock(async () => {
+        const db = await getDb();
+        const tx = db.transaction(MESSAGES_STORE, 'readwrite');
+        const store = tx.objectStore(MESSAGES_STORE);
+        messages.forEach(msg => {
+          store.put({ ...msg, sessionId: session.id });
+        });
+        return transactionToPromise(tx);
+      });
+    }
+  },
+
+  saveSessionMetadata: async (metadata: any) => {
+    await put(SESSIONS_STORE, metadata);
+  },
+
+  saveMessage: async (sessionId: string, message: any) => {
+    await put(MESSAGES_STORE, { ...message, sessionId });
+  },
+
+  deleteMessage: async (messageId: string) => {
+    await deleteItem(MESSAGES_STORE, messageId);
+  },
+
+  deleteSession: async (id: string) => {
+    await deleteItem(SESSIONS_STORE, id);
+    await withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(MESSAGES_STORE, 'readwrite');
+      const store = tx.objectStore(MESSAGES_STORE);
+      const index = store.index('sessionId');
+      const request = index.openKeyCursor(IDBKeyRange.only(id));
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) {
+          store.delete(cursor.primaryKey);
+          cursor.continue();
+        }
+      };
+      return transactionToPromise(tx);
+    });
+  },
   
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
   setAllGroups: (groups: ChatGroup[]) => setAll<ChatGroup>(GROUPS_STORE, groups),
@@ -249,7 +403,7 @@ export const dbService = {
   }),
   clearAllData: () => withWriteLock(async () => {
       const db = await getDb();
-      const storeNames = [SESSIONS_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
+      const storeNames = [SESSIONS_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE, MESSAGES_STORE];
       const tx = db.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) tx.objectStore(storeName).clear();
       return transactionToPromise(tx);
