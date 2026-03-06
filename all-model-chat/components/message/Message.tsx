@@ -26,6 +26,7 @@ interface MessageProps {
     onContinueGeneration: (messageId: string) => void;
     ttsMessageId: string | null;
     onSuggestionClick?: (suggestion: string) => void;
+    t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
     onOpenSidePanel: (content: SideViewContent) => void;
     onConfigureFile?: (file: UploadedFile, messageId: string) => void;
@@ -33,7 +34,7 @@ interface MessageProps {
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
-    const { message, prevMessage, messageIndex } = props;
+    const { message, prevMessage, messageIndex, t } = props;
     
     const isGrouped = prevMessage &&
         prevMessage.role === message.role &&

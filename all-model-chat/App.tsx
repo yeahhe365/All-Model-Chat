@@ -4,7 +4,6 @@ import { createPortal } from 'react-dom';
 import { useAppLogic } from './hooks/app/useAppLogic';
 import { useAppProps } from './hooks/app/useAppProps';
 import { WindowProvider } from './contexts/WindowContext';
-import { TranslationProvider } from './contexts/TranslationContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
 
@@ -17,59 +16,56 @@ const App: React.FC = () => {
     sidePanelContent, 
     handleCloseSidePanel, 
     uiState, 
-    language
   } = logic;
 
   const { sidebarProps, chatAreaProps, appModalsProps } = useAppProps(logic);
 
   return (
-    <TranslationProvider language={language}>
-      <div 
-        className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id} overflow-hidden`}
-        onTouchStart={uiState.handleTouchStart}
-        onTouchEnd={uiState.handleTouchEnd}
-      >
-        {pipState.isPipActive && pipState.pipContainer && pipState.pipWindow ? (
-            <>
-                {createPortal(
-                    <WindowProvider window={pipState.pipWindow} document={pipState.pipWindow.document}>
-                      <div 
-                          className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
-                          onTouchStart={uiState.handleTouchStart}
-                          onTouchEnd={uiState.handleTouchEnd}
-                      >
-                          <MainContent
-                              sidebarProps={sidebarProps}
-                              chatAreaProps={chatAreaProps}
-                              appModalsProps={appModalsProps}
-                              isHistorySidebarOpen={uiState.isHistorySidebarOpen}
-                              setIsHistorySidebarOpen={uiState.setIsHistorySidebarOpen}
-                              sidePanelContent={sidePanelContent}
-                              onCloseSidePanel={handleCloseSidePanel}
-                              themeId={currentTheme.id}
-                          />
-                      </div>
-                    </WindowProvider>,
-                    pipState.pipContainer
-                )}
-                <PiPPlaceholder onClosePip={pipState.togglePip} />
-            </>
-        ) : (
-            <WindowProvider>
-              <MainContent
-                  sidebarProps={sidebarProps}
-                  chatAreaProps={chatAreaProps}
-                  appModalsProps={appModalsProps}
-                  isHistorySidebarOpen={uiState.isHistorySidebarOpen}
-                  setIsHistorySidebarOpen={uiState.setIsHistorySidebarOpen}
-                  sidePanelContent={sidePanelContent}
-                  onCloseSidePanel={handleCloseSidePanel}
-                  themeId={currentTheme.id}
-              />
-            </WindowProvider>
-        )}
-      </div>
-    </TranslationProvider>
+    <div 
+      className={`relative flex h-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] theme-${currentTheme.id} overflow-hidden`}
+      onTouchStart={uiState.handleTouchStart}
+      onTouchEnd={uiState.handleTouchEnd}
+    >
+      {pipState.isPipActive && pipState.pipContainer && pipState.pipWindow ? (
+          <>
+              {createPortal(
+                  <WindowProvider window={pipState.pipWindow} document={pipState.pipWindow.document}>
+                    <div 
+                        className={`theme-${currentTheme.id} h-full w-full flex relative bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]`}
+                        onTouchStart={uiState.handleTouchStart}
+                        onTouchEnd={uiState.handleTouchEnd}
+                    >
+                        <MainContent
+                            sidebarProps={sidebarProps}
+                            chatAreaProps={chatAreaProps}
+                            appModalsProps={appModalsProps}
+                            isHistorySidebarOpen={uiState.isHistorySidebarOpen}
+                            setIsHistorySidebarOpen={uiState.setIsHistorySidebarOpen}
+                            sidePanelContent={sidePanelContent}
+                            onCloseSidePanel={handleCloseSidePanel}
+                            themeId={currentTheme.id}
+                        />
+                    </div>
+                  </WindowProvider>,
+                  pipState.pipContainer
+              )}
+              <PiPPlaceholder onClosePip={pipState.togglePip} />
+          </>
+      ) : (
+          <WindowProvider>
+            <MainContent
+                sidebarProps={sidebarProps}
+                chatAreaProps={chatAreaProps}
+                appModalsProps={appModalsProps}
+                isHistorySidebarOpen={uiState.isHistorySidebarOpen}
+                setIsHistorySidebarOpen={uiState.setIsHistorySidebarOpen}
+                sidePanelContent={sidePanelContent}
+                onCloseSidePanel={handleCloseSidePanel}
+                themeId={currentTheme.id}
+            />
+          </WindowProvider>
+      )}
+    </div>
   );
 };
 

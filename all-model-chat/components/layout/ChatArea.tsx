@@ -25,8 +25,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     messages, scrollContainerRef, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
     onDeleteMessage, onRetryMessage, showThoughts, baseFontSize,
     expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled,
-    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS,
-    onUpdateMessageContent, onUpdateMessageFile,
+    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, language,
+    onEditMessageContent, onUpdateMessageFile,
     appSettings, commandedInput, setCommandedInput, onMessageSent,
     selectedFiles, setSelectedFiles, onSendMessage, isEditing, editMode, editingMessageId, setEditingMessageId, onStopGenerating,
     onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
@@ -38,9 +38,10 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
     onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
     isPipSupported, isPipActive, onTogglePip,
     generateQuadImages, onToggleQuadImages,
-    onSetThinkingLevel, setCurrentChatSettings, onAddUserMessage,
+    onSetThinkingLevel, setCurrentChatSettings, onUpdateMessageContent, onAddUserMessage,
     onOpenSidePanel,
-    onLiveTranscript
+    onLiveTranscript,
+    t
   } = props;
 
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea(props);
@@ -56,7 +57,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
       onDragLeave={handleAppDragLeave}
       onDrop={handleAppDrop}
     >
-      <DragDropOverlay isDraggingOver={isAppDraggingOver} />
+      <DragDropOverlay isDraggingOver={isAppDraggingOver} t={t} />
       
       <Header
         onNewChat={onNewChat}
@@ -72,6 +73,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         isHistorySidebarOpen={isHistorySidebarOpen}
         onLoadCanvasPrompt={onLoadCanvasPrompt}
         isCanvasPromptActive={isCanvasPromptActive}
+        t={t}
         isKeyLocked={isKeyLocked}
         isPipSupported={isPipSupported}
         isPipActive={isPipActive}
@@ -94,6 +96,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onEditMessage={onEditMessage}
         onDeleteMessage={onDeleteMessage}
         onRetryMessage={onRetryMessage}
+        onEditMessageContent={onEditMessageContent}
         showThoughts={showThoughts}
         themeId={themeId}
         baseFontSize={baseFontSize}
@@ -108,6 +111,8 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         onContinueGeneration={onContinueGeneration}
         ttsMessageId={ttsMessageId}
         onQuickTTS={onQuickTTS}
+        t={t}
+        language={language}
         chatInputHeight={chatInputHeight}
         appSettings={appSettings}
         currentModelId={currentChatSettings.modelId} 
@@ -149,6 +154,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             setAspectRatio={setAspectRatio}
             imageSize={imageSize}
             setImageSize={setImageSize}
+            t={t}
             isGoogleSearchEnabled={isGoogleSearchEnabled}
             onToggleGoogleSearch={onToggleGoogleSearch}
             isCodeExecutionEnabled={isCodeExecutionEnabled}
@@ -177,7 +183,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onSuggestionClick={onSuggestionClick}
             onOrganizeInfoClick={onOrganizeInfoClick}
             showEmptyStateSuggestions={messages.length === 0}
-            onUpdateMessageContent={onUpdateMessageContent}
+            onUpdateMessageContent={onEditMessageContent}
             onAddUserMessage={onAddUserMessage}
             onLiveTranscript={onLiveTranscript}
             onToggleBBox={onToggleBBox}

@@ -11,7 +11,6 @@ import { ChatQuoteDisplay } from './area/ChatQuoteDisplay';
 import { ChatFilePreviewList } from './area/ChatFilePreviewList';
 import { ChatTextArea } from './area/ChatTextArea';
 import { LiveStatusBanner } from './LiveStatusBanner';
-import { useTranslation } from '../../../contexts/TranslationContext';
 
 export interface ChatInputAreaProps {
     toolbarProps: ChatInputToolbarProps;
@@ -83,6 +82,7 @@ export interface ChatInputAreaProps {
         onDisconnect: () => void;
         error: string | null;
     };
+    t: (key: keyof typeof translations) => string;
     themeId: string;
 }
 
@@ -98,9 +98,9 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     formProps,
     suggestionsProps,
     liveStatusProps,
+    t,
     themeId,
 }) => {
-    const { t } = useTranslation();
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
     const { isRecording } = actionsProps;
 
