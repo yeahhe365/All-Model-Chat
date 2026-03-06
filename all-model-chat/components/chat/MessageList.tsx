@@ -15,6 +15,7 @@ import { TextSelectionToolbar } from './message-list/TextSelectionToolbar';
 import { useMessageListUI } from '../../hooks/useMessageListUI';
 import { useMessageListScroll } from './message-list/hooks/useMessageListScroll';
 import { MessageListFooter } from './message-list/MessageListFooter';
+import { useTranslation } from '../../contexts/TranslationContext';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -40,8 +41,6 @@ export interface MessageListProps {
   onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
   onQuickTTS: (text: string) => Promise<string | null>;
-  t: (key: keyof typeof translations, fallback?: string) => string;
-  language: 'en' | 'zh';
   chatInputHeight: number;
   appSettings: AppSettings;
   currentModelId: string;
@@ -54,9 +53,10 @@ export interface MessageListProps {
 export const MessageList: React.FC<MessageListProps> = ({ 
     messages, sessionTitle, setScrollContainerRef, onScrollContainerScroll,
     onEditMessage, onDeleteMessage, onRetryMessage, onUpdateMessageFile, showThoughts, baseFontSize,
-    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, t, themeId,
+    expandCodeBlocksByDefault, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, ttsMessageId, onQuickTTS, themeId,
     chatInputHeight, appSettings, currentModelId, onOpenSidePanel, onQuote, onInsert, activeSessionId
 }) => {
+  const { t } = useTranslation();
   
   // UI Logic (Modals, Previews, Configuration)
   const {

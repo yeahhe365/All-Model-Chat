@@ -2,14 +2,14 @@
 import React from 'react';
 import { Paperclip } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
-import { translations } from '../../../utils/appUtils';
+import { useTranslation } from '../../../contexts/TranslationContext';
 
 interface DragDropOverlayProps {
   isDraggingOver: boolean;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
-export const DragDropOverlay: React.FC<DragDropOverlayProps> = ({ isDraggingOver, t }) => {
+export const DragDropOverlay: React.FC<DragDropOverlayProps> = ({ isDraggingOver }) => {
+  const { t } = useTranslation();
   const dragIconSize = useResponsiveValue(48, 64);
 
   if (!isDraggingOver) return null;

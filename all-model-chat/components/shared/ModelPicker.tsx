@@ -28,7 +28,6 @@ export interface ModelPickerProps {
     models: ModelOption[];
     selectedId: string;
     onSelect: (modelId: string) => void;
-    t: (key: string) => string;
     
     // Render props for the trigger button
     renderTrigger: (props: { 
@@ -45,7 +44,6 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     models,
     selectedId,
     onSelect,
-    t,
     renderTrigger,
     dropdownClassName
 }) => {
