@@ -183,7 +183,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
             onSuggestionClick={onSuggestionClick}
             onOrganizeInfoClick={onOrganizeInfoClick}
             showEmptyStateSuggestions={messages.length === 0}
-            onUpdateMessageContent={onUpdateMessageContent}
+            onUpdateMessageContent={onEditMessageContent}
             onAddUserMessage={onAddUserMessage}
             onLiveTranscript={onLiveTranscript}
             onToggleBBox={onToggleBBox}
