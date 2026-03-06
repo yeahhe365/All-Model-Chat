@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useAppLogic } from '../useAppLogic';
 import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
 
@@ -18,11 +17,12 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     getCurrentModelDisplayName,
     handleOpenSidePanel,
     language,
+    setAppSettings
   } = logic;
 
   const currentModelName = getCurrentModelDisplayName();
 
-  return useMemo(() => ({
+  return {
     activeSessionId: chatState.activeSessionId,
     sessionTitle,
     currentChatSettings: chatState.currentChatSettings,
@@ -139,52 +139,12 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onTogglePip: pipState.togglePip,
 
     generateQuadImages: appSettings.generateQuadImages ?? false,
-    onToggleQuadImages: () => logic.setAppSettings(prev => ({ ...prev, generateQuadImages: !prev.generateQuadImages })),
+    onToggleQuadImages: () => setAppSettings(prev => ({ ...prev, generateQuadImages: !prev.generateQuadImages })),
 
     onSetThinkingLevel: handleSetThinkingLevel,
     setCurrentChatSettings: chatState.setCurrentChatSettings,
     onOpenSidePanel: handleOpenSidePanel,
     onAddUserMessage: chatState.handleAddUserMessage,
     onLiveTranscript: chatState.handleLiveTranscript,
-  }), [
-    chatState.activeSessionId,
-    sessionTitle,
-    chatState.currentChatSettings,
-    chatState.isAppDraggingOver,
-    chatState.isProcessingDrop,
-    chatState.isLoading,
-    chatState.apiModels,
-    chatState.isSwitchingModel,
-    chatState.messages,
-    chatState.scrollContainerRef,
-    chatState.ttsMessageId,
-    chatState.commandedInput,
-    chatState.selectedFiles,
-    chatState.editingMessageId,
-    chatState.editMode,
-    chatState.isAppProcessingFile,
-    chatState.appFileError,
-    chatState.aspectRatio,
-    chatState.imageSize,
-    uiState.isHistorySidebarOpen,
-    pipState.isPipSupported,
-    pipState.isPipActive,
-    appSettings,
-    currentTheme.id,
-    currentModelName,
-    language,
-
-    // 注入稳定的对象引用
-    chatState,
-    uiState,
-    pipState,
-    logic,
-    handleLoadCanvasPromptAndSave,
-    handleToggleBBoxMode,
-    handleToggleGuideMode,
-    handleSuggestionClick,
-    handleSetThinkingLevel,
-    handleOpenSidePanel
-  ]);
+  };
 };
-
