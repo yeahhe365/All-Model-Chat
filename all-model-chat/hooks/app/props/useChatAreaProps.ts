@@ -5,13 +5,13 @@ import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, HD_GUIDE_SYSTEM_PROMPT } from
 // 核心优化：创建一个永远稳定的回调函数引用
 // 这样可以确保传给 MessageList 和 Message (React.memo) 的函数地址永不改变，彻底阻断无效重渲染
 function useStableCallback<T extends (...args: any[]) => any>(fn: T): T {
-    const ref = useRef<T>(fn);
-    useLayoutEffect(() => {
-        ref.current = fn;
-    });
-    return useCallback((...args: any[]) => {
-        return ref.current(...args);
-    }, []) as T;
+  const ref = useRef<T>(fn);
+  useLayoutEffect(() => {
+    ref.current = fn;
+  });
+  return useCallback((...args: any[]) => {
+    return ref.current(...args);
+  }, []) as T;
 }
 
 export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
@@ -29,6 +29,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
     handleOpenSidePanel,
+    language,
   } = logic;
 
   // 使用 useStableCallback 包裹所有会传递给子组件的函数
@@ -36,32 +37,32 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
   const onOpenSettingsModal = useStableCallback(() => uiState.setIsSettingsModalOpen(true));
   const onOpenScenariosModal = useStableCallback(() => uiState.setIsPreloadedMessagesModalOpen(true));
   const onToggleHistorySidebar = useStableCallback(() => uiState.setIsHistorySidebarOpen(prev => !prev));
-  
+
   const onLoadCanvasPrompt = useStableCallback(handleLoadCanvasPromptAndSave);
   const onToggleBBox = useStableCallback(handleToggleBBoxMode);
   const onToggleGuide = useStableCallback(handleToggleGuideMode);
-  
+
   const onScrollContainerScroll = useStableCallback(chatState.onScrollContainerScroll);
   const onEditMessage = useStableCallback(chatState.handleEditMessage);
   const onDeleteMessage = useStableCallback(chatState.handleDeleteMessage);
   const onRetryMessage = useStableCallback(chatState.handleRetryMessage);
   const onUpdateMessageFile = useStableCallback(chatState.handleUpdateMessageFile);
   const onUpdateMessageContent = useStableCallback(chatState.handleUpdateMessageContent);
-  
+
   const onSuggestionClickStable = useStableCallback((text: string) => handleSuggestionClick('homepage', text));
   const onOrganizeInfoClickStable = useStableCallback((text: string) => handleSuggestionClick('organize', text));
   const onFollowUpSuggestionClickStable = useStableCallback((text: string) => handleSuggestionClick('follow-up', text));
-  
+
   const onTextToSpeech = useStableCallback(chatState.handleTextToSpeech);
   const onGenerateCanvas = useStableCallback(chatState.handleGenerateCanvas);
   const onContinueGeneration = useStableCallback(chatState.handleContinueGeneration);
   const onQuickTTS = useStableCallback(chatState.handleQuickTTS);
-  
+
   const setCommandedInput = useStableCallback(chatState.setCommandedInput);
   const onMessageSent = useStableCallback(() => chatState.setCommandedInput(null));
   const setSelectedFiles = useStableCallback(chatState.setSelectedFiles);
   const onSendMessage = useStableCallback((text: string, options?: { isFastMode?: boolean }) => chatState.handleSendMessage({ text, ...options }));
-  
+
   const setEditingMessageId = useStableCallback(chatState.setEditingMessageId);
   const onStopGenerating = useStableCallback(chatState.handleStopGenerating);
   const onCancelEdit = useStableCallback(chatState.handleCancelEdit);
@@ -69,17 +70,17 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
   const onAddFileById = useStableCallback(chatState.handleAddFileById);
   const onCancelUpload = useStableCallback(chatState.handleCancelFileUpload);
   const onTranscribeAudio = useStableCallback(chatState.handleTranscribeAudio);
-  
+
   const setAppFileError = useStableCallback(chatState.setAppFileError);
   const setAspectRatio = useStableCallback(chatState.setAspectRatio);
   const setImageSize = useStableCallback(chatState.setImageSize);
-  
+
   const onToggleGoogleSearch = useStableCallback(chatState.toggleGoogleSearch);
   const onToggleCodeExecution = useStableCallback(chatState.toggleCodeExecution);
   const onToggleLocalPython = useStableCallback(chatState.toggleLocalPython);
   const onToggleUrlContext = useStableCallback(chatState.toggleUrlContext);
   const onToggleDeepSearch = useStableCallback(chatState.toggleDeepSearch);
-  
+
   const onClearChat = useStableCallback(chatState.handleClearCurrentChat);
   const onOpenSettings = useStableCallback(() => uiState.setIsSettingsModalOpen(true));
   const onToggleCanvasPrompt = useStableCallback(handleLoadCanvasPromptAndSave);
@@ -213,33 +214,34 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     onLiveTranscript,
   }), [
     // 现在的依赖数组中只剩下纯粹的数据和状态，排除了所有函数
-    chatState.activeSessionId, 
+    chatState.activeSessionId,
     sessionTitle,
-    chatState.currentChatSettings, 
-    chatState.isAppDraggingOver, 
+    chatState.currentChatSettings,
+    chatState.isAppDraggingOver,
     chatState.isProcessingDrop,
-    chatState.isLoading, 
-    chatState.apiModels, 
-    chatState.isSwitchingModel, 
-    chatState.messages, 
+    chatState.isLoading,
+    chatState.apiModels,
+    chatState.isSwitchingModel,
+    chatState.messages,
     chatState.scrollContainerRef,
-    chatState.ttsMessageId, 
-    chatState.commandedInput, 
+    chatState.ttsMessageId,
+    chatState.commandedInput,
     chatState.selectedFiles,
-    chatState.editingMessageId, 
-    chatState.editMode, 
-    chatState.isAppProcessingFile, 
-    chatState.appFileError, 
+    chatState.editingMessageId,
+    chatState.editMode,
+    chatState.isAppProcessingFile,
+    chatState.appFileError,
     chatState.aspectRatio,
-    chatState.imageSize, 
-    
-    uiState.isHistorySidebarOpen, 
-    pipState.isPipSupported, 
+    chatState.imageSize,
+
+    uiState.isHistorySidebarOpen,
+    pipState.isPipSupported,
     pipState.isPipActive,
-    
-    appSettings, 
-    currentTheme.id, 
+
+    appSettings,
+    currentTheme.id,
     currentModelName,
+    language,
 
     // 依然需要将这些稳定的回调传入依赖数组以满足 React Hook 规则的检测
     // 但由于上面用 useStableCallback 包装过，它们在组件整个生命周期中都不会改变
