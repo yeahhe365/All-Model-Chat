@@ -208,7 +208,35 @@ export const useSessionPersistence = ({
                  newFullSessions.forEach(session => {
                      const prevSession = virtualFullSessions.find(ps => ps.id === session.id);
                      if (prevSession !== session) {
-                         updates.push(dbService.saveSession(session));
+                         const { messages: prevMsgs = [], ...prevMeta } = prevSession || {};
+                         const { messages: newMsgs = [], ...newMeta } = session;
+
+                         // Check if metadata changed
+                         if (JSON.stringify(prevMeta) !== JSON.stringify(newMeta)) {
+                             updates.push(dbService.saveSessionMetadata(newMeta));
+                         }
+
+                         // Check if messages changed
+                         if (prevMsgs !== newMsgs) {
+                             const prevMsgsMap = new Map(prevMsgs.map(m => [m.id, m]));
+                             const newMsgsMap = new Map(newMsgs.map(m => [m.id, m]));
+
+                             // Find added or modified messages
+                             newMsgs.forEach(msg => {
+                                 const prevMsg = prevMsgsMap.get(msg.id);
+                                 if (prevMsg !== msg) {
+                                     updates.push(dbService.saveMessage(session.id, msg));
+                                 }
+                             });
+
+                             // Find deleted messages
+                             prevMsgs.forEach(msg => {
+                                 if (!newMsgsMap.has(msg.id)) {
+                                     updates.push(dbService.deleteMessage(msg.id));
+                                 }
+                             });
+                         }
+
                          modifiedSessionIds.push(session.id);
                      }
                  });
