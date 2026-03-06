@@ -73,7 +73,6 @@ export const useModelSelection = ({
             updateAndPersistSessions(prev => [newSession, ...prev]);
             setActiveSessionId(newSession.id);
         } else {
-            if (isLoading) handleStopGenerating();
             if (modelId !== currentChatSettings.modelId) {
                 setIsSwitchingModel(true);
                 updateAndPersistSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, settings: { ...s.settings, ...newSettingsPartial } } : s));
