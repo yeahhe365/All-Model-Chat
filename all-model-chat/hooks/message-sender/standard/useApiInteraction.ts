@@ -2,8 +2,10 @@
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { createChatHistoryForApi, isGemini3Model, logService } from '../../../utils/appUtils';
+import { isOpenAICompatModel } from '../../../utils/modelHelpers';
 import { buildGenerationConfig } from '../../../services/api/baseApi';
 import { geminiServiceInstance } from '../../../services/geminiService';
+import { sendOpenAICompatMessageStream, sendOpenAICompatMessageNonStream } from '../../../services/api/openaiCompatApi';
 import { pyodideService } from '../../../services/pyodideService';
 import { isLikelyHtml } from '../../../utils/codeUtils';
 import { GetStreamHandlers } from '../types';
@@ -112,24 +114,6 @@ export const useApiInteraction = ({
         const shouldStripThinking = sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;
         const historyForChat = await createChatHistoryForApi(baseMessagesForApi, shouldStripThinking);
 
-        const config = buildGenerationConfig(
-            activeModelId,
-            sessionToUpdate.systemInstruction,
-            { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP },
-            sessionToUpdate.showThoughts,
-            sessionToUpdate.thinkingBudget,
-            !!sessionToUpdate.isGoogleSearchEnabled,
-            !!sessionToUpdate.isCodeExecutionEnabled,
-            !!sessionToUpdate.isUrlContextEnabled,
-            sessionToUpdate.thinkingLevel,
-            aspectRatio,
-            sessionToUpdate.isDeepSearchEnabled,
-            imageSize,
-            sessionToUpdate.safetySettings,
-            sessionToUpdate.mediaResolution,
-            !!sessionToUpdate.isLocalPythonEnabled
-        );
-
         const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } = getStreamHandlers(
             finalSessionId,
             generationId,
@@ -148,6 +132,71 @@ export const useApiInteraction = ({
 
         setSessionLoading(finalSessionId, true);
         activeJobs.current.set(generationId, newAbortController);
+
+        // Route through OpenAI-compatible API for MiniMax and other non-Gemini providers
+        if (isOpenAICompatModel(activeModelId)) {
+            const minimaxKey = appSettings.minimaxApiKey;
+            if (!minimaxKey) {
+                streamOnError(new Error('MiniMax API Key is not configured. Please set it in Settings > API Configuration.'));
+                return;
+            }
+
+            const openaiConfig = {
+                temperature: sessionToUpdate.temperature,
+                topP: sessionToUpdate.topP,
+                systemInstruction: sessionToUpdate.systemInstruction,
+            };
+
+            if (appSettings.isStreamingEnabled) {
+                await sendOpenAICompatMessageStream(
+                    minimaxKey,
+                    activeModelId,
+                    historyForChat,
+                    finalParts,
+                    openaiConfig,
+                    newAbortController.signal,
+                    streamOnPart,
+                    onThoughtChunk,
+                    streamOnError,
+                    streamOnComplete,
+                    finalRole
+                );
+            } else {
+                await sendOpenAICompatMessageNonStream(
+                    minimaxKey,
+                    activeModelId,
+                    historyForChat,
+                    finalParts,
+                    openaiConfig,
+                    newAbortController.signal,
+                    streamOnError,
+                    (parts, thoughts, usage, grounding) => {
+                        for (const part of parts) streamOnPart(part);
+                        if (thoughts) onThoughtChunk(thoughts);
+                        streamOnComplete(usage, grounding);
+                    }
+                );
+            }
+            return;
+        }
+
+        const config = buildGenerationConfig(
+            activeModelId,
+            sessionToUpdate.systemInstruction,
+            { temperature: sessionToUpdate.temperature, topP: sessionToUpdate.topP },
+            sessionToUpdate.showThoughts,
+            sessionToUpdate.thinkingBudget,
+            !!sessionToUpdate.isGoogleSearchEnabled,
+            !!sessionToUpdate.isCodeExecutionEnabled,
+            !!sessionToUpdate.isUrlContextEnabled,
+            sessionToUpdate.thinkingLevel,
+            aspectRatio,
+            sessionToUpdate.isDeepSearchEnabled,
+            imageSize,
+            sessionToUpdate.safetySettings,
+            sessionToUpdate.mediaResolution,
+            !!sessionToUpdate.isLocalPythonEnabled
+        );
 
         if (appSettings.isStreamingEnabled) {
             await geminiServiceInstance.sendMessageStream(

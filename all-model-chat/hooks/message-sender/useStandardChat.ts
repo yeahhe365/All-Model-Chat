@@ -1,6 +1,7 @@
 
 import { useCallback } from 'react';
 import { generateUniqueId, buildContentParts, getKeyForRequest, performOptimisticSessionUpdate, logService } from '../../utils/appUtils';
+import { isOpenAICompatModel } from '../../utils/modelHelpers';
 import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage } from '../../types';
 import { StandardChatProps } from './types';
@@ -66,25 +67,37 @@ export const useStandardChat = ({
             logService.info(`Fast Mode activated (One-off): Overriding thinking level to ${targetLevel}.`);
         }
 
-        const keyResult = getKeyForRequest(appSettings, settingsForApi);
-        if ('error' in keyResult) {
-            logService.error("Send message failed: API Key not configured.");
-             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
-             const newSessionId = generateUniqueId();
-             
-             updateAndPersistSessions(prev => performOptimisticSessionUpdate(prev, {
-                 activeSessionId: null,
-                 newSessionId,
-                 newMessages: [errorMsg],
-                 settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
-                 appSettings,
-                 title: "API Key Error"
-             }));
-             setActiveSessionId(newSessionId);
-            return;
+        // For OpenAI-compatible providers (MiniMax), bypass Gemini key check
+        let keyToUse: string;
+        let isNewKey = false;
+        let shouldLockKey = false;
+
+        if (isOpenAICompatModel(activeModelId)) {
+            // MiniMax models use their own API key, managed in useApiInteraction
+            keyToUse = 'openai-compat-placeholder';
+            isNewKey = false;
+        } else {
+            const keyResult = getKeyForRequest(appSettings, settingsForApi);
+            if ('error' in keyResult) {
+                logService.error("Send message failed: API Key not configured.");
+                 const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
+                 const newSessionId = generateUniqueId();
+
+                 updateAndPersistSessions(prev => performOptimisticSessionUpdate(prev, {
+                     activeSessionId: null,
+                     newSessionId,
+                     newMessages: [errorMsg],
+                     settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
+                     appSettings,
+                     title: "API Key Error"
+                 }));
+                 setActiveSessionId(newSessionId);
+                return;
+            }
+            keyToUse = keyResult.key;
+            isNewKey = keyResult.isNewKey;
+            shouldLockKey = isNewKey && filesToUse.some(f => f.fileUri && f.uploadState === 'active');
         }
-        const { key: keyToUse, isNewKey } = keyResult;
-        const shouldLockKey = isNewKey && filesToUse.some(f => f.fileUri && f.uploadState === 'active');
 
         const newAbortController = new AbortController();
         

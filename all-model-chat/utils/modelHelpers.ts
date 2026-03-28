@@ -1,8 +1,12 @@
 
 import { ModelOption } from '../types';
 import { GEMINI_3_RO_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, TAB_CYCLE_MODELS, INITIAL_PINNED_MODELS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../constants/appConstants';
+import { MINIMAX_MODELS, isMiniMaxModel, isOpenAICompatModel } from '../constants/providerConstants';
 import { MediaResolution } from '../types/settings';
 import { UsageMetadata } from '@google/genai';
+
+// Re-export provider helpers for convenience
+export { isMiniMaxModel, isOpenAICompatModel } from '../constants/providerConstants';
 
 // --- Model Sorting & Defaults ---
 
@@ -57,7 +61,7 @@ export const getDefaultModelOptions = (): ModelOption[] => {
         }
         return { id, name, isPinned: true };
     });
-    return sortModels([...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS]);
+    return sortModels([...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS, ...MINIMAX_MODELS]);
 };
 
 // --- Helper for Model Capabilities ---

@@ -12,4 +12,8 @@ export const apiSettings = {
     apiConfig_testFailed: { en: 'Connection Failed', zh: '连接失败' },
     apiConfig_vertexExpress: { en: 'Use Vertex AI Express Endpoint', zh: '使用 Vertex AI Express 端点' },
     apiConfig_vertexExpress_btn: { en: 'Vertex Express', zh: 'Vertex Express' },
+    settingsMiniMaxConfig: { en: 'MiniMax AI Configuration', zh: 'MiniMax AI 配置' },
+    settingsMiniMaxHelp: { en: 'Enter your MiniMax API key to use MiniMax M2.7 models. Get your key from platform.minimax.chat.', zh: '输入您的 MiniMax API 密钥以使用 MiniMax M2.7 模型。请在 platform.minimax.chat 获取密钥。' },
+    settingsMiniMaxKeyPlaceholder: { en: 'Enter your MiniMax API Key', zh: '输入您的 MiniMax API 密钥' },
+    settingsMiniMaxModelsInfo: { en: 'Available models: MiniMax-M2.7 (204K context), MiniMax-M2.7-highspeed (204K context, faster).', zh: '可用模型：MiniMax-M2.7（204K 上下文），MiniMax-M2.7-highspeed（204K 上下文，更快速）。' },
 };

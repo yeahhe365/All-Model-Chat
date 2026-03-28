@@ -71,6 +71,21 @@ npm run dev
 
 ---
 
+## 🌐 Multi-Provider Support
+
+All Model Chat now supports multiple AI providers beyond Google Gemini:
+
+| Provider | Models | Context Window | Configuration |
+| :--- | :--- | :--- | :--- |
+| **Google Gemini** | Gemini 3.0, 2.5, Gemma | Up to 2M tokens | API Key or Environment Variable |
+| **MiniMax AI** | MiniMax-M2.7, MiniMax-M2.7-highspeed | 204K tokens | Settings > API Configuration |
+
+To use MiniMax models, enter your MiniMax API key in **Settings > API Configuration > MiniMax AI Configuration**, then select a MiniMax model from the model picker.
+
+> Get your MiniMax API key at [platform.minimax.chat](https://platform.minimax.chat)
+
+---
+
 ## 🛠️ 技术架构 / Technical Architecture
 
 <table width="100%">
