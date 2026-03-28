@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Sparkles } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { getClient } from '../../../services/api/baseApi';
 import { parseApiKeys } from '../../../utils/apiUtils';
@@ -9,6 +9,7 @@ import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
 import { ModelOption } from '../../../types';
+import { SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -19,6 +20,8 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
+  minimaxApiKey: string | null;
+  setMinimaxApiKey: (value: string | null) => void;
   availableModels: ModelOption[];
   t: (key: string) => string;
 }
@@ -42,6 +45,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
+  minimaxApiKey,
+  setMinimaxApiKey,
   availableModels,
   t,
 }) => {
@@ -169,6 +174,30 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 />
             </div>
         </div>
+      </div>
+
+      {/* MiniMax API Configuration */}
+      <div className="mt-8 pt-6 border-t border-[var(--theme-border-primary)]">
+        <h3 className="text-base font-semibold text-[var(--theme-text-primary)] flex items-center gap-2 mb-4">
+            <Sparkles size={iconSize} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
+            {t('settingsMiniMaxConfig')}
+        </h3>
+        <p className="text-xs text-[var(--theme-text-tertiary)] mb-3">
+            {t('settingsMiniMaxHelp')}
+        </p>
+        <div className="relative">
+            <input
+                type="password"
+                value={minimaxApiKey || ''}
+                onChange={(e) => setMinimaxApiKey(e.target.value || null)}
+                placeholder={t('settingsMiniMaxKeyPlaceholder')}
+                className={`w-full px-4 py-2.5 rounded-lg text-sm border ${SETTINGS_INPUT_CLASS} focus:outline-none focus:ring-2 transition-colors duration-200`}
+                autoComplete="off"
+            />
+        </div>
+        <p className="text-xs text-[var(--theme-text-tertiary)] mt-2">
+            {t('settingsMiniMaxModelsInfo')}
+        </p>
       </div>
     </div>
   );
