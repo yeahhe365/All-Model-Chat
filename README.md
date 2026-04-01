@@ -310,5 +310,4 @@ All-Model-Chat/
 
 <div align="center">
   <p>Developed with :heart: by <strong>yeahhe365</strong></p>
-  <p>Powered by <strong>Google Gemini API</strong></p>
 </div>
