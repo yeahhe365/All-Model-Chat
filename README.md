@@ -56,7 +56,7 @@
 ```bash
 # 克隆仓库
 git clone https://github.com/yeahhe365/All-Model-Chat.git
-cd All-Model-Chat/all-model-chat
+cd All-Model-Chat
 
 # 安装依赖
 npm install
