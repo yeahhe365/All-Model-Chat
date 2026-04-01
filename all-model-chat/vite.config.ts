@@ -34,17 +34,21 @@ export default defineConfig(({ mode }) => {
           // instance as react-pdf (which is loaded via CDN/importmap).
           // This prevents the "Cannot read properties of null (reading 'useReducer')" error.
           external: [
-            'react', 
-            'react-dom', 
-            'react-dom/client', 
+            'react',
+            'react-dom',
+            'react-dom/client',
             'react/jsx-runtime',
-            'react-pdf', 
+            'react-pdf',
             'pdfjs-dist',
             '@formkit/auto-animate/react',
             'react-virtuoso',
             'xlsx'
           ]
         }
+      },
+      test: {
+        environment: 'jsdom',
+        globals: true,
       }
     };
 });

@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.2",
@@ -39,6 +41,8 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/dompurify": "^3.0.5",
     "@types/katex": "^0.16.7",
     "@types/node": "^20.14.10",
@@ -47,10 +51,12 @@
     "@types/turndown": "^5.0.5",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
+    "jsdom": "^29.0.1",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.5.3",
     "vite": "^5.3.3",
-    "vite-plugin-static-copy": "^1.0.0"
+    "vite-plugin-static-copy": "^1.0.0",
+    "vitest": "^4.1.2"
   }
 }
