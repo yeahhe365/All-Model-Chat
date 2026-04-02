@@ -6,8 +6,17 @@ import { useAppProps } from './hooks/app/useAppProps';
 import { WindowProvider } from './contexts/WindowContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
+import { ErrorBoundary } from './components/shared/ErrorBoundary';
 
 const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+};
+
+const AppContent: React.FC = () => {
   const logic = useAppLogic();
   const { 
     currentTheme, 
