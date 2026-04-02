@@ -45,11 +45,12 @@ export const getDefaultModelOptions = (): ModelOption[] => {
         } else if (id === 'gemini-2.5-flash-native-audio-preview-12-2025') {
             name = 'Gemini 2.5 Flash Native Audio';
         } else if (id.toLowerCase().includes('gemma')) {
-             // Beautify Gemma names: gemma-3-27b-it -> Gemma 3 27B IT
+             // Beautify Gemma names: gemma-4-31b-it -> Gemma 4 31B IT
              name = id.replace(/-/g, ' ')
                       .replace(/\b\w/g, l => l.toUpperCase())
                       .replace(/\bIt\b/, 'IT')
-                      .replace(/\bB\b/, 'B'); // Ensure parameter B is uppercase
+                      .replace(/\bA4b\b/, 'A4B')
+                      .replace(/(\d)B\b/g, '$1B'); // Ensure parameter B is uppercase
         } else {
              name = id.includes('/') 
                 ? `Gemini ${id.split('/')[1]}`.replace('gemini-','').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())

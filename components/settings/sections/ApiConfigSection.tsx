@@ -30,7 +30,8 @@ const CONNECTION_TEST_MODELS: ModelOption[] = [
     { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-    { id: 'gemma-3-27b-it', name: 'Gemma 3 27b IT' },
+    { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
+    { id: 'gemma-4-26b-a4b-it', name: 'Gemma 4 26B A4B IT' },
 ];
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
