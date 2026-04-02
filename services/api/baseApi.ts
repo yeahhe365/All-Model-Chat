@@ -159,7 +159,6 @@ export const buildGenerationConfig = (
     const isGemini3 = isGemini3Model(modelId);
     // Gemma models do not support media resolution at all
     const isGemma = modelId.toLowerCase().includes('gemma');
-    
     if (!isGemini3 && !isGemma && mediaResolution) {
         // For non-Gemini 3 models (and not Gemma), apply global resolution if specified
         generationConfig.mediaResolution = mediaResolution;
