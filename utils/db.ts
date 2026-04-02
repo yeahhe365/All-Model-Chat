@@ -2,7 +2,7 @@ import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../type
 import { LogEntry } from '../services/logService';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 3; // 已从 2 修改为 3，以匹配浏览器中已存在的较新版本
+const DB_VERSION = 3;
 
 const SESSIONS_STORE = 'sessions';
 const GROUPS_STORE = 'groups';
@@ -23,10 +23,31 @@ const getDb = (): Promise<IDBDatabase> => {
         reject(request.error);
       };
       request.onsuccess = () => resolve(request.result);
-      
+
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        
+        const oldVersion = event.oldVersion;
+
+        // Version 1: Initial schema
+        if (oldVersion < 1) {
+          db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
+          db.createObjectStore(GROUPS_STORE, { keyPath: 'id' });
+          db.createObjectStore(SCENARIOS_STORE, { keyPath: 'id' });
+          db.createObjectStore(KEY_VALUE_STORE);
+        }
+
+        // Version 2: Add logs store
+        if (oldVersion < 2) {
+          if (!db.objectStoreNames.contains(LOGS_STORE)) {
+            const logStore = db.createObjectStore(LOGS_STORE, { keyPath: 'id', autoIncrement: true });
+            logStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        }
+
+        // Version 3+: Add future migrations here
+        // if (oldVersion < 3) { ... }
+
+        // Safety net: ensure all expected stores exist (e.g. if DB was partially created)
         if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
         }
@@ -165,17 +186,24 @@ export const dbService = {
           const store = tx.objectStore(SESSIONS_STORE);
           const request = store.openCursor();
           const results: string[] = [];
-          
+
           request.onsuccess = (event) => {
               const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
               if (cursor) {
                   const session = cursor.value as SavedChatSession;
+                  // Fast path: check title first (cheap), then content (expensive for long messages)
                   const titleMatch = session.title?.toLowerCase().includes(lowerQuery);
-                  const contentMatch = session.messages?.some(m => 
-                      (m.content && m.content.toLowerCase().includes(lowerQuery)) || 
-                      (m.thoughts && m.thoughts.toLowerCase().includes(lowerQuery))
-                  );
-                  
+                  let contentMatch = false;
+                  if (!titleMatch && session.messages) {
+                      for (const m of session.messages) {
+                          if (m.content?.toLowerCase().includes(lowerQuery) ||
+                              m.thoughts?.toLowerCase().includes(lowerQuery)) {
+                              contentMatch = true;
+                              break; // Stop at first match, no need to scan all messages
+                          }
+                      }
+                  }
+
                   if (titleMatch || contentMatch) {
                       results.push(session.id);
                   }
