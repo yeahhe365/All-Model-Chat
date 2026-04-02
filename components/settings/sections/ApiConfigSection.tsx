@@ -54,7 +54,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
 
   const iconSize = useResponsiveValue(18, 20);
-  const hasEnvKey = !!process.env.API_KEY;
+  const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -75,7 +75,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       // If custom config is OFF, or ON but no key provided, we might fall back to env key if available.
       // But for explicit testing, if custom config is ON, we should test what's in the box.
       if (!useCustomApiConfig && hasEnvKey) {
-          keyToTest = process.env.API_KEY || null;
+          keyToTest = (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
       }
       
       if (useCustomApiConfig && !keyToTest) {

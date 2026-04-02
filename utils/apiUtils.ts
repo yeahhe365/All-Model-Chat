@@ -10,7 +10,7 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
         };
     }
     return {
-        apiKeysString: process.env.API_KEY || null,
+        apiKeysString: (import.meta as any).env?.VITE_GEMINI_API_KEY || null,
     };
 };
 
