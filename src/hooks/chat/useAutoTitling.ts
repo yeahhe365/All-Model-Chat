@@ -1,0 +1,128 @@
+import React, { useCallback, useEffect } from 'react';
+import { AppSettings, SavedChatSession } from '../../types';
+import { getKeyForRequest, logService, generateSessionTitle } from '../../utils/appUtils';
+import { geminiServiceInstance } from '../../services/geminiService';
+
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+
+interface AutoTitlingProps {
+    appSettings: AppSettings;
+    activeChat?: SavedChatSession;
+    updateAndPersistSessions: SessionsUpdater;
+    language: 'en' | 'zh';
+    generatingTitleSessionIds: Set<string>;
+    setGeneratingTitleSessionIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+    sessionKeyMapRef?: React.MutableRefObject<Map<string, string>>;
+}
+
+export const useAutoTitling = ({
+    appSettings,
+    activeChat,
+    updateAndPersistSessions,
+    language,
+    generatingTitleSessionIds,
+    setGeneratingTitleSessionIds,
+    sessionKeyMapRef,
+}: AutoTitlingProps) => {
+
+    const generateTitleForSession = useCallback(async (session: SavedChatSession) => {
+        const { id: sessionId, messages } = session;
+        if (messages.length < 2) return;
+        
+        setGeneratingTitleSessionIds(prev => new Set(prev).add(sessionId));
+        logService.info(`Auto-generating title for session ${sessionId}`);
+
+        // Sticky Key Logic: Prefer key used in the last turn if available
+        const stickyKey = sessionKeyMapRef?.current?.get(sessionId);
+        
+        let keyToUse: string;
+        if (stickyKey) {
+            keyToUse = stickyKey;
+            // logService.debug(`Reusing sticky key for title generation.`);
+        } else {
+            // Fallback to normal rotation (skipIncrement)
+            const keyResult = getKeyForRequest(appSettings, session.settings, { skipIncrement: true });
+            if ('error' in keyResult) {
+                logService.error(`Could not generate title for session ${sessionId}: ${keyResult.error}`);
+                setGeneratingTitleSessionIds(prev => {
+                    const next = new Set(prev);
+                    next.delete(sessionId);
+                    return next;
+                });
+                return;
+            }
+            keyToUse = keyResult.key;
+        }
+
+        try {
+            const userContent = messages[0].content;
+            const modelContent = messages[1].content;
+            
+            if (!userContent.trim() && !modelContent.trim()) {
+                logService.info(`Skipping title generation for session ${sessionId} due to empty content.`);
+                return;
+            }
+            
+            const newTitle = await geminiServiceInstance.generateTitle(keyToUse, userContent, modelContent, language);
+            
+            if (newTitle && newTitle.trim()) {
+                logService.info(`Generated new title for session ${sessionId}: "${newTitle}"`);
+                updateAndPersistSessions(prev =>
+                    prev.map(s => (s.id === sessionId ? { ...s, title: newTitle.trim() } : s))
+                );
+            } else {
+                logService.warn(`Title generation for session ${sessionId} returned an empty string.`);
+            }
+
+        } catch (error) {
+            logService.error(`Failed to auto-generate title for session ${sessionId}`, { error });
+            // Fallback to local generation to prevent infinite retry loops on "New Chat"
+            const localTitle = generateSessionTitle(messages);
+            if (localTitle && localTitle !== 'New Chat') {
+                updateAndPersistSessions(prev =>
+                    prev.map(s => (s.id === sessionId ? { ...s, title: localTitle } : s))
+                );
+            }
+        } finally {
+            setGeneratingTitleSessionIds(prev => {
+                const next = new Set(prev);
+                next.delete(sessionId);
+                return next;
+            });
+        }
+    }, [appSettings, updateAndPersistSessions, language, setGeneratingTitleSessionIds, sessionKeyMapRef]);
+
+    useEffect(() => {
+        if (!appSettings.isAutoTitleEnabled || !activeChat) return;
+
+        const session = activeChat;
+
+        // Check if title is generic or a placeholder
+        // 1. Is it 'New Chat'?
+        const isNewChat = session.title === 'New Chat';
+        // 2. Is it a placeholder derived from the first message?
+        const isPlaceholder = session.title === generateSessionTitle(session.messages);
+
+        // If neither, assume user renamed it or it's already titled properly
+        if (!isNewChat && !isPlaceholder) return;
+        
+        // Skip if already generating
+        if (generatingTitleSessionIds.has(session.id)) return;
+        
+        // Need at least user prompt and model response
+        if (session.messages.length < 2) return;
+        
+        const firstMsg = session.messages[0];
+        const secondMsg = session.messages[1];
+
+        // Basic structure check
+        if (firstMsg.role !== 'user' || secondMsg.role !== 'model') return;
+
+        // Wait for the first model message to be complete
+        if (secondMsg.isLoading || secondMsg.stoppedByUser) return;
+
+        generateTitleForSession(session);
+
+    }, [activeChat, appSettings.isAutoTitleEnabled, generatingTitleSessionIds, generateTitleForSession]);
+
+};
