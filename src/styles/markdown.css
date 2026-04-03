@@ -1,0 +1,260 @@
+
+
+/* Markdown Body Overrides to prevent theme conflicts */
+.markdown-body {
+  background-color: transparent !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: 1.8 !important; /* Increased line spacing */
+}
+
+/* Tighter line height for headers */
+.markdown-body h1, 
+.markdown-body h2, 
+.markdown-body h3, 
+.markdown-body h4, 
+.markdown-body h5, 
+.markdown-body h6 {
+  line-height: 1.3 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+/* Ensure first element doesn't push down the content, aligning text with avatar */
+.markdown-body > *:first-child,
+.is-loading > *:first-child {
+  margin-top: 0 !important;
+}
+
+/* Ensure last element doesn't push bottom content, aligning text with bubble bottom */
+.markdown-body > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Apply optimized fade-in-move animation to block elements */
+.markdown-body > * {
+  /* Animation removed to prevent re-triggering during virtualization scroll */
+  transform-origin: left bottom;
+}
+
+.markdown-body p {
+  color: inherit !important;
+  margin-bottom: 1em !important; /* Ensure paragraph spacing matches line height rhythm */
+}
+
+.markdown-body a {
+  color: var(--theme-text-link) !important;
+}
+
+.markdown-body pre {
+  background-color: var(--theme-bg-code-block) !important;
+  line-height: 1.5 !important; /* Keep code blocks tighter */
+}
+
+/* Blockquote Overrides */
+.markdown-body blockquote {
+  color: inherit !important; /* Inherit color to ensure high contrast in chat bubbles */
+  border-left: 3px solid currentColor !important; /* Use current text color for border */
+  background-color: transparent !important;
+  padding: 0.25rem 0 0.25rem 1rem !important;
+  margin: 0.5rem 0 !important;
+  opacity: 0.85; /* Slight dimming for differentiation, but keeping high readability */
+}
+
+/* Horizontal Rule (Thin Line) - Darker/More Visible */
+.markdown-body hr {
+  height: 1px !important;
+  background-color: var(--theme-text-tertiary) !important;
+  border: none !important;
+  margin: 1.5rem 0 !important;
+  opacity: 0.5 !important;
+}
+
+/* Ensure lists are visible */
+.markdown-body ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+  margin-bottom: 1em !important;
+}
+
+.markdown-body ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+  margin-bottom: 1em !important;
+}
+
+.markdown-body li {
+  display: list-item !important;
+  margin-bottom: 0.25em !important;
+}
+
+/* Images in Markdown */
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0.5rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Highlight.js Overrides for seamless integration */
+.markdown-body pre code.hljs,
+code.hljs {
+  background-color: transparent !important;
+}
+
+/* Inline Code Styling - Emphasis */
+.markdown-body code:not(pre code) {
+  color: var(--theme-text-link) !important;
+  background-color: var(--theme-bg-info) !important;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  padding: 0.2em 0.4em;
+  border: 1px solid var(--theme-bg-info);
+  font-size: 0.9em;
+  line-height: 1.4; /* Slightly tighter for inline code tags */
+}
+
+/* Table Styles - Clean Minimalist Style (No Grid Borders) */
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0; /* Handled by TableBlock wrapper */
+  background-color: transparent !important;
+  border: none !important;
+  table-layout: auto;
+}
+
+.markdown-body thead {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--theme-border-secondary) !important;
+}
+
+.markdown-body thead tr {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.markdown-body thead th {
+  background-color: transparent !important;
+  color: var(--theme-text-primary) !important;
+  font-weight: 700; /* Bolder header */
+  padding: 1rem 1rem 1rem 0; /* Reduced left padding, increased vertical */
+  text-align: left;
+  border: none !important; /* Remove individual cell borders */
+  white-space: nowrap;
+  font-size: 0.95em;
+  opacity: 0.9;
+}
+
+.markdown-body tbody {
+  background-color: transparent !important;
+}
+
+/* Horizontal lines between rows */
+.markdown-body tbody tr {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--theme-border-secondary) !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+/* Remove border from last row to avoid double border with container bottom if present, or just clean look */
+.markdown-body tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.markdown-body tbody tr:hover {
+  background-color: transparent !important; /* No hover effect for cleaner look, or maybe subtle */
+}
+
+.markdown-body tbody td {
+  padding: 1.25rem 1rem 1.25rem 0; /* Generous padding matches the design */
+  border: none !important; /* No vertical borders */
+  color: var(--theme-text-secondary) !important;
+  vertical-align: top;
+  background-color: transparent !important;
+  line-height: 1.6;
+}
+
+/* First Column Emphasis (Key Column) */
+.markdown-body tbody td:first-child {
+  color: var(--theme-text-primary) !important;
+  font-weight: 500;
+  min-width: 100px; /* Ensure label column has some width */
+}
+
+/* Citation Styles */
+.citation-ref {
+  display: inline-block;
+  font-size: 0.75em;
+  font-weight: bold;
+  color: var(--theme-text-link) !important;
+  text-decoration: none !important;
+  vertical-align: super;
+  line-height: 1;
+  margin: 0 1px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.citation-ref:hover {
+  color: var(--theme-text-accent) !important;
+  text-decoration: underline !important;
+}
+
+/* Gemini Code Execution Result Styles */
+.tool-result {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  background-color: var(--theme-bg-code-block);
+  border-left: 3px solid var(--theme-border-secondary);
+  overflow-x: auto;
+  color: var(--theme-text-primary); /* Ensure default text is readable */
+}
+
+.tool-result.outcome-ok {
+  border-left-color: var(--theme-text-success);
+  background-color: rgba(22, 163, 74, 0.05);
+}
+
+.tool-result.outcome-failed, .tool-result.outcome-dead {
+  border-left-color: var(--theme-icon-error);
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+.tool-result strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--theme-text-secondary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+/* Ensure pre/code blocks inside tool results are readable and handle overflow */
+.tool-result pre {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--theme-text-primary) !important; /* Force primary text color */
+  font-family: inherit;
+  line-height: 1.5 !important;
+}
+
+/* Target the specific structure from CodeBlock if it's used inside tool-result */
+.tool-result .group.relative.rounded-lg {
+    border: 1px solid var(--theme-border-secondary);
+    background-color: var(--theme-bg-primary); /* Slightly elevate the code block */
+}

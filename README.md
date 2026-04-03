@@ -289,7 +289,7 @@ All-Model-Chat/
 
 | 类型 | 模型 |
 | :--- | :--- |
-| **Gemini 3.x** | gemini-3-flash-preview, gemini-3-pro-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
+| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
 | **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-lite-preview, gemini-2.5-flash-native-audio-preview |
 | **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
 | **Imagen 4.0** | imagen-4.0-fast-generate, imagen-4.0-generate, imagen-4.0-ultra-generate |
