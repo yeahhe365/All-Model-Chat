@@ -1,0 +1,220 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { buildContentParts, createChatHistoryForApi } from '../builder';
+import { UploadedFile, ChatMessage } from '../../../types';
+import { MediaResolution } from '../../../types/settings';
+
+// Mock fileHelpers to avoid real file I/O
+vi.mock('../../../utils/fileHelpers', () => ({
+  blobToBase64: vi.fn().mockResolvedValue('base64data'),
+  fileToString: vi.fn().mockResolvedValue('file text content'),
+  isTextFile: vi.fn((file: { name: string; type: string }) => {
+    return file.type === 'text/plain' || file.name.endsWith('.txt');
+  }),
+  getExtensionFromMimeType: vi.fn((mimeType: string) => {
+    const map: Record<string, string> = { 'image/png': '.png', 'audio/mp3': '.mp3' };
+    return map[mimeType] || '.bin';
+  }),
+  base64ToBlob: vi.fn(() => new Blob(['data'])),
+}));
+
+// Mock logService
+vi.mock('../../../services/logService', () => ({
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+
+// Mock modelHelpers
+vi.mock('../../../utils/modelHelpers', () => ({
+  isGemini3Model: vi.fn((id: string) => id?.includes('gemini-3')),
+}));
+
+const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
+  id: 'file-1',
+  name: 'test.png',
+  type: 'image/png',
+  size: 1024,
+  uploadState: 'active',
+  ...overrides,
+});
+
+const makeMessage = (role: 'user' | 'model', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
+  id: `msg-${Math.random().toString(36).slice(2, 8)}`,
+  role,
+  content,
+  timestamp: new Date(),
+  ...extra,
+});
+
+// ── buildContentParts ──
+
+describe('buildContentParts', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns text-only content parts when no files', async () => {
+    const { contentParts } = await buildContentParts('Hello');
+    expect(contentParts).toEqual([{ text: 'Hello' }]);
+  });
+
+  it('returns empty array when no text and no files', async () => {
+    const { contentParts } = await buildContentParts('   ');
+    expect(contentParts).toEqual([]);
+  });
+
+  it('skips files that are still processing', async () => {
+    const file = makeFile({ isProcessing: true });
+    const { contentParts } = await buildContentParts('Hello', [file]);
+    // Only text part, no file part
+    expect(contentParts).toEqual([{ text: 'Hello' }]);
+  });
+
+  it('skips files with errors', async () => {
+    const file = makeFile({ error: 'Upload failed' });
+    const { contentParts } = await buildContentParts('Hello', [file]);
+    expect(contentParts).toEqual([{ text: 'Hello' }]);
+  });
+
+  it('skips files not in active state', async () => {
+    const file = makeFile({ uploadState: 'pending' });
+    const { contentParts } = await buildContentParts('Hello', [file]);
+    expect(contentParts).toEqual([{ text: 'Hello' }]);
+  });
+
+  it('builds inlineData part for image files with rawFile', async () => {
+    const file = makeFile({
+      rawFile: new Blob(['img'], { type: 'image/png' }),
+    });
+    const { contentParts } = await buildContentParts('Caption', [file]);
+    expect(contentParts).toHaveLength(2);
+    // Media goes first per the optimization
+    expect(contentParts[0]).toEqual({ inlineData: { mimeType: 'image/png', data: 'base64data' } });
+    expect(contentParts[1]).toEqual({ text: 'Caption' });
+  });
+
+  it('builds fileData part for files with fileUri', async () => {
+    const file = makeFile({ fileUri: 'files/abc123' });
+    const { contentParts } = await buildContentParts('Hello', [file]);
+    expect(contentParts[0]).toEqual({ fileData: { mimeType: 'image/png', fileUri: 'files/abc123' } });
+  });
+
+  it('handles YouTube links without mimeType in fileData', async () => {
+    const file = makeFile({
+      type: 'video/youtube-link',
+      fileUri: 'https://youtube.com/watch?v=abc',
+    });
+    const { contentParts } = await buildContentParts('Describe this', [file]);
+    expect(contentParts[0]).toEqual({ fileData: { fileUri: 'https://youtube.com/watch?v=abc' } });
+  });
+
+  it('builds text part for text files', async () => {
+    const file = makeFile({
+      name: 'notes.txt',
+      type: 'text/plain',
+      rawFile: new Blob(['hello'], { type: 'text/plain' }),
+    });
+    const { contentParts } = await buildContentParts('Check this', [file]);
+    // Text file content is wrapped in markers
+    const textPart = contentParts.find(p => p.text?.includes('START OF FILE'));
+    expect(textPart).toBeTruthy();
+    expect(textPart!.text).toContain('notes.txt');
+  });
+
+  it('returns fallback text for unsupported binary types', async () => {
+    const file = makeFile({
+      name: 'data.xlsx',
+      type: 'application/vnd.ms-excel',
+      rawFile: new Blob(['data'], { type: 'application/vnd.ms-excel' }),
+    });
+    const { contentParts } = await buildContentParts('Hello', [file]);
+    const fallback = contentParts.find(p => p.text?.includes('Binary content not supported'));
+    expect(fallback).toBeTruthy();
+  });
+});
+
+// ── createChatHistoryForApi ──
+
+describe('createChatHistoryForApi', () => {
+  it('excludes messages with excludeFromContext', async () => {
+    const msgs = [
+      makeMessage('user', 'Visible'),
+      makeMessage('model', 'Hidden', { excludeFromContext: true }),
+      makeMessage('model', 'Next visible'),
+    ];
+    const history = await createChatHistoryForApi(msgs);
+    // First user msg, then one model msg (hidden one excluded)
+    expect(history).toHaveLength(2);
+    expect(history[0].role).toBe('user');
+    expect(history[1].role).toBe('model');
+    expect(history[1].parts[0].text).toBe('Next visible');
+  });
+
+  it('only includes user and model roles', async () => {
+    const msgs = [
+      makeMessage('user', 'Hi'),
+      makeMessage('error', 'Something broke') as any,
+      makeMessage('model', 'Hello'),
+    ];
+    const history = await createChatHistoryForApi(msgs);
+    expect(history).toHaveLength(2);
+  });
+
+  it('merges consecutive messages of the same role', async () => {
+    const msgs = [
+      makeMessage('user', 'First'),
+      makeMessage('user', 'Second'),
+    ];
+    const history = await createChatHistoryForApi(msgs);
+    expect(history).toHaveLength(1);
+    expect(history[0].parts).toHaveLength(2);
+  });
+
+  it('attaches thoughtSignatures to last part of model messages', async () => {
+    const msgs = [
+      makeMessage('model', 'Response', { thoughtSignatures: ['sig-1'] }),
+    ];
+    const history = await createChatHistoryForApi(msgs);
+    expect(history[0].parts[0].thoughtSignature).toBe('sig-1');
+  });
+
+  it('strips thinking blocks when stripThinking is true', async () => {
+    const msgs = [
+      makeMessage('model', 'Hello <thinking>secret thoughts</thinking> world'),
+    ];
+    const history = await createChatHistoryForApi(msgs, true);
+    const textPart = history[0].parts.find(p => p.text);
+    expect(textPart?.text).not.toContain('thinking');
+    expect(textPart?.text).toContain('Hello');
+    expect(textPart?.text).toContain('world');
+  });
+
+  it('handles apiParts for model messages with inlineData', async () => {
+    const msgs = [
+      makeMessage('model', '', {
+        apiParts: [
+          { text: 'Some code' },
+          { inlineData: { mimeType: 'image/png', data: 'base64...' } },
+        ],
+      }),
+    ];
+    const history = await createChatHistoryForApi(msgs);
+    // inlineData should be replaced with text note
+    const inlinePart = history[0].parts.find(p => p.text?.includes('media file'));
+    expect(inlinePart).toBeTruthy();
+    const codePart = history[0].parts.find(p => p.text === 'Some code');
+    expect(codePart).toBeTruthy();
+  });
+
+  it('filters out thought parts from apiParts when stripThinking is true', async () => {
+    const msgs = [
+      makeMessage('model', '', {
+        apiParts: [
+          { thought: true, text: 'secret' },
+          { text: 'visible' },
+        ],
+      }),
+    ];
+    const history = await createChatHistoryForApi(msgs, true);
+    expect(history[0].parts).toHaveLength(1);
+    expect(history[0].parts[0].text).toBe('visible');
+  });
+});
