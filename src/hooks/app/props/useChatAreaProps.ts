@@ -2,6 +2,7 @@ import { useMemo, useRef, useLayoutEffect, useCallback } from 'react';
 import { useAppLogic } from '../useAppLogic';
 import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
 import { useUIStore } from '../../../stores/uiStore';
+import { useChatStore } from '../../../stores/chatStore';
 
 // 核心优化：创建一个永远稳定的回调函数引用
 // 这样可以确保传给 MessageList 和 Message (React.memo) 的函数地址永不改变，彻底阻断无效重渲染
@@ -20,9 +21,6 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     appSettings,
     chatState,
     pipState,
-    currentTheme,
-    language,
-    t,
     sessionTitle,
     handleLoadCanvasPromptAndSave,
     handleToggleBBoxMode,
@@ -31,64 +29,57 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     handleSetThinkingLevel,
     getCurrentModelDisplayName,
     handleOpenSidePanel,
+    t,
   } = logic;
 
   // UI state from Zustand store
   const setIsSettingsModalOpen = useUIStore((s) => s.setIsSettingsModalOpen);
   const setIsPreloadedMessagesModalOpen = useUIStore((s) => s.setIsPreloadedMessagesModalOpen);
   const toggleHistorySidebar = useUIStore((s) => s.toggleHistorySidebar);
-  const setIsLogViewerOpen = useUIStore((s) => s.setIsLogViewerOpen);
-  const isHistorySidebarOpen = useUIStore((s) => s.isHistorySidebarOpen);
 
   // 使用 useStableCallback 包裹所有会传递给子组件的函数
   const onNewChat = useStableCallback(() => chatState.startNewChat());
   const onOpenSettingsModal = useStableCallback(() => setIsSettingsModalOpen(true));
   const onOpenScenariosModal = useStableCallback(() => setIsPreloadedMessagesModalOpen(true));
   const onToggleHistorySidebar = useStableCallback(() => toggleHistorySidebar());
-  
+
   const onLoadCanvasPrompt = useStableCallback(handleLoadCanvasPromptAndSave);
   const onToggleBBox = useStableCallback(handleToggleBBoxMode);
   const onToggleGuide = useStableCallback(handleToggleGuideMode);
-  
+
   const onScrollContainerScroll = useStableCallback(chatState.onScrollContainerScroll);
   const onEditMessage = useStableCallback(chatState.handleEditMessage);
   const onDeleteMessage = useStableCallback(chatState.handleDeleteMessage);
   const onRetryMessage = useStableCallback(chatState.handleRetryMessage);
   const onEditMessageContent = useStableCallback(chatState.handleUpdateMessageContent);
   const onUpdateMessageFile = useStableCallback(chatState.handleUpdateMessageFile);
-  
+
   const onSuggestionClickStable = useStableCallback((text: string) => handleSuggestionClick('homepage', text));
   const onOrganizeInfoClickStable = useStableCallback((text: string) => handleSuggestionClick('organize', text));
   const onFollowUpSuggestionClickStable = useStableCallback((text: string) => handleSuggestionClick('follow-up', text));
-  
+
   const onTextToSpeech = useStableCallback(chatState.handleTextToSpeech);
   const onGenerateCanvas = useStableCallback(chatState.handleGenerateCanvas);
   const onContinueGeneration = useStableCallback(chatState.handleContinueGeneration);
   const onQuickTTS = useStableCallback(chatState.handleQuickTTS);
-  
-  const setCommandedInput = useStableCallback(chatState.setCommandedInput);
-  const onMessageSent = useStableCallback(() => chatState.setCommandedInput(null));
-  const setSelectedFiles = useStableCallback(chatState.setSelectedFiles);
+
+  // These handlers still need to be returned — children receive them as props
+  const onMessageSent = useStableCallback(() => useChatStore.getState().setCommandedInput(null));
   const onSendMessage = useStableCallback((text: string, options?: { isFastMode?: boolean }) => chatState.handleSendMessage({ text, ...options }));
-  
-  const setEditingMessageId = useStableCallback(chatState.setEditingMessageId);
+
   const onStopGenerating = useStableCallback(chatState.handleStopGenerating);
   const onCancelEdit = useStableCallback(chatState.handleCancelEdit);
   const onProcessFiles = useStableCallback(chatState.handleProcessAndAddFiles);
   const onAddFileById = useStableCallback(chatState.handleAddFileById);
   const onCancelUpload = useStableCallback(chatState.handleCancelFileUpload);
   const onTranscribeAudio = useStableCallback(chatState.handleTranscribeAudio);
-  
-  const setAppFileError = useStableCallback(chatState.setAppFileError);
-  const setAspectRatio = useStableCallback(chatState.setAspectRatio);
-  const setImageSize = useStableCallback(chatState.setImageSize);
-  
+
   const onToggleGoogleSearch = useStableCallback(chatState.toggleGoogleSearch);
   const onToggleCodeExecution = useStableCallback(chatState.toggleCodeExecution);
   const onToggleLocalPython = useStableCallback(chatState.toggleLocalPython);
   const onToggleUrlContext = useStableCallback(chatState.toggleUrlContext);
   const onToggleDeepSearch = useStableCallback(chatState.toggleDeepSearch);
-  
+
   const onClearChat = useStableCallback(chatState.handleClearCurrentChat);
   const onOpenSettings = useStableCallback(() => setIsSettingsModalOpen(true));
   const onToggleCanvasPrompt = useStableCallback(handleLoadCanvasPromptAndSave);
@@ -114,157 +105,81 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
   const currentModelName = getCurrentModelDisplayName();
 
   return useMemo(() => ({
+    // IDs & Data (still needed by ChatArea)
     activeSessionId: chatState.activeSessionId,
     sessionTitle,
     currentChatSettings: chatState.currentChatSettings,
-    setAppFileError,
-    isAppDraggingOver: chatState.isAppDraggingOver,
-    isProcessingDrop: chatState.isProcessingDrop,
-    handleAppDragEnter,
-    handleAppDragOver,
-    handleAppDragLeave,
-    handleAppDrop,
-    onNewChat,
-    onOpenSettingsModal,
-    onOpenScenariosModal,
-    onToggleHistorySidebar,
+    messages: chatState.messages,
+    scrollContainerRef: chatState.scrollContainerRef,
+    modelsLoadingError: null as string | null,
+
+    // Computed values
     isLoading: chatState.isLoading,
     currentModelName,
     availableModels: chatState.apiModels,
     selectedModelId: chatState.currentChatSettings.modelId || appSettings.modelId,
-    onSelectModel,
-    isSwitchingModel: chatState.isSwitchingModel,
-    isHistorySidebarOpen,
-    onLoadCanvasPrompt,
     isCanvasPromptActive: chatState.currentChatSettings.systemInstruction === CANVAS_SYSTEM_PROMPT,
     isBBoxModeActive: chatState.currentChatSettings.systemInstruction === BBOX_SYSTEM_PROMPT,
     isGuideModeActive: chatState.currentChatSettings.systemInstruction === HD_GUIDE_SYSTEM_PROMPT,
-    onToggleBBox,
-    onToggleGuide,
     isKeyLocked: !!chatState.currentChatSettings.lockedApiKey,
-    themeId: currentTheme.id,
-    modelsLoadingError: null,
-    messages: chatState.messages,
-    scrollContainerRef: chatState.scrollContainerRef,
-    setScrollContainerRef,
-    onScrollContainerScroll,
-    onEditMessage,
-    onDeleteMessage,
-    onRetryMessage,
-    onEditMessageContent, 
-    onUpdateMessageFile,
+    isEditing: !!chatState.editingMessageId,
+    isImagenModel: chatState.currentChatSettings.modelId?.includes('imagen'),
+    isImageEditModel: chatState.currentChatSettings.modelId?.includes('image-preview'),
     showThoughts: chatState.currentChatSettings.showThoughts,
-    baseFontSize: appSettings.baseFontSize,
-    expandCodeBlocksByDefault: appSettings.expandCodeBlocksByDefault,
-    isMermaidRenderingEnabled: appSettings.isMermaidRenderingEnabled,
-    isGraphvizRenderingEnabled: appSettings.isGraphvizRenderingEnabled ?? true,
+    isPipSupported: pipState.isPipSupported && appSettings.useCustomApiConfig,
+    isPipActive: pipState.isPipActive,
+    generateQuadImages: appSettings.generateQuadImages ?? false,
+    isGoogleSearchEnabled: !!chatState.currentChatSettings.isGoogleSearchEnabled,
+    isCodeExecutionEnabled: !!chatState.currentChatSettings.isCodeExecutionEnabled,
+    isLocalPythonEnabled: !!chatState.currentChatSettings.isLocalPythonEnabled,
+    isUrlContextEnabled: !!chatState.currentChatSettings.isUrlContextEnabled,
+    isDeepSearchEnabled: !!chatState.currentChatSettings.isDeepSearchEnabled,
+
+    // Drag/drop state
+    isAppDraggingOver: chatState.isAppDraggingOver,
+    isProcessingDrop: chatState.isProcessingDrop,
+
+    // All handlers (stable references)
+    handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
+    setScrollContainerRef, onScrollContainerScroll,
+    onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar,
+    onLoadCanvasPrompt, onToggleBBox, onToggleGuide,
+    onSelectModel, onSetThinkingLevel,
+    onEditMessage, onDeleteMessage, onRetryMessage,
+    onEditMessageContent, onUpdateMessageFile,
     onSuggestionClick: onSuggestionClickStable,
     onOrganizeInfoClick: onOrganizeInfoClickStable,
     onFollowUpSuggestionClick: onFollowUpSuggestionClickStable,
-    onTextToSpeech,
-    onGenerateCanvas,
-    onContinueGeneration,
-    ttsMessageId: chatState.ttsMessageId,
-    onQuickTTS,
-    language,
-    appSettings,
-    commandedInput: chatState.commandedInput,
-    setCommandedInput,
-    onMessageSent,
-    selectedFiles: chatState.selectedFiles,
-    setSelectedFiles,
-    onSendMessage,
-    isEditing: !!chatState.editingMessageId,
-    editMode: chatState.editMode,
-    editingMessageId: chatState.editingMessageId,
-    setEditingMessageId,
-    onStopGenerating,
-    onCancelEdit,
-    onProcessFiles,
-    onAddFileById,
-    onCancelUpload,
-    onTranscribeAudio,
-    isProcessingFile: chatState.isAppProcessingFile,
-    fileError: chatState.appFileError,
-    isImagenModel: chatState.currentChatSettings.modelId?.includes('imagen'),
-    isImageEditModel: chatState.currentChatSettings.modelId?.includes('image-preview'),
-    aspectRatio: chatState.aspectRatio,
-    setAspectRatio,
-    imageSize: chatState.imageSize,
-    setImageSize,
-    isGoogleSearchEnabled: !!chatState.currentChatSettings.isGoogleSearchEnabled,
-    onToggleGoogleSearch,
-    isCodeExecutionEnabled: !!chatState.currentChatSettings.isCodeExecutionEnabled,
-    onToggleCodeExecution,
-    isLocalPythonEnabled: !!chatState.currentChatSettings.isLocalPythonEnabled,
-    onToggleLocalPython,
-    isUrlContextEnabled: !!chatState.currentChatSettings.isUrlContextEnabled,
-    onToggleUrlContext,
-    isDeepSearchEnabled: !!chatState.currentChatSettings.isDeepSearchEnabled,
-    onToggleDeepSearch,
-    onClearChat,
-    onOpenSettings,
-    onToggleCanvasPrompt,
-    onTogglePinCurrentSession,
-    onRetryLastTurn,
-    onEditLastUserMessage,
-    onOpenLogViewer: () => setIsLogViewerOpen(true),
-    onClearAllHistory: chatState.clearAllHistory,
-    isPipSupported: pipState.isPipSupported && appSettings.useCustomApiConfig,
-    isPipActive: pipState.isPipActive,
-    onTogglePip,
-    generateQuadImages: appSettings.generateQuadImages ?? false,
-    onToggleQuadImages,
-    onSetThinkingLevel,
-    setCurrentChatSettings,
-    onOpenSidePanel,
-    onAddUserMessage,
-    onLiveTranscript,
+    onTextToSpeech, onGenerateCanvas, onContinueGeneration, onQuickTTS,
+    onMessageSent, onSendMessage,
+    onStopGenerating, onCancelEdit,
+    onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
+    onToggleGoogleSearch, onToggleCodeExecution, onToggleLocalPython,
+    onToggleUrlContext, onToggleDeepSearch,
+    onClearChat, onOpenSettings, onToggleCanvasPrompt,
+    onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
+    onTogglePip, onToggleQuadImages,
+    setCurrentChatSettings, onOpenSidePanel,
+    onAddUserMessage, onLiveTranscript,
     t,
   }), [
-    // 现在的依赖数组中只剩下纯粹的数据和状态，排除了所有函数
-    chatState.activeSessionId, 
+    // Only data/state deps — all functions are stable references
+    chatState.activeSessionId,
     sessionTitle,
-    chatState.currentChatSettings, 
-    chatState.isAppDraggingOver, 
+    chatState.currentChatSettings,
+    chatState.isAppDraggingOver,
     chatState.isProcessingDrop,
-    chatState.isLoading, 
-    chatState.apiModels, 
-    chatState.isSwitchingModel, 
-    chatState.messages, 
+    chatState.isLoading,
+    chatState.apiModels,
+    chatState.messages,
     chatState.scrollContainerRef,
-    chatState.ttsMessageId, 
-    chatState.commandedInput, 
-    chatState.selectedFiles,
-    chatState.editingMessageId, 
-    chatState.editMode, 
-    chatState.isAppProcessingFile, 
-    chatState.appFileError, 
-    chatState.aspectRatio,
-    chatState.imageSize, 
+    chatState.editingMessageId,
 
     pipState.isPipSupported,
     pipState.isPipActive,
-    
-    appSettings, 
-    currentTheme.id, 
-    language, 
+
+    appSettings,
     t,
     currentModelName,
-
-    // 依然需要将这些稳定的回调传入依赖数组以满足 React Hook 规则的检测
-    // 但由于上面用 useStableCallback 包装过，它们在组件整个生命周期中都不会改变
-    setAppFileError, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
-    onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar,
-    onSelectModel, onLoadCanvasPrompt, onToggleBBox, onToggleGuide,
-    setScrollContainerRef, onScrollContainerScroll, onEditMessage, onDeleteMessage, onRetryMessage,
-    onEditMessageContent, onUpdateMessageFile, onSuggestionClickStable, onOrganizeInfoClickStable, onFollowUpSuggestionClickStable,
-    onTextToSpeech, onGenerateCanvas, onContinueGeneration, onQuickTTS, setCommandedInput, onMessageSent,
-    setSelectedFiles, onSendMessage, setEditingMessageId, onStopGenerating, onCancelEdit, onProcessFiles,
-    onAddFileById, onCancelUpload, onTranscribeAudio, setAspectRatio, setImageSize, onToggleGoogleSearch,
-    onToggleCodeExecution, onToggleLocalPython, onToggleUrlContext, onToggleDeepSearch, onClearChat, onOpenSettings,
-    onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage, onTogglePip,
-    onToggleQuadImages, onSetThinkingLevel, setCurrentChatSettings, onOpenSidePanel,
-    onAddUserMessage, onLiveTranscript
   ]);
 };
