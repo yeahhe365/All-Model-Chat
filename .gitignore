@@ -32,3 +32,6 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Local worktrees
+.worktrees/
