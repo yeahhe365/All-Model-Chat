@@ -45,7 +45,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     models,
     selectedId,
     onSelect,
-    t,
+    t: _t,
     renderTrigger,
     dropdownClassName
 }) => {

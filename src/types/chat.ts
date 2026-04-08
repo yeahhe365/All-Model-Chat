@@ -1,8 +1,8 @@
-
 import { ChatSettings, MediaResolution } from './settings';
 import { ThemeColors } from './theme';
 import { AppSettings, ModelOption } from './settings';
 import { translations } from '../utils/appUtils';
+import type { Content, Part } from '@google/genai';
 
 export interface VideoMetadata {
   startOffset?: string;
@@ -79,21 +79,8 @@ export interface ChatMessage {
   apiParts?: any[]; // Natively preserves API parts like executableCode and codeExecutionResult
 }
 
-// Defines the structure for a part of a content message
-export interface ContentPart {
-  text?: string;
-  inlineData?: {
-    mimeType: string;
-    data: string;
-  };
-  fileData?: { // Added for referencing uploaded files like PDFs
-    mimeType?: string; // Optional for YouTube URLs
-    fileUri: string;
-  };
-  videoMetadata?: VideoMetadata;
-  thoughtSignature?: string; // Added to pass back to API
-  mediaResolution?: { level: string }; // Added for Gemini 3 per-part resolution
-}
+export type ContentPart = Part;
+export type ChatHistoryItem = Content;
 
 export interface ChatGroup {
   id: string;

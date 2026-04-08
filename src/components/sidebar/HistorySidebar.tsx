@@ -105,7 +105,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     generatingTitleSessionIds: propsGeneratingTitleSessionIds, onOpenExportModal, onAddNewGroup,
     onDeleteGroup, onToggleGroupExpansion, themeId: propsThemeId, t,
     onNewChat, onDeleteSession, onTogglePinSession, onDuplicateSession,
-    onOpenSettingsModal, newChatShortcut
+    onOpenSettingsModal, onRenameSession, onRenameGroup, onMoveSessionToGroup, onSelectSession, language: propsLanguage, newChatShortcut
   } = props;
 
   // Read directly from stores with fallback to props
@@ -118,13 +118,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const storeThemeId = useSettingsStore(s => s.currentTheme.id);
   const storeLanguage = useSettingsStore(s => s.language);
 
-  const isOpen = storeIsOpen ?? propsIsOpen;
+  const isOpen = storeIsOpen ?? propsIsOpen ?? false;
   const sessions = storeSessions ?? propsSessions ?? [];
   const groups = storeGroups ?? propsGroups ?? [];
   const activeSessionId = storeActiveSessionId ?? propsActiveSessionId ?? null;
   const loadingSessionIds = storeLoadingSessionIds ?? propsLoadingSessionIds ?? new Set();
   const generatingTitleSessionIds = storeGeneratingTitleSessionIds ?? propsGeneratingTitleSessionIds ?? new Set();
   const themeId = storeThemeId ?? propsThemeId;
+  const language = storeLanguage === 'zh' || propsLanguage === 'zh' ? 'zh' : 'en';
 
   const {
     searchQuery, setSearchQuery,
@@ -148,7 +149,19 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleMiniSearchClick,
     handleEmptySpaceClick,
     handleSessionSelect,
-  } = useHistorySidebarLogic(props);
+  } = useHistorySidebarLogic({
+    isOpen,
+    onToggle,
+    sessions,
+    groups,
+    generatingTitleSessionIds,
+    onRenameSession,
+    onRenameGroup,
+    onMoveSessionToGroup,
+    onSelectSession,
+    t,
+    language,
+  });
 
   const ungroupedSessions = sessionsByGroupId.get(null) || [];
   const pinnedUngrouped = ungroupedSessions.filter(s => s.isPinned);
@@ -209,14 +222,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
                         key={group.id}
                         group={group}
                         sessions={sessionsByGroupId.get(group.id) || []}
-                        editingItem={editingItem}
                         dragOverId={dragOverId}
                         onToggleGroupExpansion={onToggleGroupExpansion}
                         handleGroupStartEdit={(item) => handleStartEdit('group', item)}
                         handleDrop={handleDrop}
                         handleDragOver={handleDragOver}
                         setDragOverId={setDragOverId}
-                        setEditingItem={setEditingItem}
                         onDeleteGroup={onDeleteGroup}
                         {...sessionItemSharedProps}
                     />

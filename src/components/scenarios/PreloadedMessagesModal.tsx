@@ -52,6 +52,8 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
+
+    return undefined;
   }, [isOpen]);
 
   const handleClose = () => { 

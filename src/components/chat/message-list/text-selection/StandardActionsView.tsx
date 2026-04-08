@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Quote, Copy, Check, CornerRightDown, Volume2 } from 'lucide-react';
 import { IconGoogle } from '../../../icons/CustomIcons';
 import { translations } from '../../../../utils/appUtils';

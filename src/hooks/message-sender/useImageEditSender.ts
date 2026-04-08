@@ -1,7 +1,5 @@
 
-
-
-import React, { Dispatch, SetStateAction, useCallback } from 'react';
+import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
@@ -14,7 +12,7 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 interface ImageEditSenderProps {
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    activeJobs: MutableRefObject<Map<string, AbortController>>;
     setActiveSessionId: (id: string | null) => void;
 }
 
@@ -65,7 +63,6 @@ export const useImageEditSender = ({
             newMessages: [userMessage, modelMessage],
             settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings, ...currentChatSettings },
             editingMessageId: effectiveEditingId,
-            appSettings,
             title: newTitle,
             shouldLockKey: options.shouldLockKey,
             keyToLock: keyToUse
@@ -119,8 +116,10 @@ export const useImageEditSender = ({
                             successfulImageCount++;
                             const { mimeType, data } = part.inlineData;
                             
-                            const newFile = createUploadedFileFromBase64(data, mimeType, `edited-image-${index + 1}`);
-                            combinedFiles.push(newFile);
+                            if (mimeType && data) {
+                                const newFile = createUploadedFileFromBase64(data, mimeType, `edited-image-${index + 1}`);
+                                combinedFiles.push(newFile);
+                            }
                         }
                     });
 

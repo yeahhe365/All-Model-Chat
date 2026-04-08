@@ -17,6 +17,7 @@ import { useMessageListScroll } from './message-list/hooks/useMessageListScroll'
 import { MessageListFooter } from './message-list/MessageListFooter';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
+import type { Translator } from '../../utils/translations';
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -63,12 +64,12 @@ export const MessageList: React.FC<MessageListProps> = ({
   const storeTtsMessageId = useChatStore(s => s.ttsMessageId);
   const storeAppSettings = useSettingsStore(s => s.appSettings);
   const storeThemeId = useSettingsStore(s => s.currentTheme.id);
-  const storeScrollContainerRef = useChatStore(s => s.scrollContainerRef);
 
   // Use store values with fallback to props
   const ttsMessageId = storeTtsMessageId ?? propsTtsMessageId;
   const appSettings = storeAppSettings ?? propsAppSettings;
   const themeId = storeThemeId ?? propsThemeId;
+  const translate = t as Translator;
   
   // UI Logic (Modals, Previews, Configuration)
   const {
@@ -93,7 +94,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   // Scroll Logic
   const {
       virtuosoRef,
-      setInternalScrollerRef,
+      handleScrollerRef,
       setAtBottom,
       onRangeChanged,
       scrollToPrevTurn,
@@ -121,7 +122,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           <Virtuoso
             ref={virtuosoRef}
             data={messages}
-            scrollerRef={setInternalScrollerRef}
+            scrollerRef={handleScrollerRef}
             atBottomStateChange={setAtBottom}
             followOutput={false} // Disable auto-scroll to bottom during streaming (we handle it via auto-anchor or user interaction)
             rangeChanged={onRangeChanged}
@@ -155,7 +156,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onContinueGeneration={onContinueGeneration}
                         ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
-                        t={t}
+                        t={translate}
                         appSettings={appSettings}
                         onOpenSidePanel={onOpenSidePanel}
                         onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
@@ -172,7 +173,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onInsert={onInsert} 
             onTTS={onQuickTTS} 
             containerRef={scrollerRef as any} 
-            t={t} 
+            t={translate} 
         />
 
         <ScrollNavigation 
@@ -188,7 +189,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       <FilePreviewModal 
           file={previewFile} 
           onClose={closeFilePreviewModal}
-          t={t}
+          t={translate}
           onPrev={handlePrevImage}
           onNext={handleNextImage}
           hasPrev={currentImageIndex > 0}
@@ -209,7 +210,7 @@ export const MessageList: React.FC<MessageListProps> = ({
           onClose={() => setConfiguringFile(null)} 
           file={configuringFile?.file || null}
           onSave={handleSaveFileConfig}
-          t={t}
+          t={translate}
           isGemini3={isGemini3}
       />
     </>

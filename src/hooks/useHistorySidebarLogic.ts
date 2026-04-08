@@ -20,7 +20,7 @@ interface UseHistorySidebarLogicProps {
 }
 
 export const useHistorySidebarLogic = ({
-    isOpen,
+    isOpen: _isOpen,
     onToggle,
     sessions,
     groups,

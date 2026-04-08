@@ -14,7 +14,7 @@ interface ExportChatModalProps {
   t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
-export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClose, onExport, exportStatus, t }) => {
+export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClose, onExport, exportStatus, t: _t }) => {
     const headingIconSize = useResponsiveValue(20, 24);
     const isLoading = exportStatus === 'exporting';
 

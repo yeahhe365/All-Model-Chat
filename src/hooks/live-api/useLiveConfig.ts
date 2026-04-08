@@ -2,7 +2,6 @@
 import { useMemo } from 'react';
 import { AppSettings, ChatSettings } from '../../types';
 import { Tool } from '@google/genai';
-import { MediaResolution } from '../../types/settings';
 
 interface UseLiveConfigProps {
     appSettings: AppSettings;

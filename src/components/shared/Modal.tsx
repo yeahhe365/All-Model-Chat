@@ -31,6 +31,8 @@ export const Modal: React.FC<ModalProps> = ({
       const timer = setTimeout(() => setIsActuallyOpen(false), 300); // Corresponds to modal-exit-animation duration
       return () => clearTimeout(timer);
     }
+
+    return undefined;
   }, [isOpen]);
 
   useEffect(() => {

@@ -6,7 +6,6 @@ import { generateUniqueId, getKeyForRequest, getTranslator, createMessage } from
 import { geminiServiceInstance } from '../../services/geminiService';
 import { CANVAS_SYSTEM_PROMPT } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/baseApi';
-import { ChatMessage } from '../../types';
 import { CanvasGeneratorProps } from './types';
 
 export const useCanvasGenerator = ({

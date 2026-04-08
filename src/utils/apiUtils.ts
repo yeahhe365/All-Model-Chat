@@ -2,6 +2,7 @@
 import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
+import { resolveGeminiApiKeys } from '../platform/genai/client';
 
 export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
@@ -10,7 +11,7 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
         };
     }
     return {
-        apiKeysString: (import.meta as any).env?.VITE_GEMINI_API_KEY || null,
+        apiKeysString: resolveGeminiApiKeys((import.meta as any).env ?? {}),
     };
 };
 

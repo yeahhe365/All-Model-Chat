@@ -116,6 +116,8 @@ export const useCodeBlock = ({
             el.addEventListener('scroll', handleScroll);
             return () => el.removeEventListener('scroll', handleScroll);
         }
+
+        return undefined;
     }, [handleScroll]);
 
     // Layout effect for overflow and auto-scroll

@@ -32,7 +32,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
-  isOpen, onClose, currentSettings, availableModels, availableThemes, 
+  isOpen, onClose, currentSettings, availableModels,
   onSave, onClearAllHistory, onClearCache, onOpenLogViewer,
   onInstallPwa, isInstallable, t, 
   onImportSettings, onExportSettings,

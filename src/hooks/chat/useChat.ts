@@ -39,7 +39,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const imageSize = useChatStore(s => s.imageSize);
     const ttsMessageId = useChatStore(s => s.ttsMessageId);
     const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
-    const scrollContainerRef = useChatStore(s => s.scrollContainerRef);
 
     // Stable store references for setters and persistence
     const storeRef = useChatStore;
@@ -128,13 +127,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
             storeRef.getState().setAspectRatio(v(storeRef.getState().aspectRatio));
         } else {
             storeRef.getState().setAspectRatio(v);
-        }
-    }, []);
-    const setImageSize = useCallback((v: string | ((prev: string) => string)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setImageSize(v(storeRef.getState().imageSize));
-        } else {
-            storeRef.getState().setImageSize(v);
         }
     }, []);
     const setTtsMessageId = useCallback((v: string | null | ((prev: string | null) => string | null)) => {

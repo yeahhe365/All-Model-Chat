@@ -213,7 +213,7 @@ class PyodideService {
         if (!this.worker) {
             // Dynamically construct the base URL for Pyodide based on the current location.
             // This ensures it works both in dev (localhost) and production (domain.com/base/pyodide/).
-            const basePath = import.meta.env.BASE_URL || '/';
+            const basePath = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL || '/';
             const cleanBasePath = basePath.endsWith('/') ? basePath : basePath + '/';
             const pyodideBaseUrl = `${window.location.origin}${cleanBasePath}pyodide/`;
 

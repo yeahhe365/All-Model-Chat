@@ -1,7 +1,7 @@
 
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
-import { generateUniqueId, getKeyForRequest, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
+import { generateUniqueId, getKeyForRequest, logService, createNewSession } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
 import { useChatStreamHandler } from './message-sender/useChatStreamHandler';
 import { useTtsImagenSender } from './message-sender/useTtsImagenSender';

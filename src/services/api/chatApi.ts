@@ -1,6 +1,5 @@
-
-import { GenerateContentResponse, Part, UsageMetadata, ChatHistoryItem } from "@google/genai";
-import { ThoughtSupportingPart } from '../../types';
+import { GenerateContentResponse, Part, UsageMetadata } from "@google/genai";
+import { ChatHistoryItem, ThoughtSupportingPart } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
 
@@ -8,19 +7,49 @@ import { getConfiguredApiClient } from "./baseApi";
  * Shared helper to parse GenAI responses.
  * Extracts parts, separates thoughts, and merges metadata/citations from tool calls.
  */
-const processResponse = (response: GenerateContentResponse) => {
+const mergeUniqueCitations = (target: any, citations: any[] = []) => {
+    if (citations.length === 0) {
+        return target;
+    }
+
+    if (!target.citations) {
+        target.citations = [];
+    }
+
+    for (const citation of citations) {
+        if (!target.citations.some((existing: any) => existing.uri === citation.uri)) {
+            target.citations.push(citation);
+        }
+    }
+
+    return target;
+};
+
+const getToolCallCitations = (part: Part): any[] => {
+    const args = part.toolCall?.args as
+        | { urlContextMetadata?: { citations?: any[] } }
+        | undefined;
+
+    return args?.urlContextMetadata?.citations ?? [];
+};
+
+export const processGenerateContentResponse = (response: GenerateContentResponse) => {
     let thoughtsText = "";
     const responseParts: Part[] = [];
+    const contentParts = response.candidates?.[0]?.content?.parts ?? [];
 
-    if (response.candidates && response.candidates[0]?.content?.parts) {
-        for (const part of response.candidates[0].content.parts) {
-            const pAsThoughtSupporting = part as ThoughtSupportingPart;
-            if (pAsThoughtSupporting.thought) {
-                thoughtsText += part.text;
-            } else {
-                responseParts.push(part);
-            }
+    for (const part of contentParts) {
+        const pAsThoughtSupporting = part as ThoughtSupportingPart;
+        if (pAsThoughtSupporting.thought) {
+            thoughtsText += part.text;
+            continue;
         }
+
+        if (part.toolCall || part.toolResponse) {
+            continue;
+        }
+
+        responseParts.push(part);
     }
 
     if (responseParts.length === 0 && response.text) {
@@ -34,19 +63,8 @@ const processResponse = (response: GenerateContentResponse) => {
     // @ts-ignore - Handle potential snake_case from raw API responses
     const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
 
-    const toolCalls = candidate?.toolCalls;
-    if (toolCalls) {
-        for (const toolCall of toolCalls) {
-            if (toolCall.functionCall?.args?.urlContextMetadata) {
-                if (!finalMetadata.citations) finalMetadata.citations = [];
-                const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
-                for (const newCitation of newCitations) {
-                    if (!finalMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                        finalMetadata.citations.push(newCitation);
-                    }
-                }
-            }
-        }
+    for (const part of contentParts) {
+        mergeUniqueCitations(finalMetadata, getToolCallCitations(part));
     }
 
     return {
@@ -112,25 +130,21 @@ export const sendStatelessMessageStreamApi = async (
                     finalUrlContextMetadata = urlMetadata;
                 }
 
-                const toolCalls = candidate.toolCalls;
-                if (toolCalls) {
-                    for (const toolCall of toolCalls) {
-                        if (toolCall.functionCall?.args?.urlContextMetadata) {
-                            if (!finalGroundingMetadata) finalGroundingMetadata = {};
-                            if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
-                            const newCitations = toolCall.functionCall.args.urlContextMetadata.citations || [];
-                            for (const newCitation of newCitations) {
-                                if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                                    finalGroundingMetadata.citations.push(newCitation);
-                                }
-                            }
-                        }
-                    }
-                }
-                
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
+                        const toolCallCitations = getToolCallCitations(part);
+
+                        if (toolCallCitations.length > 0) {
+                            if (!finalGroundingMetadata) {
+                                finalGroundingMetadata = {};
+                            }
+                            mergeUniqueCitations(finalGroundingMetadata, toolCallCitations);
+                        }
+
+                        if (part.toolCall || part.toolResponse) {
+                            continue;
+                        }
 
                         if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
@@ -175,7 +189,7 @@ export const sendStatelessMessageNonStreamApi = async (
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
-        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
+        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processGenerateContentResponse(response);
 
         logService.info(`Stateless non-stream complete for ${modelId}.`, { usage, hasGrounding: !!grounding, hasUrlContext: !!urlContext });
         onComplete(responseParts, thoughts, usage, grounding, urlContext);

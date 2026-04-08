@@ -59,7 +59,8 @@ export const fileToBlobUrl = (file: File | Blob): string => {
 
 export const base64ToBlob = (base64: string, mimeType: string): Blob => {
     const byteArray = decodeBase64ToArrayBuffer(base64);
-    return new Blob([byteArray], { type: mimeType });
+    const normalizedBytes = Uint8Array.from(byteArray);
+    return new Blob([normalizedBytes.buffer], { type: mimeType });
 };
 
 export const base64ToBlobUrl = (base64: string, mimeType: string): string => {

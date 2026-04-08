@@ -17,7 +17,9 @@ globalThis.BroadcastChannel = vi.fn(() => {
 vi.mock('../../utils/db', () => ({
   dbService: {
     getAppSettings: vi.fn(),
+    getSchemaVersion: vi.fn(),
     setAppSettings: vi.fn().mockResolvedValue(undefined),
+    setSchemaVersion: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
@@ -116,6 +118,18 @@ describe('settingsStore', () => {
       });
     });
 
+    it('persists the current schema version when settings are saved', async () => {
+      useSettingsStore.setState({ isSettingsLoaded: true });
+      useSettingsStore.getState().setAppSettings(prev => ({
+        ...prev,
+        temperature: 0.3,
+      }));
+
+      await vi.waitFor(() => {
+        expect(dbService.setSchemaVersion).toHaveBeenCalledWith(1);
+      });
+    });
+
     it('broadcasts settings update after persist', async () => {
       useSettingsStore.setState({ isSettingsLoaded: true });
       useSettingsStore.getState().setAppSettings(prev => ({
@@ -144,6 +158,7 @@ describe('settingsStore', () => {
 
   describe('loadSettings', () => {
     it('loads settings from DB and merges with defaults', async () => {
+      vi.mocked(dbService.getSchemaVersion).mockResolvedValue(undefined);
       vi.mocked(dbService.getAppSettings).mockResolvedValue({
         temperature: 0.5,
         language: 'zh',
@@ -157,13 +172,26 @@ describe('settingsStore', () => {
       expect(state.isSettingsLoaded).toBe(true);
     });
 
+    it('records the current schema version when loading legacy settings without a version key', async () => {
+      vi.mocked(dbService.getSchemaVersion).mockResolvedValue(undefined);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue({
+        temperature: 0.5,
+      } as any);
+
+      await useSettingsStore.getState().loadSettings();
+
+      expect(dbService.setSchemaVersion).toHaveBeenCalledWith(1);
+    });
+
     it('sets isSettingsLoaded when no stored settings', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
+      vi.mocked(dbService.getSchemaVersion).mockResolvedValue(undefined);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
     });
 
     it('handles DB errors gracefully', async () => {
+      vi.mocked(dbService.getSchemaVersion).mockResolvedValue(undefined);
       vi.mocked(dbService.getAppSettings).mockRejectedValue(new Error('DB fail'));
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
@@ -172,6 +200,7 @@ describe('settingsStore', () => {
     it('resolves system language to zh when browser is Chinese', async () => {
       const originalLang = navigator.language;
       Object.defineProperty(navigator, 'language', { value: 'zh-CN', configurable: true });
+      vi.mocked(dbService.getSchemaVersion).mockResolvedValue(undefined);
       vi.mocked(dbService.getAppSettings).mockResolvedValue({ language: 'system' } as any);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().language).toBe('zh');

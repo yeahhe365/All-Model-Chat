@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { UploadedFile } from '../../types';
-import { ChevronLeft, ChevronRight, FileCode2, FileAudio, ExternalLink, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';

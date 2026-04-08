@@ -8,6 +8,7 @@ import { ChatInputArea, ChatInputAreaProps } from './ChatInputArea';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 import { useChatStore } from '../../../stores/chatStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
+import type { Translator } from '../../../utils/translations';
 
 export type { ChatInputProps };
 
@@ -19,7 +20,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     const storeSetEditingMessageId = useChatStore(s => s.setEditingMessageId);
     const storeEditMode = useChatStore(s => s.editMode);
     const storeCommandedInput = useChatStore(s => s.commandedInput);
-    const storeSetCommandedInput = useChatStore(s => s.setCommandedInput);
     const storeAspectRatio = useChatStore(s => s.aspectRatio);
     const storeSetAspectRatio = useChatStore(s => s.setAspectRatio);
     const storeImageSize = useChatStore(s => s.imageSize);
@@ -36,7 +36,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     const setEditingMessageId = storeSetEditingMessageId ?? props.setEditingMessageId;
     const editMode = storeEditMode ?? props.editMode;
     const commandedInput = storeCommandedInput ?? props.commandedInput;
-    const setCommandedInput = storeSetCommandedInput ?? props.setCommandedInput;
     const aspectRatio = storeAspectRatio ?? props.aspectRatio;
     const setAspectRatio = storeSetAspectRatio ?? props.setAspectRatio;
     const imageSize = storeImageSize ?? props.imageSize;
@@ -45,6 +44,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     const appFileError = storeAppFileError ?? props.fileError;
     const setAppFileError = storeSetAppFileError ?? props.setAppFileError;
     const appSettings = storeAppSettings ?? props.appSettings;
+    const translate = effectiveTranslator(props.t);
 
     // Build effective props with store values
     const effectiveProps = {
@@ -55,7 +55,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         setEditingMessageId,
         editMode,
         commandedInput,
-        setCommandedInput,
         aspectRatio,
         setAspectRatio,
         imageSize,
@@ -79,7 +78,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         targetDocument,
         canSend,
         isAnyModalOpen,
-        handleSmartSendMessage
     } = useChatInputLogic(effectiveProps);
 
     // 2. 组装 Toolbar 参数
@@ -115,7 +113,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         },
         isAddingByUrl: inputState.isAddingByUrl,
         isLoading: effectiveProps.isLoading,
-        t: effectiveProps.t,
+        t: translate,
         generateQuadImages: effectiveProps.generateQuadImages,
         onToggleQuadImages: effectiveProps.onToggleQuadImages,
         supportedAspectRatios: capabilities.supportedAspectRatios,
@@ -157,7 +155,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         onCancelEdit: effectiveProps.onCancelEdit,
         canSend: canSend,
         isWaitingForUpload: inputState.isWaitingForUpload,
-        t: effectiveProps.t as any,
+        t: translate,
         onTranslate: handlers.handleTranslate,
         isTranslating: inputState.isTranslating,
         inputText: inputState.inputText,
@@ -179,7 +177,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         slashCommandProps: {
             isOpen: slashCommandState.slashCommandState.isOpen,
             commands: slashCommandState.slashCommandState.filteredCommands,
-            onSelect: handlers.handleCommandSelect,
+            onSelect: slashCommandState.handleCommandSelect,
             selectedIndex: slashCommandState.slashCommandState.selectedIndex,
         },
         fileDisplayProps: {
@@ -242,7 +240,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             error: liveAPI.error,
             onDisconnect: liveAPI.disconnect,
         },
-        t: effectiveProps.t as any,
+        t: translate,
         themeId: effectiveProps.themeId
     };
 
@@ -263,7 +261,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 allCommandsForHelp={slashCommandState.allCommandsForHelp}
                 isProcessingFile={isAppProcessingFile}
                 isLoading={effectiveProps.isLoading}
-                t={effectiveProps.t}
+                t={translate}
                 initialContent={modalsState.editingFile?.textContent || ''}
                 initialFilename={modalsState.editingFile?.name || ''}
                 isSystemAudioRecordingEnabled={appSettings.isSystemAudioRecordingEnabled}
@@ -287,7 +285,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 appSettings={appSettings}
                 availableModels={effectiveProps.availableModels}
                 currentModelId={effectiveProps.currentChatSettings.modelId}
-                t={effectiveProps.t}
+                t={translate}
                 isGemini3={capabilities.isGemini3}
                 isPreviewEditable={localFileState.isPreviewEditable}
                 onSaveTextFile={localFileState.handleSavePreviewTextFile}
@@ -304,3 +302,5 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         </>
     );
 };
+
+const effectiveTranslator = (t: ChatInputProps['t']): Translator => t as Translator;

@@ -1,9 +1,6 @@
-
 import { ChatMessage, SavedChatSession, ChatSettings } from '../../types';
 import { generateUniqueId } from './ids';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { logService } from '../../services/logService';
-import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import { base64ToBlob } from '../fileHelpers';
 
 export const createMessage = (
@@ -72,7 +69,7 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
             }
 
             // 2. Standard Rehydration from IndexedDB Blob (rawFile)
-            const isValidRawFile = file.rawFile && (file.rawFile instanceof Blob || file.rawFile instanceof File);
+            const isValidRawFile = file.rawFile instanceof Blob;
             
             // Always create Object URL for Blobs if we have the raw file, needed for previewing (text, images, media, etc.)
             // Previously this logic was restricted to visual media/PDFs, causing text files to have stale/invalid dataUrls on reload.

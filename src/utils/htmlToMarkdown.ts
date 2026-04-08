@@ -12,7 +12,7 @@ const turndownService = new TurndownService({
 turndownService.use(gfm);
 
 // Remove scripts, styles, and other non-content elements
-turndownService.remove(['script', 'style', 'noscript', 'iframe', 'object', 'applet', 'video', 'audio']);
+turndownService.remove(['script', 'style', 'noscript', 'iframe', 'object', 'video', 'audio']);
 
 // Custom rule for KaTeX Math
 turndownService.addRule('katex', {

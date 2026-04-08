@@ -41,6 +41,8 @@ export const useHtmlPreviewModal = ({
             const timer = setTimeout(() => setIsActuallyOpen(false), 300);
             return () => clearTimeout(timer);
         }
+
+        return undefined;
     }, [isOpen, initialTrueFullscreenRequest]);
 
     const handleZoomIn = useCallback(() => setScale(s => Math.min(MAX_ZOOM, s + ZOOM_STEP)), []);

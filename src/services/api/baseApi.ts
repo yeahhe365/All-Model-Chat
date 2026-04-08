@@ -5,14 +5,82 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import { DEEP_SEARCH_SYSTEM_PROMPT, LOCAL_PYTHON_SYSTEM_PROMPT } from "../../constants/promptConstants";
-import { SafetySetting, MediaResolution } from "../../types/settings";
+import { HarmBlockThreshold, HarmCategory, SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model } from "../../utils/appUtils";
+import { getModelDescriptor, normalizeModelId, type ThinkingLevel } from "../../platform/genai/modelCatalog";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
+
+const REQUEST_SAFETY_CATEGORY_ORDER: HarmCategory[] = [
+    HarmCategory.HARM_CATEGORY_HARASSMENT,
+    HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+];
+
+const LEGACY_DEFAULT_SAFETY_CATEGORY_ORDER: HarmCategory[] = [
+    ...REQUEST_SAFETY_CATEGORY_ORDER,
+    HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+];
+
+const LEGACY_DEFAULT_SAFETY_SETTINGS: SafetySetting[] = LEGACY_DEFAULT_SAFETY_CATEGORY_ORDER.map((category) => ({
+    category,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+}));
+
+const sortSafetySettingsByOrder = (
+    safetySettings: SafetySetting[],
+    order: HarmCategory[]
+): SafetySetting[] => {
+    const latestByCategory = new Map<HarmCategory, HarmBlockThreshold>();
+
+    for (const setting of safetySettings) {
+        latestByCategory.set(setting.category, setting.threshold);
+    }
+
+    return order
+        .filter((category) => latestByCategory.has(category))
+        .map((category) => ({
+            category,
+            threshold: latestByCategory.get(category)!,
+        }));
+};
+
+const areSafetySettingsEqual = (left: SafetySetting[], right: SafetySetting[]) =>
+    left.length === right.length &&
+    left.every((setting, index) => (
+        setting.category === right[index]?.category &&
+        setting.threshold === right[index]?.threshold
+    ));
+
+const isLegacyDefaultSafetySettings = (safetySettings?: SafetySetting[]) => {
+    if (!safetySettings?.length) {
+        return false;
+    }
+
+    const normalized = sortSafetySettingsByOrder(safetySettings, LEGACY_DEFAULT_SAFETY_CATEGORY_ORDER);
+    return areSafetySettingsEqual(normalized, LEGACY_DEFAULT_SAFETY_SETTINGS);
+};
+
+const buildRequestSafetySettings = (safetySettings?: SafetySetting[]) => {
+    if (!safetySettings?.length || isLegacyDefaultSafetySettings(safetySettings)) {
+        return undefined;
+    }
+
+    const normalized = sortSafetySettingsByOrder(
+        safetySettings.filter((setting) =>
+            REQUEST_SAFETY_CATEGORY_ORDER.includes(setting.category) &&
+            setting.threshold !== HarmBlockThreshold.OFF
+        ),
+        REQUEST_SAFETY_CATEGORY_ORDER
+    );
+
+    return normalized.length > 0 ? normalized : undefined;
+};
 
 export const getClient = (apiKey: string, baseUrl?: string | null, httpOptions?: any): GoogleGenAI => {
   try {
@@ -90,7 +158,7 @@ export const buildGenerationConfig = (
     isGoogleSearchEnabled?: boolean,
     isCodeExecutionEnabled?: boolean,
     isUrlContextEnabled?: boolean,
-    thinkingLevel?: 'LOW' | 'HIGH',
+    thinkingLevel?: ThinkingLevel,
     aspectRatio?: string,
     isDeepSearchEnabled?: boolean,
     imageSize?: string,
@@ -98,7 +166,14 @@ export const buildGenerationConfig = (
     mediaResolution?: MediaResolution,
     isLocalPythonEnabled?: boolean
 ): any => {
-    if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
+    const normalizedModelId = normalizeModelId(modelId);
+    const descriptor = getModelDescriptor(normalizedModelId);
+    const isGemini25FlashImageModel =
+        normalizedModelId === 'gemini-2.5-flash-image-preview' ||
+        normalizedModelId === 'gemini-2.5-flash-image';
+    const isGemini3ImageModel = descriptor?.family === 'gemini-3' && descriptor.mode === 'image';
+
+    if (isGemini25FlashImageModel) {
         const imageConfig: any = {};
         if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
         
@@ -111,7 +186,7 @@ export const buildGenerationConfig = (
         return config;
     }
 
-    if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
+    if (isGemini3ImageModel) {
          const imageConfig: any = {
             imageSize: imageSize || '1K',
          };
@@ -148,7 +223,7 @@ export const buildGenerationConfig = (
     }
 
     // Gemma 4 thinking mode: inject <|think|> token into system prompt when enabled
-    const isGemma = modelId.toLowerCase().includes('gemma');
+    const isGemma = descriptor?.family === 'gemma-4' || normalizedModelId.includes('gemma');
     if (isGemma && showThoughts) {
         finalSystemInstruction = finalSystemInstruction
             ? `<|think|>\n${finalSystemInstruction}`
@@ -158,7 +233,7 @@ export const buildGenerationConfig = (
     const generationConfig: any = {
         ...config,
         systemInstruction: finalSystemInstruction || undefined,
-        safetySettings: safetySettings || undefined,
+        safetySettings: buildRequestSafetySettings(safetySettings),
     };
 
     // Check if model is Gemini 3. If so, prefer per-part media resolution (handled in content construction),

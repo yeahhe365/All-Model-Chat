@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { LiveSession, Tool } from '@google/genai';
+import { Session, Tool } from '@google/genai';
 import { AppSettings, ChatSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
 import { getKeyForRequest } from '../../utils/apiUtils';
 import { getConfiguredApiClient } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
+import { sendLiveText } from '../../platform/genai/liveApi';
 
 interface UseLiveConnectionProps {
     appSettings: AppSettings;
@@ -20,7 +21,7 @@ interface UseLiveConnectionProps {
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
     setSessionHandle: (handle: string | null) => void;
     sessionHandleRef: React.MutableRefObject<string | null>;
-    sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
+    sessionRef: React.MutableRefObject<Promise<Session> | null>;
 }
 
 export const useLiveConnection = ({
@@ -217,12 +218,12 @@ export const useLiveConnection = ({
         if (!sessionRef.current) return;
         try {
             const session = await sessionRef.current;
-            await session.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true });
+            sendLiveText(session, modelId, text);
             logService.info("Sent text to Live API", { textLength: text.length });
         } catch (e) {
             logService.error("Failed to send text to Live API", e);
         }
-    }, [sessionRef]);
+    }, [modelId, sessionRef]);
 
     const disconnect = useCallback(() => {
         isUserDisconnectRef.current = true; // Mark as user initiated

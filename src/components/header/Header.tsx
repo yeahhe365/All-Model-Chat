@@ -7,6 +7,7 @@ import { HeaderModelSelector } from './HeaderModelSelector';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
+import type { Translator } from '../../utils/translations';
 
 interface HeaderProps {
   onNewChat: () => void;
@@ -36,7 +37,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onNewChat,
-  onOpenSettingsModal,
+  onOpenSettingsModal: _onOpenSettingsModal,
   onOpenScenariosModal,
   onToggleHistorySidebar,
   isLoading,
@@ -49,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLoadCanvasPrompt,
   isCanvasPromptActive,
   t,
-  isKeyLocked,
+  isKeyLocked: _isKeyLocked,
   isPipSupported,
   isPipActive,
   onTogglePip,
@@ -66,6 +67,7 @@ export const Header: React.FC<HeaderProps> = ({
   const isSwitchingModel = storeIsSwitchingModel ?? propsIsSwitchingModel;
   const isHistorySidebarOpen = storeIsHistorySidebarOpen ?? propsIsHistorySidebarOpen;
   const themeId = storeThemeId ?? propsThemeId;
+  const translate = t as Translator;
   
   const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95";
   const headerButtonInactive = "bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] active:bg-[var(--theme-bg-tertiary)] active:text-[var(--theme-text-primary)]";
@@ -110,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
             onSelectModel={onSelectModel}
             isSwitchingModel={isSwitchingModel}
             isLoading={isLoading}
-            t={t}
+            t={translate}
             thinkingLevel={thinkingLevel}
             onSetThinkingLevel={onSetThinkingLevel}
         />

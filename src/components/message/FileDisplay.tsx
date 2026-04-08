@@ -5,7 +5,6 @@ import { Check, Copy, Download, SlidersHorizontal, Scissors, Settings2 } from 'l
 import { triggerDownload } from '../../utils/exportUtils';
 import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
 import { formatFileSize } from '../../utils/domainUtils';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 
 interface FileDisplayProps {
   file: UploadedFile;
