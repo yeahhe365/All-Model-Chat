@@ -42,7 +42,7 @@ export const useChatEffects = ({
     loadInitialData,
     loadChatSession,
     startNewChat,
-    messages
+    messages: _messages
 }: UseChatEffectsProps) => {
 
     // 1. Initial Data Load
@@ -124,6 +124,8 @@ export const useChatEffects = ({
             const timer = setTimeout(() => setIsSwitchingModel(false), 0); 
             return () => clearTimeout(timer); 
         } 
+
+        return undefined;
     }, [isSwitchingModel, setIsSwitchingModel]);
 
     // 8. Auto-set Aspect Ratio

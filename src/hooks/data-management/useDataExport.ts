@@ -15,7 +15,7 @@ interface UseDataExportProps {
 
 export const useDataExport = ({
     appSettings,
-    savedSessions,
+    savedSessions: _savedSessions,
     savedGroups,
     savedScenarios,
     t

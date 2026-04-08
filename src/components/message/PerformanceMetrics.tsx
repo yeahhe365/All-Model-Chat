@@ -9,7 +9,7 @@ interface PerformanceMetricsProps {
     hideTimer?: boolean;
 }
 
-export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t, hideTimer }) => {
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t: _t, hideTimer }) => {
     const { 
         promptTokens, 
         completionTokens, 
@@ -24,7 +24,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
     const [elapsedTime, setElapsedTime] = useState<number>(0);
 
     useEffect(() => {
-        if (!generationStartTime) return;
+        if (!generationStartTime) return undefined;
         const startTime = new Date(generationStartTime).getTime();
         
         if (isLoading) {
@@ -36,6 +36,8 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
             const endTime = new Date(generationEndTime).getTime();
             setElapsedTime((endTime - startTime) / 1000);
         }
+
+        return undefined;
     }, [generationStartTime, generationEndTime, isLoading]);
 
     // Calculate tokens per second

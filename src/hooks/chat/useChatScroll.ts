@@ -8,6 +8,7 @@ interface ChatScrollProps {
 }
 
 export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => {
+    void messages;
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const savedScrollTop = useRef<number>(0);
     

@@ -24,12 +24,12 @@ interface UseSettingsLogicProps {
 
 export const useSettingsLogic = ({
     isOpen,
-    onClose,
+    onClose: _onClose,
     currentSettings,
     onSave,
     onClearAllHistory,
     onClearCache,
-    onOpenLogViewer,
+    onOpenLogViewer: _onOpenLogViewer,
     onImportHistory,
     t
 }: UseSettingsLogicProps) => {

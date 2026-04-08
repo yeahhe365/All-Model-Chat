@@ -11,11 +11,7 @@ export const useStandardChat = ({
     appSettings,
     currentChatSettings,
     messages,
-    selectedFiles,
-    setSelectedFiles,
-    editingMessageId,
     setEditingMessageId,
-    setAppFileError,
     aspectRatio,
     imageSize,
     userScrolledUp,
@@ -77,7 +73,6 @@ export const useStandardChat = ({
                  newSessionId,
                  newMessages: [errorMsg],
                  settings: { ...DEFAULT_CHAT_SETTINGS, ...appSettings },
-                 appSettings,
                  title: "API Key Error"
              }));
              setActiveSessionId(newSessionId);
@@ -111,9 +106,9 @@ export const useStandardChat = ({
         
         const finalSessionId = activeSessionId || generateUniqueId();
         
-        const isRawMode = (settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) 
+        const isRawMode = Boolean((settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) 
             && !isContinueMode 
-            && MODELS_SUPPORTING_RAW_MODE.some(m => activeModelId.includes(m));
+            && MODELS_SUPPORTING_RAW_MODE.some(m => activeModelId.includes(m)));
         
         updateSessionState({
             activeSessionId,

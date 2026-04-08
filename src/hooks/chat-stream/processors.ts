@@ -1,6 +1,6 @@
-import { ChatMessage, UploadedFile, ChatSettings } from '../../types';
+import { ChatMessage, ChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
-import { generateUniqueId, calculateTokenStats, createMessage, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
+import { generateUniqueId, calculateTokenStats, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
 export const appendApiPart = (parts: any[] = [], newPart: any) => {
@@ -37,7 +37,7 @@ const applyPartToMessages = (
     messages: ChatMessage[],
     part: Part,
     generationStartTime: Date,
-    newModelMessageIds: Set<string>,
+    _newModelMessageIds: Set<string>,
     firstContentPartTime: Date | null
 ) => {
     const anyPart = part as any;
@@ -187,7 +187,7 @@ export const finalizeMessages = (
     messages: ChatMessage[],
     generationStartTime: Date,
     newModelMessageIds: Set<string>,
-    currentChatSettings: ChatSettings,
+    _currentChatSettings: ChatSettings,
     language: 'en' | 'zh',
     firstContentPartTime: Date | null,
     usageMetadata?: UsageMetadata,

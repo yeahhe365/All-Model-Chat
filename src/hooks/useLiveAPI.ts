@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { LiveSession } from '@google/genai';
+import { Session } from '@google/genai';
 import { AppSettings, ChatSettings } from '../types';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
@@ -20,7 +20,7 @@ interface UseLiveAPIProps {
 }
 
 export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript, clientFunctions }: UseLiveAPIProps) => {
-    const sessionRef = useRef<Promise<LiveSession> | null>(null);
+    const sessionRef = useRef<Promise<Session> | null>(null);
 
     // Session Resumption State
     const [sessionHandle, setSessionHandle] = useState<string | null>(null);

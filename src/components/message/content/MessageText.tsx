@@ -39,24 +39,28 @@ export const MessageText: React.FC<MessageTextProps> = ({
     isGraphvizRenderingEnabled,
     onOpenSidePanel
 }) => {
-    const { content, isLoading, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
+    const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
+    const isLoading = message.isLoading ?? false;
+    const isStreamingModelResponse = isLoading && message.role === 'model';
+    const shouldAutoFullscreenHtml = appSettings.autoFullscreenHtml ?? true;
+    const hideThinkingInContext = appSettings.hideThinkingInContext ?? false;
     
     // Subscribe to live stream updates if loading
-    const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
+    const { streamContent, streamThoughts } = useMessageStream(message.id, isStreamingModelResponse);
     
     // Use streamed content if available, otherwise fall back to persisted content
     const effectiveContent = streamContent || content;
     const effectiveThoughts = streamThoughts || thoughts;
 
     // Apply smooth streaming effect only when loading and for model messages
-    const shouldSmooth = isLoading && message.role === 'model';
+    const shouldSmooth = isStreamingModelResponse;
     const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
 
     // Auto Fullscreen HTML Logic
     const prevIsLoadingRef = useRef(isLoading);
     useEffect(() => {
         if (prevIsLoadingRef.current && !isLoading) {
-            if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
+            if (shouldAutoFullscreenHtml && message.role === 'model' && effectiveContent) {
                 const regex = /```html\s*([\s\S]*?)\s*```/m;
                 const match = effectiveContent.match(regex);
                 if (match && match[1]) {
@@ -71,7 +75,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
             }
         }
         prevIsLoadingRef.current = isLoading;
-    }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
+    }, [effectiveContent, isLoading, message.role, onOpenHtmlPreview, shouldAutoFullscreenHtml]);
 
     // Only show the primary thinking indicator (spinner) if:
     // 1. It is loading
@@ -122,7 +126,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
                         t={t}
                         themeId={themeId}
                         onOpenSidePanel={onOpenSidePanel}
-                        hideThinkingInContext={appSettings.hideThinkingInContext}
+                        hideThinkingInContext={hideThinkingInContext}
                         files={message.files}
                     />
                 </div>

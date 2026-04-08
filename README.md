@@ -143,8 +143,10 @@ npm run dev
 除了在界面中手动配置，也可在根目录创建 `.env.local`：
 
 ```bash
-GEMINI_API_KEY=your_api_key_here
+VITE_GEMINI_API_KEY=your_api_key_here
 ```
+
+兼容旧配置：如果你之前使用的是 `GEMINI_API_KEY`，当前版本仍会回退读取，但建议迁移到 `VITE_GEMINI_API_KEY`。
 
 ### 构建部署
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { buildGenerationConfig } from '../baseApi';
-import { MediaResolution } from '../../../types/settings';
+import { HarmBlockThreshold, HarmCategory, MediaResolution } from '../../../types/settings';
 
 // Mock @google/genai - must use function syntax for constructor mock
 vi.mock('@google/genai', () => ({
@@ -127,6 +127,14 @@ describe('buildGenerationConfig', () => {
     topK: 64,
   };
 
+  const legacyDefaultSafetySettings = [
+    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+    { category: HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY, threshold: HarmBlockThreshold.BLOCK_NONE },
+  ];
+
   it('returns image config for gemini-2.5-flash-image-preview', () => {
     const config = buildGenerationConfig(
       'gemini-2.5-flash-image-preview', 'sys', baseConfig, false, 0,
@@ -230,6 +238,42 @@ describe('buildGenerationConfig', () => {
       false, false, true
     );
     expect(config.tools).toContainEqual({ urlContext: {} });
+  });
+
+  it('omits legacy default safety settings so Gemini request defaults remain active', () => {
+    const config = buildGenerationConfig(
+      'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
+      false, false, false, undefined, undefined, false, undefined, legacyDefaultSafetySettings
+    );
+
+    expect(config.safetySettings).toBeUndefined();
+  });
+
+  it('filters unsupported civic integrity safety settings from explicit overrides', () => {
+    const config = buildGenerationConfig(
+      'gemini-3-flash-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      [
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+        { category: HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY, threshold: HarmBlockThreshold.BLOCK_NONE },
+      ]
+    );
+
+    expect(config.safetySettings).toEqual([
+      { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
+      { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+    ]);
   });
 
   it('appends deep search prompt to systemInstruction', () => {

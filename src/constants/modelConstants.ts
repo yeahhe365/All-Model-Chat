@@ -1,6 +1,8 @@
-
-
 import { ModelOption } from '../types';
+import { MODEL_CATALOG, type ThinkingLevel } from '../platform/genai/modelCatalog';
+
+const withModelAliases = (modelIds: string[]) =>
+  modelIds.flatMap((modelId) => [modelId, `models/${modelId}`]);
 
 export const DEFAULT_MODEL_ID = 'gemini-3-flash-preview'; 
 
@@ -22,33 +24,21 @@ export const INITIAL_PINNED_MODELS: string[] = [
     'gemma-4-26b-a4b-it',
 ];
 
-export const GEMINI_3_RO_MODELS: string[] = [
-    'gemini-3.1-pro-preview',
-    'models/gemini-3.1-pro-preview',
-    'gemini-3-flash-preview',
-    'models/gemini-3-flash-preview',
-    'gemini-3.1-flash-lite-preview',
-    'models/gemini-3.1-flash-lite-preview',
-];
+export const GEMINI_3_RO_MODELS: string[] = withModelAliases(
+    MODEL_CATALOG
+        .filter((descriptor) => descriptor.family === 'gemini-3' && descriptor.supportsThinkingLevel)
+        .map((descriptor) => descriptor.id)
+);
 
-export const MODELS_MANDATORY_THINKING = [
-    'gemini-3.1-pro-preview',
-    'models/gemini-3.1-pro-preview',
-    'gemini-3-flash-preview',
-    'models/gemini-3-flash-preview',
-    'gemini-3.1-flash-lite-preview',
-    'models/gemini-3.1-flash-lite-preview',
-    'gemini-2.5-pro',
-];
+export const MODELS_MANDATORY_THINKING = withModelAliases(
+    MODEL_CATALOG
+        .filter((descriptor) => descriptor.mandatoryThinking)
+        .map((descriptor) => descriptor.id)
+);
 
-export const MODELS_SUPPORTING_RAW_MODE = [
-    'gemini-3-flash-preview',
-    'gemini-3.1-flash-lite-preview',
-    'gemini-3.1-pro-preview',
-    'gemini-2.5-pro',
-    'gemini-2.5-flash-preview-09-2025',
-    'gemini-2.5-flash-lite-preview-09-2025',
-];
+export const MODELS_SUPPORTING_RAW_MODE = MODEL_CATALOG
+    .filter((descriptor) => descriptor.supportsRawMode)
+    .map((descriptor) => descriptor.id);
 
 export const THINKING_LEVELS = [
     { id: 'MINIMAL', name: 'Minimal' },
@@ -57,20 +47,20 @@ export const THINKING_LEVELS = [
     { id: 'HIGH', name: 'High' },
 ];
 
-export const DEFAULT_THINKING_LEVEL = 'HIGH';
+export const DEFAULT_THINKING_LEVEL: ThinkingLevel = 'HIGH';
 
-export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = {
-    'gemini-2.5-flash-preview-09-2025': { min: 0, max: 24576 },
-    'gemini-2.5-pro': { min: 128, max: 32768 },
-    'gemini-3.1-pro-preview': { min: 128, max: 32768 },
-    'models/gemini-3.1-pro-preview': { min: 128, max: 32768 },
-    'gemini-3-flash-preview': { min: 128, max: 32768 },
-    'models/gemini-3-flash-preview': { min: 128, max: 32768 },
-    'gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-    'models/gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-    'gemini-2.5-flash-lite-preview-09-2025': { min: 512, max: 24576 },
-    'gemini-2.5-flash-native-audio-preview-12-2025': { min: 0, max: 24576 },
-};
+export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number } } = Object.fromEntries(
+    MODEL_CATALOG.flatMap((descriptor) => {
+        if (!descriptor.thinkingBudgetRange) {
+            return [];
+        }
+
+        return [
+            [descriptor.id, descriptor.thinkingBudgetRange],
+            [`models/${descriptor.id}`, descriptor.thinkingBudgetRange],
+        ];
+    })
+);
 
 export const DEFAULT_TEMPERATURE = 1.0;
 export const DEFAULT_TOP_P = 0.95;

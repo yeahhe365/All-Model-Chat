@@ -9,6 +9,7 @@ import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
 import { DataManagementSection } from './sections/DataManagementSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
+import type { Translator } from '../../utils/translations';
 
 interface SettingsContentProps {
     activeTab: SettingsTab;
@@ -59,6 +60,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     t
 }) => {
     const animClass = "animate-in fade-in zoom-in-95 duration-200 ease-out";
+    const translate = t as Translator;
 
     const handleBatchUpdate = (updates: Partial<AppSettings>) => {
         Object.entries(updates).forEach(([key, value]) => {
@@ -145,7 +147,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     <ShortcutsSection 
                         currentSettings={currentSettings}
                         onUpdateSettings={handleBatchUpdate}
-                        t={t} 
+                        t={translate} 
                     />
                 </div> 
             )}

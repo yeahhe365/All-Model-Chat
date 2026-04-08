@@ -32,6 +32,10 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
         }
     }, [scrollerRef, setScrollContainerRef]);
 
+    const handleScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
+        setInternalScrollerRef(ref instanceof HTMLElement ? ref : null);
+    }, []);
+
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
         visibleRangeRef.current = { startIndex, endIndex };
@@ -185,6 +189,8 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
             container.addEventListener('scroll', handleScroll, { passive: true });
             return () => container.removeEventListener('scroll', handleScroll);
         }
+
+        return undefined;
     }, [scrollerRef, handleScroll]);
 
     const showScrollDown = !atBottom;
@@ -192,7 +198,7 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
 
     return {
         virtuosoRef,
-        setInternalScrollerRef,
+        handleScrollerRef,
         setAtBottom,
         onRangeChanged,
         scrollToPrevTurn,

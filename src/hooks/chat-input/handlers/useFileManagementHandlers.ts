@@ -3,9 +3,6 @@ import { useCallback, Dispatch, SetStateAction } from 'react';
 import { UploadedFile, VideoMetadata } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
 import { useImageNavigation } from '../../ui/useImageNavigation';
-import { geminiServiceInstance } from '../../../services/geminiService';
-import { getKeyForRequest, logService, generateUniqueId } from '../../../utils/appUtils';
-import { AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
 
 interface UseFileManagementHandlersProps {
     selectedFiles: UploadedFile[];

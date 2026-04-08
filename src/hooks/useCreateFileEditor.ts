@@ -348,6 +348,8 @@ export const useCreateFileEditor = ({
             }, 100);
             return () => clearTimeout(timer);
         }
+
+        return undefined;
     }, [isEditing, isPreviewMode]);
 
     // Auto-disable preview for unsupported types

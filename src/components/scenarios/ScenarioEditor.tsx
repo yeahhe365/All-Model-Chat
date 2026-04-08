@@ -7,6 +7,7 @@ import { ScenarioEditorHeader } from './editor/ScenarioEditorHeader';
 import { ScenarioSystemPrompt } from './editor/ScenarioSystemPrompt';
 import { ScenarioMessageList } from './editor/ScenarioMessageList';
 import { ScenarioMessageInput } from './editor/ScenarioMessageInput';
+import type { Translator } from '../../utils/translations';
 
 interface ScenarioEditorProps {
     initialScenario: SavedScenario | null;
@@ -22,6 +23,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');
     const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
+    const translate = t as Translator;
     
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -94,7 +96,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                     value={scenario.systemInstruction || ''}
                     onChange={(val) => setScenario(prev => ({...prev, systemInstruction: val}))}
                     placeholder={t('scenarios_system_prompt_placeholder')}
-                    t={t}
+                    t={translate}
                     readOnly={readOnly}
                 />
 

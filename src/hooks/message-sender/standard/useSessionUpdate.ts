@@ -1,7 +1,7 @@
 
 import React, { useCallback } from 'react';
-import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../../types';
-import { generateUniqueId, generateSessionTitle, performOptimisticSessionUpdate, createMessage } from '../../../utils/appUtils';
+import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../../types';
+import { generateSessionTitle, performOptimisticSessionUpdate, createMessage } from '../../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 
 interface UseSessionUpdateProps {

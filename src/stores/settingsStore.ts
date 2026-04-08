@@ -5,6 +5,7 @@ import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG } from '../constants/app
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
 import { logService } from '../utils/appUtils';
 import { dbService } from '../utils/db';
+import { loadMigratedAppSettings, saveAppSettingsAtCurrentSchema } from '../platform/persistence/migrations';
 
 interface SettingsState {
   appSettings: AppSettings;
@@ -63,7 +64,10 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
 
       // Persist to IndexedDB
       if (state.isSettingsLoaded) {
-        dbService.setAppSettings(next)
+        saveAppSettingsAtCurrentSchema(next, {
+          setAppSettings: dbService.setAppSettings,
+          setSchemaVersion: dbService.setSchemaVersion,
+        })
           .then(() => getSettingsChannel().postMessage({ type: 'SETTINGS_UPDATED' }))
           .catch((e) => logService.error('Failed to save settings', { error: e }));
       }
@@ -74,7 +78,16 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
 
   loadSettings: async () => {
     try {
-      const storedSettings = await dbService.getAppSettings();
+      const { settings: storedSettings, isFutureSchema } = await loadMigratedAppSettings({
+        getAppSettings: dbService.getAppSettings,
+        getSchemaVersion: dbService.getSchemaVersion,
+        setSchemaVersion: dbService.setSchemaVersion,
+      });
+
+      if (isFutureSchema) {
+        logService.warn('Loaded settings from a newer persistence schema version.');
+      }
+
       if (storedSettings) {
         const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
         if (storedSettings.filesApiConfig) {

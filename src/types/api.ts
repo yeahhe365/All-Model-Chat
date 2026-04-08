@@ -1,6 +1,5 @@
-
-import { Part, UsageMetadata, File as GeminiFile, ChatHistoryItem } from "@google/genai";
-import { ModelOption } from './settings';
+import { Part, UsageMetadata, File as GeminiFile } from "@google/genai";
+import { ChatHistoryItem } from './chat';
 
 export interface GeminiService {
   uploadFile: (

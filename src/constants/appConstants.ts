@@ -1,5 +1,6 @@
 import { AppSettings, FilesApiConfig } from '../types';
 import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from '../types/settings';
+import type { ThinkingLevel } from '../platform/genai/modelCatalog';
 
 // Re-exporting from new modules
 export * from './modelConstants';
@@ -68,7 +69,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
   ttsVoice: DEFAULT_TTS_VOICE,
   thinkingBudget: DEFAULT_THINKING_BUDGET,
-  thinkingLevel: DEFAULT_THINKING_LEVEL as 'LOW' | 'HIGH',
+  thinkingLevel: DEFAULT_THINKING_LEVEL as ThinkingLevel,
   lockedApiKey: null,
   isGoogleSearchEnabled: false,
   isCodeExecutionEnabled: false,

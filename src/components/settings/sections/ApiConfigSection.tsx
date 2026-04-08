@@ -42,7 +42,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
-  availableModels,
+  availableModels: _availableModels,
   t,
 }) => {
   // Test connection state

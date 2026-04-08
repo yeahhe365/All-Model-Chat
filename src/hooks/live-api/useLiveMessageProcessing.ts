@@ -1,17 +1,17 @@
 
 import { useCallback, useRef } from 'react';
-import { LiveServerMessage, LiveSession } from '@google/genai';
+import { LiveServerMessage, Session } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
-import { logService } from '../../utils/appUtils';
 import { ThoughtSupportingPart } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
+import { getLiveInlineAudioData, getLiveModelTurnParts } from '../../platform/genai/liveApi';
 
 interface UseLiveMessageProcessingProps {
     playAudioChunk: (data: string) => Promise<void>;
     stopAudioPlayback: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
     clientFunctions?: Record<string, (args: any) => Promise<any>>;
-    sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
+    sessionRef: React.MutableRefObject<Promise<Session> | null>;
     setSessionHandle: (handle: string | null) => void;
     sessionHandleRef: React.MutableRefObject<string | null>;
 }
@@ -43,39 +43,37 @@ export const useLiveMessageProcessing = ({
     }, [onTranscript]);
 
     const handleMessage = useCallback(async (msg: LiveServerMessage) => {
-        // 1. Handle Audio Output
-        const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-        if (audioData) {
-            // Buffer the audio data for saving
-            audioChunksRef.current.push(audioData);
-            // Play immediately
-            await playAudioChunk(audioData);
-        }
+        const modelTurnParts = getLiveModelTurnParts(msg);
 
-        // 2. Handle Text/Code Content (e.g., Code Execution, Search results, Thoughts, or direct text)
-        // The model might generate code or text along with audio
-        if (msg.serverContent?.modelTurn?.parts) {
-            for (const part of msg.serverContent.modelTurn.parts) {
-                const anyPart = part as ThoughtSupportingPart;
+        // 1. Handle Audio Output and content parts in the same event
+        for (const part of modelTurnParts) {
+            const audioData = getLiveInlineAudioData(part);
+            if (audioData) {
+                audioChunksRef.current.push(audioData);
+                await playAudioChunk(audioData);
+            }
 
-                // Handle thoughts vs content
-                if (anyPart.thought && onTranscript) {
-                    const thoughtText = typeof anyPart.thought === 'string' ? anyPart.thought : (anyPart.text || "");
-                    if (thoughtText) {
-                        onTranscript(thoughtText, 'model', false, 'thought');
-                    }
-                } else if (part.text && onTranscript) {
-                    onTranscript(part.text, 'model', false, 'content');
-                }
+            // 2. Handle Text/Code Content (e.g., Code Execution, Search results, Thoughts, or direct text)
+            const anyPart = part as ThoughtSupportingPart;
 
-                if (part.executableCode) {
-                    const codeBlock = `\n\`\`\`${part.executableCode.language.toLowerCase()}\n${part.executableCode.code}\n\`\`\`\n`;
-                    if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
+            // Handle thoughts vs content
+            if (anyPart.thought && onTranscript) {
+                const thoughtText = typeof anyPart.thought === 'string' ? anyPart.thought : (anyPart.text || "");
+                if (thoughtText) {
+                    onTranscript(thoughtText, 'model', false, 'thought');
                 }
-                if (part.codeExecutionResult) {
-                    const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
-                    if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
-                }
+            } else if (part.text && onTranscript) {
+                onTranscript(part.text, 'model', false, 'content');
+            }
+
+            if (part.executableCode) {
+                const codeLanguage = part.executableCode.language?.toLowerCase() || 'text';
+                const codeBlock = `\n\`\`\`${codeLanguage}\n${part.executableCode.code}\n\`\`\`\n`;
+                if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
+            }
+            if (part.codeExecutionResult) {
+                const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
             }
         }
 

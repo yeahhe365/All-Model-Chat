@@ -1,5 +1,4 @@
-
-import React, { useCallback, Dispatch, SetStateAction } from 'react';
+import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { createChatHistoryForApi, isGemini3Model, logService } from '../../../utils/appUtils';
 import { buildGenerationConfig } from '../../../services/api/baseApi';
@@ -15,7 +14,7 @@ interface UseApiInteractionProps {
     getStreamHandlers: GetStreamHandlers;
     handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    activeJobs: MutableRefObject<Map<string, AbortController>>;
 }
 
 export const useApiInteraction = ({

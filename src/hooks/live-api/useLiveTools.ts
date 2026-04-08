@@ -1,22 +1,27 @@
 
 import { useCallback } from 'react';
-import { LiveServerMessage, LiveSession } from '@google/genai';
+import { LiveServerMessage, Session } from '@google/genai';
 import { logService } from '../../utils/appUtils';
 
 interface UseLiveToolsProps {
     clientFunctions?: Record<string, (args: any) => Promise<any>>;
-    sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
+    sessionRef: React.MutableRefObject<Promise<Session> | null>;
 }
 
 export const useLiveTools = ({ clientFunctions, sessionRef }: UseLiveToolsProps) => {
     const handleToolCall = useCallback(async (toolCall: NonNullable<LiveServerMessage['toolCall']>) => {
         logService.info("Received Tool Call", toolCall);
-        
-        if (toolCall.functionCalls.length > 0) {
-            const functionResponses = [];
-            
-            for (const call of toolCall.functionCalls) {
-                const fn = clientFunctions?.[call.name];
+
+        const functionCalls = toolCall.functionCalls ?? [];
+        if (functionCalls.length > 0) {
+            const functionResponses: Array<{
+                id?: string;
+                name?: string;
+                response: { result?: unknown; error?: string };
+            }> = [];
+
+            for (const call of functionCalls) {
+                const fn = call.name ? clientFunctions?.[call.name] : undefined;
                 if (fn) {
                     try {
                         const result = await fn(call.args);
@@ -34,11 +39,11 @@ export const useLiveTools = ({ clientFunctions, sessionRef }: UseLiveToolsProps)
                         });
                     }
                 } else {
-                    console.warn(`Function ${call.name} not found in client registry.`);
+                    console.warn(`Function ${call.name || 'unknown'} not found in client registry.`);
                     functionResponses.push({
                         id: call.id,
                         name: call.name,
-                        response: { error: `Function ${call.name} not implemented client-side.` }
+                        response: { error: `Function ${call.name || 'unknown'} not implemented client-side.` }
                     });
                 }
             }

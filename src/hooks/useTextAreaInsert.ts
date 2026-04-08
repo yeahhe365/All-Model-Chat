@@ -40,9 +40,6 @@ export const useTextAreaInsert = (
             textarea.focus();
             const newCursorPos = start + finalText.length;
             textarea.setSelectionRange(newCursorPos, newCursorPos);
-            // Scroll to cursor
-            const lineHeight = parseInt(getComputedStyle(textarea).lineHeight || '20', 10);
-            const scrollPos = textarea.scrollHeight; // Simple heuristics often suffice, or just focus.
             // Native focus usually scrolls into view.
         });
     }, [textareaRef, setInputText]);

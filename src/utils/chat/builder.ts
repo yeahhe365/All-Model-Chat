@@ -1,12 +1,21 @@
+import { PartMediaResolutionLevel } from '@google/genai';
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
 import { logService } from '../../services/logService';
 import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 
+const MEDIA_RESOLUTION_LEVEL_MAP: Record<MediaResolution, PartMediaResolutionLevel> = {
+  [MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED]: PartMediaResolutionLevel.MEDIA_RESOLUTION_UNSPECIFIED,
+  [MediaResolution.MEDIA_RESOLUTION_LOW]: PartMediaResolutionLevel.MEDIA_RESOLUTION_LOW,
+  [MediaResolution.MEDIA_RESOLUTION_MEDIUM]: PartMediaResolutionLevel.MEDIA_RESOLUTION_MEDIUM,
+  [MediaResolution.MEDIA_RESOLUTION_HIGH]: PartMediaResolutionLevel.MEDIA_RESOLUTION_HIGH,
+  [MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH]: PartMediaResolutionLevel.MEDIA_RESOLUTION_ULTRA_HIGH,
+};
+
 export const buildContentParts = async (
   text: string, 
-  files: UploadedFile[] | undefined,
+  files?: UploadedFile[],
   modelId?: string,
   mediaResolution?: MediaResolution
 ): Promise<{
@@ -72,7 +81,7 @@ export const buildContentParts = async (
                 let base64DataForApi: string | undefined;
                 
                 // Prioritize rawFile (Blob/File) for conversion
-                if (fileSource && (fileSource instanceof Blob || fileSource instanceof File)) {
+                if (fileSource instanceof Blob) {
                     try {
                         base64DataForApi = await blobToBase64(fileSource);
                     } catch (error) {
@@ -127,7 +136,7 @@ export const buildContentParts = async (
     if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED) {
         const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
         if (shouldInject) {
-            part.mediaResolution = { level: effectiveResolution };
+            part.mediaResolution = { level: MEDIA_RESOLUTION_LEVEL_MAP[effectiveResolution] };
         }
     }
     
@@ -205,7 +214,7 @@ export const createChatHistoryForApi = async (
         // Merge consecutive messages of the same role to prevent API 400 errors
         const lastHistoryItem = historyItems[historyItems.length - 1];
         if (lastHistoryItem && lastHistoryItem.role === role) {
-            lastHistoryItem.parts = lastHistoryItem.parts.concat(parts);
+            lastHistoryItem.parts = [...(lastHistoryItem.parts ?? []), ...parts];
         } else {
             historyItems.push({ role, parts });
         }

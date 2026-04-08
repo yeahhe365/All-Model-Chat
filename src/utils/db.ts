@@ -1,5 +1,6 @@
 import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
+import { APP_SCHEMA_VERSION_KEY } from '../platform/persistence/schema';
 
 const DB_NAME = 'AllModelChatDB';
 const DB_VERSION = 3;
@@ -228,6 +229,8 @@ export const dbService = {
   
   getAppSettings: () => getKeyValue<AppSettings>('appSettings'),
   setAppSettings: (settings: AppSettings) => setKeyValue<AppSettings>('appSettings', settings),
+  getSchemaVersion: () => getKeyValue<number>(APP_SCHEMA_VERSION_KEY),
+  setSchemaVersion: (version: number) => setKeyValue<number>(APP_SCHEMA_VERSION_KEY, version),
   
   getActiveSessionId: () => getKeyValue<string | null>('activeSessionId'),
   setActiveSessionId: (id: string | null) => setKeyValue<string | null>('activeSessionId', id),

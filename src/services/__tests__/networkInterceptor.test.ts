@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 describe('NetworkInterceptor', () => {
   let originalFetch: typeof window.fetch;
@@ -17,7 +17,6 @@ describe('NetworkInterceptor', () => {
     window.fetch = mockFetch;
 
     // Simulate disabled state
-    const { TARGET_HOST } = { TARGET_HOST: 'generativelanguage.googleapis.com' };
     const isInterceptorEnabled = false;
     const currentProxyUrl = 'https://proxy.example.com';
 
@@ -37,7 +36,6 @@ describe('NetworkInterceptor', () => {
     const mockFetch = vi.fn().mockResolvedValue(new Response('ok'));
     window.fetch = mockFetch;
 
-    const TARGET_HOST = 'generativelanguage.googleapis.com';
     const proxyUrl = 'https://proxy.example.com';
 
     const rewriteUrl = (urlStr: string, currentProxyUrl: string): string => {

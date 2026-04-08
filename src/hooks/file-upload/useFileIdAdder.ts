@@ -61,24 +61,28 @@ export const useFileIdAdder = ({
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
+                const mimeType = fileMetadata.mimeType ?? 'application/octet-stream';
+                const displayName = fileMetadata.displayName || fileApiId;
+                const fileResourceName = fileMetadata.name || fileApiId;
+                const fileUri = fileMetadata.uri;
                 
                 // Allow known video types or generic octet-stream (often used for arbitrary files)
                 // But strictly validate if it is a supported type if it's not generic
-                const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(fileMetadata.mimeType) || 
-                                    (fileMetadata.mimeType.startsWith('video/') && !fileMetadata.mimeType.includes('youtube'));
+                const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(mimeType) || 
+                                    (mimeType.startsWith('video/') && !mimeType.includes('youtube'));
 
                 if (!isValidType) {
-                    logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: fileMetadata.mimeType });
-                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: fileMetadata.mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${fileMetadata.mimeType}`, uploadState: 'failed' } : f));
+                    logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: mimeType });
+                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: displayName, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
                     return;
                 }
                 const newFile: UploadedFile = { 
                     id: tempId, 
-                    name: fileMetadata.displayName || fileApiId, 
-                    type: fileMetadata.mimeType, 
+                    name: displayName, 
+                    type: mimeType, 
                     size: Number(fileMetadata.sizeBytes) || 0, 
-                    fileUri: fileMetadata.uri, 
-                    fileApiName: fileMetadata.name, 
+                    fileUri, 
+                    fileApiName: fileResourceName, 
                     isProcessing: fileMetadata.state === 'PROCESSING', 
                     progress: 100, 
                     uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), 

@@ -1,6 +1,5 @@
-
-import { GeminiService, ModelOption } from '../types';
-import { Part, UsageMetadata, File as GeminiFile, ChatHistoryItem, Modality } from "@google/genai";
+import { GeminiService, ChatHistoryItem } from '../types';
+import { Part, UsageMetadata, File as GeminiFile, Modality } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi, countTokensApi } from './api/generationApi';
 import { sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
@@ -90,7 +89,7 @@ class GeminiServiceImpl implements GeminiService {
                 config,
                 abortSignal,
                 handleError,
-                (responseParts, thoughts, usage, grounding) => handleComplete(responseParts)
+                (responseParts, _thoughts, _usage, _grounding) => handleComplete(responseParts)
             );
         });
     }

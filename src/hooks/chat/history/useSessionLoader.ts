@@ -42,7 +42,7 @@ export const useSessionLoader = ({
 
     const startNewChat = useCallback((explicitTemplateSession?: SavedChatSession) => {
         // If we are already on an empty chat, just focus input and don't create a duplicate
-        if (activeChat && activeChat.messages.length === 0 && !activeChat.systemInstruction) {
+        if (activeChat && activeChat.messages.length === 0 && !activeChat.settings.systemInstruction) {
             logService.info('Already on an empty chat, reusing session.');
             
             // Clear input text, files, and editing state to ensure a "fresh" start visual
@@ -226,7 +226,7 @@ export const useSessionLoader = ({
                     // We need to verify if it's truly empty. Metadata has messages stripped.
                     // Also check systemInstruction: if it's a specific scenario, don't reuse it as a generic "New Chat"
                     const fullSession = await dbService.getSession(mostRecent.id);
-                    if (fullSession && fullSession.messages.length === 0 && !fullSession.systemInstruction) {
+                    if (fullSession && fullSession.messages.length === 0 && !fullSession.settings.systemInstruction) {
                         logService.info(`Reusing empty recent session: ${mostRecent.id}`);
                         const rehydrated = rehydrateSessionFiles(fullSession);
                         setActiveMessages(rehydrated.messages);

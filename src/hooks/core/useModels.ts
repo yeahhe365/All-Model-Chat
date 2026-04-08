@@ -1,7 +1,7 @@
 
 import { useState, useCallback } from 'react';
 import { ModelOption } from '../../types';
-import { sortModels, getDefaultModelOptions } from '../../utils/appUtils';
+import { getDefaultModelOptions } from '../../utils/appUtils';
 
 const CUSTOM_MODELS_KEY = 'custom_model_list_v1';
 

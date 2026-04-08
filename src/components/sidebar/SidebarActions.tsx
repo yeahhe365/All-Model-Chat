@@ -10,7 +10,7 @@ interface SidebarActionsProps {
   searchQuery: string;
   setIsSearching: (isSearching: boolean) => void;
   setSearchQuery: (query: string) => void;
-  t: (key: keyof typeof translations) => string;
+  t: (key: keyof typeof translations, fallback?: string) => string;
   newChatShortcut?: string;
 }
 

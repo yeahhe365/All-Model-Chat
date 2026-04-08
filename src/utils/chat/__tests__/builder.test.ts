@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { buildContentParts, createChatHistoryForApi } from '../builder';
 import { UploadedFile, ChatMessage } from '../../../types';
-import { MediaResolution } from '../../../types/settings';
 
 // Mock fileHelpers to avoid real file I/O
 vi.mock('../../../utils/fileHelpers', () => ({
@@ -36,7 +35,7 @@ const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   ...overrides,
 });
 
-const makeMessage = (role: 'user' | 'model', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
+const makeMessage = (role: ChatMessage['role'], content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
   id: `msg-${Math.random().toString(36).slice(2, 8)}`,
   role,
   content,
@@ -145,7 +144,7 @@ describe('createChatHistoryForApi', () => {
     expect(history).toHaveLength(2);
     expect(history[0].role).toBe('user');
     expect(history[1].role).toBe('model');
-    expect(history[1].parts[0].text).toBe('Next visible');
+    expect(history[1].parts?.[0]?.text).toBe('Next visible');
   });
 
   it('only includes user and model roles', async () => {
@@ -173,7 +172,7 @@ describe('createChatHistoryForApi', () => {
       makeMessage('model', 'Response', { thoughtSignatures: ['sig-1'] }),
     ];
     const history = await createChatHistoryForApi(msgs);
-    expect(history[0].parts[0].thoughtSignature).toBe('sig-1');
+    expect(history[0].parts?.[0]?.thoughtSignature).toBe('sig-1');
   });
 
   it('strips thinking blocks when stripThinking is true', async () => {
@@ -181,7 +180,7 @@ describe('createChatHistoryForApi', () => {
       makeMessage('model', 'Hello <thinking>secret thoughts</thinking> world'),
     ];
     const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts.find(p => p.text);
+    const textPart = history[0].parts?.find(p => p.text);
     expect(textPart?.text).not.toContain('thinking');
     expect(textPart?.text).toContain('Hello');
     expect(textPart?.text).toContain('world');
@@ -198,9 +197,9 @@ describe('createChatHistoryForApi', () => {
     ];
     const history = await createChatHistoryForApi(msgs);
     // inlineData should be replaced with text note
-    const inlinePart = history[0].parts.find(p => p.text?.includes('media file'));
+    const inlinePart = history[0].parts?.find(p => p.text?.includes('media file'));
     expect(inlinePart).toBeTruthy();
-    const codePart = history[0].parts.find(p => p.text === 'Some code');
+    const codePart = history[0].parts?.find(p => p.text === 'Some code');
     expect(codePart).toBeTruthy();
   });
 
@@ -215,6 +214,6 @@ describe('createChatHistoryForApi', () => {
     ];
     const history = await createChatHistoryForApi(msgs, true);
     expect(history[0].parts).toHaveLength(1);
-    expect(history[0].parts[0].text).toBe('visible');
+    expect(history[0].parts?.[0]?.text).toBe('visible');
   });
 });

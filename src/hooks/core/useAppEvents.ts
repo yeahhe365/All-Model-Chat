@@ -24,7 +24,7 @@ interface AppEventsProps {
 export const useAppEvents = ({
     appSettings,
     startNewChat,
-    handleClearCurrentChat,
+    handleClearCurrentChat: _handleClearCurrentChat,
     currentChatSettings,
     handleSelectModelInHeader,
     isSettingsModalOpen,

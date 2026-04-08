@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, Dispatch, SetStateAction } from 'react';
+import { useEffect, useRef, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
 import { getKeyForRequest } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';

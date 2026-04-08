@@ -207,7 +207,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       
       // Replace $$ ... $$ with $$ ... $$
       // Exclude purely numeric or simple word content (e.g. $$1$$, $$id$$) which are likely escaped citations/indices
-      let processedPart = part.replace(/\\$$([\s\S]*?)\\$$/g, (match, p1) => {
+      let processedPart = part.replace(/\\$$([\s\S]*?)\\$$/g, (_match, p1) => {
           if (/^\s*[\w\d\s,.]+\s*$/.test(p1) && !p1.includes('_') && !p1.includes('^')) {
               return `[${p1.trim()}]`; // Restore without backslashes
           }
@@ -215,7 +215,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       });
       
       // Replace $ ... $ with $ ... $
-      processedPart = processedPart.replace(/\\$([\s\S]*?)\\$/g, (match, p1) => {
+      processedPart = processedPart.replace(/\\$([\s\S]*?)\\$/g, (_match, p1) => {
           if (/^\s*[\w\d\s,.]+\s*$/.test(p1) && !p1.includes('_') && !p1.includes('^')) {
               return `(${p1.trim()})`; // Restore without backslashes
           }

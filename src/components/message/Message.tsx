@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
@@ -34,15 +34,16 @@ interface MessageProps {
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
-    const { message, prevMessage, messageIndex, t } = props;
+    const { message, prevMessage } = props;
     
-    const isGrouped = prevMessage &&
+    const isGrouped = Boolean(prevMessage &&
         prevMessage.role === message.role &&
-        !prevMessage.isLoading &&
-        !message.isLoading &&
-        (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000);
+        !(prevMessage.isLoading ?? false) &&
+        !(message.isLoading ?? false) &&
+        (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000));
 
-    const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && props.showThoughts));
+    const isModelThinkingOrHasThoughts = message.role === 'model'
+        && ((message.isLoading ?? false) || Boolean(message.thoughts && props.showThoughts));
     
     // User messages align right, model messages align left (default)
     const messageContainerClasses = `flex items-start gap-2 sm:gap-4 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;

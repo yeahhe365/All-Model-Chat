@@ -1,7 +1,7 @@
 
 
-import React, { Dispatch, SetStateAction, useCallback } from 'react';
-import { AppSettings, SavedChatSession, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
+import React, { useCallback } from 'react';
+import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';

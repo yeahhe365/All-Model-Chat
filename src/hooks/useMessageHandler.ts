@@ -50,7 +50,6 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setAppFileError,
         updateAndPersistSessions,
         userScrolledUp,
-        setLoadingSessionIds,
         setSessionLoading
     } = props;
     
@@ -70,7 +69,6 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         updateAndPersistSessions,
         userScrolledUp,
         handleSendMessage,
-        setLoadingSessionIds,
         setSessionLoading
     });
     

@@ -38,7 +38,9 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
             throw abortError;
         }
 
-        const images = response.generatedImages?.map(img => img.image.imageBytes) ?? [];
+        const images = response.generatedImages
+            ?.map((img) => img.image?.imageBytes)
+            .filter((image): image is string => Boolean(image)) ?? [];
         if (images.length === 0) {
             throw new Error("No images generated. The prompt may have been blocked or the model failed to respond.");
         }

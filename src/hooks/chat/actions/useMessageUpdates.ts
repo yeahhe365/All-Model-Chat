@@ -1,7 +1,7 @@
 
 import React, { useCallback, useRef, useEffect } from 'react';
 import { SavedChatSession, ChatMessage, UploadedFile, VideoMetadata, AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
-import { generateUniqueId, logService, createNewSession, createMessage } from '../../../utils/appUtils';
+import { logService, createNewSession, createMessage } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 

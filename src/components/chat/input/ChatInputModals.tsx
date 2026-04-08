@@ -14,7 +14,7 @@ export interface ChatInputModalsProps {
   onAudioRecord: (file: File) => Promise<void>;
   onRecorderCancel: () => void;
   showCreateTextFileEditor: boolean;
-  onConfirmCreateTextFile: (content: string, filename: string) => Promise<void>;
+  onConfirmCreateTextFile: (content: string | Blob, filename: string) => Promise<void>;
   onCreateTextFileCancel: () => void;
   isHelpModalOpen: boolean;
   onHelpModalClose: () => void;

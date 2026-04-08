@@ -1,12 +1,12 @@
 
 import { useEffect, useRef } from 'react';
-import { LiveSession } from '@google/genai';
+import { Session } from '@google/genai';
 
 interface UseLiveFrameCaptureProps {
     isConnected: boolean;
     videoStream: MediaStream | null;
     captureFrame: () => string | null;
-    sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
+    sessionRef: React.MutableRefObject<Promise<Session> | null>;
 }
 
 export const useLiveFrameCapture = ({

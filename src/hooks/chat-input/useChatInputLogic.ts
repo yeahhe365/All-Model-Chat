@@ -1,5 +1,4 @@
-
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ChatInputProps } from '../../types';
 import { useChatInputState } from './useChatInputState';
 import { useIsDesktop } from '../useDevice';
@@ -24,9 +23,8 @@ export const useChatInputLogic = (props: ChatInputProps) => {
         appSettings, currentChatSettings, activeSessionId, isEditing,
         onProcessFiles, t, commandedInput, onSendMessage, onMessageSent, 
         setEditingMessageId, onTranscribeAudio, onUpdateMessageContent,
-        editingMessageId, editMode, onCancelEdit, onStopGenerating,
+        onCancelEdit, onStopGenerating,
         onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, 
-        onToggleLocalPython,
         onToggleUrlContext, onClearChat, onNewChat, onOpenSettings,
         onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, 
         onSelectModel, availableModels, onEditLastUserMessage, onTogglePip,

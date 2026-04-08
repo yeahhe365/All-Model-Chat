@@ -64,7 +64,7 @@ class LogServiceImpl {
     try {
       // Simple circular reference handler
       const seen = new WeakSet();
-      return JSON.parse(JSON.stringify(data, (key, value) => {
+      return JSON.parse(JSON.stringify(data, (_key, value) => {
         if (typeof value === 'object' && value !== null) {
           if (seen.has(value)) return '[Circular]';
           seen.add(value);
