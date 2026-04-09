@@ -5,7 +5,6 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { resolveGeminiApiKeys } from './src/platform/genai/client';
-
 const manualChunkGroups: Record<string, string[]> = {
   'vendor-genai': ['@google/genai'],
   'vendor-markdown': [
@@ -41,7 +40,8 @@ const getManualChunkName = (id: string) => {
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
-    const packageJson = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf-8')) as { version: string };
+    const geminiApiKeys = resolveGeminiApiKeys(env);
+    const packageJson = JSON.parse(fs.readFileSync(path.resolve('./package.json'), 'utf-8')) as { version: string };
     return {
       plugins: [
         react(),
@@ -55,7 +55,7 @@ export default defineConfig(({ mode }) => {
         })
       ],
       define: {
-        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(geminiApiKeys || ''),
         'import.meta.env.APP_VERSION': JSON.stringify(packageJson.version),
       },
       resolve: {

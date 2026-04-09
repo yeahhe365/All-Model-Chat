@@ -125,7 +125,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const loadingSessionIds = storeLoadingSessionIds ?? propsLoadingSessionIds ?? new Set();
   const generatingTitleSessionIds = storeGeneratingTitleSessionIds ?? propsGeneratingTitleSessionIds ?? new Set();
   const themeId = storeThemeId ?? propsThemeId;
-  const language = storeLanguage ?? props.language ?? 'en';
+  const language = storeLanguage ?? propsLanguage ?? 'en';
 
   const {
     searchQuery, setSearchQuery,
@@ -154,10 +154,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     sessions,
     groups,
     generatingTitleSessionIds,
-    onRenameSession: props.onRenameSession,
-    onRenameGroup: props.onRenameGroup,
-    onMoveSessionToGroup: props.onMoveSessionToGroup,
-    onSelectSession: props.onSelectSession,
+    onRenameSession,
+    onRenameGroup,
+    onMoveSessionToGroup,
+    onSelectSession,
     t,
     language,
   });

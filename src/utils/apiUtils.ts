@@ -2,8 +2,6 @@
 import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
-import { resolveGeminiApiKeys } from '../platform/genai/client';
-
 export const getEnvApiKeysString = (): string | null => {
     const metaEnv = (import.meta as any).env || {};
     const processEnv = typeof process !== 'undefined' ? process.env || {} : {};

@@ -5,12 +5,6 @@ import { useClickOutside } from '../../hooks/useClickOutside';
 import { getTranslator } from '../../utils/appUtils';
 import { useSettingsStore } from '../../stores/settingsStore';
 
-interface SelectOption {
-  value: string;
-  label: React.ReactNode;
-  disabled?: boolean;
-}
-
 interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label: string;
   children: React.ReactNode;

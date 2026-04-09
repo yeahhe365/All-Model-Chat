@@ -7,8 +7,6 @@ import { MediaResolution } from '../../../types/settings';
 import { ToggleItem } from '../../shared/ToggleItem';
 import { Select } from '../../shared/Select';
 import { Wand2 } from 'lucide-react';
-import type { ThinkingLevel } from '../../../platform/genai/modelCatalog';
-
 interface ChatBehaviorSectionProps {
   modelId: string;
   setModelId: (id: string) => void;

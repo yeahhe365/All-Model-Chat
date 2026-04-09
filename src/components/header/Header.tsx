@@ -1,7 +1,7 @@
 import React from 'react';
 import { Wand2, PictureInPicture, PictureInPicture2 } from 'lucide-react';
 import { ModelOption } from '../../types';
-import { isLiveAudioModel, Translator } from '../../utils/appUtils';
+import { isLiveAudioModel } from '../../utils/appUtils';
 import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
 import { useChatStore } from '../../stores/chatStore';

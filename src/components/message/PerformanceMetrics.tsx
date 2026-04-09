@@ -9,7 +9,7 @@ interface PerformanceMetricsProps {
     hideTimer?: boolean;
 }
 
-export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t: _t, hideTimer }) => {
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t, hideTimer }) => {
     const { 
         promptTokens, 
         completionTokens, 

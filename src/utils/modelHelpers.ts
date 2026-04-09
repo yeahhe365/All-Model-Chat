@@ -1,13 +1,11 @@
 import { ModelOption } from '../types';
-import { GEMINI_3_RO_MODELS, STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, INITIAL_PINNED_MODELS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../constants/appConstants';
+import { STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, INITIAL_PINNED_MODELS } from '../constants/appConstants';
 import { MediaResolution } from '../types/settings';
 import { UsageMetadata } from '@google/genai';
 import {
     getModelDescriptor,
-    getModelDisplayName,
     getModelSortWeight,
     getThinkingBudgetRange,
-    type ThinkingLevel,
 } from '../platform/genai/modelCatalog';
 
 // --- Model Sorting & Defaults ---
@@ -19,15 +17,6 @@ export const isLiveAudioModel = (modelId: string): boolean => {
 };
 
 export const sortModels = (models: ModelOption[]): ModelOption[] => {
-    const getCategoryWeight = (id: string) => {
-        const lower = id.toLowerCase();
-        if (lower.includes('tts')) return 5;
-        if (lower.includes('imagen')) return 4;
-        if (lower.includes('image')) return 3;
-        if (isLiveAudioModel(id)) return 2;
-        return 1;
-    };
-
     return [...models].sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
@@ -113,10 +102,6 @@ export const calculateTokenStats = (usageMetadata?: UsageMetadata) => {
         return { promptTokens: 0, completionTokens: 0, totalTokens: 0, thoughtTokens: 0 };
     }
 
-    const usage = usageMetadata as UsageMetadata & {
-        candidatesTokenCount?: number;
-        thoughtsTokenCount?: number;
-    };
     const totalTokens = usageMetadata.totalTokenCount || 0;
     const promptTokens = usageMetadata.promptTokenCount || 0;
     // SDK field names drifted; keep compatibility with older/newer shapes.

@@ -4,8 +4,6 @@ import { ChatSettings, MediaResolution } from './settings';
 import { ThemeColors } from './theme';
 import { AppSettings, ModelOption } from './settings';
 import { translations } from '../utils/appUtils';
-import type { Content, Part } from '@google/genai';
-
 export interface VideoMetadata {
   startOffset?: string;
   endOffset?: string;

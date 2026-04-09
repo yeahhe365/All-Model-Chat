@@ -7,7 +7,7 @@ import { dbService } from '../../utils/db';
 import { DEEP_SEARCH_SYSTEM_PROMPT, LOCAL_PYTHON_SYSTEM_PROMPT } from "../../constants/promptConstants";
 import { HarmBlockThreshold, HarmCategory, SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model } from "../../utils/appUtils";
-import { getModelDescriptor, normalizeModelId, type ThinkingLevel } from "../../platform/genai/modelCatalog";
+import { getModelDescriptor, normalizeModelId } from "../../platform/genai/modelCatalog";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds

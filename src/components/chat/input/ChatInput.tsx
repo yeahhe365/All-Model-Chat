@@ -100,7 +100,7 @@ const ChatInputContent: React.FC<{ effectiveProps: ChatInputProps }> = ({ effect
         onCancelEdit: effectiveProps.onCancelEdit,
         canSend: canSend,
         isWaitingForUpload: inputState.isWaitingForUpload,
-        t: translate,
+        t: effectiveProps.t as any,
         onTranslate: handlers.handleTranslate,
         isTranslating: inputState.isTranslating,
         inputText: inputState.inputText,

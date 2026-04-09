@@ -14,7 +14,6 @@ import { useMessageListScroll } from './message-list/hooks/useMessageListScroll'
 import { MessageListFooter } from './message-list/MessageListFooter';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import type { Translator } from '../../utils/translations';
 
 const HtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -168,7 +167,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onContinueGeneration={onContinueGeneration}
                         ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
-                        t={translate}
+                        t={t}
                         appSettings={appSettings}
                         onOpenSidePanel={onOpenSidePanel}
                         onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
@@ -185,7 +184,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onInsert={onInsert} 
             onTTS={onQuickTTS} 
             containerRef={scrollerRef as any} 
-            t={translate} 
+            t={modalTranslator} 
         />
 
         <ScrollNavigation 

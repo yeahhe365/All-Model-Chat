@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
-import { Translator } from '../../utils/appUtils';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { ApiConfigSection } from './sections/ApiConfigSection';
 import { AppearanceSection } from './sections/AppearanceSection';

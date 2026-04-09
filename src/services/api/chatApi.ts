@@ -88,6 +88,10 @@ export const processGenerateContentResponse = (response: GenerateContentResponse
         }
     }
 
+    for (const part of contentParts) {
+        mergeUniqueCitations(finalMetadata, getToolCallCitations(part));
+    }
+
     return {
         parts: responseParts,
         thoughts: thoughtsText || undefined,
