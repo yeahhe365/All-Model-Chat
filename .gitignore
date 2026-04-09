@@ -33,5 +33,11 @@ Thumbs.db
 # Coverage
 coverage/
 
+# Test artifacts
+test-results/
+
 # Local worktrees
 .worktrees/
+
+# Local archive exports
+all-model-chat*.zip
