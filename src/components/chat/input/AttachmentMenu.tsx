@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, FolderUp } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
@@ -13,7 +13,7 @@ import {
   IconFileEdit,
   IconZip
 } from '../../icons/CustomIcons';
-import { useWindowContext } from '../../../contexts/WindowContext';
+import { useWindowContext } from '../../../contexts/useWindowContext';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 
@@ -31,9 +31,11 @@ const menuIconSize = 18; // Consistent icon size for menu items
 export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({});
+    const [highlightedIndex, setHighlightedIndex] = useState(0);
     const containerRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
+    const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
     
     const { window: targetWindow } = useWindowContext();
 
@@ -56,45 +58,6 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         };
     }, [isOpen]);
 
-    // Dynamic fixed positioning
-    useLayoutEffect(() => {
-        if (isOpen && buttonRef.current && targetWindow) {
-            const buttonRect = buttonRef.current.getBoundingClientRect();
-            const viewportWidth = targetWindow.innerWidth;
-            const viewportHeight = targetWindow.innerHeight;
-            
-            const MENU_WIDTH = 240; 
-            const BUTTON_MARGIN = 10;
-            const GAP = 8;
-            
-            const newStyle: React.CSSProperties = {
-                position: 'fixed',
-                zIndex: 9999, // Ensure it sits on top of everything including toolbar
-            };
-
-            // Horizontal Alignment
-            if (buttonRect.left + MENU_WIDTH > viewportWidth - BUTTON_MARGIN) {
-                // Align right edge of menu with right edge of button
-                newStyle.left = buttonRect.right - MENU_WIDTH;
-                newStyle.transformOrigin = 'bottom right';
-            } else {
-                // Align left
-                newStyle.left = buttonRect.left;
-                newStyle.transformOrigin = 'bottom left';
-            }
-
-            // Vertical Alignment (Anchored to bottom of viewport relative to button top)
-            newStyle.bottom = viewportHeight - buttonRect.top + GAP;
-
-            // Height Constraint
-            const availableHeight = buttonRect.top - BUTTON_MARGIN;
-            newStyle.maxHeight = `${Math.max(150, availableHeight)}px`;
-            newStyle.overflowY = 'auto'; // Allow scrolling if constrained
-
-            setMenuPosition(newStyle);
-        }
-    }, [isOpen, targetWindow]);
-
     const handleAction = (action: AttachmentAction) => {
         setIsOpen(false);
         onAction(action);
@@ -112,12 +75,100 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_createText', icon: <IconFileEdit size={menuIconSize} />, action: 'text' }
     ];
 
+    const computeMenuPosition = useCallback(() => {
+        if (!buttonRef.current || !targetWindow) return {};
+
+        const buttonRect = buttonRef.current.getBoundingClientRect();
+        const viewportWidth = targetWindow.innerWidth;
+        const viewportHeight = targetWindow.innerHeight;
+        const menuWidth = 240;
+        const buttonMargin = 10;
+        const gap = 8;
+
+        const nextStyle: React.CSSProperties = {
+            position: 'fixed',
+            zIndex: 9999,
+            bottom: viewportHeight - buttonRect.top + gap,
+            maxHeight: `${Math.max(150, buttonRect.top - buttonMargin)}px`,
+            overflowY: 'auto',
+        };
+
+        if (buttonRect.left + menuWidth > viewportWidth - buttonMargin) {
+            nextStyle.left = buttonRect.right - menuWidth;
+            nextStyle.transformOrigin = 'bottom right';
+        } else {
+            nextStyle.left = buttonRect.left;
+            nextStyle.transformOrigin = 'bottom left';
+        }
+
+        return nextStyle;
+    }, [targetWindow]);
+
+    const closeMenu = useCallback(() => {
+        setIsOpen(false);
+        buttonRef.current?.focus();
+    }, []);
+
+    const openMenu = useCallback((preferredIndex: number = 0) => {
+        setHighlightedIndex(preferredIndex);
+        setMenuPosition(computeMenuPosition());
+        setIsOpen(true);
+    }, [computeMenuPosition]);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        itemRefs.current[highlightedIndex]?.focus();
+    }, [highlightedIndex, isOpen]);
+
+    const handleTriggerKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (disabled) return;
+
+        if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openMenu(0);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            openMenu(menuItems.length - 1);
+        }
+    };
+
+    const handleItemKeyDown = (index: number) => (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setHighlightedIndex((index + 1) % menuItems.length);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            setHighlightedIndex((index - 1 + menuItems.length) % menuItems.length);
+        } else if (event.key === 'Home') {
+            event.preventDefault();
+            setHighlightedIndex(0);
+        } else if (event.key === 'End') {
+            event.preventDefault();
+            setHighlightedIndex(menuItems.length - 1);
+        } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            handleAction(menuItems[index].action);
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            closeMenu();
+        } else if (event.key === 'Tab') {
+            setIsOpen(false);
+        }
+    };
+
     return (
         <div className="relative" ref={containerRef}>
             <button
                 ref={buttonRef}
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    if (isOpen) {
+                        setIsOpen(false);
+                    } else {
+                        openMenu(0);
+                    }
+                }}
+                onKeyDown={handleTriggerKeyDown}
                 disabled={disabled}
                 className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rotate-45' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)] rotate-0'}`}
                 aria-label={t('attachMenu_aria')}
@@ -135,8 +186,18 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                     style={menuPosition}
                     role="menu"
                 >
-                    {menuItems.map(item => (
-                        <button key={item.action} onClick={() => handleAction(item.action)} className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3.5 transition-colors" role="menuitem">
+                    {menuItems.map((item, index) => (
+                        <button
+                            key={item.action}
+                            ref={(element) => {
+                                itemRefs.current[index] = element;
+                            }}
+                            onClick={() => handleAction(item.action)}
+                            onKeyDown={handleItemKeyDown(index)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3.5 transition-colors"
+                            role="menuitem"
+                            tabIndex={index === highlightedIndex ? 0 : -1}
+                        >
                             <span className="text-[var(--theme-text-secondary)]">{item.icon}</span>
                             <span className="font-medium">{t(item.labelKey)}</span>
                         </button>

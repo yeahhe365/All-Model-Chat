@@ -1,5 +1,4 @@
-
-import { useCallback, Dispatch, SetStateAction } from 'react';
+import { useCallback, type Dispatch, type MutableRefObject, type RefObject, type SetStateAction } from 'react';
 import { UploadedFile, VideoMetadata } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
 import { useImageNavigation } from '../../ui/useImageNavigation';
@@ -11,10 +10,10 @@ interface UseFileManagementHandlersProps {
     isAddingById: boolean;
     isLoading: boolean;
     setIsAddingById: Dispatch<SetStateAction<boolean>>;
-    justInitiatedFileOpRef: React.MutableRefObject<boolean>;
+    justInitiatedFileOpRef: MutableRefObject<boolean>;
     onAddFileById: (fileId: string) => Promise<void>;
     setFileIdInput: Dispatch<SetStateAction<string>>;
-    textareaRef: React.RefObject<HTMLTextAreaElement>;
+    textareaRef: RefObject<HTMLTextAreaElement>;
     previewFile: UploadedFile | null;
     setPreviewFile: Dispatch<SetStateAction<UploadedFile | null>>;
 }

@@ -36,8 +36,7 @@ export const translations = {
     ...aboutSettings,
 };
 
-export type TranslationKey = keyof typeof translations;
-export type Translator = (key: TranslationKey | string, fallback?: string) => string;
+export type Translator = (key: string, fallback?: string) => string;
 
 export const getTranslator = (lang: 'en' | 'zh'): Translator => (key, fallback) => {
     // The type assertion is safe because we've merged all the objects.

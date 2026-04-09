@@ -40,7 +40,6 @@ export const useTextAreaInsert = (
             textarea.focus();
             const newCursorPos = start + finalText.length;
             textarea.setSelectionRange(newCursorPos, newCursorPos);
-            // Native focus usually scrolls into view.
         });
     }, [textareaRef, setInputText]);
 

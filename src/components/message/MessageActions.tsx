@@ -120,8 +120,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                 {message.role === 'model' && !message.isLoading && (
                     <button 
                         onClick={() => onContinueGeneration(message.id)} 
-                        title="Continue Generating" 
-                        aria-label="Continue Generating" 
+                        title={t('message_continue_generating')} 
+                        aria-label={t('message_continue_generating')} 
                         className={actionButtonClasses}
                     >
                         <CirclePlay size={actionIconSize} strokeWidth={2} />
@@ -152,8 +152,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                         <button 
                             onClick={() => onTextToSpeech(message.id, message.content)} 
                             disabled={!!ttsMessageId} 
-                            title="Read aloud" 
-                            aria-label="Read message aloud" 
+                            title={t('message_read_aloud')} 
+                            aria-label={t('message_read_aloud_aria')} 
                             className={`${actionButtonClasses} disabled:opacity-30 disabled:cursor-not-allowed`}
                         >
                             {isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" strokeWidth={2} /> : <Volume2 size={actionIconSize} strokeWidth={2} />}

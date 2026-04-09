@@ -35,7 +35,8 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
       <button 
         onClick={onAddNewGroup} 
         className="flex-shrink-0 h-9 w-9 flex items-center justify-center text-[var(--theme-icon-history)] bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors" 
-        title="New Group"
+        title={t('history_new_group_title')}
+        aria-label={t('history_new_group_title')}
       >
         <FolderPlus size={18} strokeWidth={2} />
       </button>
@@ -51,7 +52,12 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
             onChange={(e) => setSearchQuery(e.target.value)} 
             className="w-full bg-transparent border-0 h-full py-0 text-sm focus:ring-0 outline-none text-[var(--theme-text-primary)] placeholder:text-[var(--theme-text-tertiary)]" 
             autoFocus 
-            onKeyDown={(e) => { if (e.key === 'Escape') setIsSearching(false); }} 
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setIsSearching(false);
+                setSearchQuery('');
+              }
+            }} 
           />
           <button 
             onClick={() => { setIsSearching(false); setSearchQuery(''); }} 
@@ -68,7 +74,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
             aria-label={t('history_search_aria')}
         >
           <Search size={18} className="text-[var(--theme-icon-history)]" strokeWidth={2} />
-          <span className="text-[var(--theme-text-primary)]">{t('history_search_button', 'Search')}</span>
+          <span className="text-[var(--theme-text-primary)]">{t('history_search_button')}</span>
         </button>
       )}
     </div>

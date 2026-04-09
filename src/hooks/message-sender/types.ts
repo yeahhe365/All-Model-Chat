@@ -1,5 +1,4 @@
-
-import React from 'react';
+import type { MutableRefObject } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
 import { UsageMetadata } from '@google/genai';
 
@@ -26,7 +25,7 @@ export interface BaseSenderProps {
     currentChatSettings: IndividualChatSettings;
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    activeJobs: MutableRefObject<Map<string, AbortController>>;
     setAppFileError: (error: string | null) => void;
     language: 'en' | 'zh';
 }
@@ -46,10 +45,10 @@ export interface StandardChatProps extends BaseSenderProps {
     setEditingMessageId: (id: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     getStreamHandlers: GetStreamHandlers;
-    sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
+    sessionKeyMapRef: MutableRefObject<Map<string, string>>;
     handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
 }

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
@@ -17,23 +17,18 @@ interface FileConfigurationModalProps {
     isGemini3: boolean;
 }
 
-export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ isOpen, onClose, file, onSave, t, isGemini3 }) => {
+type FileConfigurationModalContentProps = Omit<FileConfigurationModalProps, 'isOpen' | 'file'> & {
+    file: UploadedFile;
+};
+
+const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps> = ({ onClose, file, onSave, t, isGemini3 }) => {
     // Video Metadata
-    const [startOffset, setStartOffset] = useState('');
-    const [endOffset, setEndOffset] = useState('');
-    const [fps, setFps] = useState('');
+    const [startOffset, setStartOffset] = useState(file.videoMetadata?.startOffset || '');
+    const [endOffset, setEndOffset] = useState(file.videoMetadata?.endOffset || '');
+    const [fps, setFps] = useState(file.videoMetadata?.fps ? String(file.videoMetadata.fps) : '');
     
     // Media Resolution
-    const [mediaResolution, setMediaResolution] = useState<MediaResolution | ''>('');
-
-    useEffect(() => {
-        if (isOpen && file) {
-            setStartOffset(file.videoMetadata?.startOffset || '');
-            setEndOffset(file.videoMetadata?.endOffset || '');
-            setFps(file.videoMetadata?.fps ? String(file.videoMetadata.fps) : '');
-            setMediaResolution(file.mediaResolution || '');
-        }
-    }, [isOpen, file]);
+    const [mediaResolution, setMediaResolution] = useState<MediaResolution | ''>(file.mediaResolution || '');
 
     const handleSave = () => {
         if (!file) return;
@@ -77,8 +72,6 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
         onClose();
     };
 
-    if (!file) return null;
-
     const isVideo = file.type.startsWith('video/');
     // Supported types for per-part resolution: Images, Video, PDF
     const isImage = file.type.startsWith('image/');
@@ -86,7 +79,7 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
     const showResolutionSettings = isGemini3 && (isImage || isVideo || isPdf);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--theme-border-primary)]">
+        <Modal isOpen={true} onClose={onClose} contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--theme-border-primary)]">
             <FileConfigHeader 
                 onClose={onClose} 
                 t={t} 
@@ -116,4 +109,10 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
             </div>
         </Modal>
     );
+};
+
+export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ isOpen, file, ...props }) => {
+    if (!isOpen || !file) return null;
+
+    return <FileConfigurationModalContent key={file.id} file={file} {...props} />;
 };

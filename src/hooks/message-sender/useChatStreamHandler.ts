@@ -1,6 +1,5 @@
 
-
-import React, { useCallback } from 'react';
+import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
@@ -16,7 +15,7 @@ interface ChatStreamHandlerProps {
     appSettings: AppSettings;
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    activeJobs: MutableRefObject<Map<string, AbortController>>;
 }
 
 export const useChatStreamHandler = ({
@@ -105,7 +104,7 @@ export const useChatStreamHandler = ({
                 const newSessions = [...prev];
                 const sessionToUpdate = { ...newSessions[sessionIndex] };
                 
-                let updatedMessages = sessionToUpdate.messages.map(msg => {
+                const updatedMessages = sessionToUpdate.messages.map(msg => {
                     if (msg.id === generationId) {
                         return {
                             ...msg,
@@ -171,11 +170,10 @@ export const useChatStreamHandler = ({
             const anyPart = part as any;
             
             // 1. Accumulate plain text
-            let chunkText = "";
             if (anyPart.text) {
-                chunkText = anyPart.text;
-                accumulatedText += chunkText;
-                streamingStore.updateContent(generationId, chunkText);
+                const textChunk = anyPart.text;
+                accumulatedText += textChunk;
+                streamingStore.updateContent(generationId, textChunk);
             }
 
             // 2. Handle Tools / Code (Convert to text representation for the store)

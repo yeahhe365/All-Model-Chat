@@ -60,7 +60,7 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({ message, t, onSugg
             {isGeneratingSuggestions && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)] animate-pulse opacity-70 px-1">
                     <Loader2 size={12} className="animate-spin" strokeWidth={1.5} />
-                    <span>Generating suggestions...</span>
+                    <span>{t('messageFooter_generating_suggestions')}</span>
                 </div>
             )}
         </>

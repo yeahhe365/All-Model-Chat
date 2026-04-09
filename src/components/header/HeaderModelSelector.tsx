@@ -30,6 +30,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   onSetThinkingLevel,
 }) => {
   const displayModelName = currentModelName;
+  const accessibleModelName = displayModelName || t('loading');
 
   const abbreviatedModelName = useMemo(() => {
     if (!displayModelName) return '';
@@ -56,6 +57,13 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   
   // Consider it "Fast Mode" active if the current level matches the target fast level
   const isFastState = thinkingLevel === targetFastLevel;
+  const thinkingTitle = isFastState
+    ? t(
+        targetFastLevel === 'MINIMAL'
+          ? 'thinking_toggle_fast_minimal_title'
+          : 'thinking_toggle_fast_low_title'
+      )
+    : t('thinking_toggle_high_title');
 
   return (
     <ModelPicker
@@ -64,16 +72,17 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       onSelect={onSelectModel}
       t={t}
       dropdownClassName="w-[calc(100vw-2rem)] max-w-[240px] sm:w-[240px] sm:max-w-none max-h-96"
-      renderTrigger={({ isOpen, setIsOpen }) => (
+      renderTrigger={({ ref, onTriggerClick, onTriggerKeyDown, triggerAriaProps }) => (
         <div className="relative flex items-center gap-1">
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                ref={ref}
+                onClick={onTriggerClick}
+                onKeyDown={onTriggerKeyDown}
                 disabled={isSelectorDisabled}
                 className={`h-10 flex items-center gap-2 rounded-xl px-2 sm:px-3 bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium text-base transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed border border-transparent hover:border-[var(--theme-border-secondary)] hover:scale-[1.02] active:scale-95 active:bg-[var(--theme-bg-tertiary)] ${isSwitchingModel ? 'animate-pulse' : ''}`}
-                title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
-                aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
-                aria-haspopup="listbox"
-                aria-expanded={isOpen}
+                title={`${t('headerModelSelectorTooltip_current')}: ${accessibleModelName}. ${t('headerModelSelectorTooltip_action')}`}
+                aria-label={`${t('headerModelAriaLabel_current')}: ${accessibleModelName}. ${t('headerModelAriaLabel_action')}`}
+                {...triggerAriaProps}
             >
                 {!currentModelName && <div className="flex items-center justify-center"><GoogleSpinner size={16} /></div>}
                 
@@ -87,13 +96,14 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                         e.stopPropagation(); 
                         onSetThinkingLevel(isFastState ? 'HIGH' : targetFastLevel); 
                     }}
-                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus:visible:ring-2 focus:visible:ring-offset-2 focus:visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
+                    type="button"
+                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
                         isFastState 
                             ? 'text-yellow-500 hover:bg-[var(--theme-bg-tertiary)]' 
                             : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]'
                     }`}
-                    title={isFastState ? `Thinking: ${targetFastLevel === 'MINIMAL' ? 'Minimal' : 'Low'} (Fast Mode)` : "Thinking: High (Pro Mode)"}
-                    aria-label="Toggle thinking level"
+                    title={thinkingTitle}
+                    aria-label={t('thinking_toggle_aria')}
                 >
                     <Zap size={18} fill={isFastState ? "currentColor" : "none"} strokeWidth={2} />
                 </button>

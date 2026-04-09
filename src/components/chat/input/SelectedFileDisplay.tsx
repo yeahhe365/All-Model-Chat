@@ -1,11 +1,13 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { UploadedFile } from '../../../types';
 import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, Settings2, Edit3 } from 'lucide-react';
+import { getTranslator } from '../../../utils/appUtils';
 import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { formatFileSize } from '../../../utils/domainUtils';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 interface SelectedFileDisplayProps {
   file: UploadedFile;
@@ -17,17 +19,9 @@ interface SelectedFileDisplayProps {
 }
 
 export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, onRemove, onCancelUpload, onConfigure, onPreview, isGemini3 }) => {
-  const [isNewlyActive, setIsNewlyActive] = useState(false);
-  const prevUploadState = useRef(file.uploadState);
+  const language = useSettingsStore((state) => state.language);
+  const t = getTranslator(language);
   const { isCopied: idCopied, copyToClipboard } = useCopyToClipboard();
-
-  useEffect(() => {
-    if (prevUploadState.current !== 'active' && file.uploadState === 'active') {
-      setIsNewlyActive(true);
-      setTimeout(() => setIsNewlyActive(false), 800);
-    }
-    prevUploadState.current = file.uploadState;
-  }, [file.uploadState]);
 
   const handleCopyId = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -66,21 +60,25 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const ConfigIcon = isText ? Edit3 : (isGemini3 ? SlidersHorizontal : (isVideo ? Scissors : Settings2));
 
   return (
-    <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>
+    <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isActive ? 'newly-active-file-animate' : ''} select-none`}>
       
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); isCancellable ? onCancelUpload(file.id) : onRemove(file.id); }}
+        onClick={(e) => {
+            e.stopPropagation();
+            if (isCancellable) onCancelUpload(file.id);
+            else onRemove(file.id);
+        }}
         className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 scale-90 hover:scale-100"
-        title={isCancellable ? "Cancel Upload" : "Remove File"}
-        aria-label={isCancellable ? "Cancel Upload" : "Remove File"}
+        title={isCancellable ? t('selectedFile_cancel_upload') : t('selectedFile_remove_file')}
+        aria-label={isCancellable ? t('selectedFile_cancel_upload') : t('selectedFile_remove_file')}
       >
         {isCancellable ? <Ban size={14} /> : <X size={14} />}
       </button>
 
       <div 
         onClick={() => isActive && onPreview && onPreview(file)}
-        className={`relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 overflow-hidden flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
+        className={`file-preview-box relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 overflow-hidden flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
       >
         
         <div className={`w-full h-full flex items-center justify-center p-2 transition-all duration-300 ${isUploading || isProcessing ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100'}`}>
@@ -111,8 +109,8 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             </div>
         )}
 
-        {isNewlyActive && (
-             <div className="absolute inset-0 flex items-center justify-center bg-[var(--theme-bg-success)]/20 backdrop-blur-[1px] animate-pulse z-20">
+        {isActive && (
+             <div className="newly-active-file-overlay absolute inset-0 flex items-center justify-center bg-[var(--theme-bg-success)]/20 backdrop-blur-[1px] z-20 pointer-events-none">
                 <CheckCircle size={24} className="text-[var(--theme-text-success)] drop-shadow-md" />
              </div>
         )}
@@ -120,8 +118,11 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
         {canConfigure && (
              <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onConfigure && onConfigure(file); }}
-                title={isText ? "Edit File" : "Configure File"}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (onConfigure) onConfigure(file);
+                }}
+                title={isText ? t('selectedFile_edit_file') : t('selectedFile_configure_file')}
                 className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md hover:bg-black/70 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
              >
                 <ConfigIcon size={12} strokeWidth={2} />
@@ -132,7 +133,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             <button
               type="button"
               onClick={handleCopyId}
-              title={idCopied ? "ID Copied" : "Copy File ID"}
+              title={idCopied ? t('selectedFile_file_id_copied') : t('selectedFile_copy_file_id')}
               className={`absolute bottom-1 right-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100 scale-90 hover:scale-100 z-20 ${idCopied ? '!text-green-400 !opacity-100' : ''}`}
             >
               {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
@@ -150,10 +151,10 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
         >
             {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
             {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
-            {isFailed ? (file.error || 'Error') : 
-             isUploading ? 'Uploading...' :
-             isProcessing ? 'Processing...' :
-             isCancelled ? 'Cancelled' : 
+            {isFailed ? (file.error || t('selectedFile_error')) : 
+             isUploading ? t('selectedFile_uploading') :
+             isProcessing ? t('selectedFile_processing') :
+             isCancelled ? t('selectedFile_cancelled') : 
              formatFileSize(file.size)}
         </p>
       </div>

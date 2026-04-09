@@ -6,13 +6,14 @@ import {
     SUPPORTED_IMAGE_MIME_TYPES,
     SUPPORTED_PDF_MIME_TYPES,
     SUPPORTED_AUDIO_MIME_TYPES,
-    SUPPORTED_VIDEO_MIME_TYPES,
-    SUPPORTED_DOC_MIME_TYPES
+    SUPPORTED_VIDEO_MIME_TYPES
 } from '../../constants/fileConstants';
 import { AppSettings } from '../../types';
 import { isTextFile } from '../../utils/appUtils';
 
 export const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
+export const FILES_API_TOTAL_REQUEST_THRESHOLD = 100 * 1024 * 1024;
+export const INLINE_PDF_MAX_BYTES = 50 * 1024 * 1024;
 
 export const formatSpeed = (bytesPerSecond: number): string => {
     if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
@@ -22,7 +23,7 @@ export const formatSpeed = (bytesPerSecond: number): string => {
 };
 
 export const getEffectiveMimeType = (file: File): string => {
-    let effectiveMimeType = file.type;
+    const effectiveMimeType = file.type;
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
     // 1. Force text/plain for code/text extensions
@@ -42,19 +43,41 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
     const effectiveMimeType = getEffectiveMimeType(file);
     if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
 
-    let userPrefersFileApi = false;
-    if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.images;
-    else if (SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.pdfs;
-    else if (SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.audio;
-    else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
-    else if (SUPPORTED_DOC_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.text; // Treat docs as text config
-    else userPrefersFileApi = appSettings.filesApiConfig.text; // Fallback for text/code
+    const userPrefersFileApi =
+        SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.images :
+        SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.pdfs :
+        SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.audio :
+        SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.video :
+        appSettings.filesApiConfig.text;
 
-    // Respect the user's toggle strictly. 
-    // If OFF, send inline regardless of size (even if > 20MB, though API might reject it).
-    return userPrefersFileApi;
+    const exceedsPdfInlineLimit = SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType) && file.size > INLINE_PDF_MAX_BYTES;
+    const exceedsTotalRequestLimitByItself = file.size > FILES_API_TOTAL_REQUEST_THRESHOLD;
+
+    return userPrefersFileApi || exceedsPdfInlineLimit || exceedsTotalRequestLimitByItself;
+};
+
+export const getFileApiUploadDecisions = (files: File[], appSettings: AppSettings): boolean[] => {
+    const initialDecisions = files.map(file => shouldUseFileApi(file, appSettings));
+    const inlinePayloadSize = files.reduce((total, file, index) => {
+        if (initialDecisions[index]) return total;
+
+        const effectiveMimeType = getEffectiveMimeType(file);
+        if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return total;
+
+        return total + file.size;
+    }, 0);
+
+    if (inlinePayloadSize <= FILES_API_TOTAL_REQUEST_THRESHOLD) {
+        return initialDecisions;
+    }
+
+    return files.map((file, index) => {
+        if (initialDecisions[index]) return true;
+        const effectiveMimeType = getEffectiveMimeType(file);
+        return ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType);
+    });
 };
 
 export const checkBatchNeedsApiKey = (files: File[], appSettings: AppSettings): boolean => {
-    return files.some(file => shouldUseFileApi(file, appSettings));
+    return getFileApiUploadDecisions(files, appSettings).some(Boolean);
 };

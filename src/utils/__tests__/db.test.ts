@@ -15,7 +15,7 @@ function createIDBMock() {
     stores,
     objectStoreNames: {
       contains(name: string) {
-        return stores.hasOwnProperty(name);
+        return Object.prototype.hasOwnProperty.call(stores, name);
       },
     },
     createObjectStore,

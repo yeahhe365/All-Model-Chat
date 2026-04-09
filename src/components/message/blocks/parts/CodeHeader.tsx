@@ -52,7 +52,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
                             ${isRunning ? 'text-[var(--theme-text-link)]' : 'text-green-500 hover:text-green-600'}
                             bg-[var(--theme-bg-tertiary)]/50 mr-2
                         `} 
-                        title="Run Python Code" 
+                        title={t('code_run_python')} 
                         onClick={onRun}
                         disabled={isRunning}
                     > 
@@ -62,7 +62,7 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
                 
                 {showPreview && (
                     <>
-                        <button className={MESSAGE_BLOCK_BUTTON_CLASS} title="Open in Side Panel" onClick={onOpenSide}>
+                        <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_open_side_panel')} onClick={onOpenSide}>
                             <Sidebar size={14} strokeWidth={2} />
                         </button>
                         <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_fullscreen_monitor')} onClick={() => onFullscreen(true)}> 
@@ -73,14 +73,14 @@ export const CodeHeader: React.FC<CodeHeaderProps> = ({
                         </button>
                     </>
                 )}
-                <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={`Download ${language.toUpperCase()}`} onClick={onDownload}> 
+                <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('code_download_title').replace('{language}', language.toUpperCase())} onClick={onDownload}> 
                     <Download size={14} strokeWidth={2} /> 
                 </button>
                  <button className={MESSAGE_BLOCK_BUTTON_CLASS} title={isCopied ? t('copied_button_title') : t('copy_button_title')} onClick={onCopy}>
                     {isCopied ? <Check size={14} className="text-[var(--theme-text-success)] icon-animate-pop" strokeWidth={2} /> : <Copy size={14} strokeWidth={2} />}
                 </button>
                 {isOverflowing && (
-                    <button onClick={onToggleExpand} className={MESSAGE_BLOCK_BUTTON_CLASS} aria-expanded={isExpanded} title={isExpanded ? 'Collapse' : 'Expand'}>
+                    <button onClick={onToggleExpand} className={MESSAGE_BLOCK_BUTTON_CLASS} aria-expanded={isExpanded} title={isExpanded ? t('code_collapse') : t('code_expand')}>
                         {isExpanded ? <ChevronUp size={14} strokeWidth={2} /> : <ChevronDown size={14} strokeWidth={2} />}
                     </button>
                 )}

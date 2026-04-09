@@ -12,6 +12,7 @@ interface InputBarProps {
     isLoading: boolean;
     disabled?: boolean;
     submitLabel?: string;
+    cancelLabel?: string;
     footer?: React.ReactNode;
     autoFocus?: boolean;
     type?: 'text' | 'url';
@@ -28,6 +29,7 @@ export const InputBar: React.FC<InputBarProps> = ({
     isLoading,
     disabled = false,
     submitLabel = 'Add',
+    cancelLabel = 'Cancel',
     footer,
     autoFocus = true,
     type = 'text',
@@ -94,7 +96,7 @@ export const InputBar: React.FC<InputBarProps> = ({
                     onClick={onCancel}
                     disabled={disabled}
                     className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors focus:outline-none"
-                    aria-label="Cancel"
+                    aria-label={cancelLabel}
                 >
                     <X size={18} strokeWidth={2} />
                 </button>

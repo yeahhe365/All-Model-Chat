@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { Translator } from '../../utils/appUtils';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { ApiConfigSection } from './sections/ApiConfigSection';
 import { AppearanceSection } from './sections/AppearanceSection';
@@ -34,7 +34,7 @@ interface SettingsContentProps {
     onImportScenarios: (file: File) => void;
     onExportScenarios: () => void;
     
-    t: (key: keyof typeof translations) => string;
+    t: Translator;
 }
 
 export const SettingsContent: React.FC<SettingsContentProps> = ({

@@ -36,7 +36,7 @@ interface MessageProps {
 export const Message: React.FC<MessageProps> = React.memo((props) => {
     const { message, prevMessage } = props;
     
-    const isGrouped = Boolean(prevMessage &&
+    const isGrouped = !!prevMessage &&
         prevMessage.role === message.role &&
         !(prevMessage.isLoading ?? false) &&
         !(message.isLoading ?? false) &&

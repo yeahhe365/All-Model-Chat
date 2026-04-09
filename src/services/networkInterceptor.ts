@@ -132,7 +132,7 @@ export const networkInterceptor = {
         
         try {
             window.fetch = patchedFetch;
-        } catch (e) {
+        } catch (_error) {
             // Handle environments where window.fetch is a getter-only property (e.g., CodeSandbox, some strict environments)
             try {
                 Object.defineProperty(window, 'fetch', {

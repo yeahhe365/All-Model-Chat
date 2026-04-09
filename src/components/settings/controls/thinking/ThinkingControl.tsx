@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
@@ -18,6 +18,42 @@ interface ThinkingControlProps {
   setShowThoughts: (value: boolean) => void;
   t: (key: string) => string;
 }
+
+interface CustomThinkingBudgetControlProps {
+  minBudget: number;
+  maxBudget: number;
+  initialValue: string;
+  onValidBudgetChange: (value: number) => void;
+  t: (key: string) => string;
+}
+
+const CustomThinkingBudgetControl: React.FC<CustomThinkingBudgetControlProps> = ({
+  minBudget,
+  maxBudget,
+  initialValue,
+  onValidBudgetChange,
+  t,
+}) => {
+  const [value, setValue] = useState(initialValue);
+
+  const handleChange = (nextValue: string) => {
+    setValue(nextValue);
+    const numVal = parseInt(nextValue, 10);
+    if (!isNaN(numVal) && numVal > 0) {
+      onValidBudgetChange(numVal);
+    }
+  };
+
+  return (
+    <ThinkingBudgetSlider
+      minBudget={minBudget}
+      maxBudget={maxBudget}
+      value={value}
+      onChange={handleChange}
+      t={t}
+    />
+  );
+};
 
 export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   modelId,
@@ -39,10 +75,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   // Default ranges if config is missing (fallback for unknown models)
   const minBudget = budgetConfig?.min ?? 1024;
   const maxBudget = budgetConfig?.max ?? 32768;
-
-  const [customBudgetValue, setCustomBudgetValue] = useState(
-    thinkingBudget > 0 ? String(thinkingBudget) : String(minBudget)
-  );
+  const lastCustomBudgetRef = useRef(thinkingBudget > 0 ? thinkingBudget : minBudget);
   
   // Determine current mode
   const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
@@ -50,7 +83,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
 
   useEffect(() => {
     if (thinkingBudget > 0) {
-        setCustomBudgetValue(String(thinkingBudget));
+        lastCustomBudgetRef.current = thinkingBudget;
     }
   }, [thinkingBudget]);
 
@@ -64,8 +97,8 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   // Ensure custom budget doesn't exceed max when switching models
   useEffect(() => {
       if (thinkingBudget > maxBudget) {
+          lastCustomBudgetRef.current = maxBudget;
           setThinkingBudget(maxBudget);
-          setCustomBudgetValue(String(maxBudget));
       }
   }, [maxBudget, thinkingBudget, setThinkingBudget]);
 
@@ -77,24 +110,21 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
       } else {
           // Custom Mode
           // Restore last custom value or default to max/reasonable
-          let newBudget = parseInt(customBudgetValue, 10);
-          if (isNaN(newBudget) || newBudget <= 0) newBudget = maxBudget;
+          let newBudget = lastCustomBudgetRef.current;
+          if (!Number.isFinite(newBudget) || newBudget <= 0) newBudget = maxBudget;
           
           // Clamp to valid range for current model
           if (newBudget > maxBudget) newBudget = maxBudget;
           if (newBudget < minBudget) newBudget = minBudget;
 
-          if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
+          lastCustomBudgetRef.current = newBudget;
           setThinkingBudget(newBudget);
       }
   };
 
-  const handleCustomBudgetChange = (val: string) => {
-      setCustomBudgetValue(val);
-      const numVal = parseInt(val, 10);
-      if (!isNaN(numVal) && numVal > 0) {
-          setThinkingBudget(numVal);
-      }
+  const handleCustomBudgetChange = (value: number) => {
+      lastCustomBudgetRef.current = value;
+      setThinkingBudget(value);
   };
 
   if (isGemma) {
@@ -105,13 +135,13 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             <label className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
               <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
               {t('settingsThinkingMode')}
-              <Tooltip text="Gemma 4 uses the <|think|> token to enable thinking mode. When enabled, the model will output reasoning in <|channel|thought> tags.">
+              <Tooltip text={t('settingsThinking_gemma_tooltip')}>
                 <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
               </Tooltip>
             </label>
             {showThoughts && (
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                Thinking Enabled
+                {t('settingsThinking_enabled_badge')}
               </span>
             )}
           </div>
@@ -124,7 +154,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${showThoughts ? 'translate-x-4.5' : 'translate-x-1'}`} />
             </button>
             <span className="text-xs text-[var(--theme-text-secondary)]">
-              {showThoughts ? 'Inject <|think|> token into system prompt' : 'Thinking mode disabled'}
+              {showThoughts ? t('settingsThinking_inject_token') : t('settingsThinking_disabled')}
             </span>
           </div>
         </div>
@@ -152,7 +182,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                 </label>
                 {mode !== 'off' && (
                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                        {isGemini3 ? 'Gemini 3.0 Capabilities' : 'Reasoning Enabled'}
+                        {isGemini3 ? t('settingsThinking_gemini_capabilities') : t('settingsThinking_reasoning_enabled')}
                     </span>
                 )}
             </div>
@@ -177,16 +207,19 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                             setThinkingLevel={setThinkingLevel}
                             isFlash3={isFlash3}
                             hideMedium={false}
+                            t={t}
                         />
                     )}
 
                     {/* 2. Custom Budget Slider & Input */}
                     {mode === 'custom' && (
-                        <ThinkingBudgetSlider
+                        <CustomThinkingBudgetControl
+                            key={`${modelId}:${thinkingBudget}:${minBudget}:${maxBudget}`}
                             minBudget={minBudget}
                             maxBudget={maxBudget}
-                            value={customBudgetValue}
-                            onChange={handleCustomBudgetChange}
+                            initialValue={String(thinkingBudget > 0 ? thinkingBudget : minBudget)}
+                            onValidBudgetChange={handleCustomBudgetChange}
+                            t={t}
                         />
                     )}
 
@@ -194,7 +227,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                     {mode === 'off' && (
                         <div className="flex items-center justify-center py-1">
                             <p className="text-xs text-[var(--theme-text-tertiary)] italic flex items-center gap-2">
-                                Thinking process is disabled.
+                                {t('settingsThinking_off_message')}
                             </p>
                         </div>
                     )}

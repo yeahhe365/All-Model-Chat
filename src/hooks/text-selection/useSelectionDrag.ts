@@ -46,8 +46,6 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         
         document.removeEventListener('mousemove', handleDragMove);
-        document.removeEventListener('mouseup', handleDragEnd);
-        
         // Sync final position to React state
         const toolbar = toolbarRef.current;
         const { width, height } = toolbar.getBoundingClientRect();
@@ -67,7 +65,7 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         if (toolbarRef.current) {
             toolbarRef.current.style.transition = '';
         }
-    }, [onPositionChange, handleDragMove]);
+    }, [onPositionChange, handleDragMove, toolbarRef]);
 
     const handleDragStart = useCallback((e: React.MouseEvent) => {
         if (e.button !== 0 || !position || !toolbarRef.current) return;
@@ -84,8 +82,8 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         
         document.body.style.userSelect = 'none';
         document.addEventListener('mousemove', handleDragMove);
-        document.addEventListener('mouseup', handleDragEnd);
-    }, [position, handleDragMove, handleDragEnd]);
+        document.addEventListener('mouseup', handleDragEnd, { once: true });
+    }, [position, handleDragMove, handleDragEnd, toolbarRef]);
 
     useEffect(() => {
         return () => {

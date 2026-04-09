@@ -14,7 +14,7 @@ export const countTokensApi = async (apiKey: string, modelId: string, parts: Par
         const sanitizedParts = parts.map(p => {
             // Create a shallow copy to avoid mutating the original array elements
             // Only exclude internal app fields like thoughtSignature
-            const { thoughtSignature, ...rest } = p as any;
+            const { thoughtSignature: _thoughtSignature, ...rest } = p as any;
             return rest as Part;
         });
 

@@ -1,5 +1,10 @@
+
 import { Part, UsageMetadata, File as GeminiFile } from "@google/genai";
-import { ChatHistoryItem } from './chat';
+
+export interface ChatHistoryItem {
+  role: 'user' | 'model';
+  parts: Part[];
+}
 
 export interface GeminiService {
   uploadFile: (

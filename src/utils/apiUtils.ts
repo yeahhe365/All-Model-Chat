@@ -4,6 +4,19 @@ import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
 import { resolveGeminiApiKeys } from '../platform/genai/client';
 
+export const getEnvApiKeysString = (): string | null => {
+    const metaEnv = (import.meta as any).env || {};
+    const processEnv = typeof process !== 'undefined' ? process.env || {} : {};
+
+    return metaEnv.VITE_GEMINI_API_KEY
+        || metaEnv.GEMINI_API_KEY
+        || metaEnv.GOOGLE_API_KEY
+        || processEnv.VITE_GEMINI_API_KEY
+        || processEnv.GEMINI_API_KEY
+        || processEnv.GOOGLE_API_KEY
+        || null;
+};
+
 export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
         return {
@@ -11,7 +24,7 @@ export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: s
         };
     }
     return {
-        apiKeysString: resolveGeminiApiKeys((import.meta as any).env ?? {}),
+        apiKeysString: getEnvApiKeysString(),
     };
 };
 

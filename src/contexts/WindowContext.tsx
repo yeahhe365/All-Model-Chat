@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, ReactNode } from 'react';
 
 interface WindowContextType {
   window: Window;
@@ -10,8 +10,6 @@ const WindowContext = createContext<WindowContextType>({
   window: typeof window !== 'undefined' ? window : {} as Window,
   document: typeof document !== 'undefined' ? document : {} as Document,
 });
-
-export const useWindowContext = () => useContext(WindowContext);
 
 interface WindowProviderProps {
   window?: Window;
@@ -35,3 +33,5 @@ export const WindowProvider: React.FC<WindowProviderProps> = ({
     </WindowContext.Provider>
   );
 };
+
+export { WindowContext };

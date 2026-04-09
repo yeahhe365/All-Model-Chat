@@ -164,7 +164,7 @@ describe('buildGenerationConfig', () => {
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
     );
     expect(config.thinkingConfig).toBeDefined();
-    expect(config.thinkingConfig.includeThoughts).toBe(true);
+    expect(config.thinkingConfig.includeThoughts).toBe(false);
   });
 
   it('uses thinkingBudget when > 0 for Gemini 3', () => {
@@ -194,6 +194,13 @@ describe('buildGenerationConfig', () => {
       'gemini-2.5-pro', 'sys', baseConfig, false, 8000,
     );
     expect(config.thinkingConfig.thinkingBudget).toBe(8000);
+    expect(config.thinkingConfig.includeThoughts).toBe(false);
+  });
+
+  it('includes thought summaries only when showThoughts is enabled', () => {
+    const config = buildGenerationConfig(
+      'gemini-3-flash-preview', 'sys', baseConfig, true, 0,
+    );
     expect(config.thinkingConfig.includeThoughts).toBe(true);
   });
 

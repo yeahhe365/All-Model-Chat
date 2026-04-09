@@ -1,16 +1,19 @@
 
 import React from 'react';
+import { translations } from '../../../utils/appUtils';
 
 interface HtmlPreviewContentProps {
     iframeRef: React.RefObject<HTMLIFrameElement>;
     htmlContent: string;
     scale: number;
+    t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({
     iframeRef,
     htmlContent,
-    scale
+    scale,
+    t
 }) => {
     const handleIframeError = (event: React.SyntheticEvent<HTMLIFrameElement, Event>) => {
         console.error("Iframe loading error:", event);
@@ -29,16 +32,14 @@ export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({
             <iframe
                 ref={iframeRef}
                 srcDoc={htmlContent}
-                title="HTML Content Preview"
+                title={t('htmlPreview_iframe_title', 'HTML Content Preview')}
                 className="border-none bg-white shadow-sm origin-top-left" 
                 style={{
                     width: `${100 / scale}%`,
                     height: `${100 / scale}%`,
                     transform: `scale(${scale})`,
                 }}
-                // We strictly need allow-same-origin for html2canvas to access the contentDocument for screenshots.
-                // NOTE: This does reduce isolation slightly, but is necessary for the feature set.
-                sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"
+                sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
                 onError={handleIframeError}
             />
         </div>

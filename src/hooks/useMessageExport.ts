@@ -1,7 +1,7 @@
 
-
 import { useState } from 'react';
 import { ChatMessage } from '../types';
+import { useWindowContext } from '../contexts/useWindowContext';
 import {
     exportHtmlStringAsFile,
     exportTextStringAsFile,
@@ -25,6 +25,7 @@ export type ExportType = 'png' | 'html' | 'txt' | 'json';
 
 export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId }: UseMessageExportProps) => {
     const [exportingType, setExportingType] = useState<ExportType | null>(null);
+    const { document: targetDocument } = useWindowContext();
 
     const handleExport = async (type: ExportType, onSuccess?: () => void) => {
         if (exportingType) return;
@@ -57,7 +58,7 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
 
             // Find the rendered DOM bubble to preserve Math/Syntax/Diagrams
             // We use the data-message-id attribute which is present in the Message component
-            const messageWrapper = document.querySelector(`[data-message-id="${message.id}"]`);
+            const messageWrapper = targetDocument.querySelector(`[data-message-id="${message.id}"]`);
             // We want the inner bubble, usually inside the wrapper. 
             // The structure is Wrapper -> Container -> [Actions, Bubble, Actions]
             // We prioritize the new specific container class, falling back to older selectors if needed
@@ -89,11 +90,11 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 } else {
                     // HTML Export
                     const styles = await gatherPageStyles();
-                    const bodyClasses = document.body.className;
-                    const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
+                    const bodyClasses = targetDocument.body.className;
+                    const rootBgColor = getComputedStyle(targetDocument.documentElement).getPropertyValue('--theme-bg-primary');
                     
                     // Wrap the cleaned content
-                    const wrapper = document.createElement('div');
+                    const wrapper = targetDocument.createElement('div');
                     wrapper.className = 'markdown-body';
                     wrapper.appendChild(cleanedContent);
                     const chatHtml = wrapper.outerHTML;

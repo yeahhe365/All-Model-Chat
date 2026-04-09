@@ -33,7 +33,7 @@
 
 ## 项目简介
 
-**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：所有数据存储于浏览器 IndexedDB，无需后端服务器，在保障隐私的同时提供流畅的原生级体验。
+**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据存储于浏览器 IndexedDB，基础文本与多模态能力可直接以前端方式运行；但若要在生产环境安全启用 Live API，仍建议配套后端代理或临时凭证机制。
 
 支持两种运行模式：
 - **标准模式**：克隆仓库后通过 Vite 开发/构建，传统 SPA 部署
@@ -52,6 +52,7 @@
 - 双向实时流式交互，支持语音通话
 - 屏幕共享与视觉识别
 - 音频可视化 (AudioWorklet API)
+- 默认前端集成适合本地开发与受信任环境，生产部署建议使用后端中转或 ephemeral token
 
 ### 智能 Canvas
 - 代码块自动识别并渲染为交互式 HTML 预览（自动全屏）
@@ -64,6 +65,7 @@
 - 支持 ZIP / 文件夹拖入，自动解析代码库结构
 - 支持图片、PDF、视频、音频、文本等多种文件类型
 - 可配置各文件类型使用 Gemini Files API 还是直接 Base64 上传
+- 超过 100MB 的请求或超过 50MB 的 PDF 会自动切换到 Gemini Files API
 - 文件分辨率可调（Low / Medium / High / Ultra）
 
 ### 生产力工具链
@@ -81,7 +83,7 @@
 ### 企业级 API 管理
 - **多 Key 轮询**：支持填入多个 API Key 自动分担压力
 - **API 代理**：内置 Network Interceptor（Fetch 拦截），动态重写请求路径
-- **Vertex AI 兼容**：原生支持 Vertex AI Express 端点，自动修复路径映射
+- **Vertex AI 兼容路径**：支持通过自定义 `baseUrl` / 代理改写来兼容 Vertex AI Express 风格端点，不等同于官方 Vertex AI `project/location` 模式
 
 ### 多语言界面
 - 支持中文 / 英文 / 跟随系统三种语言设置
@@ -146,7 +148,7 @@ npm run dev
 VITE_GEMINI_API_KEY=your_api_key_here
 ```
 
-兼容旧配置：如果你之前使用的是 `GEMINI_API_KEY`，当前版本仍会回退读取，但建议迁移到 `VITE_GEMINI_API_KEY`。
+兼容模式下也可读取 `GEMINI_API_KEY` 或 `GOOGLE_API_KEY`，但前端构建场景优先推荐 `VITE_GEMINI_API_KEY`。
 
 ### 构建部署
 
@@ -168,7 +170,7 @@ npm run preview  # 本地预览构建结果
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
-| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理与 Vertex AI |
+| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理与 Vertex AI Express 风格端点 |
 | **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
 | **双模式部署** | 传统 Vite 构建 / HTML import map 零构建 CDN 加载 |
 
@@ -291,8 +293,8 @@ All-Model-Chat/
 
 | 类型 | 模型 |
 | :--- | :--- |
-| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
-| **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-lite-preview, gemini-2.5-flash-native-audio-preview |
+| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, gemini-3.1-flash-live-preview |
+| **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-native-audio-preview |
 | **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
 | **Imagen 4.0** | imagen-4.0-fast-generate, imagen-4.0-generate, imagen-4.0-ultra-generate |
 | **图片生成** | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview |

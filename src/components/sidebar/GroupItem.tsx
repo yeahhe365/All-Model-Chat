@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { ChevronDown, MoreHorizontal } from 'lucide-react';
 import { ChatGroup, SavedChatSession } from '../../types';
 import { SessionItem } from './SessionItem';
@@ -28,10 +28,13 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
   const { 
     group, sessions, editingItem, dragOverId, onToggleGroupExpansion, 
     handleGroupStartEdit, handleDrop, handleDragOver, setDragOverId,
-    setEditingItem, onDeleteGroup, t, ...sessionItemProps
+    setEditingItem, onDeleteGroup, t,
+    activeMenu, editInputRef, menuRef, handleRenameConfirm, handleRenameKeyDown,
+    toggleMenu, setActiveMenu, ...sessionItemProps
   } = props;
+  const actionButtonRef = useRef<HTMLButtonElement>(null);
   
-  const isMenuOpenInGroup = props.activeMenu === group.id || sessions?.some(s => s.id === props.activeMenu);
+  const isMenuOpenInGroup = activeMenu === group.id || sessions?.some(s => s.id === activeMenu);
 
   return (
     <div 
@@ -63,18 +66,20 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
           <div className="flex items-center gap-2 min-w-0">
              <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] transition-transform group-open/details:rotate-180 flex-shrink-0" strokeWidth={2} />
              {editingItem?.type === 'group' && editingItem.id === group.id ? (
-                <input ref={props.editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({...editingItem, title: e.target.value})} onBlur={props.handleRenameConfirm} onKeyDown={props.handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
+                <input ref={editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({...editingItem, title: e.target.value})} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
              ) : (
                 <span className="font-semibold text-sm truncate text-[var(--theme-text-secondary)]">{group.title}</span>
              )}
           </div>
-            <button onClick={(e) => props.toggleMenu(e, group.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} strokeWidth={2} /></button>
+            <button ref={actionButtonRef} onClick={(e) => toggleMenu(e, group.id)} title={t('history_item_actions')} aria-label={t('history_item_actions')} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} strokeWidth={2} /></button>
         </summary>
-        {props.activeMenu === group.id && (
+        {activeMenu === group.id && (
           <GroupItemMenu
-            menuRef={props.menuRef}
-            onStartEdit={() => { handleGroupStartEdit(group); props.setActiveMenu(null); }}
-            onDelete={() => { onDeleteGroup(group.id); props.setActiveMenu(null); }}
+            menuRef={menuRef}
+            triggerRef={actionButtonRef}
+            onRequestClose={() => setActiveMenu(null)}
+            onStartEdit={() => { handleGroupStartEdit(group); setActiveMenu(null); }}
+            onDelete={() => { onDeleteGroup(group.id); setActiveMenu(null); }}
             t={t}
           />
         )}
@@ -82,8 +87,15 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
             <SessionItem 
                 key={session.id} 
                 session={session} 
+                activeMenu={activeMenu}
                 editingItem={editingItem} 
+                editInputRef={editInputRef}
+                menuRef={menuRef}
+                handleRenameConfirm={handleRenameConfirm}
+                handleRenameKeyDown={handleRenameKeyDown}
                 setEditingItem={setEditingItem} 
+                toggleMenu={toggleMenu}
+                setActiveMenu={setActiveMenu}
                 t={t} 
                 {...sessionItemProps} 
             />

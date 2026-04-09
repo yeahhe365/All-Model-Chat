@@ -23,7 +23,11 @@ function getSyncChannel(): BroadcastChannel {
 }
 
 function broadcast(msg: SyncMessage) {
-  try { getSyncChannel().postMessage(msg); } catch {}
+  try {
+    getSyncChannel().postMessage(msg);
+  } catch {
+    // Ignore sync failures in unsupported/private browsing contexts.
+  }
 }
 
 // ── Sort helper ──
@@ -38,7 +42,11 @@ function sortSessions(sessions: SavedChatSession[]) {
 // ── URL & sessionStorage sync ──
 function syncActiveSessionToUrl(activeSessionId: string | null) {
   if (activeSessionId) {
-    try { sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId); } catch {}
+    try {
+      sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+    } catch {
+      // Ignore storage failures; URL sync is still best-effort.
+    }
     const targetPath = `/chat/${activeSessionId}`;
     try {
       if (window.location.pathname !== targetPath) {
@@ -48,14 +56,22 @@ function syncActiveSessionToUrl(activeSessionId: string | null) {
           window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
         }
       }
-    } catch {}
+    } catch {
+      // Ignore history sync failures; state remains the source of truth.
+    }
   } else {
-    try { sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY); } catch {}
     try {
-      if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
-        window.history.pushState({}, '', '/');
+      sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+    } catch {
+      // Ignore storage failures; URL sync is still best-effort.
+    }
+    try {
+      if (window.location.pathname !== '/') {
+        window.history.replaceState({}, '', '/');
       }
-    } catch {}
+    } catch {
+      // Ignore history sync failures; state remains the source of truth.
+    }
   }
 }
 
@@ -292,7 +308,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     // 6. Return Metadata Only (strip messages)
     const metadataOnly = newFullSessions.map(s => {
       if (s.messages && s.messages.length === 0) return s;
-      const { messages, ...rest } = s;
+      const { messages: _messages, ...rest } = s;
       return { ...rest, messages: [] };
     });
 

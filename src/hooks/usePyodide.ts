@@ -1,7 +1,7 @@
 
 
 import { useState, useCallback } from 'react';
-import { pyodideService, PyodideFile } from '../services/pyodideService';
+import type { PyodideFile } from '../services/pyodideService';
 
 export interface PyodideState {
     isRunning: boolean;
@@ -37,6 +37,7 @@ export const usePyodide = (codeKey?: string) => {
         pyodideResultCache.set(key, runningState);
         
         try {
+            const { pyodideService } = await import('../services/pyodideService');
             const result = await pyodideService.runPython(code);
             
             const finalState: PyodideState = {

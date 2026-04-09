@@ -2,7 +2,6 @@ import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, logService } from '../../utils/appUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
 
 interface UseFileIdAdderProps {
     appSettings: AppSettings;
@@ -58,17 +57,19 @@ export const useFileIdAdder = ({
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, mediaResolution: defaultResolution }]);
 
         try {
+            const { geminiServiceInstance } = await import('../../services/geminiService');
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
-                const mimeType = fileMetadata.mimeType ?? 'application/octet-stream';
-                const displayName = fileMetadata.displayName || fileApiId;
-                const fileResourceName = fileMetadata.name || fileApiId;
-                const fileUri = fileMetadata.uri;
+                const mimeType = fileMetadata.mimeType || 'application/octet-stream';
+                const displayName = fileMetadata.displayName || fileMetadata.name || fileApiId;
+                const fileApiName = fileMetadata.name || fileApiId;
+                const fileState = fileMetadata.state || 'ACTIVE';
                 
                 // Allow known video types or generic octet-stream (often used for arbitrary files)
                 // But strictly validate if it is a supported type if it's not generic
-                const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(mimeType) || 
+                const isValidType = mimeType === 'application/octet-stream' ||
+                                    ALL_SUPPORTED_MIME_TYPES.includes(mimeType) || 
                                     (mimeType.startsWith('video/') && !mimeType.includes('youtube'));
 
                 if (!isValidType) {
@@ -81,12 +82,12 @@ export const useFileIdAdder = ({
                     name: displayName, 
                     type: mimeType, 
                     size: Number(fileMetadata.sizeBytes) || 0, 
-                    fileUri, 
-                    fileApiName: fileResourceName, 
-                    isProcessing: fileMetadata.state === 'PROCESSING', 
+                    fileUri: fileMetadata.uri, 
+                    fileApiName, 
+                    isProcessing: fileState === 'PROCESSING', 
                     progress: 100, 
-                    uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), 
-                    error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined,
+                    uploadState: fileState === 'ACTIVE' ? 'active' : (fileState === 'PROCESSING' ? 'processing_api' : 'failed'), 
+                    error: fileState === 'FAILED' ? 'File API processing failed' : undefined,
                     mediaResolution: defaultResolution
                 };
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? newFile : f));

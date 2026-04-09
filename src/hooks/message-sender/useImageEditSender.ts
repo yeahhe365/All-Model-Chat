@@ -2,10 +2,9 @@
 import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { geminiServiceInstance } from '../../services/geminiService';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
-import { Part } from '@google/genai';
+import type { Part } from '@google/genai';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -88,6 +87,7 @@ export const useImageEditSender = ({
             }
             
             const historyForApi = await createChatHistoryForApi(historyMessages, shouldStripThinking);
+            const { geminiServiceInstance } = await import('../../services/geminiService');
             
             const callApi = () => geminiServiceInstance.editImage(keyToUse, currentChatSettings.modelId, historyForApi, promptParts, newAbortController.signal, aspectRatio, imageSize);
 
@@ -112,14 +112,19 @@ export const useImageEditSender = ({
                         if (part.text) {
                             textPartContent += part.text;
                         } else if (part.inlineData) {
+                            const base64Data = part.inlineData.data;
+                            const mimeType = part.inlineData.mimeType || 'image/png';
+
+                            if (!base64Data) {
+                                logService.warn('Image edit response returned inline data without payload.', { index });
+                                return;
+                            }
+
                             hasImagePart = true;
                             successfulImageCount++;
-                            const { mimeType, data } = part.inlineData;
-                            
-                            if (mimeType && data) {
-                                const newFile = createUploadedFileFromBase64(data, mimeType, `edited-image-${index + 1}`);
-                                combinedFiles.push(newFile);
-                            }
+
+                            const newFile = createUploadedFileFromBase64(base64Data, mimeType, `edited-image-${index + 1}`);
+                            combinedFiles.push(newFile);
                         }
                     });
 

@@ -160,7 +160,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
 
     // Non-state values from store
     const activeJobs = storeRef.getState()._activeJobs;
-    const userScrolledUp = storeRef.getState()._userScrolledUp;
+    const userScrolledUpRef = storeRef.getState()._userScrolledUp;
     const fileDraftsRef = storeRef.getState()._fileDrafts;
 
     // Persistence
@@ -185,7 +185,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setActiveMessages,
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs,
         updateAndPersistSessions: updateAndPersistSessions as any, activeChat, language, updateAndPersistGroups: updateAndPersistGroups as any,
-        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
+        userScrolledUpRef, selectedFiles, fileDraftsRef, activeSessionId,
         savedSessions
     });
 
@@ -216,12 +216,12 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setActiveSessionId,
     });
 
-    const scrollHandler = useChatScroll({ messages, userScrolledUp });
+    const scrollHandler = useChatScroll({ messages, userScrolledUpRef });
 
     const messageHandler = useMessageHandler({
         appSettings, messages, isLoading, currentChatSettings, selectedFiles,
         setSelectedFiles, editingMessageId, setEditingMessageId, setEditMode, setAppFileError,
-        aspectRatio, userScrolledUp, ttsMessageId, setTtsMessageId, activeSessionId,
+        aspectRatio, userScrolledUpRef, ttsMessageId, setTtsMessageId, activeSessionId,
         setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds,
         setLoadingSessionIds, updateAndPersistSessions, language,
         scrollContainerRef: scrollHandler.scrollContainerRef,
@@ -249,7 +249,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleStopGenerating: messageHandler.handleStopGenerating,
         startNewChat,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
-        userScrolledUp
+        userScrolledUpRef
     });
 
     // Auto-Agent for Local Python

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { getClient } from '../../../services/api/baseApi';
-import { parseApiKeys } from '../../../utils/apiUtils';
+import { getEnvApiKeysString, parseApiKeys } from '../../../utils/apiUtils';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
@@ -26,8 +26,7 @@ interface ApiConfigSectionProps {
 const CONNECTION_TEST_MODELS: ModelOption[] = [
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
     { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite' },
-{ id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
-    { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
+    { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
     { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
     { id: 'gemma-4-26b-a4b-it', name: 'Gemma 4 26B A4B IT' },
@@ -54,19 +53,27 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
 
   const iconSize = useResponsiveValue(18, 20);
-  const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
+  const envApiKeysString = getEnvApiKeysString();
+  const hasEnvKey = !!envApiKeysString;
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (useCustomApiConfig) {
-      // Delay allowing overflow until transition matches duration (300ms) to prevent clipping artifacts during expansion
-      timer = setTimeout(() => setAllowOverflow(true), 300);
-    } else {
-      // Immediately hide overflow when collapsing to ensure clean animation
-      setAllowOverflow(false);
+    if (!useCustomApiConfig) {
+      return undefined;
     }
+
+    // Delay allowing overflow until transition matches duration (300ms) to prevent clipping artifacts during expansion
+    const timer = setTimeout(() => setAllowOverflow(true), 300);
     return () => clearTimeout(timer);
   }, [useCustomApiConfig]);
+
+  const handleUseCustomApiConfigChange = (value: boolean) => {
+    if (value) {
+      setAllowOverflow(false);
+    }
+    setUseCustomApiConfig(value);
+  };
+
+  const shouldAllowOverflow = useCustomApiConfig && allowOverflow;
 
   const handleTestConnection = async () => {
       // Pick the key that would be used
@@ -75,18 +82,18 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       // If custom config is OFF, or ON but no key provided, we might fall back to env key if available.
       // But for explicit testing, if custom config is ON, we should test what's in the box.
       if (!useCustomApiConfig && hasEnvKey) {
-          keyToTest = (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
+          keyToTest = envApiKeysString;
       }
       
       if (useCustomApiConfig && !keyToTest) {
           setTestStatus('error');
-          setTestMessage("No API Key provided to test.");
+          setTestMessage(t('apiConfig_no_key_to_test'));
           return;
       }
 
       if (!keyToTest) {
            setTestStatus('error');
-           setTestMessage("No API Key available.");
+           setTestMessage(t('apiConfig_no_key_available'));
            return;
       }
 
@@ -96,7 +103,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       
       if (!firstKey) {
           setTestStatus('error');
-          setTestMessage("Invalid API Key format.");
+          setTestMessage(t('apiConfig_invalid_key_format'));
           return;
       }
 
@@ -135,13 +142,13 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       <div>
         <ApiConfigToggle
             useCustomApiConfig={useCustomApiConfig}
-            setUseCustomApiConfig={setUseCustomApiConfig}
+            setUseCustomApiConfig={handleUseCustomApiConfigChange}
             hasEnvKey={hasEnvKey}
             t={t}
         />
 
         {/* Content - collapsible area */}
-        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
+        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${shouldAllowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
             <div className="space-y-5">
                 <ApiKeyInput 
                     apiKey={apiKey} 

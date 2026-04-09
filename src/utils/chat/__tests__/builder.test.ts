@@ -180,10 +180,23 @@ describe('createChatHistoryForApi', () => {
       makeMessage('model', 'Hello <thinking>secret thoughts</thinking> world'),
     ];
     const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts?.find(p => p.text);
+    const textPart = history[0].parts.find((p: { text?: string }) => p.text);
     expect(textPart?.text).not.toContain('thinking');
     expect(textPart?.text).toContain('Hello');
     expect(textPart?.text).toContain('world');
+  });
+
+  it('removes the full thinking block instead of stopping at the first unrelated closing tag', async () => {
+    const msgs = [
+      makeMessage('model', 'Hello <thinking>secret </summary> still secret</thinking> world'),
+    ];
+    const history = await createChatHistoryForApi(msgs, true);
+    const textPart = history[0].parts.find((p: { text?: string }) => p.text);
+
+    expect(textPart?.text).toContain('Hello');
+    expect(textPart?.text).toContain('world');
+    expect(textPart?.text).not.toContain('secret');
+    expect(textPart?.text).not.toContain('</thinking>');
   });
 
   it('handles apiParts for model messages with inlineData', async () => {
@@ -197,9 +210,9 @@ describe('createChatHistoryForApi', () => {
     ];
     const history = await createChatHistoryForApi(msgs);
     // inlineData should be replaced with text note
-    const inlinePart = history[0].parts?.find(p => p.text?.includes('media file'));
+    const inlinePart = history[0].parts.find((p: { text?: string }) => p.text?.includes('media file'));
     expect(inlinePart).toBeTruthy();
-    const codePart = history[0].parts?.find(p => p.text === 'Some code');
+    const codePart = history[0].parts.find((p: { text?: string }) => p.text === 'Some code');
     expect(codePart).toBeTruthy();
   });
 

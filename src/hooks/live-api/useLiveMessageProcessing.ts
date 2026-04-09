@@ -1,6 +1,5 @@
-
 import { useCallback, useRef } from 'react';
-import { LiveServerMessage, Session } from '@google/genai';
+import type { LiveServerMessage, Session } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
 import { ThoughtSupportingPart } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
@@ -56,11 +55,14 @@ export const useLiveMessageProcessing = ({
             // 2. Handle Text/Code Content (e.g., Code Execution, Search results, Thoughts, or direct text)
             const anyPart = part as ThoughtSupportingPart;
 
-            // Handle thoughts vs content
-            if (anyPart.thought && onTranscript) {
-                const thoughtText = typeof anyPart.thought === 'string' ? anyPart.thought : (anyPart.text || "");
-                if (thoughtText) {
-                    onTranscript(thoughtText, 'model', false, 'thought');
+                if (part.executableCode) {
+                    const language = part.executableCode.language?.toLowerCase() || 'text';
+                    const codeBlock = `\n\`\`\`${language}\n${part.executableCode.code}\n\`\`\`\n`;
+                    if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
+                }
+                if (part.codeExecutionResult) {
+                    const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                    if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
                 }
             } else if (part.text && onTranscript) {
                 onTranscript(part.text, 'model', false, 'content');

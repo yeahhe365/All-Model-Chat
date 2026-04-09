@@ -3,6 +3,7 @@ import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, C
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { createNewSession, rehydrateSessionFiles, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
+import { useWindowContext } from '../../../contexts/useWindowContext';
 
 interface UseSessionLoaderProps {
     appSettings: AppSettings;
@@ -15,7 +16,7 @@ interface UseSessionLoaderProps {
     setCommandedInput: Dispatch<SetStateAction<InputCommand | null>>;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
     activeChat: SavedChatSession | undefined;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
@@ -33,12 +34,17 @@ export const useSessionLoader = ({
     setCommandedInput,
     updateAndPersistSessions,
     activeChat,
-    userScrolledUp,
+    userScrolledUpRef,
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
     savedSessions,
 }: UseSessionLoaderProps) => {
+    const { document: targetDocument } = useWindowContext();
+
+    const focusChatInput = useCallback(() => {
+        targetDocument.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+    }, [targetDocument]);
 
     const startNewChat = useCallback((explicitTemplateSession?: SavedChatSession) => {
         // If we are already on an empty chat, just focus input and don't create a duplicate
@@ -51,13 +57,13 @@ export const useSessionLoader = ({
             setEditingMessageId(null);
 
             setTimeout(() => {
-                document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+                focusChatInput();
             }, 0);
             return;
         }
 
         logService.info('Starting new chat session.');
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
         
         // Save current files to draft before switching
         if (activeSessionId) {
@@ -104,13 +110,13 @@ export const useSessionLoader = ({
         setEditingMessageId(null);
         
         setTimeout(() => {
-            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+            focusChatInput();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, focusChatInput]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
         logService.info(`Loading chat session: ${sessionId}`);
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
         
         // Save current files to draft before switching
         if (activeSessionId && activeSessionId !== sessionId) {
@@ -138,11 +144,11 @@ export const useSessionLoader = ({
                     const exists = prev.some(s => s.id === sessionId);
                     if (exists) {
                          // Update metadata if needed, but strip messages
-                         const { messages, ...metadata } = rehydrated;
+                         const { messages: _messages, ...metadata } = rehydrated;
                          return prev.map(s => s.id === sessionId ? { ...s, ...metadata, messages: [] } : s);
                     } else {
                          // Add if missing (rare case of direct load)
-                         const { messages, ...metadata } = rehydrated;
+                         const { messages: _messages, ...metadata } = rehydrated;
                          return [{ ...metadata, messages: [] } as SavedChatSession, ...prev];
                     }
                 });
@@ -153,7 +159,7 @@ export const useSessionLoader = ({
                 
                 setEditingMessageId(null);
                 setTimeout(() => {
-                    document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
+                    focusChatInput();
                 }, 0);
             } else {
                 logService.warn(`Session ${sessionId} not found. Starting new chat.`);
@@ -163,7 +169,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat session:", error);
             startNewChat();
         }
-    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat]);
+    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat, focusChatInput]);
 
     const loadInitialData = useCallback(async () => {
         try {

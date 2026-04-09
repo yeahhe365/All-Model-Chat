@@ -40,7 +40,7 @@ export const useSettingsLogic = ({
             if (saved && validTabs.includes(saved as SettingsTab)) {
                 return saved as SettingsTab;
             }
-        } catch (e) {
+        } catch (_error) {
             // Ignore storage errors
         }
         return 'model';

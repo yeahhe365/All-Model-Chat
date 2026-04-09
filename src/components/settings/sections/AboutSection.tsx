@@ -24,7 +24,9 @@ const compareVersions = (v1: string, v2: string) => {
 
 export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
   const iconSize = useResponsiveValue(18, 20);
-  const currentVersion = "1.8.5"; 
+  const currentVersion = import.meta.env.APP_VERSION
+    ?? (typeof process !== 'undefined' ? process.env.npm_package_version : undefined)
+    ?? '0.0.0';
   const [stars, setStars] = useState<number | null>(null);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
@@ -66,7 +68,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
 
   const getStatusText = () => {
     if (isUpdateAvailable) return t('about_update_available');
-    if (isBeta) return 'Beta';
+    if (isBeta) return t('about_beta');
     return t('about_latest_version');
   };
 
@@ -77,7 +79,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
       <div className="relative group">
         <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
         <div className="relative">
-            <AppLogo className="w-48 h-auto drop-shadow-2xl" />
+            <AppLogo className="w-48 h-auto drop-shadow-2xl" ariaLabel={t('app_logo_label')} />
         </div>
       </div>
 
@@ -91,7 +93,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
             target="_blank" 
             rel="noopener noreferrer"
             className="group relative inline-flex items-center justify-center p-[1px] overflow-hidden rounded-full hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-[var(--theme-bg-primary)]"
-            title={isUpdateAvailable ? `Update available: ${latestVersion}` : undefined}
+            title={isUpdateAvailable && latestVersion ? t('about_update_available_title').replace('{version}', latestVersion) : undefined}
          >
             {/* Gradient Border Background */}
             <span className={`absolute inset-0 transition-all duration-300 ${
@@ -151,7 +153,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
            >
              <Star size={iconSize} className="text-yellow-500 fill-yellow-500 group-hover:scale-110 transition-transform duration-300" />
              <span className="tabular-nums">{stars.toLocaleString()}</span>
-             <span className="text-[var(--theme-text-tertiary)] ml-1">Stars</span>
+             <span className="text-[var(--theme-text-tertiary)] ml-1">{t('about_stars')}</span>
            </a>
         )}
       </div>

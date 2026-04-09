@@ -24,7 +24,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     isGemini3,
     hasContentOrAudio 
 }) => {
-    if (!files || files.length === 0) return null;
+    const safeFiles = files || [];
 
     // Check if the message contains a tool execution result block
     const hasToolResult = content?.includes('class="tool-result"');
@@ -33,7 +33,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     const { imageFiles, documentFiles } = useMemo(() => {
         const imgs: UploadedFile[] = [];
         const docs: UploadedFile[] = [];
-        files.forEach(f => {
+        safeFiles.forEach(f => {
             // Prevent duplicate display of auto-generated execution files at the top
             // if they will be rendered inside the ToolResultBlock at the bottom.
             if (hasToolResult && (f.name.startsWith('generated-plot') || f.name.startsWith('generated-file'))) {
@@ -45,7 +45,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
             else docs.push(f);
         });
         return { imageFiles: imgs, documentFiles: docs };
-    }, [files, hasToolResult]);
+    }, [safeFiles, hasToolResult]);
 
     const isQuadImageView = imageFiles.length === 4 && imageFiles.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
     const marginClass = hasContentOrAudio ? 'mb-2' : '';
@@ -54,7 +54,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     // This prevents scrollbars from appearing on single-column layouts where they aren't needed
     const showDocScroll = documentFiles.length > 4;
 
-    if (imageFiles.length === 0 && documentFiles.length === 0) return null;
+    if (safeFiles.length === 0 || (imageFiles.length === 0 && documentFiles.length === 0)) return null;
 
     return (
         <div className={`flex flex-col gap-2 ${marginClass}`}>

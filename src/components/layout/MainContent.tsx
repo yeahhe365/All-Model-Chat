@@ -41,6 +41,7 @@ export const MainContent: React.FC<MainContentProps> = ({
             
             {sidePanelContent && (
                 <SidePanel 
+                    key={`${sidePanelContent.type}:${sidePanelContent.language || ''}:${sidePanelContent.title || ''}:${sidePanelContent.content}`}
                     content={sidePanelContent} 
                     onClose={onCloseSidePanel}
                     themeId={themeId}

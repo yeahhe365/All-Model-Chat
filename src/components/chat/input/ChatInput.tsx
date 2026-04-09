@@ -8,64 +8,11 @@ import { ChatInputArea, ChatInputAreaProps } from './ChatInputArea';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 import { useChatStore } from '../../../stores/chatStore';
 import { useSettingsStore } from '../../../stores/settingsStore';
-import type { Translator } from '../../../utils/translations';
+import { translations } from '../../../utils/appUtils';
 
 export type { ChatInputProps };
 
-export const ChatInput: React.FC<ChatInputProps> = (props) => {
-    // Read state directly from stores instead of through props
-    const storeSelectedFiles = useChatStore(s => s.selectedFiles);
-    const storeSetSelectedFiles = useChatStore(s => s.setSelectedFiles);
-    const storeEditingMessageId = useChatStore(s => s.editingMessageId);
-    const storeSetEditingMessageId = useChatStore(s => s.setEditingMessageId);
-    const storeEditMode = useChatStore(s => s.editMode);
-    const storeCommandedInput = useChatStore(s => s.commandedInput);
-    const storeAspectRatio = useChatStore(s => s.aspectRatio);
-    const storeSetAspectRatio = useChatStore(s => s.setAspectRatio);
-    const storeImageSize = useChatStore(s => s.imageSize);
-    const storeSetImageSize = useChatStore(s => s.setImageSize);
-    const storeIsAppProcessingFile = useChatStore(s => s.isAppProcessingFile);
-    const storeAppFileError = useChatStore(s => s.appFileError);
-    const storeSetAppFileError = useChatStore(s => s.setAppFileError);
-    const storeAppSettings = useSettingsStore(s => s.appSettings);
-
-    // Use store values, falling back to props for backward compatibility
-    const selectedFiles = storeSelectedFiles ?? props.selectedFiles;
-    const setSelectedFiles = storeSetSelectedFiles ?? props.setSelectedFiles;
-    const editingMessageId = storeEditingMessageId ?? props.editingMessageId;
-    const setEditingMessageId = storeSetEditingMessageId ?? props.setEditingMessageId;
-    const editMode = storeEditMode ?? props.editMode;
-    const commandedInput = storeCommandedInput ?? props.commandedInput;
-    const aspectRatio = storeAspectRatio ?? props.aspectRatio;
-    const setAspectRatio = storeSetAspectRatio ?? props.setAspectRatio;
-    const imageSize = storeImageSize ?? props.imageSize;
-    const setImageSize = storeSetImageSize ?? props.setImageSize;
-    const isAppProcessingFile = storeIsAppProcessingFile ?? props.isProcessingFile;
-    const appFileError = storeAppFileError ?? props.fileError;
-    const setAppFileError = storeSetAppFileError ?? props.setAppFileError;
-    const appSettings = storeAppSettings ?? props.appSettings;
-    const translate = effectiveTranslator(props.t);
-
-    // Build effective props with store values
-    const effectiveProps = {
-        ...props,
-        selectedFiles,
-        setSelectedFiles,
-        editingMessageId,
-        setEditingMessageId,
-        editMode,
-        commandedInput,
-        aspectRatio,
-        setAspectRatio,
-        imageSize,
-        setImageSize,
-        isProcessingFile: isAppProcessingFile,
-        fileError: appFileError,
-        setAppFileError,
-        appSettings,
-    };
-
-    // 1. 获取所有核心逻辑和状态
+const ChatInputContent: React.FC<{ effectiveProps: ChatInputProps }> = ({ effectiveProps }) => {
     const {
         inputState,
         capabilities,
@@ -80,18 +27,17 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         isAnyModalOpen,
     } = useChatInputLogic(effectiveProps);
 
-    // 2. 组装 Toolbar 参数
     const toolbarProps: ChatInputToolbarProps = {
         isImagenModel: capabilities.isImagenModel || false,
         isGemini3ImageModel: capabilities.isGemini3ImageModel,
         isTtsModel: capabilities.isTtsModel,
         ttsVoice: effectiveProps.currentChatSettings.ttsVoice,
         setTtsVoice: (voice) => effectiveProps.setCurrentChatSettings(prev => ({ ...prev, ttsVoice: voice })),
-        aspectRatio,
-        setAspectRatio,
-        imageSize,
-        setImageSize,
-        fileError: appFileError,
+        aspectRatio: effectiveProps.aspectRatio,
+        setAspectRatio: effectiveProps.setAspectRatio,
+        imageSize: effectiveProps.imageSize,
+        setImageSize: effectiveProps.setImageSize,
+        fileError: effectiveProps.fileError,
         showAddByIdInput: modalsState.showAddByIdInput,
         fileIdInput: inputState.fileIdInput,
         setFileIdInput: inputState.setFileIdInput,
@@ -113,7 +59,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         },
         isAddingByUrl: inputState.isAddingByUrl,
         isLoading: effectiveProps.isLoading,
-        t: translate,
+        t: effectiveProps.t as unknown as (key: string) => string,
         generateQuadImages: effectiveProps.generateQuadImages,
         onToggleQuadImages: effectiveProps.onToggleQuadImages,
         supportedAspectRatios: capabilities.supportedAspectRatios,
@@ -125,7 +71,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         onEditTtsContext: () => modalsState.setShowTtsContextEditor(true)
     };
 
-    // 3. 组装操作按钮参数
     const actionsProps: ChatInputActionsProps = {
         onAttachmentAction: modalsState.handleAttachmentAction,
         disabled: inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
@@ -161,7 +106,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         inputText: inputState.inputText,
         onToggleFullscreen: inputState.handleToggleFullscreen,
         isFullscreen: inputState.isFullscreen,
-        editMode,
+        editMode: effectiveProps.editMode,
         isNativeAudioModel: capabilities.isNativeAudioModel || false,
         onStartLiveSession: liveAPI.connect,
         isLiveConnected: liveAPI.isConnected,
@@ -170,7 +115,6 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
         onFastSendMessage: handlers.handleFastSubmit
     };
 
-    // 4. 组装输入区域核心参数
     const areaProps: ChatInputAreaProps = {
         toolbarProps,
         actionsProps,
@@ -181,7 +125,7 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             selectedIndex: slashCommandState.slashCommandState.selectedIndex,
         },
         fileDisplayProps: {
-            selectedFiles,
+            selectedFiles: effectiveProps.selectedFiles,
             onRemove: handlers.removeSelectedFile,
             onCancelUpload: effectiveProps.onCancelUpload,
             onConfigure: localFileState.handleConfigureFile,
@@ -211,15 +155,15 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             initialTextareaHeight: INITIAL_TEXTAREA_HEIGHT_PX,
             isConverting: localFileState.isConverting,
         },
-        fileInputRefs: {
-            fileInputRef: modalsState.fileInputRef,
-            imageInputRef: modalsState.imageInputRef,
-            folderInputRef: modalsState.folderInputRef,
-            zipInputRef: modalsState.zipInputRef,
-            cameraInputRef: modalsState.cameraInputRef,
-            handleFileChange: handlers.handleFileChange,
-            handleFolderChange: handlers.handleFolderChange,
-            handleZipChange: handlers.handleZipChange,
+        fileInputs: {
+            fileInput: modalsState.fileInputRef,
+            imageInput: modalsState.imageInputRef,
+            folderInput: modalsState.folderInputRef,
+            zipInput: modalsState.zipInputRef,
+            cameraInput: modalsState.cameraInputRef,
+            onFileChange: handlers.handleFileChange,
+            onFolderChange: handlers.handleFolderChange,
+            onZipChange: handlers.handleZipChange,
         },
         formProps: {
             onSubmit: handlers.handleSubmit,
@@ -239,12 +183,12 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
             volume: liveAPI.volume,
             error: liveAPI.error,
             onDisconnect: liveAPI.disconnect,
+            t: effectiveProps.t,
         },
-        t: translate,
+        t: effectiveProps.t as (key: keyof typeof translations) => string,
         themeId: effectiveProps.themeId
     };
 
-    // 5. 渲染 UI
     const chatInputContent = <ChatInputArea {...areaProps} />;
 
     return (
@@ -259,14 +203,14 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 isHelpModalOpen={modalsState.isHelpModalOpen}
                 onHelpModalClose={() => modalsState.setIsHelpModalOpen(false)}
                 allCommandsForHelp={slashCommandState.allCommandsForHelp}
-                isProcessingFile={isAppProcessingFile}
+                isProcessingFile={effectiveProps.isProcessingFile}
                 isLoading={effectiveProps.isLoading}
-                t={translate}
+                t={effectiveProps.t as unknown as (key: string) => string}
                 initialContent={modalsState.editingFile?.textContent || ''}
                 initialFilename={modalsState.editingFile?.name || ''}
-                isSystemAudioRecordingEnabled={appSettings.isSystemAudioRecordingEnabled}
+                isSystemAudioRecordingEnabled={effectiveProps.appSettings.isSystemAudioRecordingEnabled}
                 themeId={effectiveProps.themeId}
-                isPasteRichTextAsMarkdownEnabled={appSettings.isPasteRichTextAsMarkdownEnabled ?? true}
+                isPasteRichTextAsMarkdownEnabled={effectiveProps.appSettings.isPasteRichTextAsMarkdownEnabled ?? true}
                 showTtsContextEditor={modalsState.showTtsContextEditor}
                 onCloseTtsContextEditor={() => modalsState.setShowTtsContextEditor(false)}
                 ttsContext={inputState.ttsContext}
@@ -281,11 +225,11 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
                 previewFile={localFileState.previewFile}
                 setPreviewFile={localFileState.setPreviewFile}
                 inputText={inputState.inputText}
-                selectedFiles={selectedFiles}
-                appSettings={appSettings}
+                selectedFiles={effectiveProps.selectedFiles}
+                appSettings={effectiveProps.appSettings}
                 availableModels={effectiveProps.availableModels}
                 currentModelId={effectiveProps.currentChatSettings.modelId}
-                t={translate}
+                t={effectiveProps.t as unknown as (key: string) => string}
                 isGemini3={capabilities.isGemini3}
                 isPreviewEditable={localFileState.isPreviewEditable}
                 onSaveTextFile={localFileState.handleSavePreviewTextFile}
@@ -303,4 +247,59 @@ export const ChatInput: React.FC<ChatInputProps> = (props) => {
     );
 };
 
-const effectiveTranslator = (t: ChatInputProps['t']): Translator => t as Translator;
+export const ChatInput: React.FC<ChatInputProps> = (props) => {
+    // Read state directly from stores instead of through props
+    const storeSelectedFiles = useChatStore(s => s.selectedFiles);
+    const storeSetSelectedFiles = useChatStore(s => s.setSelectedFiles);
+    const storeEditingMessageId = useChatStore(s => s.editingMessageId);
+    const storeSetEditingMessageId = useChatStore(s => s.setEditingMessageId);
+    const storeEditMode = useChatStore(s => s.editMode);
+    const storeCommandedInput = useChatStore(s => s.commandedInput);
+    const storeAspectRatio = useChatStore(s => s.aspectRatio);
+    const storeSetAspectRatio = useChatStore(s => s.setAspectRatio);
+    const storeImageSize = useChatStore(s => s.imageSize);
+    const storeSetImageSize = useChatStore(s => s.setImageSize);
+    const storeIsAppProcessingFile = useChatStore(s => s.isAppProcessingFile);
+    const storeAppFileError = useChatStore(s => s.appFileError);
+    const storeSetAppFileError = useChatStore(s => s.setAppFileError);
+    const storeAppSettings = useSettingsStore(s => s.appSettings);
+
+    // Use store values, falling back to props for backward compatibility
+    const selectedFiles = storeSelectedFiles ?? props.selectedFiles;
+    const setSelectedFiles = storeSetSelectedFiles ?? props.setSelectedFiles;
+    const editingMessageId = storeEditingMessageId ?? props.editingMessageId;
+    const setEditingMessageId = storeSetEditingMessageId ?? props.setEditingMessageId;
+    const editMode = storeEditMode ?? props.editMode;
+    const commandedInput = storeCommandedInput ?? props.commandedInput;
+    const aspectRatio = storeAspectRatio ?? props.aspectRatio;
+    const setAspectRatio = storeSetAspectRatio ?? props.setAspectRatio;
+    const imageSize = storeImageSize ?? props.imageSize;
+    const setImageSize = storeSetImageSize ?? props.setImageSize;
+    const isAppProcessingFile = storeIsAppProcessingFile ?? props.isProcessingFile;
+    const appFileError = storeAppFileError ?? props.fileError;
+    const setAppFileError = storeSetAppFileError ?? props.setAppFileError;
+    const appSettings = storeAppSettings ?? props.appSettings;
+
+    // Build effective props with store values
+    const effectiveProps = {
+        ...props,
+        selectedFiles,
+        setSelectedFiles,
+        editingMessageId,
+        setEditingMessageId,
+        editMode,
+        commandedInput,
+        aspectRatio,
+        setAspectRatio,
+        imageSize,
+        setImageSize,
+        isProcessingFile: isAppProcessingFile,
+        fileError: appFileError,
+        setAppFileError,
+        appSettings,
+    };
+
+    const chatInputKey = `${effectiveProps.activeSessionId ?? 'no-session'}:${effectiveProps.isEditing ? 'editing' : 'draft'}`;
+
+    return <ChatInputContent key={chatInputKey} effectiveProps={effectiveProps} />;
+};

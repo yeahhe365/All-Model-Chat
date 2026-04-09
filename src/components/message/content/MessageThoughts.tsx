@@ -2,7 +2,6 @@
 import React, { useMemo, useState } from 'react';
 import { ChatMessage, AppSettings, SideViewContent, UploadedFile } from '../../../types';
 import { translations, parseThoughtProcess, getKeyForRequest } from '../../../utils/appUtils';
-import { geminiServiceInstance } from '../../../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { ThinkingHeader } from './thoughts/ThinkingHeader';
@@ -83,6 +82,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                 return;
             }
 
+            const { geminiServiceInstance } = await import('../../../services/geminiService');
             const result = await geminiServiceInstance.translateText(keyResult.key, effectiveThoughts, 'Chinese');
             setTranslatedThoughts(result);
             setIsShowingTranslation(true);
@@ -147,6 +147,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
                             lastThought={lastThought}
                             thinkingTimeMs={message.thinkingTimeMs}
                             content={isShowingTranslation && translatedThoughts ? translatedThoughts : (thoughts || '')}
+                            preferProvidedContent={isShowingTranslation && !!translatedThoughts}
                             onImageClick={onImageClick}
                             onOpenHtmlPreview={onOpenHtmlPreview}
                             expandCodeBlocksByDefault={expandCodeBlocksByDefault}

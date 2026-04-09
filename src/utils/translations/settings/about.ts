@@ -10,4 +10,7 @@ export const aboutSettings = {
     about_logo_alt: { en: 'All Model Chat Logo', zh: 'All Model Chat 标志' },
     about_latest_version: { en: 'Latest', zh: '已是最新' },
     about_update_available: { en: 'Update Available', zh: '有新版本' },
+    about_update_available_title: { en: 'Update available: {version}', zh: '有新版本：{version}' },
+    about_beta: { en: 'Beta', zh: '测试版' },
+    about_stars: { en: 'Stars', zh: '星标' },
 };

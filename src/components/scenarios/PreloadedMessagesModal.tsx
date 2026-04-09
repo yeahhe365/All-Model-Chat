@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { SavedScenario } from '../../types';
 import { X, Plus, Upload, Download, ArrowLeft } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations, Translator } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioList } from './ScenarioList';
@@ -48,12 +48,10 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
 
   // Focus management when modal opens
   useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
-      return () => clearTimeout(timer);
-    }
+    if (!isOpen) return;
 
-    return undefined;
+    const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   const handleClose = () => { 
@@ -186,7 +184,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                     initialScenario={editingScenario}
                     onSave={actions.handleSaveScenario}
                     onCancel={actions.handleCancelEdit}
-                    t={t}
+                    t={t as Translator}
                     readOnly={!!isSystemScenario}
                 />
             )}

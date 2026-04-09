@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { UploadedFile, AppSettings } from '../../types';
 import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../utils/appUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
 
 interface UseTokenCountLogicProps {
     isOpen: boolean;
@@ -51,6 +50,7 @@ export const useTokenCountLogic = ({
                 return;
             }
 
+            const { geminiServiceInstance } = await import('../../services/geminiService');
             const count = await geminiServiceInstance.countTokens(keyResult.key, modelId, contentParts);
             setTokenCount(count);
         } catch (err) {

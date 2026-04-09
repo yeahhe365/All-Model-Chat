@@ -7,20 +7,18 @@ const AspectRatioIcon = ({ ratio, className }: { ratio: string; className?: stri
     if (ratio === 'Auto') {
         return <Sparkles size={16} className={className} strokeWidth={2} />;
     }
-    let styles: React.CSSProperties = {};
-    switch (ratio) {
-        case '1:1': styles = { width: '20px', height: '20px' }; break;
-        case '9:16': styles = { width: '12px', height: '21px' }; break;
-        case '16:9': styles = { width: '24px', height: '13.5px' }; break;
-        case '4:3': styles = { width: '20px', height: '15px' }; break;
-        case '3:4': styles = { width: '15px', height: '20px' }; break;
-        case '2:3': styles = { width: '14px', height: '21px' }; break;
-        case '3:2': styles = { width: '21px', height: '14px' }; break;
-        case '4:5': styles = { width: '16px', height: '20px' }; break;
-        case '5:4': styles = { width: '20px', height: '16px' }; break;
-        case '21:9': styles = { width: '24px', height: '10px' }; break;
-        default: styles = { width: '20px', height: '20px' }; break;
-    }
+    const styles: React.CSSProperties = {
+        '1:1': { width: '20px', height: '20px' },
+        '9:16': { width: '12px', height: '21px' },
+        '16:9': { width: '24px', height: '13.5px' },
+        '4:3': { width: '20px', height: '15px' },
+        '3:4': { width: '15px', height: '20px' },
+        '2:3': { width: '14px', height: '21px' },
+        '3:2': { width: '21px', height: '14px' },
+        '4:5': { width: '16px', height: '20px' },
+        '5:4': { width: '20px', height: '16px' },
+        '21:9': { width: '24px', height: '10px' },
+    }[ratio] || { width: '20px', height: '20px' };
     return <div style={styles} className={`border-2 border-current rounded-sm ${className || ''}`}></div>;
 };
 

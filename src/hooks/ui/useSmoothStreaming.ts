@@ -26,21 +26,32 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
         // Browser pauses rAF when hidden, but state updates can pile up or be ignored
         if (document.hidden && isStreaming) {
             displayedTextRef.current = safeText;
-            setDisplayedText(safeText);
         }
         
         // If we stopped streaming, snap to full text immediately to ensure consistency
         if (!isStreaming) {
-            if (displayedTextRef.current !== safeText) {
-                displayedTextRef.current = safeText;
-                setDisplayedText(safeText);
-            }
+            displayedTextRef.current = safeText;
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
             }
         }
     }, [safeText, isStreaming]);
+
+    useEffect(() => {
+        if (!isStreaming) {
+            return undefined;
+        }
+
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                setDisplayedText(displayedTextRef.current);
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [isStreaming]);
 
     // Animation Loop
     useEffect(() => {

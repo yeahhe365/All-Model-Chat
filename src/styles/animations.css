@@ -70,6 +70,12 @@
   to { box-shadow: 0 0 0 8px transparent; } 
 }
 
+@keyframes fileSuccessFade {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @keyframes loading-dots-pulse { 
   0%, 80%, 100% { transform: scale(0); opacity: 0.5; } 
   40% { transform: scale(1.0); opacity: 1; } 
@@ -151,6 +157,7 @@
 .fullscreen-enter-animation { animation: fullscreenEnter 0.4s var(--ease-out-expo) both; }
 .form-send-animate { animation: formSendPulse 0.3s cubic-bezier(0.2, 0, 0, 1); }
 .newly-active-file-animate .file-preview-box { animation: fileSuccessRing 0.6s ease-out; border-color: var(--theme-text-success); transition: border-color 0.3s; }
+.newly-active-file-overlay { animation: fileSuccessFade 0.8s ease-out forwards; }
 
 /* Sidebar Loading Dots */
 .loading-dots-container { display: flex; gap: 3px; padding: 2px; }

@@ -72,10 +72,14 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
                         onSelect={handleModelSelect}
                         t={t}
                         dropdownClassName="w-full max-h-60"
-                        renderTrigger={({ isOpen, setIsOpen }) => (
+                        renderTrigger={({ ref, onTriggerClick, onTriggerKeyDown, triggerAriaProps }) => (
                             <button
-                                onClick={() => setIsOpen(!isOpen)}
+                                ref={ref}
+                                type="button"
+                                onClick={onTriggerClick}
+                                onKeyDown={onTriggerKeyDown}
                                 className="w-full flex items-center justify-between px-3 py-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg text-sm text-[var(--theme-text-primary)] hover:border-[var(--theme-border-focus)] transition-colors focus:ring-2 focus:ring-[var(--theme-border-focus)] outline-none"
+                                {...triggerAriaProps}
                             >
                                 <span>{displayModelName}</span>
                                 <span className="text-xs text-[var(--theme-text-tertiary)] font-mono">{selectedModelId}</span>

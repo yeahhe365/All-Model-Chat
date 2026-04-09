@@ -1,7 +1,14 @@
 import { GenerateContentResponse, Part, UsageMetadata } from "@google/genai";
-import { ChatHistoryItem, ThoughtSupportingPart } from '../../types';
+import { ThoughtSupportingPart, ChatHistoryItem } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient } from "./baseApi";
+
+type CandidateWithLegacyUrlContext = {
+    urlContextMetadata?: unknown;
+    url_context_metadata?: unknown;
+    groundingMetadata?: unknown;
+    content?: { parts?: Part[] };
+};
 
 /**
  * Shared helper to parse GenAI responses.
@@ -57,14 +64,28 @@ export const processGenerateContentResponse = (response: GenerateContentResponse
     }
     
     const candidate = response.candidates?.[0];
-    const groundingMetadata = candidate?.groundingMetadata;
+    const candidateWithLegacyUrlContext = candidate as CandidateWithLegacyUrlContext | undefined;
+    const groundingMetadata = candidateWithLegacyUrlContext?.groundingMetadata;
     const finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
     
-    // @ts-ignore - Handle potential snake_case from raw API responses
-    const urlContextMetadata = candidate?.urlContextMetadata || candidate?.url_context_metadata;
+    const urlContextMetadata =
+        candidateWithLegacyUrlContext?.urlContextMetadata ||
+        candidateWithLegacyUrlContext?.url_context_metadata;
 
-    for (const part of contentParts) {
-        mergeUniqueCitations(finalMetadata, getToolCallCitations(part));
+    const functionCalls = response.functionCalls;
+    if (functionCalls) {
+        for (const functionCall of functionCalls) {
+            const urlContextMetadata = functionCall.args?.urlContextMetadata;
+            if (urlContextMetadata && typeof urlContextMetadata === 'object' && 'citations' in urlContextMetadata) {
+                if (!finalMetadata.citations) finalMetadata.citations = [];
+                const newCitations = Array.isArray(urlContextMetadata.citations) ? urlContextMetadata.citations : [];
+                for (const newCitation of newCitations) {
+                    if (!finalMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
+                        finalMetadata.citations.push(newCitation);
+                    }
+                }
+            }
+        }
     }
 
     return {
@@ -119,17 +140,36 @@ export const sendStatelessMessageStreamApi = async (
             const candidate = chunkResponse.candidates?.[0];
             
             if (candidate) {
-                const metadataFromChunk = candidate.groundingMetadata;
+                const candidateWithLegacyUrlContext = candidate as CandidateWithLegacyUrlContext;
+                const metadataFromChunk = candidateWithLegacyUrlContext.groundingMetadata;
                 if (metadataFromChunk) {
                     finalGroundingMetadata = metadataFromChunk;
                 }
                 
-                // @ts-ignore
-                const urlMetadata = candidate.urlContextMetadata || candidate.url_context_metadata;
+                const urlMetadata =
+                    candidateWithLegacyUrlContext.urlContextMetadata ||
+                    candidateWithLegacyUrlContext.url_context_metadata;
                 if (urlMetadata) {
                     finalUrlContextMetadata = urlMetadata;
                 }
 
+                const functionCalls = chunkResponse.functionCalls;
+                if (functionCalls) {
+                    for (const functionCall of functionCalls) {
+                        const urlContextMetadata = functionCall.args?.urlContextMetadata;
+                        if (urlContextMetadata && typeof urlContextMetadata === 'object' && 'citations' in urlContextMetadata) {
+                            if (!finalGroundingMetadata) finalGroundingMetadata = {};
+                            if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
+                            const newCitations = Array.isArray(urlContextMetadata.citations) ? urlContextMetadata.citations : [];
+                            for (const newCitation of newCitations) {
+                                if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
+                                    finalGroundingMetadata.citations.push(newCitation);
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;

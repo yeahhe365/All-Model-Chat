@@ -50,6 +50,7 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
         if (!message.files?.length) return message;
 
         const newFiles = message.files.map(file => {
+            const rawFile = file.rawFile;
             // 1. Check for legacy Base64 stored in dataUrl (Abuse Check)
             // If dataUrl exists but it's NOT a blob: URI, it might be a base64 string
             if (file.dataUrl && !file.dataUrl.startsWith('blob:') && !file.dataUrl.startsWith('http')) {
@@ -62,29 +63,29 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
                     const newUrl = URL.createObjectURL(newFile);
                     
                     return { ...file, rawFile: newFile, dataUrl: newUrl };
-                } catch (e) {
+                } catch (_error) {
                     logService.warn(`Failed to migrate legacy Base64 file: ${file.name}`);
                     // If migration fails, keep as is, but it might lag
                 }
             }
 
             // 2. Standard Rehydration from IndexedDB Blob (rawFile)
-            const isValidRawFile = file.rawFile instanceof Blob;
+            const isValidRawFile = rawFile instanceof Blob;
             
             // Always create Object URL for Blobs if we have the raw file, needed for previewing (text, images, media, etc.)
             // Previously this logic was restricted to visual media/PDFs, causing text files to have stale/invalid dataUrls on reload.
             if (isValidRawFile) {
                 try {
                     // Create a new blob URL. The browser will handle the old invalid one on page unload.
-                    const dataUrl = URL.createObjectURL(file.rawFile as Blob);
+                    const dataUrl = URL.createObjectURL(rawFile);
                     return { ...file, dataUrl: dataUrl };
                 } catch (error) {
                     logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
                     return { ...file, dataUrl: undefined, error: "Preview failed to load" };
                 }
-            } else if (file.rawFile && !isValidRawFile) {
+            } else if (rawFile && !isValidRawFile) {
                 // It has a rawFile property but it's not a Blob (e.g. {} from JSON or bad persistence). Strip it.
-                const { rawFile, ...rest } = file;
+                const { rawFile: _rawFile, ...rest } = file;
                 return rest;
             }
             

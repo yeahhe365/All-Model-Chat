@@ -51,10 +51,10 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
             }
         };
 
-        if (typeof ImageCapture !== 'undefined') {
-            const imageCapture = new ImageCapture(track) as ImageCapture & {
-                grabFrame: () => Promise<ImageBitmap>;
-            };
+        // Attempt to use ImageCapture API (Chrome/Edge)
+        const ImageCaptureCtor = (window as unknown as { ImageCapture?: new (track: MediaStreamTrack) => { grabFrame: () => Promise<ImageBitmap> } }).ImageCapture;
+        if (ImageCaptureCtor) {
+            const imageCapture = new ImageCaptureCtor(track);
             imageCapture.grabFrame()
                 .then(processBitmap)
                 .catch((err: any) => {

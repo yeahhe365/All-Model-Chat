@@ -12,7 +12,8 @@ interface UseMessageListScrollProps {
 export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSessionId }: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [atBottom, setAtBottom] = useState(true);
-    const [scrollerRef, setInternalScrollerRef] = useState<HTMLElement | null>(null);
+    const [scrollerRef, setScrollerRef] = useState<HTMLElement | null>(null);
+    const [visibleStartIndex, setVisibleStartIndex] = useState(0);
     const visibleRangeRef = useRef({ startIndex: 0, endIndex: 0 });
     
     const scrollSaveTimeoutRef = useRef<number | null>(null);
@@ -24,6 +25,10 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     // Track state for the anchoring effect specifically
     const prevMsgCount = useRef(messages.length);
     const prevSessionIdForAnchor = useRef(activeSessionId);
+
+    const setInternalScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
+        setScrollerRef(ref instanceof HTMLElement ? ref : null);
+    }, []);
 
     // Sync internal scroller ref with parent's expectations
     useEffect(() => {
@@ -39,6 +44,7 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
         visibleRangeRef.current = { startIndex, endIndex };
+        setVisibleStartIndex(prev => (prev === startIndex ? prev : startIndex));
     }, []);
 
     // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
@@ -189,12 +195,11 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
             container.addEventListener('scroll', handleScroll, { passive: true });
             return () => container.removeEventListener('scroll', handleScroll);
         }
-
         return undefined;
     }, [scrollerRef, handleScroll]);
 
     const showScrollDown = !atBottom;
-    const showScrollUp = messages.length > 2 && visibleRangeRef.current.startIndex > 0;
+    const showScrollUp = messages.length > 2 && visibleStartIndex > 0;
 
     return {
         virtuosoRef,
