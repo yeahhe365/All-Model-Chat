@@ -11,7 +11,7 @@ interface UseMessageUpdatesProps {
     appSettings: AppSettings;
     currentChatSettings: IndividualChatSettings;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
 export const useMessageUpdates = ({
@@ -20,7 +20,7 @@ export const useMessageUpdates = ({
     appSettings,
     currentChatSettings,
     updateAndPersistSessions,
-    userScrolledUp,
+    userScrolledUpRef,
 }: UseMessageUpdatesProps) => {
     
     // Track active message IDs for the live session within the closure of the hook instance
@@ -96,8 +96,8 @@ export const useMessageUpdates = ({
             }
             return s;
         }));
-        userScrolledUp.current = false;
-    }, [activeSessionId, updateAndPersistSessions, userScrolledUp, appSettings, currentChatSettings, setActiveSessionId]);
+        userScrolledUpRef.current = false;
+    }, [activeSessionId, updateAndPersistSessions, userScrolledUpRef, appSettings, currentChatSettings, setActiveSessionId]);
 
     const handleLiveTranscript = useCallback((text: string, role: 'user' | 'model', isFinal: boolean, type: 'content' | 'thought' = 'content', audioUrl?: string | null) => {
         let currentSessionId = activeSessionId || pendingSessionIdRef.current;
@@ -119,8 +119,8 @@ export const useMessageUpdates = ({
             if (s.id !== currentSessionId) return s;
 
             // Determine which ID we are currently tracking for this role
-            let currentId = role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
-            let messages = [...s.messages];
+            const currentId = role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
+            const messages = [...s.messages];
             
             // Find the index of the existing message, if any
             let messageIndex = currentId ? messages.findIndex(m => m.id === currentId) : -1;

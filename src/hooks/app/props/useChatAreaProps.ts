@@ -1,4 +1,4 @@
-import { useMemo, useRef, useLayoutEffect, useCallback } from 'react';
+import { useRef, useLayoutEffect, useCallback } from 'react';
 import { useAppLogic } from '../useAppLogic';
 import { CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
 import { useUIStore } from '../../../stores/uiStore';
@@ -104,7 +104,7 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
   // getCurrentModelDisplayName 是立即求值的，得到的是 string (原始类型)，因此无需包装回调
   const currentModelName = getCurrentModelDisplayName();
 
-  return useMemo(() => ({
+  return {
     // IDs & Data (still needed by ChatArea)
     activeSessionId: chatState.activeSessionId,
     sessionTitle,
@@ -162,24 +162,5 @@ export const useChatAreaProps = (logic: ReturnType<typeof useAppLogic>) => {
     setCurrentChatSettings, onOpenSidePanel,
     onAddUserMessage, onLiveTranscript,
     t,
-  }), [
-    // Only data/state deps — all functions are stable references
-    chatState.activeSessionId,
-    sessionTitle,
-    chatState.currentChatSettings,
-    chatState.isAppDraggingOver,
-    chatState.isProcessingDrop,
-    chatState.isLoading,
-    chatState.apiModels,
-    chatState.messages,
-    chatState.scrollContainerRef,
-    chatState.editingMessageId,
-
-    pipState.isPipSupported,
-    pipState.isPipActive,
-
-    appSettings,
-    t,
-    currentModelName,
-  ]);
+  };
 };

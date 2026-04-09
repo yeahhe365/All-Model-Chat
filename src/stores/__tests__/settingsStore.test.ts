@@ -184,8 +184,7 @@ describe('settingsStore', () => {
     });
 
     it('sets isSettingsLoaded when no stored settings', async () => {
-      vi.mocked(dbService.getSchemaVersion).mockResolvedValue(undefined);
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(null as any);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
     });

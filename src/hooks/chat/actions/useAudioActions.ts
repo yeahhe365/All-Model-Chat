@@ -2,7 +2,6 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { getKeyForRequest, logService } from '../../../utils/appUtils';
-import { geminiServiceInstance } from '../../../services/geminiService';
 
 interface UseAudioActionsProps {
     appSettings: AppSettings;
@@ -40,6 +39,7 @@ export const useAudioActions = ({
         }
     
         try {
+            const { geminiServiceInstance } = await import('../../../services/geminiService');
             const modelToUse = appSettings.transcriptionModelId || 'models/gemini-flash-latest';
             const transcribedText = await geminiServiceInstance.transcribeAudio(
                 keyResult.key,

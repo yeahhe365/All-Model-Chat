@@ -1,9 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Session, Tool } from '@google/genai';
+import type { Session, Tool } from '@google/genai';
 import { AppSettings, ChatSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
 import { getKeyForRequest } from '../../utils/apiUtils';
-import { getConfiguredApiClient } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 import { sendLiveText } from '../../platform/genai/liveApi';
 
@@ -108,6 +107,7 @@ export const useLiveConnection = ({
             }
 
             // Specify API version v1alpha for Live API support
+            const { getConfiguredApiClient } = await import('../../services/api/baseApi');
             const ai = await getConfiguredApiClient(keyResult.key, { apiVersion: 'v1alpha' });
             
             // Initialize Audio (Mic & Worklet)

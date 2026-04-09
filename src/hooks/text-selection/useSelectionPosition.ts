@@ -1,17 +1,16 @@
 
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 
 interface UseSelectionPositionProps {
     containerRef: React.RefObject<HTMLElement>;
     isAudioActive: boolean;
-    toolbarRef: React.RefObject<HTMLDivElement>;
 }
 
-export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }: UseSelectionPositionProps) => {
+export const useSelectionPosition = ({ containerRef, isAudioActive }: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedText, setSelectedText] = useState('');
-    const selectionBoundsRef = useRef<DOMRect | null>(null);
+    const [selectionBounds, setSelectionBounds] = useState<DOMRect | null>(null);
 
     // Monitor selection changes
     useEffect(() => {
@@ -21,7 +20,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !selection.rangeCount) {
                 setPosition(null);
-                selectionBoundsRef.current = null;
+                setSelectionBounds(null);
                 setSelectedText('');
                 return;
             }
@@ -33,14 +32,14 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             const containerEl = containerRef.current;
             if (containerEl && !containerEl.contains(commonAncestor)) {
                 setPosition(null);
-                selectionBoundsRef.current = null;
+                setSelectionBounds(null);
                 return;
             }
 
             const targetElement = commonAncestor.nodeType === 1 ? commonAncestor as HTMLElement : commonAncestor.parentElement;
             if (targetElement && (targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA')) {
                 setPosition(null);
-                selectionBoundsRef.current = null;
+                setSelectionBounds(null);
                 return;
             }
 
@@ -52,13 +51,13 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
 
             if (!text) {
                 setPosition(null);
-                selectionBoundsRef.current = null;
+                setSelectionBounds(null);
                 setSelectedText('');
                 return;
             }
 
             const rect = range.getBoundingClientRect();
-            selectionBoundsRef.current = rect;
+            setSelectionBounds(rect);
             
             setPosition({
                 top: rect.top - 50, 
@@ -78,50 +77,11 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         };
     }, [containerRef, isAudioActive]);
 
-    // Screen boundary clamping
-    useLayoutEffect(() => {
-        if (!position || !toolbarRef.current) return;
-
-        const toolbar = toolbarRef.current;
-        const { width, height } = toolbar.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const padding = 10;
-
-        let correctedLeft = position.left;
-        let correctedTop = position.top;
-        const halfWidth = width / 2;
-        
-        // Horizontal
-        if (correctedLeft - halfWidth < padding) correctedLeft = padding + halfWidth;
-        if (correctedLeft + halfWidth > viewportWidth - padding) correctedLeft = viewportWidth - padding - halfWidth;
-
-        // Vertical
-        if (correctedTop < padding) {
-            if (selectionBoundsRef.current) {
-                const belowPos = selectionBoundsRef.current.bottom + 10;
-                if (belowPos + height < viewportHeight - padding) {
-                    correctedTop = belowPos;
-                } else {
-                    correctedTop = padding;
-                }
-            } else {
-                correctedTop = padding;
-            }
-        }
-        if (correctedTop + height > viewportHeight - padding) {
-            correctedTop = viewportHeight - padding - height;
-        }
-
-        if (Math.abs(correctedLeft - position.left) > 1 || Math.abs(correctedTop - position.top) > 1) {
-            setPosition({ left: correctedLeft, top: correctedTop });
-        }
-    }, [position, selectedText]); // Re-run when text changes (toolbar size might change)
-
     const clearSelection = () => {
         window.getSelection()?.removeAllRanges();
         setPosition(null);
+        setSelectionBounds(null);
     };
 
-    return { position, setPosition, selectedText, clearSelection };
+    return { position, setPosition, selectedText, clearSelection, selectionBounds };
 };

@@ -4,13 +4,17 @@ import { MediaResolution } from '../types/settings';
 import { UsageMetadata } from '@google/genai';
 import {
     getModelDescriptor,
-    getModelDisplayName,
     getModelSortWeight,
     getThinkingBudgetRange,
-    type ThinkingLevel,
 } from '../platform/genai/modelCatalog';
 
 // --- Model Sorting & Defaults ---
+
+export const isLiveAudioModel = (modelId: string): boolean => {
+    if (!modelId) return false;
+    const lowerId = modelId.toLowerCase();
+    return lowerId.includes('native-audio') || lowerId.includes('flash-live-preview') || lowerId.includes('gemini-live');
+};
 
 export const sortModels = (models: ModelOption[]): ModelOption[] => {
     return [...models].sort((a, b) => {
@@ -33,11 +37,28 @@ export const sortModels = (models: ModelOption[]): ModelOption[] => {
 };
 
 export const getDefaultModelOptions = (): ModelOption[] => {
-    const pinnedInternalModels: ModelOption[] = INITIAL_PINNED_MODELS.map(id => ({
-        id,
-        name: getModelDisplayName(id),
-        isPinned: true,
-    }));
+    const pinnedInternalModels: ModelOption[] = INITIAL_PINNED_MODELS.map(id => {
+        let name;
+        if (id === 'gemini-2.5-flash-preview-09-2025') {
+            name = 'Gemini 2.5 Flash';
+        } else if (id === 'gemini-3.1-flash-live-preview') {
+            name = 'Gemini 3.1 Flash Live';
+        } else if (id === 'gemini-2.5-flash-native-audio-preview-12-2025') {
+            name = 'Gemini 2.5 Flash Native Audio';
+        } else if (id.toLowerCase().includes('gemma')) {
+             // Beautify Gemma names: gemma-4-31b-it -> Gemma 4 31B IT
+             name = id.replace(/-/g, ' ')
+                      .replace(/\b\w/g, l => l.toUpperCase())
+                      .replace(/\bIt\b/, 'IT')
+                      .replace(/\bA4b\b/, 'A4B')
+                      .replace(/(\d)B\b/g, '$1B'); // Ensure parameter B is uppercase
+        } else {
+             name = id.includes('/') 
+                ? `Gemini ${id.split('/')[1]}`.replace('gemini-','').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                : `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')}`.replace(/\b\w/g, l => l.toUpperCase());
+        }
+        return { id, name, isPinned: true };
+    });
     return sortModels([...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS]);
 };
 
@@ -52,7 +73,7 @@ const MODEL_SETTINGS_CACHE_KEY = 'model_settings_cache';
 export interface CachedModelSettings {
     mediaResolution?: MediaResolution;
     thinkingBudget?: number;
-    thinkingLevel?: ThinkingLevel;
+    thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 export const getCachedModelSettings = (modelId: string): CachedModelSettings | undefined => {
@@ -81,20 +102,18 @@ export const calculateTokenStats = (usageMetadata?: UsageMetadata) => {
         return { promptTokens: 0, completionTokens: 0, totalTokens: 0, thoughtTokens: 0 };
     }
 
-    const usage = usageMetadata as UsageMetadata & {
-        candidatesTokenCount?: number;
-        thoughtsTokenCount?: number;
-    };
     const totalTokens = usageMetadata.totalTokenCount || 0;
     const promptTokens = usageMetadata.promptTokenCount || 0;
-    // Fallback if completion count missing
-    let completionTokens = usage.candidatesTokenCount || 0;
+    // SDK field names drifted; keep compatibility with older/newer shapes.
+    const metadataWithCandidateCount = usageMetadata as UsageMetadata & { candidatesTokenCount?: number };
+    let completionTokens = metadataWithCandidateCount.candidatesTokenCount || 0;
     
     if (!completionTokens && totalTokens > 0 && promptTokens > 0) {
         completionTokens = totalTokens - promptTokens;
     }
 
-    const thoughtTokens = usage.thoughtsTokenCount || 0;
+    const metadataWithThoughtCount = usageMetadata as UsageMetadata & { thoughtsTokenCount?: number };
+    const thoughtTokens = metadataWithThoughtCount.thoughtsTokenCount || 0;
 
     return { promptTokens, completionTokens, totalTokens, thoughtTokens };
 };

@@ -7,6 +7,7 @@ import { ModelsErrorDisplay } from '../chat/overlays/ModelsErrorDisplay';
 import { ChatAreaProps } from './chat-area/ChatAreaProps';
 import { useChatArea } from './chat-area/useChatArea';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
+import { Translator } from '../../utils/appUtils';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -69,6 +70,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
 
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
   const pipShortcut = useMemo(() => getShortcutDisplay('general.togglePip', appSettings), [appSettings]);
+  const translator = t as Translator;
 
   return (
     <div
@@ -94,7 +96,7 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
         isHistorySidebarOpen={isHistorySidebarOpen}
         onLoadCanvasPrompt={onLoadCanvasPrompt}
         isCanvasPromptActive={isCanvasPromptActive}
-        t={t}
+        t={translator}
         isKeyLocked={isKeyLocked}
         isPipSupported={isPipSupported}
         isPipActive={isPipActive}

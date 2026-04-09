@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatMessage } from '../../../types';
 
 interface UseAppTitleProps {
@@ -13,17 +13,19 @@ export const useAppTitle = ({ isLoading, messages, language, sessionTitle }: Use
     const [generationTime, setGenerationTime] = useState(0);
 
     // Determine the start time of the current generation for accurate timing across renders/tabs
-    const currentGenerationStartTime = useMemo(() => {
+    const currentGenerationStartTime = (() => {
         if (!isLoading) return null;
         // Find the loading message (usually near the end)
         for (let i = messages.length - 1; i >= 0; i--) {
             const m = messages[i];
             if ((m.role === 'model' || m.role === 'error') && m.isLoading) {
-                return m.generationStartTime ? new Date(m.generationStartTime).getTime() : Date.now();
+                if (m.generationStartTime) return new Date(m.generationStartTime).getTime();
+                if (m.timestamp) return new Date(m.timestamp).getTime();
+                return null;
             }
         }
         return null;
-    }, [messages, isLoading]);
+    })();
 
     // Update timer
     useEffect(() => {
@@ -34,18 +36,18 @@ export const useAppTitle = ({ isLoading, messages, language, sessionTitle }: Use
             };
             update(); // Initial update
             intervalId = window.setInterval(update, 1000);
-        } else {
-            setGenerationTime(0);
         }
         return () => clearInterval(intervalId);
     }, [currentGenerationStartTime]);
+
+    const activeGenerationTime = currentGenerationStartTime ? generationTime : 0;
 
     // Apply to Document Title
     useEffect(() => {
         const updateTitle = () => {
             let statusPrefix = '';
             if (isLoading) {
-                const timeDisplay = ` (${generationTime}s)`;
+                const timeDisplay = ` (${activeGenerationTime}s)`;
                 statusPrefix = (language === 'zh' ? `生成中${timeDisplay}... | ` : `Generating${timeDisplay}... | `);
             }
             
@@ -67,5 +69,5 @@ export const useAppTitle = ({ isLoading, messages, language, sessionTitle }: Use
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [sessionTitle, isLoading, language, generationTime]);
+    }, [sessionTitle, isLoading, language, activeGenerationTime]);
 };

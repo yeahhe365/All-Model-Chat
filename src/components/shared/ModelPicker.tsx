@@ -1,28 +1,10 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { ModelOption } from '../../types';
-import { Box, Volume2, Image as ImageIcon, Sparkles, MessageSquareText, Check, AudioWaveform } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { useClickOutside } from '../../hooks/useClickOutside';
 import { sortModels } from '../../utils/appUtils';
-
-export const getModelIcon = (model: ModelOption | undefined) => {
-    if (!model) return <Box size={15} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />;
-    const { id, isPinned } = model;
-    const lowerId = id.toLowerCase();
-    
-    // Native Audio (Live)
-    if (lowerId.includes('native-audio')) return <AudioWaveform size={15} className="text-amber-500 dark:text-amber-400 flex-shrink-0" strokeWidth={1.5} />;
-
-    if (lowerId.includes('tts')) return <Volume2 size={15} className="text-purple-500 dark:text-purple-400 flex-shrink-0" strokeWidth={1.5} />;
-    // Check for 'imagen' or 'image' to capture models like gemini-2.5-flash-image (Nano Banana)
-    if (lowerId.includes('imagen') || lowerId.includes('image')) return <ImageIcon size={15} className="text-rose-500 dark:text-rose-400 flex-shrink-0" strokeWidth={1.5} />;
-    
-    // Gemini Text Models
-    if (lowerId.includes('gemini')) return <MessageSquareText size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
-
-    if (isPinned) return <Sparkles size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
-    return <Box size={15} className="text-[var(--theme-text-tertiary)] opacity-70 flex-shrink-0" strokeWidth={1.5} />;
-};
+import { getModelIcon } from './modelPickerUtils';
 
 export interface ModelPickerProps {
     models: ModelOption[];
@@ -35,7 +17,14 @@ export interface ModelPickerProps {
         isOpen: boolean; 
         setIsOpen: (v: boolean) => void; 
         selectedModel: ModelOption | undefined;
-        ref: React.RefObject<any>;
+        ref: React.Ref<HTMLButtonElement>;
+        onTriggerClick: () => void;
+        onTriggerKeyDown: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
+        triggerAriaProps: {
+            'aria-haspopup': 'listbox';
+            'aria-expanded': boolean;
+            'aria-controls': string;
+        };
     }) => React.ReactNode;
     
     dropdownClassName?: string;
@@ -45,13 +34,15 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     models,
     selectedId,
     onSelect,
-    t: _t,
+    t,
     renderTrigger,
     dropdownClassName
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     
     const containerRef = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
     useClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
@@ -61,6 +52,92 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
     }, [models]);
 
     const selectedModel = models.find(m => m.id === selectedId);
+    const selectedIndex = sortedModels.findIndex(model => model.id === selectedId);
+    const [highlightedIndex, setHighlightedIndex] = useState(selectedIndex >= 0 ? selectedIndex : -1);
+    const listboxId = `model-picker-${Math.abs(selectedId.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0))}`;
+
+    const getNextIndex = useCallback((startIndex: number, direction: 1 | -1) => {
+        if (sortedModels.length === 0) return -1;
+        return (startIndex + direction + sortedModels.length) % sortedModels.length;
+    }, [sortedModels.length]);
+
+    const openMenu = useCallback((preferredIndex?: number) => {
+        const nextIndex = preferredIndex ?? (selectedIndex >= 0 ? selectedIndex : 0);
+        setHighlightedIndex(nextIndex);
+        setIsOpen(true);
+    }, [selectedIndex]);
+
+    const closeMenu = useCallback((restoreFocus: boolean = true) => {
+        setIsOpen(false);
+        if (restoreFocus) {
+            triggerRef.current?.focus();
+        }
+    }, []);
+
+    const handleTriggerClick = useCallback(() => {
+        if (isOpen) {
+            closeMenu(false);
+            return;
+        }
+        openMenu();
+    }, [closeMenu, isOpen, openMenu]);
+
+    const handleTriggerKeyDown = useCallback((event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            openMenu(selectedIndex >= 0 ? selectedIndex : 0);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            openMenu(selectedIndex >= 0 ? selectedIndex : Math.max(sortedModels.length - 1, 0));
+        } else if (event.key === 'Home') {
+            event.preventDefault();
+            openMenu(0);
+        } else if (event.key === 'End') {
+            event.preventDefault();
+            openMenu(Math.max(sortedModels.length - 1, 0));
+        } else if ((event.key === 'Enter' || event.key === ' ') && !isOpen) {
+            event.preventDefault();
+            openMenu();
+        } else if (event.key === 'Escape' && isOpen) {
+            event.preventDefault();
+            closeMenu();
+        }
+    }, [closeMenu, isOpen, openMenu, selectedIndex, sortedModels.length]);
+
+    const handleOptionKeyDown = useCallback((index: number) => (event: React.KeyboardEvent<HTMLButtonElement>) => {
+        const focusOption = (nextIndex: number) => {
+            setHighlightedIndex(nextIndex);
+            optionRefs.current[nextIndex]?.focus();
+        };
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            focusOption(getNextIndex(index, 1));
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            focusOption(getNextIndex(index, -1));
+        } else if (event.key === 'Home') {
+            event.preventDefault();
+            focusOption(0);
+        } else if (event.key === 'End') {
+            event.preventDefault();
+            focusOption(Math.max(sortedModels.length - 1, 0));
+        } else if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            onSelect(sortedModels[index].id);
+            closeMenu();
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            closeMenu();
+        } else if (event.key === 'Tab') {
+            closeMenu(false);
+        }
+    }, [closeMenu, getNextIndex, onSelect, sortedModels]);
+
+    useEffect(() => {
+        if (!isOpen || highlightedIndex < 0) return;
+        optionRefs.current[highlightedIndex]?.focus();
+    }, [highlightedIndex, isOpen]);
 
     return (
         <div className="relative" ref={containerRef}>
@@ -68,16 +145,24 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                 isOpen, 
                 setIsOpen, 
                 selectedModel, 
-                ref: containerRef
+                ref: triggerRef,
+                onTriggerClick: handleTriggerClick,
+                onTriggerKeyDown: handleTriggerKeyDown,
+                triggerAriaProps: {
+                    'aria-haspopup': 'listbox',
+                    'aria-expanded': isOpen,
+                    'aria-controls': listboxId,
+                }
             })}
 
             {isOpen && (
                 <div 
+                    id={listboxId}
                     className={`absolute top-full left-0 mt-1 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-primary)] rounded-xl shadow-premium z-50 flex flex-col modal-enter-animation overflow-hidden ${dropdownClassName || 'w-full min-w-[280px] max-h-[300px]'}`}
                 >
                     {!models.length ? (
                         <div className="p-4 text-center">
-                            <p className="text-xs text-[var(--theme-text-tertiary)] mt-2">No models available</p>
+                            <p className="text-xs text-[var(--theme-text-tertiary)] mt-2">{t('modelPicker_empty')}</p>
                         </div>
                     ) : (
                         <div 
@@ -95,9 +180,14 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
                                             <div className="h-px bg-[var(--theme-border-secondary)] my-1 mx-2 opacity-50" />
                                         )}
                                         <button
+                                            ref={(element) => {
+                                                optionRefs.current[index] = element;
+                                            }}
                                             role="option"
                                             aria-selected={isSelected}
+                                            tabIndex={index === highlightedIndex ? 0 : -1}
                                             onClick={() => { onSelect(model.id); setIsOpen(false); }}
+                                            onKeyDown={handleOptionKeyDown(index)}
                                             className={`group w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between transition-colors cursor-pointer outline-none
                                                 ${isSelected 
                                                     ? 'bg-[var(--theme-bg-tertiary)]/50' 

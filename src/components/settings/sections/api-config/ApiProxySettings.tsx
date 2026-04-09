@@ -42,8 +42,8 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     };
 
     const getProxyPlaceholder = () => {
-        if (!useApiProxy) return 'Enable proxy URL to set value';
-        return 'e.g., https://api-proxy.de/gemini/v1beta';
+        if (!useApiProxy) return t('apiConfig_proxy_placeholder_disabled');
+        return t('apiConfig_proxy_placeholder');
     };
 
     const currentBaseUrl = apiProxyUrl?.trim() || defaultBaseUrl;
@@ -55,7 +55,7 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
             <div className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-2">
                     <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer">
-                        API Proxy
+                        {t('apiConfig_proxy_label')}
                     </label>
                     <button
                         type="button"
@@ -74,10 +74,10 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
                         type="button"
                         onClick={handleResetProxy}
                         className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] border-transparent hover:border-[var(--theme-border-secondary)]"
-                        title="Reset to default"
+                        title={t('apiConfig_reset_proxy')}
                     >
                         <RotateCcw size={10} strokeWidth={1.5} />
-                        <span>Reset</span>
+                        <span>{t('apiConfig_reset_button')}</span>
                     </button>
                 </div>
                 <Toggle
@@ -97,13 +97,13 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
                     onChange={(e) => setApiProxyUrl(e.target.value)}
                     className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
                     placeholder={getProxyPlaceholder()}
-                    aria-label="API Proxy URL"
+                    aria-label={t('apiConfig_proxy_aria')}
                 />
                 
                 <div className="mt-3 p-3 rounded-lg bg-[var(--theme-bg-tertiary)]/30 border border-[var(--theme-border-secondary)]">
                     <div className="flex gap-2 text-xs text-[var(--theme-text-tertiary)] mb-1.5">
                         <AlertCircle size={14} className="flex-shrink-0 mt-0.5" strokeWidth={1.5} />
-                        <span>Preview of actual request URL:</span>
+                        <span>{t('apiConfig_proxy_preview')}</span>
                     </div>
                     <div className="flex items-start gap-2 pl-5">
                         <ArrowRight size={12} className="mt-1 text-[var(--theme-text-tertiary)]" />

@@ -1,12 +1,22 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Code, Eye, Download, FileCode2 } from 'lucide-react';
+import React, { Suspense, lazy, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { X, Code, Eye, Download, FileCode2, LucideIcon } from 'lucide-react';
 import { SideViewContent } from '../../types';
-import { MermaidBlock } from '../message/blocks/MermaidBlock';
-import { GraphvizBlock } from '../message/blocks/GraphvizBlock';
 import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
 import { CodeEditor } from '../shared/CodeEditor';
 import { useIsMobile } from '../../hooks/useDevice';
+import { getTranslator } from '../../utils/appUtils';
+import { useSettingsStore } from '../../stores/settingsStore';
+
+const MermaidBlock = lazy(async () => {
+    const module = await import('../message/blocks/MermaidBlock');
+    return { default: module.MermaidBlock };
+});
+
+const GraphvizBlock = lazy(async () => {
+    const module = await import('../message/blocks/GraphvizBlock');
+    return { default: module.GraphvizBlock };
+});
 
 interface SidePanelProps {
     content: SideViewContent | null;
@@ -14,11 +24,38 @@ interface SidePanelProps {
     themeId: string;
 }
 
+type SidePanelTab = 'code' | 'preview';
+
+interface SidePanelTabButtonProps {
+    id: SidePanelTab;
+    icon: LucideIcon;
+    label: string;
+    activeTab: SidePanelTab;
+    onSelect: (tab: SidePanelTab) => void;
+}
+
+const SidePanelTabButton: React.FC<SidePanelTabButtonProps> = ({ id, icon: Icon, label, activeTab, onSelect }) => (
+    <button
+        type="button"
+        onClick={() => onSelect(id)}
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+            activeTab === id
+                ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] shadow-sm'
+                : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-secondary)]/50'
+        }`}
+        title={label}
+        aria-label={label}
+    >
+        <Icon size={14} strokeWidth={1.5} />
+        <span className="hidden sm:inline">{label}</span>
+    </button>
+);
+
 export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId }) => {
     // Initialize with content immediately to ensure iframe has srcDoc on first render
     const [localCode, setLocalCode] = useState(content?.content || '');
     const [debouncedCode, setDebouncedCode] = useState(content?.content || '');
-    const [activeTab, setActiveTab] = useState<'code' | 'preview'>('preview');
+    const [activeTab, setActiveTab] = useState<SidePanelTab>('preview');
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     // Resizing State
@@ -28,22 +65,9 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     const sidebarRef = useRef<HTMLDivElement>(null);
 
     const isMobile = useIsMobile();
+    const language = useSettingsStore(s => s.language);
+    const t = useMemo(() => getTranslator(language), [language]);
     
-    // Sync state when content prop changes (e.g. opening different file while panel is open)
-    useEffect(() => {
-        if (content) {
-            setLocalCode(content.content);
-            setDebouncedCode(content.content);
-            // Reset to preview tab when new content is loaded for better UX
-            if (activeTab === 'code' && content.type === 'html') {
-                // Optional: Force preview for HTML, or keep current tab? 
-                // Keeping current tab is usually better for persistent editing, 
-                // but if opening new file, preview is expected.
-                // Let's stick to user preference or default to preview if type changed.
-            }
-        }
-    }, [content]);
-
     // Debounce code updates for preview to avoid excessive rendering during edits
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -105,14 +129,14 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     const renderPreview = () => {
         if (content.type === 'html') {
             return (
-                <div className="w-full h-full relative bg-white">
+                <div className="w-full h-full relative bg-[var(--theme-bg-primary)]">
                     <iframe
                         ref={iframeRef}
                         className="w-full h-full border-0 block"
                         // SECURITY: Removed allow-same-origin to prevent access to localStorage/parent DOM
                         // Added allow-downloads to match main preview capabilities
                         sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
-                        title="Live Preview"
+                        title={t('sidepanel_live_preview_title')}
                         srcDoc={debouncedCode}
                     />
                 </div>
@@ -120,50 +144,40 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
         }
         if (content.type === 'mermaid') {
             return (
-                <div className="w-full h-full overflow-auto bg-white dark:bg-[#0d1117] p-4 flex items-center justify-center">
-                    <div className="w-full flex justify-center">
-                        <MermaidBlock 
-                            code={debouncedCode} 
-                            onImageClick={() => {}} 
-                            isLoading={false} 
-                            themeId={themeId} 
-                            onOpenSidePanel={() => {}} 
-                        />
-                    </div>
+                <div className="w-full h-full overflow-auto bg-[var(--theme-bg-primary)] p-4 flex items-center justify-center">
+                    <Suspense fallback={<div className="w-full" />}>
+                        <div className="w-full flex justify-center">
+                            <MermaidBlock 
+                                code={debouncedCode} 
+                                onImageClick={() => {}} 
+                                isLoading={false} 
+                                themeId={themeId} 
+                                onOpenSidePanel={() => {}} 
+                            />
+                        </div>
+                    </Suspense>
                 </div>
             );
         }
         if (content.type === 'graphviz') {
             return (
-                <div className="w-full h-full overflow-auto bg-white dark:bg-[#0d1117] p-4 flex items-center justify-center">
-                    <div className="w-full flex justify-center">
-                        <GraphvizBlock 
-                            code={debouncedCode} 
-                            onImageClick={() => {}} 
-                            isLoading={false} 
-                            themeId={themeId} 
-                            onOpenSidePanel={() => {}} 
-                        />
-                    </div>
+                <div className="w-full h-full overflow-auto bg-[var(--theme-bg-primary)] p-4 flex items-center justify-center">
+                    <Suspense fallback={<div className="w-full" />}>
+                        <div className="w-full flex justify-center">
+                            <GraphvizBlock 
+                                code={debouncedCode} 
+                                onImageClick={() => {}} 
+                                isLoading={false} 
+                                themeId={themeId} 
+                                onOpenSidePanel={() => {}} 
+                            />
+                        </div>
+                    </Suspense>
                 </div>
             );
         }
-        return <div className="p-4 text-[var(--theme-text-tertiary)] flex items-center justify-center h-full">Preview not supported for this type.</div>;
+        return <div className="p-4 text-[var(--theme-text-tertiary)] flex items-center justify-center h-full">{t('sidepanel_preview_unsupported')}</div>;
     };
-
-    const TabButton = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
-        <button
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                activeTab === id 
-                ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] shadow-sm' 
-                : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-secondary)]/50'
-            }`}
-        >
-            <Icon size={14} strokeWidth={1.5} />
-            <span className="hidden sm:inline">{label}</span>
-        </button>
-    );
 
     const editorLanguage = content.language || (
         content.type === 'html' ? 'html' :
@@ -176,7 +190,8 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     const isHtml = content.type === 'html';
 
     const PreviewIcon = isHtml ? FileCode2 : Eye;
-    const previewLabel = isHtml ? "HTML" : "Preview";
+    const previewLabel = isHtml ? "HTML" : t('preview');
+    const codeLabel = t('code');
 
     return (
         <>
@@ -204,7 +219,8 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                             flex items-center justify-center group transition-colors hover:bg-[var(--theme-bg-accent)]
                             ${isResizing ? 'bg-[var(--theme-bg-accent)]' : 'bg-transparent'}
                         `}
-                        title="Drag to resize"
+                        title={t('sidepanel_resize_title')}
+                        aria-label={t('sidepanel_resize_title')}
                     />
                 )}
 
@@ -212,16 +228,16 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                 <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex-shrink-0">
                     {/* Left: Tabs */}
                     <div className="flex bg-[var(--theme-bg-input)] p-1 rounded-lg border border-[var(--theme-border-secondary)] flex-shrink-0">
-                        <TabButton id="preview" icon={PreviewIcon} label={previewLabel} />
-                        <TabButton id="code" icon={Code} label="Code" />
+                        <SidePanelTabButton id="preview" icon={PreviewIcon} label={previewLabel} activeTab={activeTab} onSelect={setActiveTab} />
+                        <SidePanelTabButton id="code" icon={Code} label={codeLabel} activeTab={activeTab} onSelect={setActiveTab} />
                     </div>
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={handleDownload} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Download Code">
+                        <button type="button" onClick={handleDownload} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title={t('sidepanel_download_title')} aria-label={t('sidepanel_download_title')}>
                             <Download size={16} strokeWidth={1.5} />
                         </button>
-                        <button onClick={onClose} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Close Panel">
+                        <button type="button" onClick={onClose} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title={t('sidepanel_close_title')} aria-label={t('sidepanel_close_title')}>
                             <X size={18} strokeWidth={1.5} />
                         </button>
                     </div>

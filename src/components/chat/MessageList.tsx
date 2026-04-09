@@ -1,14 +1,11 @@
 
-import React, { useMemo } from 'react';
+import React, { Suspense, lazy, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import { ChatMessage, AppSettings, SideViewContent, VideoMetadata } from '../../types';
 import { Message } from '../message/Message';
 import { translations } from '../../utils/appUtils';
-import { HtmlPreviewModal } from '../modals/HtmlPreviewModal';
-import { FilePreviewModal } from '../modals/FilePreviewModal';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
-import { FileConfigurationModal } from '../modals/FileConfigurationModal';
 import { MediaResolution } from '../../types/settings';
 import { isGemini3Model } from '../../utils/appUtils';
 import { TextSelectionToolbar } from './message-list/TextSelectionToolbar';
@@ -17,7 +14,21 @@ import { useMessageListScroll } from './message-list/hooks/useMessageListScroll'
 import { MessageListFooter } from './message-list/MessageListFooter';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import type { Translator } from '../../utils/translations';
+
+const HtmlPreviewModal = lazy(async () => {
+  const module = await import('../modals/HtmlPreviewModal');
+  return { default: module.HtmlPreviewModal };
+});
+
+const FilePreviewModal = lazy(async () => {
+  const module = await import('../modals/FilePreviewModal');
+  return { default: module.FilePreviewModal };
+});
+
+const FileConfigurationModal = lazy(async () => {
+  const module = await import('../modals/FileConfigurationModal');
+  return { default: module.FileConfigurationModal };
+});
 
 export interface MessageListProps {
   messages: ChatMessage[];
@@ -69,7 +80,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   const ttsMessageId = storeTtsMessageId ?? propsTtsMessageId;
   const appSettings = storeAppSettings ?? propsAppSettings;
   const themeId = storeThemeId ?? propsThemeId;
-  const translate = t as Translator;
+  const modalTranslator = t as (key: string) => string;
   
   // UI Logic (Modals, Previews, Configuration)
   const {
@@ -156,7 +167,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                         onContinueGeneration={onContinueGeneration}
                         ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
-                        t={translate}
+                        t={t}
                         appSettings={appSettings}
                         onOpenSidePanel={onOpenSidePanel}
                         onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
@@ -173,7 +184,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             onInsert={onInsert} 
             onTTS={onQuickTTS} 
             containerRef={scrollerRef as any} 
-            t={translate} 
+            t={modalTranslator} 
         />
 
         <ScrollNavigation 
@@ -182,37 +193,44 @@ export const MessageList: React.FC<MessageListProps> = ({
           onScrollToPrev={scrollToPrevTurn}
           onScrollToNext={scrollToNextTurn}
           bottomOffset={chatInputHeight}
+          t={t}
         />
       </div>
     
-      {/* Modals */}
-      <FilePreviewModal 
-          file={previewFile} 
-          onClose={closeFilePreviewModal}
-          t={translate}
-          onPrev={handlePrevImage}
-          onNext={handleNextImage}
-          hasPrev={currentImageIndex > 0}
-          hasNext={currentImageIndex !== -1 && currentImageIndex < allImages.length - 1}
-      />
+      <Suspense fallback={null}>
+        {previewFile && (
+          <FilePreviewModal 
+              file={previewFile} 
+              onClose={closeFilePreviewModal}
+              t={t}
+              onPrev={handlePrevImage}
+              onNext={handleNextImage}
+              hasPrev={currentImageIndex > 0}
+              hasNext={currentImageIndex !== -1 && currentImageIndex < allImages.length - 1}
+          />
+        )}
 
-      {isHtmlPreviewModalOpen && htmlToPreview !== null && (
-        <HtmlPreviewModal
-          isOpen={isHtmlPreviewModalOpen}
-          onClose={handleCloseHtmlPreview}
-          htmlContent={htmlToPreview}
-          initialTrueFullscreenRequest={initialTrueFullscreenRequest}
-        />
-      )}
+        {isHtmlPreviewModalOpen && htmlToPreview !== null && (
+          <HtmlPreviewModal
+            isOpen={isHtmlPreviewModalOpen}
+            onClose={handleCloseHtmlPreview}
+            htmlContent={htmlToPreview}
+            initialTrueFullscreenRequest={initialTrueFullscreenRequest}
+            t={t}
+          />
+        )}
 
-      <FileConfigurationModal 
-          isOpen={!!configuringFile} 
-          onClose={() => setConfiguringFile(null)} 
-          file={configuringFile?.file || null}
-          onSave={handleSaveFileConfig}
-          t={translate}
-          isGemini3={isGemini3}
-      />
+        {!!configuringFile && (
+          <FileConfigurationModal 
+              isOpen={!!configuringFile} 
+              onClose={() => setConfiguringFile(null)} 
+              file={configuringFile?.file || null}
+              onSave={handleSaveFileConfig}
+              t={modalTranslator}
+              isGemini3={isGemini3}
+          />
+        )}
+      </Suspense>
     </>
   );
 };

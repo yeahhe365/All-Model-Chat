@@ -4,6 +4,7 @@
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings, ModelOption } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, CANVAS_SYSTEM_PROMPT, BBOX_SYSTEM_PROMPT, DEFAULT_SYSTEM_INSTRUCTION, HD_GUIDE_SYSTEM_PROMPT } from '../../../constants/appConstants';
+import { useWindowContext } from '../../../contexts/useWindowContext';
 
 interface UseAppHandlersProps {
     setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
@@ -24,6 +25,12 @@ export const useAppHandlers = ({
     chatState,
     t
 }: UseAppHandlersProps) => {
+  const { document: targetDocument } = useWindowContext();
+
+  const focusChatInput = useCallback(() => {
+    const textarea = targetDocument.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement | null;
+    textarea?.focus();
+  }, [targetDocument]);
 
   const handleSaveSettings = useCallback((newSettings: AppSettings) => {
     setAppSettings(newSettings);
@@ -54,10 +61,9 @@ export const useAppHandlers = ({
     }
     
     setTimeout(() => {
-        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-        if (textarea) textarea.focus();
+        focusChatInput();
     }, 50);
-  }, [currentChatSettings.systemInstruction, setAppSettings, activeSessionId, setCurrentChatSettings]);
+  }, [currentChatSettings.systemInstruction, setAppSettings, activeSessionId, setCurrentChatSettings, focusChatInput]);
 
   const handleToggleBBoxMode = useCallback(() => {
     const isCurrentlyBBox = currentChatSettings.systemInstruction === BBOX_SYSTEM_PROMPT;
@@ -115,11 +121,10 @@ export const useAppHandlers = ({
     } else {
         setCommandedInput({ text: text + '\n', id: Date.now() });
         setTimeout(() => {
-            const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-            if (textarea) textarea.focus();
+            focusChatInput();
         }, 0);
     }
-  }, [currentChatSettings.systemInstruction, appSettings, chatState, setAppSettings, activeSessionId, setCurrentChatSettings]);
+  }, [currentChatSettings.systemInstruction, appSettings, chatState, setAppSettings, activeSessionId, setCurrentChatSettings, focusChatInput]);
 
   const handleSetThinkingLevel = useCallback((level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => {
     setAppSettings(prev => ({ ...prev, thinkingLevel: level }));
@@ -127,10 +132,9 @@ export const useAppHandlers = ({
         setCurrentChatSettings(prev => ({ ...prev, thinkingLevel: level }));
     }
     setTimeout(() => {
-        const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-        if (textarea) textarea.focus();
+        focusChatInput();
     }, 50);
-  }, [setAppSettings, activeSessionId, setCurrentChatSettings]);
+  }, [setAppSettings, activeSessionId, setCurrentChatSettings, focusChatInput]);
 
   const getCurrentModelDisplayName = useCallback(() => {
     const { apiModels, isSwitchingModel } = chatState;
@@ -139,7 +143,7 @@ export const useAppHandlers = ({
     const model = apiModels.find((m: ModelOption) => m.id === modelIdToDisplay);
     if (model) return model.name;
     if (modelIdToDisplay) { 
-        let n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; 
+        const n = modelIdToDisplay.split('/').pop()?.replace('gemini-','Gemini ') || modelIdToDisplay; 
         return n.split('-').map((w: string)=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ').replace(' Preview ',' Preview ');
     }
     return apiModels.length === 0 ? t('appNoModelsAvailable') : t('appNoModelSelected');

@@ -1,6 +1,5 @@
-
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Session } from '@google/genai';
+import type { Session } from '@google/genai';
 import { AppSettings, ChatSettings } from '../types';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
@@ -58,7 +57,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     const { liveConfig, tools } = useLiveConfig({ 
         appSettings, 
         chatSettings, 
-        sessionHandle: sessionHandleRef.current,
+        sessionHandle,
         clientFunctions
     });
 

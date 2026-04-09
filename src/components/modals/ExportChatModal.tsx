@@ -17,6 +17,7 @@ interface ExportChatModalProps {
 export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClose, onExport, exportStatus, t: _t }) => {
     const headingIconSize = useResponsiveValue(20, 24);
     const isLoading = exportStatus === 'exporting';
+    const t = _t as (key: string, fallback?: string) => string;
 
     return (
         <Modal isOpen={isOpen} onClose={isLoading ? () => {} : onClose}>
@@ -27,13 +28,13 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
                 <div className="flex-shrink-0 flex justify-between items-center p-3 sm:p-4 border-b border-[var(--theme-border-primary)]">
                     <h2 id="export-chat-title" className="text-lg sm:text-xl font-semibold text-[var(--theme-text-link)] flex items-center">
                         <Download size={headingIconSize} className="mr-2.5 opacity-80" />
-                        Export Chat
+                        {t('export_chat', 'Export Chat')}
                     </h2>
                     <button 
                         onClick={onClose} 
                         disabled={isLoading}
                         className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors p-1 rounded-full disabled:opacity-50" 
-                        aria-label="Close export dialog"
+                        aria-label={t('export_close_aria', 'Close export dialog')}
                     >
                         <X size={22} />
                     </button>
@@ -43,11 +44,11 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-40 text-[var(--theme-text-secondary)]">
                             <Loader2 size={36} className="animate-spin text-[var(--theme-text-link)] mb-4" />
-                            <p className="text-base font-medium">Exporting conversation...</p>
-                            <p className="text-sm mt-1">This may take a moment for long chats or images.</p>
+                            <p className="text-base font-medium">{t('export_chat_loading', 'Exporting conversation...')}</p>
+                            <p className="text-sm mt-1">{t('export_chat_loading_hint', 'This may take a moment for long chats or images.')}</p>
                         </div>
                     ) : (
-                        <ExportOptions onExport={onExport} variant="chat" />
+                        <ExportOptions onExport={onExport} variant="chat" t={_t} />
                     )}
                 </div>
             </div>

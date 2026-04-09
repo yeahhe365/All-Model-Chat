@@ -21,4 +21,8 @@ export const headerTranslations = {
     headerModelAriaLabel_current: { en: 'Current AI Model', zh: '当前 AI 模型' },
     headerModelAriaLabel_action: { en: `Click to change model`, zh: `点击更改模型` },
     header_model_search_placeholder: { en: 'Search models...', zh: '搜索模型...' },
+    thinking_toggle_aria: { en: 'Toggle thinking level', zh: '切换思考档位' },
+    thinking_toggle_fast_minimal_title: { en: 'Thinking level: Minimal (Fast Mode)', zh: '当前思考档位：极速' },
+    thinking_toggle_fast_low_title: { en: 'Thinking level: Low (Fast Mode)', zh: '当前思考档位：低思考' },
+    thinking_toggle_high_title: { en: 'Thinking level: High (Pro Mode)', zh: '当前思考档位：高思考' },
 };

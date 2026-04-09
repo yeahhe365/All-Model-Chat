@@ -16,9 +16,9 @@ export const INITIAL_PINNED_MODELS: string[] = [
     'gemini-3-flash-preview',
     'gemini-3.1-flash-lite-preview',
     'gemini-3.1-pro-preview',
+    'gemini-3.1-flash-live-preview',
     'gemini-2.5-pro',
     'gemini-2.5-flash-preview-09-2025',
-    'gemini-2.5-flash-lite-preview-09-2025',
     'gemini-2.5-flash-native-audio-preview-12-2025',
     'gemma-4-31b-it',
     'gemma-4-26b-a4b-it',
@@ -92,7 +92,6 @@ export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
     { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro' },
     { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
     { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
-    { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
     { id: 'gemini-2.5-flash-native-audio-preview-12-2025', name: 'Gemini 2.5 Flash Native Audio' },
 ];
 

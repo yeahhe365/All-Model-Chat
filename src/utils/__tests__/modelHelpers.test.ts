@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   sortModels,
   isGemini3Model,
+  isLiveAudioModel,
+  getDefaultModelOptions,
   calculateTokenStats,
   adjustThinkingBudget,
 } from '../modelHelpers';
@@ -90,6 +92,32 @@ describe('isGemini3Model', () => {
 
   it('is case insensitive', () => {
     expect(isGemini3Model('Gemini-3-Flash-Preview')).toBe(true);
+  });
+});
+
+describe('isLiveAudioModel', () => {
+  it('returns true for Gemini 3.1 Flash Live Preview', () => {
+    expect(isLiveAudioModel('gemini-3.1-flash-live-preview')).toBe(true);
+  });
+
+  it('returns true for native-audio preview models', () => {
+    expect(isLiveAudioModel('gemini-2.5-flash-native-audio-preview-12-2025')).toBe(true);
+  });
+
+  it('returns false for standard text models', () => {
+    expect(isLiveAudioModel('gemini-3-flash-preview')).toBe(false);
+  });
+});
+
+describe('getDefaultModelOptions', () => {
+  it('includes the current Gemini 3.1 Flash Live model by default', () => {
+    const defaultModels = getDefaultModelOptions();
+    expect(defaultModels.some(model => model.id === 'gemini-3.1-flash-live-preview')).toBe(true);
+  });
+
+  it('excludes the retired Gemini 2.5 Flash Lite preview model', () => {
+    const defaultModels = getDefaultModelOptions();
+    expect(defaultModels.some(model => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(false);
   });
 });
 

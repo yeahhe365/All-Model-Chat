@@ -1,8 +1,6 @@
-
-import React, { useCallback } from 'react';
+import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
-import { geminiServiceInstance } from '../../services/geminiService';
 import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
 import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
@@ -12,7 +10,7 @@ type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[
 interface TtsImagenSenderProps {
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
+    activeJobs: MutableRefObject<Map<string, AbortController>>;
     setActiveSessionId: (id: string | null) => void;
 }
 
@@ -75,6 +73,7 @@ export const useTtsImagenSender = ({
         activeJobs.current.set(generationId, newAbortController);
 
         try {
+            const { geminiServiceInstance } = await import('../../services/geminiService');
             if (isTtsModel) {
                 const base64Pcm = await geminiServiceInstance.generateSpeech(keyToUse, currentChatSettings.modelId, text, currentChatSettings.ttsVoice, newAbortController.signal);
                 if (newAbortController.signal.aborted) throw new Error("aborted");

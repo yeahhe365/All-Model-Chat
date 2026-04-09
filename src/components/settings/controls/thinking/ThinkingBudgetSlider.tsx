@@ -8,22 +8,29 @@ interface ThinkingBudgetSliderProps {
     maxBudget: number;
     value: string;
     onChange: (val: string) => void;
+    t: (key: string, fallback?: string) => string;
 }
 
 export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
     minBudget,
     maxBudget,
     value,
-    onChange
+    onChange,
+    t
 }) => {
+    const tokensLabel = t('settingsThinkingBudget_tokens');
+    const description = t('settingsThinkingBudget_description')
+        .replace('{min}', String(minBudget))
+        .replace('{max}', String(maxBudget));
+
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                    <Calculator size={12} /> Token Budget
+                    <Calculator size={12} /> {t('settingsThinkingBudget')}
                 </label>
                 <span className="text-xs font-mono text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)] px-2 py-0.5 rounded border border-[var(--theme-border-secondary)]">
-                    {parseInt(value || '0').toLocaleString()} tokens
+                    {parseInt(value || '0').toLocaleString()} {tokensLabel}
                 </span>
             </div>
 
@@ -49,7 +56,7 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
                 </div>
             </div>
             <p className="text-[10px] text-[var(--theme-text-tertiary)] text-center">
-                Controls the maximum number of tokens the model can use for its internal thought process ({minBudget}-{maxBudget}).
+                {description}
             </p>
         </div>
     );

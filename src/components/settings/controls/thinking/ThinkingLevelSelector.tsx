@@ -8,13 +8,15 @@ interface ThinkingLevelSelectorProps {
     setThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
     isFlash3: boolean;
     hideMedium?: boolean;
+    t: (key: string) => string;
 }
 
 export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
     thinkingLevel,
     setThinkingLevel,
     isFlash3,
-    hideMedium
+    hideMedium,
+    t
 }) => {
     let numButtons = 0;
     if (isFlash3) numButtons++;
@@ -28,7 +30,7 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                    <Gauge size={12} /> Intensity Level
+                    <Gauge size={12} /> {t('settingsThinkingIntensity')}
                 </span>
             </div>
             <div className={`grid ${gridClass} gap-2`}>
@@ -36,28 +38,28 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
                     <LevelButton 
                         active={thinkingLevel === 'MINIMAL'} 
                         onClick={() => setThinkingLevel('MINIMAL')} 
-                        label="Minimal" 
+                        label={t('settingsThinkingLevel_minimal')} 
                         icon={<Feather size={14} />}
                     />
                 )}
                 <LevelButton 
                     active={thinkingLevel === 'LOW'} 
                     onClick={() => setThinkingLevel('LOW')} 
-                    label="Low" 
+                    label={t('settingsThinkingLevel_low')} 
                     icon={<Zap size={14} />}
                 />
                 {!hideMedium && (
                     <LevelButton 
                         active={thinkingLevel === 'MEDIUM'} 
                         onClick={() => setThinkingLevel('MEDIUM')} 
-                        label="Medium" 
+                        label={t('settingsThinkingLevel_medium')} 
                         icon={<Sparkles size={14} />}
                     />
                 )}
                 <LevelButton 
                     active={thinkingLevel === 'HIGH'} 
                     onClick={() => setThinkingLevel('HIGH')} 
-                    label="High" 
+                    label={t('settingsThinkingLevel_high')} 
                     icon={<Cpu size={14} />}
                 />
             </div>

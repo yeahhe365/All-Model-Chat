@@ -1,12 +1,11 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedChatSession, ChatGroup } from '../types';
-import { useWindowContext } from '../contexts/WindowContext';
-import { translations } from '../utils/appUtils';
+import { useWindowContext } from '../contexts/useWindowContext';
+import { Translator } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 
 interface UseHistorySidebarLogicProps {
-    isOpen: boolean;
     onToggle: () => void;
     sessions: SavedChatSession[];
     groups: ChatGroup[];
@@ -15,12 +14,11 @@ interface UseHistorySidebarLogicProps {
     onRenameGroup: (groupId: string, newTitle: string) => void;
     onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
     onSelectSession: (sessionId: string) => void;
-    t: (key: keyof typeof translations, fallback?: string) => string;
+    t: Translator;
     language: 'en' | 'zh';
 }
 
 export const useHistorySidebarLogic = ({
-    isOpen: _isOpen,
     onToggle,
     sessions,
     groups,
@@ -44,7 +42,7 @@ export const useHistorySidebarLogic = ({
     const editInputRef = useRef<HTMLInputElement>(null);
     const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
     
-    const { document: targetDocument } = useWindowContext();
+    const { document: targetDocument, window: targetWindow } = useWindowContext();
 
     // --- Effects ---
 
@@ -78,7 +76,6 @@ export const useHistorySidebarLogic = ({
     useEffect(() => {
         const trimmedQuery = searchQuery.trim();
         if (!trimmedQuery) {
-            setSearchResults(null);
             return;
         }
 
@@ -251,7 +248,7 @@ export const useHistorySidebarLogic = ({
     };
 
     const handleEmptySpaceClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
+        if (e.target === e.currentTarget && targetWindow.innerWidth < 768) {
             onToggle();
         }
     };
@@ -259,7 +256,7 @@ export const useHistorySidebarLogic = ({
     const handleSessionSelect = (sessionId: string) => {
         onSelectSession(sessionId);
         // Auto-close sidebar on mobile
-        if (window.innerWidth < 768) {
+        if (targetWindow.innerWidth < 768) {
             onToggle();
         }
     };

@@ -1,9 +1,7 @@
+
 import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
 import { createChatHistoryForApi, isGemini3Model, logService } from '../../../utils/appUtils';
-import { buildGenerationConfig } from '../../../services/api/baseApi';
-import { geminiServiceInstance } from '../../../services/geminiService';
-import { pyodideService } from '../../../services/pyodideService';
 import { isLikelyHtml } from '../../../utils/codeUtils';
 import { GetStreamHandlers } from '../types';
 import { ContentPart } from '../../../types/chat';
@@ -100,6 +98,7 @@ export const useApiInteraction = ({
                 const filesToMount = enrichedFiles.filter(f => f.rawFile && !f.type.includes('youtube'));
                 if (filesToMount.length > 0) {
                     logService.info(`Mounting ${filesToMount.length} files for Local Python execution.`);
+                    const { pyodideService } = await import('../../../services/pyodideService');
                     await pyodideService.mountFiles(filesToMount);
                 }
             } catch (e) {
@@ -110,6 +109,10 @@ export const useApiInteraction = ({
 
         const shouldStripThinking = sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;
         const historyForChat = await createChatHistoryForApi(baseMessagesForApi, shouldStripThinking);
+        const [{ buildGenerationConfig }, { geminiServiceInstance }] = await Promise.all([
+            import('../../../services/api/baseApi'),
+            import('../../../services/geminiService'),
+        ]);
 
         const config = buildGenerationConfig(
             activeModelId,

@@ -1,11 +1,7 @@
 
-
-
 import { useCallback } from 'react';
 import { generateUniqueId, getKeyForRequest, getTranslator, createMessage } from '../../utils/appUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
 import { CANVAS_SYSTEM_PROMPT } from '../../constants/appConstants';
-import { buildGenerationConfig } from '../../services/api/baseApi';
 import { CanvasGeneratorProps } from './types';
 
 export const useCanvasGenerator = ({
@@ -77,6 +73,11 @@ export const useCanvasGenerator = ({
             generationStartTime, 
             canvasSettings
         );
+
+        const [{ geminiServiceInstance }, { buildGenerationConfig }] = await Promise.all([
+            import('../../services/geminiService'),
+            import('../../services/api/baseApi'),
+        ]);
 
         const config = buildGenerationConfig(
             canvasModelId,

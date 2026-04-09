@@ -33,6 +33,7 @@ export const AddUrlInput: React.FC<AddUrlInputProps> = ({
             isLoading={isLoading}
             disabled={isAddingByUrl}
             submitLabel={t('add')}
+            cancelLabel={t('cancel')}
             type="url"
             ariaLabel={t('addByUrl_aria')}
         />

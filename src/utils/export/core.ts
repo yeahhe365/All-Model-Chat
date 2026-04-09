@@ -26,7 +26,7 @@ export const sanitizeFilename = (name: string): string => {
     return "export";
   }
   // Remove illegal characters for filenames and control characters
-  let saneName = name.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
+  let saneName = name.trim().replace(/[<>:"/\\|?*]/g, '_').replace(/\p{Cc}/gu, '_');
   // Windows doesn't like filenames ending with a period or space.
   saneName = saneName.replace(/[. ]+$/, '');
   // Limit length to avoid issues with filesystems

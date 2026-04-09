@@ -25,7 +25,7 @@ interface ChatHistoryProps {
     updateAndPersistGroups: GroupsUpdater;
     activeChat: SavedChatSession | undefined;
     language: 'en' | 'zh';
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
@@ -46,7 +46,7 @@ export const useChatHistory = ({
     updateAndPersistGroups,
     activeChat,
     language,
-    userScrolledUp,
+    userScrolledUpRef,
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
@@ -65,7 +65,7 @@ export const useChatHistory = ({
         setCommandedInput,
         updateAndPersistSessions,
         activeChat,
-        userScrolledUp,
+        userScrolledUpRef,
         selectedFiles,
         fileDraftsRef,
         activeSessionId,

@@ -3,6 +3,8 @@ import { Filter, Download, Trash2, RefreshCw, Terminal } from 'lucide-react';
 import { LogEntry, LogLevel, LogCategory } from '../../services/logService';
 import { LOG_LEVEL_COLORS, CATEGORY_COLORS } from './constants';
 import { LogRow } from './LogRow';
+import { getTranslator } from '../../utils/appUtils';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 interface ConsoleTabProps {
     logs: LogEntry[];
@@ -13,6 +15,8 @@ interface ConsoleTabProps {
 }
 
 export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore, onFetchMore, onClear }) => {
+    const language = useSettingsStore((state) => state.language);
+    const t = getTranslator(language);
     const [filterText, setFilterText] = useState('');
     const [activeCategory, setActiveCategory] = useState<LogCategory | 'ALL'>('ALL');
     const [visibleLevels, setVisibleLevels] = useState<Record<LogLevel, boolean>>({
@@ -50,7 +54,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
             <div className="p-3 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex flex-wrap items-center gap-3">
             <input 
                 type="text" 
-                placeholder="Search logs..." 
+                placeholder={t('logViewer_search_placeholder')} 
                 value={filterText} 
                 onChange={e => setFilterText(e.target.value)}
                 className="flex-grow min-w-[150px] px-3 py-1.5 text-sm bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-md focus:ring-1 focus:ring-[var(--theme-border-focus)] text-[var(--theme-text-primary)]"
@@ -65,7 +69,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
                     onChange={(e) => setActiveCategory(e.target.value as any)}
                     className="bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] text-xs rounded border border-[var(--theme-border-secondary)] px-2 py-1 focus:outline-none"
                 >
-                    <option value="ALL">All Categories</option>
+                    <option value="ALL">{t('logViewer_all_categories')}</option>
                     {Object.keys(CATEGORY_COLORS).map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
             </div>
@@ -81,11 +85,11 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
 
             <div className="flex-grow" />
 
-            <button onClick={handleExport} className="flex items-center gap-1.5 text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] px-3 py-1.5 rounded-md transition-colors" title="Export JSON">
-                <Download size={14} /> Export JSON
+            <button onClick={handleExport} className="flex items-center gap-1.5 text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] px-3 py-1.5 rounded-md transition-colors" title={t('logViewer_export_json')}>
+                <Download size={14} /> {t('logViewer_export_json')}
             </button>
-            <button onClick={onClear} className="flex items-center gap-1.5 text-xs bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/20 px-3 py-1.5 rounded-md transition-colors">
-                <Trash2 size={14} /> Clear
+            <button onClick={onClear} title={t('logViewer_clear_title')} aria-label={t('logViewer_clear_title')} className="flex items-center gap-1.5 text-xs bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/20 px-3 py-1.5 rounded-md transition-colors">
+                <Trash2 size={14} /> {t('logViewer_clear')}
             </button>
             </div>
 
@@ -94,7 +98,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
             {filteredLogs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--theme-text-tertiary)] opacity-50">
                     <Terminal size={48} className="mb-2" />
-                    <p>No logs found</p>
+                    <p>{t('logViewer_no_logs')}</p>
                 </div>
             ) : (
                 filteredLogs.map((log) => <LogRow key={log.id || log.timestamp.toISOString()} log={log} />)
@@ -109,7 +113,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
                         className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors disabled:opacity-50"
                     >
                         {isLoading ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
-                        Load older logs
+                        {t('logViewer_load_older')}
                     </button>
                 </div>
             )}

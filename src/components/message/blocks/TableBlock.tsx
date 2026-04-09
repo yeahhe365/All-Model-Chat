@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check } from 'lucide-react';
-import { useWindowContext } from '../../../contexts/WindowContext';
+import { useWindowContext } from '../../../contexts/useWindowContext';
 import { triggerDownload } from '../../../utils/exportUtils';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { translations } from '../../../utils/appUtils';
@@ -59,7 +59,6 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
         
         try {
             // Dynamically import xlsx to avoid heavy bundle size if not used
-            // @ts-ignore - xlsx is provided via importmap
             const XLSX = await import('xlsx');
             
             if (XLSX && XLSX.utils && XLSX.writeFile) {
@@ -83,7 +82,15 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
         setShowDownloadMenu(false);
     };
 
-    const tFunc = t || ((key: string) => key === 'exportToCSV' ? 'Export to CSV' : 'Export to Excel');
+    const tFunc = t || ((key: string) => ({
+        copy_markdown: 'Copy Markdown',
+        copied_button_title: 'Copied!',
+        download: 'Download',
+        exportToCSV: 'Export to CSV',
+        exportToExcel: 'Export to Excel',
+        htmlPreview_fullscreen: 'Fullscreen',
+        htmlPreview_exit_fullscreen: 'Exit Fullscreen',
+    }[key] ?? key));
 
     // When fullscreen, we use a portal and a specific layout.
     if (isFullscreen) {
@@ -93,7 +100,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                     <button
                         onClick={handleCopyMarkdown}
                         className="p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all hover:scale-105 backdrop-blur-sm"
-                        title={isCopied ? "Copied!" : "Copy Markdown"}
+                        title={isCopied ? tFunc('copied_button_title') : tFunc('copy_markdown')}
                     >
                         {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                     </button>
@@ -102,7 +109,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                          <button
                             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
                             className="p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all hover:scale-105 backdrop-blur-sm"
-                            title="Download"
+                            title={tFunc('download')}
                         >
                             <Download size={16} />
                         </button>
@@ -130,7 +137,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                     <button
                         onClick={toggleFullscreen}
                         className="p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all hover:scale-105 backdrop-blur-sm"
-                        title="Exit Fullscreen"
+                        title={tFunc('htmlPreview_exit_fullscreen')}
                     >
                         <Minimize2 size={16} />
                     </button>
@@ -163,7 +170,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                 <button
                     onClick={handleCopyMarkdown}
                     className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-                    title={isCopied ? "Copied!" : "Copy Markdown"}
+                    title={isCopied ? tFunc('copied_button_title') : tFunc('copy_markdown')}
                 >
                     {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                 </button>
@@ -172,7 +179,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                     <button
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
                         className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-                        title="Download"
+                        title={tFunc('download')}
                     >
                         <Download size={14} />
                     </button>
@@ -199,7 +206,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                 <button
                     onClick={toggleFullscreen}
                     className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-                    title="Fullscreen"
+                    title={tFunc('htmlPreview_fullscreen')}
                 >
                     <Maximize2 size={14} />
                 </button>

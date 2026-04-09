@@ -2,19 +2,24 @@
 import React from 'react';
 import { Globe } from 'lucide-react';
 import { getDomain, getFavicon } from './utils';
+import { getTranslator } from '../../../utils/appUtils';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 interface SearchSourcesProps {
     sources: Array<{ uri: string; title: string }>;
 }
 
 export const SearchSources: React.FC<SearchSourcesProps> = ({ sources }) => {
+    const language = useSettingsStore((state) => state.language);
+    const t = getTranslator(language);
+
     if (!sources || sources.length === 0) return null;
 
     return (
         <div className="mt-3 pt-2 border-t border-[var(--theme-border-secondary)]/30 animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex items-center gap-2 mb-2">
                 <Globe size={11} className="text-[var(--theme-text-tertiary)]" strokeWidth={2} />
-                <h4 className="text-[10px] font-bold uppercase text-[var(--theme-text-tertiary)] tracking-widest">Sources</h4>
+                <h4 className="text-[10px] font-bold uppercase text-[var(--theme-text-tertiary)] tracking-widest">{t('searchSources_title')}</h4>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                 {sources.map((source, i) => {
@@ -44,7 +49,7 @@ export const SearchSources: React.FC<SearchSourcesProps> = ({ sources }) => {
                             </div>
                             <div className="min-w-0 flex-1">
                                 <div className="text-[11px] font-medium text-[var(--theme-text-primary)] truncate leading-tight group-hover:text-[var(--theme-text-link)] transition-colors">
-                                    {source.title || "Web Source"}
+                                    {source.title || t('searchSources_web_source')}
                                 </div>
                                 <div className="text-[9px] text-[var(--theme-text-tertiary)] truncate opacity-70 leading-none mt-0.5">
                                     {getDomain(source.uri)}

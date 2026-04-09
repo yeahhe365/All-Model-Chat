@@ -1,6 +1,5 @@
-
 import { useCallback, useRef } from 'react';
-import { LiveServerMessage, Session } from '@google/genai';
+import type { LiveServerMessage, Session } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
 import { ThoughtSupportingPart } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
@@ -56,7 +55,6 @@ export const useLiveMessageProcessing = ({
             // 2. Handle Text/Code Content (e.g., Code Execution, Search results, Thoughts, or direct text)
             const anyPart = part as ThoughtSupportingPart;
 
-            // Handle thoughts vs content
             if (anyPart.thought && onTranscript) {
                 const thoughtText = typeof anyPart.thought === 'string' ? anyPart.thought : (anyPart.text || "");
                 if (thoughtText) {

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
 import { SuggestionIcon } from './SuggestionIcon';
 import { translations } from '../../../../utils/appUtils';
+import { useIsDesktop } from '../../../../hooks/useDevice';
 
 interface ChatSuggestionsProps {
     show: boolean;
@@ -22,6 +23,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
     const [isSuggestionsHovered, setIsSuggestionsHovered] = useState(false);
+    const isDesktop = useIsDesktop();
 
     const checkScroll = useCallback(() => {
         if (suggestionsRef.current) {
@@ -49,6 +51,10 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
 
     if (!show || isFullscreen) return null;
 
+    const shouldRenderNavigation = isDesktop;
+    const shouldShowNavigation = isDesktop && isSuggestionsHovered;
+    const shouldUseFadeMask = isDesktop && (showLeftArrow || showRightArrow);
+
     return (
         <div 
             className="relative group/suggestions mb-1"
@@ -58,7 +64,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
             <div 
                 ref={suggestionsRef}
                 onScroll={checkScroll}
-                className="flex gap-2 overflow-x-auto pb-1 px-1 no-scrollbar fade-mask-x scroll-smooth"
+                className={`flex gap-2 overflow-x-auto pb-1 pl-1 pr-4 sm:pr-2 no-scrollbar scroll-smooth ${shouldUseFadeMask ? 'fade-mask-x' : ''}`}
             >
                 {SUGGESTIONS_KEYS.map((s, i) => (
                     <React.Fragment key={i}>
@@ -105,7 +111,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         title={t('bbox_button_title')}
                                     >
                                         <SuggestionIcon iconName="Scan" />
-                                        <span>Bbox</span>
+                                        <span>{t('bbox_button_label')}</span>
                                     </button>
                                 )}
                                 {onToggleGuide && (
@@ -125,7 +131,7 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                         title={t('guide_button_title')}
                                     >
                                         <MousePointer2 size={16} />
-                                        <span>Guide</span>
+                                        <span>{t('guide_button_label')}</span>
                                     </button>
                                 )}
                             </>
@@ -135,22 +141,22 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
             </div>
 
             {/* Navigation Arrows (Visible on Hover) */}
-            {showLeftArrow && (
+            {shouldRenderNavigation && showLeftArrow && (
                 <button
                     type="button"
                     onClick={() => handleScroll('left')}
-                    className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/80 backdrop-blur-sm border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 hover:scale-110 active:scale-95 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                    aria-label="Scroll left"
+                    className={`absolute left-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/80 backdrop-blur-sm border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 hover:scale-110 active:scale-95 ${shouldShowNavigation ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    aria-label={t('scroll_left_aria')}
                 >
                     <ChevronLeft size={16} strokeWidth={2} />
                 </button>
             )}
-            {showRightArrow && (
+            {shouldRenderNavigation && showRightArrow && (
                 <button
                     type="button"
                     onClick={() => handleScroll('right')}
-                    className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/80 backdrop-blur-sm border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 hover:scale-110 active:scale-95 ${isSuggestionsHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                    aria-label="Scroll right"
+                    className={`absolute right-0 top-1/2 -translate-y-[calc(50%+4px)] z-10 p-1.5 rounded-full bg-[var(--theme-bg-primary)]/80 backdrop-blur-sm border border-[var(--theme-border-secondary)] shadow-md text-[var(--theme-text-primary)] transition-all duration-200 hover:scale-110 active:scale-95 ${shouldShowNavigation ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                    aria-label={t('scroll_right_aria')}
                 >
                     <ChevronRight size={16} strokeWidth={2} />
                 </button>

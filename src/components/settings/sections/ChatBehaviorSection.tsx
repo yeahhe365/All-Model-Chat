@@ -7,8 +7,6 @@ import { MediaResolution } from '../../../types/settings';
 import { ToggleItem } from '../../shared/ToggleItem';
 import { Select } from '../../shared/Select';
 import { Wand2 } from 'lucide-react';
-import type { ThinkingLevel } from '../../../platform/genai/modelCatalog';
-
 interface ChatBehaviorSectionProps {
   modelId: string;
   setModelId: (id: string) => void;
@@ -29,8 +27,8 @@ interface ChatBehaviorSectionProps {
   setTopK: (value: number) => void;
   thinkingBudget: number;
   setThinkingBudget: (value: number) => void;
-  thinkingLevel?: ThinkingLevel;
-  setThinkingLevel?: (value: ThinkingLevel) => void;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   safetySettings?: SafetySetting[];

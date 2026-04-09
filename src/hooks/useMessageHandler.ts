@@ -20,7 +20,7 @@ interface MessageHandlerProps {
     setEditMode: (mode: 'update' | 'resend') => void;
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     ttsMessageId: string | null;
     setTtsMessageId: (id: string | null) => void;
     activeSessionId: string | null;
@@ -49,7 +49,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setEditMode,
         setAppFileError,
         updateAndPersistSessions,
-        userScrolledUp,
+        userScrolledUpRef,
         setSessionLoading
     } = props;
     
@@ -67,7 +67,7 @@ export const useMessageHandler = (props: MessageHandlerProps) => {
         setEditMode,
         setAppFileError,
         updateAndPersistSessions,
-        userScrolledUp,
+        userScrolledUpRef,
         handleSendMessage,
         setSessionLoading
     });

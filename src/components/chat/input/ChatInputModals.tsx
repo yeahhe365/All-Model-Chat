@@ -1,13 +1,27 @@
 
-
-
-import React from 'react';
-import { AudioRecorder } from '../../modals/AudioRecorder';
-import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
-import { HelpModal } from '../../modals/HelpModal';
-import { TextEditorModal } from '../../modals/TextEditorModal';
+import React, { Suspense, lazy } from 'react';
 import { translations } from '../../../utils/appUtils';
 import { CommandInfo, UploadedFile } from '../../../types';
+
+const AudioRecorder = lazy(async () => {
+  const module = await import('../../modals/AudioRecorder');
+  return { default: module.AudioRecorder };
+});
+
+const CreateTextFileEditor = lazy(async () => {
+  const module = await import('../../modals/CreateTextFileEditor');
+  return { default: module.CreateTextFileEditor };
+});
+
+const HelpModal = lazy(async () => {
+  const module = await import('../../modals/HelpModal');
+  return { default: module.HelpModal };
+});
+
+const TextEditorModal = lazy(async () => {
+  const module = await import('../../modals/TextEditorModal');
+  return { default: module.TextEditorModal };
+});
 
 export interface ChatInputModalsProps {
   showRecorder: boolean;
@@ -33,12 +47,6 @@ export interface ChatInputModalsProps {
   ttsContext?: string;
   setTtsContext?: (val: string) => void;
 }
-
-const DEFAULT_TTS_CONTEXT_TEMPLATE = `# AUDIO PROFILE: [Name]
-## THE SCENE: [Description]
-### DIRECTOR'S NOTES
-Style: [e.g. Happy]
-Pace: [e.g. Fast]`;
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   showRecorder,
@@ -67,8 +75,10 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
     return null;
   }
 
+  const defaultTtsContextTemplate = t('tts_context_template');
+
   return (
-    <>
+    <Suspense fallback={null}>
       {showRecorder && (
           <AudioRecorder 
             onRecord={onAudioRecord} 
@@ -95,13 +105,13 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
           <TextEditorModal 
             isOpen={showTtsContextEditor} 
             onClose={onCloseTtsContextEditor} 
-            title="TTS Director's Notes"
-            value={ttsContext || DEFAULT_TTS_CONTEXT_TEMPLATE}
+            title={t('tts_context_title')}
+            value={ttsContext || defaultTtsContextTemplate}
             onChange={setTtsContext}
-            placeholder={DEFAULT_TTS_CONTEXT_TEMPLATE}
+            placeholder={defaultTtsContextTemplate}
             t={t as (key: string) => string}
           />
       )}
-    </>
+    </Suspense>
   );
 };

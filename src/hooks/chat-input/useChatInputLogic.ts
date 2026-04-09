@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ChatInputProps } from '../../types';
 import { useChatInputState } from './useChatInputState';
 import { useIsDesktop } from '../useDevice';
-import { useWindowContext } from '../../contexts/WindowContext';
+import { useWindowContext } from '../../contexts/useWindowContext';
 import { useModelCapabilities } from '../useModelCapabilities';
 import { useChatInputModals } from './useChatInputModals';
 import { useVoiceInput } from '../useVoiceInput';
@@ -101,7 +101,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
     );
 
     // Intercept Send Message for Live API
-    const handleSmartSendMessage = useCallback(async (text: string, options?: { isFastMode?: boolean }) => {
+    const handleSmartSendMessage = async (text: string, options?: { isFastMode?: boolean }) => {
         if (capabilities.isNativeAudioModel) {
             // Live API Logic: Auto-connect if needed
             if (!liveAPI.isConnected) {
@@ -123,7 +123,7 @@ export const useChatInputLogic = (props: ChatInputProps) => {
             // Standard Chat
             onSendMessage(text, options);
         }
-    }, [capabilities.isNativeAudioModel, liveAPI.isConnected, liveAPI.connect, liveAPI.sendText, onSendMessage, onAddUserMessage]);
+    };
 
     // 8. Handlers (Instantiated directly instead of via useChatInputHandlers)
     

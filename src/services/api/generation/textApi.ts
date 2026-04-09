@@ -75,12 +75,10 @@ ASSISTANT: "${modelContent}"`;
             }
         });
 
-        const jsonText = response.text;
-        if (!jsonText) {
+        const jsonStr = response.text?.trim();
+        if (!jsonStr) {
             throw new Error("Suggestions generation returned an empty response.");
         }
-
-        const jsonStr = jsonText.trim();
         const parsed = JSON.parse(jsonStr);
         if (parsed.suggestions && Array.isArray(parsed.suggestions) && parsed.suggestions.every((s: any) => typeof s === 'string')) {
             return parsed.suggestions.slice(0, 3); // Ensure only 3

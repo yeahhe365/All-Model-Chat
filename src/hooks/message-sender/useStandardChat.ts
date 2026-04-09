@@ -14,7 +14,7 @@ export const useStandardChat = ({
     setEditingMessageId,
     aspectRatio,
     imageSize,
-    userScrolledUp,
+    userScrolledUpRef,
     activeSessionId,
     setActiveSessionId,
     activeJobs,
@@ -51,7 +51,7 @@ export const useStandardChat = ({
         isFastMode: boolean = false
     ) => {
         const settingsForPersistence = { ...currentChatSettings };
-        let settingsForApi = { ...currentChatSettings };
+        const settingsForApi = { ...currentChatSettings };
         
         if (isFastMode) {
             const isGemini3Flash = activeModelId.includes('gemini-3') && activeModelId.includes('flash');
@@ -79,7 +79,9 @@ export const useStandardChat = ({
             return;
         }
         const { key: keyToUse, isNewKey } = keyResult;
-        const shouldLockKey = isNewKey && filesToUse.some(f => f.fileUri && f.uploadState === 'active');
+        const shouldLockKey = Boolean(
+            isNewKey && filesToUse.some(f => Boolean(f.fileUri) && f.uploadState === 'active')
+        );
 
         const newAbortController = new AbortController();
         
@@ -106,9 +108,11 @@ export const useStandardChat = ({
         
         const finalSessionId = activeSessionId || generateUniqueId();
         
-        const isRawMode = Boolean((settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled) 
-            && !isContinueMode 
-            && MODELS_SUPPORTING_RAW_MODE.some(m => activeModelId.includes(m)));
+        const isRawMode = Boolean(
+            (settingsForApi.isRawModeEnabled ?? appSettings.isRawModeEnabled)
+            && !isContinueMode
+            && MODELS_SUPPORTING_RAW_MODE.some(m => activeModelId.includes(m))
+        );
         
         updateSessionState({
             activeSessionId,
@@ -125,7 +129,7 @@ export const useStandardChat = ({
             shouldLockKey
         });
 
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
         
         await performApiCall({
             finalSessionId,
@@ -147,7 +151,7 @@ export const useStandardChat = ({
 
     }, [
         appSettings, currentChatSettings, messages, aspectRatio, imageSize, activeSessionId, 
-        updateAndPersistSessions, setActiveSessionId, userScrolledUp, updateSessionState, performApiCall
+        updateAndPersistSessions, setActiveSessionId, userScrolledUpRef, updateSessionState, performApiCall
     ]);
 
     return { sendStandardMessage };

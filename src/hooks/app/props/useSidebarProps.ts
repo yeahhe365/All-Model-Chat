@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useAppLogic } from '../useAppLogic';
 import { getShortcutDisplay } from '../../../utils/shortcutUtils';
 import { useUIStore } from '../../../stores/uiStore';
@@ -18,7 +17,7 @@ export const useSidebarProps = (logic: ReturnType<typeof useAppLogic>) => {
   const setIsPreloadedMessagesModalOpen = useUIStore((s) => s.setIsPreloadedMessagesModalOpen);
   const isHistorySidebarOpen = useUIStore((s) => s.isHistorySidebarOpen);
 
-  return useMemo(() => ({
+  return {
     isOpen: isHistorySidebarOpen,
     onToggle: () => setIsHistorySidebarOpen(prev => !prev),
     sessions: chatState.savedSessions,
@@ -44,31 +43,5 @@ export const useSidebarProps = (logic: ReturnType<typeof useAppLogic>) => {
     themeId: currentTheme.id,
     language,
     newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
-  }), [
-    isHistorySidebarOpen,
-    setIsHistorySidebarOpen,
-    setIsSettingsModalOpen,
-    setIsPreloadedMessagesModalOpen,
-    chatState.savedSessions,
-    chatState.savedGroups,
-    chatState.activeSessionId,
-    chatState.loadingSessionIds,
-    chatState.generatingTitleSessionIds,
-    chatState.loadChatSession,
-    chatState.startNewChat,
-    chatState.handleDeleteChatHistorySession,
-    chatState.handleRenameSession,
-    chatState.handleTogglePinCurrentSession,
-    chatState.handleDuplicateSession,
-    chatState.handleAddNewGroup,
-    chatState.handleDeleteGroup,
-    chatState.handleRenameGroup,
-    chatState.handleMoveSessionToGroup,
-    chatState.handleToggleGroupExpansion,
-    currentTheme,
-    language,
-    t,
-    appSettings,
-    setIsExportModalOpen
-  ]);
+  };
 };

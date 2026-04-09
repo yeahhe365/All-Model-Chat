@@ -1,7 +1,7 @@
 import React from 'react';
 import { Wand2, PictureInPicture, PictureInPicture2 } from 'lucide-react';
 import { ModelOption } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { isLiveAudioModel } from '../../utils/appUtils';
 import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
 import { useChatStore } from '../../stores/chatStore';
@@ -23,7 +23,7 @@ interface HeaderProps {
   isHistorySidebarOpen?: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  t: (key: keyof typeof translations) => string;
+  t: Translator;
   isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
   const strokeWidth = 2; 
 
   const lowerModelId = selectedModelId?.toLowerCase() || '';
-  const isNativeAudioModel = lowerModelId.includes('native-audio');
+  const isNativeAudioModel = isLiveAudioModel(selectedModelId);
   const isImageModel = lowerModelId.includes('image') || lowerModelId.includes('imagen');
   const isTtsModel = lowerModelId.includes('tts');
   
@@ -92,7 +92,9 @@ export const Header: React.FC<HeaderProps> = ({
   const showTextTools = !isNativeAudioModel && !isImageModel && !isTtsModel;
 
   return (
-    <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 sm:p-3 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
+    <header
+      className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} pl-[calc(env(safe-area-inset-left,0px)+0.5rem)] pr-[calc(env(safe-area-inset-right,0px)+0.5rem)] pt-[calc(env(safe-area-inset-top,0px)+0.5rem)] pb-2 sm:pl-[calc(env(safe-area-inset-left,0px)+0.75rem)] sm:pr-[calc(env(safe-area-inset-right,0px)+0.75rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+0.75rem)] sm:pb-3 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}
+    >
       
       {/* Left Section: Navigation & Model Selector */}
       <div className="flex items-center gap-2 min-w-0">
@@ -149,8 +151,8 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onTogglePip}
               className={`${headerButtonBase} ${headerButtonInactive}`}
-              aria-label={isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
-              title={(isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture') + (pipShortcut ? ` (${pipShortcut})` : '')}
+              aria-label={isPipActive ? t('pipExit') : t('pipEnter')}
+              title={(isPipActive ? t('pipExit') : t('pipEnter')) + (pipShortcut ? ` (${pipShortcut})` : '')}
             >
               {isPipActive ? <PictureInPicture2 size={iconSize} strokeWidth={strokeWidth} /> : <PictureInPicture size={iconSize} strokeWidth={strokeWidth} />}
             </button>

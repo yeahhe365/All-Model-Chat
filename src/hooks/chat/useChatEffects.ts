@@ -49,7 +49,7 @@ export const useChatEffects = ({
     useEffect(() => {
         const loadData = async () => await loadInitialData();
         loadData();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
     
     // 2. Session Validation
     // This effect ensures that if the activeSessionId points to a session that doesn't exist in savedSessions
@@ -123,8 +123,7 @@ export const useChatEffects = ({
         if (isSwitchingModel) { 
             const timer = setTimeout(() => setIsSwitchingModel(false), 0); 
             return () => clearTimeout(timer); 
-        } 
-
+        }
         return undefined;
     }, [isSwitchingModel, setIsSwitchingModel]);
 

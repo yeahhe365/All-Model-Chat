@@ -103,6 +103,15 @@ describe('chatStore', () => {
       useChatStore.getState().setActiveSessionId(null);
       expect(useChatStore.getState().activeSessionId).toBeNull();
     });
+
+    it('resets the URL to the home route when clearing an active chat route', () => {
+      window.location.pathname = '/chat/sess-1';
+
+      useChatStore.getState().setActiveSessionId('sess-1');
+      useChatStore.getState().setActiveSessionId(null);
+
+      expect(window.history.replaceState).toHaveBeenCalledWith({}, '', '/');
+    });
   });
 
   // ── setSavedSessions ──

@@ -6,6 +6,8 @@ import { triggerDownload } from '../../../utils/exportUtils';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { UploadedFile } from '../../../types';
+import { getTranslator } from '../../../utils/appUtils';
+import { useSettingsStore } from '../../../stores/settingsStore';
 import { FileDisplay } from '../FileDisplay';
 
 export interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -14,6 +16,8 @@ export interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElemen
 }
 
 export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, children, files, onImageClick, ...props }) => {
+    const language = useSettingsStore((state) => state.language);
+    const t = getTranslator(language);
     const [copied, setCopied] = useState(false);
 
     // Try to find the pre element which contains the code/output
@@ -59,7 +63,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, chi
                      <button 
                         onClick={handleDownload}
                         className={`${MESSAGE_BLOCK_BUTTON_CLASS} !bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-sm`}
-                        title="Download Output"
+                        title={t('toolResult_download_output')}
                     >
                         {copied ? <Check size={14} className="text-[var(--theme-text-success)] icon-animate-pop"/> : <Download size={14} />}
                     </button>
@@ -70,7 +74,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, chi
             {generatedFiles.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)]/50">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5 mb-2">
-                        <FileOutput size={12} /> Generated Output Files
+                        <FileOutput size={12} /> {t('toolResult_generated_files')}
                     </span>
                     <div className="flex flex-wrap gap-2">
                         {generatedFiles.map(file => (

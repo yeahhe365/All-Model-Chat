@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { SavedChatSession, ChatGroup } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { Translator } from '../../utils/appUtils';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
 import { SessionItem } from './SessionItem';
@@ -35,7 +35,7 @@ export interface HistorySidebarProps {
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  t: Translator;
   language?: 'en' | 'zh';
   themeId?: string;
   newChatShortcut?: string;
@@ -53,7 +53,7 @@ const MiniSidebarButton = ({ onClick, icon: Icon, title, href }: { onClick: () =
                     onClick();
                   }
                 }}
-                className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)] no-underline"
+                className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] no-underline"
                 title={title}
                 aria-label={title}
             >
@@ -67,7 +67,7 @@ const MiniSidebarButton = ({ onClick, icon: Icon, title, href }: { onClick: () =
               e.stopPropagation();
               onClick();
             }}
-            className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
+            className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)]"
             title={title}
             aria-label={title}
         >
@@ -125,7 +125,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const loadingSessionIds = storeLoadingSessionIds ?? propsLoadingSessionIds ?? new Set();
   const generatingTitleSessionIds = storeGeneratingTitleSessionIds ?? propsGeneratingTitleSessionIds ?? new Set();
   const themeId = storeThemeId ?? propsThemeId;
-  const language = storeLanguage === 'zh' || propsLanguage === 'zh' ? 'zh' : 'en';
+  const language = storeLanguage ?? propsLanguage ?? 'en';
 
   const {
     searchQuery, setSearchQuery,
@@ -150,7 +150,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleEmptySpaceClick,
     handleSessionSelect,
   } = useHistorySidebarLogic({
-    isOpen,
     onToggle,
     sessions,
     groups,

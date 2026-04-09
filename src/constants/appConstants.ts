@@ -35,6 +35,7 @@ export const CHAT_HISTORY_SESSIONS_KEY = 'chatHistorySessions';
 export const CHAT_HISTORY_GROUPS_KEY = 'chatHistoryGroups';
 export const ACTIVE_CHAT_SESSION_ID_KEY = 'activeChatSessionId';
 export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
+export const CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY = 'createTextFileEditorLastExtension';
 
 // Shared UI Styles
 export const MESSAGE_BLOCK_BUTTON_CLASS = "p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]/50 transition-all duration-200 focus:outline-none opacity-70 hover:opacity-100";

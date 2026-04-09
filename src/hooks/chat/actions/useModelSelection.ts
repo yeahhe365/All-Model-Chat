@@ -4,6 +4,7 @@ import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession }
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import { createNewSession, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
+import { useWindowContext } from '../../../contexts/useWindowContext';
 
 interface UseModelSelectionProps {
     appSettings: AppSettings;
@@ -15,7 +16,7 @@ interface UseModelSelectionProps {
     setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
     setIsSwitchingModel: (switching: boolean) => void;
     handleStopGenerating: () => void;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
 export const useModelSelection = ({
@@ -28,8 +29,14 @@ export const useModelSelection = ({
     setCurrentChatSettings,
     setIsSwitchingModel,
     handleStopGenerating,
-    userScrolledUp,
+    userScrolledUpRef,
 }: UseModelSelectionProps) => {
+    const { document: targetDocument } = useWindowContext();
+
+    const focusChatInput = useCallback(() => {
+        const textarea = targetDocument.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement | null;
+        textarea?.focus();
+    }, [targetDocument]);
 
     const handleSelectModelInHeader = useCallback((modelId: string) => {
         // Resolve target settings based on context (Session vs Global)
@@ -50,7 +57,7 @@ export const useModelSelection = ({
         // 3. Determine new settings
         const newMediaResolution = cached?.mediaResolution ?? sourceSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
         let newThinkingBudget = cached?.thinkingBudget ?? sourceSettings.thinkingBudget;
-        let newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
+        const newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
 
 
         // 4. Validating range compatibility using shared helper
@@ -85,16 +92,13 @@ export const useModelSelection = ({
                 }
             }
         }
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
 
         // Auto-focus input after model selection
         setTimeout(() => {
-            const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-            if (textarea) {
-                textarea.focus();
-            }
+            focusChatInput();
         }, 50);
-    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
+    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUpRef, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel, focusChatInput]);
 
     return { handleSelectModelInHeader };
 };

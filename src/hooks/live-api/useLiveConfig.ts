@@ -1,7 +1,7 @@
 
 import { useMemo } from 'react';
 import { AppSettings, ChatSettings } from '../../types';
-import { Tool } from '@google/genai';
+import type { Tool } from '@google/genai';
 
 interface UseLiveConfigProps {
     appSettings: AppSettings;
@@ -10,7 +10,7 @@ interface UseLiveConfigProps {
     clientFunctions?: Record<string, any>;
 }
 
-export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: UseLiveConfigProps) => {
+export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions: _clientFunctions }: UseLiveConfigProps) => {
     return useMemo(() => {
         // Construct Tools Configuration
         const tools: Tool[] = [];
@@ -53,7 +53,7 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
         // 0 means disabled. -1 means auto. >0 means manual budget.
         if (chatSettings.thinkingBudget !== 0) {
              const thinkingConfig: any = {
-                includeThoughts: true 
+                includeThoughts: !!chatSettings.showThoughts,
              };
              if (chatSettings.thinkingBudget > 0) {
                  thinkingConfig.thinkingBudget = chatSettings.thinkingBudget;
@@ -67,5 +67,5 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
         }
 
         return { liveConfig, tools };
-    }, [chatSettings, sessionHandle, clientFunctions]);
+    }, [chatSettings, sessionHandle]);
 };

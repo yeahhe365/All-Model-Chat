@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
-import { Theme } from '../../constants/themeConstants';
-import { translations } from '../../utils/appUtils';
+import { translations, Translator } from '../../utils/appUtils';
+import { Theme } from '../../types/theme';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { useSettingsLogic } from '../../hooks/features/useSettingsLogic';
@@ -32,7 +32,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
-  isOpen, onClose, currentSettings, availableModels,
+  isOpen, onClose, currentSettings, availableModels, availableThemes: _availableThemes,
   onSave, onClearAllHistory, onClearCache, onOpenLogViewer,
   onInstallPwa, isInstallable, t, 
   onImportSettings, onExportSettings,
@@ -121,7 +121,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onExportHistory={onExportHistory}
                         onImportScenarios={onImportScenarios}
                         onExportScenarios={onExportScenarios}
-                        t={t}
+                        t={t as Translator}
                     />
                 </div>
             </main>

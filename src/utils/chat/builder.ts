@@ -5,17 +5,11 @@ import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 
-const MEDIA_RESOLUTION_LEVEL_MAP: Record<MediaResolution, PartMediaResolutionLevel> = {
-  [MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED]: PartMediaResolutionLevel.MEDIA_RESOLUTION_UNSPECIFIED,
-  [MediaResolution.MEDIA_RESOLUTION_LOW]: PartMediaResolutionLevel.MEDIA_RESOLUTION_LOW,
-  [MediaResolution.MEDIA_RESOLUTION_MEDIUM]: PartMediaResolutionLevel.MEDIA_RESOLUTION_MEDIUM,
-  [MediaResolution.MEDIA_RESOLUTION_HIGH]: PartMediaResolutionLevel.MEDIA_RESOLUTION_HIGH,
-  [MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH]: PartMediaResolutionLevel.MEDIA_RESOLUTION_ULTRA_HIGH,
-};
+const THINKING_BLOCK_REGEX = /<thinking>[\s\S]*?<\/thinking>/gi;
 
 export const buildContentParts = async (
   text: string, 
-  files?: UploadedFile[],
+  files: UploadedFile[] | undefined = undefined,
   modelId?: string,
   mediaResolution?: MediaResolution
 ): Promise<{
@@ -56,9 +50,9 @@ export const buildContentParts = async (
         if (isTextLike) {
             // Special handling for text/code: Read content and wrap in text part
             let textContent = '';
-            if (fileSource && (fileSource instanceof File || fileSource instanceof Blob)) {
+            if (fileSource) {
                 // If it's a File/Blob, read directly
-                textContent = await fileToString(fileSource as File);
+                textContent = fileSource instanceof File ? await fileToString(fileSource) : await fileSource.text();
             } else if (urlSource) {
                 // Fallback: Fetch from URL if rawFile is missing
                 const response = await fetch(urlSource);
@@ -81,7 +75,7 @@ export const buildContentParts = async (
                 let base64DataForApi: string | undefined;
                 
                 // Prioritize rawFile (Blob/File) for conversion
-                if (fileSource instanceof Blob) {
+                if (fileSource) {
                     try {
                         base64DataForApi = await blobToBase64(fileSource);
                     } catch (error) {
@@ -136,7 +130,9 @@ export const buildContentParts = async (
     if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED) {
         const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
         if (shouldInject) {
-            part.mediaResolution = { level: MEDIA_RESOLUTION_LEVEL_MAP[effectiveResolution] };
+            part.mediaResolution = {
+                level: PartMediaResolutionLevel[effectiveResolution as keyof typeof PartMediaResolutionLevel]
+            };
         }
     }
     
@@ -169,7 +165,7 @@ export const createChatHistoryForApi = async (
         if (msg.excludeFromContext) continue;
         if (msg.role !== 'user' && msg.role !== 'model') continue;
 
-        let parts: ContentPart[] = [];
+        let parts: ContentPart[];
         
         if (msg.role === 'model' && msg.apiParts && msg.apiParts.length > 0) {
             // Use natively saved parts to retain executableCode and codeExecutionResult exactly as the API provided
@@ -198,7 +194,7 @@ export const createChatHistoryForApi = async (
             let contentToUse = msg.content;
             if (stripThinking) {
                 // Remove <thinking> blocks including tags from the content
-                contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
+                contentToUse = contentToUse.replace(THINKING_BLOCK_REGEX, '').trim();
             }
             const { contentParts } = await buildContentParts(contentToUse, msg.files);
             parts = contentParts;

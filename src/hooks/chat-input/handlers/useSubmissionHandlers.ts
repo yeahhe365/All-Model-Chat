@@ -1,7 +1,6 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings, UploadedFile } from '../../../types';
 import { getKeyForRequest } from '../../../utils/appUtils';
-import { geminiServiceInstance } from '../../../services/geminiService';
 
 interface UseSubmissionHandlersProps {
     canSend: boolean;
@@ -134,6 +133,7 @@ export const useSubmissionHandlers = ({
         }
 
         try {
+            const { geminiServiceInstance } = await import('../../../services/geminiService');
             const translatedText = await geminiServiceInstance.translateText(keyResult.key, inputText);
             setInputText(translatedText);
         } catch (error) {

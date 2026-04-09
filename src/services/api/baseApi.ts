@@ -7,7 +7,7 @@ import { dbService } from '../../utils/db';
 import { DEEP_SEARCH_SYSTEM_PROMPT, LOCAL_PYTHON_SYSTEM_PROMPT } from "../../constants/promptConstants";
 import { HarmBlockThreshold, HarmCategory, SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model } from "../../utils/appUtils";
-import { getModelDescriptor, normalizeModelId, type ThinkingLevel } from "../../platform/genai/modelCatalog";
+import { getModelDescriptor, normalizeModelId } from "../../platform/genai/modelCatalog";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
@@ -158,7 +158,7 @@ export const buildGenerationConfig = (
     isGoogleSearchEnabled?: boolean,
     isCodeExecutionEnabled?: boolean,
     isUrlContextEnabled?: boolean,
-    thinkingLevel?: ThinkingLevel,
+    thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
     aspectRatio?: string,
     isDeepSearchEnabled?: boolean,
     imageSize?: string,
@@ -257,7 +257,7 @@ export const buildGenerationConfig = (
         // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
         // We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {
-            includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
+            includeThoughts: !!showThoughts,
         };
 
         if (thinkingBudget > 0) {
@@ -271,12 +271,9 @@ export const buildGenerationConfig = (
         ].includes(modelId) || modelId.includes('gemini-2.5');
 
         if (modelSupportsThinking) {
-            // Decouple thinking budget from showing thoughts.
-            // `thinkingBudget` controls if and how much the model thinks.
-            // `includeThoughts` controls if the `thought` field is returned in the stream.
             generationConfig.thinkingConfig = {
                 thinkingBudget: thinkingBudget,
-                includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
+                includeThoughts: !!showThoughts,
             };
         }
     }

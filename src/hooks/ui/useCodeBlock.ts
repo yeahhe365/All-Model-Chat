@@ -1,10 +1,11 @@
 
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useCopyToClipboard } from '../useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
 import { SideViewContent } from '../../types';
+import { translations } from '../../utils/appUtils';
 
 const COLLAPSE_THRESHOLD_PX = 320;
 
@@ -53,6 +54,7 @@ interface UseCodeBlockProps {
     expandCodeBlocksByDefault: boolean;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     onOpenSidePanel: (content: SideViewContent) => void;
+    t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const useCodeBlock = ({
@@ -60,13 +62,12 @@ export const useCodeBlock = ({
     className,
     expandCodeBlocksByDefault,
     onOpenHtmlPreview,
-    onOpenSidePanel
+    onOpenSidePanel,
+    t
 }: UseCodeBlockProps) => {
     const preRef = useRef<HTMLPreElement>(null);
-    const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
-    const hasUserInteracted = useRef(false);
-    const [isExpanded, setIsExpanded] = useState(expandCodeBlocksByDefault);
+    const [userExpandedPreference, setUserExpandedPreference] = useState<boolean | null>(null);
     
     const { isCopied, copyToClipboard } = useCopyToClipboard();
 
@@ -80,24 +81,14 @@ export const useCodeBlock = ({
         (child): child is React.ReactElement => React.isValidElement(child)
     );
 
-    // Synchronously resolve content string
-    let currentContent = '';
-    if (codeElement) {
-        currentContent = extractTextFromNode(codeElement.props.children);
-    } else {
-        currentContent = extractTextFromNode(children);
-    }
-
-    if (currentContent) {
-        codeText.current = currentContent;
-    }
-
-    // Sync with global prop
-    useEffect(() => {
-        if (!hasUserInteracted.current) {
-            setIsExpanded(expandCodeBlocksByDefault);
+    const codeText = useMemo(() => {
+        if (codeElement) {
+            return extractTextFromNode(codeElement.props.children);
         }
-    }, [expandCodeBlocksByDefault]);
+        return extractTextFromNode(children);
+    }, [children, codeElement]);
+
+    const isExpanded = userExpandedPreference ?? expandCodeBlocksByDefault;
 
     // Scroll handler
     const handleScroll = useCallback(() => {
@@ -125,11 +116,6 @@ export const useCodeBlock = ({
         const preElement = preRef.current;
         if (!preElement) return;
 
-        if (!currentContent) {
-            const domCodeEl = preElement.querySelector('code');
-            codeText.current = domCodeEl ? (domCodeEl.textContent || '') : (preElement.textContent || '');
-        }
-
         const isCurrentlyOverflowing = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
         
         if (isCurrentlyOverflowing !== isOverflowing) {
@@ -141,7 +127,7 @@ export const useCodeBlock = ({
         }
 
         // Auto-scroll Logic
-        const currentLength = codeText.current.length;
+        const currentLength = codeText.length;
         if (!isExpanded && prevTextLength.current > 0 && currentLength > prevTextLength.current) {
             if (!userHasScrolledUp.current) {
                 const scrollToBottom = () => {
@@ -162,22 +148,21 @@ export const useCodeBlock = ({
         
         prevTextLength.current = currentLength;
 
-    }, [children, isExpanded, isOverflowing, currentContent]);
+    }, [children, codeText, isExpanded, isOverflowing]);
 
     const handleToggleExpand = () => {
-        hasUserInteracted.current = true;
-        setIsExpanded(prev => !prev);
+        setUserExpandedPreference(prev => !(prev ?? expandCodeBlocksByDefault));
     };
     
     const handleCopy = () => {
-        if (codeText.current && !isCopied) {
-            copyToClipboard(codeText.current);
+        if (codeText && !isCopied) {
+            copyToClipboard(codeText);
         }
     };
 
     // Language processing
     const langMatch = className?.match(/language-(\S+)/);
-    let language = langMatch ? langMatch[1].toLowerCase() : 'txt';
+    const language = langMatch ? langMatch[1].toLowerCase() : 'txt';
 
     let mimeType = 'text/plain';
     if (['html', 'xml', 'svg'].includes(language)) mimeType = 'text/html';
@@ -186,7 +171,7 @@ export const useCodeBlock = ({
     else if (language === 'json') mimeType = 'application/json';
     else if (['markdown', 'md'].includes(language)) mimeType = 'text/markdown';
 
-    const contentLooksLikeHtml = isLikelyHtml(codeText.current);
+    const contentLooksLikeHtml = isLikelyHtml(codeText);
     const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language);
     
     const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
@@ -197,9 +182,9 @@ export const useCodeBlock = ({
     else if (language === 'xml' && contentLooksLikeHtml) finalLanguage = 'html';
 
     const handleOpenSide = () => {
-        let displayTitle = 'HTML Preview';
+        let displayTitle = t('htmlPreview_subtitle_html', 'HTML Preview');
         if (finalLanguage === 'html') {
-            const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const titleMatch = codeText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 displayTitle = titleMatch[1];
             }
@@ -207,28 +192,28 @@ export const useCodeBlock = ({
         
         onOpenSidePanel({
             type: 'html',
-            content: codeText.current,
+            content: codeText,
             language: finalLanguage,
             title: displayTitle
         });
     };
 
     const handleFullscreenPreview = (trueFullscreen: boolean) => {
-        onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: trueFullscreen });
+        onOpenHtmlPreview(codeText, { initialTrueFullscreen: trueFullscreen });
     };
 
     const handleDownload = () => {
-        let ext = LANGUAGE_EXTENSION_MAP[finalLanguage.toLowerCase()] || finalLanguage;
+        const ext = LANGUAGE_EXTENSION_MAP[finalLanguage.toLowerCase()] || finalLanguage;
         let filename = `snippet.${ext}`;
         
         if (downloadMimeType === 'text/html' || ext === 'html') {
-            const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const titleMatch = codeText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
-                let saneTitle = sanitizeFilename(titleMatch[1].trim());
+                const saneTitle = sanitizeFilename(titleMatch[1].trim());
                 if (saneTitle) filename = `${saneTitle}.html`;
             }
         }
-        const blob = new Blob([codeText.current], { type: downloadMimeType });
+        const blob = new Blob([codeText], { type: downloadMimeType });
         const url = URL.createObjectURL(blob);
         triggerDownload(url, filename);
     };

@@ -117,6 +117,11 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
     return URL.createObjectURL(blob);
 };
 
+type ExtendedDisplayMediaStreamOptions = DisplayMediaStreamOptions & {
+    systemAudio?: 'include' | 'exclude';
+    selfBrowserSurface?: 'include' | 'exclude';
+};
+
 /**
  * Combines microphone stream with system audio stream (screen share) if requested.
  * Returns the resulting mixed stream and a cleanup function.
@@ -127,7 +132,7 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
     }
 
     try {
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        const displayMediaOptions: ExtendedDisplayMediaStreamOptions = {
             video: {
                 width: 1,
                 height: 1, // Request minimal video size as we only need audio
@@ -137,11 +142,10 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
                 noiseSuppression: false,
                 autoGainControl: false,
             },
-            // @ts-ignore
             systemAudio: 'include',
-            // @ts-ignore
             selfBrowserSurface: 'include'
-        } as any);
+        };
+        const displayStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
 
         // Check if audio track exists (user might have unchecked "Share Audio")
         if (displayStream.getAudioTracks().length === 0) {

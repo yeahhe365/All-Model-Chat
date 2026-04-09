@@ -2,8 +2,7 @@
 // hooks/chat/useSuggestions.ts
 import React, { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
-import { getKeyForRequest, logService } from '../../utils/appUtils';
-import { geminiServiceInstance } from '../../services/geminiService';
+import { getKeyForRequest, isLiveAudioModel, logService } from '../../utils/appUtils';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -53,6 +52,7 @@ export const useSuggestions = ({
         }
 
         try {
+            const { geminiServiceInstance } = await import('../../services/geminiService');
             const suggestions = await geminiServiceInstance.generateSuggestions(keyToUse, userContent, modelContent, language);
             if (suggestions && suggestions.length > 0) {
                 updateAndPersistSessions(prev => prev.map(s => s.id === sessionId ? {
@@ -81,7 +81,7 @@ export const useSuggestions = ({
             // Filter out non-text models (Imagen, TTS, Audio, etc.)
             const lowerModelId = settings.modelId.toLowerCase();
             const isImageModel = lowerModelId.includes('imagen') || lowerModelId.includes('flash-image') || lowerModelId.includes('image-preview');
-            const isAudioModel = lowerModelId.includes('tts') || lowerModelId.includes('native-audio');
+            const isAudioModel = lowerModelId.includes('tts') || isLiveAudioModel(settings.modelId);
             
             if (isImageModel || isAudioModel) {
                 prevIsLoadingRef.current = isLoading;

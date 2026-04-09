@@ -2,6 +2,8 @@
 import React, { useRef, useEffect } from 'react';
 import { PreloadedMessage } from '../../../types';
 import { User, Bot, ArrowUp, ArrowDown, Edit3, Trash2, MessageSquare } from 'lucide-react';
+import { getTranslator } from '../../../utils/appUtils';
+import { useSettingsStore } from '../../../stores/settingsStore';
 
 interface ScenarioMessageListProps {
     messages: PreloadedMessage[];
@@ -22,6 +24,8 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
     onMoveMessage,
     readOnly
 }) => {
+    const language = useSettingsStore((state) => state.language);
+    const t = getTranslator(language);
     const listRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom if adding new messages (heuristic: if editingId is null and length increased, handled by parent usually, 
@@ -45,8 +49,8 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                     <div className="p-4 rounded-full bg-[var(--theme-bg-secondary)] mb-4">
                         <MessageSquare size={32} className="opacity-50" />
                     </div>
-                    <p className="text-sm font-medium">No messages yet.</p>
-                    <p className="text-xs mt-1">Add messages below to script the conversation flow.</p>
+                    <p className="text-sm font-medium">{t('scenarioMessages_empty_title')}</p>
+                    <p className="text-xs mt-1">{t('scenarioMessages_empty_desc')}</p>
                 </div>
             ) : (
                 messages.map((msg, index) => {
@@ -91,7 +95,9 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                                                     }
                                                 }}
                                             />
-                                            <div className="text-[10px] opacity-60 text-right font-medium uppercase tracking-wide">Press Enter to save</div>
+                                            <div className="text-[10px] opacity-60 text-right font-medium uppercase tracking-wide">
+                                                {t('scenarioMessages_save_hint')}
+                                            </div>
                                         </div>
                                     ) : (
                                         <div className="leading-relaxed">{msg.content}</div>
@@ -105,11 +111,11 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                                         flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200
                                         bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-lg rounded-full px-1.5 py-1 z-10 scale-95 group-hover:scale-100
                                     `}>
-                                        <button onClick={() => onMoveMessage(index, -1)} disabled={index === 0} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowUp size={12} /></button>
-                                        <button onClick={() => onMoveMessage(index, 1)} disabled={index === messages.length - 1} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowDown size={12} /></button>
+                                        <button onClick={() => onMoveMessage(index, -1)} disabled={index === 0} title={t('scenarios_moveUp_title')} aria-label={t('scenarios_moveUp_title')} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowUp size={12} /></button>
+                                        <button onClick={() => onMoveMessage(index, 1)} disabled={index === messages.length - 1} title={t('scenarios_moveDown_title')} aria-label={t('scenarios_moveDown_title')} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowDown size={12} /></button>
                                         <div className="w-px h-3 bg-[var(--theme-border-secondary)] mx-0.5"></div>
-                                        <button onClick={() => setEditingMessageId(msg.id)} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-link)] text-[var(--theme-text-tertiary)] transition-colors"><Edit3 size={12} /></button>
-                                        <button onClick={() => onDeleteMessage(msg.id)} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-danger)] text-[var(--theme-text-tertiary)] transition-colors"><Trash2 size={12} /></button>
+                                        <button onClick={() => setEditingMessageId(msg.id)} title={t('scenarios_edit_title')} aria-label={t('scenarios_edit_title')} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-link)] text-[var(--theme-text-tertiary)] transition-colors"><Edit3 size={12} /></button>
+                                        <button onClick={() => onDeleteMessage(msg.id)} title={t('scenarios_delete_title')} aria-label={t('scenarios_delete_title')} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-danger)] text-[var(--theme-text-tertiary)] transition-colors"><Trash2 size={12} /></button>
                                     </div>
                                 )}
                             </div>

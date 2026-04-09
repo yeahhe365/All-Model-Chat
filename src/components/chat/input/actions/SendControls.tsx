@@ -42,7 +42,6 @@ export const SendControls: React.FC<SendControlsProps> = ({
             const timeout = setTimeout(() => setRipples([]), 600);
             return () => clearTimeout(timeout);
         }
-
         return undefined;
     }, [ripples]);
 

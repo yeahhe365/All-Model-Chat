@@ -4,11 +4,10 @@ import { ChatMessage } from '../../types';
 
 interface ChatScrollProps {
     messages: ChatMessage[];
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
-export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => {
-    void messages;
+export const useChatScroll = ({ messages: _messages, userScrolledUpRef }: ChatScrollProps) => {
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const savedScrollTop = useRef<number>(0);
     
@@ -58,12 +57,12 @@ export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => 
 
             // If the user moved and is not at bottom, mark as scrolled up
             if (isAtBottom) {
-                userScrolledUp.current = false;
+                userScrolledUpRef.current = false;
             } else if (!isAutoScrolling.current) {
-                userScrolledUp.current = true;
+                userScrolledUpRef.current = true;
             }
         }
-    }, [userScrolledUp]);
+    }, [userScrolledUpRef]);
     
     return {
         scrollContainerRef, 

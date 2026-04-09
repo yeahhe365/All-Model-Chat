@@ -1,4 +1,3 @@
-
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { generateUniqueId, getKeyForRequest, logService, createNewSession } from '../utils/appUtils';
@@ -22,7 +21,7 @@ interface MessageSenderProps {
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
@@ -46,7 +45,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setAppFileError,
         aspectRatio,
         imageSize,
-        userScrolledUp,
+        userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
         activeJobs,
@@ -139,7 +138,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const generationId = generateUniqueId();
         
         if (appSettings.isAutoScrollOnSendEnabled) {
-            userScrolledUp.current = false;
+            userScrolledUpRef.current = false;
         }
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
@@ -162,7 +161,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
     }, [
         appSettings, currentChatSettings, messages, selectedFiles, setSelectedFiles,
         editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, imageSize,
-        userScrolledUp, activeSessionId, setActiveSessionId, updateAndPersistSessions,
+        userScrolledUpRef, activeSessionId, setActiveSessionId, updateAndPersistSessions,
         handleTtsImagenMessage, handleImageEditMessage, sendStandardMessage
     ]);
 

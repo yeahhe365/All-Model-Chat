@@ -11,4 +11,5 @@ export const safetySettings = {
     safety_threshold_BLOCK_ONLY_HIGH: { en: 'Block Few', zh: '拦截少量' },
     safety_threshold_BLOCK_MEDIUM_AND_ABOVE: { en: 'Block Some', zh: '拦截部分' },
     safety_threshold_BLOCK_LOW_AND_ABOVE: { en: 'Block Most', zh: '拦截大部分' },
+    safety_changes_apply: { en: 'Changes apply to new messages.', zh: '更改将应用于新消息。' },
 };

@@ -5,7 +5,7 @@ import { exportSvgAsImage } from '../../../utils/exportUtils';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { DiagramWrapper } from './parts/DiagramWrapper';
 
-declare var Viz: any;
+declare let Viz: any;
 
 const graphvizCache = new Map<string, string>();
 
@@ -15,9 +15,17 @@ interface GraphvizBlockProps {
   isLoading: boolean;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
+  renderDelayMs?: number;
 }
 
-export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
+export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({
+  code,
+  onImageClick,
+  isLoading: isMessageLoading,
+  themeId,
+  onOpenSidePanel,
+  renderDelayMs = 500,
+}) => {
   const [manualLayout, setManualLayout] = useState<'LR' | 'TB' | null>(null);
 
   const effectiveLayout = useMemo(() => {
@@ -149,7 +157,6 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: ReturnType<typeof setTimeout>;
 
     const performRender = async () => {
         if (!isMounted) return;
@@ -163,9 +170,9 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         await renderGraph();
     };
 
-    timeoutId = setTimeout(performRender, 500);
+    const timeoutId = setTimeout(performRender, renderDelayMs);
 
-    let pollInterval: number;
+    let pollInterval: number | undefined;
     if (typeof Viz === 'undefined') {
         pollInterval = window.setInterval(() => {
             if (typeof Viz !== 'undefined') {
@@ -180,7 +187,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         clearTimeout(timeoutId);
         if (pollInterval) clearInterval(pollInterval);
     };
-  }, [renderGraph]);
+  }, [renderDelayMs, renderGraph]);
 
   const handleToggleLayout = () => {
     setManualLayout(effectiveLayout === 'LR' ? 'TB' : 'LR');

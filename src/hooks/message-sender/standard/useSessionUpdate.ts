@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import { useCallback, type MutableRefObject } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession, UploadedFile } from '../../../types';
 import { generateSessionTitle, performOptimisticSessionUpdate, createMessage } from '../../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
@@ -9,7 +9,7 @@ interface UseSessionUpdateProps {
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
     setActiveSessionId: (id: string | null) => void;
     setEditingMessageId: (id: string | null) => void;
-    sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
+    sessionKeyMapRef: MutableRefObject<Map<string, string>>;
 }
 
 export const useSessionUpdate = ({

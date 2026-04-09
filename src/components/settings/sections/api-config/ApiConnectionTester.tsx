@@ -33,11 +33,11 @@ export const ApiConnectionTester: React.FC<ApiConnectionTesterProps> = ({
                     <div className="flex-grow">
                         <Select
                             id="api-test-model"
-                            label="Test Model"
+                            label={t('apiConfig_testModel')}
                             layout="horizontal"
                             value={testModelId}
                             onChange={(e) => onModelChange(e.target.value)}
-                            labelContent={<span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">Test Model</span>}
+                            labelContent={<span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">{t('apiConfig_testModel')}</span>}
                             className="mb-0"
                         >
                             {availableModels.map(m => (

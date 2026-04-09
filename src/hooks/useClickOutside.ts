@@ -1,6 +1,6 @@
 
 import { useEffect, RefObject } from 'react';
-import { useWindowContext } from '../contexts/WindowContext';
+import { useWindowContext } from '../contexts/useWindowContext';
 
 type Handler = (event: MouseEvent | TouchEvent) => void;
 

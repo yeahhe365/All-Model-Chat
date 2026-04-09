@@ -1,7 +1,6 @@
 
 import React, { useState, useRef } from 'react';
 import { SavedScenario } from '../../types';
-import { translations } from '../../utils/appUtils';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { ScenarioEditorHeader } from './editor/ScenarioEditorHeader';
 import { ScenarioSystemPrompt } from './editor/ScenarioSystemPrompt';
@@ -13,12 +12,14 @@ interface ScenarioEditorProps {
     initialScenario: SavedScenario | null;
     onSave: (scenario: SavedScenario) => void;
     onCancel: () => void;
-    t: (key: keyof typeof translations, fallback?: string) => string;
+    t: Translator;
     readOnly?: boolean;
 }
 
 export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave, onCancel, t, readOnly = false }) => {
-    const [scenario, setScenario] = useState<SavedScenario>(initialScenario || { id: Date.now().toString(), title: '', messages: [], systemInstruction: '' });
+    const [scenario, setScenario] = useState<SavedScenario>(
+        initialScenario || { id: 'draft-scenario', title: '', messages: [], systemInstruction: '' }
+    );
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');

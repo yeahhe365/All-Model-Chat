@@ -13,7 +13,8 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 10;
 const ZOOM_SPEED_FACTOR = 1.1;
 
-export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
+const ImageViewerContent: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
+    const t = _t as (key: string) => string;
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
@@ -22,12 +23,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
     const imageRef = useRef<HTMLImageElement>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
     const lastDistRef = useRef<number | null>(null);
-
-    // Reset view when file changes
-    useEffect(() => {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
-    }, [file.id]);
 
     const handleZoom = useCallback((direction: 'in' | 'out') => {
         if (!viewportRef.current || !imageRef.current) return;
@@ -198,7 +193,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
                 <img
                     ref={imageRef}
                     src={file.dataUrl}
-                    alt={`Zoomed view of ${file.name}`}
+                    alt={t('imageViewer_alt').replace('{filename}', file.name)}
                     style={{
                         transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
                         transformOrigin: '0 0', 
@@ -221,7 +216,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
             {/* Bottom Controls */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
                 <FloatingToolbar className="p-1.5">
-                    <ToolbarButton onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} title="Zoom Out">
+                    <ToolbarButton onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} title={t('imageViewer_zoom_out')}>
                         <ZoomOut size={16} strokeWidth={1.5} />
                     </ToolbarButton>
                     
@@ -229,13 +224,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
                         {(scale * 100).toFixed(0)}%
                     </ToolbarLabel>
 
-                    <ToolbarButton onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} title="Zoom In">
+                    <ToolbarButton onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} title={t('imageViewer_zoom_in')}>
                         <ZoomIn size={16} strokeWidth={1.5} />
                     </ToolbarButton>
 
                     <ToolbarDivider />
 
-                    <ToolbarButton onClick={handleReset} title="Reset View">
+                    <ToolbarButton onClick={handleReset} title={t('imageViewer_reset_view')}>
                         <RotateCw size={16} strokeWidth={1.5} />
                     </ToolbarButton>
                 </FloatingToolbar>
@@ -243,3 +238,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t: _t }) => {
         </div>
     );
 };
+
+export const ImageViewer: React.FC<ImageViewerProps> = (props) => (
+    <ImageViewerContent key={props.file.id} {...props} />
+);

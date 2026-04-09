@@ -15,6 +15,7 @@ interface CreateFileFooterProps {
     isProcessing: boolean;
     isLoading: boolean;
     isExportingPdf: boolean;
+    isPdfPreviewReady: boolean;
     hasContent: boolean;
     t: (key: keyof typeof translations | string) => string;
 }
@@ -30,6 +31,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
     isProcessing,
     isLoading,
     isExportingPdf,
+    isPdfPreviewReady,
     hasContent,
     t
 }) => {
@@ -43,7 +45,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
                         onChange={(e) => setFilenameBase(e.target.value)}
                         placeholder={t('createText_filename_placeholder')}
                         className="w-full h-9 px-3 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] outline-none transition-all text-sm font-medium"
-                        aria-label="Filename"
+                        aria-label={t('createText_filename_placeholder')}
                         autoComplete="off"
                     />
                 </div>
@@ -53,7 +55,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
                         value={extension}
                         onChange={(e) => setExtension(e.target.value)}
                         className="h-9 pl-3 pr-8 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:border-transparent text-[var(--theme-text-primary)] outline-none transition-all text-sm font-mono cursor-pointer appearance-none max-w-[80px]"
-                        aria-label="File Extension"
+                        aria-label={t('createText_extension_aria')}
                     >
                         {SUPPORTED_EXTENSIONS.map(ext => (
                             <option key={ext} value={ext}>{ext}</option>
@@ -68,7 +70,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
                 <button
                   type="button"
                   onClick={onSave}
-                  disabled={(!hasContent && !filenameBase.trim()) || isProcessing || isLoading || isExportingPdf}
+                  disabled={(!hasContent && !filenameBase.trim()) || isProcessing || isLoading || isExportingPdf || (isPdf && !isPdfPreviewReady)}
                   className="h-9 px-3 sm:px-4 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95 whitespace-nowrap flex-shrink-0"
                   title={isEditing ? t('save') : t('createText_create_button')}
                 >
