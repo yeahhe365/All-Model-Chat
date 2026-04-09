@@ -1,17 +1,28 @@
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from './blocks/CodeBlock';
-import { MermaidBlock } from './blocks/MermaidBlock';
-import { GraphvizBlock } from './blocks/GraphvizBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { ToolResultBlock } from './blocks/ToolResultBlock';
+import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
 import { UploadedFile, SideViewContent } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { getRehypePlugins, remarkPlugins } from '../../utils/markdownConfig';
 import { InlineCode } from './code-block/InlineCode';
 
-interface MarkdownRendererProps {
+const loadMermaidBlock = async () => {
+  const module = await import('./blocks/MermaidBlock');
+  return { default: module.MermaidBlock };
+};
+
+const loadGraphvizBlock = async () => {
+  const module = await import('./blocks/GraphvizBlock');
+  return { default: module.GraphvizBlock };
+};
+
+const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/thinking>/gi;
+
+export interface MarkdownRendererProps {
   content: string;
   isLoading: boolean;
   onImageClick: (file: UploadedFile) => void;
@@ -25,6 +36,8 @@ interface MarkdownRendererProps {
   onOpenSidePanel: (content: SideViewContent) => void;
   hideThinkingInContext?: boolean;
   files?: UploadedFile[];
+  diagramLoadMode?: 'deferred' | 'eager';
+  diagramRenderDelayMs?: number;
 }
 
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
@@ -40,7 +53,9 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
   themeId,
   onOpenSidePanel,
   hideThinkingInContext,
-  files
+  files,
+  diagramLoadMode = 'deferred',
+  diagramRenderDelayMs = 500
 }) => {
 
   const rehypePlugins = useMemo(() => getRehypePlugins(allowHtml), [allowHtml]);
@@ -109,7 +124,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       return <div className={className} {...rest}>{children}</div>;
     },
     pre: (props: any) => {
-      const { node, children, ...rest } = props;
+      const { node: _node, children, ...rest } = props;
       
       const codeElement = React.Children.toArray(children).find(
         (child: any) => {
@@ -132,17 +147,37 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
 
       if (isMermaidRenderingEnabled && language === 'mermaid' && typeof rawCode === 'string') {
         return (
-          <div>
-            <MermaidBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} onOpenSidePanel={onOpenSidePanel} />
-          </div>
+          <DeferredDiagramBlock
+            label={`Mermaid ${t('preview')}`}
+            load={loadMermaidBlock}
+            componentProps={{
+              code: rawCode,
+              onImageClick,
+              isLoading,
+              renderDelayMs: diagramRenderDelayMs,
+              themeId,
+              onOpenSidePanel,
+            }}
+            eager={diagramLoadMode === 'eager'}
+          />
         );
       }
 
       if (isGraphvizRenderingEnabled && isGraphviz && typeof rawCode === 'string') {
         return (
-          <div>
-            <GraphvizBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} onOpenSidePanel={onOpenSidePanel} />
-          </div>
+          <DeferredDiagramBlock
+            label={`Graphviz ${t('preview')}`}
+            load={loadGraphvizBlock}
+            componentProps={{
+              code: rawCode,
+              onImageClick,
+              isLoading,
+              renderDelayMs: diagramRenderDelayMs,
+              themeId,
+              onOpenSidePanel,
+            }}
+            eager={diagramLoadMode === 'eager'}
+          />
         );
       }
       
@@ -159,7 +194,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
         </CodeBlock>
       );
     }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files]);
+  }), [diagramLoadMode, diagramRenderDelayMs, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files]);
 
   const processedContent = useMemo(() => {
     if (!content) return '';
@@ -192,7 +227,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
                 </div>
             </details>`;
 
-        text = text.replace(/<thinking>([\s\S]*?)<\/[^>]+>/gi, (_, content) => createDetailsBlock(content));
+        text = text.replace(THINKING_BLOCK_REGEX, (_, content) => createDetailsBlock(content));
 
         if (isLoading) {
              text = text.replace(/<thinking>([\s\S]*?)$/i, (_, content) => createDetailsBlock(content));
@@ -207,7 +242,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       
       // Replace $$ ... $$ with $$ ... $$
       // Exclude purely numeric or simple word content (e.g. $$1$$, $$id$$) which are likely escaped citations/indices
-      let processedPart = part.replace(/\\$$([\s\S]*?)\\$$/g, (_match, p1) => {
+      let processedPart = part.replace(/\\$$([\s\S]*?)\\$$/g, (_, p1) => {
           if (/^\s*[\w\d\s,.]+\s*$/.test(p1) && !p1.includes('_') && !p1.includes('^')) {
               return `[${p1.trim()}]`; // Restore without backslashes
           }
@@ -215,7 +250,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(({
       });
       
       // Replace $ ... $ with $ ... $
-      processedPart = processedPart.replace(/\\$([\s\S]*?)\\$/g, (_match, p1) => {
+      processedPart = processedPart.replace(/\\$([\s\S]*?)\\$/g, (_, p1) => {
           if (/^\s*[\w\d\s,.]+\s*$/.test(p1) && !p1.includes('_') && !p1.includes('^')) {
               return `(${p1.trim()})`; // Restore without backslashes
           }

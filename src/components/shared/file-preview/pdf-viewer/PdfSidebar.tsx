@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Document, Page } from 'react-pdf';
+import { Page } from 'react-pdf';
 
 interface PdfSidebarProps {
-    fileUrl: string | undefined;
     numPages: number | null;
     currentPage: number;
     showSidebar: boolean;
@@ -12,7 +11,6 @@ interface PdfSidebarProps {
 }
 
 export const PdfSidebar: React.FC<PdfSidebarProps> = ({
-    fileUrl,
     numPages,
     currentPage,
     showSidebar,
@@ -23,12 +21,7 @@ export const PdfSidebar: React.FC<PdfSidebarProps> = ({
         <div className={`relative flex-shrink-0 bg-gray-950 border-r border-white/10 transition-all duration-300 ease-in-out flex flex-col ${showSidebar ? 'w-40 sm:w-52' : 'w-0 overflow-hidden'}`}>
             {showSidebar && (
                 <div ref={sidebarRef} className="flex-grow overflow-y-auto custom-scrollbar p-4">
-                        <Document 
-                        file={fileUrl} 
-                        loading={null} 
-                        error={null}
-                        className="flex flex-col gap-5"
-                        >
+                    <div className="flex flex-col gap-5">
                         {numPages && Array.from(new Array(numPages), (_, index) => {
                             const pageNum = index + 1;
                             return (
@@ -54,7 +47,7 @@ export const PdfSidebar: React.FC<PdfSidebarProps> = ({
                                 </div>
                             );
                         })}
-                    </Document>
+                    </div>
                 </div>
             )}
         </div>

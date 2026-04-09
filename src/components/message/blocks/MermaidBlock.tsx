@@ -10,9 +10,17 @@ interface MermaidBlockProps {
   isLoading: boolean;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
+  renderDelayMs?: number;
 }
 
-export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
+export const MermaidBlock: React.FC<MermaidBlockProps> = ({
+  code,
+  onImageClick,
+  isLoading: isMessageLoading,
+  themeId,
+  onOpenSidePanel,
+  renderDelayMs = 500,
+}) => {
   const [svg, setSvg] = useState('');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(true);
@@ -68,13 +76,13 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
             setIsRendering(false);
         }
       }
-    }, 500);
+    }, renderDelayMs);
 
     return () => {
         isMounted = false;
         clearTimeout(timeoutId);
     };
-  }, [code, isMessageLoading, themeId]);
+  }, [code, isMessageLoading, renderDelayMs, themeId]);
 
   const handleDownloadJpg = async () => {
     if (!svg || isDownloading) return;

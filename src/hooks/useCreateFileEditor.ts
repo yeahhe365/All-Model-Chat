@@ -1,5 +1,15 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../utils/htmlToMarkdown';
+import {
+    loadHtml2PdfFactory,
+    waitForElementToBecomeStable,
+} from '../utils/export/pdf';
+import {
+    createInlineImagePlaceholder,
+    extractInlineImagePlaceholders,
+    resolveInlineImagePlaceholders,
+} from '../utils/inlineImagePlaceholders';
+import { CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY } from '../constants/appConstants';
 
 export const SUPPORTED_EXTENSIONS = [
   '.md', '.pdf', '.txt', '.json', '.js', '.ts', '.py', '.html', '.css', '.csv', '.xml', '.yaml', '.sql'
@@ -20,15 +30,19 @@ export const useCreateFileEditor = ({
     themeId,
     isPasteRichTextAsMarkdownEnabled
 }: UseCreateFileEditorProps) => {
-    const [textContent, setTextContent] = useState(initialContent);
-    const [debouncedContent, setDebouncedContent] = useState(initialContent);
+    const initialInlineImagesRef = useRef(extractInlineImagePlaceholders(initialContent));
+    const imagePlaceholdersRef = useRef(initialInlineImagesRef.current.placeholders);
+    const nextImageIndexRef = useRef(initialInlineImagesRef.current.nextIndex);
+
+    const [textContent, setTextContent] = useState(initialInlineImagesRef.current.editorContent);
+    const [debouncedEditorContent, setDebouncedEditorContent] = useState(initialInlineImagesRef.current.editorContent);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [isExportingPdf, setIsExportingPdf] = useState(false);
+    const [isPdfPreviewReady, setIsPdfPreviewReady] = useState(false);
     
     // Refs
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const printRef = useRef<HTMLDivElement>(null);
-    const imageReplacementsRef = useRef<Map<string, string>>(new Map());
 
     // Filename Logic
     const [filenameBase, setFilenameBase] = useState(() => {
@@ -39,12 +53,28 @@ export const useCreateFileEditor = ({
     });
     
     const [extension, setExtension] = useState(() => {
-        if (!initialFilename) return '.md';
+        if (!initialFilename) {
+            if (typeof window !== 'undefined') {
+                const storedExtension = window.localStorage.getItem(CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY);
+                if (storedExtension && SUPPORTED_EXTENSIONS.includes(storedExtension)) {
+                    return storedExtension;
+                }
+            }
+            return '.md';
+        }
         const lastDotIndex = initialFilename.lastIndexOf('.');
         if (lastDotIndex === -1) return '.md';
         const ext = initialFilename.substring(lastDotIndex);
         return SUPPORTED_EXTENSIONS.includes(ext) ? ext : ext;
     });
+
+    const handleSetExtension = useCallback((nextExtension: string) => {
+        setExtension(nextExtension);
+
+        if (typeof window !== 'undefined') {
+            window.localStorage.setItem(CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY, nextExtension);
+        }
+    }, []);
 
     const isEditing = initialFilename !== '';
     const isPdf = extension === '.pdf';
@@ -52,60 +82,28 @@ export const useCreateFileEditor = ({
 
     // Debounce content
     useEffect(() => {
-        const handler = setTimeout(() => setDebouncedContent(textContent), 300);
+        const handler = setTimeout(() => setDebouncedEditorContent(textContent), 300);
         return () => clearTimeout(handler);
     }, [textContent]);
 
-    // Cleanup object URLs
-    useEffect(() => {
-        return () => {
-            imageReplacementsRef.current.forEach((_, blobUrl) => URL.revokeObjectURL(blobUrl));
-        };
-    }, []);
+    const debouncedContent = useMemo(
+        () => resolveInlineImagePlaceholders(debouncedEditorContent, imagePlaceholdersRef.current),
+        [debouncedEditorContent]
+    );
 
-    // --- PDF Fix: Create off-screen container ---
-    const createPdfContainer = (): HTMLElement | null => {
+    useEffect(() => {
+        if (!isPdf) {
+            setIsPdfPreviewReady(false);
+        }
+    }, [isPdf]);
+
+    const getPdfExportTarget = () => {
         if (!printRef.current) {
             console.error("Print reference not found for PDF generation.");
             return null;
         }
 
-        // 1. Deep clone the content
-        const clone = printRef.current.cloneNode(true) as HTMLElement;
-
-        // 2. Remove any constraints that might cut off content (Fix overflow issues)
-        clone.style.height = 'auto';
-        clone.style.minHeight = '100px';
-        clone.style.maxHeight = 'none';
-        clone.style.overflow = 'visible';
-        clone.style.display = 'block'; 
-        clone.style.position = 'static'; // 修复点：恢复标准文档流
-
-        // 3. Create a wrapper to hold the clone
-        const tempContainer = document.createElement('div');
-        tempContainer.className = `theme-${themeId} html2pdf-export-container`;
-        
-        // 修复点：将其水平移出屏幕，而不是使用负 z-index 藏在背后，更安全
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px'; 
-        tempContainer.style.top = '0px';
-        tempContainer.style.width = '800px'; // A4-like width
-        tempContainer.style.height = 'auto'; // 修复点：强制高度自适应
-        tempContainer.style.opacity = '1'; 
-        tempContainer.style.visibility = 'visible'; 
-        tempContainer.style.pointerEvents = 'none';
-
-        const isDark = themeId === 'onyx';
-        tempContainer.style.backgroundColor = isDark ? '#09090b' : '#ffffff';
-        tempContainer.style.color = isDark ? '#f4f4f5' : '#000000';
-
-        tempContainer.appendChild(clone);
-        document.body.appendChild(tempContainer);
-
-        // Force layout calculation so it gets an actual height in DOM
-        tempContainer.getBoundingClientRect();
-
-        return tempContainer;
+        return printRef.current;
     };
 
     // Shared html2canvas options
@@ -116,32 +114,10 @@ export const useCreateFileEditor = ({
         html2canvas: { 
             scale: 2, 
             useCORS: true, 
-            logging: false, // 关闭日志
-            letterRendering: true,
+            logging: false,
             backgroundColor: themeId === 'onyx' ? '#09090b' : '#ffffff',
             windowWidth: 800,
             scrollY: 0,
-            onclone: (clonedDoc: Document) => {
-                // 【核心修复】：解除克隆文档中全局的溢出隐藏限制，这是导致空白的根本原因
-                if (clonedDoc.documentElement) {
-                    clonedDoc.documentElement.style.overflow = 'visible';
-                    clonedDoc.documentElement.style.height = 'auto';
-                }
-                if (clonedDoc.body) {
-                    clonedDoc.body.style.overflow = 'visible';
-                    clonedDoc.body.style.height = 'auto';
-                }
-
-                // 将用于导出的容器在克隆体中重置回原位，以便截图被正确截取
-                const el = clonedDoc.querySelector('.html2pdf-export-container') as HTMLElement;
-                if (el) {
-                    el.style.position = 'static';
-                    el.style.left = '0';
-                    el.style.zIndex = 'auto';
-                    el.style.display = 'block';
-                    el.style.height = 'auto';
-                }
-            }
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -149,21 +125,13 @@ export const useCreateFileEditor = ({
 
     // Logic: PDF Generation
     const generatePdfBlob = async (): Promise<Blob | null> => {
-        const container = createPdfContainer();
+        const container = getPdfExportTarget();
         if (!container) return null;
         
-        try {
-            // @ts-ignore
-            if (window.html2pdf) {
-                // @ts-ignore
-                return await window.html2pdf().set(getPdfOpt('temp')).from(container).output('blob');
-            }
-            return null;
-        } finally {
-            if (document.body.contains(container)) {
-                document.body.removeChild(container);
-            }
-        }
+        await waitForElementToBecomeStable(container);
+
+        const html2pdf = await loadHtml2PdfFactory();
+        return html2pdf().set(getPdfOpt('temp')).from(container).output('blob');
     };
 
     const handleSave = async (isProcessing: boolean) => {
@@ -177,9 +145,6 @@ export const useCreateFileEditor = ({
         if (isPdf) {
             setIsExportingPdf(true);
             try {
-                // Wait briefly to ensure any recent state changes are painted
-                await new Promise(resolve => setTimeout(resolve, 300));
-                
                 const pdfBlob = await generatePdfBlob();
                 if (pdfBlob) {
                     onConfirm(pdfBlob, finalName);
@@ -193,54 +158,40 @@ export const useCreateFileEditor = ({
                 setIsExportingPdf(false);
             }
         } else {
-            let contentToSave = textContent;
-            if (imageReplacementsRef.current.size > 0) {
-                imageReplacementsRef.current.forEach((base64, blobUrl) => {
-                    contentToSave = contentToSave.split(blobUrl).join(base64);
-                });
-            }
-            onConfirm(contentToSave, finalName);
+            onConfirm(resolveInlineImagePlaceholders(textContent, imagePlaceholdersRef.current), finalName);
         }
     };
 
     const handleDownloadPdf = async () => {
-        const container = createPdfContainer();
+        const container = getPdfExportTarget();
         if (!container) return;
         
         setIsExportingPdf(true);
-        let finalName = filenameBase.trim() || 'document';
+        const finalName = filenameBase.trim() || 'document';
     
         try {
-          // Wait briefly for fonts/images to stabilize in the clone
-          await new Promise(resolve => setTimeout(resolve, 300));
+          await waitForElementToBecomeStable(container);
 
-          // @ts-ignore
-          if (window.html2pdf) {
-            // @ts-ignore
-            await window.html2pdf().set(getPdfOpt(finalName)).from(container).save();
-          } else {
-            alert("PDF generator not loaded.");
-          }
+          const html2pdf = await loadHtml2PdfFactory();
+          await html2pdf().set(getPdfOpt(finalName)).from(container).save();
         } catch (error) {
           console.error("PDF Export failed:", error);
+          alert("Error generating PDF.");
         } finally {
-          if (document.body.contains(container)) {
-              document.body.removeChild(container);
-          }
           setIsExportingPdf(false);
         }
     };
 
     // Logic: Image Insertion
     const insertImageFile = useCallback((file: File, startPos: number, endPos: number = startPos) => {
-        const blobUrl = URL.createObjectURL(file);
+        const placeholder = createInlineImagePlaceholder(nextImageIndexRef.current++);
         const reader = new FileReader();
         reader.onload = (evt) => {
-            const base64 = evt.target?.result as string;
-            if (base64) {
-                imageReplacementsRef.current.set(blobUrl, base64);
+            const dataUrl = evt.target?.result as string;
+            if (dataUrl) {
+                imagePlaceholdersRef.current.set(placeholder, dataUrl);
                 const imageName = file.name || `image-${Date.now()}.png`;
-                const markdownImage = `\n![${imageName}](${blobUrl})\n`;
+                const markdownImage = `\n![${imageName}](${placeholder})\n`;
                 
                 setTextContent(prev => {
                     const safeStart = Math.min(startPos, prev.length);
@@ -363,9 +314,11 @@ export const useCreateFileEditor = ({
         textContent, setTextContent,
         debouncedContent,
         filenameBase, setFilenameBase,
-        extension, setExtension,
+        extension, setExtension: handleSetExtension,
         isPreviewMode, setIsPreviewMode,
         isExportingPdf,
+        isPdfPreviewReady,
+        setIsPdfPreviewReady,
         textareaRef,
         printRef,
         isEditing,
