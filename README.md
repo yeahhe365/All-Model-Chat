@@ -151,10 +151,15 @@ GEMINI_API_KEY=your_api_key_here
 
 ```bash
 # 在仓库根目录
+npm run build
 docker compose up -d --build
 ```
 
 默认访问 `http://localhost:8080`。如需关闭后台运行可执行 `docker compose down`。
+
+说明：
+- `web` 镜像默认直接打包宿主机已生成的 `dist/`，不再在容器内执行前端生产构建。
+- 修改前端代码后，请先重新执行 `npm run build`，再执行 `docker compose up -d --build`。
 
 > ⚠️ 安全边界说明
 > 当前 `web + api` 代理方案定位为 **受信任/自托管环境**（trusted self-hosted deployment）。
