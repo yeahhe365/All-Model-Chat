@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { getClient } from '../../../services/api/baseApi';
-import { parseApiKeys } from '../../../utils/apiUtils';
+import { parseApiKeys, SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
@@ -19,6 +19,7 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
+  serverManagedApi?: boolean;
   availableModels: ModelOption[];
   t: (key: string) => string;
 }
@@ -42,6 +43,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
+  serverManagedApi = false,
   availableModels,
   t,
 }) => {
@@ -55,6 +57,12 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
+  const canUseServerManagedTestKey = !!(
+    serverManagedApi &&
+    useCustomApiConfig &&
+    useApiProxy &&
+    apiProxyUrl?.trim()
+  );
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -78,10 +86,16 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           keyToTest = (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
       }
       
-      if (useCustomApiConfig && !keyToTest) {
+      if (useCustomApiConfig && !keyToTest && !canUseServerManagedTestKey) {
           setTestStatus('error');
           setTestMessage("No API Key provided to test.");
           return;
+      }
+
+      if (!keyToTest) {
+           if (canUseServerManagedTestKey) {
+               keyToTest = SERVER_MANAGED_API_KEY;
+           }
       }
 
       if (!keyToTest) {
@@ -161,7 +175,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                     onTest={handleTestConnection}
                     testStatus={testStatus}
                     testMessage={testMessage}
-                    isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig)}
+                    isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig && !canUseServerManagedTestKey)}
                     availableModels={CONNECTION_TEST_MODELS}
                     testModelId={testModelId}
                     onModelChange={setTestModelId}

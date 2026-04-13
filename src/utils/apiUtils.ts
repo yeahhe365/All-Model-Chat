@@ -3,6 +3,8 @@ import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
 
+export const SERVER_MANAGED_API_KEY = '__SERVER_MANAGED_API_KEY__';
+
 export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
         return {
@@ -32,6 +34,12 @@ export const getKeyForRequest = (
     options: { skipIncrement?: boolean } = {}
 ): { key: string; isNewKey: boolean } | { error: string } => {
     const { skipIncrement = false } = options;
+    const shouldUseServerManagedMarker = !!(
+        appSettings.serverManagedApi &&
+        appSettings.useCustomApiConfig &&
+        appSettings.useApiProxy &&
+        appSettings.apiProxyUrl?.trim()
+    );
 
     const logUsage = (key: string) => {
         if (appSettings.useCustomApiConfig) {
@@ -41,12 +49,18 @@ export const getKeyForRequest = (
 
     const { apiKeysString } = getActiveApiConfig(appSettings);
     if (!apiKeysString) {
+        if (shouldUseServerManagedMarker) {
+            return { key: SERVER_MANAGED_API_KEY, isNewKey: false };
+        }
         return { error: "API Key not configured." };
     }
     
     const availableKeys = parseApiKeys(apiKeysString);
 
     if (availableKeys.length === 0) {
+        if (shouldUseServerManagedMarker) {
+            return { key: SERVER_MANAGED_API_KEY, isNewKey: false };
+        }
         return { error: "No valid API keys found." };
     }
 
