@@ -4,6 +4,20 @@ import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
 
 export const SERVER_MANAGED_API_KEY = '__SERVER_MANAGED_API_KEY__';
+export type ServerManagedProxyEligibility = Pick<
+    AppSettings,
+    'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'
+>;
+
+export const isServerManagedApiEnabledForProxyRequests = (
+    appSettings: ServerManagedProxyEligibility
+): boolean =>
+    !!(
+        appSettings.serverManagedApi &&
+        appSettings.useCustomApiConfig &&
+        appSettings.useApiProxy &&
+        appSettings.apiProxyUrl?.trim()
+    );
 
 export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
@@ -34,12 +48,7 @@ export const getKeyForRequest = (
     options: { skipIncrement?: boolean } = {}
 ): { key: string; isNewKey: boolean } | { error: string } => {
     const { skipIncrement = false } = options;
-    const shouldUseServerManagedMarker = !!(
-        appSettings.serverManagedApi &&
-        appSettings.useCustomApiConfig &&
-        appSettings.useApiProxy &&
-        appSettings.apiProxyUrl?.trim()
-    );
+    const shouldUseServerManagedMarker = isServerManagedApiEnabledForProxyRequests(appSettings);
 
     const logUsage = (key: string) => {
         if (appSettings.useCustomApiConfig) {

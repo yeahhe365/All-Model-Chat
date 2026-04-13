@@ -3,7 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { getClient } from '../../../services/api/baseApi';
-import { parseApiKeys, SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
+import {
+  isServerManagedApiEnabledForProxyRequests,
+  parseApiKeys,
+  SERVER_MANAGED_API_KEY,
+} from '../../../utils/apiUtils';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
@@ -57,12 +61,12 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
-  const canUseServerManagedTestKey = !!(
-    serverManagedApi &&
-    useCustomApiConfig &&
-    useApiProxy &&
-    apiProxyUrl?.trim()
-  );
+  const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
+    serverManagedApi,
+    useCustomApiConfig,
+    useApiProxy,
+    apiProxyUrl,
+  });
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -77,25 +81,21 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   }, [useCustomApiConfig]);
 
   const handleTestConnection = async () => {
-      // Pick the key that would be used
-      let keyToTest = apiKey;
-      
-      // If custom config is OFF, or ON but no key provided, we might fall back to env key if available.
-      // But for explicit testing, if custom config is ON, we should test what's in the box.
-      if (!useCustomApiConfig && hasEnvKey) {
-          keyToTest = (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
-      }
-      
-      if (useCustomApiConfig && !keyToTest && !canUseServerManagedTestKey) {
+      const resolveKeyToTest = (): string | null => {
+          if (apiKey) return apiKey;
+          if (!useCustomApiConfig && hasEnvKey) {
+              return (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
+          }
+          if (canUseServerManagedTestKey) return SERVER_MANAGED_API_KEY;
+          return null;
+      };
+
+      const keyToTest = resolveKeyToTest();
+
+      if (!keyToTest && useCustomApiConfig && !canUseServerManagedTestKey) {
           setTestStatus('error');
           setTestMessage("No API Key provided to test.");
           return;
-      }
-
-      if (!keyToTest) {
-           if (canUseServerManagedTestKey) {
-               keyToTest = SERVER_MANAGED_API_KEY;
-           }
       }
 
       if (!keyToTest) {
