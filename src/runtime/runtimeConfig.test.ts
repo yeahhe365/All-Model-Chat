@@ -16,6 +16,7 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.runtime.example/v1beta',
+      liveApiEphemeralTokenEndpoint: '/api/live-token',
     } as any;
 
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({
@@ -23,6 +24,7 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.runtime.example/v1beta',
+      liveApiEphemeralTokenEndpoint: '/api/live-token',
     });
   });
 
@@ -32,6 +34,7 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: '1',
       useApiProxy: 'false',
       apiProxyUrl: '  ',
+      liveApiEphemeralTokenEndpoint: '   ',
     };
 
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({
@@ -39,6 +42,7 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: false,
       apiProxyUrl: null,
+      liveApiEphemeralTokenEndpoint: null,
     });
   });
 });

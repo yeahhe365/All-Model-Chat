@@ -26,7 +26,12 @@ vi.mock('../../../utils/appUtils', () => ({
 }));
 
 import { GoogleGenAI } from '@google/genai';
-import { getClient, getApiClient, getConfiguredApiClient } from '../baseApi';
+import {
+  getClient,
+  getApiClient,
+  getConfiguredApiClient,
+  getLiveApiClientFromEphemeralTokenEndpoint,
+} from '../baseApi';
 import { dbService } from '../../../utils/db';
 
 // ── getClient ──
@@ -115,6 +120,57 @@ describe('getConfiguredApiClient', () => {
     // baseUrl should not be in the config
     const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as any;
     expect(callArgs.baseUrl).toBeUndefined();
+  });
+});
+
+// ── getLiveApiClientFromEphemeralTokenEndpoint ──
+
+describe('getLiveApiClientFromEphemeralTokenEndpoint', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('creates a v1alpha client from a token "name" payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ name: 'ephemeral-name-token' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClientFromEphemeralTokenEndpoint('/api/live-token');
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/live-token', { method: 'GET' });
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'ephemeral-name-token',
+      httpOptions: { apiVersion: 'v1alpha' },
+    });
+  });
+
+  it('accepts legacy "token" payload shape', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ token: 'legacy-token' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClientFromEphemeralTokenEndpoint('/api/live-token');
+
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'legacy-token',
+      httpOptions: { apiVersion: 'v1alpha' },
+    });
+  });
+
+  it('throws when endpoint returns an unexpected payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ nope: true }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getLiveApiClientFromEphemeralTokenEndpoint('/api/live-token'),
+    ).rejects.toThrow('Live token endpoint returned an unexpected payload');
   });
 });
 

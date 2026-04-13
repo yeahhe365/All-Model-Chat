@@ -81,6 +81,51 @@ export const getConfiguredApiClient = async (apiKey: string, httpOptions?: any):
     return getClient(apiKey, apiProxyUrl, httpOptions);
 };
 
+interface LiveTokenEndpointPayload {
+    name?: unknown;
+    token?: unknown;
+    error?: unknown;
+}
+
+export const getLiveApiClientFromEphemeralTokenEndpoint = async (
+    endpoint: string
+): Promise<GoogleGenAI> => {
+    const normalizedEndpoint = endpoint.trim();
+    if (!normalizedEndpoint) {
+        throw new Error("Live token endpoint is not configured.");
+    }
+
+    const response = await fetch(normalizedEndpoint, { method: 'GET' });
+    if (!response.ok) {
+        let message = `HTTP ${response.status}`;
+        try {
+            const payload = (await response.json()) as LiveTokenEndpointPayload;
+            if (typeof payload.error === 'string' && payload.error.trim().length > 0) {
+                message = payload.error;
+            }
+        } catch {
+            if (response.statusText) {
+                message = `${message}: ${response.statusText}`;
+            }
+        }
+        throw new Error(`Failed to fetch Live token: ${message}`);
+    }
+
+    const payload = (await response.json()) as LiveTokenEndpointPayload;
+    const tokenValue =
+        typeof payload?.name === 'string' && payload.name.trim().length > 0
+            ? payload.name
+            : typeof payload?.token === 'string' && payload.token.trim().length > 0
+                ? payload.token
+                : null;
+
+    if (!tokenValue) {
+        throw new Error('Live token endpoint returned an unexpected payload');
+    }
+
+    return getClient(tokenValue, null, { apiVersion: 'v1alpha' });
+};
+
 export const buildGenerationConfig = (
     modelId: string,
     systemInstruction: string,

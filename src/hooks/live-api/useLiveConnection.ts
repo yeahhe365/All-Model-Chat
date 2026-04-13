@@ -3,7 +3,7 @@ import { LiveSession, Tool } from '@google/genai';
 import { AppSettings, ChatSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
 import { getKeyForRequest } from '../../utils/apiUtils';
-import { getConfiguredApiClient } from '../../services/api/baseApi';
+import { getConfiguredApiClient, getLiveApiClientFromEphemeralTokenEndpoint } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 
 interface UseLiveConnectionProps {
@@ -100,14 +100,21 @@ export const useLiveConnection = ({
         isUserDisconnectRef.current = false; // Reset user disconnect flag
 
         try {
-            // Get API Key using the current chat settings to respect locked keys or rotation
-            const keyResult = getKeyForRequest(appSettings, chatSettings, { skipIncrement: true });
-            if ('error' in keyResult) {
-                throw new Error(keyResult.error);
-            }
+            let ai;
+            const liveApiEphemeralTokenEndpoint = appSettings.liveApiEphemeralTokenEndpoint?.trim();
 
-            // Specify API version v1alpha for Live API support
-            const ai = await getConfiguredApiClient(keyResult.key, { apiVersion: 'v1alpha' });
+            if (liveApiEphemeralTokenEndpoint) {
+                ai = await getLiveApiClientFromEphemeralTokenEndpoint(liveApiEphemeralTokenEndpoint);
+            } else {
+                // Get API Key using the current chat settings to respect locked keys or rotation
+                const keyResult = getKeyForRequest(appSettings, chatSettings, { skipIncrement: true });
+                if ('error' in keyResult) {
+                    throw new Error(keyResult.error);
+                }
+
+                // Specify API version v1alpha for Live API support
+                ai = await getConfiguredApiClient(keyResult.key, { apiVersion: 'v1alpha' });
+            }
             
             // Initialize Audio (Mic & Worklet)
             // We pass a callback that sends the encoded audio to the session

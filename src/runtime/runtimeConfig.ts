@@ -1,6 +1,11 @@
 import type { AppSettings } from '../types/settings';
 
-type RuntimeConfigKey = 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl';
+type RuntimeConfigKey =
+  | 'serverManagedApi'
+  | 'useCustomApiConfig'
+  | 'useApiProxy'
+  | 'apiProxyUrl'
+  | 'liveApiEphemeralTokenEndpoint';
 
 type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
 
@@ -28,7 +33,7 @@ function readBooleanValue(value: unknown): boolean | undefined {
   return undefined;
 }
 
-function readProxyUrl(value: unknown): string | null | undefined {
+function readNullableString(value: unknown): string | null | undefined {
   if (typeof value === 'string') {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : null;
@@ -42,7 +47,10 @@ function readProxyUrl(value: unknown): string | null | undefined {
 }
 
 export function getRuntimeConfigAppSettingsOverrides(): Partial<
-  Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>
+  Pick<
+    AppSettings,
+    'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'liveApiEphemeralTokenEndpoint'
+  >
 > {
   const runtimeConfig = typeof window !== 'undefined' ? window.__AMC_RUNTIME_CONFIG__ : undefined;
 
@@ -51,7 +59,10 @@ export function getRuntimeConfigAppSettingsOverrides(): Partial<
   }
 
   const overrides: Partial<
-    Pick<AppSettings, 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>
+    Pick<
+      AppSettings,
+      'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'liveApiEphemeralTokenEndpoint'
+    >
   > = {};
 
   const serverManagedApi = readBooleanValue(runtimeConfig.serverManagedApi);
@@ -69,9 +80,14 @@ export function getRuntimeConfigAppSettingsOverrides(): Partial<
     overrides.useApiProxy = useApiProxy;
   }
 
-  const apiProxyUrl = readProxyUrl(runtimeConfig.apiProxyUrl);
+  const apiProxyUrl = readNullableString(runtimeConfig.apiProxyUrl);
   if (apiProxyUrl !== undefined) {
     overrides.apiProxyUrl = apiProxyUrl;
+  }
+
+  const liveApiEphemeralTokenEndpoint = readNullableString(runtimeConfig.liveApiEphemeralTokenEndpoint);
+  if (liveApiEphemeralTokenEndpoint !== undefined) {
+    overrides.liveApiEphemeralTokenEndpoint = liveApiEphemeralTokenEndpoint;
   }
 
   return overrides;
