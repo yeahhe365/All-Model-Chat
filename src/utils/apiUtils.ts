@@ -3,7 +3,7 @@ import { AppSettings, ChatSettings } from '../types';
 import { API_KEY_LAST_USED_INDEX_KEY } from '../constants/appConstants';
 import { logService } from '../services/logService';
 
-export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
+const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
     if (appSettings.useCustomApiConfig) {
         return {
             apiKeysString: appSettings.apiKey,

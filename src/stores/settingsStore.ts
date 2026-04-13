@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { AppSettings } from '../types';
+import type { SyncMessage } from '../types/sync';
 import { Theme } from '../types/theme';
 import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { logService } from '../utils/appUtils';
+import { logService, resolveSupportedModelId } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 
 interface SettingsState {
@@ -40,6 +41,17 @@ function computeTheme(themeId: string): Theme {
   return AVAILABLE_THEMES.find(t => t.id === resolvedId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
 }
 
+function sanitizeAppSettings(settings: AppSettings): AppSettings {
+  return {
+    ...settings,
+    modelId: resolveSupportedModelId(settings.modelId, DEFAULT_APP_SETTINGS.modelId),
+    transcriptionModelId: resolveSupportedModelId(
+      settings.transcriptionModelId,
+      DEFAULT_APP_SETTINGS.transcriptionModelId,
+    ),
+  };
+}
+
 // BroadcastChannel singleton for settings sync
 let settingsChannel: BroadcastChannel | null = null;
 function getSettingsChannel(): BroadcastChannel {
@@ -58,17 +70,18 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
   setAppSettings: (v) => {
     set((state) => {
       const next = typeof v === 'function' ? v(state.appSettings) : v;
-      const currentTheme = computeTheme(next.themeId);
-      const language = resolveLanguage(next.language);
+      const sanitizedNext = sanitizeAppSettings(next);
+      const currentTheme = computeTheme(sanitizedNext.themeId);
+      const language = resolveLanguage(sanitizedNext.language);
 
       // Persist to IndexedDB
       if (state.isSettingsLoaded) {
-        dbService.setAppSettings(next)
+        dbService.setAppSettings(sanitizedNext)
           .then(() => getSettingsChannel().postMessage({ type: 'SETTINGS_UPDATED' }))
           .catch((e) => logService.error('Failed to save settings', { error: e }));
       }
 
-      return { appSettings: next, currentTheme, language };
+      return { appSettings: sanitizedNext, currentTheme, language };
     });
   },
 
@@ -76,7 +89,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
     try {
       const storedSettings = await dbService.getAppSettings();
       if (storedSettings) {
-        const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
+        const newSettings = sanitizeAppSettings({ ...DEFAULT_APP_SETTINGS, ...storedSettings });
         if (storedSettings.filesApiConfig) {
           newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
         }
@@ -103,7 +116,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
 // Setup BroadcastChannel listener for multi-tab settings sync
 if (typeof BroadcastChannel !== 'undefined') {
   const channel = getSettingsChannel();
-  channel.onmessage = (event) => {
+  channel.onmessage = (event: MessageEvent<SyncMessage>) => {
     const msg = event.data;
     if (msg.type === 'SETTINGS_UPDATED') {
       logService.info('[Sync] Reloading settings from DB');

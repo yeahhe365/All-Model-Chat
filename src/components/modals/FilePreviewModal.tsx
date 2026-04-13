@@ -1,15 +1,20 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { UploadedFile } from '../../types';
-import { ChevronLeft, ChevronRight, FileCode2, FileAudio, ExternalLink, FileText } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
-import { PdfViewer } from '../shared/file-preview/PdfViewer';
 import { IconYoutube } from '../icons/CustomIcons';
+import { copyFileToClipboard } from '../../utils/fileHelpers';
+
+const LazyPdfViewer = lazy(async () => {
+    const module = await import('../shared/file-preview/PdfViewer');
+    return { default: module.PdfViewer };
+});
 
 interface FilePreviewModalProps {
   file: UploadedFile | null;
@@ -47,24 +52,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
   const handleCopy = useCallback(async () => {
       if (!file || !file.dataUrl || isCopied) return;
       try {
-          // Fetch content to copy
-          const response = await fetch(file.dataUrl);
-          const blob = await response.blob();
-          
-          if (file.type.startsWith('text/') || file.type === 'application/json' || file.type.includes('javascript') || file.type.includes('xml')) {
-              const text = await blob.text();
-              await navigator.clipboard.writeText(text);
-          } else {
-              if (!navigator.clipboard || !navigator.clipboard.write) {
-                  console.error("Clipboard API not available.");
-                  return;
-              }
-              await navigator.clipboard.write([
-                  new ClipboardItem({
-                      [blob.type]: blob
-                  })
-              ]);
-          }
+          await copyFileToClipboard(file);
           setIsCopied(true);
           setTimeout(() => setIsCopied(false), 2000);
       } catch (err) {
@@ -177,7 +165,7 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         {/* Content Viewer */}
         <div className="flex-grow w-full h-full overflow-hidden relative">
           {isImage ? (
-              <ImageViewer file={file} t={t as (key: string) => string} />
+              <ImageViewer file={file} />
           ) : isText ? (
               <TextFileViewer 
                   file={file} 
@@ -194,7 +182,13 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
                   content={textContentLoaded ? editedContent : undefined}
               />
           ) : isPdf ? (
-             <PdfViewer file={file} />
+             <Suspense fallback={
+                <div className="w-full h-full flex items-center justify-center text-white/70">
+                    Loading PDF viewer...
+                </div>
+             }>
+                <LazyPdfViewer file={file} />
+             </Suspense>
           ) : isVideo ? (
               <div className="w-full h-full flex items-center justify-center">
                 {file.dataUrl && (

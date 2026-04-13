@@ -2,7 +2,7 @@
 import { AppSettings } from '../types';
 import { DEFAULT_SHORTCUTS } from '../constants/shortcuts';
 
-export const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
 export const formatShortcut = (shortcut: string): string[] => {
     if (!shortcut) return [];
@@ -29,21 +29,7 @@ export const formatShortcut = (shortcut: string): string[] => {
     });
 };
 
-export const normalizeKey = (key: string): string => {
-    const lower = key.toLowerCase();
-    if (lower === 'control') return 'ctrl';
-    if (lower === 'escape') return 'escape';
-    if (lower === 'enter') return 'enter';
-    if (lower === 'tab') return 'tab';
-    if (lower === ' ') return 'space';
-    if (lower === 'arrowup') return 'arrowup';
-    if (lower === 'arrowdown') return 'arrowdown';
-    if (lower === 'arrowleft') return 'arrowleft';
-    if (lower === 'arrowright') return 'arrowright';
-    return lower;
-};
-
-export const getEventKeyCombo = (e: React.KeyboardEvent | KeyboardEvent): string | null => {
+const getEventKeyCombo = (e: React.KeyboardEvent | KeyboardEvent): string | null => {
     // Ignore modifier-only presses for combo detection (unless that's what we want? usually not)
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return null;
 

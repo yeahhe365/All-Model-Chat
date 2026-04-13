@@ -1,29 +1,75 @@
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Enhanced fadeInUp with 'settle' effect */
+/* Lightweight fade that avoids blur-driven repaints on large surfaces. */
 @keyframes fadeInUp { 
-  0% { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(4px); } 
-  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } 
+  0% { opacity: 0; transform: translate3d(0, 16px, 0); } 
+  100% { opacity: 1; transform: translate3d(0, 0, 0); } 
 }
 
-/* User-requested Smooth Reveal Output Animation - OPTIMIZED */
-/* Removed filter:blur and scale() to prevent frame drops during text streaming */
-@keyframes fadeInMove {
-    0% { 
-        opacity: 0; 
-        transform: translateY(8px) scale(0.9); 
-        filter: blur(3px); 
-    }
-    100% { 
-        opacity: 1; 
-        transform: translateY(0) scale(1); 
-        filter: blur(0); 
-    }
+@keyframes uiEnter {
+  from {
+    opacity: var(--enter-opacity-from, 1);
+    transform: translate3d(
+      var(--enter-translate-x-from, 0),
+      var(--enter-translate-y-from, 0),
+      0
+    ) scale(var(--enter-scale-from, 1));
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
-.message-smooth-entry {
-  animation: fadeInMove 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+.animate-in {
+  animation-name: uiEnter;
+  animation-duration: var(--tw-duration, var(--enter-duration, 200ms));
+  animation-timing-function: var(--tw-ease, var(--enter-easing, var(--ease-out-expo)));
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.fade-in {
+  --enter-opacity-from: 0;
+}
+
+.zoom-in {
+  --enter-scale-from: 0.98;
+  transform-origin: center;
+}
+
+.zoom-in-95 {
+  --enter-scale-from: 0.95;
+  transform-origin: center;
+}
+
+.slide-in-from-top-1 {
+  --enter-translate-y-from: calc(var(--spacing, 0.25rem) * -1);
+}
+
+.slide-in-from-top-2 {
+  --enter-translate-y-from: calc(var(--spacing, 0.25rem) * -2);
+}
+
+.slide-in-from-top-4 {
+  --enter-translate-y-from: calc(var(--spacing, 0.25rem) * -4);
+}
+
+.slide-in-from-bottom-1 {
+  --enter-translate-y-from: calc(var(--spacing, 0.25rem) * 1);
+}
+
+.slide-in-from-bottom-2 {
+  --enter-translate-y-from: calc(var(--spacing, 0.25rem) * 2);
+}
+
+.slide-in-from-bottom-4 {
+  --enter-translate-y-from: calc(var(--spacing, 0.25rem) * 4);
+}
+
+.slide-in-from-left-1 {
+  --enter-translate-x-from: calc(var(--spacing, 0.25rem) * -1);
 }
 
 /* Side Panel Slide In */
@@ -140,8 +186,6 @@
 .mic-recording-animate { animation: micPulse 2s infinite; background-color: var(--theme-bg-danger); color: var(--theme-icon-stop); }
 .title-update-animate { animation: newTitlePulse 1.5s ease-out; }
 
-/* Message animation uses user-requested physics */
-.message-container-animate { animation: fadeInMove 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .welcome-message-animate { animation: fadeInUp 0.8s 0.1s var(--ease-out-expo) both; }
 .slide-in-right-animate { animation: slideInRight 0.4s var(--ease-out-expo) both; }
 
@@ -178,4 +222,22 @@
 @keyframes progress-stripe {
     0% { background-position: 1rem 0; }
     100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-cursor-blink,
+  .google-spinner,
+  .google-path-anim,
+  .mic-recording-animate {
+    animation: none !important;
+  }
 }

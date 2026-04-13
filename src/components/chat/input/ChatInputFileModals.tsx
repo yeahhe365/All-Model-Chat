@@ -1,11 +1,19 @@
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { UploadedFile, AppSettings, ModelOption } from '../../../types';
 import { FileConfigurationModal } from '../../modals/FileConfigurationModal';
-import { TokenCountModal } from '../../modals/TokenCountModal';
-import { FilePreviewModal } from '../../modals/FilePreviewModal';
 import { VideoMetadata } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
+
+const LazyTokenCountModal = lazy(async () => {
+    const module = await import('../../modals/TokenCountModal');
+    return { default: module.TokenCountModal };
+});
+
+const LazyFilePreviewModal = lazy(async () => {
+    const module = await import('../../modals/FilePreviewModal');
+    return { default: module.FilePreviewModal };
+});
 
 interface ChatInputFileModalsProps {
     configuringFile: UploadedFile | null;
@@ -61,28 +69,32 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                 isGemini3={isGemini3}
             />
 
-            <TokenCountModal
-                isOpen={showTokenModal}
-                onClose={() => setShowTokenModal(false)}
-                initialText={inputText}
-                initialFiles={selectedFiles}
-                appSettings={appSettings}
-                availableModels={availableModels}
-                currentModelId={currentModelId}
-                t={t}
-            />
+            <Suspense fallback={null}>
+                <LazyTokenCountModal
+                    isOpen={showTokenModal}
+                    onClose={() => setShowTokenModal(false)}
+                    initialText={inputText}
+                    initialFiles={selectedFiles}
+                    appSettings={appSettings}
+                    availableModels={availableModels}
+                    currentModelId={currentModelId}
+                    t={t}
+                />
+            </Suspense>
 
-            <FilePreviewModal
-                file={previewFile}
-                onClose={() => setPreviewFile(null)}
-                t={t as any}
-                onPrev={handlers.handlePrevImage}
-                onNext={handlers.handleNextImage}
-                hasPrev={handlers.currentImageIndex > 0}
-                hasNext={handlers.currentImageIndex !== -1 && handlers.currentImageIndex < handlers.inputImages.length - 1}
-                onSaveText={onSaveTextFile}
-                initialEditMode={isPreviewEditable}
-            />
+            <Suspense fallback={null}>
+                <LazyFilePreviewModal
+                    file={previewFile}
+                    onClose={() => setPreviewFile(null)}
+                    t={t as any}
+                    onPrev={handlers.handlePrevImage}
+                    onNext={handlers.handleNextImage}
+                    hasPrev={handlers.currentImageIndex > 0}
+                    hasNext={handlers.currentImageIndex !== -1 && handlers.currentImageIndex < handlers.inputImages.length - 1}
+                    onSaveText={onSaveTextFile}
+                    initialEditMode={isPreviewEditable}
+                />
+            </Suspense>
         </>
     );
 };

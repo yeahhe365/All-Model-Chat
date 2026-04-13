@@ -1,14 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound } from 'lucide-react';
 import { useResponsiveValue } from '../../../hooks/useDevice';
+import { SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 import { getClient } from '../../../services/api/baseApi';
 import { parseApiKeys } from '../../../utils/apiUtils';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../../constants/appConstants';
+import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
-import { ModelOption } from '../../../types';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -19,19 +21,10 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
-  availableModels: ModelOption[];
+  liveApiEphemeralTokenEndpoint: string | null;
+  setLiveApiEphemeralTokenEndpoint: (value: string | null) => void;
   t: (key: string) => string;
 }
-
-const CONNECTION_TEST_MODELS: ModelOption[] = [
-    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
-    { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite' },
-{ id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
-    { id: 'gemini-2.5-flash-lite-preview-09-2025', name: 'Gemini 2.5 Flash Lite' },
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-    { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
-    { id: 'gemma-4-26b-a4b-it', name: 'Gemma 4 26B A4B IT' },
-];
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   useCustomApiConfig,
@@ -42,31 +35,52 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
-  availableModels,
+  liveApiEphemeralTokenEndpoint,
+  setLiveApiEphemeralTokenEndpoint,
   t,
 }) => {
   // Test connection state
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
-  const [testModelId, setTestModelId] = useState<string>('gemini-3-flash-preview');
+  const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   
   // State to manage overflow visibility during transitions
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
+  const overflowTimerRef = useRef<number | null>(null);
 
   const iconSize = useResponsiveValue(18, 20);
   const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
+  const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (useCustomApiConfig) {
-      // Delay allowing overflow until transition matches duration (300ms) to prevent clipping artifacts during expansion
-      timer = setTimeout(() => setAllowOverflow(true), 300);
-    } else {
-      // Immediately hide overflow when collapsing to ensure clean animation
-      setAllowOverflow(false);
+    return () => {
+      if (overflowTimerRef.current !== null) {
+        window.clearTimeout(overflowTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleUseCustomApiConfigChange = (value: boolean) => {
+    if (overflowTimerRef.current !== null) {
+      window.clearTimeout(overflowTimerRef.current);
+      overflowTimerRef.current = null;
     }
-    return () => clearTimeout(timer);
-  }, [useCustomApiConfig]);
+
+    setUseCustomApiConfig(value);
+
+    if (value) {
+      setAllowOverflow(false);
+      // Delay allowing overflow until transition matches duration (300ms) to prevent clipping artifacts during expansion
+      overflowTimerRef.current = window.setTimeout(() => {
+        setAllowOverflow(true);
+        overflowTimerRef.current = null;
+      }, 300);
+      return;
+    }
+
+    // Immediately hide overflow when collapsing to ensure clean animation
+    setAllowOverflow(false);
+  };
 
   const handleTestConnection = async () => {
       // Pick the key that would be used
@@ -107,9 +121,9 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
       try {
           // Use the base API helper to get a client with sanitation logic
-          const ai = getClient(firstKey, effectiveUrl);
+          const ai = await getClient(firstKey, effectiveUrl);
           
-          const modelIdToUse = testModelId || 'gemini-3-flash-preview';
+          const modelIdToUse = testModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
           
           await ai.models.generateContent({
               model: modelIdToUse,
@@ -135,7 +149,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
       <div>
         <ApiConfigToggle
             useCustomApiConfig={useCustomApiConfig}
-            setUseCustomApiConfig={setUseCustomApiConfig}
+            setUseCustomApiConfig={handleUseCustomApiConfigChange}
             hasEnvKey={hasEnvKey}
             t={t}
         />
@@ -156,6 +170,27 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                     setApiProxyUrl={(val) => { setApiProxyUrl(val); setTestStatus('idle'); }}
                     t={t}
                 />
+
+                <div className="space-y-2 pt-2">
+                    <label htmlFor="live-token-endpoint-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+                        {t('settingsLiveTokenEndpoint')}
+                    </label>
+                    <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                        {t('settingsLiveTokenEndpointHelp')}
+                    </p>
+                    <input
+                        id="live-token-endpoint-input"
+                        type="text"
+                        value={liveApiEphemeralTokenEndpoint || ''}
+                        onChange={(e) => {
+                            const value = e.target.value.trim();
+                            setLiveApiEphemeralTokenEndpoint(value || null);
+                        }}
+                        className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
+                        placeholder={t('settingsLiveTokenEndpointPlaceholder')}
+                        aria-label={t('settingsLiveTokenEndpoint')}
+                    />
+                </div>
 
                 <ApiConnectionTester 
                     onTest={handleTestConnection}

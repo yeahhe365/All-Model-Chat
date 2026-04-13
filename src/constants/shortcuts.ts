@@ -1,6 +1,6 @@
 import { translations } from '../utils/appUtils';
 
-export interface ShortcutDefinition {
+interface ShortcutDefinition {
     id: string;
     labelKey: keyof typeof translations | string;
     defaultKey: string;

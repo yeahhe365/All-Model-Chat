@@ -3,7 +3,8 @@
 import React from 'react';
 import { ThemeColors } from '../types/theme';
 import { AppSettings, MediaResolution } from '../types';
-import { Theme, AVAILABLE_THEMES } from '../constants/themeConstants';
+import { Theme } from '../types/theme';
+import { AVAILABLE_THEMES } from '../constants/themeConstants';
 import { 
   SUPPORTED_IMAGE_MIME_TYPES, 
   SUPPORTED_AUDIO_MIME_TYPES, 
@@ -24,7 +25,16 @@ import {
   AlertTriangle 
 } from 'lucide-react';
 
-export const generateThemeCssVariables = (colors: ThemeColors): string => {
+type NotificationOptionsWithTag = NotificationOptions & {
+  renotify?: boolean;
+  tag?: string;
+};
+
+type WindowWithWebkitAudioContext = Window & typeof globalThis & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
+const generateThemeCssVariables = (colors: ThemeColors): string => {
   let css = ':root {\n';
   for (const [key, value] of Object.entries(colors)) {
     const cssVarName = `--theme-${key.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
@@ -44,18 +54,6 @@ export const applyThemeToDocument = (doc: Document, theme: Theme, settings: AppS
   AVAILABLE_THEMES.forEach(t => bodyClassList.remove(`theme-${t.id}`));
   bodyClassList.add(`theme-${theme.id}`, 'antialiased');
 
-  const markdownDarkTheme = doc.getElementById('markdown-dark-theme') as HTMLLinkElement;
-  const markdownLightTheme = doc.getElementById('markdown-light-theme') as HTMLLinkElement;
-  const hljsDarkTheme = doc.getElementById('hljs-dark-theme') as HTMLLinkElement;
-  const hljsLightTheme = doc.getElementById('hljs-light-theme') as HTMLLinkElement;
-
-  const isDark = theme.id === 'onyx';
-
-  if (markdownDarkTheme) markdownDarkTheme.disabled = !isDark;
-  if (markdownLightTheme) markdownLightTheme.disabled = isDark;
-  if (hljsDarkTheme) hljsDarkTheme.disabled = !isDark;
-  if (hljsLightTheme) hljsLightTheme.disabled = isDark;
-
   doc.body.style.fontSize = `${settings.baseFontSize}px`;
 };
 
@@ -68,7 +66,11 @@ export const showNotification = async (title: string, options?: NotificationOpti
   const show = () => {
     // Use a tag to prevent multiple notifications from stacking up.
     // The 'renotify' property ensures that even with the same tag, the user is alerted.
-    const notification = new Notification(title, { ...options, tag: 'all-model-chat-response', renotify: true } as any);
+    const notification = new Notification(title, {
+      ...options,
+      tag: 'all-model-chat-response',
+      renotify: true,
+    } as NotificationOptionsWithTag);
 
     notification.onclick = () => {
       window.focus();
@@ -95,7 +97,7 @@ let sharedAudioContext: AudioContext | null = null;
 
 const getAudioContext = () => {
     if (!sharedAudioContext) {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
         if (AudioContextClass) {
             sharedAudioContext = new AudioContextClass();
         }
@@ -141,7 +143,7 @@ export const playCompletionSound = () => {
   }
 };
 
-export type FileCategory = 'image' | 'audio' | 'video' | 'pdf' | 'youtube' | 'code' | 'spreadsheet' | 'doc' | 'presentation' | 'archive' | 'error';
+type FileCategory = 'image' | 'audio' | 'video' | 'pdf' | 'youtube' | 'code' | 'spreadsheet' | 'doc' | 'presentation' | 'archive' | 'error';
 
 export const getFileTypeCategory = (mimeType: string, error?: string): FileCategory => {
     if (error) return 'error';
@@ -178,7 +180,9 @@ export const extractTextFromNode = (node: React.ReactNode): string => {
     if (!node) return '';
     if (typeof node === 'string' || typeof node === 'number') return String(node);
     if (Array.isArray(node)) return node.map(extractTextFromNode).join('');
-    if (React.isValidElement(node) && node.props && 'children' in node.props) return extractTextFromNode((node.props as any).children);
+    if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+        return extractTextFromNode(node.props.children);
+    }
     return '';
 };
 

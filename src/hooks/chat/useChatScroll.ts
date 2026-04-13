@@ -1,13 +1,11 @@
 
 import React, { useRef, useCallback } from 'react';
-import { ChatMessage } from '../../types';
 
 interface ChatScrollProps {
-    messages: ChatMessage[];
     userScrolledUp: React.MutableRefObject<boolean>;
 }
 
-export const useChatScroll = ({ messages, userScrolledUp }: ChatScrollProps) => {
+export const useChatScroll = ({ userScrolledUp }: ChatScrollProps) => {
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const savedScrollTop = useRef<number>(0);
     

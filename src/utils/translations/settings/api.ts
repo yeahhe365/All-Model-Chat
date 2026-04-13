@@ -10,6 +10,13 @@ export const apiSettings = {
     apiConfig_testing: { en: 'Testing...', zh: '测试中...' },
     apiConfig_testSuccess: { en: 'Connection Successful', zh: '连接成功' },
     apiConfig_testFailed: { en: 'Connection Failed', zh: '连接失败' },
-    apiConfig_vertexExpress: { en: 'Use Vertex AI Express Endpoint', zh: '使用 Vertex AI Express 端点' },
-    apiConfig_vertexExpress_btn: { en: 'Vertex Express', zh: 'Vertex Express' },
+    settingsLiveTokenEndpoint: { en: 'Live API Token Endpoint', zh: 'Live API Token 端点' },
+    settingsLiveTokenEndpointHelp: {
+        en: 'Required for Live API in the browser. Point this to a backend endpoint that returns JSON containing an ephemeral token `name` or `token`.',
+        zh: '浏览器中的 Live API 必须配置该项。请填写一个后端端点，它需要返回包含临时令牌 `name` 或 `token` 的 JSON。',
+    },
+    settingsLiveTokenEndpointPlaceholder: {
+        en: 'e.g., https://example.com/api/live-token',
+        zh: '例如：https://example.com/api/live-token',
+    },
 };

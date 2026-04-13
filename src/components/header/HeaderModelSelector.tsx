@@ -4,7 +4,7 @@ import { Zap } from 'lucide-react';
 import { ModelOption } from '../../types';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
 import { ModelPicker } from '../shared/ModelPicker';
-import { isGemini3Model } from '../../utils/appUtils';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 
 interface HeaderModelSelectorProps {
   currentModelName?: string;
@@ -46,7 +46,8 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   const isSelectorDisabled = availableModels.length === 0 || isLoading || isSwitchingModel;
   
   // Check for Gemini 3 models (ignoring case) but exclude image models
-  const isGemini3 = isGemini3Model(selectedModelId) && !selectedModelId.toLowerCase().includes('image');
+  const { isGemini3, isImagenModel } = getModelCapabilities(selectedModelId);
+  const supportsThinkingToggle = isGemini3 && !isImagenModel;
 
   // Determine the target "Fast" level based on model capabilities
   // Gemini 3 Flash models support MINIMAL thinking for maximum speed
@@ -81,7 +82,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
             </button>
 
             {/* Thinking Level Toggle */}
-            {isGemini3 && (
+            {supportsThinkingToggle && (
                 <button 
                     onClick={(e) => { 
                         e.stopPropagation(); 

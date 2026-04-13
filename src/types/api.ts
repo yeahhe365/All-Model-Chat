@@ -1,6 +1,67 @@
 
-import { Part, UsageMetadata, File as GeminiFile, ChatHistoryItem } from "@google/genai";
-import { ModelOption } from './settings';
+import type { Content, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
+import type { SafetySetting } from './settings';
+
+export type ChatHistoryItem = Content & {
+  parts: Part[];
+  role: 'user' | 'model';
+};
+
+export type StreamMessageCompleteHandler = (
+  usageMetadata?: UsageMetadata,
+  groundingMetadata?: any,
+  urlContextMetadata?: any
+) => void;
+
+export type NonStreamMessageCompleteHandler = (
+  parts: Part[],
+  thoughtsText?: string,
+  usageMetadata?: UsageMetadata,
+  groundingMetadata?: any,
+  urlContextMetadata?: any
+) => void;
+
+export type StreamMessageSender = (
+  apiKey: string,
+  modelId: string,
+  history: ChatHistoryItem[],
+  parts: Part[],
+  config: any,
+  abortSignal: AbortSignal,
+  onPart: (part: Part) => void,
+  onThoughtChunk: (chunk: string) => void,
+  onError: (error: Error) => void,
+  onComplete: StreamMessageCompleteHandler,
+  role?: 'user' | 'model'
+) => Promise<void>;
+
+export type NonStreamMessageSender = (
+  apiKey: string,
+  modelId: string,
+  history: ChatHistoryItem[],
+  parts: Part[],
+  config: any,
+  abortSignal: AbortSignal,
+  onError: (error: Error) => void,
+  onComplete: NonStreamMessageCompleteHandler
+) => Promise<void>;
+
+export interface LiveClientFunction {
+  declaration: FunctionDeclaration;
+  handler: (args: any) => Promise<unknown>;
+}
+
+export type LiveClientFunctions = Record<string, LiveClientFunction>;
+
+export interface EditImageRequestConfig {
+  systemInstruction?: string;
+  showThoughts?: boolean;
+  thinkingBudget?: number;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  isGoogleSearchEnabled?: boolean;
+  isDeepSearchEnabled?: boolean;
+  safetySettings?: SafetySetting[];
+}
 
 export interface GeminiService {
   uploadFile: (
@@ -14,30 +75,8 @@ export interface GeminiService {
   getFileMetadata: (apiKey: string, fileApiName: string) => Promise<GeminiFile | null>;
   
   // Stateless Message Sending
-  sendMessageStream: (
-    apiKey: string,
-    modelId: string,
-    history: ChatHistoryItem[],
-    parts: Part[],
-    config: any,
-    abortSignal: AbortSignal,
-    onPart: (part: Part) => void,
-    onThoughtChunk: (chunk: string) => void,
-    onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
-    role?: 'user' | 'model'
-  ) => Promise<void>;
-
-  sendMessageNonStream: (
-    apiKey: string,
-    modelId: string,
-    history: ChatHistoryItem[],
-    parts: Part[],
-    config: any,
-    abortSignal: AbortSignal,
-    onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
-  ) => Promise<void>;
+  sendMessageStream: StreamMessageSender;
+  sendMessageNonStream: NonStreamMessageSender;
 
   generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
@@ -45,7 +84,16 @@ export interface GeminiService {
   translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
-  editImage: (apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, imageSize?: string) => Promise<Part[]>;
+  editImage: (
+    apiKey: string,
+    modelId: string,
+    history: ChatHistoryItem[],
+    parts: Part[],
+    abortSignal: AbortSignal,
+    aspectRatio?: string,
+    imageSize?: string,
+    requestConfig?: EditImageRequestConfig,
+  ) => Promise<Part[]>;
   countTokens: (apiKey: string, modelId: string, parts: Part[]) => Promise<number>;
 }
 

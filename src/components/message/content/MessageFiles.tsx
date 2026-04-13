@@ -24,13 +24,15 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     isGemini3,
     hasContentOrAudio 
 }) => {
-    if (!files || files.length === 0) return null;
-
     // Check if the message contains a tool execution result block
     const hasToolResult = content?.includes('class="tool-result"');
 
     // Separate images from other documents to handle layouts differently
     const { imageFiles, documentFiles } = useMemo(() => {
+        if (!files || files.length === 0) {
+            return { imageFiles: [], documentFiles: [] };
+        }
+
         const imgs: UploadedFile[] = [];
         const docs: UploadedFile[] = [];
         files.forEach(f => {
@@ -46,6 +48,8 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
         });
         return { imageFiles: imgs, documentFiles: docs };
     }, [files, hasToolResult]);
+
+    if (!files || files.length === 0) return null;
 
     const isQuadImageView = imageFiles.length === 4 && imageFiles.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
     const marginClass = hasContentOrAudio ? 'mb-2' : '';

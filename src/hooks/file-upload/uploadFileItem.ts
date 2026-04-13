@@ -8,6 +8,7 @@ import { formatSpeed, getEffectiveMimeType, shouldUseFileApi } from './utils';
 interface UploadFileItemParams {
     file: File;
     keyToUse: string | null;
+    forceFileApi?: boolean;
     defaultResolution: MediaResolution | undefined;
     appSettings: any; // Using any to avoid circular dep issues with types if strictly typed, but AppSettings is imported in types
     setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
@@ -17,6 +18,7 @@ interface UploadFileItemParams {
 export const uploadFileItem = async ({
     file,
     keyToUse,
+    forceFileApi = false,
     defaultResolution,
     appSettings,
     setSelectedFiles,
@@ -31,7 +33,7 @@ export const uploadFileItem = async ({
         return;
     }
 
-    const shouldUploadFile = shouldUseFileApi(file, appSettings);
+    const shouldUploadFile = forceFileApi || shouldUseFileApi(file, appSettings);
     
     // Generate a blob URL immediately for local preview, regardless of upload method
     const dataUrl = fileToBlobUrl(file);

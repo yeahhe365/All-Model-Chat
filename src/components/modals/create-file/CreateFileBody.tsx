@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MarkdownRenderer } from '../../message/MarkdownRenderer';
+import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
 import { translations } from '../../../utils/appUtils';
 
 interface CreateFileBodyProps {
@@ -105,7 +105,7 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                             style={{ fontSize: '16px' }}
                           >
                               <div className="markdown-body">
-                                  <MarkdownRenderer 
+                                  <LazyMarkdownRenderer 
                                       content={debouncedContent || '*Start typing...*'}
                                       isLoading={false}
                                       onImageClick={() => {}}
@@ -117,6 +117,7 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                                       allowHtml={true}
                                       t={t as any}
                                       themeId={themeId}
+                                      fallbackMode="raw"
                                   />
                               </div>
                               <div className="mt-8 pt-4 border-t border-[var(--theme-border-secondary)] text-center text-xs text-[var(--theme-text-tertiary)] hidden print:block">

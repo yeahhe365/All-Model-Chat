@@ -10,7 +10,7 @@ interface TextEditorModalProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
   readOnly?: boolean;
 }
 

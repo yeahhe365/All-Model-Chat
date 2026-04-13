@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
 import { SettingsTab } from '../../hooks/features/useSettingsLogic';
 import { ApiConfigSection } from './sections/ApiConfigSection';
 import { AppearanceSection } from './sections/AppearanceSection';
@@ -9,8 +9,9 @@ import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
 import { DataManagementSection } from './sections/DataManagementSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
+import { SettingsTransferProps } from './settingsTypes';
 
-interface SettingsContentProps {
+interface SettingsContentProps extends SettingsTransferProps {
     activeTab: SettingsTab;
     currentSettings: AppSettings;
     availableModels: ModelOption[];
@@ -24,16 +25,6 @@ interface SettingsContentProps {
     onOpenLogViewer: () => void;
     onClearLogs: () => void;
     onReset: () => void;
-    onInstallPwa: () => void;
-    isInstallable: boolean;
-    onImportSettings: (file: File) => void;
-    onExportSettings: () => void;
-    onImportHistory: (file: File) => void;
-    onExportHistory: () => void;
-    onImportScenarios: (file: File) => void;
-    onExportScenarios: () => void;
-    
-    t: (key: keyof typeof translations) => string;
 }
 
 export const SettingsContent: React.FC<SettingsContentProps> = ({
@@ -74,7 +65,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         modelId={currentSettings.modelId} 
                         setModelId={handleModelChange}
                         transcriptionModelId={currentSettings.transcriptionModelId} setTranscriptionModelId={(v) => updateSetting('transcriptionModelId', v)}
-                        generateQuadImages={currentSettings.generateQuadImages ?? false} setGenerateQuadImages={(v) => updateSetting('generateQuadImages', v)}
                         ttsVoice={currentSettings.ttsVoice} setTtsVoice={(v) => updateSetting('ttsVoice', v)}
                         systemInstruction={currentSettings.systemInstruction} setSystemInstruction={(v) => updateSetting('systemInstruction', v)}
                         temperature={currentSettings.temperature} setTemperature={(v) => updateSetting('temperature', v)}
@@ -87,7 +77,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         mediaResolution={currentSettings.mediaResolution} setMediaResolution={(v) => updateSetting('mediaResolution', v)}
                         autoCanvasVisualization={currentSettings.autoCanvasVisualization ?? false}
                         setAutoCanvasVisualization={(v) => updateSetting('autoCanvasVisualization', v)}
-                        autoCanvasModelId={currentSettings.autoCanvasModelId || 'gemini-3-flash-preview'}
+                        autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
                         setAutoCanvasModelId={(v) => updateSetting('autoCanvasModelId', v)}
                         availableModels={availableModels}
                         t={t as any}
@@ -115,7 +105,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
                         useApiProxy={currentSettings.useApiProxy ?? false}
                         setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
-                        availableModels={availableModels}
+                        liveApiEphemeralTokenEndpoint={currentSettings.liveApiEphemeralTokenEndpoint ?? null}
+                        setLiveApiEphemeralTokenEndpoint={(val) => updateSetting('liveApiEphemeralTokenEndpoint', val)}
                         t={t as any}
                     />
                 </div>
@@ -145,7 +136,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     <ShortcutsSection 
                         currentSettings={currentSettings}
                         onUpdateSettings={handleBatchUpdate}
-                        t={t} 
+                        t={t as any} 
                     />
                 </div> 
             )}

@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
 import { translations } from '../../utils/appUtils';
@@ -34,13 +34,13 @@ interface MessageProps {
 }
 
 export const Message: React.FC<MessageProps> = React.memo((props) => {
-    const { message, prevMessage, messageIndex, t } = props;
+    const { message, prevMessage } = props;
     
-    const isGrouped = prevMessage &&
+    const isGrouped = !!(prevMessage &&
         prevMessage.role === message.role &&
         !prevMessage.isLoading &&
         !message.isLoading &&
-        (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000);
+        (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000));
 
     const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && props.showThoughts));
     

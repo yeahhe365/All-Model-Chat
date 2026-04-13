@@ -4,6 +4,7 @@ import { ModelOption, SafetySetting } from '../../../types';
 import { ModelVoiceSettings } from '../ModelVoiceSettings';
 import { SafetySection } from './SafetySection';
 import { MediaResolution } from '../../../types/settings';
+import { AVAILABLE_CANVAS_MODELS } from '../../../constants/settingsModelOptions';
 import { ToggleItem } from '../../shared/ToggleItem';
 import { Select } from '../../shared/Select';
 import { Wand2 } from 'lucide-react';
@@ -14,8 +15,6 @@ interface ChatBehaviorSectionProps {
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
-  generateQuadImages: boolean;
-  setGenerateQuadImages: (value: boolean) => void;
   ttsVoice: string;
   setTtsVoice: (value: string) => void;
   systemInstruction: string;
@@ -28,8 +27,8 @@ interface ChatBehaviorSectionProps {
   setTopK: (value: number) => void;
   thinkingBudget: number;
   setThinkingBudget: (value: number) => void;
-  thinkingLevel?: 'LOW' | 'HIGH';
-  setThinkingLevel?: (value: 'LOW' | 'HIGH') => void;
+  thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  setThinkingLevel?: (value: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
   showThoughts: boolean;
   setShowThoughts: (value: boolean) => void;
   safetySettings?: SafetySetting[];
@@ -56,8 +55,6 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
             setAvailableModels={props.setAvailableModels}
             transcriptionModelId={props.transcriptionModelId}
             setTranscriptionModelId={props.setTranscriptionModelId}
-            generateQuadImages={props.generateQuadImages}
-            setGenerateQuadImages={props.setGenerateQuadImages}
             ttsVoice={props.ttsVoice}
             setTtsVoice={props.setTtsVoice}
             systemInstruction={props.systemInstruction}
@@ -106,8 +103,9 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
                       onChange={(e) => props.setAutoCanvasModelId(e.target.value)}
                       className="py-3"
                   >
-                      <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
-                      <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite</option>
+                      {AVAILABLE_CANVAS_MODELS.map((model) => (
+                          <option key={model.id} value={model.id}>{model.name}</option>
+                      ))}
                   </Select>
             </div>
         </div>

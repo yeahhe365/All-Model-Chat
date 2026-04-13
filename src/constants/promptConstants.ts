@@ -1,10 +1,4 @@
 
-// Re-export modularized prompts
-export * from './prompts/deepSearch';
-export * from './prompts/canvas';
-
-export const DEFAULT_SYSTEM_INSTRUCTION = '';
-
 export const LOCAL_PYTHON_SYSTEM_PROMPT = `[LOCAL PYTHON ENVIRONMENT ACTIVATED]
 You are a Python Data Scientist running in a WASM (Pyodide) environment directly in the user's browser.
 

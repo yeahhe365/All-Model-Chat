@@ -14,20 +14,22 @@ const LOCK_NAME = 'all_model_chat_db_write_lock';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+const isVersionConflictError = (error: unknown): boolean => {
+  if (error instanceof DOMException) {
+    return error.name === 'VersionError';
+  }
+
+  if (error instanceof Error) {
+    return error.name === 'VersionError' || /requested version .* less than .* existing version/i.test(error.message);
+  }
+
+  return false;
+};
+
 const getDb = (): Promise<IDBDatabase> => {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onerror = () => {
-        console.error('IndexedDB error:', request.error);
-        reject(request.error);
-      };
-      request.onsuccess = () => resolve(request.result);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        const oldVersion = event.oldVersion;
-
+      const applyMigrations = (db: IDBDatabase, oldVersion: number) => {
         // Version 1: Initial schema
         if (oldVersion < 1) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
@@ -65,6 +67,34 @@ const getDb = (): Promise<IDBDatabase> => {
           logStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
+
+      const openDatabase = (version?: number, allowVersionFallback: boolean = false) => {
+        const request = version === undefined
+          ? indexedDB.open(DB_NAME)
+          : indexedDB.open(DB_NAME, version);
+
+        request.onerror = () => {
+          if (allowVersionFallback && isVersionConflictError(request.error)) {
+            console.warn(
+              `IndexedDB version ${DB_VERSION} is older than the stored schema. Reopening ${DB_NAME} with the browser's current version.`
+            );
+            openDatabase(undefined, false);
+            return;
+          }
+
+          console.error('IndexedDB error:', request.error);
+          reject(request.error);
+        };
+
+        request.onsuccess = () => resolve(request.result);
+
+        request.onupgradeneeded = (event) => {
+          const db = (event.target as IDBOpenDBRequest).result;
+          applyMigrations(db, event.oldVersion);
+        };
+      };
+
+      openDatabase(DB_VERSION, true);
     });
   }
   return dbPromise;

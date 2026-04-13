@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, RotateCcw, Check } from 'lucide-react';
 import { ModelOption } from '../../../../types';
-import { getDefaultModelOptions } from '../../../../utils/appUtils';
 import { ModelListEditorRow } from './ModelListEditorRow';
 
 interface ModelListEditorProps {
@@ -32,8 +31,9 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
         setTempModels(prev => [...prev, { id: '', name: '', isPinned: true }]);
     };
 
-    const handleResetDefaults = () => {
+    const handleResetDefaults = async () => {
         if (window.confirm("Reset model list to default? This will clear all custom additions.")) {
+            const { getDefaultModelOptions } = await import('../../../../utils/defaultModelOptions');
             setTempModels(getDefaultModelOptions());
         }
     };

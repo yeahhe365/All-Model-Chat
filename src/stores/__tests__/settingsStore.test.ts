@@ -158,7 +158,7 @@ describe('settingsStore', () => {
     });
 
     it('sets isSettingsLoaded when no stored settings', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
     });
@@ -177,6 +177,20 @@ describe('settingsStore', () => {
       expect(useSettingsStore.getState().language).toBe('zh');
       Object.defineProperty(navigator, 'language', { value: originalLang, configurable: true });
     });
+
+    it('falls back when stored settings reference removed Gemini 2.5 Flash preview models', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue({
+        modelId: 'gemini-2.5-flash-preview-09-2025',
+        transcriptionModelId: 'gemini-2.5-flash-lite-preview-09-2025',
+      } as any);
+
+      await useSettingsStore.getState().loadSettings();
+
+      const state = useSettingsStore.getState();
+      expect(state.appSettings.modelId).toBe('gemini-3-flash-preview');
+      expect(state.appSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+    });
+
   });
 
   // ── broadcastSettingsUpdate ──

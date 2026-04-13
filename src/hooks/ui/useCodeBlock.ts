@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from
 import { useCopyToClipboard } from '../useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { isLikelyHtml } from '../../utils/codeUtils';
-import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
+import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { SideViewContent } from '../../types';
 
 const COLLAPSE_THRESHOLD_PX = 320;
@@ -63,17 +63,15 @@ export const useCodeBlock = ({
     onOpenSidePanel
 }: UseCodeBlockProps) => {
     const preRef = useRef<HTMLPreElement>(null);
-    const codeText = useRef<string>('');
     const [isOverflowing, setIsOverflowing] = useState(false);
-    const hasUserInteracted = useRef(false);
-    const [isExpanded, setIsExpanded] = useState(expandCodeBlocksByDefault);
+    const [expandedOverride, setExpandedOverride] = useState<boolean | null>(null);
     
     const { isCopied, copyToClipboard } = useCopyToClipboard();
 
     // Auto-scroll logic state
     const userHasScrolledUp = useRef(false);
-    const isAutoScrolling = useRef(false);
     const prevTextLength = useRef(0);
+    const lastKnownScrollTop = useRef(0);
 
     // Find the code element
     const codeElement = React.Children.toArray(children).find(
@@ -81,52 +79,43 @@ export const useCodeBlock = ({
     );
 
     // Synchronously resolve content string
-    let currentContent = '';
-    if (codeElement) {
-        currentContent = extractTextFromNode(codeElement.props.children);
-    } else {
-        currentContent = extractTextFromNode(children);
-    }
-
-    if (currentContent) {
-        codeText.current = currentContent;
-    }
-
-    // Sync with global prop
-    useEffect(() => {
-        if (!hasUserInteracted.current) {
-            setIsExpanded(expandCodeBlocksByDefault);
-        }
-    }, [expandCodeBlocksByDefault]);
+    const currentContent = codeElement
+        ? extractTextFromNode(codeElement.props.children)
+        : extractTextFromNode(children);
+    const resolvedCodeText = currentContent;
+    const isExpanded = expandedOverride ?? expandCodeBlocksByDefault;
 
     // Scroll handler
     const handleScroll = useCallback(() => {
-        if (isAutoScrolling.current) return;
-
         const el = preRef.current;
         if (!el) return;
         
+        const previousScrollTop = lastKnownScrollTop.current;
         const isAtBottom = Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) < 25;
-        userHasScrolledUp.current = !isAtBottom;
+
+        if (isAtBottom) {
+            userHasScrolledUp.current = false;
+        } else if (el.scrollTop < previousScrollTop - 1) {
+            userHasScrolledUp.current = true;
+        }
+
+        lastKnownScrollTop.current = el.scrollTop;
     }, []);
 
     useEffect(() => {
         const el = preRef.current;
         if (el) {
+            lastKnownScrollTop.current = el.scrollTop;
             el.addEventListener('scroll', handleScroll);
             return () => el.removeEventListener('scroll', handleScroll);
         }
+        return undefined;
     }, [handleScroll]);
 
     // Layout effect for overflow and auto-scroll
     useLayoutEffect(() => {
         const preElement = preRef.current;
         if (!preElement) return;
-
-        if (!currentContent) {
-            const domCodeEl = preElement.querySelector('code');
-            codeText.current = domCodeEl ? (domCodeEl.textContent || '') : (preElement.textContent || '');
-        }
 
         const isCurrentlyOverflowing = preElement.scrollHeight > COLLAPSE_THRESHOLD_PX;
         
@@ -135,47 +124,37 @@ export const useCodeBlock = ({
             if (isCurrentlyOverflowing) {
                 userHasScrolledUp.current = false;
             }
+            lastKnownScrollTop.current = preElement.scrollTop;
             return;
         }
 
         // Auto-scroll Logic
-        const currentLength = codeText.current.length;
+        const currentLength = resolvedCodeText.length;
         if (!isExpanded && prevTextLength.current > 0 && currentLength > prevTextLength.current) {
             if (!userHasScrolledUp.current) {
-                const scrollToBottom = () => {
-                    if (preElement) preElement.scrollTop = preElement.scrollHeight;
-                };
-
-                isAutoScrolling.current = true;
-                scrollToBottom();
-                
-                requestAnimationFrame(() => {
-                    scrollToBottom();
-                    setTimeout(() => {
-                        isAutoScrolling.current = false;
-                    }, 100);
-                });
+                preElement.scrollTop = preElement.scrollHeight;
+                lastKnownScrollTop.current = preElement.scrollTop;
             }
         }
         
         prevTextLength.current = currentLength;
+        lastKnownScrollTop.current = preElement.scrollTop;
 
-    }, [children, isExpanded, isOverflowing, currentContent]);
+    }, [children, isExpanded, isOverflowing, resolvedCodeText]);
 
     const handleToggleExpand = () => {
-        hasUserInteracted.current = true;
-        setIsExpanded(prev => !prev);
+        setExpandedOverride(prev => !(prev ?? expandCodeBlocksByDefault));
     };
     
     const handleCopy = () => {
-        if (codeText.current && !isCopied) {
-            copyToClipboard(codeText.current);
+        if (resolvedCodeText && !isCopied) {
+            copyToClipboard(resolvedCodeText);
         }
     };
 
     // Language processing
     const langMatch = className?.match(/language-(\S+)/);
-    let language = langMatch ? langMatch[1].toLowerCase() : 'txt';
+    const language = langMatch ? langMatch[1].toLowerCase() : 'txt';
 
     let mimeType = 'text/plain';
     if (['html', 'xml', 'svg'].includes(language)) mimeType = 'text/html';
@@ -184,7 +163,7 @@ export const useCodeBlock = ({
     else if (language === 'json') mimeType = 'application/json';
     else if (['markdown', 'md'].includes(language)) mimeType = 'text/markdown';
 
-    const contentLooksLikeHtml = isLikelyHtml(codeText.current);
+    const contentLooksLikeHtml = isLikelyHtml(resolvedCodeText);
     const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language);
     
     const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
@@ -197,7 +176,7 @@ export const useCodeBlock = ({
     const handleOpenSide = () => {
         let displayTitle = 'HTML Preview';
         if (finalLanguage === 'html') {
-            const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const titleMatch = resolvedCodeText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 displayTitle = titleMatch[1];
             }
@@ -205,28 +184,28 @@ export const useCodeBlock = ({
         
         onOpenSidePanel({
             type: 'html',
-            content: codeText.current,
+            content: resolvedCodeText,
             language: finalLanguage,
             title: displayTitle
         });
     };
 
     const handleFullscreenPreview = (trueFullscreen: boolean) => {
-        onOpenHtmlPreview(codeText.current, { initialTrueFullscreen: trueFullscreen });
+        onOpenHtmlPreview(resolvedCodeText, { initialTrueFullscreen: trueFullscreen });
     };
 
     const handleDownload = () => {
-        let ext = LANGUAGE_EXTENSION_MAP[finalLanguage.toLowerCase()] || finalLanguage;
+        const ext = LANGUAGE_EXTENSION_MAP[finalLanguage.toLowerCase()] || finalLanguage;
         let filename = `snippet.${ext}`;
         
         if (downloadMimeType === 'text/html' || ext === 'html') {
-            const titleMatch = codeText.current.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const titleMatch = resolvedCodeText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
-                let saneTitle = sanitizeFilename(titleMatch[1].trim());
+                const saneTitle = sanitizeFilename(titleMatch[1].trim());
                 if (saneTitle) filename = `${saneTitle}.html`;
             }
         }
-        const blob = new Blob([codeText.current], { type: downloadMimeType });
+        const blob = new Blob([resolvedCodeText], { type: downloadMimeType });
         const url = URL.createObjectURL(blob);
         triggerDownload(url, filename);
     };

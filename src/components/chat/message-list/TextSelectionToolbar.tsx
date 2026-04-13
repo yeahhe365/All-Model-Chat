@@ -16,7 +16,7 @@ interface TextSelectionToolbarProps {
     onQuote: (text: string) => void;
     onInsert?: (text: string) => void;
     onTTS?: (text: string) => Promise<string | null>;
-    containerRef: React.RefObject<HTMLElement>;
+    containerRef: React.RefObject<HTMLElement> | HTMLElement | null;
     t?: (key: keyof typeof translations) => string;
 }
 

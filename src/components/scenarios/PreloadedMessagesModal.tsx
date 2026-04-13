@@ -14,7 +14,7 @@ interface PreloadedMessagesModalProps {
   savedScenarios: SavedScenario[];
   onSaveAllScenarios: (scenarios: SavedScenario[]) => void;
   onLoadScenario: (scenario: SavedScenario) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
@@ -52,6 +52,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isOpen]);
 
   const handleClose = () => { 

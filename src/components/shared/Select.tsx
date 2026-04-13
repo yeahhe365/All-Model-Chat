@@ -15,6 +15,12 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   direction?: 'up' | 'down';
 }
 
+type SelectOption = {
+    value: string;
+    label: React.ReactNode;
+    disabled: boolean | undefined;
+};
+
 export const Select: React.FC<SelectProps> = ({ 
     id, 
     label, 
@@ -36,18 +42,18 @@ export const Select: React.FC<SelectProps> = ({
     
     useClickOutside(wrapperRef, () => setIsOpen(false), isOpen);
 
-    const options = useMemo(() => {
-        return React.Children.toArray(children).map((child) => {
+    const options = useMemo<SelectOption[]>(() => {
+        return React.Children.toArray(children).flatMap((child) => {
             if (React.isValidElement(child) && child.type === 'option') {
                 const props = child.props as React.OptionHTMLAttributes<HTMLOptionElement>;
-                return {
+                return [{
                     value: String(props.value),
                     label: props.children,
                     disabled: props.disabled
-                };
+                }];
             }
-            return null;
-        }).filter((opt): opt is { value: string, label: React.ReactNode, disabled?: boolean } => opt !== null);
+            return [];
+        });
     }, [children]);
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));

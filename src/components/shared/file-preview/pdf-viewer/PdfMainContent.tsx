@@ -12,7 +12,7 @@ interface PdfMainContentProps {
     onLoadSuccess: (data: { numPages: number }) => void;
     onLoadError: (err: Error) => void;
     setPageRef: (pageNum: number, element: HTMLDivElement | null) => void;
-    containerRef: React.RefObject<HTMLDivElement>;
+    containerRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 // 核心优化：懒加载/虚拟化 PDF 页面
@@ -27,11 +27,11 @@ const LazyPdfPage = ({
     scale: number;
     rotation: number;
     setPageRef: (pageNum: number, element: HTMLDivElement | null) => void;
-    containerRef: React.RefObject<HTMLDivElement>;
+    containerRef: React.MutableRefObject<HTMLDivElement | null>;
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-    const wrapperRef = useRef<HTMLDivElement>(null);
+    const wrapperRef = useRef<HTMLDivElement | null>(null);
 
     // 标准 A4 纸比例估算，用于首次加载前的占位高度，防止滚动条严重跳动
     const isRotated = rotation === 90 || rotation === 270;
@@ -178,4 +178,3 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
         </div>
     );
 };
-

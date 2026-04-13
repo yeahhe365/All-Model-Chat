@@ -2,9 +2,9 @@
 import React, { useState, useCallback } from 'react';
 import { X, Check, Download, ClipboardCopy, Loader2, FileText, ImageIcon, FileVideo, FileAudio, FileCode2, Save, Edit3 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
-import { triggerDownload } from '../../../utils/exportUtils';
+import { triggerDownload } from '../../../utils/export/core';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import { formatFileSize } from '../../../utils/domainUtils';
+import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolbar';
 
 interface FilePreviewHeaderProps {
@@ -55,23 +55,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
 
         if (!file.dataUrl || isCopied) return;
         try {
-            // Fetch content to copy
-            const response = await fetch(file.dataUrl);
-            const blob = await response.blob();
-            
-            if (file.type.startsWith('text/') || file.type === 'application/json' || file.type.includes('javascript') || file.type.includes('xml')) {
-                const text = await blob.text();
-                await navigator.clipboard.writeText(text);
-            } else {
-                if (!navigator.clipboard || !navigator.clipboard.write) {
-                    throw new Error("Clipboard API not available.");
-                }
-                await navigator.clipboard.write([
-                    new ClipboardItem({
-                        [blob.type]: blob
-                    })
-                ]);
-            }
+            await copyFileToClipboard(file);
             setInternalIsCopied(true);
             setTimeout(() => setInternalIsCopied(false), 2000);
         } catch (err) {

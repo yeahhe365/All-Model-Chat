@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { translations } from '../../../utils/appUtils';
-import { MarkdownRenderer } from '../MarkdownRenderer';
+import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
 import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
 import { isLikelyHtml } from '../../../utils/codeUtils';
@@ -39,7 +39,8 @@ export const MessageText: React.FC<MessageTextProps> = ({
     isGraphvizRenderingEnabled,
     onOpenSidePanel
 }) => {
-    const { content, isLoading, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
+    const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
+    const isLoading = message.isLoading ?? false;
     
     // Subscribe to live stream updates if loading
     const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
@@ -110,7 +111,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
               />
             ) : effectiveContent ? (
                 <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
-                    <MarkdownRenderer
+                    <LazyMarkdownRenderer
                         content={displayedContent} // Use smoothed text
                         isLoading={isLoading}
                         onImageClick={onImageClick}

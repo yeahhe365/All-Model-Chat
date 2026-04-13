@@ -33,7 +33,6 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo((props) 
         isGemini3 
     } = props;
 
-    const hasFiles = message.files && message.files.length > 0;
     const hasContentOrAudio = !!(message.content || message.audioSrc);
 
     return (
@@ -54,7 +53,6 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo((props) 
             
             <MessageFooter 
                 message={message} 
-                t={props.t} 
                 onSuggestionClick={props.onSuggestionClick} 
             />
         </>

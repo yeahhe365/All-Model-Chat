@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AudioLines } from 'lucide-react';
-import { AVAILABLE_TTS_VOICES } from '../../../../constants/appConstants';
 import { Select } from '../../../shared/Select';
+import type { TtsVoiceOption } from '../../../../constants/voiceOptions';
 
 interface TtsVoiceSelectorProps {
     ttsVoice: string;
@@ -11,6 +11,22 @@ interface TtsVoiceSelectorProps {
 }
 
 export const TtsVoiceSelector: React.FC<TtsVoiceSelectorProps> = ({ ttsVoice, setTtsVoice, t }) => {
+    const [voices, setVoices] = useState<TtsVoiceOption[]>([]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        void import('../../../../constants/voiceOptions').then(({ AVAILABLE_TTS_VOICES }) => {
+            if (isMounted) {
+                setVoices(AVAILABLE_TTS_VOICES);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     return (
         <Select
             id="tts-voice-selector"
@@ -23,7 +39,7 @@ export const TtsVoiceSelector: React.FC<TtsVoiceSelectorProps> = ({ ttsVoice, se
             direction="up"
             dropdownClassName="!w-auto !min-w-full max-h-[300px]"
         >
-            {AVAILABLE_TTS_VOICES.map(voice => (
+            {voices.map(voice => (
                 <option key={voice.id} value={voice.id}>
                     <div className="flex items-center gap-2">
                          <AudioLines size={14} className="text-purple-500 flex-shrink-0" />

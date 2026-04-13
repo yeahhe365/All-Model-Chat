@@ -12,31 +12,40 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
     const dragOffset = useRef({ x: 0, y: 0 });
     const rafRef = useRef<number | null>(null);
 
+    const getClampedPosition = useCallback((clientX: number, clientY: number) => {
+        if (!toolbarRef.current) return null;
+
+        const toolbar = toolbarRef.current;
+        const { width, height } = toolbar.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 10;
+
+        let newLeft = clientX - dragOffset.current.x;
+        let newTop = clientY - dragOffset.current.y;
+
+        const halfWidth = width / 2;
+        newLeft = Math.max(padding + halfWidth, Math.min(newLeft, viewportWidth - padding - halfWidth));
+        newTop = Math.max(padding, Math.min(newTop, viewportHeight - padding - height));
+
+        return { toolbar, top: newTop, left: newLeft };
+    }, [toolbarRef]);
+
     const handleDragMove = useCallback((e: MouseEvent) => {
         if (!isDragging.current || !toolbarRef.current) return;
         
         if (rafRef.current) cancelAnimationFrame(rafRef.current);
         
         rafRef.current = requestAnimationFrame(() => {
-            if (!isDragging.current || !toolbarRef.current) return;
-            
-            const toolbar = toolbarRef.current;
-            const { width, height } = toolbar.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-            const padding = 10;
+            if (!isDragging.current) return;
 
-            let newLeft = e.clientX - dragOffset.current.x;
-            let newTop = e.clientY - dragOffset.current.y;
-            
-            const halfWidth = width / 2;
-            newLeft = Math.max(padding + halfWidth, Math.min(newLeft, viewportWidth - padding - halfWidth));
-            newTop = Math.max(padding, Math.min(newTop, viewportHeight - padding - height));
+            const nextPosition = getClampedPosition(e.clientX, e.clientY);
+            if (!nextPosition) return;
 
-            toolbar.style.left = `${newLeft}px`;
-            toolbar.style.top = `${newTop}px`;
+            nextPosition.toolbar.style.left = `${nextPosition.left}px`;
+            nextPosition.toolbar.style.top = `${nextPosition.top}px`;
         });
-    }, [toolbarRef]);
+    }, [getClampedPosition, toolbarRef]);
 
     const handleDragEnd = useCallback((e: MouseEvent) => {
         if (!isDragging.current || !toolbarRef.current) return;
@@ -49,25 +58,15 @@ export const useSelectionDrag = ({ toolbarRef, position, onPositionChange }: Use
         document.removeEventListener('mouseup', handleDragEnd);
         
         // Sync final position to React state
-        const toolbar = toolbarRef.current;
-        const { width, height } = toolbar.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const padding = 10;
+        const nextPosition = getClampedPosition(e.clientX, e.clientY);
+        if (nextPosition) {
+            onPositionChange({ top: nextPosition.top, left: nextPosition.left });
+        }
 
-        let newLeft = e.clientX - dragOffset.current.x;
-        let newTop = e.clientY - dragOffset.current.y;
-
-        const halfWidth = width / 2;
-        newLeft = Math.max(padding + halfWidth, Math.min(newLeft, viewportWidth - padding - halfWidth));
-        newTop = Math.max(padding, Math.min(newTop, viewportHeight - padding - height));
-        
-        onPositionChange({ top: newTop, left: newLeft });
-        
         if (toolbarRef.current) {
             toolbarRef.current.style.transition = '';
         }
-    }, [onPositionChange, handleDragMove]);
+    }, [getClampedPosition, onPositionChange, handleDragMove]);
 
     const handleDragStart = useCallback((e: React.MouseEvent) => {
         if (e.button !== 0 || !position || !toolbarRef.current) return;

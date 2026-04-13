@@ -13,16 +13,13 @@
     <a href="https://github.com/yeahhe365/All-Model-Chat/releases" target="_blank">
       <img src="https://img.shields.io/github/v/release/yeahhe365/All-Model-Chat?style=for-the-badge&color=3b82f6" alt="Release">
     </a>
-    <a href="https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true" target="_blank">
-      <img src="https://img.shields.io/badge/Google%20AI%20Studio-Try_it_now-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Try in AI Studio">
-    </a>
     <img src="https://img.shields.io/badge/许可证-MIT-green?style=for-the-badge" alt="License">
   </p>
 
   <p>
     <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React">
     <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
-    <img src="https://img.shields.io/badge/Tailwind-3.4-38BDB8?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind">
+    <img src="https://img.shields.io/badge/Tailwind-4.2-38BDB8?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind">
     <img src="https://img.shields.io/badge/Gemini_SDK-1.2+-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini SDK">
     <img src="https://img.shields.io/badge/PWA-Supported-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
   </p>
@@ -33,11 +30,9 @@
 
 ## 项目简介
 
-**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：所有数据存储于浏览器 IndexedDB，无需后端服务器，在保障隐私的同时提供流畅的原生级体验。
+**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据仍全部存储于浏览器 IndexedDB；但若要在浏览器中使用 **Live API**，需要额外提供一个签发 ephemeral token 的后端端点，以避免直接暴露长期 API Key。
 
-支持两种运行模式：
-- **标准模式**：克隆仓库后通过 Vite 开发/构建，传统 SPA 部署
-- **零构建模式**：利用 HTML import map 直接在浏览器中加载依赖，可在 Google AI Studio 中一键运行
+当前项目以 **标准 Vite 构建模式** 为主：克隆仓库后通过 Vite 开发、构建并部署，生产路径完全由本地依赖和打包产物接管。
 
 ---
 
@@ -52,6 +47,7 @@
 - 双向实时流式交互，支持语音通话
 - 屏幕共享与视觉识别
 - 音频可视化 (AudioWorklet API)
+- 浏览器端连接要求配置 **ephemeral token endpoint**
 
 ### 智能 Canvas
 - 代码块自动识别并渲染为交互式 HTML 预览（自动全屏）
@@ -64,7 +60,8 @@
 - 支持 ZIP / 文件夹拖入，自动解析代码库结构
 - 支持图片、PDF、视频、音频、文本等多种文件类型
 - 可配置各文件类型使用 Gemini Files API 还是直接 Base64 上传
-- 文件分辨率可调（Low / Medium / High / Ultra）
+- Inline Base64 负载上限为 **100MB / 请求**，PDF 为 **50MB**
+- 文件分辨率可调（Low / Medium / High；Ultra 仅适用于 Gemini 3 文件分辨率）
 
 ### 生产力工具链
 - **深度搜索**：聚合 Google Search，自动规划搜索任务并提供精准引用
@@ -81,14 +78,13 @@
 ### 企业级 API 管理
 - **多 Key 轮询**：支持填入多个 API Key 自动分担压力
 - **API 代理**：内置 Network Interceptor（Fetch 拦截），动态重写请求路径
-- **Vertex AI 兼容**：原生支持 Vertex AI Express 端点，自动修复路径映射
 
 ### 多语言界面
 - 支持中文 / 英文 / 跟随系统三种语言设置
 - 覆盖所有 UI 组件（聊天、设置、侧边栏、快捷键等）
 
 ### PWA 支持
-- Service Worker 离线缓存，动态 App Shell 发现
+- Web App Manifest + 安装提示
 - 可安装为桌面/移动端应用
 - 支持画中画 (Picture-in-Picture) 模式
 
@@ -133,10 +129,7 @@ npm run dev
 ```
 
 访问 `http://localhost:5173`，在 **设置 -> API 配置** 中填入你的 Gemini API Key。
-
-### 方式二：Google AI Studio（零构建）
-
-直接在 [Google AI Studio](https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true) 中打开，所有依赖通过 CDN 加载，无需任何本地配置。
+若需使用 **Live API**，还需配置一个返回 ephemeral token 的后端端点。
 
 ### 配置密钥
 
@@ -160,22 +153,15 @@ npm run preview  # 本地预览构建结果
 | 层级 | 技术栈 |
 | :--- | :--- |
 | **核心框架** | React 18 + TypeScript 5.5 + Vite 5 |
-| **样式方案** | Tailwind CSS 3.4 (CDN) + CSS 变量主题系统 |
+| **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
-| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理与 Vertex AI |
-| **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
-| **双模式部署** | 传统 Vite 构建 / HTML import map 零构建 CDN 加载 |
-
-### 双模式架构说明
-
-项目通过 `index.html` 中的 `<script type="importmap">` 实现双模式运行：
-
-- **Vite 模式**：`vite.config.ts` 将 React、react-pdf 等标记为 `external`，由 Vite 处理打包
-- **零构建模式**：import map 直接指向 esm.sh CDN，浏览器原生解析模块依赖，适合 Google AI Studio 等不支持构建的环境
+| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理 |
+| **PWA** | Web App Manifest + 安装提示 |
+| **部署方式** | 标准 Vite 构建与静态资源部署 |
 
 ---
 
@@ -274,10 +260,9 @@ All-Model-Chat/
 │   └── ...                     # 其他工具（剪贴板、日期、域名校验、快捷键等）
 ├── App.tsx                     # 应用入口组件
 ├── index.tsx                   # 渲染入口（挂载 React、导入样式）
-├── index.html                  # HTML 入口（CDN 资源、import map、PWA meta）
-├── manifest.json               # PWA 应用清单
-├── sw.js                       # Service Worker（离线缓存）
-├── vite.config.ts              # Vite 配置（React 插件、Pyodide 静态复制、外部化配置）
+├── index.html                  # HTML 入口（应用壳、manifest meta、Vite 入口）
+├── manifest.json               # Web App 清单
+├── vite.config.ts              # Vite 配置（React/Tailwind 插件、Pyodide 静态复制、拆包配置）
 ├── tsconfig.json               # TypeScript 配置
 ├── package.json                # 项目依赖
 └── LICENSE                     # MIT 许可证
@@ -289,10 +274,10 @@ All-Model-Chat/
 
 | 类型 | 模型 |
 | :--- | :--- |
-| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
-| **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-lite-preview, gemini-2.5-flash-native-audio-preview |
-| **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
-| **Imagen 4.0** | imagen-4.0-fast-generate, imagen-4.0-generate, imagen-4.0-ultra-generate |
+| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, gemini-3.1-flash-live-preview |
+| **Gemini 2.5** | gemini-2.5-flash-native-audio-preview-12-2025 |
+| **附加手动模型 ID** | gemma-4-31b-it, gemma-4-26b-a4b-it（未包含在仓库内置 Gemini docs 快照中） |
+| **Imagen 4.0** | imagen-4.0-fast-generate-001, imagen-4.0-generate-001, imagen-4.0-ultra-generate-001 |
 | **图片生成** | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview |
 | **TTS** | gemini-2.5-pro-preview-tts, gemini-2.5-flash-preview-tts (30+ 种语音) |
 

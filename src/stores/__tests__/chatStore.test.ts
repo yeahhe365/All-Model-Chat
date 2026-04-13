@@ -40,10 +40,10 @@ vi.mock('../../utils/appUtils', () => ({
   rehydrateSessionFiles: vi.fn((session: any) => session),
   getTranslator: vi.fn(),
   applyThemeToDocument: vi.fn(),
+  resolveSupportedModelId: vi.fn((modelId: string | null | undefined, fallback: string) =>
+    modelId || fallback
+  ),
 }));
-
-// Mock core/useMultiTabSync for SyncMessage type
-vi.mock('../../hooks/core/useMultiTabSync', () => ({}));
 
 import { useChatStore } from '../chatStore';
 import { dbService } from '../../utils/db';
@@ -102,6 +102,15 @@ describe('chatStore', () => {
       useChatStore.getState().setActiveSessionId('sess-1');
       useChatStore.getState().setActiveSessionId(null);
       expect(useChatStore.getState().activeSessionId).toBeNull();
+    });
+
+    it('navigates back to root when clearing an active /chat route', () => {
+      window.location.pathname = '/chat/sess-1';
+
+      useChatStore.getState().setActiveSessionId('sess-1');
+      useChatStore.getState().setActiveSessionId(null);
+
+      expect(window.history.pushState).toHaveBeenCalledWith({}, '', '/');
     });
   });
 

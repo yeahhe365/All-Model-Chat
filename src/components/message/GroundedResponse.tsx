@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { UploadedFile, SideViewContent } from '../../types';
-import { MarkdownRenderer } from './MarkdownRenderer';
+import { LazyMarkdownRenderer } from './LazyMarkdownRenderer';
 import { translations } from '../../utils/appUtils';
 import { insertCitations, extractSources } from './grounded-response/utils';
 import { SearchQueries } from './grounded-response/SearchQueries';
@@ -52,7 +52,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
 
       {/* Main Content */}
       <div className="markdown-body">
-        <MarkdownRenderer
+        <LazyMarkdownRenderer
           content={content}
           isLoading={isLoading}
           onImageClick={onImageClick}

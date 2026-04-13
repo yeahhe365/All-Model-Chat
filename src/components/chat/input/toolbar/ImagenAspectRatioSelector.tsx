@@ -7,17 +7,21 @@ const AspectRatioIcon = ({ ratio, className }: { ratio: string; className?: stri
     if (ratio === 'Auto') {
         return <Sparkles size={16} className={className} strokeWidth={2} />;
     }
-    let styles: React.CSSProperties = {};
+    let styles: React.CSSProperties;
     switch (ratio) {
         case '1:1': styles = { width: '20px', height: '20px' }; break;
+        case '1:4': styles = { width: '8px', height: '24px' }; break;
+        case '1:8': styles = { width: '6px', height: '24px' }; break;
         case '9:16': styles = { width: '12px', height: '21px' }; break;
         case '16:9': styles = { width: '24px', height: '13.5px' }; break;
+        case '4:1': styles = { width: '24px', height: '8px' }; break;
         case '4:3': styles = { width: '20px', height: '15px' }; break;
         case '3:4': styles = { width: '15px', height: '20px' }; break;
         case '2:3': styles = { width: '14px', height: '21px' }; break;
         case '3:2': styles = { width: '21px', height: '14px' }; break;
         case '4:5': styles = { width: '16px', height: '20px' }; break;
         case '5:4': styles = { width: '20px', height: '16px' }; break;
+        case '8:1': styles = { width: '24px', height: '6px' }; break;
         case '21:9': styles = { width: '24px', height: '10px' }; break;
         default: styles = { width: '20px', height: '20px' }; break;
     }

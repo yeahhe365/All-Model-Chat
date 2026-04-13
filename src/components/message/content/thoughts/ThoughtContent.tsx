@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MarkdownRenderer } from '../../MarkdownRenderer';
+import { LazyMarkdownRenderer } from '../../LazyMarkdownRenderer';
 import { SideViewContent, UploadedFile } from '../../../../types';
 import { useMessageStream } from '../../../../hooks/ui/useMessageStream';
 
@@ -52,7 +52,7 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
             )}
 
             <div className="prose prose-sm max-w-none dark:prose-invert text-[var(--theme-text-secondary)] leading-relaxed markdown-body thought-process-content opacity-90">
-                <MarkdownRenderer
+                <LazyMarkdownRenderer
                     content={effectiveContent}
                     isLoading={isLoading}
                     onImageClick={onImageClick}

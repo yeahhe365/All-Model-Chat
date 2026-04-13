@@ -6,18 +6,18 @@ import { describe, it, expect } from 'vitest';
 function createIDBMock() {
   const stores: Record<string, Map<string, unknown>> = {};
 
-  const createObjectStore = (name: string, options?: { keyPath?: string; autoIncrement?: boolean }) => {
+  const createObjectStore = (name: string, _options?: { keyPath?: string; autoIncrement?: boolean }) => {
     if (!stores[name]) stores[name] = new Map();
     return stores[name];
   };
 
   return {
-    stores,
-    objectStoreNames: {
-      contains(name: string) {
-        return stores.hasOwnProperty(name);
+      stores,
+      objectStoreNames: {
+        contains(name: string) {
+        return Object.prototype.hasOwnProperty.call(stores, name);
+        },
       },
-    },
     createObjectStore,
   };
 }

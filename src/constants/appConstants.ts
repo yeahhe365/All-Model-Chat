@@ -3,10 +3,9 @@ import { HarmCategory, HarmBlockThreshold, SafetySetting, MediaResolution } from
 
 // Re-exporting from new modules
 export * from './modelConstants';
-export * from './promptConstants';
 export * from './shortcuts';
 
-export const APP_LOGO_SVG_DATA_URI = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0xNSAxOCAxOCAxOTUgNzUiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMwMGZmZmYiIHN0b3Atb3BhY2l0eT0iMSIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iI2FhMDBmZiIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48bWFzayBpZD0ibSI+PHJlY3QgeD0iLTUwIiB5PSIwIiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0id2hpdGUiLz48cmVjdCB4PSItNTAiIHk9IjQ1IiB3aWR0aD0iMzUwIiBoZWlnaHQ9IjQiIGZpbGw9ImJsYWNrIi8+PHJlY3QgeD0iLTUwIiB5PSI2MCIgd2lkdGg9IjM1MCIgaGVpZ2h0PSIyIiBmaWxsPSJibGFjayIvPjxyZWN0IHg9IjM2IiB5PSI1NSIgd2lkdGg9IjgiIGhlaWdodD0iOCIgZmlsbD0iYmxhY2siLz48L21hc2s+PC9kZWZzPjxnIHRyYW5zZm9ybT0ic2tld1goLTE1KSI+PGcgbWFNrPSJ1cmwoI20pIiBmaWxsPSJ1cmwoI2cpIj48cGF0aCBkPSJNMjAsODAgTDQwLDIwIEw2MCw4MCBMNDgsODAgTDQ0LDY4IEwzNiw2OCBMMzIsODAgWiIvPjxwYXRoIGQ9Ik03MCw4MCBMNzAsMjAgTDg1LDIwIEw5NSw1MCBMMTA1LDIwIEwxMjAsMjAgTDEyMCw4MCBMMTEwLDgwIEwxMTAsNDAgTDk4LDcwIEw5Miw3MCBMODAsNDAgTDgwLDgwIFoiLz48cGF0aCBkPSJNMTY1LDI1IEwxNDAsMjUgTDEzNSw0MCBMMTM1LDY1IEwxNDAsODAgTDE2NSw4MCBMMTY1LDcwIEwxNDUsNzAgTDE0NSwzNSBMMTY1LDM1IFoiLz48L2c+PHJlY3QgeD0iMTcwIiB5PSIyMCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDBmZmZmIi8+PHJlY3QgeD0iMTAiIHk9Ijg1IiB3aWR0aD0iMjAiIGhlaWdodD0iMyIgZmlsbD0iIzAwZmZmZiIvPjwvZz48L3N2Zz4=';
+export const DEFAULT_SYSTEM_INSTRUCTION = '';
 
 // Import specific constants needed to build the default objects
 import {
@@ -18,20 +17,15 @@ import {
     DEFAULT_TTS_VOICE,
     DEFAULT_THINKING_BUDGET,
     DEFAULT_THINKING_LEVEL,
-    DEFAULT_TRANSCRIPTION_MODEL_ID
+    DEFAULT_TRANSCRIPTION_MODEL_ID,
+    DEFAULT_AUTO_CANVAS_MODEL_ID
 } from './modelConstants';
-import { DEFAULT_SYSTEM_INSTRUCTION } from './promptConstants';
-
 // Define constants that are truly app-level
-export const DEFAULT_IS_STREAMING_ENABLED = true; 
-export const DEFAULT_BASE_FONT_SIZE = 16; 
-export const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
+const DEFAULT_IS_STREAMING_ENABLED = true; 
+const DEFAULT_BASE_FONT_SIZE = 16; 
+const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
 
-// localStorage keys
-export const APP_SETTINGS_KEY = 'chatAppSettings';
-export const PRELOADED_SCENARIO_KEY = 'chatPreloadedScenario';
-export const CHAT_HISTORY_SESSIONS_KEY = 'chatHistorySessions';
-export const CHAT_HISTORY_GROUPS_KEY = 'chatHistoryGroups';
+// Storage keys
 export const ACTIVE_CHAT_SESSION_ID_KEY = 'activeChatSessionId';
 export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
 
@@ -56,7 +50,7 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
     text: false,
 };
 
-export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
@@ -68,7 +62,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
   ttsVoice: DEFAULT_TTS_VOICE,
   thinkingBudget: DEFAULT_THINKING_BUDGET,
-  thinkingLevel: DEFAULT_THINKING_LEVEL as 'LOW' | 'HIGH',
+  thinkingLevel: DEFAULT_THINKING_LEVEL as 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
   lockedApiKey: null,
   isGoogleSearchEnabled: false,
   isCodeExecutionEnabled: false,
@@ -88,6 +82,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   apiKey: null,
   apiProxyUrl: "https://api-proxy.de/gemini/v1beta",
   useApiProxy: false,
+  liveApiEphemeralTokenEndpoint: null,
   language: 'system',
   isStreamingEnabled: DEFAULT_IS_STREAMING_ENABLED,
   transcriptionModelId: DEFAULT_TRANSCRIPTION_MODEL_ID,
@@ -106,7 +101,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   showWelcomeSuggestions: true,
   isAudioCompressionEnabled: DEFAULT_IS_AUDIO_COMPRESSION_ENABLED,
   autoCanvasVisualization: false,
-  autoCanvasModelId: 'gemini-3-flash-preview',
+  autoCanvasModelId: DEFAULT_AUTO_CANVAS_MODEL_ID,
   isPasteRichTextAsMarkdownEnabled: true,
   isPasteAsTextFileEnabled: true,
   isSystemAudioRecordingEnabled: false,

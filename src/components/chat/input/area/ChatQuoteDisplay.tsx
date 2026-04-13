@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Quote, Trash2 } from 'lucide-react';
-import { MarkdownRenderer } from '../../../message/MarkdownRenderer';
+import { LazyMarkdownRenderer } from '../../../message/LazyMarkdownRenderer';
 import { translations } from '../../../../utils/appUtils';
 
 interface ChatQuoteDisplayProps {
@@ -30,7 +30,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
                         )}
                         <div className="max-h-[160px] overflow-y-auto custom-scrollbar">
                             <div className="markdown-body text-sm text-[var(--theme-text-secondary)]" style={{ fontSize: '13px' }}>
-                                <MarkdownRenderer
+                                <LazyMarkdownRenderer
                                     content={quote}
                                     isLoading={false}
                                     onImageClick={() => {}}
@@ -41,6 +41,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
                                     t={t}
                                     themeId={themeId}
                                     onOpenSidePanel={() => {}}
+                                    fallbackMode="raw"
                                 />
                             </div>
                         </div>

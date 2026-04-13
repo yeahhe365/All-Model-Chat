@@ -5,7 +5,7 @@ import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal,
 import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import { formatFileSize } from '../../../utils/domainUtils';
+import { formatFileSize } from '../../../utils/fileHelpers';
 
 interface SelectedFileDisplayProps {
   file: UploadedFile;
@@ -22,11 +22,20 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const { isCopied: idCopied, copyToClipboard } = useCopyToClipboard();
 
   useEffect(() => {
-    if (prevUploadState.current !== 'active' && file.uploadState === 'active') {
-      setIsNewlyActive(true);
-      setTimeout(() => setIsNewlyActive(false), 800);
-    }
+    const wasPreviouslyActive = prevUploadState.current === 'active';
     prevUploadState.current = file.uploadState;
+
+    if (wasPreviouslyActive || file.uploadState !== 'active') {
+      return undefined;
+    }
+
+    const showTimer = window.setTimeout(() => setIsNewlyActive(true), 0);
+    const hideTimer = window.setTimeout(() => setIsNewlyActive(false), 800);
+
+    return () => {
+      window.clearTimeout(showTimer);
+      window.clearTimeout(hideTimer);
+    };
   }, [file.uploadState]);
 
   const handleCopyId = (event: React.MouseEvent) => {
@@ -70,7 +79,14 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); isCancellable ? onCancelUpload(file.id) : onRemove(file.id); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isCancellable) {
+            onCancelUpload(file.id);
+          } else {
+            onRemove(file.id);
+          }
+        }}
         className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 scale-90 hover:scale-100"
         title={isCancellable ? "Cancel Upload" : "Remove File"}
         aria-label={isCancellable ? "Cancel Upload" : "Remove File"}
@@ -79,8 +95,12 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
       </button>
 
       <div 
-        onClick={() => isActive && onPreview && onPreview(file)}
-        className={`relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 overflow-hidden flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
+        onClick={() => {
+          if (isActive && onPreview) {
+            onPreview(file);
+          }
+        }}
+        className={`file-preview-box relative w-full aspect-square rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-tertiary)]/30 overflow-hidden flex items-center justify-center transition-colors group-hover:border-[var(--theme-border-focus)]/50 ${isActive && onPreview ? 'cursor-pointer hover:opacity-90' : ''}`}
       >
         
         <div className={`w-full h-full flex items-center justify-center p-2 transition-all duration-300 ${isUploading || isProcessing ? 'opacity-30 blur-[1px] scale-95' : 'opacity-100'}`}>
@@ -120,7 +140,12 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
         {canConfigure && (
              <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onConfigure && onConfigure(file); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onConfigure) {
+                    onConfigure(file);
+                  }
+                }}
                 title={isText ? "Edit File" : "Configure File"}
                 className={`absolute bottom-1 left-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md hover:bg-black/70 transition-all z-20 ${getResolutionColor(file.mediaResolution)}`}
              >

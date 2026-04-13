@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, InputCommand, ChatSettings } from '../types';
+import type { SyncMessage } from '../types/sync';
 import { dbService } from '../utils/db';
-import { logService, rehydrateSessionFiles } from '../utils/appUtils';
+import { logService, rehydrateSessionFiles, resolveSupportedModelId } from '../utils/appUtils';
 import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
-import { SyncMessage } from '../hooks/core/useMultiTabSync';
+import { DEFAULT_MODEL_ID } from '../constants/modelConstants';
+
+type UpdaterOrValue<T> = T | ((prev: T) => T);
 
 // ── Internal refs (not in Zustand state to avoid re-renders) ──
 // Typed as MutableRefObject so downstream hooks see the correct shape
@@ -23,7 +26,11 @@ function getSyncChannel(): BroadcastChannel {
 }
 
 function broadcast(msg: SyncMessage) {
-  try { getSyncChannel().postMessage(msg); } catch {}
+  try {
+    getSyncChannel().postMessage(msg);
+  } catch {
+    // Ignore sync failures in unsupported or restricted environments.
+  }
 }
 
 // ── Sort helper ──
@@ -35,10 +42,24 @@ function sortSessions(sessions: SavedChatSession[]) {
   });
 }
 
+function sanitizeSessionModel(session: SavedChatSession): SavedChatSession {
+  return {
+    ...session,
+    settings: {
+      ...session.settings,
+      modelId: resolveSupportedModelId(session.settings?.modelId, DEFAULT_MODEL_ID),
+    },
+  };
+}
+
 // ── URL & sessionStorage sync ──
 function syncActiveSessionToUrl(activeSessionId: string | null) {
   if (activeSessionId) {
-    try { sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId); } catch {}
+    try {
+      sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
+    } catch {
+      // Ignore sessionStorage sync failures.
+    }
     const targetPath = `/chat/${activeSessionId}`;
     try {
       if (window.location.pathname !== targetPath) {
@@ -48,14 +69,22 @@ function syncActiveSessionToUrl(activeSessionId: string | null) {
           window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
         }
       }
-    } catch {}
+    } catch {
+      // Ignore history sync failures.
+    }
   } else {
-    try { sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY); } catch {}
     try {
-      if (window.location.pathname !== '/' && !window.location.pathname.startsWith('/chat/')) {
+      sessionStorage.removeItem(ACTIVE_CHAT_SESSION_ID_KEY);
+    } catch {
+      // Ignore sessionStorage sync failures.
+    }
+    try {
+      if (window.location.pathname !== '/') {
         window.history.pushState({}, '', '/');
       }
-    } catch {}
+    } catch {
+      // Ignore history sync failures.
+    }
   }
 }
 
@@ -90,25 +119,25 @@ interface ChatState {
 
 interface ChatActions {
   // Session setters
-  setSavedSessions: (v: SavedChatSession[] | ((p: SavedChatSession[]) => SavedChatSession[])) => void;
-  setSavedGroups: (v: ChatGroup[] | ((p: ChatGroup[]) => ChatGroup[])) => void;
-  setActiveSessionId: (id: string | null) => void;
-  setActiveMessages: (v: ChatMessage[] | ((p: ChatMessage[]) => ChatMessage[])) => void;
+  setSavedSessions: (v: UpdaterOrValue<SavedChatSession[]>) => void;
+  setSavedGroups: (v: UpdaterOrValue<ChatGroup[]>) => void;
+  setActiveSessionId: (id: UpdaterOrValue<string | null>) => void;
+  setActiveMessages: (v: UpdaterOrValue<ChatMessage[]>) => void;
 
   // Auxiliary setters
-  setEditingMessageId: (id: string | null) => void;
-  setEditMode: (mode: 'update' | 'resend') => void;
-  setCommandedInput: (cmd: InputCommand | null) => void;
-  setLoadingSessionIds: (v: Set<string> | ((p: Set<string>) => Set<string>)) => void;
-  setGeneratingTitleSessionIds: (v: Set<string> | ((p: Set<string>) => Set<string>)) => void;
-  setSelectedFiles: (v: UploadedFile[] | ((p: UploadedFile[]) => UploadedFile[])) => void;
-  setAppFileError: (v: string | null) => void;
-  setIsAppProcessingFile: (v: boolean) => void;
-  setAspectRatio: (v: string) => void;
-  setImageSize: (v: string) => void;
-  setTtsMessageId: (v: string | null) => void;
-  setIsSwitchingModel: (v: boolean) => void;
-  setScrollContainerRef: (ref: React.RefObject<HTMLDivElement> | null) => void;
+  setEditingMessageId: (id: UpdaterOrValue<string | null>) => void;
+  setEditMode: (mode: UpdaterOrValue<'update' | 'resend'>) => void;
+  setCommandedInput: (cmd: UpdaterOrValue<InputCommand | null>) => void;
+  setLoadingSessionIds: (v: UpdaterOrValue<Set<string>>) => void;
+  setGeneratingTitleSessionIds: (v: UpdaterOrValue<Set<string>>) => void;
+  setSelectedFiles: (v: UpdaterOrValue<UploadedFile[]>) => void;
+  setAppFileError: (v: UpdaterOrValue<string | null>) => void;
+  setIsAppProcessingFile: (v: UpdaterOrValue<boolean>) => void;
+  setAspectRatio: (v: UpdaterOrValue<string>) => void;
+  setImageSize: (v: UpdaterOrValue<string>) => void;
+  setTtsMessageId: (v: UpdaterOrValue<string | null>) => void;
+  setIsSwitchingModel: (v: UpdaterOrValue<boolean>) => void;
+  setScrollContainerRef: (ref: UpdaterOrValue<React.RefObject<HTMLDivElement> | null>) => void;
 
   // Persistence
   updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
@@ -155,9 +184,11 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     savedGroups: typeof v === 'function' ? v(s.savedGroups) : v,
   })),
 
-  setActiveSessionId: (id) => {
-    set({ activeSessionId: id });
-    syncActiveSessionToUrl(id);
+  setActiveSessionId: (value) => {
+    const nextValue =
+      typeof value === 'function' ? value(get().activeSessionId) : value;
+    set({ activeSessionId: nextValue });
+    syncActiveSessionToUrl(nextValue);
   },
 
   setActiveMessages: (v) => set((s) => ({
@@ -165,9 +196,20 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   })),
 
   // ── Auxiliary Setters ──
-  setEditingMessageId: (id) => set({ editingMessageId: id }),
-  setEditMode: (mode) => set({ editMode: mode }),
-  setCommandedInput: (cmd) => set({ commandedInput: cmd }),
+  setEditingMessageId: (value) =>
+    set((state) => ({
+      editingMessageId:
+        typeof value === 'function' ? value(state.editingMessageId) : value,
+    })),
+  setEditMode: (value) =>
+    set((state) => ({
+      editMode: typeof value === 'function' ? value(state.editMode) : value,
+    })),
+  setCommandedInput: (value) =>
+    set((state) => ({
+      commandedInput:
+        typeof value === 'function' ? value(state.commandedInput) : value,
+    })),
   setLoadingSessionIds: (v) => set((s) => ({
     loadingSessionIds: typeof v === 'function' ? v(s.loadingSessionIds) : v,
   })),
@@ -177,13 +219,38 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   setSelectedFiles: (v) => set((s) => ({
     selectedFiles: typeof v === 'function' ? v(s.selectedFiles) : v,
   })),
-  setAppFileError: (v) => set({ appFileError: v }),
-  setIsAppProcessingFile: (v) => set({ isAppProcessingFile: v }),
-  setAspectRatio: (v) => set({ aspectRatio: v }),
-  setImageSize: (v) => set({ imageSize: v }),
-  setTtsMessageId: (v) => set({ ttsMessageId: v }),
-  setIsSwitchingModel: (v) => set({ isSwitchingModel: v }),
-  setScrollContainerRef: (ref) => set({ scrollContainerRef: ref }),
+  setAppFileError: (value) =>
+    set((state) => ({
+      appFileError:
+        typeof value === 'function' ? value(state.appFileError) : value,
+    })),
+  setIsAppProcessingFile: (value) =>
+    set((state) => ({
+      isAppProcessingFile:
+        typeof value === 'function' ? value(state.isAppProcessingFile) : value,
+    })),
+  setAspectRatio: (value) =>
+    set((state) => ({
+      aspectRatio: typeof value === 'function' ? value(state.aspectRatio) : value,
+    })),
+  setImageSize: (value) =>
+    set((state) => ({
+      imageSize: typeof value === 'function' ? value(state.imageSize) : value,
+    })),
+  setTtsMessageId: (value) =>
+    set((state) => ({
+      ttsMessageId: typeof value === 'function' ? value(state.ttsMessageId) : value,
+    })),
+  setIsSwitchingModel: (value) =>
+    set((state) => ({
+      isSwitchingModel:
+        typeof value === 'function' ? value(state.isSwitchingModel) : value,
+    })),
+  setScrollContainerRef: (value) =>
+    set((state) => ({
+      scrollContainerRef:
+        typeof value === 'function' ? value(state.scrollContainerRef) : value,
+    })),
 
   // ── Persistence Actions ──
   refreshSessions: async () => {
@@ -194,13 +261,14 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
       if (activeSessionId) {
         const fullActiveSession = await dbService.getSession(activeSessionId);
         if (fullActiveSession) {
-          const rehydrated = rehydrateSessionFiles(fullActiveSession);
+          const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(fullActiveSession));
           setActiveMessages(rehydrated.messages);
         }
       }
 
-      sortSessions(metadataList);
-      setSavedSessions(metadataList);
+      const sanitizedMetadata = metadataList.map(sanitizeSessionModel);
+      sortSessions(sanitizedMetadata);
+      setSavedSessions(sanitizedMetadata);
     } catch (e) {
       logService.error('Failed to refresh sessions from DB', { error: e });
     }
@@ -290,11 +358,9 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     }
 
     // 6. Return Metadata Only (strip messages)
-    const metadataOnly = newFullSessions.map(s => {
-      if (s.messages && s.messages.length === 0) return s;
-      const { messages, ...rest } = s;
-      return { ...rest, messages: [] };
-    });
+    const metadataOnly = newFullSessions.map(s => (
+      s.messages && s.messages.length > 0 ? { ...s, messages: [] } : s
+    ));
 
     set({ savedSessions: metadataOnly });
   },

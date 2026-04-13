@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { SideViewContent, UploadedFile } from '../../../types';
-import { exportSvgAsImage } from '../../../utils/exportUtils';
 import { DiagramWrapper } from './parts/DiagramWrapper';
 
 interface MermaidBlockProps {
@@ -80,6 +79,7 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, 
     if (!svg || isDownloading) return;
     setIsDownloading(true);
     try {
+        const { exportSvgAsImage } = await import('../../../utils/export/image');
         await exportSvgAsImage(svg, `mermaid-diagram-${Date.now()}.jpg`, 3, 'image/jpeg');
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram as JPG.';

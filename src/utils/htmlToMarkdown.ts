@@ -9,10 +9,10 @@ const turndownService = new TurndownService({
 });
 
 // Use GitHub Flavored Markdown plugin (tables, task lists, etc.)
-turndownService.use(gfm);
+turndownService.use(gfm as any);
 
 // Remove scripts, styles, and other non-content elements
-turndownService.remove(['script', 'style', 'noscript', 'iframe', 'object', 'applet', 'video', 'audio']);
+turndownService.remove(['script', 'style', 'noscript', 'iframe', 'object', 'video', 'audio']);
 
 // Custom rule for KaTeX Math
 turndownService.addRule('katex', {

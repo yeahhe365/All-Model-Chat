@@ -6,14 +6,13 @@ import { FloatingToolbar, ToolbarButton, ToolbarDivider, ToolbarLabel } from './
 
 interface ImageViewerProps {
     file: UploadedFile;
-    t: (key: string) => string;
 }
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 10;
 const ZOOM_SPEED_FACTOR = 1.1;
 
-export const ImageViewer: React.FC<ImageViewerProps> = ({ file, t }) => {
+export const ImageViewer: React.FC<ImageViewerProps> = ({ file }) => {
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
