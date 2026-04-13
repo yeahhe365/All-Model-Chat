@@ -116,13 +116,13 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
             <div className="p-4 rounded-full bg-[var(--theme-bg-input)] mb-4">
                 <Inbox size={48} className="opacity-30" strokeWidth={1} />
             </div>
-            <p className="text-base font-medium text-[var(--theme-text-secondary)]">{t('scenarios_empty_title' as any, 'No scenarios found.')}</p>
+            <p className="text-base font-medium text-[var(--theme-text-secondary)]">No scenarios found.</p>
             {searchQuery && (
                 <button 
                     onClick={() => setSearchQuery('')} 
                     className="mt-2 text-[var(--theme-text-link)] hover:underline text-sm"
                 >
-                    {t('scenarios_clear_search' as any, 'Clear search query')}
+                    Clear search query
                 </button>
             )}
           </div>

@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Page } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { translations } from '../../../../utils/appUtils';
 
 interface PdfMainContentProps {
+    fileUrl: string | undefined;
     numPages: number | null;
     scale: number;
     rotation: number;
     isLoading: boolean;
     error: string | null;
+    onLoadSuccess: (data: { numPages: number }) => void;
+    onLoadError: (err: Error) => void;
     setPageRef: (pageNum: number, element: HTMLDivElement | null) => void;
-    containerRef: React.RefObject<HTMLDivElement>;
-    t: (key: keyof typeof translations) => string;
+    containerRef: React.MutableRefObject<HTMLDivElement | null>;
 }
 
 // 核心优化：懒加载/虚拟化 PDF 页面
@@ -20,15 +21,13 @@ const LazyPdfPage = ({
     scale,
     rotation,
     setPageRef,
-    containerRef,
-    t
+    containerRef
 }: {
     pageNum: number;
     scale: number;
     rotation: number;
     setPageRef: (pageNum: number, element: HTMLDivElement | null) => void;
-    containerRef: React.RefObject<HTMLDivElement>;
-    t: (key: keyof typeof translations) => string;
+    containerRef: React.MutableRefObject<HTMLDivElement | null>;
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -69,6 +68,11 @@ const LazyPdfPage = ({
         return () => observer.disconnect();
     }, [containerRef]);
 
+    // 当缩放或旋转改变时，清空缓存的尺寸，让 react-pdf 重新计算新尺寸
+    useEffect(() => {
+        setDimensions({ width: 0, height: 0 });
+    }, [scale, rotation]);
+
     return (
         <div 
             ref={(el) => {
@@ -100,9 +104,7 @@ const LazyPdfPage = ({
             ) : (
                 // Canvas 卸载后的占位 UI，极低内存消耗
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-50 text-gray-300">
-                    <span className="text-sm font-mono font-medium tracking-widest">
-                        {t('pdf_page_placeholder').replace('{page}', String(pageNum))}
-                    </span>
+                    <span className="text-sm font-mono font-medium tracking-widest">PAGE {pageNum}</span>
                 </div>
             )}
         </div>
@@ -110,14 +112,16 @@ const LazyPdfPage = ({
 };
 
 export const PdfMainContent: React.FC<PdfMainContentProps> = ({
+    fileUrl,
     numPages,
     scale,
     rotation,
     isLoading,
     error,
+    onLoadSuccess,
+    onLoadError,
     setPageRef,
-    containerRef,
-    t
+    containerRef
 }) => {
     return (
         <div className="flex-grow h-full relative flex flex-col min-w-0">
@@ -127,22 +131,28 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
             >
                 {/* PDF Content */}
                 <div className={`flex flex-col items-center gap-6 transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
-                    <div className="flex flex-col items-center gap-6 w-full">
+                    <Document
+                        file={fileUrl}
+                        onLoadSuccess={onLoadSuccess}
+                        onLoadError={onLoadError}
+                        loading={null}
+                        error={null}
+                        className="flex flex-col items-center gap-6 w-full"
+                    >
                         {numPages && Array.from(new Array(numPages), (_, index) => {
                             const pageNum = index + 1;
                             return (
                                 <LazyPdfPage 
-                                    key={`${pageNum}-${scale}-${rotation}`}
+                                    key={pageNum}
                                     pageNum={pageNum}
                                     scale={scale}
                                     rotation={rotation}
                                     setPageRef={setPageRef}
                                     containerRef={containerRef}
-                                    t={t}
                                 />
                             );
                         })}
-                    </div>
+                    </Document>
                 </div>
 
                 {/* Loading Indicator */}
@@ -150,7 +160,7 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="bg-black/50 backdrop-blur-md p-4 rounded-xl flex flex-col items-center gap-2 text-white">
                             <Loader2 size={32} className="animate-spin" />
-                            <span className="text-sm font-medium">{t('pdf_loading')}</span>
+                            <span className="text-sm font-medium">Loading PDF...</span>
                         </div>
                     </div>
                 )}

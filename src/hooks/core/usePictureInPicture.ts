@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { logService } from '../../utils/appUtils';
 
 declare global {
@@ -12,9 +12,15 @@ declare global {
 }
 
 export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void) => {
-    const isPipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window;
+    const [isPipSupported, setIsPipSupported] = useState(false);
     const [pipWindow, setPipWindow] = useState<Window | null>(null);
     const [pipContainer, setPipContainer] = useState<HTMLElement | null>(null);
+
+    useEffect(() => {
+        if ('documentPictureInPicture' in window) {
+            setIsPipSupported(true);
+        }
+    }, []);
 
     const closePip = useCallback(() => {
         if (pipWindow) {

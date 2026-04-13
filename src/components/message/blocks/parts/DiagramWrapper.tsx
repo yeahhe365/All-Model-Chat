@@ -3,8 +3,6 @@ import { Loader2, AlertTriangle, Download, Maximize, Code, Copy, Check, Sidebar 
 import { UploadedFile } from '../../../../types';
 import { useCopyToClipboard } from '../../../../hooks/useCopyToClipboard';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../../constants/appConstants';
-import { getTranslator } from '../../../../utils/appUtils';
-import { useSettingsStore } from '../../../../stores/settingsStore';
 
 interface DiagramWrapperProps {
   title: string;
@@ -29,8 +27,6 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
   showSource, setShowSource, onImageClick, onDownloadJpg, onOpenSidePanel,
   themeId, children, extraActions, containerRef
 }) => {
-  const language = useSettingsStore((state) => state.language);
-  const t = getTranslator(language);
   const { isCopied, copyToClipboard } = useCopyToClipboard();
   
   const handleCopyCode = () => copyToClipboard(code);
@@ -40,11 +36,7 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
 
   if (isRendering) {
     return (
-      <div
-        className={`${containerClasses} bg-[var(--theme-bg-tertiary)] my-2`}
-        data-export-pending="true"
-        aria-busy="true"
-      >
+      <div className={`${containerClasses} bg-[var(--theme-bg-tertiary)] my-2`}>
         <Loader2 size={24} className="animate-spin text-[var(--theme-text-link)]" />
       </div>
     );
@@ -56,7 +48,7 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
           <div className={`${containerClasses} bg-red-900/20 mb-2 !p-4`}>
             <div className="text-center text-red-400">
                 <AlertTriangle className="mx-auto mb-2" />
-                <strong className="font-semibold">{title} {t('diagram_error')}</strong>
+                <strong className="font-semibold">{title} Error</strong>
                 <pre className="mt-1 text-xs text-left whitespace-pre-wrap">{error}</pre>
             </div>
           </div>
@@ -72,18 +64,14 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
       <div className="flex items-center justify-between px-3 py-2 border border-[var(--theme-border-secondary)] border-b-0 rounded-t-lg bg-[var(--theme-bg-tertiary)]/30 backdrop-blur-sm">
           <span className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] px-1">{title}</span>
           <div className="flex items-center gap-1 flex-shrink-0">
-             <button
-                onClick={() => setShowSource(!showSource)}
-                className={MESSAGE_BLOCK_BUTTON_CLASS}
-                title={showSource ? t('diagram_hide_source') : t('diagram_show_source')}
-             >
+             <button onClick={() => setShowSource(!showSource)} className={MESSAGE_BLOCK_BUTTON_CLASS} title={showSource ? "Hide Source" : "Show Source"}>
                 <Code size={14} />
              </button>
              {extraActions}
              <button 
                 onClick={onOpenSidePanel}
                 className={MESSAGE_BLOCK_BUTTON_CLASS}
-                title={t('diagram_open_side_panel')}
+                title="Open in Side Panel"
              >
                 <Sidebar size={14} />
              </button>
@@ -92,7 +80,7 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
                     <button
                         onClick={(e) => { e.stopPropagation(); onImageClick(diagramFile); }}
                         className={MESSAGE_BLOCK_BUTTON_CLASS}
-                        title={t('diagram_zoom')}
+                        title="Zoom Diagram"
                     >
                         <Maximize size={14} />
                     </button>
@@ -100,7 +88,7 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
                         onClick={(e) => { e.stopPropagation(); onDownloadJpg(); }}
                         disabled={isDownloading}
                         className={MESSAGE_BLOCK_BUTTON_CLASS}
-                        title={t('diagram_download_jpg')}
+                        title="Download as JPG"
                     >
                         {isDownloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                     </button>
@@ -120,7 +108,7 @@ export const DiagramWrapper: React.FC<DiagramWrapperProps> = ({
       {showSource && (
           <div className="relative rounded-b-lg border border-[var(--theme-border-secondary)] border-t-0 bg-[var(--theme-bg-code-block)] overflow-hidden">
               <div className="absolute top-2 right-2 z-10">
-                  <button onClick={handleCopyCode} className={MESSAGE_BLOCK_BUTTON_CLASS} title={t('diagram_copy_code')}>
+                  <button onClick={handleCopyCode} className={MESSAGE_BLOCK_BUTTON_CLASS} title="Copy Code">
                       {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                   </button>
               </div>

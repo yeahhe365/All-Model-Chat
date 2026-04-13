@@ -36,10 +36,11 @@ describe('NetworkInterceptor', () => {
     const mockFetch = vi.fn().mockResolvedValue(new Response('ok'));
     window.fetch = mockFetch;
 
+    const TARGET_HOST = 'generativelanguage.googleapis.com';
     const proxyUrl = 'https://proxy.example.com';
 
     const rewriteUrl = (urlStr: string, currentProxyUrl: string): string => {
-      const targetOrigin = 'https://generativelanguage.googleapis.com';
+      const targetOrigin = `https://${TARGET_HOST}`;
       let newUrl = urlStr.replace(targetOrigin, currentProxyUrl);
 
       if (newUrl.includes('/v1/v1beta/')) {
@@ -53,10 +54,10 @@ describe('NetworkInterceptor', () => {
     };
 
     const result = rewriteUrl(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent',
       proxyUrl,
     );
-    expect(result).toBe('https://proxy.example.com/v1beta/models/gemini-2.5-pro:generateContent');
+    expect(result).toBe('https://proxy.example.com/v1beta/models/gemini-3.1-pro-preview:generateContent');
   });
 
   it('should fix double version path /v1beta/v1beta', () => {
@@ -72,10 +73,10 @@ describe('NetworkInterceptor', () => {
     };
 
     const result = rewriteUrl(
-      'https://generativelanguage.googleapis.com/v1beta/v1beta/models/gemini-2.5-pro',
+      'https://generativelanguage.googleapis.com/v1beta/v1beta/models/gemini-3.1-pro-preview',
       'https://proxy.example.com',
     );
-    expect(result).toBe('https://proxy.example.com/v1beta/models/gemini-2.5-pro');
+    expect(result).toBe('https://proxy.example.com/v1beta/models/gemini-3.1-pro-preview');
   });
 
   it('should fix Vertex AI path by injecting publishers/google', () => {
@@ -90,10 +91,10 @@ describe('NetworkInterceptor', () => {
     };
 
     const result = rewriteUrl(
-      'https://aiplatform.googleapis.com/v1/models/gemini-2.5-pro:generateContent',
+      'https://aiplatform.googleapis.com/v1/models/gemini-3.1-pro-preview:generateContent',
     );
     expect(result).toBe(
-      'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-pro:generateContent',
+      'https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-3.1-pro-preview:generateContent',
     );
   });
 

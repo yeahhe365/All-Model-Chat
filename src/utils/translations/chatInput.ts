@@ -1,12 +1,9 @@
-
 export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything...', zh: '询问任何问题' },
     aspectRatio_title: { en: 'Aspect Ratio', zh: '宽高比' },
     addById_placeholder: { en: 'Paste File ID (e.g., files/xyz123)', zh: '粘贴文件 ID (例如 files/xyz123)' },
     addById_aria: { en: 'File ID input', zh: '文件 ID 输入框' },
-    addById_uri_hint_start: { en: 'Enter a valid Gemini API File URI (e.g., ', zh: '请输入有效的 Gemini API 文件 URI（例如：' },
-    addById_uri_hint_end: { en: ')', zh: '）' },
     addById_button_aria: { en: 'Add file by ID', zh: '通过 ID 添加文件' },
     cancelAddById_button_aria: { en: 'Cancel adding file by ID', zh: '取消通过 ID 添加文件' },
     addByUrl_placeholder: { en: 'Paste YouTube URL...', zh: '粘贴 YouTube 链接...' },
@@ -56,25 +53,9 @@ export const chatInputTranslations = {
     translate_button_title: { en: 'Translate to English', zh: '翻译成英文' },
     translating_button_title: { en: 'Translating...', zh: '翻译中...' },
     bbox_button_title: { en: 'Object Detection (BBox)', zh: '目标检测 (BBox)' },
-    bbox_button_label: { en: 'BBox', zh: '目标检测' },
     guide_button_title: { en: 'HD Guide (Arrow)', zh: '高清引导 (箭头)' },
-    guide_button_label: { en: 'Guide', zh: '高清引导' },
-    scroll_left_aria: { en: 'Scroll suggestions left', zh: '向左滚动建议' },
-    scroll_right_aria: { en: 'Scroll suggestions right', zh: '向右滚动建议' },
     fullscreen_tooltip_expand: { en: 'Expand Input', zh: '展开输入框' },
     fullscreen_tooltip_collapse: { en: 'Collapse Input', zh: '收起输入框' },
-    tts_context_title: { en: "TTS Director's Notes", zh: 'TTS 导演注释' },
-    tts_context_label: { en: 'Context', zh: '上下文' },
-    tts_context_template: { en: "# AUDIO PROFILE: [Name]\n## THE SCENE: [Description]\n### DIRECTOR'S NOTES\nStyle: [e.g. Happy]\nPace: [e.g. Fast]", zh: '# 音频人设：[名称]\n## 场景：[描述]\n### 导演注释\n风格：[例如：开心]\n节奏：[例如：轻快]' },
-    quad_images_label: { en: '4 Images', zh: '4 张图' },
-    quote_remove_aria: { en: 'Remove quote', zh: '删除引用' },
-    chatInput_textarea_aria: { en: 'Chat message input', zh: '聊天消息输入框' },
-    scroll_prev_message: { en: 'Scroll to previous message', zh: '滚动到上一条消息' },
-    scroll_down: { en: 'Scroll down', zh: '滚动到底部' },
-    live_status_speaking: { en: 'Gemini is speaking...', zh: 'Gemini 正在说话...' },
-    live_status_listening: { en: 'Listening...', zh: '正在聆听...' },
-    live_status_active: { en: 'Live Session Active • Type to chat', zh: '实时会话已连接，可直接输入' },
-    live_status_end_call: { en: 'End Call', zh: '结束通话' },
 
     // Token Modal
     tokenModal_title: { en: 'Token Calculator', zh: 'Token 计算器' },
@@ -84,24 +65,12 @@ export const chatInputTranslations = {
     tokenModal_files: { en: 'Files', zh: '文件' },
     tokenModal_clear: { en: 'Clear', zh: '清空' },
     tokenModal_count: { en: 'Calculate', zh: '计算' },
-    tokenFooter_estimated: { en: 'Estimated Tokens', zh: '预估 Token' },
-    tokenFooter_ready: { en: 'Ready to calculate', zh: '准备开始计算' },
-    tokenFooter_clear_all: { en: 'Clear All', zh: '全部清空' },
 
     // Create Text File Modal
     createText_title: { en: 'Create New File', zh: '创建新文件' },
-    createText_edit_title: { en: 'Edit File', zh: '编辑文件' },
     createText_filename_placeholder: { en: 'Filename', zh: '文件名' },
     createText_content_placeholder: { en: 'Type or paste content here...', zh: '在此输入或粘贴内容...' },
-    createText_content_aria: { en: 'File content', zh: '文件内容' },
-    createText_extension_aria: { en: 'File extension', zh: '文件扩展名' },
     createText_create_button: { en: 'Create File', zh: '创建文件' },
-    createText_download_pdf: { en: 'Download PDF', zh: '下载 PDF' },
-    createText_switch_to_edit: { en: 'Switch to Edit', zh: '切换到编辑' },
-    createText_switch_to_preview: { en: 'Switch to Preview', zh: '切换到预览' },
-    createText_drop_image: { en: 'Drop image to insert', zh: '拖放图片以插入' },
-    createText_preview_empty: { en: 'Start typing...', zh: '开始输入...' },
-    createText_generated_with: { en: 'Generated with Markflow AI (All Model Chat)', zh: '由 Markflow AI (All Model Chat) 生成' },
 
     // File Settings Modal
     fileSettings_title: { en: 'File Configuration', zh: '文件配置' },
@@ -143,34 +112,4 @@ export const chatInputTranslations = {
     // Help Modal
     helpModal_title: { en: 'Command Help', zh: '命令帮助' },
     helpModal_close_aria: { en: 'Close help modal', zh: '关闭帮助模态框' },
-    helpModal_search_placeholder: { en: 'Search commands...', zh: '搜索命令...' },
-    helpModal_copy_title: { en: 'Click to copy', zh: '点击复制' },
-    helpModal_empty: { en: 'No commands found matching "{query}"', zh: '未找到与 "{query}" 匹配的命令' },
-    helpModal_tip: { en: 'Tip: Type / in the chat input to open the command menu instantly.', zh: '提示：在聊天输入框输入 / 可立即打开命令菜单。' },
-
-    // Audio Recorder
-    audioRecorder_title: { en: 'Voice Recorder', zh: '语音录音' },
-    audioRecorder_review_title: { en: 'Preview Recording', zh: '预览录音' },
-    audioRecorder_accessing_mic: { en: 'Accessing microphone...', zh: '正在访问麦克风...' },
-    audioRecorder_ready: { en: 'Ready to record', zh: '准备开始录音' },
-    audioRecorder_system_audio_enabled: { en: 'System audio recording enabled', zh: '已启用系统音频录制' },
-    audioRecorder_recording: { en: 'Recording', zh: '录音中' },
-    audioRecorder_total_duration: { en: 'Total Duration', zh: '总时长' },
-    audioRecorder_start: { en: 'Start Recording', zh: '开始录音' },
-    audioRecorder_discard: { en: 'Discard', zh: '丢弃' },
-    audioRecorder_save: { en: 'Save Recording', zh: '保存录音' },
-    audioRecorder_saving: { en: 'Saving...', zh: '保存中...' },
-    audioRecorder_save_failed: { en: 'Failed to save recording.', zh: '保存录音失败。' },
-
-    // Selected File Preview
-    selectedFile_cancel_upload: { en: 'Cancel Upload', zh: '取消上传' },
-    selectedFile_remove_file: { en: 'Remove File', zh: '移除文件' },
-    selectedFile_edit_file: { en: 'Edit File', zh: '编辑文件' },
-    selectedFile_configure_file: { en: 'Configure File', zh: '配置文件' },
-    selectedFile_file_id_copied: { en: 'ID Copied', zh: '文件 ID 已复制' },
-    selectedFile_copy_file_id: { en: 'Copy File ID', zh: '复制文件 ID' },
-    selectedFile_error: { en: 'Error', zh: '错误' },
-    selectedFile_uploading: { en: 'Uploading...', zh: '上传中...' },
-    selectedFile_processing: { en: 'Processing...', zh: '处理中...' },
-    selectedFile_cancelled: { en: 'Cancelled', zh: '已取消' },
 };

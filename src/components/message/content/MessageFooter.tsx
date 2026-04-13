@@ -2,17 +2,15 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { ChatMessage } from '../../../types';
-import { translations } from '../../../utils/appUtils';
 import { PerformanceMetrics } from '../PerformanceMetrics';
 import { AudioPlayer } from '../../shared/AudioPlayer';
 
 interface MessageFooterProps {
     message: ChatMessage;
-    t: (key: keyof typeof translations) => string;
     onSuggestionClick?: (suggestion: string) => void;
 }
 
-export const MessageFooter: React.FC<MessageFooterProps> = ({ message, t, onSuggestionClick }) => {
+export const MessageFooter: React.FC<MessageFooterProps> = ({ message, onSuggestionClick }) => {
     const { audioSrc, audioAutoplay, suggestions, isGeneratingSuggestions, role, generationStartTime } = message;
 
     return (
@@ -26,7 +24,6 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({ message, t, onSugg
             {(role === 'model' || (role === 'error' && generationStartTime)) && (
                 <PerformanceMetrics 
                     message={message} 
-                    t={t} 
                     hideTimer={message.isLoading}
                 />
             )}
@@ -60,7 +57,7 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({ message, t, onSugg
             {isGeneratingSuggestions && (
                 <div className="mt-3 flex items-center gap-2 text-xs text-[var(--theme-text-tertiary)] animate-pulse opacity-70 px-1">
                     <Loader2 size={12} className="animate-spin" strokeWidth={1.5} />
-                    <span>{t('messageFooter_generating_suggestions')}</span>
+                    <span>Generating suggestions...</span>
                 </div>
             )}
         </>

@@ -1,20 +1,16 @@
 
 import React, { Suspense, lazy } from 'react';
 import { UploadedFile, AppSettings, ModelOption } from '../../../types';
+import { FileConfigurationModal } from '../../modals/FileConfigurationModal';
 import { VideoMetadata } from '../../../types';
 import { MediaResolution } from '../../../types/settings';
 
-const FileConfigurationModal = lazy(async () => {
-    const module = await import('../../modals/FileConfigurationModal');
-    return { default: module.FileConfigurationModal };
-});
-
-const TokenCountModal = lazy(async () => {
+const LazyTokenCountModal = lazy(async () => {
     const module = await import('../../modals/TokenCountModal');
     return { default: module.TokenCountModal };
 });
 
-const FilePreviewModal = lazy(async () => {
+const LazyFilePreviewModal = lazy(async () => {
     const module = await import('../../modals/FilePreviewModal');
     return { default: module.FilePreviewModal };
 });
@@ -63,20 +59,18 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
     handlers
 }) => {
     return (
-        <Suspense fallback={null}>
-            {!!configuringFile && (
-                <FileConfigurationModal 
-                    isOpen={!!configuringFile} 
-                    onClose={() => setConfiguringFile(null)} 
-                    file={configuringFile}
-                    onSave={handlers.handleSaveFileConfig}
-                    t={t}
-                    isGemini3={isGemini3}
-                />
-            )}
+        <>
+            <FileConfigurationModal 
+                isOpen={!!configuringFile} 
+                onClose={() => setConfiguringFile(null)} 
+                file={configuringFile}
+                onSave={handlers.handleSaveFileConfig}
+                t={t}
+                isGemini3={isGemini3}
+            />
 
-            {showTokenModal && (
-                <TokenCountModal
+            <Suspense fallback={null}>
+                <LazyTokenCountModal
                     isOpen={showTokenModal}
                     onClose={() => setShowTokenModal(false)}
                     initialText={inputText}
@@ -86,10 +80,10 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                     currentModelId={currentModelId}
                     t={t}
                 />
-            )}
+            </Suspense>
 
-            {previewFile && (
-                <FilePreviewModal
+            <Suspense fallback={null}>
+                <LazyFilePreviewModal
                     file={previewFile}
                     onClose={() => setPreviewFile(null)}
                     t={t as any}
@@ -100,7 +94,7 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                     onSaveText={onSaveTextFile}
                     initialEditMode={isPreviewEditable}
                 />
-            )}
-        </Suspense>
+            </Suspense>
+        </>
     );
 };

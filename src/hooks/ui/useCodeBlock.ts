@@ -1,11 +1,10 @@
 
-import React, { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { useCopyToClipboard } from '../useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { isLikelyHtml } from '../../utils/codeUtils';
-import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
+import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { SideViewContent } from '../../types';
-import { translations } from '../../utils/appUtils';
 
 const COLLAPSE_THRESHOLD_PX = 320;
 
@@ -54,7 +53,6 @@ interface UseCodeBlockProps {
     expandCodeBlocksByDefault: boolean;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     onOpenSidePanel: (content: SideViewContent) => void;
-    t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export const useCodeBlock = ({
@@ -62,52 +60,55 @@ export const useCodeBlock = ({
     className,
     expandCodeBlocksByDefault,
     onOpenHtmlPreview,
-    onOpenSidePanel,
-    t
+    onOpenSidePanel
 }: UseCodeBlockProps) => {
     const preRef = useRef<HTMLPreElement>(null);
     const [isOverflowing, setIsOverflowing] = useState(false);
-    const [userExpandedPreference, setUserExpandedPreference] = useState<boolean | null>(null);
+    const [expandedOverride, setExpandedOverride] = useState<boolean | null>(null);
     
     const { isCopied, copyToClipboard } = useCopyToClipboard();
 
     // Auto-scroll logic state
     const userHasScrolledUp = useRef(false);
-    const isAutoScrolling = useRef(false);
     const prevTextLength = useRef(0);
+    const lastKnownScrollTop = useRef(0);
 
     // Find the code element
     const codeElement = React.Children.toArray(children).find(
         (child): child is React.ReactElement => React.isValidElement(child)
     );
 
-    const codeText = useMemo(() => {
-        if (codeElement) {
-            return extractTextFromNode(codeElement.props.children);
-        }
-        return extractTextFromNode(children);
-    }, [children, codeElement]);
-
-    const isExpanded = userExpandedPreference ?? expandCodeBlocksByDefault;
+    // Synchronously resolve content string
+    const currentContent = codeElement
+        ? extractTextFromNode(codeElement.props.children)
+        : extractTextFromNode(children);
+    const resolvedCodeText = currentContent;
+    const isExpanded = expandedOverride ?? expandCodeBlocksByDefault;
 
     // Scroll handler
     const handleScroll = useCallback(() => {
-        if (isAutoScrolling.current) return;
-
         const el = preRef.current;
         if (!el) return;
         
+        const previousScrollTop = lastKnownScrollTop.current;
         const isAtBottom = Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) < 25;
-        userHasScrolledUp.current = !isAtBottom;
+
+        if (isAtBottom) {
+            userHasScrolledUp.current = false;
+        } else if (el.scrollTop < previousScrollTop - 1) {
+            userHasScrolledUp.current = true;
+        }
+
+        lastKnownScrollTop.current = el.scrollTop;
     }, []);
 
     useEffect(() => {
         const el = preRef.current;
         if (el) {
+            lastKnownScrollTop.current = el.scrollTop;
             el.addEventListener('scroll', handleScroll);
             return () => el.removeEventListener('scroll', handleScroll);
         }
-
         return undefined;
     }, [handleScroll]);
 
@@ -123,40 +124,31 @@ export const useCodeBlock = ({
             if (isCurrentlyOverflowing) {
                 userHasScrolledUp.current = false;
             }
+            lastKnownScrollTop.current = preElement.scrollTop;
             return;
         }
 
         // Auto-scroll Logic
-        const currentLength = codeText.length;
+        const currentLength = resolvedCodeText.length;
         if (!isExpanded && prevTextLength.current > 0 && currentLength > prevTextLength.current) {
             if (!userHasScrolledUp.current) {
-                const scrollToBottom = () => {
-                    if (preElement) preElement.scrollTop = preElement.scrollHeight;
-                };
-
-                isAutoScrolling.current = true;
-                scrollToBottom();
-                
-                requestAnimationFrame(() => {
-                    scrollToBottom();
-                    setTimeout(() => {
-                        isAutoScrolling.current = false;
-                    }, 100);
-                });
+                preElement.scrollTop = preElement.scrollHeight;
+                lastKnownScrollTop.current = preElement.scrollTop;
             }
         }
         
         prevTextLength.current = currentLength;
+        lastKnownScrollTop.current = preElement.scrollTop;
 
-    }, [children, codeText, isExpanded, isOverflowing]);
+    }, [children, isExpanded, isOverflowing, resolvedCodeText]);
 
     const handleToggleExpand = () => {
-        setUserExpandedPreference(prev => !(prev ?? expandCodeBlocksByDefault));
+        setExpandedOverride(prev => !(prev ?? expandCodeBlocksByDefault));
     };
     
     const handleCopy = () => {
-        if (codeText && !isCopied) {
-            copyToClipboard(codeText);
+        if (resolvedCodeText && !isCopied) {
+            copyToClipboard(resolvedCodeText);
         }
     };
 
@@ -171,7 +163,7 @@ export const useCodeBlock = ({
     else if (language === 'json') mimeType = 'application/json';
     else if (['markdown', 'md'].includes(language)) mimeType = 'text/markdown';
 
-    const contentLooksLikeHtml = isLikelyHtml(codeText);
+    const contentLooksLikeHtml = isLikelyHtml(resolvedCodeText);
     const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language);
     
     const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
@@ -182,9 +174,9 @@ export const useCodeBlock = ({
     else if (language === 'xml' && contentLooksLikeHtml) finalLanguage = 'html';
 
     const handleOpenSide = () => {
-        let displayTitle = t('htmlPreview_subtitle_html', 'HTML Preview');
+        let displayTitle = 'HTML Preview';
         if (finalLanguage === 'html') {
-            const titleMatch = codeText.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const titleMatch = resolvedCodeText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 displayTitle = titleMatch[1];
             }
@@ -192,14 +184,14 @@ export const useCodeBlock = ({
         
         onOpenSidePanel({
             type: 'html',
-            content: codeText,
+            content: resolvedCodeText,
             language: finalLanguage,
             title: displayTitle
         });
     };
 
     const handleFullscreenPreview = (trueFullscreen: boolean) => {
-        onOpenHtmlPreview(codeText, { initialTrueFullscreen: trueFullscreen });
+        onOpenHtmlPreview(resolvedCodeText, { initialTrueFullscreen: trueFullscreen });
     };
 
     const handleDownload = () => {
@@ -207,13 +199,13 @@ export const useCodeBlock = ({
         let filename = `snippet.${ext}`;
         
         if (downloadMimeType === 'text/html' || ext === 'html') {
-            const titleMatch = codeText.match(/<title[^>]*>([^<]+)<\/title>/i);
+            const titleMatch = resolvedCodeText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch && titleMatch[1]) {
                 const saneTitle = sanitizeFilename(titleMatch[1].trim());
                 if (saneTitle) filename = `${saneTitle}.html`;
             }
         }
-        const blob = new Blob([codeText], { type: downloadMimeType });
+        const blob = new Blob([resolvedCodeText], { type: downloadMimeType });
         const url = URL.createObjectURL(blob);
         triggerDownload(url, filename);
     };

@@ -1,6 +1,11 @@
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
-import { Type } from "@google/genai";
+
+const SCHEMA_TYPE = {
+    OBJECT: 'OBJECT',
+    ARRAY: 'ARRAY',
+    STRING: 'STRING',
+} as const;
 
 export const translateTextApi = async (apiKey: string, text: string, targetLanguage: string = 'English'): Promise<string> => {
     logService.info(`Translating text to ${targetLanguage}...`);
@@ -9,7 +14,7 @@ export const translateTextApi = async (apiKey: string, text: string, targetLangu
     try {
         const ai = await getConfiguredApiClient(apiKey);
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-3.1-flash-lite-preview',
             contents: prompt,
             config: {
                 temperature: 0.1,
@@ -18,8 +23,9 @@ export const translateTextApi = async (apiKey: string, text: string, targetLangu
             }
         });
 
-        if (response.text) {
-            return response.text.trim();
+        const translatedText = response.text?.trim();
+        if (translatedText) {
+            return translatedText;
         } else {
             throw new Error("Translation failed. The model returned an empty response.");
         }
@@ -52,7 +58,7 @@ ASSISTANT: "${modelContent}"`;
     try {
         const ai = await getConfiguredApiClient(apiKey);
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-3.1-flash-lite-preview',
             contents: prompt,
             config: {
                 thinkingConfig: { thinkingBudget: -1 }, // auto
@@ -60,12 +66,12 @@ ASSISTANT: "${modelContent}"`;
                 topP: 0.95,
                 responseMimeType: "application/json",
                 responseSchema: {
-                    type: Type.OBJECT,
+                    type: SCHEMA_TYPE.OBJECT,
                     properties: {
                         suggestions: {
-                            type: Type.ARRAY,
+                            type: SCHEMA_TYPE.ARRAY,
                             items: {
-                                type: Type.STRING,
+                                type: SCHEMA_TYPE.STRING,
                                 description: "A short, relevant suggested reply or follow-up question."
                             },
                             description: "An array of exactly three suggested replies."
@@ -92,7 +98,7 @@ ASSISTANT: "${modelContent}"`;
             const ai = await getConfiguredApiClient(apiKey); // Re-get client
             const fallbackPrompt = `${prompt}\n\nReturn the three suggestions as a numbered list, one per line. Do not include any other text or formatting.`;
              const fallbackResponse = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-lite',
+                model: 'gemini-3.1-flash-lite-preview',
                 contents: fallbackPrompt,
                 config: {
                     thinkingConfig: { thinkingBudget: -1 },
@@ -100,8 +106,9 @@ ASSISTANT: "${modelContent}"`;
                     topP: 0.95,
                 }
             });
-            if (fallbackResponse.text) {
-                return fallbackResponse.text.trim().split('\n').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 3);
+            const fallbackText = fallbackResponse.text?.trim();
+            if (fallbackText) {
+                return fallbackText.split('\n').map(s => s.replace(/^\d+\.\s*/, '').trim()).filter(Boolean).slice(0, 3);
             }
         } catch (fallbackError) {
              logService.error("Fallback suggestions generation also failed:", fallbackError);
@@ -119,7 +126,7 @@ export const generateTitleApi = async (apiKey: string, userContent: string, mode
     try {
         const ai = await getConfiguredApiClient(apiKey);
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-lite',
+            model: 'gemini-3.1-flash-lite-preview',
             contents: prompt,
             config: {
                 thinkingConfig: { thinkingBudget: -1 },
@@ -128,9 +135,10 @@ export const generateTitleApi = async (apiKey: string, userContent: string, mode
             }
         });
 
-        if (response.text) {
+        const titleText = response.text?.trim();
+        if (titleText) {
             // Clean up the title: remove quotes, trim whitespace
-            let title = response.text.trim();
+            let title = titleText;
             if ((title.startsWith('"') && title.endsWith('"')) || (title.startsWith("'") && title.endsWith("'"))) {
                 title = title.substring(1, title.length - 1);
             }

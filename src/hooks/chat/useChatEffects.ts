@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { UploadedFile, SavedChatSession, ChatSettings, ModelOption, ChatMessage } from '../../types';
+import { UploadedFile, SavedChatSession, ChatSettings, ModelOption } from '../../types';
 import { logService, cleanupFilePreviewUrls } from '../../utils/appUtils';
 
 interface UseChatEffectsProps {
@@ -21,7 +21,6 @@ interface UseChatEffectsProps {
     loadInitialData: () => Promise<void>;
     loadChatSession: (id: string) => void;
     startNewChat: () => void;
-    messages: ChatMessage[];
 }
 
 export const useChatEffects = ({
@@ -41,15 +40,14 @@ export const useChatEffects = ({
     setAspectRatio,
     loadInitialData,
     loadChatSession,
-    startNewChat,
-    messages: _messages
+    startNewChat
 }: UseChatEffectsProps) => {
 
     // 1. Initial Data Load
     useEffect(() => {
         const loadData = async () => await loadInitialData();
         loadData();
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     
     // 2. Session Validation
     // This effect ensures that if the activeSessionId points to a session that doesn't exist in savedSessions
@@ -123,7 +121,7 @@ export const useChatEffects = ({
         if (isSwitchingModel) { 
             const timer = setTimeout(() => setIsSwitchingModel(false), 0); 
             return () => clearTimeout(timer); 
-        }
+        } 
         return undefined;
     }, [isSwitchingModel, setIsSwitchingModel]);
 

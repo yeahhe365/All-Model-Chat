@@ -1,6 +1,4 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { getTranslator } from '../../utils/appUtils';
-import { useSettingsStore } from '../../stores/settingsStore';
 
 interface Props {
   children: ReactNode;
@@ -26,17 +24,14 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   render() {
-    const language = useSettingsStore.getState().language || (typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en');
-    const t = getTranslator(language);
-
     if (this.state.hasError) {
       return (
         <div className="flex h-full items-center justify-center bg-gray-900 p-8">
           <div className="max-w-md rounded-xl bg-gray-800 p-8 text-center shadow-2xl">
             <div className="mb-4 text-5xl">&#9888;&#65039;</div>
-            <h2 className="mb-2 text-xl font-bold text-white">{t('errorBoundary_title')}</h2>
+            <h2 className="mb-2 text-xl font-bold text-white">Something went wrong</h2>
             <p className="mb-4 text-sm text-gray-400">
-              {this.state.error?.message || t('errorBoundary_fallback')}
+              {this.state.error?.message || 'An unexpected error occurred.'}
             </p>
             <button
               onClick={() => {
@@ -45,7 +40,7 @@ export class ErrorBoundary extends Component<Props, State> {
               }}
               className="rounded-lg bg-blue-600 px-6 py-2 text-white transition-colors hover:bg-blue-700"
             >
-              {t('errorBoundary_reload')}
+              Reload
             </button>
           </div>
         </div>

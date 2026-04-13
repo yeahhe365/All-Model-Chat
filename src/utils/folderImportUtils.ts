@@ -1,5 +1,5 @@
 // utils/folderImportUtils.ts
-import { fileToString } from './domainUtils';
+import { fileToString } from './fileHelpers';
 
 const IGNORED_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp',
@@ -160,7 +160,7 @@ export const generateFolderContext = async (files: FileList | File[] | { file: F
         } else {
              // Standard File object
              file = item as File;
-             path = (file as any).webkitRelativePath || file.name;
+             path = file.webkitRelativePath || file.name;
         }
         
         return {

@@ -1,62 +1,68 @@
-import { GenerateContentResponse, Part, UsageMetadata } from "@google/genai";
-import { ThoughtSupportingPart, ChatHistoryItem } from '../../types';
-import { logService } from "../logService";
-import { getConfiguredApiClient } from "./baseApi";
 
-type CandidateWithLegacyUrlContext = {
+import type { FunctionCall, GenerateContentResponse, Part, UsageMetadata } from "@google/genai";
+import {
+    ThoughtSupportingPart,
+    StreamMessageSender,
+    NonStreamMessageSender,
+} from '../../types';
+import { logService } from "../logService";
+import { getConfiguredApiClient, getHttpOptionsForContents } from "./baseApi";
+
+type CandidateWithUrlContext = {
+    groundingMetadata?: unknown;
     urlContextMetadata?: unknown;
     url_context_metadata?: unknown;
-    groundingMetadata?: unknown;
-    content?: { parts?: Part[] };
+};
+
+type MetadataWithCitations = {
+    citations?: Array<{ uri?: string }>;
+} & Record<string, unknown>;
+
+const mergeFunctionCallUrlContextMetadata = (
+    finalMetadata: { citations?: Array<{ uri?: string }> },
+    functionCalls?: FunctionCall[]
+) => {
+    if (!functionCalls?.length) return;
+
+    for (const functionCall of functionCalls) {
+        const urlContextMetadata = functionCall.args?.urlContextMetadata;
+        if (!urlContextMetadata || typeof urlContextMetadata !== 'object') continue;
+
+        const citations = Array.isArray((urlContextMetadata as { citations?: unknown[] }).citations)
+            ? ((urlContextMetadata as { citations?: Array<{ uri?: string }> }).citations ?? [])
+            : [];
+
+        if (citations.length === 0) continue;
+
+        if (!finalMetadata.citations) {
+            finalMetadata.citations = [];
+        }
+
+        for (const citation of citations) {
+            if (!finalMetadata.citations.some(existing => existing.uri === citation.uri)) {
+                finalMetadata.citations.push(citation);
+            }
+        }
+    }
 };
 
 /**
  * Shared helper to parse GenAI responses.
  * Extracts parts, separates thoughts, and merges metadata/citations from tool calls.
  */
-const mergeUniqueCitations = (target: any, citations: any[] = []) => {
-    if (citations.length === 0) {
-        return target;
-    }
-
-    if (!target.citations) {
-        target.citations = [];
-    }
-
-    for (const citation of citations) {
-        if (!target.citations.some((existing: any) => existing.uri === citation.uri)) {
-            target.citations.push(citation);
-        }
-    }
-
-    return target;
-};
-
-const getToolCallCitations = (part: Part): any[] => {
-    const args = part.toolCall?.args as
-        | { urlContextMetadata?: { citations?: any[] } }
-        | undefined;
-
-    return args?.urlContextMetadata?.citations ?? [];
-};
-
-export const processGenerateContentResponse = (response: GenerateContentResponse) => {
+const processResponse = (response: GenerateContentResponse) => {
     let thoughtsText = "";
     const responseParts: Part[] = [];
-    const contentParts = response.candidates?.[0]?.content?.parts ?? [];
 
-    for (const part of contentParts) {
-        const pAsThoughtSupporting = part as ThoughtSupportingPart;
-        if (pAsThoughtSupporting.thought) {
-            thoughtsText += part.text;
-            continue;
+    if (response.candidates && response.candidates[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+            const pAsThoughtSupporting = part as ThoughtSupportingPart;
+            if (pAsThoughtSupporting.thought) {
+                thoughtsText += part.text;
+            } else {
+                responseParts.push(part);
+            }
         }
-
-        if (part.toolCall || part.toolResponse) {
-            continue;
-        }
-
-        responseParts.push(part);
     }
 
     if (responseParts.length === 0 && response.text) {
@@ -64,33 +70,15 @@ export const processGenerateContentResponse = (response: GenerateContentResponse
     }
     
     const candidate = response.candidates?.[0];
-    const candidateWithLegacyUrlContext = candidate as CandidateWithLegacyUrlContext | undefined;
-    const groundingMetadata = candidateWithLegacyUrlContext?.groundingMetadata;
-    const finalMetadata: any = groundingMetadata ? { ...groundingMetadata } : {};
+    const groundingMetadata = candidate?.groundingMetadata;
+    const finalMetadata: MetadataWithCitations = groundingMetadata && typeof groundingMetadata === 'object'
+        ? { ...(groundingMetadata as Record<string, unknown>) }
+        : {};
     
-    const urlContextMetadata =
-        candidateWithLegacyUrlContext?.urlContextMetadata ||
-        candidateWithLegacyUrlContext?.url_context_metadata;
+    const urlContextCandidate = candidate as CandidateWithUrlContext | undefined;
+    const urlContextMetadata = urlContextCandidate?.urlContextMetadata || urlContextCandidate?.url_context_metadata;
 
-    const functionCalls = response.functionCalls;
-    if (functionCalls) {
-        for (const functionCall of functionCalls) {
-            const urlContextMetadata = functionCall.args?.urlContextMetadata;
-            if (urlContextMetadata && typeof urlContextMetadata === 'object' && 'citations' in urlContextMetadata) {
-                if (!finalMetadata.citations) finalMetadata.citations = [];
-                const newCitations = Array.isArray(urlContextMetadata.citations) ? urlContextMetadata.citations : [];
-                for (const newCitation of newCitations) {
-                    if (!finalMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                        finalMetadata.citations.push(newCitation);
-                    }
-                }
-            }
-        }
-    }
-
-    for (const part of contentParts) {
-        mergeUniqueCitations(finalMetadata, getToolCallCitations(part));
-    }
+    mergeFunctionCallUrlContextMetadata(finalMetadata, response.functionCalls);
 
     return {
         parts: responseParts,
@@ -101,26 +89,27 @@ export const processGenerateContentResponse = (response: GenerateContentResponse
     };
 };
 
-export const sendStatelessMessageStreamApi = async (
-    apiKey: string,
-    modelId: string,
-    history: ChatHistoryItem[],
-    parts: Part[],
-    config: any,
-    abortSignal: AbortSignal,
-    onPart: (part: Part) => void,
-    onThoughtChunk: (chunk: string) => void,
-    onError: (error: Error) => void,
-    onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
-    role: 'user' | 'model' = 'user'
-): Promise<void> => {
+export const sendStatelessMessageStreamApi: StreamMessageSender = async (
+    apiKey,
+    modelId,
+    history,
+    parts,
+    config,
+    abortSignal,
+    onPart,
+    onThoughtChunk,
+    onError,
+    onComplete,
+    role = 'user'
+) => {
     logService.info(`Sending message via stateless generateContentStream for ${modelId} (Role: ${role})`);
     let finalUsageMetadata: UsageMetadata | undefined = undefined;
-    let finalGroundingMetadata: any = null;
-    let finalUrlContextMetadata: any = null;
+    let finalGroundingMetadata: MetadataWithCitations | null = null;
+    let finalUrlContextMetadata: unknown = null;
+    const contents = [...history, { role: role, parts }];
 
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
         
         if (abortSignal.aborted) {
             logService.warn("Streaming aborted by signal before start.");
@@ -129,7 +118,7 @@ export const sendStatelessMessageStreamApi = async (
 
         const result = await ai.models.generateContentStream({
             model: modelId,
-            contents: [...history, { role: role, parts }],
+            contents,
             config: config
         });
 
@@ -144,51 +133,25 @@ export const sendStatelessMessageStreamApi = async (
             const candidate = chunkResponse.candidates?.[0];
             
             if (candidate) {
-                const candidateWithLegacyUrlContext = candidate as CandidateWithLegacyUrlContext;
-                const metadataFromChunk = candidateWithLegacyUrlContext.groundingMetadata;
+                const metadataFromChunk = candidate.groundingMetadata;
                 if (metadataFromChunk) {
-                    finalGroundingMetadata = metadataFromChunk;
+                    finalGroundingMetadata = { ...(metadataFromChunk as object) } as MetadataWithCitations;
                 }
                 
-                const urlMetadata =
-                    candidateWithLegacyUrlContext.urlContextMetadata ||
-                    candidateWithLegacyUrlContext.url_context_metadata;
+                const urlContextCandidate = candidate as CandidateWithUrlContext;
+                const urlMetadata = urlContextCandidate.urlContextMetadata || urlContextCandidate.url_context_metadata;
                 if (urlMetadata) {
                     finalUrlContextMetadata = urlMetadata;
                 }
 
-                const functionCalls = chunkResponse.functionCalls;
-                if (functionCalls) {
-                    for (const functionCall of functionCalls) {
-                        const urlContextMetadata = functionCall.args?.urlContextMetadata;
-                        if (urlContextMetadata && typeof urlContextMetadata === 'object' && 'citations' in urlContextMetadata) {
-                            if (!finalGroundingMetadata) finalGroundingMetadata = {};
-                            if (!finalGroundingMetadata.citations) finalGroundingMetadata.citations = [];
-                            const newCitations = Array.isArray(urlContextMetadata.citations) ? urlContextMetadata.citations : [];
-                            for (const newCitation of newCitations) {
-                                if (!finalGroundingMetadata.citations.some((c: any) => c.uri === newCitation.uri)) {
-                                    finalGroundingMetadata.citations.push(newCitation);
-                                }
-                            }
-                        }
-                    }
+                if (chunkResponse.functionCalls?.length) {
+                    if (!finalGroundingMetadata) finalGroundingMetadata = {};
+                    mergeFunctionCallUrlContextMetadata(finalGroundingMetadata, chunkResponse.functionCalls);
                 }
                 
                 if (candidate.content?.parts?.length) {
                     for (const part of candidate.content.parts) {
                         const pAsThoughtSupporting = part as ThoughtSupportingPart;
-                        const toolCallCitations = getToolCallCitations(part);
-
-                        if (toolCallCitations.length > 0) {
-                            if (!finalGroundingMetadata) {
-                                finalGroundingMetadata = {};
-                            }
-                            mergeUniqueCitations(finalGroundingMetadata, toolCallCitations);
-                        }
-
-                        if (part.toolCall || part.toolResponse) {
-                            continue;
-                        }
 
                         if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
@@ -208,32 +171,33 @@ export const sendStatelessMessageStreamApi = async (
     }
 };
 
-export const sendStatelessMessageNonStreamApi = async (
-    apiKey: string,
-    modelId: string,
-    history: ChatHistoryItem[],
-    parts: Part[],
-    config: any,
-    abortSignal: AbortSignal,
-    onError: (error: Error) => void,
-    onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
-): Promise<void> => {
+export const sendStatelessMessageNonStreamApi: NonStreamMessageSender = async (
+    apiKey,
+    modelId,
+    history,
+    parts,
+    config,
+    abortSignal,
+    onError,
+    onComplete
+) => {
     logService.info(`Sending message via stateless generateContent (non-stream) for model ${modelId}`);
+    const contents = [...history, { role: 'user', parts }];
     
     try {
-        const ai = await getConfiguredApiClient(apiKey);
+        const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
         const response = await ai.models.generateContent({
             model: modelId,
-            contents: [...history, { role: 'user', parts }],
+            contents,
             config: config
         });
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }
 
-        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processGenerateContentResponse(response);
+        const { parts: responseParts, thoughts, usage, grounding, urlContext } = processResponse(response);
 
         logService.info(`Stateless non-stream complete for ${modelId}.`, { usage, hasGrounding: !!grounding, hasUrlContext: !!urlContext });
         onComplete(responseParts, thoughts, usage, grounding, urlContext);

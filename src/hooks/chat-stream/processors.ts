@@ -1,5 +1,5 @@
 import { ChatMessage, ChatSettings } from '../../types';
-import { Part, UsageMetadata } from '@google/genai';
+import type { Part, UsageMetadata } from '@google/genai';
 import { generateUniqueId, calculateTokenStats, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
@@ -28,6 +28,20 @@ export const appendApiPart = (parts: any[] = [], newPart: any) => {
     return newParts;
 };
 
+const findLoadingModelMessageIndex = (
+    messages: ChatMessage[],
+    generationStartTime: Date
+) => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+        const msg = messages[i];
+        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
+            return i;
+        }
+    }
+
+    return -1;
+};
+
 /**
  * Core logic to mutate the messages array with a new part.
  * Used by both single and batch updaters to avoid code duplication.
@@ -42,15 +56,7 @@ const applyPartToMessages = (
 ) => {
     const anyPart = part as any;
     const now = Date.now();
-    
-    let lastMessageIndex = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-        const msg = messages[i];
-        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
-            lastMessageIndex = i;
-            break;
-        }
-    }
+    const lastMessageIndex = findLoadingModelMessageIndex(messages, generationStartTime);
 
     if (lastMessageIndex === -1) return;
     let lastMessage = messages[lastMessageIndex];
@@ -111,15 +117,7 @@ const applyThoughtToMessages = (
     generationStartTime: Date
 ) => {
     const now = Date.now();
-    
-    let lastMessageIndex = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-        const msg = messages[i];
-        if (msg.isLoading && msg.role === 'model' && msg.generationStartTime && msg.generationStartTime.getTime() === generationStartTime.getTime()) {
-            lastMessageIndex = i;
-            break;
-        }
-    }
+    const lastMessageIndex = findLoadingModelMessageIndex(messages, generationStartTime);
 
     if (lastMessageIndex !== -1) {
         const lastMessage = messages[lastMessageIndex];
@@ -131,28 +129,6 @@ const applyThoughtToMessages = (
         }
         messages[lastMessageIndex] = { ...lastMessage, ...updates };
     }
-};
-
-export const updateMessagesWithPart = (
-    messages: ChatMessage[],
-    part: Part,
-    generationStartTime: Date,
-    newModelMessageIds: Set<string>,
-    firstContentPartTime: Date | null
-): ChatMessage[] => {
-    const newMessages = [...messages];
-    applyPartToMessages(newMessages, part, generationStartTime, newModelMessageIds, firstContentPartTime);
-    return newMessages;
-};
-
-export const updateMessagesWithThought = (
-    messages: ChatMessage[],
-    thoughtChunk: string,
-    generationStartTime: Date
-): ChatMessage[] => {
-    const newMessages = [...messages];
-    applyThoughtToMessages(newMessages, thoughtChunk, generationStartTime);
-    return newMessages;
 };
 
 /**

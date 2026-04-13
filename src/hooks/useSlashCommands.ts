@@ -31,12 +31,6 @@ interface UseSlashCommandsProps {
   thinkingLevel?: 'LOW' | 'HIGH' | 'MINIMAL' | 'MEDIUM';
 }
 
-interface CommandSpec {
-  name: string;
-  description: string;
-  icon: string;
-}
-
 export const useSlashCommands = ({
   t,
   onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext,
@@ -59,27 +53,8 @@ export const useSlashCommands = ({
     selectedIndex: 0,
   });
 
-  const commandSpecs = useMemo<CommandSpec[]>(() => [
-    { name: 'model', description: t('help_cmd_model'), icon: 'bot' },
-    { name: 'help', description: t('help_cmd_help'), icon: 'help' },
-    { name: 'edit', description: t('help_cmd_edit'), icon: 'edit' },
-    { name: 'pin', description: t('help_cmd_pin'), icon: 'pin' },
-    { name: 'retry', description: t('help_cmd_retry'), icon: 'retry' },
-    { name: 'online', description: t('help_cmd_search'), icon: 'search' },
-    { name: 'deep', description: t('help_cmd_deep'), icon: 'deep' },
-    { name: 'code', description: t('help_cmd_code'), icon: 'code' },
-    { name: 'url', description: t('help_cmd_url'), icon: 'url' },
-    { name: 'file', description: t('help_cmd_file'), icon: 'file' },
-    { name: 'clear', description: t('help_cmd_clear'), icon: 'clear' },
-    { name: 'new', description: t('help_cmd_new'), icon: 'new' },
-    { name: 'settings', description: t('help_cmd_settings'), icon: 'settings' },
-    { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas' },
-    { name: 'pip', description: t('help_cmd_pip'), icon: 'pip' },
-    { name: 'fast', description: t('help_cmd_fast'), icon: 'fast' },
-  ], [t]);
-
   const commands = useMemo<Command[]>(() => [
-    { ...commandSpecs[0], action: () => {
+    { name: 'model', description: t('help_cmd_model'), icon: 'bot', action: () => {
         setInputText('/model ');
         setTimeout(() => {
             const textarea = textareaRef.current;
@@ -90,31 +65,30 @@ export const useSlashCommands = ({
             }
         }, 0);
     } },
-    { ...commandSpecs[1], action: () => setIsHelpModalOpen(true) },
-    { ...commandSpecs[2], action: onEditLastUserMessage },
-    { ...commandSpecs[3], action: onTogglePinCurrentSession },
-    { ...commandSpecs[4], action: onRetryLastTurn },
-    { ...commandSpecs[5], action: onToggleGoogleSearch },
-    { ...commandSpecs[6], action: onToggleDeepSearch },
-    { ...commandSpecs[7], action: onToggleCodeExecution },
-    { ...commandSpecs[8], action: onToggleUrlContext },
-    { ...commandSpecs[9], action: () => onAttachmentAction('upload') },
-    { ...commandSpecs[10], action: onClearChat },
-    { ...commandSpecs[11], action: onNewChat },
-    { ...commandSpecs[12], action: onOpenSettings },
-    { ...commandSpecs[13], action: onToggleCanvasPrompt },
-    { ...commandSpecs[14], action: onTogglePip },
-    { ...commandSpecs[15], action: () => {
+    { name: 'help', description: t('help_cmd_help'), icon: 'help', action: () => setIsHelpModalOpen(true) },
+    { name: 'edit', description: t('help_cmd_edit'), icon: 'edit', action: onEditLastUserMessage },
+    { name: 'pin', description: t('help_cmd_pin'), icon: 'pin', action: onTogglePinCurrentSession },
+    { name: 'retry', description: t('help_cmd_retry'), icon: 'retry', action: onRetryLastTurn },
+    { name: 'online', description: t('help_cmd_search'), icon: 'search', action: onToggleGoogleSearch },
+    { name: 'deep', description: t('help_cmd_deep'), icon: 'deep', action: onToggleDeepSearch },
+    { name: 'code', description: t('help_cmd_code'), icon: 'code', action: onToggleCodeExecution },
+    { name: 'url', description: t('help_cmd_url'), icon: 'url', action: onToggleUrlContext },
+    { name: 'file', description: t('help_cmd_file'), icon: 'file', action: () => onAttachmentAction('upload') },
+    { name: 'clear', description: t('help_cmd_clear'), icon: 'clear', action: onClearChat },
+    { name: 'new', description: t('help_cmd_new'), icon: 'new', action: onNewChat },
+    { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
+    { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
+    { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
+    { name: 'fast', description: t('help_cmd_fast'), icon: 'fast', action: () => {
         const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
         const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
         onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
     }},
-  ], [commandSpecs, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
+  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
   
-  const allCommandsForHelp = useMemo(
-    () => commandSpecs.map((command) => ({ name: `/${command.name}`, description: command.description, icon: command.icon })),
-    [commandSpecs]
-  );
+  const allCommandsForHelp = useMemo(() => [
+    ...commands.map(c => ({ name: `/${c.name}`, description: c.description, icon: c.icon })),
+  ], [commands]);
 
   const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;

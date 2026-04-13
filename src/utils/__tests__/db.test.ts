@@ -12,12 +12,12 @@ function createIDBMock() {
   };
 
   return {
-    stores,
-    objectStoreNames: {
-      contains(name: string) {
+      stores,
+      objectStoreNames: {
+        contains(name: string) {
         return Object.prototype.hasOwnProperty.call(stores, name);
+        },
       },
-    },
     createObjectStore,
   };
 }

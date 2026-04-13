@@ -8,8 +8,7 @@ interface ImageSizeSelectorProps {
     supportedSizes?: string[];
 }
 
-export const ImageSizeSelector: React.FC<ImageSizeSelectorProps> = ({ imageSize, setImageSize, t, supportedSizes }) => {
-    void t;
+export const ImageSizeSelector: React.FC<ImageSizeSelectorProps> = ({ imageSize, setImageSize, t: _t, supportedSizes }) => {
     const sizes = supportedSizes || [];
     if (sizes.length === 0) return null;
 

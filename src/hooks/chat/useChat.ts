@@ -8,7 +8,7 @@ import { useChatHistory } from './useChatHistory';
 import { useFileHandling } from '../files/useFileHandling';
 import { useFileDragDrop } from '../files/useFileDragDrop';
 import { usePreloadedScenarios } from '../usePreloadedScenarios';
-import { useMessageHandler } from '../useMessageHandler';
+import { useMessageSender } from '../useMessageSender';
 import { useChatScroll } from './useChatScroll';
 import { useAutoTitling } from './useAutoTitling';
 import { useSuggestions } from './useSuggestions';
@@ -18,7 +18,8 @@ import { useChatEffects } from './useChatEffects';
 import { useBackgroundKeepAlive } from '../core/useBackgroundKeepAlive';
 import { useLocalPythonAgent } from '../features/useLocalPythonAgent';
 import { useChatStore } from '../../stores/chatStore';
-import { SavedChatSession, ChatGroup, ChatMessage, InputCommand, UploadedFile as UF } from '../../types';
+import { useMessageActions } from './messages/useMessageActions';
+import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
 
@@ -40,134 +41,29 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const ttsMessageId = useChatStore(s => s.ttsMessageId);
     const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
 
-    // Stable store references for setters and persistence
-    const storeRef = useChatStore;
-    const setActiveSessionId = useCallback((v: string | null | ((prev: string | null) => string | null)) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().activeSessionId);
-            storeRef.getState().setActiveSessionId(newVal);
-        } else {
-            storeRef.getState().setActiveSessionId(v);
-        }
-    }, []);
-    const setActiveMessages = useCallback((v: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().activeMessages);
-            storeRef.getState().setActiveMessages(newVal);
-        } else {
-            storeRef.getState().setActiveMessages(v);
-        }
-    }, []);
-    const setCommandedInput = useCallback((v: InputCommand | null | ((prev: InputCommand | null) => InputCommand | null)) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().commandedInput);
-            storeRef.getState().setCommandedInput(newVal);
-        } else {
-            storeRef.getState().setCommandedInput(v);
-        }
-    }, []);
-    const setSavedSessions = useCallback((v: SavedChatSession[] | ((prev: SavedChatSession[]) => SavedChatSession[])) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().savedSessions);
-            storeRef.getState().setSavedSessions(newVal);
-        } else {
-            storeRef.getState().setSavedSessions(v);
-        }
-    }, []);
-    const setSavedGroups = useCallback((v: ChatGroup[] | ((prev: ChatGroup[]) => ChatGroup[])) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().savedGroups);
-            storeRef.getState().setSavedGroups(newVal);
-        } else {
-            storeRef.getState().setSavedGroups(v);
-        }
-    }, []);
-    const setEditingMessageId = useCallback((v: string | null | ((prev: string | null) => string | null)) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().editingMessageId);
-            storeRef.getState().setEditingMessageId(newVal);
-        } else {
-            storeRef.getState().setEditingMessageId(v);
-        }
-    }, []);
-    const setSelectedFiles = useCallback((v: UF[] | ((prev: UF[]) => UF[])) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().selectedFiles);
-            storeRef.getState().setSelectedFiles(newVal);
-        } else {
-            storeRef.getState().setSelectedFiles(v);
-        }
-    }, []);
-    const setAppFileError = useCallback((v: string | null | ((prev: string | null) => string | null)) => {
-        if (typeof v === 'function') {
-            const newVal = v(storeRef.getState().appFileError);
-            storeRef.getState().setAppFileError(newVal);
-        } else {
-            storeRef.getState().setAppFileError(v);
-        }
-    }, []);
-
-    // Direct stable references (no adapter needed)
-    const setEditMode = useCallback((v: 'update' | 'resend' | ((prev: 'update' | 'resend') => 'update' | 'resend')) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setEditMode(v(storeRef.getState().editMode));
-        } else {
-            storeRef.getState().setEditMode(v);
-        }
-    }, []);
-    const setIsAppProcessingFile = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setIsAppProcessingFile(v(storeRef.getState().isAppProcessingFile));
-        } else {
-            storeRef.getState().setIsAppProcessingFile(v);
-        }
-    }, []);
-    const setAspectRatio = useCallback((v: string | ((prev: string) => string)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setAspectRatio(v(storeRef.getState().aspectRatio));
-        } else {
-            storeRef.getState().setAspectRatio(v);
-        }
-    }, []);
-    const setTtsMessageId = useCallback((v: string | null | ((prev: string | null) => string | null)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setTtsMessageId(v(storeRef.getState().ttsMessageId));
-        } else {
-            storeRef.getState().setTtsMessageId(v);
-        }
-    }, []);
-    const setIsSwitchingModel = useCallback((v: boolean | ((prev: boolean) => boolean)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setIsSwitchingModel(v(storeRef.getState().isSwitchingModel));
-        } else {
-            storeRef.getState().setIsSwitchingModel(v);
-        }
-    }, []);
-    const setLoadingSessionIds = useCallback((v: Set<string> | ((prev: Set<string>) => Set<string>)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setLoadingSessionIds(v(storeRef.getState().loadingSessionIds));
-        } else {
-            storeRef.getState().setLoadingSessionIds(v);
-        }
-    }, []);
-    const setGeneratingTitleSessionIds = useCallback((v: Set<string> | ((prev: Set<string>) => Set<string>)) => {
-        if (typeof v === 'function') {
-            storeRef.getState().setGeneratingTitleSessionIds(v(storeRef.getState().generatingTitleSessionIds));
-        } else {
-            storeRef.getState().setGeneratingTitleSessionIds(v);
-        }
-    }, []);
+    const setActiveSessionId = useChatStore((s) => s.setActiveSessionId);
+    const setActiveMessages = useChatStore((s) => s.setActiveMessages);
+    const setCommandedInput = useChatStore((s) => s.setCommandedInput);
+    const setSavedSessions = useChatStore((s) => s.setSavedSessions);
+    const setSavedGroups = useChatStore((s) => s.setSavedGroups);
+    const setEditingMessageId = useChatStore((s) => s.setEditingMessageId);
+    const setSelectedFiles = useChatStore((s) => s.setSelectedFiles);
+    const setAppFileError = useChatStore((s) => s.setAppFileError);
+    const setEditMode = useChatStore((s) => s.setEditMode);
+    const setIsAppProcessingFile = useChatStore((s) => s.setIsAppProcessingFile);
+    const setAspectRatio = useChatStore((s) => s.setAspectRatio);
+    const setTtsMessageId = useChatStore((s) => s.setTtsMessageId);
+    const setIsSwitchingModel = useChatStore((s) => s.setIsSwitchingModel);
+    const setGeneratingTitleSessionIds = useChatStore((s) => s.setGeneratingTitleSessionIds);
+    const updateAndPersistSessions = useChatStore((s) => s.updateAndPersistSessions);
+    const updateAndPersistGroups = useChatStore((s) => s.updateAndPersistGroups);
+    const setSessionLoading = useChatStore((s) => s.setSessionLoading);
+    const setCurrentChatSettings = useChatStore((s) => s.setCurrentChatSettings);
 
     // Non-state values from store
-    const activeJobs = storeRef.getState()._activeJobs;
-    const userScrolledUpRef = storeRef.getState()._userScrolledUp;
-    const fileDraftsRef = storeRef.getState()._fileDrafts;
-
-    // Persistence
-    const updateAndPersistSessions = storeRef.getState().updateAndPersistSessions;
-    const updateAndPersistGroups = storeRef.getState().updateAndPersistGroups;
-    const setSessionLoading = storeRef.getState().setSessionLoading;
-    const setCurrentChatSettings = storeRef.getState().setCurrentChatSettings;
+    const activeJobs = useChatStore.getState()._activeJobs;
+    const userScrolledUp = useChatStore.getState()._userScrolledUp;
+    const fileDraftsRef = useChatStore.getState()._fileDrafts;
 
     // Aliases
     const messages = activeMessages;
@@ -185,7 +81,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setActiveMessages,
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs,
         updateAndPersistSessions: updateAndPersistSessions as any, activeChat, language, updateAndPersistGroups: updateAndPersistGroups as any,
-        userScrolledUpRef, selectedFiles, fileDraftsRef, activeSessionId,
+        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
         savedSessions
     });
 
@@ -216,17 +112,52 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setActiveSessionId,
     });
 
-    const scrollHandler = useChatScroll({ messages, userScrolledUpRef });
+    const scrollHandler = useChatScroll({ userScrolledUp });
 
-    const messageHandler = useMessageHandler({
-        appSettings, messages, isLoading, currentChatSettings, selectedFiles,
-        setSelectedFiles, editingMessageId, setEditingMessageId, setEditMode, setAppFileError,
-        aspectRatio, userScrolledUpRef, ttsMessageId, setTtsMessageId, activeSessionId,
-        setActiveSessionId, setCommandedInput, activeJobs, loadingSessionIds,
-        setLoadingSessionIds, updateAndPersistSessions, language,
-        scrollContainerRef: scrollHandler.scrollContainerRef,
+    const messageSender = useMessageSender({
+        appSettings,
+        currentChatSettings,
+        messages,
+        selectedFiles,
+        setSelectedFiles,
+        editingMessageId,
+        setEditingMessageId,
+        setAppFileError,
+        aspectRatio,
+        imageSize,
+        userScrolledUp,
+        activeSessionId,
+        setActiveSessionId,
+        activeJobs,
+        updateAndPersistSessions,
         sessionKeyMapRef,
-        setSessionLoading
+        language,
+        setSessionLoading,
+    });
+
+    const messageActions = useMessageActions({
+        messages,
+        isLoading,
+        activeSessionId,
+        editingMessageId,
+        activeJobs,
+        setCommandedInput,
+        setSelectedFiles,
+        setEditingMessageId,
+        setEditMode,
+        setAppFileError,
+        updateAndPersistSessions,
+        userScrolledUp,
+        handleSendMessage: messageSender.handleSendMessage,
+        setSessionLoading,
+    });
+
+    const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler({
+        appSettings,
+        currentChatSettings,
+        ttsMessageId,
+        setTtsMessageId,
+        updateAndPersistSessions,
     });
 
     useAutoTitling({ appSettings, activeChat, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
@@ -246,10 +177,10 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setCurrentChatSettings,
         setSelectedFiles,
         updateAndPersistSessions,
-        handleStopGenerating: messageHandler.handleStopGenerating,
+        handleStopGenerating: messageActions.handleStopGenerating,
         startNewChat,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
-        userScrolledUpRef
+        userScrolledUp
     });
 
     // Auto-Agent for Local Python
@@ -260,7 +191,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         isLoading,
         activeSessionId,
         updateMessageContent: chatActions.handleUpdateMessageContent,
-        onContinueGeneration: messageHandler.handleContinueGeneration,
+        onContinueGeneration: messageActions.handleContinueGeneration,
         updateAndPersistSessions
     });
 
@@ -281,8 +212,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setAspectRatio,
         loadInitialData: historyHandler.loadInitialData,
         loadChatSession,
-        startNewChat,
-        messages
+        startNewChat
     });
 
     return {
@@ -350,18 +280,18 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleAddFileById: fileHandler.handleAddFileById,
 
         // Message handlers
-        handleSendMessage: messageHandler.handleSendMessage,
-        handleGenerateCanvas: messageHandler.handleGenerateCanvas,
-        handleStopGenerating: messageHandler.handleStopGenerating,
-        handleEditMessage: messageHandler.handleEditMessage,
-        handleCancelEdit: messageHandler.handleCancelEdit,
-        handleDeleteMessage: messageHandler.handleDeleteMessage,
-        handleRetryMessage: messageHandler.handleRetryMessage,
-        handleRetryLastTurn: messageHandler.handleRetryLastTurn,
-        handleTextToSpeech: messageHandler.handleTextToSpeech,
-        handleQuickTTS: messageHandler.handleQuickTTS,
-        handleEditLastUserMessage: messageHandler.handleEditLastUserMessage,
-        handleContinueGeneration: messageHandler.handleContinueGeneration,
+        handleSendMessage: messageSender.handleSendMessage,
+        handleGenerateCanvas: messageSender.handleGenerateCanvas,
+        handleStopGenerating: messageActions.handleStopGenerating,
+        handleEditMessage: messageActions.handleEditMessage,
+        handleCancelEdit: messageActions.handleCancelEdit,
+        handleDeleteMessage: messageActions.handleDeleteMessage,
+        handleRetryMessage: messageActions.handleRetryMessage,
+        handleRetryLastTurn: messageActions.handleRetryLastTurn,
+        handleTextToSpeech,
+        handleQuickTTS,
+        handleEditLastUserMessage: messageActions.handleEditLastUserMessage,
+        handleContinueGeneration: messageActions.handleContinueGeneration,
 
         // Scenarios
         savedScenarios: scenarioHandler.savedScenarios,
@@ -370,6 +300,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
 
         // Actions
         handleTranscribeAudio: chatActions.handleTranscribeAudio,
+        setCommandedInput,
         setCurrentChatSettings,
         handleSelectModelInHeader: chatActions.handleSelectModelInHeader,
         handleClearCurrentChat: chatActions.handleClearCurrentChat,

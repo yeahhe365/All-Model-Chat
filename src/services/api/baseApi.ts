@@ -1,88 +1,32 @@
 
-
-
-import { GoogleGenAI, Modality } from "@google/genai";
+import type { GoogleGenAI, Part } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
-import { DEEP_SEARCH_SYSTEM_PROMPT, LOCAL_PYTHON_SYSTEM_PROMPT } from "../../constants/promptConstants";
-import { HarmBlockThreshold, HarmCategory, SafetySetting, MediaResolution } from "../../types/settings";
+import type { AppSettings } from '../../types';
+import { SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model } from "../../utils/appUtils";
-import { getModelDescriptor, normalizeModelId } from "../../platform/genai/modelCatalog";
+import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 
 
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+const IMAGE_TEXT_MODALITIES = ['IMAGE', 'TEXT'] as const;
 
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
-const REQUEST_SAFETY_CATEGORY_ORDER: HarmCategory[] = [
-    HarmCategory.HARM_CATEGORY_HARASSMENT,
-    HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-];
+export class LiveApiAuthConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'LiveApiAuthConfigurationError';
+  }
+}
 
-const LEGACY_DEFAULT_SAFETY_CATEGORY_ORDER: HarmCategory[] = [
-    ...REQUEST_SAFETY_CATEGORY_ORDER,
-    HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
-];
-
-const LEGACY_DEFAULT_SAFETY_SETTINGS: SafetySetting[] = LEGACY_DEFAULT_SAFETY_CATEGORY_ORDER.map((category) => ({
-    category,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-}));
-
-const sortSafetySettingsByOrder = (
-    safetySettings: SafetySetting[],
-    order: HarmCategory[]
-): SafetySetting[] => {
-    const latestByCategory = new Map<HarmCategory, HarmBlockThreshold>();
-
-    for (const setting of safetySettings) {
-        latestByCategory.set(setting.category, setting.threshold);
-    }
-
-    return order
-        .filter((category) => latestByCategory.has(category))
-        .map((category) => ({
-            category,
-            threshold: latestByCategory.get(category)!,
-        }));
+const loadGoogleGenAI = async () => {
+  const { GoogleGenAI } = await import('@google/genai');
+  return GoogleGenAI;
 };
 
-const areSafetySettingsEqual = (left: SafetySetting[], right: SafetySetting[]) =>
-    left.length === right.length &&
-    left.every((setting, index) => (
-        setting.category === right[index]?.category &&
-        setting.threshold === right[index]?.threshold
-    ));
-
-const isLegacyDefaultSafetySettings = (safetySettings?: SafetySetting[]) => {
-    if (!safetySettings?.length) {
-        return false;
-    }
-
-    const normalized = sortSafetySettingsByOrder(safetySettings, LEGACY_DEFAULT_SAFETY_CATEGORY_ORDER);
-    return areSafetySettingsEqual(normalized, LEGACY_DEFAULT_SAFETY_SETTINGS);
-};
-
-const buildRequestSafetySettings = (safetySettings?: SafetySetting[]) => {
-    if (!safetySettings?.length || isLegacyDefaultSafetySettings(safetySettings)) {
-        return undefined;
-    }
-
-    const normalized = sortSafetySettingsByOrder(
-        safetySettings.filter((setting) =>
-            REQUEST_SAFETY_CATEGORY_ORDER.includes(setting.category) &&
-            setting.threshold !== HarmBlockThreshold.OFF
-        ),
-        REQUEST_SAFETY_CATEGORY_ORDER
-    );
-
-    return normalized.length > 0 ? normalized : undefined;
-};
-
-export const getClient = (apiKey: string, baseUrl?: string | null, httpOptions?: any): GoogleGenAI => {
+export const getClient = async (apiKey: string, baseUrl?: string | null, httpOptions?: any): Promise<GoogleGenAI> => {
   try {
       // Sanitize the API key to replace common non-ASCII characters that might
       // be introduced by copy-pasting from rich text editors. This prevents
@@ -109,8 +53,9 @@ export const getClient = (apiKey: string, baseUrl?: string | null, httpOptions?:
       if (httpOptions) {
           config.httpOptions = httpOptions;
       }
-      
-      return new GoogleGenAI(config);
+
+      const GoogleGenAIConstructor = await loadGoogleGenAI();
+      return new GoogleGenAIConstructor(config);
   } catch (error) {
       logService.error("Failed to initialize GoogleGenAI client:", error);
       // Re-throw to be caught by the calling function
@@ -118,13 +63,13 @@ export const getClient = (apiKey: string, baseUrl?: string | null, httpOptions?:
   }
 };
 
-export const getApiClient = (apiKey?: string | null, baseUrl?: string | null, httpOptions?: any): GoogleGenAI => {
+export const getApiClient = async (apiKey?: string | null, baseUrl?: string | null, httpOptions?: any): Promise<GoogleGenAI> => {
     if (!apiKey) {
         const silentError = new Error("API key is not configured in settings or provided.");
         silentError.name = "SilentError";
         throw silentError;
     }
-    return getClient(apiKey, baseUrl, httpOptions);
+    return await getClient(apiKey, baseUrl, httpOptions);
 };
 
 /**
@@ -146,10 +91,93 @@ export const getConfiguredApiClient = async (apiKey: string, httpOptions?: any):
         }
     }
     
-    return getClient(apiKey, apiProxyUrl, httpOptions);
+    return await getClient(apiKey, apiProxyUrl, httpOptions);
 };
 
-export const buildGenerationConfig = (
+const resolveConfiguredBaseUrl = (
+    appSettings: Pick<AppSettings, 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
+): string | null => {
+    const shouldUseProxy = !!(appSettings.useCustomApiConfig && appSettings.useApiProxy);
+    return shouldUseProxy ? (appSettings.apiProxyUrl ?? null) : null;
+};
+
+const extractLiveApiToken = (payload: unknown): string | null => {
+    if (typeof payload === 'string') {
+        return payload.trim() || null;
+    }
+
+    if (!payload || typeof payload !== 'object') {
+        return null;
+    }
+
+    const tokenPayload = payload as Record<string, unknown>;
+    const token =
+        tokenPayload.name ??
+        tokenPayload.token ??
+        tokenPayload.ephemeralToken ??
+        tokenPayload.authToken;
+
+    return typeof token === 'string' && token.trim().length > 0 ? token.trim() : null;
+};
+
+export const getLiveApiClient = async (
+    appSettings: Pick<AppSettings, 'liveApiEphemeralTokenEndpoint' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
+    httpOptions?: any,
+): Promise<GoogleGenAI> => {
+    const endpoint = appSettings.liveApiEphemeralTokenEndpoint?.trim();
+
+    if (!endpoint) {
+        throw new LiveApiAuthConfigurationError('Live API requires an ephemeral token endpoint.');
+    }
+
+    let response: Response;
+    try {
+        response = await fetch(endpoint);
+    } catch (error) {
+        throw new LiveApiAuthConfigurationError(
+            error instanceof Error
+                ? error.message
+                : 'Failed to fetch Live API ephemeral token.',
+        );
+    }
+
+    if (!response.ok) {
+        throw new LiveApiAuthConfigurationError(
+            `Failed to fetch Live API ephemeral token (${response.status}).`,
+        );
+    }
+
+    let payload: unknown;
+    try {
+        payload = await response.json();
+    } catch {
+        throw new LiveApiAuthConfigurationError('Live API token endpoint must return JSON.');
+    }
+
+    const token = extractLiveApiToken(payload);
+    if (!token) {
+        throw new LiveApiAuthConfigurationError(
+            'Live API token endpoint response must include `name` or `token`.',
+        );
+    }
+
+    return getClient(token, resolveConfiguredBaseUrl(appSettings), httpOptions);
+};
+
+const hasPerPartMediaResolution = (parts: Part[] = []): boolean =>
+    parts.some((part) => Boolean((part as Part & { mediaResolution?: unknown }).mediaResolution));
+
+export const getHttpOptionsForContents = (
+    contents: Array<{ parts?: Part[] }>,
+): { apiVersion: 'v1alpha' } | undefined => {
+    if (contents.some((content) => hasPerPartMediaResolution(content.parts))) {
+        return { apiVersion: 'v1alpha' };
+    }
+
+    return undefined;
+};
+
+export const buildGenerationConfig = async (
     modelId: string,
     systemInstruction: string,
     config: { temperature?: number; topP?: number; topK?: number },
@@ -165,20 +193,13 @@ export const buildGenerationConfig = (
     safetySettings?: SafetySetting[],
     mediaResolution?: MediaResolution,
     isLocalPythonEnabled?: boolean
-): any => {
-    const normalizedModelId = normalizeModelId(modelId);
-    const descriptor = getModelDescriptor(normalizedModelId);
-    const isGemini25FlashImageModel =
-        normalizedModelId === 'gemini-2.5-flash-image-preview' ||
-        normalizedModelId === 'gemini-2.5-flash-image';
-    const isGemini3ImageModel = descriptor?.family === 'gemini-3' && descriptor.mode === 'image';
-
-    if (isGemini25FlashImageModel) {
+): Promise<any> => {
+    if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: any = {};
         if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
         
         const config: any = {
-            responseModalities: [Modality.IMAGE, Modality.TEXT],
+            responseModalities: IMAGE_TEXT_MODALITIES,
         };
         if (Object.keys(imageConfig).length > 0) {
             config.imageConfig = imageConfig;
@@ -186,7 +207,7 @@ export const buildGenerationConfig = (
         return config;
     }
 
-    if (isGemini3ImageModel) {
+    if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
          const imageConfig: any = {
             imageSize: imageSize || '1K',
          };
@@ -198,6 +219,13 @@ export const buildGenerationConfig = (
             responseModalities: ['IMAGE', 'TEXT'],
             imageConfig,
          };
+
+         if (modelId === 'gemini-3.1-flash-image-preview') {
+            config.thinkingConfig = {
+                includeThoughts: true,
+                thinkingLevel: thinkingLevel === 'HIGH' ? 'HIGH' : 'MINIMAL',
+            };
+         }
          
          // Add tools if enabled
          const tools = [];
@@ -211,19 +239,21 @@ export const buildGenerationConfig = (
     
     let finalSystemInstruction = systemInstruction;
     if (isDeepSearchEnabled) {
+        const deepSearchPrompt = await loadDeepSearchSystemPrompt();
         finalSystemInstruction = finalSystemInstruction
-            ? `${finalSystemInstruction}\n\n${DEEP_SEARCH_SYSTEM_PROMPT}`
-            : DEEP_SEARCH_SYSTEM_PROMPT;
+            ? `${finalSystemInstruction}\n\n${deepSearchPrompt}`
+            : deepSearchPrompt;
     }
 
     if (isLocalPythonEnabled) {
+        const localPythonPrompt = await loadLocalPythonSystemPrompt();
         finalSystemInstruction = finalSystemInstruction
-            ? `${finalSystemInstruction}\n\n${LOCAL_PYTHON_SYSTEM_PROMPT}`
-            : LOCAL_PYTHON_SYSTEM_PROMPT;
+            ? `${finalSystemInstruction}\n\n${localPythonPrompt}`
+            : localPythonPrompt;
     }
 
     // Gemma 4 thinking mode: inject <|think|> token into system prompt when enabled
-    const isGemma = descriptor?.family === 'gemma-4' || normalizedModelId.includes('gemma');
+    const isGemma = modelId.toLowerCase().includes('gemma');
     if (isGemma && showThoughts) {
         finalSystemInstruction = finalSystemInstruction
             ? `<|think|>\n${finalSystemInstruction}`
@@ -233,16 +263,20 @@ export const buildGenerationConfig = (
     const generationConfig: any = {
         ...config,
         systemInstruction: finalSystemInstruction || undefined,
-        safetySettings: buildRequestSafetySettings(safetySettings),
+        safetySettings: safetySettings || undefined,
     };
 
     // Check if model is Gemini 3. If so, prefer per-part media resolution (handled in content construction),
     // but we can omit the global config to avoid conflict, or set it if per-part isn't used.
     // However, if we are NOT Gemini 3, we MUST use global config.
     const isGemini3 = isGemini3Model(modelId);
-    if (!isGemini3 && !isGemma && mediaResolution) {
+    const normalizedMediaResolution =
+        !isGemini3 && mediaResolution === MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH
+            ? MediaResolution.MEDIA_RESOLUTION_HIGH
+            : mediaResolution;
+    if (!isGemini3 && !isGemma && normalizedMediaResolution) {
         // For non-Gemini 3 models (and not Gemma), apply global resolution if specified
-        generationConfig.mediaResolution = mediaResolution;
+        generationConfig.mediaResolution = normalizedMediaResolution;
     } 
     // Note: For Gemini 3, we don't set global mediaResolution here because we inject it into parts in `buildContentParts`.
     // The API documentation says per-part overrides global, but to be clean/explicit as requested ("become Per-part"), 
@@ -257,7 +291,7 @@ export const buildGenerationConfig = (
         // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
         // We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {
-            includeThoughts: !!showThoughts,
+            includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
         };
 
         if (thinkingBudget > 0) {
@@ -266,14 +300,15 @@ export const buildGenerationConfig = (
             generationConfig.thinkingConfig.thinkingLevel = thinkingLevel || 'HIGH';
         }
     } else {
-        const modelSupportsThinking = [
-            'gemini-2.5-pro',
-        ].includes(modelId) || modelId.includes('gemini-2.5');
+        const modelSupportsThinking = modelId.includes('gemini-2.5');
 
         if (modelSupportsThinking) {
+            // Decouple thinking budget from showing thoughts.
+            // `thinkingBudget` controls if and how much the model thinks.
+            // `includeThoughts` controls if the `thought` field is returned in the stream.
             generationConfig.thinkingConfig = {
                 thinkingBudget: thinkingBudget,
-                includeThoughts: !!showThoughts,
+                includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
             };
         }
     }
@@ -293,9 +328,6 @@ export const buildGenerationConfig = (
 
     if (tools.length > 0) {
         generationConfig.tools = tools;
-        // When using tools, these should not be set
-        delete generationConfig.responseMimeType;
-        delete generationConfig.responseSchema;
     }
     
     return generationConfig;

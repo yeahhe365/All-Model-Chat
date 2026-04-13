@@ -16,7 +16,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   availableModels,
   selectedModelId,
   onSelectModel,
-  t,
   setAvailableModels
 }) => {
   const [isEditingList, setIsEditingList] = useState(false);
@@ -26,7 +25,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <ModelSelectorHeader 
             isEditingList={isEditingList} 
             setIsEditingList={setIsEditingList} 
-            t={t}
         />
 
         {isEditingList ? (
@@ -34,14 +32,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 availableModels={availableModels} 
                 onSave={setAvailableModels} 
                 setIsEditingList={setIsEditingList} 
-                t={t}
             />
         ) : (
             <ModelListView 
                 availableModels={availableModels} 
                 selectedModelId={selectedModelId} 
                 onSelectModel={onSelectModel} 
-                t={t}
             />
         )}
     </div>

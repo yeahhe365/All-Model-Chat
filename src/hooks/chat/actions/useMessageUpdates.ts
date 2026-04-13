@@ -11,7 +11,7 @@ interface UseMessageUpdatesProps {
     appSettings: AppSettings;
     currentChatSettings: IndividualChatSettings;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
-    userScrolledUpRef: React.MutableRefObject<boolean>;
+    userScrolledUp: React.MutableRefObject<boolean>;
 }
 
 export const useMessageUpdates = ({
@@ -20,7 +20,7 @@ export const useMessageUpdates = ({
     appSettings,
     currentChatSettings,
     updateAndPersistSessions,
-    userScrolledUpRef,
+    userScrolledUp,
 }: UseMessageUpdatesProps) => {
     
     // Track active message IDs for the live session within the closure of the hook instance
@@ -96,8 +96,8 @@ export const useMessageUpdates = ({
             }
             return s;
         }));
-        userScrolledUpRef.current = false;
-    }, [activeSessionId, updateAndPersistSessions, userScrolledUpRef, appSettings, currentChatSettings, setActiveSessionId]);
+        userScrolledUp.current = false;
+    }, [activeSessionId, updateAndPersistSessions, userScrolledUp, appSettings, currentChatSettings, setActiveSessionId]);
 
     const handleLiveTranscript = useCallback((text: string, role: 'user' | 'model', isFinal: boolean, type: 'content' | 'thought' = 'content', audioUrl?: string | null) => {
         let currentSessionId = activeSessionId || pendingSessionIdRef.current;

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../../types';
 import { getKeyForRequest, logService, generateSessionTitle } from '../../utils/appUtils';
+import { geminiServiceInstance } from '../../services/geminiService';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -54,7 +55,6 @@ export const useAutoTitling = ({
         }
 
         try {
-            const { geminiServiceInstance } = await import('../../services/geminiService');
             const userContent = messages[0].content;
             const modelContent = messages[1].content;
             

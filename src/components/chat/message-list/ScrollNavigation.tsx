@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { ArrowUp, ArrowDown } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
 
 interface ScrollNavigationProps {
     showUp: boolean;
@@ -9,7 +8,6 @@ interface ScrollNavigationProps {
     onScrollToPrev: () => void;
     onScrollToNext: () => void;
     bottomOffset: number;
-    t: (key: keyof typeof translations) => string;
 }
 
 export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({ 
@@ -17,8 +15,7 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
     showDown, 
     onScrollToPrev, 
     onScrollToNext, 
-    bottomOffset,
-    t,
+    bottomOffset 
 }) => {
     if (!showUp && !showDown) return null;
 
@@ -44,8 +41,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                         pointer-events-auto
                         shadow-md
                     "
-                    aria-label={t('scroll_prev_message')}
-                    title={t('scroll_prev_message')}
+                    aria-label="Scroll to previous message"
+                    title="Scroll to previous message"
                 >
                     <ArrowUp size={18} strokeWidth={2.5} />
                 </button>
@@ -64,8 +61,8 @@ export const ScrollNavigation: React.FC<ScrollNavigationProps> = ({
                         pointer-events-auto
                         shadow-md
                     "
-                    aria-label={t('scroll_down')}
-                    title={t('scroll_down')}
+                    aria-label="Scroll down"
+                    title="Scroll down"
                 >
                     <ArrowDown size={18} strokeWidth={2.5} />
                 </button>

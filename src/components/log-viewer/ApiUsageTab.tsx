@@ -4,8 +4,6 @@ import { KeyRound, CheckCircle } from 'lucide-react';
 import { AppSettings, ChatSettings } from '../../types';
 import { ObfuscatedApiKey } from './ObfuscatedApiKey';
 import { parseApiKeys } from '../../utils/apiUtils';
-import { getTranslator } from '../../utils/appUtils';
-import { useSettingsStore } from '../../stores/settingsStore';
 
 interface ApiUsageTabProps {
     apiKeyUsage: Map<string, number>;
@@ -14,9 +12,6 @@ interface ApiUsageTabProps {
 }
 
 export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettings, currentChatSettings }) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
-
     // Sanitize keys to match how they are logged in utils/apiUtils.ts (strip quotes, split by newlines/commas)
     const allApiKeys = parseApiKeys(appSettings.apiKey);
 
@@ -36,7 +31,7 @@ export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettin
 
     return (
         <div className="p-4 overflow-y-auto custom-scrollbar h-full">
-            <h4 className="font-semibold text-lg text-[var(--theme-text-primary)] mb-4 flex items-center gap-2"><KeyRound size={20} /> {t('logViewer_api_usage_stats')}</h4>
+            <h4 className="font-semibold text-lg text-[var(--theme-text-primary)] mb-4 flex items-center gap-2"><KeyRound size={20} /> API Key Usage Statistics</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from(displayApiKeyUsage.entries())
                 .sort(([, a], [, b]) => b - a)
@@ -47,7 +42,7 @@ export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettin
                     <div key={key} className={`p-4 rounded-xl border transition-all relative overflow-hidden ${isActive ? 'bg-[var(--theme-bg-accent)]/10 border-[var(--theme-border-focus)]' : 'bg-[var(--theme-bg-input)] border-[var(--theme-border-secondary)]'}`}>
                     <div className="flex justify-between items-start mb-2">
                         <span className="font-mono text-xs text-[var(--theme-text-tertiary)]">#{index + 1}</span>
-                        {isActive && <span className="text-[10px] font-bold uppercase bg-green-900 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle size={10} /> {t('logViewer_api_key_active')}</span>}
+                        {isActive && <span className="text-[10px] font-bold uppercase bg-green-900 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle size={10} /> Active</span>}
                     </div>
                     <div className="mb-4">
                         <ObfuscatedApiKey apiKey={key} />
@@ -55,7 +50,7 @@ export const ApiUsageTab: React.FC<ApiUsageTabProps> = ({ apiKeyUsage, appSettin
                     <div className="flex items-end justify-between">
                         <div className="flex flex-col">
                             <span className="text-2xl font-bold text-[var(--theme-text-primary)]">{count}</span>
-                            <span className="text-xs text-[var(--theme-text-tertiary)]">{t('logViewer_requests')}</span>
+                            <span className="text-xs text-[var(--theme-text-tertiary)]">requests</span>
                         </div>
                         <div className="text-xl font-bold text-[var(--theme-text-tertiary)] opacity-30">
                             {percentage.toFixed(0)}%

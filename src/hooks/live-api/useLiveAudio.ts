@@ -146,7 +146,7 @@ export const useLiveAudio = () => {
 
     const stopAudioPlayback = useCallback(() => {
         sourcesRef.current.forEach(s => {
-            try { s.stop(); } catch (_error) { /* ignore already stopped */ }
+            try { s.stop(); } catch (e) { /* ignore already stopped */ }
         });
         sourcesRef.current.clear();
         nextStartTimeRef.current = 0;

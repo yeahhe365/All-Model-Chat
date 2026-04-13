@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useState } from 'react';
+import React, { useState } from 'react';
 import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
 import { translations } from '../../../utils/appUtils';
 
@@ -9,8 +9,6 @@ interface CreateFileBodyProps {
     debouncedContent: string;
     textareaRef: React.RefObject<HTMLTextAreaElement>;
     printRef: React.RefObject<HTMLDivElement>;
-    isPdf: boolean;
-    setIsPdfPreviewReady: (ready: boolean) => void;
     isPreviewMode: boolean;
     supportsRichPreview: boolean;
     handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
@@ -19,19 +17,12 @@ interface CreateFileBodyProps {
     t: (key: keyof typeof translations | string) => string;
 }
 
-const PdfExportSurface = lazy(async () => {
-    const module = await import('./CreateFilePdfExportSurface');
-    return { default: module.CreateFilePdfExportSurface };
-});
-
 export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
     textContent,
     setTextContent,
     debouncedContent,
     textareaRef,
     printRef,
-    isPdf,
-    setIsPdfPreviewReady,
     isPreviewMode,
     supportsRichPreview,
     handlePaste,
@@ -88,13 +79,13 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                     onDrop={onDrop}
                     className="absolute inset-0 w-full h-full p-4 bg-transparent border-none text-[var(--theme-text-primary)] placeholder-[var(--theme-text-tertiary)] resize-none custom-scrollbar outline-none font-mono text-sm leading-relaxed"
                     placeholder={t('createText_content_placeholder')}
-                    aria-label={t('createText_content_aria')}
+                    aria-label="File content"
                     spellCheck={false}
                   />
                   {isDragging && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-[var(--theme-bg-accent)]/10 backdrop-blur-sm">
                           <div className="bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] px-4 py-2 rounded-lg font-medium shadow-lg animate-in fade-in zoom-in duration-200">
-                              {t('createText_drop_image')}
+                              Drop image to insert
                           </div>
                       </div>
                   )}
@@ -109,12 +100,13 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                     `}>
                       <div className="absolute inset-0 w-full h-full overflow-auto custom-scrollbar">
                           <div 
+                            ref={printRef}
                             className="w-full min-h-full bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] p-4 sm:p-6 transition-colors duration-300"
                             style={{ fontSize: '16px' }}
                           >
                               <div className="markdown-body">
                                   <LazyMarkdownRenderer 
-                                      content={debouncedContent || `*${t('createText_preview_empty')}*`}
+                                      content={debouncedContent || '*Start typing...*'}
                                       isLoading={false}
                                       onImageClick={() => {}}
                                       onOpenHtmlPreview={() => {}}
@@ -125,28 +117,17 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                                       allowHtml={true}
                                       t={t as any}
                                       themeId={themeId}
-                                      fallback={<div className="whitespace-pre-wrap break-words">{debouncedContent || `*${t('createText_preview_empty')}*`}</div>}
+                                      fallbackMode="raw"
                                   />
                               </div>
                               <div className="mt-8 pt-4 border-t border-[var(--theme-border-secondary)] text-center text-xs text-[var(--theme-text-tertiary)] hidden print:block">
-                                 {t('createText_generated_with')}
+                                 Generated with Markflow AI (All Model Chat)
                               </div>
                           </div>
                       </div>
                     </div>
                 )}
             </div>
-            {isPdf && (
-                <Suspense fallback={null}>
-                    <PdfExportSurface
-                        content={debouncedContent || `*${t('createText_preview_empty')}*`}
-                        printRef={printRef}
-                        themeId={themeId}
-                        t={t}
-                        setIsPdfPreviewReady={setIsPdfPreviewReady}
-                    />
-                </Suspense>
-            )}
         </div>
     );
 };

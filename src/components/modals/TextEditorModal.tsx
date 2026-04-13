@@ -10,13 +10,12 @@ interface TextEditorModalProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
   readOnly?: boolean;
 }
 
-type TextEditorModalContentProps = Omit<TextEditorModalProps, 'isOpen'>;
-
-const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
+export const TextEditorModal: React.FC<TextEditorModalProps> = ({
+  isOpen,
   onClose,
   title,
   value,
@@ -26,12 +25,16 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
   readOnly
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Use local state to decouple rendering from global app state during active typing
   const [localValue, setLocalValue] = useState(value);
 
   useEffect(() => {
-    const focusTimer = window.setTimeout(() => textareaRef.current?.focus(), 100);
-    return () => window.clearTimeout(focusTimer);
-  }, []);
+    if (isOpen) {
+      setLocalValue(value);
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    }
+  }, [isOpen, value]);
 
   const handleValueChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       if (readOnly) return;
@@ -47,7 +50,7 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
 
   return (
     <Modal
-      isOpen={true}
+      isOpen={isOpen}
       onClose={handleDone}
       contentClassName="w-full h-full sm:h-[90vh] sm:w-[90vw] max-w-5xl bg-[var(--theme-bg-primary)] sm:rounded-xl shadow-2xl flex flex-col overflow-hidden border border-[var(--theme-border-primary)]"
       noPadding
@@ -82,12 +85,4 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
       </div>
     </Modal>
   );
-};
-
-export const TextEditorModal: React.FC<TextEditorModalProps> = ({ isOpen, ...props }) => {
-  if (!isOpen) {
-    return null;
-  }
-
-  return <TextEditorModalContent {...props} />;
 };

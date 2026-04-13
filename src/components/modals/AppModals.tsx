@@ -1,29 +1,26 @@
 
 import React, { Suspense, lazy } from 'react';
-import { AVAILABLE_THEMES } from '../../constants/themeConstants';
 import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
 import { translations } from '../../utils/appUtils';
-import { useUIStore } from '../../stores/uiStore';
-import { useSettingsStore } from '../../stores/settingsStore';
 
-const SettingsModal = lazy(async () => {
-  const module = await import('../settings/SettingsModal');
-  return { default: module.SettingsModal };
+const LazySettingsModal = lazy(async () => {
+    const module = await import('../settings/SettingsModal');
+    return { default: module.SettingsModal };
 });
 
-const LogViewer = lazy(async () => {
-  const module = await import('../log-viewer/LogViewer');
-  return { default: module.LogViewer };
+const LazyLogViewer = lazy(async () => {
+    const module = await import('../log-viewer/LogViewer');
+    return { default: module.LogViewer };
 });
 
-const PreloadedMessagesModal = lazy(async () => {
-  const module = await import('../scenarios/PreloadedMessagesModal');
-  return { default: module.PreloadedMessagesModal };
+const LazyPreloadedMessagesModal = lazy(async () => {
+    const module = await import('../scenarios/PreloadedMessagesModal');
+    return { default: module.PreloadedMessagesModal };
 });
 
-const ExportChatModal = lazy(async () => {
-  const module = await import('./ExportChatModal');
-  return { default: module.ExportChatModal };
+const LazyExportChatModal = lazy(async () => {
+    const module = await import('./ExportChatModal');
+    return { default: module.ExportChatModal };
 });
 
 export interface AppModalsProps {
@@ -60,15 +57,15 @@ export interface AppModalsProps {
   setIsLogViewerOpen?: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
   currentChatSettings: ChatSettings;
 
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  t: (key: keyof typeof translations | string, fallback?: string) => string;
   setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
     const {
-        isSettingsModalOpen: propsIsSettingsModalOpen,
-        setIsSettingsModalOpen: propsSetIsSettingsModalOpen,
-        appSettings: propsAppSettings,
+        isSettingsModalOpen = false,
+        setIsSettingsModalOpen = () => {},
+        appSettings,
         availableModels,
         handleSaveSettings, clearCacheAndReload,
         clearAllHistory,
@@ -76,86 +73,75 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         handleImportSettings, handleExportSettings,
         handleImportHistory, handleExportHistory,
         handleImportAllScenarios, handleExportAllScenarios,
-        isPreloadedMessagesModalOpen: propsIsPreloadedMessagesModalOpen,
-        setIsPreloadedMessagesModalOpen: propsSetIsPreloadedMessagesModalOpen,
+        isPreloadedMessagesModalOpen = false,
+        setIsPreloadedMessagesModalOpen = () => {},
         savedScenarios,
         handleSaveAllScenarios, handleLoadPreloadedScenario,
         isExportModalOpen, setIsExportModalOpen, handleExportChat, exportStatus,
-        isLogViewerOpen: propsIsLogViewerOpen,
-        setIsLogViewerOpen: propsSetIsLogViewerOpen,
+        isLogViewerOpen = false,
+        setIsLogViewerOpen = () => {},
         currentChatSettings,
         t, setAvailableModels
     } = props;
-
-    // Read directly from stores with fallback to props
-    const storeIsSettingsModalOpen = useUIStore(s => s.isSettingsModalOpen);
-    const storeSetIsSettingsModalOpen = useUIStore(s => s.setIsSettingsModalOpen);
-    const storeIsPreloadedMessagesModalOpen = useUIStore(s => s.isPreloadedMessagesModalOpen);
-    const storeSetIsPreloadedMessagesModalOpen = useUIStore(s => s.setIsPreloadedMessagesModalOpen);
-    const storeIsLogViewerOpen = useUIStore(s => s.isLogViewerOpen);
-    const storeSetIsLogViewerOpen = useUIStore(s => s.setIsLogViewerOpen);
-    const storeAppSettings = useSettingsStore(s => s.appSettings);
-
-    const isSettingsModalOpen = storeIsSettingsModalOpen ?? propsIsSettingsModalOpen;
-    const setIsSettingsModalOpen = storeSetIsSettingsModalOpen ?? propsSetIsSettingsModalOpen;
-    const isPreloadedMessagesModalOpen = storeIsPreloadedMessagesModalOpen ?? propsIsPreloadedMessagesModalOpen;
-    const setIsPreloadedMessagesModalOpen = storeSetIsPreloadedMessagesModalOpen ?? propsSetIsPreloadedMessagesModalOpen;
-    const isLogViewerOpen = storeIsLogViewerOpen ?? propsIsLogViewerOpen;
-    const setIsLogViewerOpen = storeSetIsLogViewerOpen ?? propsSetIsLogViewerOpen;
-    const appSettings = storeAppSettings ?? propsAppSettings;
     
     return (
-        <Suspense fallback={null}>
+        <>
           {isLogViewerOpen && (
-            <LogViewer
-                isOpen={isLogViewerOpen}
-                onClose={() => setIsLogViewerOpen(false)}
-                appSettings={appSettings}
-                currentChatSettings={currentChatSettings}
-            />
+            <Suspense fallback={null}>
+                <LazyLogViewer
+                    isOpen={isLogViewerOpen}
+                    onClose={() => setIsLogViewerOpen(false)}
+                    appSettings={appSettings!}
+                    currentChatSettings={currentChatSettings}
+                />
+            </Suspense>
           )}
           {isSettingsModalOpen && (
-            <SettingsModal
-              isOpen={isSettingsModalOpen}
-              onClose={() => setIsSettingsModalOpen(false)}
-              currentSettings={appSettings}
-              availableModels={availableModels}
-              availableThemes={AVAILABLE_THEMES}
-              onSave={handleSaveSettings}
-              onClearAllHistory={clearAllHistory}
-              onClearCache={clearCacheAndReload}
-              onOpenLogViewer={() => setIsLogViewerOpen(true)}
-              onInstallPwa={handleInstallPwa}
-              isInstallable={!!installPromptEvent && !isStandalone}
-              onImportSettings={handleImportSettings}
-              onExportSettings={handleExportSettings}
-              onImportHistory={handleImportHistory}
-              onExportHistory={handleExportHistory}
-              onImportScenarios={handleImportAllScenarios}
-              onExportScenarios={handleExportAllScenarios}
-              t={t}
-              setAvailableModels={setAvailableModels}
-            />
+            <Suspense fallback={null}>
+                <LazySettingsModal
+                  isOpen={isSettingsModalOpen}
+                  onClose={() => setIsSettingsModalOpen(false)}
+                  currentSettings={appSettings!}
+                  availableModels={availableModels}
+                  onSave={handleSaveSettings}
+                  onClearAllHistory={clearAllHistory}
+                  onClearCache={clearCacheAndReload}
+                  onOpenLogViewer={() => setIsLogViewerOpen(true)}
+                  onInstallPwa={handleInstallPwa}
+                  isInstallable={!!installPromptEvent && !isStandalone}
+                  onImportSettings={handleImportSettings}
+                  onExportSettings={handleExportSettings}
+                  onImportHistory={handleImportHistory}
+                  onExportHistory={handleExportHistory}
+                  onImportScenarios={handleImportAllScenarios}
+                  onExportScenarios={handleExportAllScenarios}
+                  t={t}
+                  setAvailableModels={setAvailableModels}
+                />
+            </Suspense>
           )}
           {isPreloadedMessagesModalOpen && (
-            <PreloadedMessagesModal
-              isOpen={isPreloadedMessagesModalOpen}
-              onClose={() => setIsPreloadedMessagesModalOpen(false)}
-              savedScenarios={savedScenarios}
-              onSaveAllScenarios={handleSaveAllScenarios}
-              onLoadScenario={handleLoadPreloadedScenario}
-              t={t}
-            />
+            <Suspense fallback={null}>
+                <LazyPreloadedMessagesModal
+                  isOpen={isPreloadedMessagesModalOpen}
+                  onClose={() => setIsPreloadedMessagesModalOpen(false)}
+                  savedScenarios={savedScenarios}
+                  onSaveAllScenarios={handleSaveAllScenarios}
+                  onLoadScenario={handleLoadPreloadedScenario}
+                  t={t}
+                />
+            </Suspense>
           )}
           {isExportModalOpen && (
-              <ExportChatModal
-                isOpen={isExportModalOpen}
-                onClose={() => setIsExportModalOpen(false)}
-                onExport={handleExportChat}
-                exportStatus={exportStatus}
-                t={t}
-              />
+              <Suspense fallback={null}>
+                  <LazyExportChatModal
+                    isOpen={isExportModalOpen}
+                    onClose={() => setIsExportModalOpen(false)}
+                    onExport={handleExportChat}
+                    exportStatus={exportStatus}
+                  />
+              </Suspense>
           )}
-        </Suspense>
+        </>
     );
 }

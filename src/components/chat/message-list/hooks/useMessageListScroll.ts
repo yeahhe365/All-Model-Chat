@@ -12,8 +12,8 @@ interface UseMessageListScrollProps {
 export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSessionId }: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [atBottom, setAtBottom] = useState(true);
-    const [scrollerRef, setScrollerRef] = useState<HTMLElement | null>(null);
     const [visibleStartIndex, setVisibleStartIndex] = useState(0);
+    const [scrollerRef, setInternalScrollerRef] = useState<HTMLElement | null>(null);
     const visibleRangeRef = useRef({ startIndex: 0, endIndex: 0 });
     
     const scrollSaveTimeoutRef = useRef<number | null>(null);
@@ -26,10 +26,6 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     const prevMsgCount = useRef(messages.length);
     const prevSessionIdForAnchor = useRef(activeSessionId);
 
-    const setInternalScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
-        setScrollerRef(ref instanceof HTMLElement ? ref : null);
-    }, []);
-
     // Sync internal scroller ref with parent's expectations
     useEffect(() => {
         if (scrollerRef) {
@@ -37,14 +33,16 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
         }
     }, [scrollerRef, setScrollContainerRef]);
 
-    const handleScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
-        setInternalScrollerRef(ref instanceof HTMLElement ? ref : null);
-    }, []);
-
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
         visibleRangeRef.current = { startIndex, endIndex };
-        setVisibleStartIndex(prev => (prev === startIndex ? prev : startIndex));
+        setVisibleStartIndex(startIndex);
+    }, []);
+
+    const handleScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
+        if (ref === null || ref instanceof HTMLElement) {
+            setInternalScrollerRef(ref);
+        }
     }, []);
 
     // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
@@ -191,11 +189,12 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     // Attach listener manually to the scroller ref
     useEffect(() => {
         const container = scrollerRef;
-        if (container) {
-            container.addEventListener('scroll', handleScroll, { passive: true });
-            return () => container.removeEventListener('scroll', handleScroll);
+        if (!container) {
+            return undefined;
         }
-        return undefined;
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => container.removeEventListener('scroll', handleScroll);
     }, [scrollerRef, handleScroll]);
 
     const showScrollDown = !atBottom;

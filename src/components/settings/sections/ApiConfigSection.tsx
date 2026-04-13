@@ -1,14 +1,19 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound } from 'lucide-react';
+import type { ModelOption } from '../../../types';
 import { useResponsiveValue } from '../../../hooks/useDevice';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
+import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
 import { getClient } from '../../../services/api/baseApi';
-import { getEnvApiKeysString, parseApiKeys } from '../../../utils/apiUtils';
+import {
+  isServerManagedApiEnabledForProxyRequests,
+  parseApiKeys,
+  SERVER_MANAGED_API_KEY,
+} from '../../../utils/apiUtils';
 import { ApiConfigToggle } from './api-config/ApiConfigToggle';
 import { ApiKeyInput } from './api-config/ApiKeyInput';
 import { ApiProxySettings } from './api-config/ApiProxySettings';
 import { ApiConnectionTester } from './api-config/ApiConnectionTester';
-import { ModelOption } from '../../../types';
 
 interface ApiConfigSectionProps {
   useCustomApiConfig: boolean;
@@ -19,18 +24,12 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
-  availableModels: ModelOption[];
+  serverManagedApi?: boolean;
+  availableModels?: ModelOption[];
+  liveApiEphemeralTokenEndpoint?: string | null;
+  setLiveApiEphemeralTokenEndpoint?: (value: string | null) => void;
   t: (key: string) => string;
 }
-
-const CONNECTION_TEST_MODELS: ModelOption[] = [
-    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' },
-    { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite' },
-    { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash' },
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-    { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
-    { id: 'gemma-4-26b-a4b-it', name: 'Gemma 4 26B A4B IT' },
-];
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   useCustomApiConfig,
@@ -41,140 +40,183 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
-  availableModels: _availableModels,
+  serverManagedApi = false,
+  liveApiEphemeralTokenEndpoint = null,
+  setLiveApiEphemeralTokenEndpoint,
   t,
 }) => {
-  // Test connection state
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
-  const [testModelId, setTestModelId] = useState<string>('gemini-3-flash-preview');
-  
-  // State to manage overflow visibility during transitions
+  const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
+  const overflowTimerRef = useRef<number | null>(null);
 
   const iconSize = useResponsiveValue(18, 20);
-  const envApiKeysString = getEnvApiKeysString();
-  const hasEnvKey = !!envApiKeysString;
+  const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
+  const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
+  const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
+    serverManagedApi,
+    useCustomApiConfig,
+    useApiProxy,
+    apiProxyUrl,
+  });
 
   useEffect(() => {
-    if (!useCustomApiConfig) {
-      return undefined;
-    }
-
-    // Delay allowing overflow until transition matches duration (300ms) to prevent clipping artifacts during expansion
-    const timer = setTimeout(() => setAllowOverflow(true), 300);
-    return () => clearTimeout(timer);
-  }, [useCustomApiConfig]);
+    return () => {
+      if (overflowTimerRef.current !== null) {
+        window.clearTimeout(overflowTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleUseCustomApiConfigChange = (value: boolean) => {
+    if (overflowTimerRef.current !== null) {
+      window.clearTimeout(overflowTimerRef.current);
+      overflowTimerRef.current = null;
+    }
+
+    setUseCustomApiConfig(value);
+
     if (value) {
       setAllowOverflow(false);
+      overflowTimerRef.current = window.setTimeout(() => {
+        setAllowOverflow(true);
+        overflowTimerRef.current = null;
+      }, 300);
+      return;
     }
-    setUseCustomApiConfig(value);
+
+    setAllowOverflow(false);
   };
 
-  const shouldAllowOverflow = useCustomApiConfig && allowOverflow;
-
   const handleTestConnection = async () => {
-      // Pick the key that would be used
-      let keyToTest = apiKey;
-      
-      // If custom config is OFF, or ON but no key provided, we might fall back to env key if available.
-      // But for explicit testing, if custom config is ON, we should test what's in the box.
+    const resolveKeyToTest = (): string | null => {
+      if (apiKey) return apiKey;
       if (!useCustomApiConfig && hasEnvKey) {
-          keyToTest = envApiKeysString;
+        return (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
       }
-      
-      if (useCustomApiConfig && !keyToTest) {
-          setTestStatus('error');
-          setTestMessage(t('apiConfig_no_key_to_test'));
-          return;
-      }
+      if (canUseServerManagedTestKey) return SERVER_MANAGED_API_KEY;
+      return null;
+    };
 
-      if (!keyToTest) {
-           setTestStatus('error');
-           setTestMessage(t('apiConfig_no_key_available'));
-           return;
-      }
+    const keyToTest = resolveKeyToTest();
 
-      // Handle multiple keys - pick first for test
-      const keys = parseApiKeys(keyToTest);
-      const firstKey = keys[0];
-      
-      if (!firstKey) {
-          setTestStatus('error');
-          setTestMessage(t('apiConfig_invalid_key_format'));
-          return;
-      }
+    if (!keyToTest && useCustomApiConfig && !canUseServerManagedTestKey) {
+      setTestStatus('error');
+      setTestMessage('No API Key provided to test.');
+      return;
+    }
 
-      const effectiveUrl = (useCustomApiConfig && useApiProxy && apiProxyUrl) ? apiProxyUrl : null;
+    if (!keyToTest) {
+      setTestStatus('error');
+      setTestMessage('No API Key available.');
+      return;
+    }
 
-      setTestStatus('testing');
-      setTestMessage(null);
+    const keys = parseApiKeys(keyToTest);
+    const firstKey = keys[0];
 
-      try {
-          // Use the base API helper to get a client with sanitation logic
-          const ai = getClient(firstKey, effectiveUrl);
-          
-          const modelIdToUse = testModelId || 'gemini-3-flash-preview';
-          
-          await ai.models.generateContent({
-              model: modelIdToUse,
-              contents: 'Hello',
-          });
+    if (!firstKey) {
+      setTestStatus('error');
+      setTestMessage('Invalid API Key format.');
+      return;
+    }
 
-          setTestStatus('success');
-      } catch (error) {
-          setTestStatus('error');
-          setTestMessage(error instanceof Error ? error.message : String(error));
-      }
+    const effectiveUrl = useCustomApiConfig && useApiProxy && apiProxyUrl ? apiProxyUrl : null;
+
+    setTestStatus('testing');
+    setTestMessage(null);
+
+    try {
+      const ai = await getClient(firstKey, effectiveUrl);
+      const modelIdToUse = testModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
+
+      await ai.models.generateContent({
+        model: modelIdToUse,
+        contents: 'Hello',
+      });
+
+      setTestStatus('success');
+    } catch (error) {
+      setTestStatus('error');
+      setTestMessage(error instanceof Error ? error.message : String(error));
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-         <h3 className="text-base font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
-             <KeyRound size={iconSize} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
-             {t('settingsApiConfig')}
-         </h3>
+        <h3 className="text-base font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
+          <KeyRound size={iconSize} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
+          {t('settingsApiConfig')}
+        </h3>
       </div>
 
       <div>
         <ApiConfigToggle
-            useCustomApiConfig={useCustomApiConfig}
-            setUseCustomApiConfig={handleUseCustomApiConfigChange}
-            hasEnvKey={hasEnvKey}
-            t={t}
+          useCustomApiConfig={useCustomApiConfig}
+          setUseCustomApiConfig={handleUseCustomApiConfigChange}
+          hasEnvKey={hasEnvKey}
+          t={t}
         />
 
-        {/* Content - collapsible area */}
-        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${shouldAllowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
-            <div className="space-y-5">
-                <ApiKeyInput 
-                    apiKey={apiKey} 
-                    setApiKey={(val) => { setApiKey(val); setTestStatus('idle'); }} 
-                    t={t} 
-                />
+        <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
+          <div className="space-y-5">
+            <ApiKeyInput
+              apiKey={apiKey}
+              setApiKey={(val) => {
+                setApiKey(val);
+                setTestStatus('idle');
+              }}
+              t={t}
+            />
 
-                <ApiProxySettings 
-                    useApiProxy={useApiProxy}
-                    setUseApiProxy={(val) => { setUseApiProxy(val); setTestStatus('idle'); }}
-                    apiProxyUrl={apiProxyUrl}
-                    setApiProxyUrl={(val) => { setApiProxyUrl(val); setTestStatus('idle'); }}
-                    t={t}
-                />
+            <ApiProxySettings
+              useApiProxy={useApiProxy}
+              setUseApiProxy={(val) => {
+                setUseApiProxy(val);
+                setTestStatus('idle');
+              }}
+              apiProxyUrl={apiProxyUrl}
+              setApiProxyUrl={(val) => {
+                setApiProxyUrl(val);
+                setTestStatus('idle');
+              }}
+              t={t}
+            />
 
-                <ApiConnectionTester 
-                    onTest={handleTestConnection}
-                    testStatus={testStatus}
-                    testMessage={testMessage}
-                    isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig)}
-                    availableModels={CONNECTION_TEST_MODELS}
-                    testModelId={testModelId}
-                    onModelChange={setTestModelId}
-                    t={t}
-                />
+            <div className="space-y-2 pt-2">
+              <label htmlFor="live-token-endpoint-input" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+                {t('settingsLiveTokenEndpoint')}
+              </label>
+              <p className="text-xs leading-relaxed text-[var(--theme-text-tertiary)]">
+                {t('settingsLiveTokenEndpointHelp')}
+              </p>
+              <input
+                id="live-token-endpoint-input"
+                type="text"
+                value={liveApiEphemeralTokenEndpoint || ''}
+                onChange={(e) => {
+                  const value = e.target.value.trim();
+                  setLiveApiEphemeralTokenEndpoint?.(value || null);
+                }}
+                className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
+                placeholder={t('settingsLiveTokenEndpointPlaceholder')}
+                aria-label={t('settingsLiveTokenEndpoint')}
+              />
             </div>
+
+            <ApiConnectionTester
+              onTest={handleTestConnection}
+              testStatus={testStatus}
+              testMessage={testMessage}
+              isTestDisabled={testStatus === 'testing' || (!apiKey && useCustomApiConfig && !canUseServerManagedTestKey)}
+              availableModels={CONNECTION_TEST_MODELS}
+              testModelId={testModelId}
+              onModelChange={setTestModelId}
+              t={t}
+            />
+          </div>
         </div>
       </div>
     </div>

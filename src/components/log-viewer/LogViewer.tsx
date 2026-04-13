@@ -8,8 +8,6 @@ import { ConsoleTab } from './ConsoleTab';
 import { TokenUsageTab } from './TokenUsageTab';
 import { ApiUsageTab } from './ApiUsageTab';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
-import { getTranslator } from '../../utils/appUtils';
-import { useSettingsStore } from '../../stores/settingsStore';
 
 interface LogViewerProps {
   isOpen: boolean;
@@ -19,8 +17,6 @@ interface LogViewerProps {
 }
 
 export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettings, currentChatSettings }) => {
-  const language = useSettingsStore((state) => state.language);
-  const t = getTranslator(language);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [apiKeyUsage, setApiKeyUsage] = useState<Map<string, number>>(new Map());
   const [tokenUsage, setTokenUsage] = useState<Map<string, TokenUsageStats>>(new Map());
@@ -72,7 +68,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         const unsubscribe = logService.subscribeToApiKeys(setApiKeyUsage);
         return () => unsubscribe();
     }
-
     return undefined;
   }, [isOpen, appSettings.useCustomApiConfig]);
 
@@ -81,7 +76,6 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         const unsubscribe = logService.subscribeToTokenUsage(setTokenUsage);
         return () => unsubscribe();
     }
-
     return undefined;
   }, [isOpen]);
 
@@ -104,23 +98,23 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         {/* Header */}
         <header className="py-2 px-4 border-b border-[var(--theme-border-secondary)] flex justify-between items-center bg-[var(--theme-bg-secondary)] flex-shrink-0">
           <h2 className="text-lg font-semibold text-[var(--theme-text-link)] flex items-center gap-2">
-            <Terminal size={20} /> {t('logViewer_title')}
+            <Terminal size={20} /> System Logs
           </h2>
-          <button onClick={onClose} title={t('close')} aria-label={t('close')} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full transition-colors"><X size={22} /></button>
+          <button onClick={onClose} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full transition-colors"><X size={22} /></button>
         </header>
 
         {/* Tabs */}
         <div className="border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] px-4 flex-shrink-0">
           <nav className="flex space-x-4">
             <button onClick={() => setActiveTab('console')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'console' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
-                <Terminal size={14} /> {t('logViewer_console_tab')}
+                <Terminal size={14} /> Console
             </button>
             <button onClick={() => setActiveTab('tokens')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'tokens' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
-                <Coins size={14} /> {t('logViewer_tokens_tab')}
+                <Coins size={14} /> Token Usage
             </button>
             {appSettings.useCustomApiConfig && (
                 <button onClick={() => setActiveTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
-                    <KeyRound size={14} /> {t('logViewer_api_tab')}
+                    <KeyRound size={14} /> API Usage
                 </button>
             )}
           </nav>
@@ -153,10 +147,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleClear}
-        title={t('logViewer_clear_title')}
-        message={t('logViewer_clear_message')}
-        confirmLabel={t('logViewer_clear')}
-        cancelLabel={t('cancel')}
+        title="Clear Logs"
+        message="Are you sure you want to clear all logs and usage statistics from the database?"
+        confirmLabel="Clear"
         isDanger
     />
     </>

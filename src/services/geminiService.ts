@@ -1,8 +1,14 @@
+
 import { GeminiService, ChatHistoryItem } from '../types';
-import { Part, UsageMetadata, File as GeminiFile, Modality } from "@google/genai";
+import type { EditImageRequestConfig } from '../types';
+import type { Part, File as GeminiFile } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
-import { generateImagesApi, generateSpeechApi, transcribeAudioApi, translateTextApi, generateTitleApi, generateSuggestionsApi, countTokensApi } from './api/generationApi';
+import { generateImagesApi } from './api/generation/imageApi';
+import { generateSpeechApi, transcribeAudioApi } from './api/generation/audioApi';
+import { generateTitleApi, generateSuggestionsApi, translateTextApi } from './api/generation/textApi';
+import { countTokensApi } from './api/generation/tokenApi';
 import { sendStatelessMessageStreamApi, sendStatelessMessageNonStreamApi } from './api/chatApi';
+import { buildGenerationConfig } from './api/baseApi';
 import { logService } from "./logService";
 
 class GeminiServiceImpl implements GeminiService {
@@ -53,7 +59,16 @@ class GeminiServiceImpl implements GeminiService {
         return countTokensApi(apiKey, modelId, parts);
     }
 
-    async editImage(apiKey: string, modelId: string, history: ChatHistoryItem[], parts: Part[], abortSignal: AbortSignal, aspectRatio?: string, imageSize?: string): Promise<Part[]> {
+    async editImage(
+        apiKey: string,
+        modelId: string,
+        history: ChatHistoryItem[],
+        parts: Part[],
+        abortSignal: AbortSignal,
+        aspectRatio?: string,
+        imageSize?: string,
+        requestConfig?: EditImageRequestConfig,
+    ): Promise<Part[]> {
         return new Promise((resolve, reject) => {
             if (abortSignal.aborted) {
                 const abortError = new Error("aborted");
@@ -66,66 +81,70 @@ class GeminiServiceImpl implements GeminiService {
             const handleError = (error: Error) => {
                 reject(error);
             };
-            
-            const config: any = {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            };
-            
-            if (aspectRatio && aspectRatio !== 'Auto') {
-                if (!config.imageConfig) config.imageConfig = {};
-                config.imageConfig.aspectRatio = aspectRatio;
-            }
 
-            if ((modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') && imageSize) {
-                if (!config.imageConfig) config.imageConfig = {};
-                config.imageConfig.imageSize = imageSize;
-            }
-
-            sendStatelessMessageNonStreamApi(
-                apiKey,
+            buildGenerationConfig(
                 modelId,
-                history,
-                parts,
-                config,
-                abortSignal,
-                handleError,
-                (responseParts, _thoughts, _usage, _grounding) => handleComplete(responseParts)
-            );
+                requestConfig?.systemInstruction || '',
+                {},
+                requestConfig?.showThoughts ?? false,
+                requestConfig?.thinkingBudget ?? 0,
+                !!requestConfig?.isGoogleSearchEnabled,
+                false,
+                false,
+                requestConfig?.thinkingLevel,
+                aspectRatio,
+                !!requestConfig?.isDeepSearchEnabled,
+                imageSize,
+                requestConfig?.safetySettings,
+            )
+                .then((config) =>
+                    sendStatelessMessageNonStreamApi(
+                        apiKey,
+                        modelId,
+                        history,
+                        parts,
+                        config,
+                        abortSignal,
+                        handleError,
+                        (responseParts) => handleComplete(responseParts)
+                    )
+                )
+                .catch(handleError);
         });
     }
 
-    async sendMessageStream(
-        apiKey: string,
-        modelId: string,
-        history: ChatHistoryItem[],
-        parts: Part[],
-        config: any,
-        abortSignal: AbortSignal,
-        onPart: (part: Part) => void,
-        onThoughtChunk: (chunk: string) => void,
-        onError: (error: Error) => void,
-        onComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void,
-        role: 'user' | 'model' = 'user'
-    ): Promise<void> {
+    sendMessageStream: GeminiService['sendMessageStream'] = async (
+        apiKey,
+        modelId,
+        history,
+        parts,
+        config,
+        abortSignal,
+        onPart,
+        onThoughtChunk,
+        onError,
+        onComplete,
+        role = 'user'
+    ) => {
         return sendStatelessMessageStreamApi(
             apiKey, modelId, history, parts, config, abortSignal, onPart, onThoughtChunk, onError, onComplete, role
         );
-    }
+    };
 
-    async sendMessageNonStream(
-        apiKey: string,
-        modelId: string,
-        history: ChatHistoryItem[],
-        parts: Part[],
-        config: any,
-        abortSignal: AbortSignal,
-        onError: (error: Error) => void,
-        onComplete: (parts: Part[], thoughtsText?: string, usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void
-    ): Promise<void> {
+    sendMessageNonStream: GeminiService['sendMessageNonStream'] = async (
+        apiKey,
+        modelId,
+        history,
+        parts,
+        config,
+        abortSignal,
+        onError,
+        onComplete
+    ) => {
         return sendStatelessMessageNonStreamApi(
             apiKey, modelId, history, parts, config, abortSignal, onError, onComplete
         );
-    }
+    };
 }
 
 export const geminiServiceInstance: GeminiService = new GeminiServiceImpl();

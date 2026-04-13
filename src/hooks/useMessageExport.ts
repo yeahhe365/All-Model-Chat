@@ -1,18 +1,8 @@
 
+
 import { useState } from 'react';
 import { ChatMessage } from '../types';
-import { useWindowContext } from '../contexts/useWindowContext';
-import {
-    exportHtmlStringAsFile,
-    exportTextStringAsFile,
-    triggerDownload,
-    sanitizeFilename,
-    generateExportHtmlTemplate,
-    generateExportTxtTemplate,
-    gatherPageStyles,
-    prepareElementForExport,
-    generateSnapshotPng
-} from '../utils/exportUtils';
+import { triggerDownload, sanitizeFilename } from '../utils/export/core';
 
 interface UseMessageExportProps {
     message: ChatMessage;
@@ -25,7 +15,6 @@ export type ExportType = 'png' | 'html' | 'txt' | 'json';
 
 export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId }: UseMessageExportProps) => {
     const [exportingType, setExportingType] = useState<ExportType | null>(null);
-    const { document: targetDocument } = useWindowContext();
 
     const handleExport = async (type: ExportType, onSuccess?: () => void) => {
         if (exportingType) return;
@@ -56,9 +45,25 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
+            const loadExportModules = async () => {
+                const [files, dom, image, templates] = await Promise.all([
+                    import('../utils/export/files'),
+                    import('../utils/export/dom'),
+                    import('../utils/export/image'),
+                    import('../utils/export/templates'),
+                ]);
+
+                return {
+                    ...files,
+                    ...dom,
+                    ...image,
+                    ...templates,
+                };
+            };
+
             // Find the rendered DOM bubble to preserve Math/Syntax/Diagrams
             // We use the data-message-id attribute which is present in the Message component
-            const messageWrapper = targetDocument.querySelector(`[data-message-id="${message.id}"]`);
+            const messageWrapper = document.querySelector(`[data-message-id="${message.id}"]`);
             // We want the inner bubble, usually inside the wrapper. 
             // The structure is Wrapper -> Container -> [Actions, Bubble, Actions]
             // We prioritize the new specific container class, falling back to older selectors if needed
@@ -68,6 +73,14 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 if (!contentNodeSource) {
                     throw new Error("Could not find message content in DOM. Please ensure the message is visible.");
                 }
+
+                const {
+                    exportHtmlStringAsFile,
+                    gatherPageStyles,
+                    prepareElementForExport,
+                    generateSnapshotPng,
+                    generateExportHtmlTemplate,
+                } = await loadExportModules();
 
                 // Use unified helper to clone, clean, and embed images
                 // For PNG, we want expanded details visible. For HTML, we want them collapsed by default but interactive.
@@ -90,11 +103,11 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 } else {
                     // HTML Export
                     const styles = await gatherPageStyles();
-                    const bodyClasses = targetDocument.body.className;
-                    const rootBgColor = getComputedStyle(targetDocument.documentElement).getPropertyValue('--theme-bg-primary');
+                    const bodyClasses = document.body.className;
+                    const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
                     
                     // Wrap the cleaned content
-                    const wrapper = targetDocument.createElement('div');
+                    const wrapper = document.createElement('div');
                     wrapper.className = 'markdown-body';
                     wrapper.appendChild(cleanedContent);
                     const chatHtml = wrapper.outerHTML;
@@ -115,6 +128,7 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 }
 
             } else if (type === 'txt') {
+                const { exportTextStringAsFile, generateExportTxtTemplate } = await loadExportModules();
                 const txtContent = generateExportTxtTemplate({
                     title: `Message Export ${shortId}`,
                     date: dateStr,

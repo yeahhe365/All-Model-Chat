@@ -75,7 +75,7 @@ class LogServiceImpl {
         }
         return value;
       }));
-    } catch (_error) {
+    } catch (e) {
       return '[Serialization Failed]';
     }
   }

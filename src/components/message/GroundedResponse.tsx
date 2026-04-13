@@ -65,7 +65,6 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
           themeId={themeId}
           onOpenSidePanel={onOpenSidePanel}
           files={files}
-          fallback={<div className="whitespace-pre-wrap break-words">{content}</div>}
         />
       </div>
       

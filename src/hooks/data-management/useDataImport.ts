@@ -55,7 +55,7 @@ export const useDataImport = ({
                 if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
                     const importedValue = importedSettings[key];
                     const defaultValue = DEFAULT_APP_SETTINGS[key];
-                    if (typeof importedValue === typeof defaultValue || (['apiKey', 'apiProxyUrl', 'lockedApiKey'].includes(key) && (typeof importedValue === 'string' || importedValue === null))) {
+                    if (typeof importedValue === typeof defaultValue || (['apiKey', 'apiProxyUrl', 'liveApiEphemeralTokenEndpoint', 'lockedApiKey'].includes(key) && (typeof importedValue === 'string' || importedValue === null))) {
                         (newSettings as any)[key] = importedValue;
                     } else {
                         logService.warn(`Type mismatch for setting "${key}" during import. Using default.`);

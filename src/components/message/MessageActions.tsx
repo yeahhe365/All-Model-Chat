@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Volume2, Loader2, Pencil, Wand2, CirclePlay } from 'lucide-react';
+import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Pencil, Wand2, CirclePlay } from 'lucide-react';
 import { ChatMessage } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
@@ -57,16 +57,15 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
-    onTextToSpeech,
+    onTextToSpeech: _onTextToSpeech,
     onGenerateCanvas,
     onContinueGeneration,
-    ttsMessageId,
+    ttsMessageId: _ttsMessageId,
     themeId,
     t
 }) => {
     const actionIconSize = useResponsiveValue(15, 16); 
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
-    const isThisMessageLoadingTts = ttsMessageId === message.id;
     
     // Enhanced button styling: lighter default, distinct hover, rounded corners
     const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100 hover:scale-105 active:scale-95";
@@ -120,8 +119,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                 {message.role === 'model' && !message.isLoading && (
                     <button 
                         onClick={() => onContinueGeneration(message.id)} 
-                        title={t('message_continue_generating')} 
-                        aria-label={t('message_continue_generating')} 
+                        title="Continue Generating" 
+                        aria-label="Continue Generating" 
                         className={actionButtonClasses}
                     >
                         <CirclePlay size={actionIconSize} strokeWidth={2} />
@@ -147,16 +146,6 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
                             className={actionButtonClasses}
                         >
                             <Wand2 size={actionIconSize} strokeWidth={2} />
-                        </button>
-
-                        <button 
-                            onClick={() => onTextToSpeech(message.id, message.content)} 
-                            disabled={!!ttsMessageId} 
-                            title={t('message_read_aloud')} 
-                            aria-label={t('message_read_aloud_aria')} 
-                            className={`${actionButtonClasses} disabled:opacity-30 disabled:cursor-not-allowed`}
-                        >
-                            {isThisMessageLoadingTts ? <Loader2 size={actionIconSize} className="animate-spin" strokeWidth={2} /> : <Volume2 size={actionIconSize} strokeWidth={2} />}
                         </button>
                         <ExportMessageButton 
                             message={message}

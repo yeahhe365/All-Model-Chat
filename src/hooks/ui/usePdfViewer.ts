@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { pdfjs } from 'react-pdf';
 import { UploadedFile } from '../../types';
-import { translations } from '../../utils/appUtils';
 
 // Configure PDF worker globally
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
@@ -16,12 +15,10 @@ const getInitialScale = () => {
     return 1.1;
 };
 
-export const usePdfViewer = (
-    _file: UploadedFile,
-    t: (key: keyof typeof translations, fallback?: string) => string
-) => {
+export const usePdfViewer = (file: UploadedFile) => {
     const [numPages, setNumPages] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [pageInput, setPageInput] = useState("1");
     const [scale, setScale] = useState(getInitialScale);
     const [rotation, setRotation] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +28,18 @@ export const usePdfViewer = (
     const containerRef = useRef<HTMLDivElement>(null);
     const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const sidebarRef = useRef<HTMLDivElement>(null);
+
+    // Reset state when file changes
+    useEffect(() => {
+        setNumPages(null);
+        setCurrentPage(1);
+        setPageInput("1");
+        setRotation(0);
+        setScale(getInitialScale());
+        setIsLoading(true);
+        setError(null);
+        pageRefs.current.clear();
+    }, [file.id]);
 
     // Intersection Observer to update current page number on scroll
     useEffect(() => {
@@ -62,7 +71,13 @@ export const usePdfViewer = (
         return () => observer.disconnect();
     }, [numPages, isLoading]);
 
+    // Sync input with current page when scrolling (auto-update input value if not user-focused)
     useEffect(() => {
+        // We use a simplified check here since we don't have direct access to the input ref in the hook easily 
+        // without passing it back and forth. Instead, we just update the state.
+        // The Toolbar component handles not overwriting if focused via its own logic or simply responding to this state update.
+        setPageInput(String(currentPage));
+        
         // Auto-scroll sidebar to keep current page thumbnail in view
         if (showSidebar && sidebarRef.current) {
             const thumbnail = sidebarRef.current.querySelector(`[data-thumbnail-page="${currentPage}"]`);
@@ -79,7 +94,7 @@ export const usePdfViewer = (
 
     const onDocumentLoadError = (err: Error) => {
         setIsLoading(false);
-        setError(err.message || t('pdf_load_error', 'Failed to load PDF.'));
+        setError(err.message || 'Failed to load PDF.');
         console.error("PDF Load Error:", err);
     };
 
@@ -88,6 +103,7 @@ export const usePdfViewer = (
         if (el) {
             el.scrollIntoView({ behavior: 'auto', block: 'start' });
             setCurrentPage(pageNum);
+            setPageInput(String(pageNum));
         }
     };
 
@@ -101,10 +117,12 @@ export const usePdfViewer = (
         scrollToPage(next);
     };
 
-    const handlePageInputCommit = (pageInput: string) => {
+    const handlePageInputCommit = () => {
         const page = parseInt(pageInput, 10);
         if (!isNaN(page) && page >= 1 && page <= (numPages || 1)) {
             scrollToPage(page);
+        } else {
+            setPageInput(String(currentPage));
         }
     };
 
@@ -125,6 +143,8 @@ export const usePdfViewer = (
     return {
         numPages,
         currentPage,
+        pageInput,
+        setPageInput,
         scale,
         rotation,
         isLoading,

@@ -2,16 +2,20 @@
 import { useMemo } from 'react';
 import { AppSettings, ChatSettings } from '../../types';
 import type { Tool } from '@google/genai';
+import type { LiveClientFunctions } from '../../types';
 
 interface UseLiveConfigProps {
     appSettings: AppSettings;
     chatSettings: ChatSettings;
     sessionHandle: string | null;
-    clientFunctions?: Record<string, any>;
+    clientFunctions?: LiveClientFunctions;
 }
 
-export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions: _clientFunctions }: UseLiveConfigProps) => {
+export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: UseLiveConfigProps) => {
     return useMemo(() => {
+        const modelId = chatSettings.modelId?.toLowerCase() ?? '';
+        const isGemini31FlashLive = modelId.includes('gemini-3.1-flash-live');
+
         // Construct Tools Configuration
         const tools: Tool[] = [];
         
@@ -19,12 +23,13 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions: _c
         if (chatSettings.isGoogleSearchEnabled || chatSettings.isDeepSearchEnabled) {
             tools.push({ googleSearch: {} });
         }
-        
-        // Code execution is not supported by Native Audio models (Live API)
-        
-        // Client-side tools handling (if specific definitions needed, add here)
-        // Note: Function declarations for client tools would be added here if we were defining them schema-first.
-        // For dynamic client functions, we assume the model knows or we handle standard ones.
+
+        const functionDeclarations = Object.values(clientFunctions ?? {}).map(
+            ({ declaration }) => declaration,
+        );
+        if (functionDeclarations.length > 0) {
+            tools.push({ functionDeclarations });
+        }
 
         // Build Config
         const liveConfig: any = {
@@ -45,15 +50,24 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions: _c
             contextWindowCompression: {
                 slidingWindow: {}
             },
+            // Enable session resumption from the first connection so the server
+            // can start issuing handle updates immediately.
+            sessionResumption: sessionHandle ? { handle: sessionHandle } : {},
             // Use configured media resolution
             mediaResolution: chatSettings.mediaResolution
         };
 
         // Configure Thinking for Native Audio models if enabled in settings
-        // 0 means disabled. -1 means auto. >0 means manual budget.
-        if (chatSettings.thinkingBudget !== 0) {
+        // Gemini 3.1 Flash Live uses thinkingLevel; Gemini 2.5 native audio/live
+        // models still use thinkingBudget.
+        if (isGemini31FlashLive) {
+             liveConfig.thinkingConfig = {
+                includeThoughts: true,
+                thinkingLevel: chatSettings.thinkingLevel || 'MINIMAL',
+             };
+        } else if (chatSettings.thinkingBudget !== 0) {
              const thinkingConfig: any = {
-                includeThoughts: !!chatSettings.showThoughts,
+                includeThoughts: true 
              };
              if (chatSettings.thinkingBudget > 0) {
                  thinkingConfig.thinkingBudget = chatSettings.thinkingBudget;
@@ -61,11 +75,6 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions: _c
              liveConfig.thinkingConfig = thinkingConfig;
         }
 
-        // Enable Session Resumption if we have a handle
-        if (sessionHandle) {
-            liveConfig.sessionResumption = { handle: sessionHandle };
-        }
-
         return { liveConfig, tools };
-    }, [chatSettings, sessionHandle]);
+    }, [chatSettings, sessionHandle, clientFunctions]);
 };

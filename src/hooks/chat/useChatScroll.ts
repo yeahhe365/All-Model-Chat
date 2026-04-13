@@ -1,13 +1,11 @@
 
 import React, { useRef, useCallback } from 'react';
-import { ChatMessage } from '../../types';
 
 interface ChatScrollProps {
-    messages: ChatMessage[];
-    userScrolledUpRef: React.MutableRefObject<boolean>;
+    userScrolledUp: React.MutableRefObject<boolean>;
 }
 
-export const useChatScroll = ({ messages: _messages, userScrolledUpRef }: ChatScrollProps) => {
+export const useChatScroll = ({ userScrolledUp }: ChatScrollProps) => {
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
     const savedScrollTop = useRef<number>(0);
     
@@ -57,12 +55,12 @@ export const useChatScroll = ({ messages: _messages, userScrolledUpRef }: ChatSc
 
             // If the user moved and is not at bottom, mark as scrolled up
             if (isAtBottom) {
-                userScrolledUpRef.current = false;
+                userScrolledUp.current = false;
             } else if (!isAutoScrolling.current) {
-                userScrolledUpRef.current = true;
+                userScrolledUp.current = true;
             }
         }
-    }, [userScrolledUpRef]);
+    }, [userScrolledUp]);
     
     return {
         scrollContainerRef, 

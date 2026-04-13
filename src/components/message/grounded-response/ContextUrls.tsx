@@ -2,8 +2,6 @@
 import React, { useMemo } from 'react';
 import { Link as LinkIcon, AlertTriangle, CheckCircle, Globe } from 'lucide-react';
 import { getDomain } from './utils';
-import { getTranslator } from '../../../utils/appUtils';
-import { useSettingsStore } from '../../../stores/settingsStore';
 
 interface UrlContextItem {
     retrievedUrl?: string;
@@ -25,9 +23,6 @@ const getStatusIcon = (status?: string) => {
 };
 
 export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
-
     const items = useMemo<UrlContextItem[]>(() => {
         if (!metadata) return [];
         // Handle both snake_case and camelCase
@@ -40,7 +35,7 @@ export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
         <div className="mt-3 pt-2 border-t border-[var(--theme-border-secondary)]/30 animate-in fade-in slide-in-from-top-1 duration-200">
             <div className="flex items-center gap-2 mb-2">
                 <LinkIcon size={11} className="text-[var(--theme-text-tertiary)]" strokeWidth={2} />
-                <h4 className="text-[10px] font-bold uppercase text-[var(--theme-text-tertiary)] tracking-widest">{t('contextUrls_title')}</h4>
+                <h4 className="text-[10px] font-bold uppercase text-[var(--theme-text-tertiary)] tracking-widest">Context URLs</h4>
             </div>
             <div className="flex flex-wrap gap-2">
                 {items.map((item, i) => {
@@ -55,7 +50,7 @@ export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--theme-bg-tertiary)]/20 hover:bg-[var(--theme-bg-tertiary)]/60 border border-[var(--theme-border-secondary)]/30 hover:border-[var(--theme-border-secondary)] transition-all no-underline group max-w-full"
-                            title={t('contextUrls_status').replace('{status}', String(status ?? ''))}
+                            title={`Status: ${status}`}
                         >
                             <div className="flex-shrink-0 pt-0.5">
                                 {getStatusIcon(status)}

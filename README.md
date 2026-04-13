@@ -33,10 +33,11 @@
 
 ## 项目简介
 
-**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据存储于浏览器 IndexedDB，基础文本与多模态能力可直接以前端方式运行；但若要在生产环境安全启用 Live API，仍建议配套后端代理或临时凭证机制。
+**All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持新增的独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
 
-支持两种运行模式：
+支持三种运行模式：
 - **标准模式**：克隆仓库后通过 Vite 开发/构建，传统 SPA 部署
+- **Docker 部署模式**：`web + api` 双服务部署，前端走 `/api/gemini/*` 与 `/api/live-token`
 - **零构建模式**：利用 HTML import map 直接在浏览器中加载依赖，可在 Google AI Studio 中一键运行
 
 ---
@@ -52,7 +53,6 @@
 - 双向实时流式交互，支持语音通话
 - 屏幕共享与视觉识别
 - 音频可视化 (AudioWorklet API)
-- 默认前端集成适合本地开发与受信任环境，生产部署建议使用后端中转或 ephemeral token
 
 ### 智能 Canvas
 - 代码块自动识别并渲染为交互式 HTML 预览（自动全屏）
@@ -65,7 +65,6 @@
 - 支持 ZIP / 文件夹拖入，自动解析代码库结构
 - 支持图片、PDF、视频、音频、文本等多种文件类型
 - 可配置各文件类型使用 Gemini Files API 还是直接 Base64 上传
-- 超过 100MB 的请求或超过 50MB 的 PDF 会自动切换到 Gemini Files API
 - 文件分辨率可调（Low / Medium / High / Ultra）
 
 ### 生产力工具链
@@ -83,7 +82,7 @@
 ### 企业级 API 管理
 - **多 Key 轮询**：支持填入多个 API Key 自动分担压力
 - **API 代理**：内置 Network Interceptor（Fetch 拦截），动态重写请求路径
-- **Vertex AI 兼容路径**：支持通过自定义 `baseUrl` / 代理改写来兼容 Vertex AI Express 风格端点，不等同于官方 Vertex AI `project/location` 模式
+- **Vertex AI 兼容**：原生支持 Vertex AI Express 端点，自动修复路径映射
 
 ### 多语言界面
 - 支持中文 / 英文 / 跟随系统三种语言设置
@@ -136,21 +135,83 @@ npm run dev
 
 访问 `http://localhost:5173`，在 **设置 -> API 配置** 中填入你的 Gemini API Key。
 
-### 方式二：Google AI Studio（零构建）
-
-直接在 [Google AI Studio](https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true) 中打开，所有依赖通过 CDN 加载，无需任何本地配置。
-
-### 配置密钥
-
-除了在界面中手动配置，也可在根目录创建 `.env.local`：
+除了在界面中手动配置，也可在根目录创建 `.env.local`（仅前端开发模式使用）：
 
 ```bash
-VITE_GEMINI_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_api_key_here
 ```
 
-兼容模式下也可读取 `GEMINI_API_KEY` 或 `GOOGLE_API_KEY`，但前端构建场景优先推荐 `VITE_GEMINI_API_KEY`。
+### 方式二：Docker Compose（推荐生产部署）
 
-### 构建部署
+项目包含双容器部署：
+- `web`：Nginx 托管前端静态资源，并反向代理 `/api/*` 到 `api` 服务
+- `api`：Node 服务，提供 `/api/gemini/*` 代理与 `/api/live-token`
+
+运行方式：
+
+```bash
+# 在仓库根目录
+npm run build
+docker compose up -d --build
+```
+
+默认访问 `http://localhost:8080`。如需关闭后台运行可执行 `docker compose down`。
+
+说明：
+- `web` 镜像默认直接打包宿主机已生成的 `dist/`，不再在容器内执行前端生产构建。
+- 修改前端代码后，请先重新执行 `npm run build`，再执行 `docker compose up -d --build`。
+
+> ⚠️ 安全边界说明
+> 当前 `web + api` 代理方案定位为 **受信任/自托管环境**（trusted self-hosted deployment）。
+> 它用于隐藏服务端 `GEMINI_API_KEY` 并转发请求，但**本身并不足以**作为公开互联网下“无鉴权多用户 API 网关”。
+> 若要对公网开放，请额外引入鉴权、配额/限流、滥用防护、审计与租户隔离等能力。
+
+### 运行时配置与环境变量
+
+部署时请区分两类配置：
+
+| 变量名 | 用途 | 公开性 | 默认值 |
+| :--- | :--- | :--- | :--- |
+| `GEMINI_API_KEY` | 后端调用 Gemini API 的真实密钥（`api` 服务读取） | **仅服务端** | 空（必须在生产环境提供） |
+| `PORT` | `api` 服务监听端口 | 仅服务端 | `3001` |
+| `GEMINI_API_BASE` | Gemini 上游地址（代理目标） | 仅服务端 | `https://generativelanguage.googleapis.com` |
+| `ALLOWED_ORIGINS` | 逗号分隔 CORS 白名单（跨域部署时使用） | 仅服务端 | 空 |
+| `RUNTIME_SERVER_MANAGED_API` | 前端默认启用服务端托管 API | **公开运行时配置** | `true` |
+| `RUNTIME_USE_CUSTOM_API_CONFIG` | 前端默认启用“自定义 API 配置” | 公开运行时配置 | `true` |
+| `RUNTIME_USE_API_PROXY` | 前端默认启用 API 代理 | 公开运行时配置 | `true` |
+| `RUNTIME_API_PROXY_URL` | 前端默认 Gemini 代理地址 | 公开运行时配置 | `/api/gemini` |
+| `RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT` | 前端默认 Live token 端点 | 公开运行时配置 | `/api/live-token` |
+
+说明：
+- 上述 `RUNTIME_*` 会在容器启动时写入 `runtime-config.js`，可被浏览器读取，因此只能放“可公开”信息。
+- `GEMINI_API_KEY` 只应存在于后端环境变量，不应写入前端构建产物、`runtime-config.js` 或浏览器设置备份。
+- 前端在部署时默认依赖后端端点：`/api/gemini/*` 与 `/api/live-token`。
+
+### 方式三：Cloudflare Pages（静态前端）+ 独立 API 服务
+
+可将前端部署在 Cloudflare Pages，同时将 `server/` 独立部署到任意 Node 运行环境（VM、容器平台、Serverless 容器等）：
+
+1. 前端（Pages）执行标准构建并发布 `dist`：
+```bash
+npm run build
+```
+2. 后端（独立服务）构建并启动：
+```bash
+npm run build:api
+npm run start:api
+```
+3. 在前端运行时配置中将以下值指向后端公开地址（示例）：
+```text
+RUNTIME_API_PROXY_URL=https://your-api.example.com/api/gemini
+RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-token
+```
+4. 在后端环境设置 `GEMINI_API_KEY`，并按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
+
+### 方式四：Google AI Studio（零构建）
+
+直接在 [Google AI Studio](https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true) 中打开，所有依赖通过 CDN 加载，无需本地构建流程。
+
+### 构建与预览
 
 ```bash
 npm run build    # 构建生产版本
@@ -170,16 +231,20 @@ npm run preview  # 本地预览构建结果
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
-| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理与 Vertex AI Express 风格端点 |
+| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理与 Vertex AI |
 | **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
-| **双模式部署** | 传统 Vite 构建 / HTML import map 零构建 CDN 加载 |
+| **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API / HTML import map 零构建 |
 
-### 双模式架构说明
+### 前端双模式说明（与部署形态独立）
 
 项目通过 `index.html` 中的 `<script type="importmap">` 实现双模式运行：
 
 - **Vite 模式**：`vite.config.ts` 将 React、react-pdf 等标记为 `external`，由 Vite 处理打包
 - **零构建模式**：import map 直接指向 esm.sh CDN，浏览器原生解析模块依赖，适合 Google AI Studio 等不支持构建的环境
+
+生产部署若采用服务端托管 API，前端默认请求后端端点：
+- `/api/gemini/*`
+- `/api/live-token`
 
 ---
 
@@ -293,8 +358,8 @@ All-Model-Chat/
 
 | 类型 | 模型 |
 | :--- | :--- |
-| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview, gemini-3.1-flash-live-preview |
-| **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-native-audio-preview |
+| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
+| **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-lite-preview, gemini-2.5-flash-native-audio-preview |
 | **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
 | **Imagen 4.0** | imagen-4.0-fast-generate, imagen-4.0-generate, imagen-4.0-ultra-generate |
 | **图片生成** | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview |

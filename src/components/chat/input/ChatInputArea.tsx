@@ -1,4 +1,5 @@
 
+/* eslint-disable react-hooks/refs */
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
@@ -11,13 +12,6 @@ import { ChatQuoteDisplay } from './area/ChatQuoteDisplay';
 import { ChatFilePreviewList } from './area/ChatFilePreviewList';
 import { ChatTextArea } from './area/ChatTextArea';
 import { LiveStatusBanner } from './LiveStatusBanner';
-
-const assignInputRef = (
-    refObject: React.RefObject<HTMLInputElement>,
-    node: HTMLInputElement | null
-) => {
-    (refObject as React.MutableRefObject<HTMLInputElement | null>).current = node;
-};
 
 export interface ChatInputAreaProps {
     toolbarProps: ChatInputToolbarProps;
@@ -61,14 +55,14 @@ export interface ChatInputAreaProps {
         isConverting: boolean;
     };
     fileInputs: {
-        fileInput: React.RefObject<HTMLInputElement>;
-        imageInput: React.RefObject<HTMLInputElement>;
-        folderInput: React.RefObject<HTMLInputElement>;
-        zipInput: React.RefObject<HTMLInputElement>;
-        cameraInput: React.RefObject<HTMLInputElement>;
-        onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-        onFolderChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-        onZipChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        fileInputRef: React.RefObject<HTMLInputElement>;
+        imageInputRef: React.RefObject<HTMLInputElement>;
+        folderInputRef: React.RefObject<HTMLInputElement>;
+        zipInputRef: React.RefObject<HTMLInputElement>;
+        cameraInputRef: React.RefObject<HTMLInputElement>;
+        handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        handleFolderChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+        handleZipChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
     };
     formProps: {
         onSubmit: (e: React.FormEvent) => void;
@@ -88,7 +82,6 @@ export interface ChatInputAreaProps {
         volume: number;
         onDisconnect: () => void;
         error: string | null;
-        t: (key: keyof typeof translations) => string;
     };
     t: (key: keyof typeof translations) => string;
     themeId: string;
@@ -111,16 +104,6 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 }) => {
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
     const { isRecording } = actionsProps;
-    const {
-        fileInput,
-        imageInput,
-        folderInput,
-        zipInput,
-        cameraInput,
-        onFileChange,
-        onFolderChange,
-        onZipChange,
-    } = fileInputs;
 
     const isUIBlocked = inputProps.disabled && !isAnimatingSend && !isRecording;
 
@@ -139,6 +122,16 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     const inputContainerClass = isFullscreen
         ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200 relative"
         : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
+
+    const hiddenFileInputs = (
+        <>
+            <input type="file" ref={fileInputs.fileInputRef} onChange={fileInputs.handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+            <input type="file" ref={fileInputs.imageInputRef} onChange={fileInputs.handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+            <input type="file" ref={fileInputs.folderInputRef} onChange={fileInputs.handleFolderChange} className="hidden" aria-hidden="true" {...({ webkitdirectory: "", directory: "" } as { webkitdirectory: string; directory: string })} multiple />
+            <input type="file" ref={fileInputs.zipInputRef} onChange={fileInputs.handleZipChange} accept=".zip" className="hidden" aria-hidden="true" />
+            <input type="file" ref={fileInputs.cameraInputRef} onChange={fileInputs.handleFileChange} accept="image/*" capture="environment" className="hidden" aria-hidden="true" />
+        </>
+    );
 
     return (
         <div className={wrapperClass} aria-hidden={isUIBlocked}>
@@ -205,7 +198,6 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                             onCompositionEnd={inputProps.onCompositionEnd}
                             onFocus={inputProps.onFocus}
                             placeholder={inputProps.placeholder}
-                            ariaLabel={t('chatInput_textarea_aria')}
                             disabled={inputProps.disabled}
                             isFullscreen={isFullscreen}
                             isMobile={isMobile}
@@ -215,13 +207,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
                         <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1 relative z-10">
                             <ChatInputActions {...actionsProps} />
-                            
-                            {/* Hidden inputs */}
-                            <input type="file" ref={(node) => assignInputRef(fileInput, node)} onChange={onFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                            <input type="file" ref={(node) => assignInputRef(imageInput, node)} onChange={onFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                            <input type="file" ref={(node) => assignInputRef(folderInput, node)} onChange={onFolderChange} className="hidden" aria-hidden="true" {...({ webkitdirectory: "", directory: "" } as any)} multiple />
-                            <input type="file" ref={(node) => assignInputRef(zipInput, node)} onChange={onZipChange} accept=".zip" className="hidden" aria-hidden="true" />
-                            <input type="file" ref={(node) => assignInputRef(cameraInput, node)} onChange={onFileChange} accept="image/*" capture="environment" className="hidden" aria-hidden="true" />
+                            {hiddenFileInputs}
                         </div>
                     </div>
                 </form>

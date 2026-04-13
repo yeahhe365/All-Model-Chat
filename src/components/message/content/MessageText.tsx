@@ -1,18 +1,14 @@
 
 
-import React, { Suspense, lazy, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
 import { translations } from '../../../utils/appUtils';
 import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
+import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
 import { isLikelyHtml } from '../../../utils/codeUtils';
 import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
 import { useMessageStream } from '../../../hooks/ui/useMessageStream';
-
-const GroundedResponse = lazy(async () => {
-    const module = await import('../GroundedResponse');
-    return { default: module.GroundedResponse };
-});
 
 interface MessageTextProps {
     message: ChatMessage;
@@ -43,26 +39,25 @@ export const MessageText: React.FC<MessageTextProps> = ({
     isGraphvizRenderingEnabled,
     onOpenSidePanel
 }) => {
-    const { content, isLoading, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
-    const isMessageLoading = !!isLoading;
-    const shouldAutoFullscreenHtml = !!appSettings.autoFullscreenHtml;
+    const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
+    const isLoading = message.isLoading ?? false;
     
     // Subscribe to live stream updates if loading
-    const { streamContent, streamThoughts } = useMessageStream(message.id, isMessageLoading && message.role === 'model');
+    const { streamContent, streamThoughts } = useMessageStream(message.id, isLoading && message.role === 'model');
     
     // Use streamed content if available, otherwise fall back to persisted content
     const effectiveContent = streamContent || content;
     const effectiveThoughts = streamThoughts || thoughts;
 
     // Apply smooth streaming effect only when loading and for model messages
-    const shouldSmooth = isMessageLoading && message.role === 'model';
+    const shouldSmooth = isLoading && message.role === 'model';
     const displayedContent = useSmoothStreaming(effectiveContent, shouldSmooth);
 
     // Auto Fullscreen HTML Logic
-    const prevIsLoadingRef = useRef(isMessageLoading);
+    const prevIsLoadingRef = useRef(isLoading);
     useEffect(() => {
-        if (prevIsLoadingRef.current && !isMessageLoading) {
-            if (shouldAutoFullscreenHtml && message.role === 'model' && effectiveContent) {
+        if (prevIsLoadingRef.current && !isLoading) {
+            if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
                 const regex = /```html\s*([\s\S]*?)\s*```/m;
                 const match = effectiveContent.match(regex);
                 if (match && match[1]) {
@@ -76,8 +71,8 @@ export const MessageText: React.FC<MessageTextProps> = ({
                 }
             }
         }
-        prevIsLoadingRef.current = isMessageLoading;
-    }, [isMessageLoading, shouldAutoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
+        prevIsLoadingRef.current = isLoading;
+    }, [isLoading, appSettings.autoFullscreenHtml, effectiveContent, message.role, onOpenHtmlPreview]);
 
     // Only show the primary thinking indicator (spinner) if:
     // 1. It is loading
@@ -85,7 +80,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
     // 3. There is no audio yet
     // 4. AND either thoughts are disabled OR there are no thoughts (even streamed ones) yet.
     // This prevents showing the spinner here when the MessageThoughts component is already showing it.
-    const showPrimaryThinkingIndicator = isMessageLoading && !effectiveContent && !audioSrc && (!showThoughts || !effectiveThoughts);
+    const showPrimaryThinkingIndicator = isLoading && !effectiveContent && !audioSrc && (!showThoughts || !effectiveThoughts);
 
     return (
         <>
@@ -99,28 +94,26 @@ export const MessageText: React.FC<MessageTextProps> = ({
             )}
 
             {(effectiveContent && (groundingMetadata || urlContextMetadata)) ? (
-              <Suspense fallback={<div className="whitespace-pre-wrap break-words">{displayedContent}</div>}>
-                <GroundedResponse 
-                  text={displayedContent} // Use smoothed text
-                  metadata={groundingMetadata} 
-                  urlContextMetadata={urlContextMetadata}
-                  isLoading={isMessageLoading} 
-                  onOpenHtmlPreview={onOpenHtmlPreview} 
-                  expandCodeBlocksByDefault={expandCodeBlocksByDefault} 
-                  onImageClick={onImageClick} 
-                  isMermaidRenderingEnabled={isMermaidRenderingEnabled} 
-                  isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} 
-                  t={t} 
-                  themeId={themeId} 
-                  onOpenSidePanel={onOpenSidePanel}
-                  files={message.files}
-                />
-              </Suspense>
+              <GroundedResponse 
+                text={displayedContent} // Use smoothed text
+                metadata={groundingMetadata} 
+                urlContextMetadata={urlContextMetadata}
+                isLoading={isLoading} 
+                onOpenHtmlPreview={onOpenHtmlPreview} 
+                expandCodeBlocksByDefault={expandCodeBlocksByDefault} 
+                onImageClick={onImageClick} 
+                isMermaidRenderingEnabled={isMermaidRenderingEnabled} 
+                isGraphvizRenderingEnabled={isGraphvizRenderingEnabled} 
+                t={t} 
+                themeId={themeId} 
+                onOpenSidePanel={onOpenSidePanel}
+                files={message.files}
+              />
             ) : effectiveContent ? (
-                <div className={`markdown-body ${isMessageLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
+                <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
                     <LazyMarkdownRenderer
                         content={displayedContent} // Use smoothed text
-                        isLoading={isMessageLoading}
+                        isLoading={isLoading}
                         onImageClick={onImageClick}
                         onOpenHtmlPreview={onOpenHtmlPreview}
                         expandCodeBlocksByDefault={expandCodeBlocksByDefault}
@@ -130,9 +123,8 @@ export const MessageText: React.FC<MessageTextProps> = ({
                         t={t}
                         themeId={themeId}
                         onOpenSidePanel={onOpenSidePanel}
-                        hideThinkingInContext={!!appSettings.hideThinkingInContext}
+                        hideThinkingInContext={appSettings.hideThinkingInContext}
                         files={message.files}
-                        fallback={<div className="whitespace-pre-wrap break-words">{displayedContent}</div>}
                     />
                 </div>
             ) : null}

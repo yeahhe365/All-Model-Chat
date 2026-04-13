@@ -1,7 +1,7 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ModelOption } from '../../types';
-import { getDefaultModelOptions } from '../../utils/appUtils';
+import { sanitizeModelOptions } from '../../utils/modelHelpers';
 
 const CUSTOM_MODELS_KEY = 'custom_model_list_v1';
 
@@ -11,22 +11,49 @@ export const useModels = () => {
         try {
             const stored = localStorage.getItem(CUSTOM_MODELS_KEY);
             if (stored) {
-                return JSON.parse(stored);
+                return sanitizeModelOptions(JSON.parse(stored));
             }
         } catch (e) {
             console.error('Failed to load custom models', e);
         }
-        return getDefaultModelOptions();
+        return [];
     });
+    const [isModelsLoading, setIsModelsLoading] = useState(() => apiModels.length === 0);
+    const [modelsLoadingError, setModelsLoadingError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (apiModels.length > 0) {
+            setIsModelsLoading(false);
+            return;
+        }
+
+        let isActive = true;
+
+        void import('../../utils/defaultModelOptions')
+            .then(({ getDefaultModelOptions }) => {
+                if (!isActive) return;
+                setApiModelsState(getDefaultModelOptions());
+                setIsModelsLoading(false);
+            })
+            .catch((error) => {
+                console.error('Failed to load default models', error);
+                if (!isActive) return;
+                setModelsLoadingError('Failed to load default models');
+                setIsModelsLoading(false);
+            });
+
+        return () => {
+            isActive = false;
+        };
+    }, [apiModels.length]);
     
     const setApiModels = useCallback((models: ModelOption[]) => {
-        setApiModelsState(models);
-        localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(models));
+        const sanitizedModels = sanitizeModelOptions(models);
+        setApiModelsState(sanitizedModels);
+        setIsModelsLoading(false);
+        setModelsLoadingError(null);
+        localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(sanitizedModels));
     }, []);
-
-    // Currently loading is instantaneous for local storage, but structure prepared for API fetch
-    const isModelsLoading = false;
-    const modelsLoadingError = null;
 
     return { apiModels, setApiModels, isModelsLoading, modelsLoadingError };
 };

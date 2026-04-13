@@ -4,40 +4,10 @@ import { useIsMobile } from '../useDevice';
 export const INITIAL_TEXTAREA_HEIGHT_PX = 28;
 export const MAX_TEXTAREA_HEIGHT_PX = 150;
 
-const parseStoredQuotes = (savedQuotes: string | null): string[] => {
-    if (!savedQuotes) {
-        return [];
-    }
-
-    try {
-        const parsed = JSON.parse(savedQuotes);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch (_error) {
-        return [];
-    }
-};
-
-const getInitialDraftState = (activeSessionId: string | null, isEditing: boolean) => {
-    if (!activeSessionId || isEditing || typeof localStorage === 'undefined') {
-        return {
-            inputText: '',
-            quotes: [] as string[],
-            ttsContext: '',
-        };
-    }
-
-    return {
-        inputText: localStorage.getItem(`chatDraft_${activeSessionId}`) || '',
-        quotes: parseStoredQuotes(localStorage.getItem(`chatQuotes_${activeSessionId}`)),
-        ttsContext: localStorage.getItem(`chatTtsContext_${activeSessionId}`) || '',
-    };
-};
-
 export const useChatInputState = (activeSessionId: string | null, isEditing: boolean) => {
-    const initialDraftState = getInitialDraftState(activeSessionId, isEditing);
-    const [inputText, setInputText] = useState(initialDraftState.inputText);
-    const [quotes, setQuotes] = useState<string[]>(initialDraftState.quotes);
-    const [ttsContext, setTtsContext] = useState(initialDraftState.ttsContext);
+    const [inputText, setInputText] = useState('');
+    const [quotes, setQuotes] = useState<string[]>([]);
+    const [ttsContext, setTtsContext] = useState('');
     const [isTranslating, setIsTranslating] = useState(false);
     const [isAnimatingSend, setIsAnimatingSend] = useState(false);
     const [fileIdInput, setFileIdInput] = useState('');
@@ -53,6 +23,36 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
     const isComposingRef = useRef(false);
 
     const isMobile = useIsMobile();
+
+    // Load draft from localStorage when session changes
+    useEffect(() => {
+        if (activeSessionId && !isEditing) {
+            const draftKey = `chatDraft_${activeSessionId}`;
+            const savedDraft = localStorage.getItem(draftKey);
+            setInputText(savedDraft || '');
+            
+            // Load quotes draft
+            const quoteKey = `chatQuotes_${activeSessionId}`;
+            try {
+                const savedQuotes = localStorage.getItem(quoteKey);
+                if (savedQuotes) {
+                    const parsed = JSON.parse(savedQuotes);
+                    if (Array.isArray(parsed)) {
+                        setQuotes(parsed);
+                    }
+                } else {
+                    setQuotes([]);
+                }
+            } catch (e) {
+                setQuotes([]);
+            }
+
+            // Load TTS Context draft
+            const ttsKey = `chatTtsContext_${activeSessionId}`;
+            const savedTtsContext = localStorage.getItem(ttsKey);
+            setTtsContext(savedTtsContext || '');
+        }
+    }, [activeSessionId, isEditing]);
 
     // Cross-Tab Sync for Input Drafts
     useEffect(() => {
@@ -74,7 +74,7 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
                     if (JSON.stringify(newValue) !== JSON.stringify(quotes)) {
                         setQuotes(newValue);
                     }
-                } catch (_error) {
+                } catch {
                     // Ignore malformed cross-tab quote payloads.
                 }
             } else if (e.key === ttsKey) {

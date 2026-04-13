@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { UploadedFile } from '../../types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
@@ -8,9 +8,13 @@ import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
-import { PdfViewer } from '../shared/file-preview/PdfViewer';
 import { IconYoutube } from '../icons/CustomIcons';
-import { useWindowContext } from '../../contexts/useWindowContext';
+import { copyFileToClipboard } from '../../utils/fileHelpers';
+
+const LazyPdfViewer = lazy(async () => {
+    const module = await import('../shared/file-preview/PdfViewer');
+    return { default: module.PdfViewer };
+});
 
 interface FilePreviewModalProps {
   file: UploadedFile | null;
@@ -29,75 +33,26 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
     onPrev, onNext, hasPrev = false, hasNext = false,
     onSaveText, initialEditMode = false
 }) => {
-  if (!file) return null;
-
-  const instanceKey = `${file.id}:${initialEditMode ? 'edit' : 'view'}`;
-
-  return (
-    <FilePreviewModalContent
-      key={instanceKey}
-      file={file}
-      onClose={onClose}
-      t={t}
-      onPrev={onPrev}
-      onNext={onNext}
-      hasPrev={hasPrev}
-      hasNext={hasNext}
-      onSaveText={onSaveText}
-      initialEditMode={initialEditMode}
-    />
-  );
-};
-
-const FilePreviewModalContent: React.FC<{
-  file: UploadedFile;
-  onClose: () => void;
-  t: (key: keyof typeof translations) => string;
-  onPrev?: () => void;
-  onNext?: () => void;
-  hasPrev: boolean;
-  hasNext: boolean;
-  onSaveText?: (fileId: string, content: string, newName: string) => void;
-  initialEditMode: boolean;
-}> = ({
-  file,
-  onClose,
-  t,
-  onPrev,
-  onNext,
-  hasPrev,
-  hasNext,
-  onSaveText,
-  initialEditMode,
-}) => {
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [editedContent, setEditedContent] = useState('');
-  const [editedName, setEditedName] = useState(file.name);
+  const [editedName, setEditedName] = useState('');
   const [textContentLoaded, setTextContentLoaded] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const { document: targetDocument, window: targetWindow } = useWindowContext();
+
+  useEffect(() => {
+      if (file) {
+          setIsEditing(initialEditMode);
+          setEditedName(file.name);
+          setEditedContent(''); // Will be populated by onLoad from viewer
+          setTextContentLoaded(false);
+          setIsCopied(false);
+      }
+  }, [file, initialEditMode]);
 
   const handleCopy = useCallback(async () => {
       if (!file || !file.dataUrl || isCopied) return;
       try {
-          // Fetch content to copy
-          const response = await fetch(file.dataUrl);
-          const blob = await response.blob();
-          
-          if (file.type.startsWith('text/') || file.type === 'application/json' || file.type.includes('javascript') || file.type.includes('xml')) {
-              const text = await blob.text();
-              await navigator.clipboard.writeText(text);
-          } else {
-              if (!navigator.clipboard || !navigator.clipboard.write) {
-                  console.error("Clipboard API not available.");
-                  return;
-              }
-              await navigator.clipboard.write([
-                  new ClipboardItem({
-                      [blob.type]: blob
-                  })
-              ]);
-          }
+          await copyFileToClipboard(file);
           setIsCopied(true);
           setTimeout(() => setIsCopied(false), 2000);
       } catch (err) {
@@ -111,20 +66,6 @@ const FilePreviewModalContent: React.FC<{
           if (!file) return;
           
           if (isEditing) return; // Disable nav when editing
-
-          const target = e.target as HTMLElement | null;
-          const tagName = target?.tagName.toLowerCase();
-          const isEditableTarget = !!target && (
-              target.isContentEditable ||
-              tagName === 'input' ||
-              tagName === 'textarea' ||
-              tagName === 'select'
-          );
-          const hasSelectedText = !!targetWindow.getSelection?.()?.toString();
-
-          if (e.defaultPrevented || isEditableTarget || hasSelectedText) {
-              return;
-          }
 
           // Copy Shortcut (Ctrl+C or Cmd+C)
           if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -141,9 +82,9 @@ const FilePreviewModalContent: React.FC<{
               onNext();
           }
       };
-      targetDocument.addEventListener('keydown', handleKeyDown);
-      return () => targetDocument.removeEventListener('keydown', handleKeyDown);
-  }, [file, hasPrev, hasNext, onPrev, onNext, isEditing, handleCopy, targetDocument, targetWindow]);
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [file, hasPrev, hasNext, onPrev, onNext, isEditing, handleCopy]);
 
   const handleSave = useCallback(() => {
       if (file && onSaveText) {
@@ -158,13 +99,15 @@ const FilePreviewModalContent: React.FC<{
       if (isEditing) {
           // Cancel
           setIsEditing(false);
-          setEditedName(file.name);
+          setEditedName(file?.name || '');
           // Content revert is handled by re-render of viewer with original file, 
           // but we rely on TextFileViewer to re-fetch or re-use cached content.
       } else {
           setIsEditing(true);
       }
   }, [isEditing, file]);
+
+  if (!file) return null;
 
   const isImage = SUPPORTED_IMAGE_MIME_TYPES.includes(file.type) || file.type === 'image/svg+xml';
   const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
@@ -209,12 +152,12 @@ const FilePreviewModalContent: React.FC<{
 
         {/* Navigation Buttons - Hide in Edit Mode */}
         {!isEditing && hasPrev && onPrev && (
-            <button onClick={(e) => { e.stopPropagation(); onPrev(); }} className={`${navButtonClass} left-2`} aria-label={t('filePreview_previous')}>
+            <button onClick={(e) => { e.stopPropagation(); onPrev(); }} className={`${navButtonClass} left-2`} aria-label="Previous">
                 <ChevronLeft size={24} />
             </button>
         )}
         {!isEditing && hasNext && onNext && (
-            <button onClick={(e) => { e.stopPropagation(); onNext(); }} className={`${navButtonClass} right-2`} aria-label={t('filePreview_next')}>
+            <button onClick={(e) => { e.stopPropagation(); onNext(); }} className={`${navButtonClass} right-2`} aria-label="Next">
                 <ChevronRight size={24} />
             </button>
         )}
@@ -222,11 +165,10 @@ const FilePreviewModalContent: React.FC<{
         {/* Content Viewer */}
         <div className="flex-grow w-full h-full overflow-hidden relative">
           {isImage ? (
-              <ImageViewer file={file} t={t as (key: string) => string} />
+              <ImageViewer file={file} />
           ) : isText ? (
               <TextFileViewer 
                   file={file} 
-                  t={t as (key: string) => string}
                   isEditable={isEditing}
                   onChange={setEditedContent}
                   onLoad={(content) => {
@@ -240,7 +182,13 @@ const FilePreviewModalContent: React.FC<{
                   content={textContentLoaded ? editedContent : undefined}
               />
           ) : isPdf ? (
-             <PdfViewer file={file} t={t as (key: string) => string} />
+             <Suspense fallback={
+                <div className="w-full h-full flex items-center justify-center text-white/70">
+                    Loading PDF viewer...
+                </div>
+             }>
+                <LazyPdfViewer file={file} />
+             </Suspense>
           ) : isVideo ? (
               <div className="w-full h-full flex items-center justify-center">
                 {file.dataUrl && (
@@ -257,7 +205,7 @@ const FilePreviewModalContent: React.FC<{
                   {file.fileUri && getYoutubeEmbedUrl(file.fileUri) ? (
                       <iframe 
                           src={getYoutubeEmbedUrl(file.fileUri)!} 
-                          title={t('filePreview_youtube_player')} 
+                          title="YouTube video player" 
                           frameBorder="0" 
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                           allowFullScreen
@@ -266,7 +214,7 @@ const FilePreviewModalContent: React.FC<{
                   ) : (
                       <div className="text-center text-white/50">
                           <IconYoutube size={64} className="mx-auto mb-4 opacity-50" />
-                          <p>{t('filePreview_invalid_youtube_url')}</p>
+                          <p>Invalid YouTube URL</p>
                       </div>
                   )}
               </div>
@@ -286,7 +234,7 @@ const FilePreviewModalContent: React.FC<{
           ) : (
               <div className="w-full h-full flex items-center justify-center text-white/50 flex-col gap-2">
                   <FileCode2 size={48} />
-                  <p>{t('filePreview_unsupported')}</p>
+                  <p>Preview not available for this file type.</p>
               </div>
           )}
         </div>

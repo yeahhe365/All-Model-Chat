@@ -8,11 +8,8 @@ import { useFullscreen } from '../ui/useFullscreen';
 interface AppEventsProps {
     appSettings: AppSettings;
     startNewChat: () => void;
-    handleClearCurrentChat: () => void;
     currentChatSettings: ChatSettings;
     handleSelectModelInHeader: (modelId: string) => void;
-    isSettingsModalOpen: boolean;
-    isPreloadedMessagesModalOpen: boolean;
     setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
     onTogglePip: () => void;
     isPipSupported: boolean;
@@ -24,11 +21,8 @@ interface AppEventsProps {
 export const useAppEvents = ({
     appSettings,
     startNewChat,
-    handleClearCurrentChat: _handleClearCurrentChat,
     currentChatSettings,
     handleSelectModelInHeader,
-    isSettingsModalOpen,
-    isPreloadedMessagesModalOpen,
     setIsLogViewerOpen,
     onTogglePip,
     isPipSupported,
@@ -150,7 +144,7 @@ export const useAppEvents = ({
                 pipWindow.document.removeEventListener('keydown', handleKeyDown);
             }
         };
-    }, [appSettings, startNewChat, isSettingsModalOpen, isPreloadedMessagesModalOpen, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating, toggleFullscreen]);
+    }, [appSettings, startNewChat, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating, toggleFullscreen]);
 
     return {
         installPromptEvent,

@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getMixedAudioStream } from '../../utils/audio/audioProcessing';
 
-export type RecorderStatus = 'idle' | 'recording' | 'paused';
+type RecorderStatus = 'idle' | 'recording' | 'paused';
 
 interface UseRecorderOptions {
     onStop?: (blob: Blob) => void;

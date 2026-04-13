@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useWindowContext } from '../../contexts/useWindowContext';
+import { useWindowContext } from '../../contexts/WindowContext';
 
 export const useFullscreen = () => {
     const { document: targetDocument } = useWindowContext();

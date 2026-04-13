@@ -25,7 +25,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
                     <div className="flex-grow min-w-0 pr-6">
                         {quotes.length > 1 && (
                             <div className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider mb-1">
-                                {t('selection_quote_label')} {index + 1}
+                                Quote {index + 1}
                             </div>
                         )}
                         <div className="max-h-[160px] overflow-y-auto custom-scrollbar">
@@ -41,7 +41,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
                                     t={t}
                                     themeId={themeId}
                                     onOpenSidePanel={() => {}}
-                                    fallback={<div className="whitespace-pre-wrap break-words">{quote}</div>}
+                                    fallbackMode="raw"
                                 />
                             </div>
                         </div>
@@ -50,7 +50,7 @@ export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRe
                         type="button"
                         onClick={() => onRemoveQuote(index)}
                         className="absolute top-2 right-2 p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-full transition-colors"
-                        aria-label={t('quote_remove_aria')}
+                        aria-label="Remove quote"
                     >
                         <Trash2 size={14} />
                     </button>

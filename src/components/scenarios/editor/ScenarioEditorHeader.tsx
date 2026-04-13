@@ -31,7 +31,7 @@ export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
                     onClick={onCancel}
                     className="hidden md:flex items-center gap-1.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] px-3 py-1.5 rounded-lg transition-colors"
                 >
-                    <ChevronLeft size={16} /> {t('scenarios_back')}
+                    <ChevronLeft size={16} /> Back
                 </button>
                 <div className="hidden md:block h-6 w-px bg-[var(--theme-border-secondary)]"></div>
                 

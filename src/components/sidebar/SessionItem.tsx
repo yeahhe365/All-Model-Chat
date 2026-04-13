@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
 import { translations } from '../../utils/appUtils';
@@ -40,7 +40,6 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
   } = props;
 
   const [isRightClickAnimating, setIsRightClickAnimating] = useState(false);
-  const actionButtonRef = useRef<HTMLButtonElement>(null);
   const isActive = activeMenu === session.id;
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -83,15 +82,13 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
         {loadingSessionIds.has(session.id) ? (
           <LoadingDots />
         ) : !generatingTitleSessionIds.has(session.id) && (
-          <button ref={actionButtonRef} onClick={(e) => toggleMenu(e, session.id)} title={t('history_item_actions')} aria-label={t('history_item_actions')} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)]"><MoreHorizontal size={16} strokeWidth={2} /></button>
+          <button onClick={(e) => toggleMenu(e, session.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)]"><MoreHorizontal size={16} strokeWidth={2} /></button>
         )}
       </div>
       {activeMenu === session.id && (
         <SessionItemMenu
           session={session}
           menuRef={menuRef}
-          triggerRef={actionButtonRef}
-          onRequestClose={() => setActiveMenu(null)}
           onStartEdit={() => { handleStartEdit(session); setActiveMenu(null); }}
           onTogglePin={() => { onTogglePinSession(session.id); setActiveMenu(null); }}
           onDuplicate={() => { onDuplicateSession(session.id); setActiveMenu(null); }}

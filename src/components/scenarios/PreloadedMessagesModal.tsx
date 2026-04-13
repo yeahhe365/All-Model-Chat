@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { SavedScenario } from '../../types';
 import { X, Plus, Upload, Download, ArrowLeft } from 'lucide-react';
-import { translations, Translator } from '../../utils/appUtils';
+import { translations } from '../../utils/appUtils';
 import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioList } from './ScenarioList';
@@ -14,7 +14,7 @@ interface PreloadedMessagesModalProps {
   savedScenarios: SavedScenario[];
   onSaveAllScenarios: (scenarios: SavedScenario[]) => void;
   onLoadScenario: (scenario: SavedScenario) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
@@ -48,10 +48,11 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
 
   // Focus management when modal opens
   useEffect(() => {
-    if (!isOpen) return;
-
-    const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
-    return () => clearTimeout(timer);
+    if (isOpen) {
+      const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
   }, [isOpen]);
 
   const handleClose = () => { 
@@ -184,7 +185,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                     initialScenario={editingScenario}
                     onSave={actions.handleSaveScenario}
                     onCancel={actions.handleCancelEdit}
-                    t={t as Translator}
+                    t={t}
                     readOnly={!!isSystemScenario}
                 />
             )}

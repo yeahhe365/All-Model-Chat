@@ -18,7 +18,7 @@ interface UIActions {
 export const useUIStore = create<UIState & UIActions>((set) => ({
   isSettingsModalOpen: false,
   isPreloadedMessagesModalOpen: false,
-  isHistorySidebarOpen: typeof window !== 'undefined' ? window.innerWidth >= 768 : false,
+  isHistorySidebarOpen: window.innerWidth >= 768,
   isLogViewerOpen: false,
 
   setIsSettingsModalOpen: (v) =>

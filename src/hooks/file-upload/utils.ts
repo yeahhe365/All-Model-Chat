@@ -11,9 +11,8 @@ import {
 import { AppSettings } from '../../types';
 import { isTextFile } from '../../utils/appUtils';
 
-export const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
-export const FILES_API_TOTAL_REQUEST_THRESHOLD = 100 * 1024 * 1024;
-export const INLINE_PDF_MAX_BYTES = 50 * 1024 * 1024;
+const INLINE_MAX_REQUEST_BYTES = 100 * 1024 * 1024;
+const INLINE_MAX_PDF_BYTES = 50 * 1024 * 1024;
 
 export const formatSpeed = (bytesPerSecond: number): string => {
     if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
@@ -50,34 +49,38 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
         SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.video :
         appSettings.filesApiConfig.text;
 
-    const exceedsPdfInlineLimit = SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType) && file.size > INLINE_PDF_MAX_BYTES;
-    const exceedsTotalRequestLimitByItself = file.size > FILES_API_TOTAL_REQUEST_THRESHOLD;
+    const inlineLimitBytes = SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)
+        ? INLINE_MAX_PDF_BYTES
+        : INLINE_MAX_REQUEST_BYTES;
 
-    return userPrefersFileApi || exceedsPdfInlineLimit || exceedsTotalRequestLimitByItself;
+    return userPrefersFileApi || file.size > inlineLimitBytes;
 };
 
-export const getFileApiUploadDecisions = (files: File[], appSettings: AppSettings): boolean[] => {
-    const initialDecisions = files.map(file => shouldUseFileApi(file, appSettings));
-    const inlinePayloadSize = files.reduce((total, file, index) => {
-        if (initialDecisions[index]) return total;
+export const getFilesRequiringFileApi = (files: File[], appSettings: AppSettings): Set<File> => {
+    const filesRequiringApi = new Set<File>();
+    const inlineCandidates: File[] = [];
+    let inlinePayloadBytes = 0;
 
+    for (const file of files) {
         const effectiveMimeType = getEffectiveMimeType(file);
-        if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return total;
+        if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) continue;
 
-        return total + file.size;
-    }, 0);
+        if (shouldUseFileApi(file, appSettings)) {
+            filesRequiringApi.add(file);
+            continue;
+        }
 
-    if (inlinePayloadSize <= FILES_API_TOTAL_REQUEST_THRESHOLD) {
-        return initialDecisions;
+        inlineCandidates.push(file);
+        inlinePayloadBytes += file.size;
     }
 
-    return files.map((file, index) => {
-        if (initialDecisions[index]) return true;
-        const effectiveMimeType = getEffectiveMimeType(file);
-        return ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType);
-    });
+    if (inlinePayloadBytes > INLINE_MAX_REQUEST_BYTES) {
+        inlineCandidates.forEach((file) => filesRequiringApi.add(file));
+    }
+
+    return filesRequiringApi;
 };
 
 export const checkBatchNeedsApiKey = (files: File[], appSettings: AppSettings): boolean => {
-    return getFileApiUploadDecisions(files, appSettings).some(Boolean);
+    return getFilesRequiringFileApi(files, appSettings).size > 0;
 };

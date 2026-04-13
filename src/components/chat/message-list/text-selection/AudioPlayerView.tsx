@@ -1,8 +1,6 @@
 
 import React from 'react';
 import { GripVertical, X, Loader2 } from 'lucide-react';
-import { getTranslator } from '../../../../utils/appUtils';
-import { useSettingsStore } from '../../../../stores/settingsStore';
 
 interface AudioPlayerViewProps {
     audioUrl: string | null;
@@ -19,14 +17,11 @@ export const AudioPlayerView: React.FC<AudioPlayerViewProps> = ({
     onDragStart, 
     onClose 
 }) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
-
     if (isLoading) {
         return (
             <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)]">
                 <Loader2 size={14} className="animate-spin text-[var(--theme-text-link)]" />
-                <span>{t('selection_generating_audio')}</span>
+                <span>Generating Audio...</span>
             </div>
         );
     }
@@ -38,7 +33,7 @@ export const AudioPlayerView: React.FC<AudioPlayerViewProps> = ({
             <div 
                 onMouseDown={onDragStart}
                 className="cursor-grab active:cursor-grabbing p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors touch-none"
-                title={t('selection_drag_to_move')}
+                title="Drag to move"
             >
                 <GripVertical size={14} />
             </div>
@@ -52,8 +47,6 @@ export const AudioPlayerView: React.FC<AudioPlayerViewProps> = ({
             />
             <button 
                 onClick={onClose}
-                title={t('close')}
-                aria-label={t('close')}
                 className="p-1.5 rounded-full text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] ml-1"
             >
                 <X size={16} />
