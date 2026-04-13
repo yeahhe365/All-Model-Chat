@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      PORT: 3001
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_API_BASE: ${GEMINI_API_BASE:-https://generativelanguage.googleapis.com}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+    expose:
+      - "3001"
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    depends_on:
+      - api
+    environment:
+      RUNTIME_SERVER_MANAGED_API: ${RUNTIME_SERVER_MANAGED_API:-true}
+      RUNTIME_USE_CUSTOM_API_CONFIG: ${RUNTIME_USE_CUSTOM_API_CONFIG:-false}
+      RUNTIME_USE_API_PROXY: ${RUNTIME_USE_API_PROXY:-true}
+      RUNTIME_API_PROXY_URL: ${RUNTIME_API_PROXY_URL:-/api/gemini}
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    restart: unless-stopped
