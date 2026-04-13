@@ -8,7 +8,7 @@ RUN npm ci
 COPY index.html manifest.json sw.js tsconfig.json vite.config.ts ./
 COPY public public
 COPY src src
-RUN npm run build
+RUN NODE_OPTIONS=--max-old-space-size=2048 npm run build
 
 FROM nginx:1.27-alpine
 
