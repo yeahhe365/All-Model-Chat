@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import mermaid from 'mermaid';
 import { SideViewContent, UploadedFile } from '../../../types';
-import { exportSvgAsImage } from '../../../utils/exportUtils';
 import { DiagramWrapper } from './parts/DiagramWrapper';
 
 interface MermaidBlockProps {
@@ -10,17 +9,9 @@ interface MermaidBlockProps {
   isLoading: boolean;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
-  renderDelayMs?: number;
 }
 
-export const MermaidBlock: React.FC<MermaidBlockProps> = ({
-  code,
-  onImageClick,
-  isLoading: isMessageLoading,
-  themeId,
-  onOpenSidePanel,
-  renderDelayMs = 500,
-}) => {
+export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
   const [svg, setSvg] = useState('');
   const [error, setError] = useState('');
   const [isRendering, setIsRendering] = useState(true);
@@ -76,18 +67,19 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({
             setIsRendering(false);
         }
       }
-    }, renderDelayMs);
+    }, 500);
 
     return () => {
         isMounted = false;
         clearTimeout(timeoutId);
     };
-  }, [code, isMessageLoading, renderDelayMs, themeId]);
+  }, [code, isMessageLoading, themeId]);
 
   const handleDownloadJpg = async () => {
     if (!svg || isDownloading) return;
     setIsDownloading(true);
     try {
+        const { exportSvgAsImage } = await import('../../../utils/export/image');
         await exportSvgAsImage(svg, `mermaid-diagram-${Date.now()}.jpg`, 3, 'image/jpeg');
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Failed to export diagram as JPG.';

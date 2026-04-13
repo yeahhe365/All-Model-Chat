@@ -10,7 +10,7 @@ import { VoiceControl } from './controls/VoiceControl';
 import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { MediaResolution } from '../../types/settings';
-import { isLiveAudioModel } from '../../utils/appUtils';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -18,8 +18,6 @@ interface ModelVoiceSettingsProps {
   availableModels: ModelOption[];
   transcriptionModelId: string;
   setTranscriptionModelId: (value: string) => void;
-  generateQuadImages: boolean;
-  setGenerateQuadImages: (value: boolean) => void;
   ttsVoice: string;
   setTtsVoice: (value: string) => void;
   t: (key: string) => string;
@@ -46,7 +44,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const {
     modelId, setModelId, availableModels,
     transcriptionModelId, setTranscriptionModelId,
-    ttsVoice: _ttsVoice, setTtsVoice: _setTtsVoice,
+    ttsVoice, setTtsVoice, 
     systemInstruction, setSystemInstruction,
     thinkingBudget, setThinkingBudget,
     thinkingLevel, setThinkingLevel,
@@ -93,7 +91,9 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
   const inputBaseClasses = "w-full p-2.5 border rounded-lg transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm";
   const isSystemPromptSet = localPrompt && localPrompt.trim() !== "";
   
-  const isNativeAudio = isLiveAudioModel(modelId);
+  const capabilities = getModelCapabilities(modelId);
+  const isNativeAudio = capabilities.isNativeAudioModel;
+  const supportsUltraHighResolution = capabilities.isGemini3;
 
   return (
     <div className="space-y-8">
@@ -123,13 +123,13 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                 <div className="flex justify-between items-center mb-2">
                     <label htmlFor="system-prompt-input" className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center">
                         <span>{t('settingsSystemPrompt')}</span>
-                        {isSystemPromptSet && <span className="w-2 h-2 ml-2 bg-[var(--theme-text-success)] rounded-full animate-pulse" title={t('settingsSystemPrompt_active')} />}
+                        {isSystemPromptSet && <span className="w-2 h-2 ml-2 bg-[var(--theme-text-success)] rounded-full animate-pulse" title="Active" />}
                     </label>
                     <button
                         type="button"
                         onClick={handleOpenExpand}
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
-                        title={t('settingsSystemPrompt_expand')}
+                        title="Expand Editor"
                     >
                         <Maximize2 size={14} />
                     </button>
@@ -142,7 +142,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                   rows={3} 
                   className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] custom-scrollbar`}
                   placeholder={t('chatBehavior_systemPrompt_placeholder')}
-                  aria-label={t('settingsSystemPrompt_input_aria')}
+                  aria-label="System prompt text area"
                 />
             </div>
 
@@ -209,7 +209,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                             <span className='flex items-center text-sm font-medium text-[var(--theme-text-primary)]'>
                                 <ImageIcon size={14} className="mr-2 text-[var(--theme-text-secondary)]" />
                                 {t('settingsMediaResolution')}
-                                <Tooltip text={isNativeAudio ? t('settingsMediaResolution_live_tooltip') : t('settingsMediaResolution_tooltip')}>
+                                <Tooltip text={isNativeAudio ? "Controls video/audio resolution for Live API." : t('settingsMediaResolution_tooltip')}>
                                     <Info size={14} className="ml-2 text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
                                 </Tooltip>
                             </span>
@@ -221,7 +221,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                         <option value={MediaResolution.MEDIA_RESOLUTION_LOW}>{t('mediaResolution_low')}</option>
                         {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_MEDIUM}>{t('mediaResolution_medium')}</option>}
                         {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_HIGH}>{t('mediaResolution_high')}</option>}
-                        {!isNativeAudio && <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>}
+                        {!isNativeAudio && supportsUltraHighResolution && <option value={MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH}>{t('mediaResolution_ultra_high')}</option>}
                     </Select>
                 )}
             </div>
@@ -231,6 +231,8 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
       <VoiceControl
         transcriptionModelId={transcriptionModelId}
         setTranscriptionModelId={setTranscriptionModelId}
+        ttsVoice={ttsVoice}
+        setTtsVoice={setTtsVoice}
         t={t}
       />
     </div>

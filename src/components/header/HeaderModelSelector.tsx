@@ -4,7 +4,7 @@ import { Zap } from 'lucide-react';
 import { ModelOption } from '../../types';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
 import { ModelPicker } from '../shared/ModelPicker';
-import { isGemini3Model } from '../../utils/appUtils';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 
 interface HeaderModelSelectorProps {
   currentModelName?: string;
@@ -30,7 +30,6 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   onSetThinkingLevel,
 }) => {
   const displayModelName = currentModelName;
-  const accessibleModelName = displayModelName || t('loading');
 
   const abbreviatedModelName = useMemo(() => {
     if (!displayModelName) return '';
@@ -47,7 +46,8 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   const isSelectorDisabled = availableModels.length === 0 || isLoading || isSwitchingModel;
   
   // Check for Gemini 3 models (ignoring case) but exclude image models
-  const isGemini3 = isGemini3Model(selectedModelId) && !selectedModelId.toLowerCase().includes('image');
+  const { isGemini3, isImagenModel } = getModelCapabilities(selectedModelId);
+  const supportsThinkingToggle = isGemini3 && !isImagenModel;
 
   // Determine the target "Fast" level based on model capabilities
   // Gemini 3 Flash models support MINIMAL thinking for maximum speed
@@ -57,13 +57,6 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   
   // Consider it "Fast Mode" active if the current level matches the target fast level
   const isFastState = thinkingLevel === targetFastLevel;
-  const thinkingTitle = isFastState
-    ? t(
-        targetFastLevel === 'MINIMAL'
-          ? 'thinking_toggle_fast_minimal_title'
-          : 'thinking_toggle_fast_low_title'
-      )
-    : t('thinking_toggle_high_title');
 
   return (
     <ModelPicker
@@ -72,17 +65,16 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       onSelect={onSelectModel}
       t={t}
       dropdownClassName="w-[calc(100vw-2rem)] max-w-[240px] sm:w-[240px] sm:max-w-none max-h-96"
-      renderTrigger={({ ref, onTriggerClick, onTriggerKeyDown, triggerAriaProps }) => (
+      renderTrigger={({ isOpen, setIsOpen }) => (
         <div className="relative flex items-center gap-1">
             <button
-                ref={ref}
-                onClick={onTriggerClick}
-                onKeyDown={onTriggerKeyDown}
+                onClick={() => setIsOpen(!isOpen)}
                 disabled={isSelectorDisabled}
                 className={`h-10 flex items-center gap-2 rounded-xl px-2 sm:px-3 bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)] font-medium text-base transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] disabled:opacity-70 disabled:cursor-not-allowed border border-transparent hover:border-[var(--theme-border-secondary)] hover:scale-[1.02] active:scale-95 active:bg-[var(--theme-bg-tertiary)] ${isSwitchingModel ? 'animate-pulse' : ''}`}
-                title={`${t('headerModelSelectorTooltip_current')}: ${accessibleModelName}. ${t('headerModelSelectorTooltip_action')}`}
-                aria-label={`${t('headerModelAriaLabel_current')}: ${accessibleModelName}. ${t('headerModelAriaLabel_action')}`}
-                {...triggerAriaProps}
+                title={`${t('headerModelSelectorTooltip_current')}: ${displayModelName}. ${t('headerModelSelectorTooltip_action')}`}
+                aria-label={`${t('headerModelAriaLabel_current')}: ${displayModelName}. ${t('headerModelAriaLabel_action')}`}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
             >
                 {!currentModelName && <div className="flex items-center justify-center"><GoogleSpinner size={16} /></div>}
                 
@@ -90,20 +82,19 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
             </button>
 
             {/* Thinking Level Toggle */}
-            {isGemini3 && (
+            {supportsThinkingToggle && (
                 <button 
                     onClick={(e) => { 
                         e.stopPropagation(); 
                         onSetThinkingLevel(isFastState ? 'HIGH' : targetFastLevel); 
                     }}
-                    type="button"
-                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
+                    className={`h-10 w-10 flex items-center justify-center rounded-xl transition-all duration-200 ease-out focus:outline-none focus:visible:ring-2 focus:visible:ring-offset-2 focus:visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95 ${
                         isFastState 
                             ? 'text-yellow-500 hover:bg-[var(--theme-bg-tertiary)]' 
                             : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]'
                     }`}
-                    title={thinkingTitle}
-                    aria-label={t('thinking_toggle_aria')}
+                    title={isFastState ? `Thinking: ${targetFastLevel === 'MINIMAL' ? 'Minimal' : 'Low'} (Fast Mode)` : "Thinking: High (Pro Mode)"}
+                    aria-label="Toggle thinking level"
                 >
                     <Zap size={18} fill={isFastState ? "currentColor" : "none"} strokeWidth={2} />
                 </button>

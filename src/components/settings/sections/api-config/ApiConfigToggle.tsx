@@ -30,14 +30,14 @@ export const ApiConfigToggle: React.FC<ApiConfigToggleProps> = ({
                     {t('settingsUseCustomApi')}
                     {hasEnvKey && !useCustomApiConfig && (
                         <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-500/10 text-green-600 border border-green-500/20">
-                            <ShieldCheck size={10} /> {t('apiConfig_env_key_active')}
+                            <ShieldCheck size={10} /> Env Key Active
                         </span>
                     )}
                 </span>
                 <span className="text-xs text-[var(--theme-text-tertiary)] mt-0.5">
                     {useCustomApiConfig
-                        ? (hasEnvKey ? t('apiConfig_overriding_env') : t('apiConfig_using_own_keys'))
-                        : (hasEnvKey ? t('apiConfig_default_info') : t('apiConfig_missing_env_key'))
+                        ? (hasEnvKey ? 'Overriding environment API key' : 'Using your own API keys')
+                        : (hasEnvKey ? t('apiConfig_default_info') : 'No API key found in environment. Enable custom key to proceed.')
                     }
                 </span>
             </div>

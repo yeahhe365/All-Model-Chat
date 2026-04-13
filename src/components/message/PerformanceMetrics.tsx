@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import { ChatMessage } from '../../types';
-import { translations } from '../../utils/appUtils';
 
 interface PerformanceMetricsProps {
     message: ChatMessage;
-    t: (key: keyof typeof translations) => string;
     hideTimer?: boolean;
 }
 
-export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t, hideTimer }) => {
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, hideTimer }) => {
     const { 
         promptTokens, 
         completionTokens, 
@@ -23,34 +21,26 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
 
     const [liveElapsedTime, setLiveElapsedTime] = useState<number>(() => {
         if (!generationStartTime) return 0;
-        const startTime = new Date(generationStartTime).getTime();
-        return Math.max(0, (Date.now() - startTime) / 1000);
+        return (Date.now() - new Date(generationStartTime).getTime()) / 1000;
     });
 
     useEffect(() => {
-        if (!generationStartTime) return undefined;
+        if (!generationStartTime || !isLoading) return;
         const startTime = new Date(generationStartTime).getTime();
-        
-        if (isLoading) {
-            const updateTimer = () => setLiveElapsedTime((Date.now() - startTime) / 1000);
-            const frame = requestAnimationFrame(updateTimer);
-            const intervalId = setInterval(updateTimer, 100);
-            return () => {
-                cancelAnimationFrame(frame);
-                clearInterval(intervalId);
-            };
+        const updateTimer = () => setLiveElapsedTime((Date.now() - startTime) / 1000);
+        const intervalId = setInterval(updateTimer, 100);
+        return () => clearInterval(intervalId);
+    }, [generationStartTime, isLoading]);
+
+    const elapsedTime = (() => {
+        if (!generationStartTime) return 0;
+        if (generationEndTime && !isLoading) {
+            const startTime = new Date(generationStartTime).getTime();
+            const endTime = new Date(generationEndTime).getTime();
+            return (endTime - startTime) / 1000;
         }
-
-        return undefined;
-    }, [generationStartTime, generationEndTime, isLoading]);
-
-    const elapsedTime = generationStartTime
-        ? isLoading
-            ? liveElapsedTime
-            : generationEndTime
-                ? (new Date(generationEndTime).getTime() - new Date(generationStartTime).getTime()) / 1000
-                : liveElapsedTime
-        : 0;
+        return liveElapsedTime;
+    })();
 
     // Calculate tokens per second
     // Include thought tokens in speed calculation as they are generated content
@@ -84,7 +74,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
     return (
         <div className="mt-2 flex justify-end items-center flex-wrap gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-[var(--theme-text-primary)] font-mono select-none">
             {showTokens && (
-                <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title={t('metrics_token_usage')}>
+                <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title="Token Usage">
                     <span className="flex items-center gap-2">
                         <span>I: {(promptTokens ?? 0).toLocaleString()}</span>
                         <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
@@ -104,14 +94,14 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
             )}
 
             {tokensPerSecond > 0 && (
-                <div className="flex items-center gap-1" title={t('metrics_generation_speed')}>
+                <div className="flex items-center gap-1" title="Generation Speed (excluding TTFT)">
                     <Zap size={11} className="text-amber-400 fill-amber-400/20" strokeWidth={2} />
                     <span>{tokensPerSecond.toFixed(1)} t/s</span>
                 </div>
             )}
 
             {showTimer && (
-                <div className="tabular-nums" title={t('metrics_total_duration')}>
+                <div className="tabular-nums" title="Total Duration">
                     {elapsedTime.toFixed(1)}s
                 </div>
             )}

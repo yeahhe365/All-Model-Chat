@@ -6,8 +6,6 @@ import { AudioPlayer } from '../shared/AudioPlayer';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { AudioVisualizer } from '../recorder/AudioVisualizer';
 import { RecorderControls } from '../recorder/RecorderControls';
-import { getTranslator } from '../../utils/appUtils';
-import { useSettingsStore } from '../../stores/settingsStore';
 
 interface AudioRecorderProps {
   onRecord: (file: File) => Promise<void>;
@@ -16,8 +14,6 @@ interface AudioRecorderProps {
 }
 
 export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel, isSystemAudioRecordingEnabled }) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
     const {
         viewState,
         isInitializing,
@@ -46,7 +42,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             await onRecord(file);
         } catch (e) {
             console.error(e);
-            alert(t('audioRecorder_save_failed'));
+            alert("Failed to save recording.");
             setIsSaving(false);
         }
     };
@@ -68,14 +64,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)]">
                 <h2 className="text-base font-semibold text-[var(--theme-text-primary)]">
-                    {viewState === 'review' ? t('audioRecorder_review_title') : t('audioRecorder_title')}
+                    {viewState === 'review' ? 'Preview Recording' : 'Voice Recorder'}
                 </h2>
-                <button
-                    onClick={onCancel}
-                    title={t('close')}
-                    aria-label={t('close')}
-                    className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors"
-                >
+                <button onClick={onCancel} className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors">
                     <X size={20} />
                 </button>
             </div>
@@ -104,11 +95,11 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                             </div>
                         </div>
                         <p className="text-sm text-[var(--theme-text-secondary)]">
-                            {isInitializing ? t('audioRecorder_accessing_mic') : t('audioRecorder_ready')}
+                            {isInitializing ? "Accessing microphone..." : "Ready to record"}
                         </p>
                         {isSystemAudioRecordingEnabled && !isInitializing && (
                             <p className="text-xs text-[var(--theme-text-tertiary)] bg-[var(--theme-bg-tertiary)]/50 px-2 py-1 rounded">
-                                {t('audioRecorder_system_audio_enabled')}
+                                System audio recording enabled
                             </p>
                         )}
                     </div>
@@ -125,7 +116,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
 
                         <div className="flex items-center gap-2 text-xs font-medium text-[var(--theme-text-tertiary)] uppercase tracking-widest animate-pulse">
                             <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                            {t('audioRecorder_recording')}
+                            Recording
                         </div>
                     </div>
                 )}
@@ -134,7 +125,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                 {viewState === 'review' && audioUrl && (
                     <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="flex flex-col items-center mb-6">
-                            <div className="text-xs text-[var(--theme-text-tertiary)] mb-1 uppercase tracking-wide">{t('audioRecorder_total_duration')}</div>
+                            <div className="text-xs text-[var(--theme-text-tertiary)] mb-1 uppercase tracking-wide">Total Duration</div>
                             <div className="text-3xl font-mono text-[var(--theme-text-primary)]">{formatTime(recordingTime)}</div>
                         </div>
                         <AudioPlayer src={audioUrl} className="w-full" />

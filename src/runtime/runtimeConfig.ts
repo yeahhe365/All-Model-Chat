@@ -1,0 +1,94 @@
+import type { AppSettings } from '../types/settings';
+
+type RuntimeConfigKey =
+  | 'serverManagedApi'
+  | 'useCustomApiConfig'
+  | 'useApiProxy'
+  | 'apiProxyUrl'
+  | 'liveApiEphemeralTokenEndpoint';
+
+type RuntimeConfigShape = Partial<Record<RuntimeConfigKey, unknown>>;
+
+declare global {
+  interface Window {
+    __AMC_RUNTIME_CONFIG__?: RuntimeConfigShape;
+  }
+}
+
+function readBooleanValue(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') {
+      return true;
+    }
+    if (normalized === 'false' || normalized === '0') {
+      return false;
+    }
+  }
+
+  return undefined;
+}
+
+function readNullableString(value: unknown): string | null | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  return undefined;
+}
+
+export function getRuntimeConfigAppSettingsOverrides(): Partial<
+  Pick<
+    AppSettings,
+    'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'liveApiEphemeralTokenEndpoint'
+  >
+> {
+  const runtimeConfig = typeof window !== 'undefined' ? window.__AMC_RUNTIME_CONFIG__ : undefined;
+
+  if (!runtimeConfig) {
+    return {};
+  }
+
+  const overrides: Partial<
+    Pick<
+      AppSettings,
+      'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl' | 'liveApiEphemeralTokenEndpoint'
+    >
+  > = {};
+
+  const serverManagedApi = readBooleanValue(runtimeConfig.serverManagedApi);
+  if (serverManagedApi !== undefined) {
+    overrides.serverManagedApi = serverManagedApi;
+  }
+
+  const useCustomApiConfig = readBooleanValue(runtimeConfig.useCustomApiConfig);
+  if (useCustomApiConfig !== undefined) {
+    overrides.useCustomApiConfig = useCustomApiConfig;
+  }
+
+  const useApiProxy = readBooleanValue(runtimeConfig.useApiProxy);
+  if (useApiProxy !== undefined) {
+    overrides.useApiProxy = useApiProxy;
+  }
+
+  const apiProxyUrl = readNullableString(runtimeConfig.apiProxyUrl);
+  if (apiProxyUrl !== undefined) {
+    overrides.apiProxyUrl = apiProxyUrl;
+  }
+
+  const liveApiEphemeralTokenEndpoint = readNullableString(runtimeConfig.liveApiEphemeralTokenEndpoint);
+  if (liveApiEphemeralTokenEndpoint !== undefined) {
+    overrides.liveApiEphemeralTokenEndpoint = liveApiEphemeralTokenEndpoint;
+  }
+
+  return overrides;
+}

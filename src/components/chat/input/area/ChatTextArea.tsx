@@ -12,7 +12,6 @@ interface ChatTextAreaProps {
     onCompositionEnd: () => void;
     onFocus?: () => void;
     placeholder: string;
-    ariaLabel?: string;
     disabled: boolean;
     isFullscreen: boolean;
     isMobile: boolean;
@@ -30,7 +29,6 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
     onCompositionEnd,
     onFocus,
     placeholder,
-    ariaLabel,
     disabled,
     isFullscreen,
     isMobile,
@@ -94,12 +92,12 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
                 onCompositionStart={onCompositionStart}
                 onCompositionEnd={onCompositionEnd}
                 placeholder={placeholder}
-                className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px] transition-[height] duration-150 ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
+                className="w-full bg-transparent border-0 resize-none px-1 py-1 text-base placeholder:text-[var(--theme-text-tertiary)] focus:ring-0 focus:outline-none custom-scrollbar flex-grow min-h-[24px]"
                 style={{ 
                     height: isFullscreen ? '100%' : `${isMobile ? 24 : initialTextareaHeight}px`,
                     overflowY: isFullscreen ? 'auto' : 'hidden'
                 }}
-                aria-label={ariaLabel}
+                aria-label="Chat message input"
                 onFocus={onFocus}
                 disabled={disabled || isConverting}
                 rows={1}

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Mic, Activity, X } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
 
 interface LiveStatusBannerProps {
     isConnected: boolean;
@@ -9,7 +8,6 @@ interface LiveStatusBannerProps {
     volume: number;
     onDisconnect: () => void;
     error: string | null;
-    t: (key: keyof typeof translations) => string;
 }
 
 export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({ 
@@ -17,8 +15,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
     isSpeaking, 
     volume, 
     onDisconnect,
-    error,
-    t,
+    error
 }) => {
     if (error) {
         return (
@@ -51,10 +48,10 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
                 
                 <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold text-[var(--theme-text-primary)]">
-                        {isSpeaking ? t('live_status_speaking') : t('live_status_listening')}
+                        {isSpeaking ? "Gemini is speaking..." : "Listening..."}
                     </span>
                     <span className="text-[10px] text-[var(--theme-text-secondary)] truncate">
-                        {t('live_status_active')}
+                        Live Session Active • Type to chat
                     </span>
                 </div>
             </div>
@@ -63,7 +60,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
                 onClick={onDisconnect}
                 className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors"
             >
-                {t('live_status_end_call')}
+                End Call
             </button>
         </div>
     );

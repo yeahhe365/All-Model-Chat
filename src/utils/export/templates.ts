@@ -27,16 +27,6 @@ export const generateExportHtmlTemplate = ({
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Chat Export: ${title}</title>
             ${styles}
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-            <script>
-                document.addEventListener('DOMContentLoaded', () => {
-                    document.querySelectorAll('pre code').forEach((el) => {
-                        if (window.hljs) {
-                            window.hljs.highlightElement(el);
-                        }
-                    });
-                });
-            </script>
             <style>
                 /* Reset & Layout */
                 html, body { height: auto !important; overflow: auto !important; min-height: 100vh; }
@@ -86,12 +76,13 @@ export const generateExportHtmlTemplate = ({
                     display: none !important; 
                 }
 
-                /* Message Styling Fixes */
-                .group.relative.message-container-animate { 
-                    animation: none !important; 
-                    opacity: 1 !important; 
-                    transform: none !important; 
+                /* Message Layout Fixes */
+                [data-message-id] {
+                    break-inside: avoid;
                     margin-bottom: 1.5rem;
+                }
+                [data-message-id]:last-child {
+                    margin-bottom: 0;
                 }
                 
                 /* Links */

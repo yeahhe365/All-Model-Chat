@@ -1,10 +1,10 @@
 
-import { useCallback, type MutableRefObject } from 'react';
+
+import React, { useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
-import { Part, UsageMetadata } from '@google/genai';
+import type { Part, UsageMetadata } from '@google/genai';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { logService, showNotification, calculateTokenStats, playCompletionSound } from '../../utils/appUtils';
-import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
@@ -15,7 +15,7 @@ interface ChatStreamHandlerProps {
     appSettings: AppSettings;
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: MutableRefObject<Map<string, AbortController>>;
+    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
 
 export const useChatStreamHandler = ({
@@ -140,13 +140,15 @@ export const useChatStreamHandler = ({
                     if (appSettings.isCompletionNotificationEnabled && document.hidden) {
                         const msg = finalizationResult.completedMessageForNotification;
                         const notificationBody = (msg.content || "Media or tool response received").substring(0, 150) + (msg.content && msg.content.length > 150 ? '...' : '');
-                        showNotification(
-                            'Response Ready', 
-                            {
-                                body: notificationBody,
-                                icon: APP_LOGO_SVG_DATA_URI,
-                            }
-                        );
+                        void import('../../constants/assets').then(({ APP_LOGO_SVG_DATA_URI }) => {
+                            showNotification(
+                                'Response Ready',
+                                {
+                                    body: notificationBody,
+                                    icon: APP_LOGO_SVG_DATA_URI,
+                                }
+                            );
+                        });
                     }
                 }
 
@@ -171,9 +173,9 @@ export const useChatStreamHandler = ({
             
             // 1. Accumulate plain text
             if (anyPart.text) {
-                const textChunk = anyPart.text;
-                accumulatedText += textChunk;
-                streamingStore.updateContent(generationId, textChunk);
+                const chunkText = anyPart.text;
+                accumulatedText += chunkText;
+                streamingStore.updateContent(generationId, chunkText);
             }
 
             // 2. Handle Tools / Code (Convert to text representation for the store)

@@ -53,7 +53,6 @@ export const MessageContent: React.FC<MessageContentProps> = React.memo((props) 
             
             <MessageFooter 
                 message={message} 
-                t={props.t} 
                 onSuggestionClick={props.onSuggestionClick} 
             />
         </>

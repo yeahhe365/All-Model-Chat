@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, RefObject } from 'react';
-import { useWindowContext } from '../../contexts/useWindowContext';
-import { sanitizeFilename, exportElementAsPng, triggerDownload } from '../../utils/exportUtils';
+import { useWindowContext } from '../../contexts/WindowContext';
+import { sanitizeFilename, triggerDownload } from '../../utils/export/core';
 import { useFullscreen } from './useFullscreen';
-import { translations } from '../../utils/appUtils';
 
 const ZOOM_STEP = 0.1;
 const MIN_ZOOM = 0.25;
@@ -14,16 +13,18 @@ interface UseHtmlPreviewModalProps {
     htmlContent: string | null;
     initialTrueFullscreenRequest?: boolean;
     iframeRef: RefObject<HTMLIFrameElement>;
-    t: (key: keyof typeof translations, fallback?: string) => string;
 }
+
+type DocumentWithWebkitFullscreen = Document & {
+    webkitFullscreenElement?: Element | null;
+};
 
 export const useHtmlPreviewModal = ({
     isOpen,
     onClose,
     htmlContent,
     initialTrueFullscreenRequest,
-    iframeRef,
-    t
+    iframeRef
 }: UseHtmlPreviewModalProps) => {
     const [isTrueFullscreen, setIsTrueFullscreen] = useState(false);
     const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -44,7 +45,6 @@ export const useHtmlPreviewModal = ({
             const timer = setTimeout(() => setIsActuallyOpen(false), 300);
             return () => clearTimeout(timer);
         }
-
         return undefined;
     }, [isOpen, initialTrueFullscreenRequest]);
 
@@ -66,13 +66,8 @@ export const useHtmlPreviewModal = ({
     }, [exitFullscreen]);
 
     useEffect(() => {
-        const fullscreenDocument = targetDocument as Document & {
-            webkitFullscreenElement?: Element | null;
-        };
-
         const handleFullscreenChange = () => {
-            const newlyFullscreenElement =
-                fullscreenDocument.fullscreenElement || fullscreenDocument.webkitFullscreenElement;
+            const newlyFullscreenElement = targetDocument.fullscreenElement || (targetDocument as DocumentWithWebkitFullscreen).webkitFullscreenElement;
             const isNowInTrueFullscreenForIframe = newlyFullscreenElement === iframeRef.current;
 
             if (isTrueFullscreen && !isNowInTrueFullscreenForIframe) {
@@ -116,13 +111,17 @@ export const useHtmlPreviewModal = ({
     }, [isOpen, onClose, initialTrueFullscreenRequest, enterTrueFullscreen, isTrueFullscreen, targetDocument, iframeRef]);
 
     const getPreviewTitle = useCallback(() => {
-        let title = t('htmlPreview_subtitle_html', 'HTML Preview');
-        const titleMatch = htmlContent?.match(/<title[^>]*>([^<]+)<\/title>/i);
-        if (titleMatch && titleMatch[1]) {
-            title = titleMatch[1].trim();
+        let title = "HTML Preview";
+        try {
+            const titleMatch = htmlContent?.match(/<title[^>]*>([^<]+)<\/title>/i);
+            if (titleMatch && titleMatch[1]) {
+                title = titleMatch[1].trim();
+            }
+        } catch {
+            // Fall back to the default preview title if parsing fails.
         }
         return title;
-    }, [htmlContent, t]);
+    }, [htmlContent]);
 
     const handleDownload = useCallback(() => {
         if (!htmlContent) return;
@@ -134,22 +133,12 @@ export const useHtmlPreviewModal = ({
     }, [htmlContent, getPreviewTitle]);
 
     const handleScreenshot = useCallback(async () => {
-        if (isScreenshotting) return;
-
+        if (!iframeRef.current?.contentDocument || isScreenshotting) return;
+        
         setIsScreenshotting(true);
         try {
-            const previewDocument = iframeRef.current?.contentDocument;
-            if (!previewDocument) {
-                alert(
-                    t(
-                        'htmlPreview_screenshot_error',
-                        'Sorry, the screenshot could not be captured. Please check the console for errors.'
-                    )
-                );
-                return;
-            }
-
-            const elementToCapture = previewDocument.documentElement;
+            const { exportElementAsPng } = await import('../../utils/export/image');
+            const elementToCapture = iframeRef.current.contentDocument.documentElement;
             const title = getPreviewTitle();
             const filename = `${sanitizeFilename(title)}-screenshot.png`;
             
@@ -159,11 +148,11 @@ export const useHtmlPreviewModal = ({
             });
         } catch (err) {
             console.error("Failed to take screenshot of iframe content:", err);
-            alert(t('htmlPreview_screenshot_error', 'Sorry, the screenshot could not be captured. Please check the console for errors.'));
+            alert("Sorry, the screenshot could not be captured. Please check the console for errors.");
         } finally {
             setIsScreenshotting(false);
         }
-    }, [isScreenshotting, iframeRef, getPreviewTitle, t]);
+    }, [isScreenshotting, iframeRef, getPreviewTitle]);
 
     const handleRefresh = useCallback(() => {
         if (iframeRef.current && htmlContent) {

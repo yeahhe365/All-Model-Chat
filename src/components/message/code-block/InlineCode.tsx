@@ -1,12 +1,8 @@
 
 import React from 'react';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
-import { getTranslator } from '../../../utils/appUtils';
-import { useSettingsStore } from '../../../stores/settingsStore';
 
-export const InlineCode = ({ className, children, ...props }: any) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
+export const InlineCode = ({ className, children, inline, ...props }: any) => {
     const { isCopied, copyToClipboard } = useCopyToClipboard(1500);
 
     const handleCopy = (e: React.MouseEvent) => {
@@ -20,13 +16,13 @@ export const InlineCode = ({ className, children, ...props }: any) => {
         <code
             className={`${className || ''} relative inline-block cursor-pointer group/code`}
             onClick={handleCopy}
-            title={t('inlineCode_click_to_copy')}
+            title="Click to copy"
             {...props}
         >
             {children}
             {isCopied && (
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-black/80 text-white text-[10px] px-1.5 py-0.5 rounded shadow-lg whitespace-nowrap z-10 animate-in fade-in zoom-in duration-200">
-                    {t('copied_button_title')}
+                    Copied!
                 </span>
             )}
         </code>

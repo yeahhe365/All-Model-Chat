@@ -2,9 +2,9 @@
 import { ALL_SUPPORTED_MIME_TYPES } from '../constants/fileConstants';
 import { convertHtmlToMarkdown } from './htmlToMarkdown';
 
-export const PASTE_TEXT_AS_FILE_THRESHOLD = 5000;
+const PASTE_TEXT_AS_FILE_THRESHOLD = 5000;
 
-export type PasteResult = 
+type PasteResult = 
     | { type: 'files'; files: File[] }
     | { type: 'large-text-file'; files: File[] }
     | { type: 'markdown'; content: string }

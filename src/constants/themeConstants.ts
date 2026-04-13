@@ -1,8 +1,7 @@
-import type { Theme, ThemeColors } from '../types/theme';
 
-export type { Theme, ThemeColors } from '../types/theme';
+import { Theme, ThemeColors } from '../types/theme';
 
-export const ONYX_THEME_COLORS: ThemeColors = {
+const ONYX_THEME_COLORS: ThemeColors = {
   // Backgrounds
   bgPrimary: '#09090b', // Zinc 950 - Main Content
   bgSecondary: '#000000', // True Black - Sidebar/Header (Framing effect)
@@ -59,7 +58,7 @@ export const ONYX_THEME_COLORS: ThemeColors = {
   iconHistory: '#a1a1aa',
 };
 
-export const PEARL_THEME_COLORS: ThemeColors = {
+const PEARL_THEME_COLORS: ThemeColors = {
   // Backgrounds
   bgPrimary: '#FFFFFF',
   bgSecondary: '#f9f9f9',

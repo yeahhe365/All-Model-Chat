@@ -36,14 +36,13 @@ interface MessageProps {
 export const Message: React.FC<MessageProps> = React.memo((props) => {
     const { message, prevMessage } = props;
     
-    const isGrouped = Boolean(prevMessage &&
+    const isGrouped = !!(prevMessage &&
         prevMessage.role === message.role &&
-        !(prevMessage.isLoading ?? false) &&
-        !(message.isLoading ?? false) &&
+        !prevMessage.isLoading &&
+        !message.isLoading &&
         (new Date(message.timestamp).getTime() - new Date(prevMessage.timestamp).getTime() < 5 * 60 * 1000));
 
-    const isModelThinkingOrHasThoughts = message.role === 'model'
-        && ((message.isLoading ?? false) || Boolean(message.thoughts && props.showThoughts));
+    const isModelThinkingOrHasThoughts = message.role === 'model' && (message.isLoading || (message.thoughts && props.showThoughts));
     
     // User messages align right, model messages align left (default)
     const messageContainerClasses = `flex items-start gap-2 sm:gap-4 group ${isGrouped ? 'mt-1.5' : 'mt-6'} ${message.role === 'user' ? 'justify-end' : 'justify-start'}`;

@@ -1,33 +1,73 @@
+
 import { ModelOption } from '../types';
-import { STATIC_TTS_MODELS, STATIC_IMAGEN_MODELS, INITIAL_PINNED_MODELS } from '../constants/appConstants';
+import { GEMINI_3_RO_MODELS, THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../constants/appConstants';
 import { MediaResolution } from '../types/settings';
-import { UsageMetadata } from '@google/genai';
-import {
-    getModelDescriptor,
-    getModelSortWeight,
-    getThinkingBudgetRange,
-} from '../platform/genai/modelCatalog';
+import type { UsageMetadata } from '@google/genai';
 
 // --- Model Sorting & Defaults ---
 
-export const isLiveAudioModel = (modelId: string): boolean => {
-    if (!modelId) return false;
+export const REMOVED_MODEL_IDS = [
+    'gemini-2.5-flash-preview-09-2025',
+    'gemini-2.5-flash-lite-preview-09-2025',
+] as const;
+
+export const isRemovedModelId = (modelId: string | null | undefined): boolean =>
+    !!modelId && REMOVED_MODEL_IDS.includes(modelId as (typeof REMOVED_MODEL_IDS)[number]);
+
+export const sanitizeModelOptions = (models: ModelOption[]): ModelOption[] =>
+    models.filter((model) => !isRemovedModelId(model.id));
+
+export const resolveSupportedModelId = (modelId: string | null | undefined, fallback: string): string =>
+    isRemovedModelId(modelId) ? fallback : (modelId || fallback);
+
+const isNativeAudioModel = (modelId: string): boolean => {
     const lowerId = modelId.toLowerCase();
-    return lowerId.includes('native-audio') || lowerId.includes('flash-live-preview') || lowerId.includes('gemini-live');
+    return lowerId.includes('native-audio') || lowerId.includes('-live-');
 };
 
+const isGemini31FlashLiveModel = (modelId: string): boolean =>
+    modelId.toLowerCase().includes('gemini-3.1-flash-live');
+
+const isGemini31FlashImageModel = (modelId: string): boolean =>
+    modelId.toLowerCase().includes('gemini-3.1-flash-image');
+
+const isTtsModel = (modelId: string): boolean => modelId.toLowerCase().includes('tts');
+
+const isGemini3ImageModel = (modelId: string): boolean => (
+    modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview'
+);
+
+const isFlashImageModel = (modelId: string): boolean => modelId.toLowerCase().includes('gemini-2.5-flash-image');
+
+const isRealImagenModel = (modelId: string): boolean => modelId.toLowerCase().includes('imagen');
+
+export const isImageModel = (modelId: string): boolean => (
+    isRealImagenModel(modelId)
+    || isFlashImageModel(modelId)
+    || isGemini3ImageModel(modelId)
+    || (modelId.toLowerCase().includes('image') && !modelId.toLowerCase().includes('imagen'))
+);
+
 export const sortModels = (models: ModelOption[]): ModelOption[] => {
+    const getCategoryWeight = (id: string) => {
+        if (isTtsModel(id)) return 5;
+        if (isRealImagenModel(id)) return 4;
+        if (isImageModel(id)) return 3;
+        if (isNativeAudioModel(id)) return 2;
+        return 1;
+    };
+
     return [...models].sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
         
         if (a.isPinned && b.isPinned) {
-            const weightA = getModelSortWeight(a.id);
-            const weightB = getModelSortWeight(b.id);
+            const weightA = getCategoryWeight(a.id);
+            const weightB = getCategoryWeight(b.id);
             if (weightA !== weightB) return weightA - weightB;
 
-            const isA3 = isGemini3Model(a.id);
-            const isB3 = isGemini3Model(b.id);
+            const isA3 = a.id.includes('gemini-3');
+            const isB3 = b.id.includes('gemini-3');
             if (isA3 && !isB3) return -1;
             if (!isA3 && isB3) return 1;
         }
@@ -36,41 +76,68 @@ export const sortModels = (models: ModelOption[]): ModelOption[] => {
     });
 };
 
-export const getDefaultModelOptions = (): ModelOption[] => {
-    const pinnedInternalModels: ModelOption[] = INITIAL_PINNED_MODELS.map(id => {
-        let name;
-        if (id === 'gemini-2.5-flash-preview-09-2025') {
-            name = 'Gemini 2.5 Flash';
-        } else if (id === 'gemini-3.1-flash-live-preview') {
-            name = 'Gemini 3.1 Flash Live';
-        } else if (id === 'gemini-2.5-flash-native-audio-preview-12-2025') {
-            name = 'Gemini 2.5 Flash Native Audio';
-        } else if (id.toLowerCase().includes('gemma')) {
-             // Beautify Gemma names: gemma-4-31b-it -> Gemma 4 31B IT
-             name = id.replace(/-/g, ' ')
-                      .replace(/\b\w/g, l => l.toUpperCase())
-                      .replace(/\bIt\b/, 'IT')
-                      .replace(/\bA4b\b/, 'A4B')
-                      .replace(/(\d)B\b/g, '$1B'); // Ensure parameter B is uppercase
-        } else {
-             name = id.includes('/') 
-                ? `Gemini ${id.split('/')[1]}`.replace('gemini-','').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-                : `Gemini ${id.replace('gemini-','').replace(/-/g, ' ')}`.replace(/\b\w/g, l => l.toUpperCase());
-        }
-        return { id, name, isPinned: true };
-    });
-    return sortModels([...pinnedInternalModels, ...STATIC_TTS_MODELS, ...STATIC_IMAGEN_MODELS]);
-};
-
 // --- Helper for Model Capabilities ---
 export const isGemini3Model = (modelId: string): boolean => {
-    return getModelDescriptor(modelId)?.family === 'gemini-3';
+    if (!modelId) return false;
+    const lowerId = modelId.toLowerCase();
+    return GEMINI_3_RO_MODELS.some(m => lowerId.includes(m)) || lowerId.includes('gemini-3-pro') || lowerId.includes('gemini-3.1-flash');
+};
+
+export const getModelCapabilities = (modelId: string) => {
+    const isGemini3 = isGemini3Model(modelId);
+    const gemini3ImageModel = isGemini3ImageModel(modelId);
+    const flashImageModel = isFlashImageModel(modelId);
+    const realImagenModel = isRealImagenModel(modelId);
+    const ttsModel = isTtsModel(modelId);
+    const nativeAudioModel = isNativeAudioModel(modelId);
+    const imageModel = realImagenModel || flashImageModel || gemini3ImageModel;
+
+    let supportedAspectRatios: string[] | undefined;
+    if (realImagenModel) {
+        supportedAspectRatios = ['1:1', '16:9', '9:16', '4:3', '3:4'];
+    } else if (isGemini31FlashImageModel(modelId)) {
+        supportedAspectRatios = ['Auto', '1:1', '1:4', '1:8', '16:9', '9:16', '4:1', '4:3', '3:4', '3:2', '2:3', '4:5', '5:4', '8:1', '21:9'];
+    } else if (gemini3ImageModel || flashImageModel) {
+        supportedAspectRatios = ['Auto', '1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3', '4:5', '5:4', '21:9'];
+    }
+
+    let supportedImageSizes: string[] | undefined;
+    if (isGemini31FlashImageModel(modelId)) {
+        supportedImageSizes = ['512', '1K', '2K', '4K'];
+    } else if (gemini3ImageModel) {
+        supportedImageSizes = ['1K', '2K', '4K'];
+    } else if (realImagenModel && !modelId.toLowerCase().includes('fast')) {
+        supportedImageSizes = ['1K', '2K'];
+    }
+
+    return {
+        isGemini3,
+        isGemini3ImageModel: gemini3ImageModel,
+        isFlashImageModel: flashImageModel,
+        isRealImagenModel: realImagenModel,
+        isImagenModel: imageModel,
+        isTtsModel: ttsModel,
+        isNativeAudioModel: nativeAudioModel,
+        supportedAspectRatios,
+        supportedImageSizes,
+    };
+};
+
+export const getDefaultThinkingLevelForModel = (
+    modelId: string,
+    fallback: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' = 'HIGH',
+): 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' => {
+    if (isGemini31FlashLiveModel(modelId) || isGemini31FlashImageModel(modelId)) {
+        return 'MINIMAL';
+    }
+
+    return fallback;
 };
 
 // --- Model Settings Cache ---
 const MODEL_SETTINGS_CACHE_KEY = 'model_settings_cache';
 
-export interface CachedModelSettings {
+interface CachedModelSettings {
     mediaResolution?: MediaResolution;
     thinkingBudget?: number;
     thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
@@ -104,29 +171,28 @@ export const calculateTokenStats = (usageMetadata?: UsageMetadata) => {
 
     const totalTokens = usageMetadata.totalTokenCount || 0;
     const promptTokens = usageMetadata.promptTokenCount || 0;
-    // SDK field names drifted; keep compatibility with older/newer shapes.
-    const metadataWithCandidateCount = usageMetadata as UsageMetadata & { candidatesTokenCount?: number };
-    let completionTokens = metadataWithCandidateCount.candidatesTokenCount || 0;
+    // Fallback if completion count missing
+    const usageWithCandidateCount = usageMetadata as UsageMetadata & { candidatesTokenCount?: number };
+    let completionTokens = usageWithCandidateCount.candidatesTokenCount || 0;
     
     if (!completionTokens && totalTokens > 0 && promptTokens > 0) {
         completionTokens = totalTokens - promptTokens;
     }
 
-    const metadataWithThoughtCount = usageMetadata as UsageMetadata & { thoughtsTokenCount?: number };
-    const thoughtTokens = metadataWithThoughtCount.thoughtsTokenCount || 0;
+    const usageWithThoughtCount = usageMetadata as UsageMetadata & { thoughtsTokenCount?: number };
+    const thoughtTokens = usageWithThoughtCount.thoughtsTokenCount || 0;
 
     return { promptTokens, completionTokens, totalTokens, thoughtTokens };
 };
 
 // --- Thinking Budget Logic Extraction ---
 export const adjustThinkingBudget = (modelId: string, currentBudget: number): number => {
-    const descriptor = getModelDescriptor(modelId);
-    const range = getThinkingBudgetRange(modelId);
+    const range = THINKING_BUDGET_RANGES[modelId];
     let newBudget = currentBudget;
 
     if (range) {
-        const isGemini3 = descriptor?.family === 'gemini-3';
-        const isMandatory = descriptor?.mandatoryThinking ?? false;
+        const isGemini3 = modelId.includes('gemini-3');
+        const isMandatory = MODELS_MANDATORY_THINKING.includes(modelId);
 
         // Case A: Mandatory Thinking Check
         if (isMandatory && newBudget === 0) {

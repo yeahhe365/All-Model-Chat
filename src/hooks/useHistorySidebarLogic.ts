@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedChatSession, ChatGroup } from '../types';
-import { useWindowContext } from '../contexts/useWindowContext';
-import { Translator } from '../utils/appUtils';
+import { useWindowContext } from '../contexts/WindowContext';
+import { translations } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 
 interface UseHistorySidebarLogicProps {
@@ -14,7 +14,7 @@ interface UseHistorySidebarLogicProps {
     onRenameGroup: (groupId: string, newTitle: string) => void;
     onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
     onSelectSession: (sessionId: string) => void;
-    t: Translator;
+    t: (key: keyof typeof translations, fallback?: string) => string;
     language: 'en' | 'zh';
 }
 
@@ -42,7 +42,7 @@ export const useHistorySidebarLogic = ({
     const editInputRef = useRef<HTMLInputElement>(null);
     const prevGeneratingTitleSessionIdsRef = useRef<Set<string>>(new Set());
     
-    const { document: targetDocument, window: targetWindow } = useWindowContext();
+    const { document: targetDocument } = useWindowContext();
 
     // --- Effects ---
 
@@ -75,9 +75,7 @@ export const useHistorySidebarLogic = ({
     // Search Effect - Async Content Search
     useEffect(() => {
         const trimmedQuery = searchQuery.trim();
-        if (!trimmedQuery) {
-            return;
-        }
+        if (!trimmedQuery) return;
 
         const handler = setTimeout(async () => {
             try {
@@ -248,7 +246,7 @@ export const useHistorySidebarLogic = ({
     };
 
     const handleEmptySpaceClick = (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget && targetWindow.innerWidth < 768) {
+        if (e.target === e.currentTarget) {
             onToggle();
         }
     };
@@ -256,7 +254,7 @@ export const useHistorySidebarLogic = ({
     const handleSessionSelect = (sessionId: string) => {
         onSelectSession(sessionId);
         // Auto-close sidebar on mobile
-        if (targetWindow.innerWidth < 768) {
+        if (window.innerWidth < 768) {
             onToggle();
         }
     };

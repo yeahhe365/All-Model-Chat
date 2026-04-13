@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
-import { isGemini3Model } from '../../../../utils/appUtils';
+import { getModelCapabilities, isGemini3Model } from '../../../../utils/modelHelpers';
 import { ThinkingModeSelector } from './ThinkingModeSelector';
 import { ThinkingLevelSelector } from './ThinkingLevelSelector';
 import { ThinkingBudgetSlider } from './ThinkingBudgetSlider';
@@ -19,41 +19,7 @@ interface ThinkingControlProps {
   t: (key: string) => string;
 }
 
-interface CustomThinkingBudgetControlProps {
-  minBudget: number;
-  maxBudget: number;
-  initialValue: string;
-  onValidBudgetChange: (value: number) => void;
-  t: (key: string) => string;
-}
-
-const CustomThinkingBudgetControl: React.FC<CustomThinkingBudgetControlProps> = ({
-  minBudget,
-  maxBudget,
-  initialValue,
-  onValidBudgetChange,
-  t,
-}) => {
-  const [value, setValue] = useState(initialValue);
-
-  const handleChange = (nextValue: string) => {
-    setValue(nextValue);
-    const numVal = parseInt(nextValue, 10);
-    if (!isNaN(numVal) && numVal > 0) {
-      onValidBudgetChange(numVal);
-    }
-  };
-
-  return (
-    <ThinkingBudgetSlider
-      minBudget={minBudget}
-      maxBudget={maxBudget}
-      value={value}
-      onChange={handleChange}
-      t={t}
-    />
-  );
-};
+type ThinkingLevelOption = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 
 export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   modelId,
@@ -66,16 +32,29 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   t
 }) => {
   const isGemini3 = isGemini3Model(modelId);
+  const capabilities = getModelCapabilities(modelId);
   const isFlash3 = isGemini3 && modelId.toLowerCase().includes('flash');
+  const isGemini31FlashImage = modelId.toLowerCase().includes('gemini-3.1-flash-image');
+  const isGemini3ProImage = modelId === 'gemini-3-pro-image-preview';
+  const isImageThinkingLevelOnly = isGemini31FlashImage;
   const isGemma = modelId.toLowerCase().includes('gemma');
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
+  const supportedThinkingLevels: ThinkingLevelOption[] =
+    isImageThinkingLevelOnly
+      ? ['MINIMAL', 'HIGH']
+      : (isGemini3
+          ? (isFlash3 ? ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] : ['LOW', 'MEDIUM', 'HIGH'])
+          : []);
   
   const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
 
   // Default ranges if config is missing (fallback for unknown models)
   const minBudget = budgetConfig?.min ?? 1024;
   const maxBudget = budgetConfig?.max ?? 32768;
-  const lastCustomBudgetRef = useRef(thinkingBudget > 0 ? thinkingBudget : minBudget);
+
+  const [customBudgetValue, setCustomBudgetValue] = useState(
+    thinkingBudget > 0 ? String(thinkingBudget) : String(minBudget)
+  );
   
   // Determine current mode
   const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
@@ -83,7 +62,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
 
   useEffect(() => {
     if (thinkingBudget > 0) {
-        lastCustomBudgetRef.current = thinkingBudget;
+        setCustomBudgetValue(String(thinkingBudget));
     }
   }, [thinkingBudget]);
 
@@ -97,10 +76,24 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   // Ensure custom budget doesn't exceed max when switching models
   useEffect(() => {
       if (thinkingBudget > maxBudget) {
-          lastCustomBudgetRef.current = maxBudget;
           setThinkingBudget(maxBudget);
+          setCustomBudgetValue(String(maxBudget));
       }
   }, [maxBudget, thinkingBudget, setThinkingBudget]);
+
+  useEffect(() => {
+    if (!isImageThinkingLevelOnly || thinkingBudget === -1) return;
+    setThinkingBudget(-1);
+  }, [isImageThinkingLevelOnly, thinkingBudget, setThinkingBudget]);
+
+  useEffect(() => {
+    if (!isImageThinkingLevelOnly || !setThinkingLevel) return;
+
+    const normalizedLevel = thinkingLevel === 'HIGH' ? 'HIGH' : 'MINIMAL';
+    if (thinkingLevel !== normalizedLevel) {
+      setThinkingLevel(normalizedLevel);
+    }
+  }, [isImageThinkingLevelOnly, thinkingLevel, setThinkingLevel]);
 
   const handleModeChange = (newMode: 'auto' | 'off' | 'custom') => {
       if (newMode === 'auto') {
@@ -110,21 +103,24 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
       } else {
           // Custom Mode
           // Restore last custom value or default to max/reasonable
-          let newBudget = lastCustomBudgetRef.current;
-          if (!Number.isFinite(newBudget) || newBudget <= 0) newBudget = maxBudget;
+          let newBudget = parseInt(customBudgetValue, 10);
+          if (isNaN(newBudget) || newBudget <= 0) newBudget = maxBudget;
           
           // Clamp to valid range for current model
           if (newBudget > maxBudget) newBudget = maxBudget;
           if (newBudget < minBudget) newBudget = minBudget;
 
-          lastCustomBudgetRef.current = newBudget;
+          if (String(newBudget) !== customBudgetValue) setCustomBudgetValue(String(newBudget));
           setThinkingBudget(newBudget);
       }
   };
 
-  const handleCustomBudgetChange = (value: number) => {
-      lastCustomBudgetRef.current = value;
-      setThinkingBudget(value);
+  const handleCustomBudgetChange = (val: string) => {
+      setCustomBudgetValue(val);
+      const numVal = parseInt(val, 10);
+      if (!isNaN(numVal) && numVal > 0) {
+          setThinkingBudget(numVal);
+      }
   };
 
   if (isGemma) {
@@ -135,13 +131,13 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             <label className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
               <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
               {t('settingsThinkingMode')}
-              <Tooltip text={t('settingsThinking_gemma_tooltip')}>
+              <Tooltip text="Gemma 4 uses the <|think|> token to enable thinking mode. When enabled, the model will output reasoning in <|channel|thought> tags.">
                 <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
               </Tooltip>
             </label>
             {showThoughts && (
               <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                {t('settingsThinking_enabled_badge')}
+                Thinking Enabled
               </span>
             )}
           </div>
@@ -154,13 +150,15 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
               <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${showThoughts ? 'translate-x-4.5' : 'translate-x-1'}`} />
             </button>
             <span className="text-xs text-[var(--theme-text-secondary)]">
-              {showThoughts ? t('settingsThinking_inject_token') : t('settingsThinking_disabled')}
+              {showThoughts ? 'Inject <|think|> token into system prompt' : 'Thinking mode disabled'}
             </span>
           </div>
         </div>
       </div>
     );
   }
+
+  if (capabilities.isGemini3ImageModel && isGemini3ProImage) return null;
 
   if (!showThinkingControls) return null;
 
@@ -180,54 +178,52 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                         <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
                     </Tooltip>
                 </label>
-                {mode !== 'off' && (
+                {(mode !== 'off' || isImageThinkingLevelOnly) && (
                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                        {isGemini3 ? t('settingsThinking_gemini_capabilities') : t('settingsThinking_reasoning_enabled')}
+                        {isGemini3 ? 'Gemini 3.0 Capabilities' : 'Reasoning Enabled'}
                     </span>
                 )}
             </div>
             
             {/* Segmented Control (Tabs) */}
-            <ThinkingModeSelector
-                mode={mode}
-                onModeChange={handleModeChange}
-                isGemini3={isGemini3}
-                isMandatoryThinking={isMandatoryThinking}
-                t={t}
-            />
+            {!isImageThinkingLevelOnly && (
+              <ThinkingModeSelector
+                  mode={mode}
+                  onModeChange={handleModeChange}
+                  isGemini3={isGemini3}
+                  isMandatoryThinking={isMandatoryThinking}
+                  t={t}
+              />
+            )}
 
             {/* Content Area */}
-            {showContent && (
+            {(showContent || isImageThinkingLevelOnly) && (
                 <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     
                     {/* 1. Gemini 3.0 Preset Level Selector */}
-                    {isGemini3 && mode === 'auto' && setThinkingLevel && (
+                    {((isGemini3 && mode === 'auto') || isImageThinkingLevelOnly) && setThinkingLevel && (
                         <ThinkingLevelSelector
                             thinkingLevel={thinkingLevel}
                             setThinkingLevel={setThinkingLevel}
-                            isFlash3={isFlash3}
-                            hideMedium={false}
-                            t={t}
+                            supportedLevels={supportedThinkingLevels}
                         />
                     )}
 
                     {/* 2. Custom Budget Slider & Input */}
-                    {mode === 'custom' && (
-                        <CustomThinkingBudgetControl
-                            key={`${modelId}:${thinkingBudget}:${minBudget}:${maxBudget}`}
+                    {!isImageThinkingLevelOnly && mode === 'custom' && (
+                        <ThinkingBudgetSlider
                             minBudget={minBudget}
                             maxBudget={maxBudget}
-                            initialValue={String(thinkingBudget > 0 ? thinkingBudget : minBudget)}
-                            onValidBudgetChange={handleCustomBudgetChange}
-                            t={t}
+                            value={customBudgetValue}
+                            onChange={handleCustomBudgetChange}
                         />
                     )}
 
                     {/* 3. Off State Message */}
-                    {mode === 'off' && (
+                    {!isImageThinkingLevelOnly && mode === 'off' && (
                         <div className="flex items-center justify-center py-1">
                             <p className="text-xs text-[var(--theme-text-tertiary)] italic flex items-center gap-2">
-                                {t('settingsThinking_off_message')}
+                                Thinking process is disabled.
                             </p>
                         </div>
                     )}

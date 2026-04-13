@@ -3,65 +3,63 @@ import React from 'react';
 import { Gauge, Feather, Zap, Sparkles, Cpu } from 'lucide-react';
 import { LevelButton } from './LevelButton';
 
+type ThinkingLevelOption = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+
 interface ThinkingLevelSelectorProps {
-    thinkingLevel: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH' | undefined;
-    setThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
-    isFlash3: boolean;
-    hideMedium?: boolean;
-    t: (key: string) => string;
+    thinkingLevel: ThinkingLevelOption | undefined;
+    setThinkingLevel: (level: ThinkingLevelOption) => void;
+    supportedLevels: ThinkingLevelOption[];
 }
 
 export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
     thinkingLevel,
     setThinkingLevel,
-    isFlash3,
-    hideMedium,
-    t
+    supportedLevels,
 }) => {
-    let numButtons = 0;
-    if (isFlash3) numButtons++;
-    numButtons++; // LOW
-    if (!hideMedium) numButtons++; // MEDIUM
-    numButtons++; // HIGH
+    const levelButtons = [
+        {
+            level: 'MINIMAL' as const,
+            label: 'Minimal',
+            icon: <Feather size={14} />,
+        },
+        {
+            level: 'LOW' as const,
+            label: 'Low',
+            icon: <Zap size={14} />,
+        },
+        {
+            level: 'MEDIUM' as const,
+            label: 'Medium',
+            icon: <Sparkles size={14} />,
+        },
+        {
+            level: 'HIGH' as const,
+            label: 'High',
+            icon: <Cpu size={14} />,
+        },
+    ].filter(({ level }) => supportedLevels.includes(level));
 
-    const gridClass = numButtons === 4 ? 'grid-cols-2 sm:grid-cols-4' : (numButtons === 3 ? 'grid-cols-3' : 'grid-cols-2');
+    const gridClass = levelButtons.length === 4
+        ? 'grid-cols-2 sm:grid-cols-4'
+        : (levelButtons.length === 3 ? 'grid-cols-3' : 'grid-cols-2');
 
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                    <Gauge size={12} /> {t('settingsThinkingIntensity')}
+                    <Gauge size={12} /> Intensity Level
                 </span>
             </div>
             <div className={`grid ${gridClass} gap-2`}>
-                {isFlash3 && (
+                {levelButtons.map(({ level, label, icon }) => (
                     <LevelButton 
-                        active={thinkingLevel === 'MINIMAL'} 
-                        onClick={() => setThinkingLevel('MINIMAL')} 
-                        label={t('settingsThinkingLevel_minimal')} 
-                        icon={<Feather size={14} />}
+                        key={level}
+                        active={thinkingLevel === level}
+                        onClick={() => setThinkingLevel(level)}
+                        label={label}
+                        icon={icon}
                     />
-                )}
-                <LevelButton 
-                    active={thinkingLevel === 'LOW'} 
-                    onClick={() => setThinkingLevel('LOW')} 
-                    label={t('settingsThinkingLevel_low')} 
-                    icon={<Zap size={14} />}
-                />
-                {!hideMedium && (
-                    <LevelButton 
-                        active={thinkingLevel === 'MEDIUM'} 
-                        onClick={() => setThinkingLevel('MEDIUM')} 
-                        label={t('settingsThinkingLevel_medium')} 
-                        icon={<Sparkles size={14} />}
-                    />
-                )}
-                <LevelButton 
-                    active={thinkingLevel === 'HIGH'} 
-                    onClick={() => setThinkingLevel('HIGH')} 
-                    label={t('settingsThinkingLevel_high')} 
-                    icon={<Cpu size={14} />}
-                />
+                ))}
             </div>
         </div>
     );

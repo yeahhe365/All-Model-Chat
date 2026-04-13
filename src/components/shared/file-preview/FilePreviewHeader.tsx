@@ -2,9 +2,9 @@
 import React, { useState, useCallback } from 'react';
 import { X, Check, Download, ClipboardCopy, Loader2, FileText, ImageIcon, FileVideo, FileAudio, FileCode2, Save, Edit3 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
-import { triggerDownload } from '../../../utils/exportUtils';
+import { triggerDownload } from '../../../utils/export/core';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import { formatFileSize } from '../../../utils/domainUtils';
+import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolbar';
 
 interface FilePreviewHeaderProps {
@@ -55,30 +55,14 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
 
         if (!file.dataUrl || isCopied) return;
         try {
-            // Fetch content to copy
-            const response = await fetch(file.dataUrl);
-            const blob = await response.blob();
-            
-            if (file.type.startsWith('text/') || file.type === 'application/json' || file.type.includes('javascript') || file.type.includes('xml')) {
-                const text = await blob.text();
-                await navigator.clipboard.writeText(text);
-            } else {
-                if (!navigator.clipboard || !navigator.clipboard.write) {
-                    throw new Error("Clipboard API not available.");
-                }
-                await navigator.clipboard.write([
-                    new ClipboardItem({
-                        [blob.type]: blob
-                    })
-                ]);
-            }
+            await copyFileToClipboard(file);
             setInternalIsCopied(true);
             setTimeout(() => setInternalIsCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy content:', err);
-            alert(t('filePreview_copy_failed'));
+            alert('Failed to copy to clipboard. Your browser might not support this feature or require permissions.');
         }
-    }, [file, isCopied, onCopy, t]);
+    }, [file, isCopied, onCopy]);
 
     const handleDownload = useCallback(async () => {
         if (!file.dataUrl || isDownloading) return;
@@ -124,7 +108,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                             value={editedName}
                             onChange={(e) => onNameChange(e.target.value)}
                             className="bg-transparent border-b border-white/20 text-xs sm:text-sm font-medium text-white/90 focus:border-white/50 outline-none w-full"
-                            placeholder={t('createText_filename_placeholder')}
+                            placeholder="Filename"
                             autoFocus
                         />
                     ) : (
@@ -144,20 +128,20 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
             {/* Top Actions */}
             <FloatingToolbar className="pointer-events-auto p-1">
                 {isEditable ? (
-                    <ToolbarButton onClick={onSave} className="!text-green-400 hover:!bg-green-500/20" title={t('filePreview_save_changes')}>
+                    <ToolbarButton onClick={onSave} className="!text-green-400 hover:!bg-green-500/20" title="Save Changes">
                         <Save size={18} strokeWidth={2} />
                     </ToolbarButton>
                 ) : (
                     <>
                         {isText && onToggleEdit && (
-                            <ToolbarButton onClick={onToggleEdit} title={t('filePreview_edit_file')}>
+                            <ToolbarButton onClick={onToggleEdit} title="Edit File">
                                 <Edit3 size={18} strokeWidth={1.5} />
                             </ToolbarButton>
                         )}
-                        <ToolbarButton onClick={handleCopy} disabled={isCopied} title={isCopied ? t('copied_button_title') : t('copy_button_title')}>
+                        <ToolbarButton onClick={handleCopy} disabled={isCopied} title={isCopied ? "Copied!" : "Copy Content"}>
                             {isCopied ? <Check size={18} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
                         </ToolbarButton>
-                        <ToolbarButton onClick={handleDownload} disabled={isDownloading} title={isMermaidDiagram ? t('filePreview_download_svg') : t('filePreview_download_file')}>
+                        <ToolbarButton onClick={handleDownload} disabled={isDownloading} title={isMermaidDiagram ? "Download SVG" : "Download File"}>
                             {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <Download size={18} strokeWidth={1.5} />}
                         </ToolbarButton>
                     </>
@@ -168,8 +152,8 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                 <ToolbarButton
                     onClick={isEditable && onToggleEdit ? onToggleEdit : onClose}
                     danger
-                    aria-label={isEditable ? t('cancelEdit_title') : t('imageZoom_close_aria')}
-                    title={isEditable ? t('cancelEdit_title') : t('imageZoom_close_title')}
+                    aria-label={isEditable ? "Cancel Edit" : t('imageZoom_close_aria')}
+                    title={isEditable ? "Cancel Edit" : t('imageZoom_close_title')}
                 >
                     <X size={18} strokeWidth={1.5} />
                 </ToolbarButton>

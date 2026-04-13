@@ -2,8 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, RotateCcw } from 'lucide-react';
 import { formatShortcut, recordKeyCombination } from '../../../../utils/shortcutUtils';
-import { getTranslator } from '../../../../utils/appUtils';
-import { useSettingsStore } from '../../../../stores/settingsStore';
 
 interface ShortcutRecorderProps {
     value: string; // The current shortcut string (e.g. "mod+shift+p")
@@ -12,15 +10,12 @@ interface ShortcutRecorderProps {
 }
 
 export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defaultValue, onChange }) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
     const [isRecording, setIsRecording] = useState(false);
     const [tempKey, setTempKey] = useState<string | null>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     const displayValue = tempKey !== null ? tempKey : (value || defaultValue);
     const formattedKeys = formatShortcut(displayValue);
-    const shortcutDescription = formattedKeys.length > 0 ? formattedKeys.join(' + ') : t('shortcuts_recorder_none');
 
     useEffect(() => {
         if (!isRecording) return;
@@ -91,8 +86,8 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                     <button 
                         onClick={handleReset} 
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
-                        title={t('shortcuts_recorder_reset')}
-                        aria-label={t('shortcuts_recorder_reset_aria')}
+                        title="Reset to default"
+                        aria-label="Reset shortcut"
                     >
                         <RotateCcw size={12} />
                     </button>
@@ -101,8 +96,8 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                     <button 
                         onClick={handleClear}
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
-                        title={t('shortcuts_recorder_clear')}
-                        aria-label={t('shortcuts_recorder_clear_aria')}
+                        title="Clear shortcut"
+                        aria-label="Clear shortcut"
                     >
                         <X size={12} />
                     </button>
@@ -120,12 +115,12 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                         : 'hover:bg-[var(--theme-bg-tertiary)]/50'
                     }
                 `}
-                title={isRecording ? t('shortcuts_recorder_press_keys') : t('shortcuts_recorder_click')}
-                aria-label={isRecording ? t('shortcuts_recorder_recording_aria') : `${t('shortcuts_recorder_current')}: ${shortcutDescription}`}
+                title={isRecording ? "Press keys to record" : "Click to record shortcut"}
+                aria-label={isRecording ? "Recording shortcut" : `Current shortcut: ${formattedKeys.join(' plus ')}`}
             >
                 {isRecording ? (
                     <span className="text-xs font-medium animate-pulse whitespace-nowrap font-mono">
-                        {tempKey ? formatShortcut(tempKey).join(' + ') : t('shortcuts_recorder_recording')}
+                        {tempKey ? formatShortcut(tempKey).join(' + ') : 'Recording...'}
                     </span>
                 ) : (
                     isBound ? (
@@ -150,7 +145,7 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                             ))}
                         </div>
                     ) : (
-                        <span className="text-xs text-[var(--theme-text-tertiary)] italic px-2">{t('shortcuts_recorder_none')}</span>
+                        <span className="text-xs text-[var(--theme-text-tertiary)] italic px-2">None</span>
                     )
                 )}
             </button>

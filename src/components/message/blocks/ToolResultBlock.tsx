@@ -2,22 +2,18 @@
 
 import React, { useState } from 'react';
 import { Download, Check, FileOutput } from 'lucide-react';
-import { triggerDownload } from '../../../utils/exportUtils';
+import { triggerDownload } from '../../../utils/export/core';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { UploadedFile } from '../../../types';
-import { getTranslator } from '../../../utils/appUtils';
-import { useSettingsStore } from '../../../stores/settingsStore';
 import { FileDisplay } from '../FileDisplay';
 
-export interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElement> {
     files?: UploadedFile[];
     onImageClick?: (file: UploadedFile) => void;
 }
 
 export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, children, files, onImageClick, ...props }) => {
-    const language = useSettingsStore((state) => state.language);
-    const t = getTranslator(language);
     const [copied, setCopied] = useState(false);
 
     // Try to find the pre element which contains the code/output
@@ -63,7 +59,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, chi
                      <button 
                         onClick={handleDownload}
                         className={`${MESSAGE_BLOCK_BUTTON_CLASS} !bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-sm`}
-                        title={t('toolResult_download_output')}
+                        title="Download Output"
                     >
                         {copied ? <Check size={14} className="text-[var(--theme-text-success)] icon-animate-pop"/> : <Download size={14} />}
                     </button>
@@ -74,7 +70,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, chi
             {generatedFiles.length > 0 && (
                 <div className="mt-3 pt-3 border-t border-[var(--theme-border-secondary)]/50">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5 mb-2">
-                        <FileOutput size={12} /> {t('toolResult_generated_files')}
+                        <FileOutput size={12} /> Generated Output Files
                     </span>
                     <div className="flex flex-wrap gap-2">
                         {generatedFiles.map(file => (

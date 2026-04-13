@@ -1,11 +1,5 @@
 export const dataSettings = {
     settingsDataManagement: { en: 'Data Management', zh: '数据管理' },
-    settingsData_application: { en: 'Application Data', zh: '应用数据' },
-    settingsData_settings: { en: 'Settings', zh: '设置' },
-    settingsData_history: { en: 'Chat History', zh: '聊天记录' },
-    settingsData_scenarios: { en: 'Scenarios', zh: '场景' },
-    settingsData_system_logs: { en: 'System & Logs', zh: '系统与日志' },
-    settingsData_danger_zone: { en: 'Danger Zone', zh: '危险操作' },
     settingsReset: { en: 'Reset Settings', zh: '重置设置' },
     settingsReset_confirm: { en: 'Are you sure you want to reset all settings to their default values? This does not affect chat history. Your current changes will be lost.', zh: '您确定要将所有设置重置为默认值吗？这不会影响您的聊天记录。您当前的更改将丢失。' },
     settingsClearHistory: { en: 'Clear Chat History', zh: '清空历史对话' },

@@ -1,0 +1,101 @@
+import React, { act } from 'react';
+import { createRoot, Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
+import { ApiConfigSection } from './ApiConfigSection';
+
+const { getClientMock, generateContentMock } = vi.hoisted(() => ({
+  getClientMock: vi.fn(),
+  generateContentMock: vi.fn(),
+}));
+
+vi.mock('../../../hooks/useDevice', () => ({
+  useResponsiveValue: vi.fn(() => 18),
+}));
+
+vi.mock('../../../services/api/baseApi', () => ({
+  getClient: getClientMock,
+}));
+
+vi.mock('../../../services/logService', () => ({
+  logService: {
+    recordApiKeyUsage: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
+describe('ApiConfigSection', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+
+  beforeEach(() => {
+    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    vi.clearAllMocks();
+    generateContentMock.mockResolvedValue({});
+    getClientMock.mockReturnValue({
+      models: {
+        generateContent: generateContentMock,
+      },
+    });
+
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('allows running connection test in server-managed mode without a browser-held key', async () => {
+    await act(async () => {
+      root.render(
+        <ApiConfigSection
+          useCustomApiConfig
+          setUseCustomApiConfig={vi.fn()}
+          apiKey={null}
+          setApiKey={vi.fn()}
+          apiProxyUrl="https://proxy.example.com/v1beta"
+          setApiProxyUrl={vi.fn()}
+          useApiProxy
+          setUseApiProxy={vi.fn()}
+          serverManagedApi
+          availableModels={[]}
+          t={(key) => key}
+        />
+      );
+    });
+
+    const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('apiConfig_testConnection')
+    );
+
+    expect(testButton).toBeDefined();
+    expect(testButton?.hasAttribute('disabled')).toBe(false);
+
+    await act(async () => {
+      testButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    await vi.waitFor(() => {
+      expect(getClientMock).toHaveBeenCalled();
+    });
+    expect(getClientMock).toHaveBeenCalledWith(
+      SERVER_MANAGED_API_KEY,
+      'https://proxy.example.com/v1beta'
+    );
+
+    await vi.waitFor(() => {
+      expect(generateContentMock).toHaveBeenCalledWith({
+        model: 'gemini-3-flash-preview',
+        contents: 'Hello',
+      });
+    });
+  });
+});

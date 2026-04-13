@@ -1,6 +1,7 @@
-import type { MutableRefObject } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
-import { UsageMetadata } from '@google/genai';
+
+import React from 'react';
+import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
+import type { UsageMetadata } from '@google/genai';
 
 export type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -25,7 +26,7 @@ export interface BaseSenderProps {
     currentChatSettings: IndividualChatSettings;
     updateAndPersistSessions: SessionsUpdater;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
-    activeJobs: MutableRefObject<Map<string, AbortController>>;
+    activeJobs: React.MutableRefObject<Map<string, AbortController>>;
     setAppFileError: (error: string | null) => void;
     language: 'en' | 'zh';
 }
@@ -39,16 +40,13 @@ export interface CanvasGeneratorProps extends BaseSenderProps {
 
 export interface StandardChatProps extends BaseSenderProps {
     messages: ChatMessage[];
-    selectedFiles: UploadedFile[];
-    setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
-    editingMessageId: string | null;
     setEditingMessageId: (id: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUpRef: MutableRefObject<boolean>;
+    userScrolledUp: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     getStreamHandlers: GetStreamHandlers;
-    sessionKeyMapRef: MutableRefObject<Map<string, string>>;
+    sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     handleGenerateCanvas: (sourceMessageId: string, content: string) => Promise<void>;
 }

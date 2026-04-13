@@ -28,10 +28,10 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             <button
                 onMouseDown={onQuote}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                title={t ? t('selection_quote_title') : "Quote Selection"}
+                title="Quote Selection"
             >
                 <Quote size={14} className="text-[var(--theme-text-link)]" />
-                <span>{t ? t('selection_quote_label') : "Quote"}</span>
+                <span>Quote</span>
             </button>
             
             {onInsert && (
@@ -53,14 +53,14 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             <button
                 onMouseDown={onCopy}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                title={t ? t('selection_copy_raw_title') : "Copy Raw Text"}
+                title="Copy Raw Text"
             >
                 {isCopied ? (
                     <Check size={14} className="text-[var(--theme-text-success)]" />
                 ) : (
                     <Copy size={14} className="text-[var(--theme-text-tertiary)]" />
                 )}
-                <span>{isCopied ? (t ? t('copied_button_title') : 'Copied') : (t ? t('copy') : 'Copy')}</span>
+                <span>{isCopied ? 'Copied' : 'Copy'}</span>
             </button>
 
             <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-0.5" />
@@ -68,10 +68,10 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             <button
                 onMouseDown={onSearch}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                title={t ? t('search') : "Search"}
+                title="Search"
             >
                 <IconGoogle size={14} />
-                <span>{t ? t('search') : "Search"}</span>
+                <span>Search</span>
             </button>
 
             {onTTS && (
@@ -80,10 +80,10 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
                     <button
                         onMouseDown={onTTS}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                        title={t ? t('selection_read_aloud_title') : "Read Aloud (TTS)"}
+                        title="Read Aloud (TTS)"
                     >
                         <Volume2 size={14} className="text-purple-500" />
-                        <span>{t ? t('selection_read_aloud_label') : "TTS"}</span>
+                        <span>TTS</span>
                     </button>
                 </>
             )}

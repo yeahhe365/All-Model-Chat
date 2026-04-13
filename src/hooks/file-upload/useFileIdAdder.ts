@@ -2,6 +2,7 @@ import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, logService } from '../../utils/appUtils';
+import { geminiServiceInstance } from '../../services/geminiService';
 
 interface UseFileIdAdderProps {
     appSettings: AppSettings;
@@ -57,37 +58,32 @@ export const useFileIdAdder = ({
         setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, mediaResolution: defaultResolution }]);
 
         try {
-            const { geminiServiceInstance } = await import('../../services/geminiService');
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
             if (fileMetadata) {
                 logService.info(`Successfully fetched metadata for file ID ${fileApiId}`, { metadata: fileMetadata });
-                const mimeType = fileMetadata.mimeType || 'application/octet-stream';
-                const displayName = fileMetadata.displayName || fileMetadata.name || fileApiId;
-                const fileApiName = fileMetadata.name || fileApiId;
-                const fileState = fileMetadata.state || 'ACTIVE';
+                const mimeType = fileMetadata.mimeType ?? 'application/octet-stream';
                 
                 // Allow known video types or generic octet-stream (often used for arbitrary files)
                 // But strictly validate if it is a supported type if it's not generic
-                const isValidType = mimeType === 'application/octet-stream' ||
-                                    ALL_SUPPORTED_MIME_TYPES.includes(mimeType) || 
+                const isValidType = ALL_SUPPORTED_MIME_TYPES.includes(mimeType) || 
                                     (mimeType.startsWith('video/') && !mimeType.includes('youtube'));
 
                 if (!isValidType) {
                     logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: mimeType });
-                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: displayName, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
+                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
                     return;
                 }
                 const newFile: UploadedFile = { 
                     id: tempId, 
-                    name: displayName, 
+                    name: fileMetadata.displayName || fileApiId, 
                     type: mimeType, 
                     size: Number(fileMetadata.sizeBytes) || 0, 
                     fileUri: fileMetadata.uri, 
-                    fileApiName, 
-                    isProcessing: fileState === 'PROCESSING', 
+                    fileApiName: fileMetadata.name || fileApiId, 
+                    isProcessing: fileMetadata.state === 'PROCESSING', 
                     progress: 100, 
-                    uploadState: fileState === 'ACTIVE' ? 'active' : (fileState === 'PROCESSING' ? 'processing_api' : 'failed'), 
-                    error: fileState === 'FAILED' ? 'File API processing failed' : undefined,
+                    uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), 
+                    error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined,
                     mediaResolution: defaultResolution
                 };
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? newFile : f));

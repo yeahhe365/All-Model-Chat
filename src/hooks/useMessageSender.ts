@@ -1,4 +1,5 @@
-import React, { useCallback, Dispatch, SetStateAction } from 'react';
+
+import React, { useCallback } from 'react';
 import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../types';
 import { generateUniqueId, getKeyForRequest, logService, createNewSession } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../constants/appConstants';
@@ -7,6 +8,7 @@ import { useTtsImagenSender } from './message-sender/useTtsImagenSender';
 import { useImageEditSender } from './message-sender/useImageEditSender';
 import { useCanvasGenerator } from './message-sender/useCanvasGenerator';
 import { useStandardChat } from './message-sender/useStandardChat';
+import { getModelCapabilities } from '../utils/modelHelpers';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -21,13 +23,11 @@ interface MessageSenderProps {
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUpRef: React.MutableRefObject<boolean>;
+    userScrolledUp: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
-    setLoadingSessionIds: Dispatch<SetStateAction<Set<string>>>;
     updateAndPersistSessions: SessionsUpdater;
-    scrollContainerRef: React.RefObject<HTMLDivElement>;
     sessionKeyMapRef: React.MutableRefObject<Map<string, string>>;
     language: 'en' | 'zh';
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
@@ -45,7 +45,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setAppFileError,
         aspectRatio,
         imageSize,
-        userScrolledUpRef,
+        userScrolledUp: userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
         activeJobs,
@@ -96,10 +96,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
         
         const sessionToUpdate = currentChatSettings;
         const activeModelId = sessionToUpdate.modelId;
-        const isTtsModel = activeModelId.includes('-tts');
-        const isImagenModel = activeModelId.includes('imagen');
-        const isImageEditModel = (activeModelId.includes('image-preview') || activeModelId.includes('gemini-2.5-flash-image')) && !activeModelId.includes('gemini-3-pro') && !activeModelId.includes('gemini-3.1-flash');
-        const isGemini3Image = activeModelId === 'gemini-3-pro-image-preview' || activeModelId === 'gemini-3.1-flash-image-preview';
+        const capabilities = getModelCapabilities(activeModelId);
+        const isTtsModel = capabilities.isTtsModel;
+        const isImagenModel = capabilities.isRealImagenModel;
+        const isImageEditModel = capabilities.isFlashImageModel;
+        const isGemini3Image = capabilities.isGemini3ImageModel;
 
         logService.info(`Sending message with model ${activeModelId}`, { textLength: textToUse.length, fileCount: filesToUse.length, editingId: effectiveEditingId, sessionId: activeSessionId, isContinueMode, isFastMode });
 

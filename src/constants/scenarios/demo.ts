@@ -39,34 +39,3 @@ export const voxelScenario: SavedScenario = {
     *   *细节:* 眼睛、嘴巴、Logo 等细节需要通过特定颜色的体素点缀。
 4.  **调整相机:** 确保相机位置 (\`camera.position\`) 足以容纳整个模型，不要太近也不要太远。`,
 };
-
-export const audioDemoScenario: SavedScenario = {
-    id: 'audio-tech-demo',
-    title: '🎵 Audio Processing Demo',
-    messages: [
-        {
-            id: 'demo-audio-1',
-            role: 'user',
-            content: 'How does this app handle audio uploads and recordings?'
-        },
-        {
-            id: 'demo-audio-2',
-            role: 'model',
-            content: `### 🎧 Automatic Audio Optimization
-
-This application features an advanced client-side audio processing engine designed to optimize performance and cost.
-
-#### How it works:
-1.  **Drag & Drop**: When you drag an audio file (e.g., MP3, WAV, FLAC, M4A) into the chat, it is automatically intercepted.
-2.  **Compression**: The app recompresses the audio in the browser to **16kHz Mono MP3 at 64kbps**.
-3.  **Efficiency**: This significantly reduces file size (often by 80-90%) and token usage without sacrificing speech intelligibility for the AI model.
-
-#### Try it out:
-*   **Drag an audio file** into this chat window. You'll see a "Compressing..." status.
-*   Use the **Microphone** button to dictate or the **Record Audio** tool to create a voice note—both use this optimization pipeline!
-
-This ensures you can upload longer recordings while staying within API limits.`
-        }
-    ],
-    systemInstruction: 'You are a helpful assistant explaining the technical features of the application.',
-};

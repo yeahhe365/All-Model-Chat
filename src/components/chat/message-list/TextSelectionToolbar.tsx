@@ -16,7 +16,7 @@ interface TextSelectionToolbarProps {
     onQuote: (text: string) => void;
     onInsert?: (text: string) => void;
     onTTS?: (text: string) => Promise<string | null>;
-    containerRef: React.RefObject<HTMLElement>;
+    containerRef: React.RefObject<HTMLElement> | HTMLElement | null;
     t?: (key: keyof typeof translations) => string;
 }
 
@@ -28,9 +28,10 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
     const audioState = useSelectionAudio();
 
     // 2. Position Logic
-    const { position, setPosition, selectedText, clearSelection, selectionBounds } = useSelectionPosition({
+    const { position, setPosition, selectedText, clearSelection } = useSelectionPosition({
         containerRef,
         isAudioActive: audioState.isPlaying || audioState.isLoading,
+        toolbarRef
     });
 
     // 3. Drag Logic
@@ -97,7 +98,7 @@ export const TextSelectionToolbar: React.FC<TextSelectionToolbarProps> = ({ onQu
     if (!position) return null;
 
     return (
-        <ToolbarContainer ref={toolbarRef} position={position} selectionBounds={selectionBounds} isDragging={isDragging.current}>
+        <ToolbarContainer ref={toolbarRef} position={position} isDragging={isDragging.current}>
             {(audioState.isPlaying || audioState.isLoading) ? (
                 <AudioPlayerView 
                     audioUrl={audioState.audioUrl}

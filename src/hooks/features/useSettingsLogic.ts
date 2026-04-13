@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { AppSettings } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { translations, logService, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget } from '../../utils/appUtils';
+import { translations, logService, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../utils/appUtils';
 import { MediaResolution } from '../../types/settings';
 import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
 
@@ -12,24 +12,20 @@ const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 
 interface UseSettingsLogicProps {
     isOpen: boolean;
-    onClose: () => void;
     currentSettings: AppSettings;
     onSave: (newSettings: AppSettings) => void;
     onClearAllHistory: () => void;
     onClearCache: () => void;
-    onOpenLogViewer: () => void;
     onImportHistory: (file: File) => void;
     t: (key: keyof typeof translations) => string;
 }
 
 export const useSettingsLogic = ({
     isOpen,
-    onClose: _onClose,
     currentSettings,
     onSave,
     onClearAllHistory,
     onClearCache,
-    onOpenLogViewer: _onOpenLogViewer,
     onImportHistory,
     t
 }: UseSettingsLogicProps) => {
@@ -40,7 +36,7 @@ export const useSettingsLogic = ({
             if (saved && validTabs.includes(saved as SettingsTab)) {
                 return saved as SettingsTab;
             }
-        } catch (_error) {
+        } catch (e) {
             // Ignore storage errors
         }
         return 'model';
@@ -165,7 +161,7 @@ export const useSettingsLogic = ({
         const cached = getCachedModelSettings(newModelId);
 
         let newThinkingBudget = cached?.thinkingBudget ?? currentSettings.thinkingBudget;
-        const newThinkingLevel = cached?.thinkingLevel ?? currentSettings.thinkingLevel;
+        const newThinkingLevel = cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(newModelId, currentSettings.thinkingLevel);
         const newMediaResolution = cached?.mediaResolution ?? currentSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
         // 3. Apply defaults/clamping logic using shared helper

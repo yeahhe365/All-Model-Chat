@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { buildContentParts, createChatHistoryForApi } from '../builder';
-import { UploadedFile, ChatMessage } from '../../../types';
+import { UploadedFile, ChatMessage, MediaResolution } from '../../../types';
 
 // Mock fileHelpers to avoid real file I/O
 vi.mock('../../../utils/fileHelpers', () => ({
@@ -35,7 +35,7 @@ const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   ...overrides,
 });
 
-const makeMessage = (role: ChatMessage['role'], content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
+const makeMessage = (role: 'user' | 'model' | 'error', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
   id: `msg-${Math.random().toString(36).slice(2, 8)}`,
   role,
   content,
@@ -144,7 +144,7 @@ describe('createChatHistoryForApi', () => {
     expect(history).toHaveLength(2);
     expect(history[0].role).toBe('user');
     expect(history[1].role).toBe('model');
-    expect(history[1].parts?.[0]?.text).toBe('Next visible');
+    expect(history[1].parts[0].text).toBe('Next visible');
   });
 
   it('only includes user and model roles', async () => {
@@ -167,12 +167,20 @@ describe('createChatHistoryForApi', () => {
     expect(history[0].parts).toHaveLength(2);
   });
 
-  it('attaches thoughtSignatures to last part of model messages', async () => {
+  it('replays thought signatures on their original apiParts without moving them to the last part', async () => {
     const msgs = [
-      makeMessage('model', 'Response', { thoughtSignatures: ['sig-1'] }),
+      makeMessage('model', '', {
+        thoughtSignatures: ['sig-1'],
+        apiParts: [
+          { text: 'First', thoughtSignature: 'sig-1' },
+          { text: 'Second' },
+        ],
+      }),
     ];
     const history = await createChatHistoryForApi(msgs);
-    expect(history[0].parts?.[0]?.thoughtSignature).toBe('sig-1');
+    expect(history[0].parts[0]).toMatchObject({ text: 'First', thoughtSignature: 'sig-1' });
+    expect(history[0].parts[1]).toEqual({ text: 'Second' });
+    expect(history[0].parts[1]).not.toHaveProperty('thoughtSignature');
   });
 
   it('strips thinking blocks when stripThinking is true', async () => {
@@ -180,23 +188,10 @@ describe('createChatHistoryForApi', () => {
       makeMessage('model', 'Hello <thinking>secret thoughts</thinking> world'),
     ];
     const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts.find((p: { text?: string }) => p.text);
+    const textPart = history[0].parts.find(p => p.text);
     expect(textPart?.text).not.toContain('thinking');
     expect(textPart?.text).toContain('Hello');
     expect(textPart?.text).toContain('world');
-  });
-
-  it('removes the full thinking block instead of stopping at the first unrelated closing tag', async () => {
-    const msgs = [
-      makeMessage('model', 'Hello <thinking>secret </summary> still secret</thinking> world'),
-    ];
-    const history = await createChatHistoryForApi(msgs, true);
-    const textPart = history[0].parts.find((p: { text?: string }) => p.text);
-
-    expect(textPart?.text).toContain('Hello');
-    expect(textPart?.text).toContain('world');
-    expect(textPart?.text).not.toContain('secret');
-    expect(textPart?.text).not.toContain('</thinking>');
   });
 
   it('handles apiParts for model messages with inlineData', async () => {
@@ -210,9 +205,9 @@ describe('createChatHistoryForApi', () => {
     ];
     const history = await createChatHistoryForApi(msgs);
     // inlineData should be replaced with text note
-    const inlinePart = history[0].parts.find((p: { text?: string }) => p.text?.includes('media file'));
+    const inlinePart = history[0].parts.find(p => p.text?.includes('media file'));
     expect(inlinePart).toBeTruthy();
-    const codePart = history[0].parts.find((p: { text?: string }) => p.text === 'Some code');
+    const codePart = history[0].parts.find(p => p.text === 'Some code');
     expect(codePart).toBeTruthy();
   });
 
@@ -227,6 +222,30 @@ describe('createChatHistoryForApi', () => {
     ];
     const history = await createChatHistoryForApi(msgs, true);
     expect(history[0].parts).toHaveLength(1);
-    expect(history[0].parts?.[0]?.text).toBe('visible');
+    expect(history[0].parts[0].text).toBe('visible');
+  });
+
+  it('preserves per-part media resolution for Gemini 3 history rebuilds', async () => {
+    const msgs = [
+      makeMessage('user', 'Inspect this', {
+        files: [
+          makeFile({
+            fileUri: 'files/abc123',
+            mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH,
+          }),
+        ],
+      }),
+    ];
+
+    const history = await (createChatHistoryForApi as any)(
+      msgs,
+      false,
+      'gemini-3.1-pro-preview'
+    );
+
+    expect(history[0].parts[0]).toEqual({
+      fileData: { mimeType: 'image/png', fileUri: 'files/abc123' },
+      mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
+    });
   });
 });

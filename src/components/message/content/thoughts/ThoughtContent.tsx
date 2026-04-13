@@ -10,7 +10,6 @@ interface ThoughtContentProps {
     lastThought: { title: string; content: string; isFallback: boolean } | null;
     thinkingTimeMs?: number;
     content: string; // Persisted content
-    preferProvidedContent?: boolean;
     onImageClick: (file: UploadedFile) => void;
     onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
     expandCodeBlocksByDefault: boolean;
@@ -27,7 +26,6 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
     lastThought,
     thinkingTimeMs,
     content,
-    preferProvidedContent = false,
     onImageClick,
     onOpenHtmlPreview,
     expandCodeBlocksByDefault,
@@ -39,7 +37,7 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
 }) => {
     // Subscribe to live thoughts if loading
     const { streamThoughts } = useMessageStream(messageId, isLoading);
-    const effectiveContent = preferProvidedContent ? content : (streamThoughts || content);
+    const effectiveContent = streamThoughts || content;
 
     return (
         <div className="px-3 pb-3 pt-2 border-t border-[var(--theme-border-secondary)]/50 text-xs relative">
@@ -66,7 +64,6 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
                     t={t}
                     themeId={themeId}
                     onOpenSidePanel={onOpenSidePanel}
-                    fallback={<div className="whitespace-pre-wrap break-words">{effectiveContent}</div>}
                 />
             </div>
         </div>

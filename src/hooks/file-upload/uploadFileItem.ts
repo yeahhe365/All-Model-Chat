@@ -2,13 +2,15 @@ import React from 'react';
 import { UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, fileToBlobUrl, logService } from '../../utils/appUtils';
-import { formatSpeed, getEffectiveMimeType } from './utils';
+import { geminiServiceInstance } from '../../services/geminiService';
+import { formatSpeed, getEffectiveMimeType, shouldUseFileApi } from './utils';
 
 interface UploadFileItemParams {
     file: File;
     keyToUse: string | null;
-    shouldUploadFile: boolean;
+    forceFileApi?: boolean;
     defaultResolution: MediaResolution | undefined;
+    appSettings: any; // Using any to avoid circular dep issues with types if strictly typed, but AppSettings is imported in types
     setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
     uploadStatsRef: React.MutableRefObject<Map<string, { lastLoaded: number; lastTime: number }>>;
 }
@@ -16,8 +18,9 @@ interface UploadFileItemParams {
 export const uploadFileItem = async ({
     file,
     keyToUse,
-    shouldUploadFile,
+    forceFileApi = false,
     defaultResolution,
+    appSettings,
     setSelectedFiles,
     uploadStatsRef
 }: UploadFileItemParams) => {
@@ -29,6 +32,9 @@ export const uploadFileItem = async ({
         setSelectedFiles(prev => [...prev, { id: fileId, name: file.name, type: file.type || 'unknown', size: file.size, isProcessing: false, progress: 0, error: `Unsupported file type: ${file.name}`, uploadState: 'failed' }]);
         return;
     }
+
+    const shouldUploadFile = forceFileApi || shouldUseFileApi(file, appSettings);
+    
     // Generate a blob URL immediately for local preview, regardless of upload method
     const dataUrl = fileToBlobUrl(file);
 
@@ -97,7 +103,6 @@ export const uploadFileItem = async ({
         };
 
         try {
-            const { geminiServiceInstance } = await import('../../services/geminiService');
             const uploadedFileInfo = await geminiServiceInstance.uploadFile(
                 keyToUse, 
                 file, 

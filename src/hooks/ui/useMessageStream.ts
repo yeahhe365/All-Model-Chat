@@ -1,28 +1,31 @@
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useState, useEffect } from 'react';
 import { streamingStore } from '../../services/streamingStore';
 
 export const useMessageStream = (messageId: string, isStreaming: boolean) => {
-    const subscribe = useCallback((onStoreChange: () => void) => {
+    const [streamContent, setStreamContent] = useState<string>('');
+    const [streamThoughts, setStreamThoughts] = useState<string>('');
+
+    useEffect(() => {
         if (!isStreaming || !messageId) {
-            return () => {};
+            setStreamContent('');
+            setStreamThoughts('');
+            return;
         }
 
-        return streamingStore.subscribe(messageId, onStoreChange);
-    }, [isStreaming, messageId]);
+        // Initialize with current store value
+        setStreamContent(streamingStore.getContent(messageId));
+        setStreamThoughts(streamingStore.getThoughts(messageId));
 
-    const getContentSnapshot = useCallback(() => {
-        if (!isStreaming || !messageId) return '';
-        return streamingStore.getContent(messageId);
-    }, [isStreaming, messageId]);
+        const unsubscribe = streamingStore.subscribe(messageId, () => {
+            setStreamContent(streamingStore.getContent(messageId));
+            setStreamThoughts(streamingStore.getThoughts(messageId));
+        });
 
-    const getThoughtsSnapshot = useCallback(() => {
-        if (!isStreaming || !messageId) return '';
-        return streamingStore.getThoughts(messageId);
-    }, [isStreaming, messageId]);
-
-    const streamContent = useSyncExternalStore(subscribe, getContentSnapshot, () => '');
-    const streamThoughts = useSyncExternalStore(subscribe, getThoughtsSnapshot, () => '');
+        return () => {
+            unsubscribe();
+        };
+    }, [messageId, isStreaming]);
 
     return { streamContent, streamThoughts };
 };

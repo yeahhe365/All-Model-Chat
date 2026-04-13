@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { logService } from '../../utils/appUtils';
 
-export type VideoSource = 'camera' | 'screen' | null;
+type VideoSource = 'camera' | 'screen' | null;
 
 export const useLiveVideo = () => {
     const [videoStream, setVideoStream] = useState<MediaStream | null>(null);

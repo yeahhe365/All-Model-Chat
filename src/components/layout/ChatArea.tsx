@@ -5,42 +5,24 @@ import { ChatInput } from '../chat/input/ChatInput';
 import { DragDropOverlay } from '../chat/overlays/DragDropOverlay';
 import { ModelsErrorDisplay } from '../chat/overlays/ModelsErrorDisplay';
 import { ChatAreaProps } from './chat-area/ChatAreaProps';
+import { ChatAreaProvider } from './chat-area/ChatAreaContext';
 import { useChatArea } from './chat-area/useChatArea';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
-import { Translator } from '../../utils/appUtils';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
 
-// Re-export props for consumers like useAppProps
 export type { ChatAreaProps };
 
-export const ChatArea: React.FC<ChatAreaProps> = (props) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
   const {
-    activeSessionId, sessionTitle, currentChatSettings,
-    isAppDraggingOver, handleAppDragEnter, handleAppDragOver, handleAppDragLeave, handleAppDrop,
-    onNewChat, onOpenSettingsModal, onOpenScenariosModal, onToggleHistorySidebar, isLoading,
-    currentModelName, availableModels, selectedModelId, onSelectModel,
-    isCanvasPromptActive, onLoadCanvasPrompt, onToggleBBox, isBBoxModeActive, onToggleGuide, isGuideModeActive,
-    isKeyLocked, modelsLoadingError,
-    messages, setScrollContainerRef, onScrollContainerScroll, onEditMessage,
-    onDeleteMessage, onRetryMessage, showThoughts,
-    onSuggestionClick, onOrganizeInfoClick, onFollowUpSuggestionClick, onTextToSpeech, onGenerateCanvas, onContinueGeneration, onQuickTTS,
-    onEditMessageContent, onUpdateMessageFile,
-    onMessageSent, onSendMessage, isEditing,
-    onStopGenerating, onCancelEdit, onProcessFiles, onAddFileById, onCancelUpload, onTranscribeAudio,
-    isGoogleSearchEnabled, onToggleGoogleSearch, isCodeExecutionEnabled, onToggleCodeExecution,
-    isLocalPythonEnabled, onToggleLocalPython,
-    isUrlContextEnabled, onToggleUrlContext, isDeepSearchEnabled, onToggleDeepSearch,
-    onClearChat, onOpenSettings, onToggleCanvasPrompt,
-    onTogglePinCurrentSession, onRetryLastTurn, onEditLastUserMessage,
-    isPipSupported, isPipActive, onTogglePip,
-    generateQuadImages, onToggleQuadImages,
-    onSetThinkingLevel, setCurrentChatSettings, onAddUserMessage,
-    onOpenSidePanel,
-    onLiveTranscript,
-    t
-  } = props;
+    session,
+    shell,
+    header,
+    messageActions,
+    inputActions,
+    features,
+  } = chatArea;
 
   // Read values from stores directly (no longer passed as props)
   const appSettings = useSettingsStore(s => s.appSettings);
@@ -48,7 +30,6 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const language = useSettingsStore(s => s.language);
   const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
   const isHistorySidebarOpen = useUIStore(s => s.isHistorySidebarOpen);
-  const scrollContainerRef = useChatStore(s => s.scrollContainerRef) as React.RefObject<HTMLDivElement>;
   const commandedInput = useChatStore(s => s.commandedInput);
   const selectedFiles = useChatStore(s => s.selectedFiles);
   const setSelectedFiles = useChatStore(s => s.setSelectedFiles);
@@ -65,157 +46,232 @@ export const ChatArea: React.FC<ChatAreaProps> = (props) => {
   const ttsMessageId = useChatStore(s => s.ttsMessageId);
 
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea({
-    currentChatSettings,
+    currentChatSettings: session.currentChatSettings,
   });
 
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
   const pipShortcut = useMemo(() => getShortcutDisplay('general.togglePip', appSettings), [appSettings]);
-  const translator = t as Translator;
+  const showEmptyStateSuggestions = session.messages.length === 0;
+  const messageListValue = useMemo(
+    () => ({
+      messages: session.messages,
+      sessionTitle: session.sessionTitle,
+      setScrollContainerRef: messageActions.setScrollContainerRef,
+      onScrollContainerScroll: messageActions.onScrollContainerScroll,
+      onEditMessage: messageActions.onEditMessage,
+      onDeleteMessage: messageActions.onDeleteMessage,
+      onRetryMessage: messageActions.onRetryMessage,
+      onUpdateMessageFile: messageActions.onUpdateMessageFile,
+      showThoughts: session.showThoughts,
+      themeId,
+      baseFontSize: appSettings.baseFontSize,
+      expandCodeBlocksByDefault: appSettings.expandCodeBlocksByDefault,
+      isMermaidRenderingEnabled: appSettings.isMermaidRenderingEnabled,
+      isGraphvizRenderingEnabled: appSettings.isGraphvizRenderingEnabled ?? true,
+      onSuggestionClick: messageActions.onSuggestionClick,
+      onOrganizeInfoClick: messageActions.onOrganizeInfoClick,
+      onFollowUpSuggestionClick: messageActions.onFollowUpSuggestionClick,
+      onTextToSpeech: messageActions.onTextToSpeech,
+      onGenerateCanvas: messageActions.onGenerateCanvas,
+      onContinueGeneration: messageActions.onContinueGeneration,
+      ttsMessageId,
+      onQuickTTS: messageActions.onQuickTTS,
+      t: shell.t,
+      language,
+      chatInputHeight,
+      appSettings,
+      currentModelId: session.currentChatSettings.modelId,
+      onOpenSidePanel: messageActions.onOpenSidePanel,
+      onQuote: handleQuote,
+      onInsert: handleInsert,
+      activeSessionId: session.activeSessionId,
+    }),
+    [
+      appSettings,
+      chatInputHeight,
+      handleInsert,
+      handleQuote,
+      language,
+      messageActions,
+      session.activeSessionId,
+      session.currentChatSettings,
+      session.messages,
+      session.sessionTitle,
+      session.showThoughts,
+      shell.t,
+      themeId,
+      ttsMessageId,
+    ]
+  );
+
+  const inputValue = useMemo(
+    () => ({
+      appSettings,
+      currentChatSettings: session.currentChatSettings,
+      setAppFileError,
+      activeSessionId: session.activeSessionId,
+      commandedInput,
+      onMessageSent: inputActions.onMessageSent,
+      selectedFiles,
+      setSelectedFiles,
+      onSendMessage: inputActions.onSendMessage,
+      isLoading: session.isLoading,
+      isEditing: session.isEditing,
+      editMode,
+      editingMessageId,
+      setEditingMessageId,
+      onStopGenerating: inputActions.onStopGenerating,
+      onCancelEdit: inputActions.onCancelEdit,
+      onProcessFiles: inputActions.onProcessFiles,
+      onAddFileById: inputActions.onAddFileById,
+      onCancelUpload: inputActions.onCancelUpload,
+      onTranscribeAudio: inputActions.onTranscribeAudio,
+      isProcessingFile,
+      fileError,
+      isImagenModel,
+      isImageEditModel: features.isImageEditModel,
+      aspectRatio,
+      setAspectRatio,
+      imageSize,
+      setImageSize,
+      t: shell.t,
+      isGoogleSearchEnabled: features.isGoogleSearchEnabled,
+      onToggleGoogleSearch: inputActions.onToggleGoogleSearch,
+      isCodeExecutionEnabled: features.isCodeExecutionEnabled,
+      onToggleCodeExecution: inputActions.onToggleCodeExecution,
+      isLocalPythonEnabled: features.isLocalPythonEnabled,
+      onToggleLocalPython: inputActions.onToggleLocalPython,
+      isUrlContextEnabled: features.isUrlContextEnabled,
+      onToggleUrlContext: inputActions.onToggleUrlContext,
+      isDeepSearchEnabled: features.isDeepSearchEnabled,
+      onToggleDeepSearch: inputActions.onToggleDeepSearch,
+      onClearChat: inputActions.onClearChat,
+      onNewChat: header.onNewChat,
+      onOpenSettings: inputActions.onOpenSettings,
+      onToggleCanvasPrompt: inputActions.onToggleCanvasPrompt,
+      onSelectModel: header.onSelectModel,
+      availableModels: header.availableModels,
+      onTogglePinCurrentSession: inputActions.onTogglePinCurrentSession,
+      onRetryLastTurn: inputActions.onRetryLastTurn,
+      onEditLastUserMessage: inputActions.onEditLastUserMessage,
+      onTogglePip: header.onTogglePip,
+      isPipActive: header.isPipActive,
+      isHistorySidebarOpen,
+      generateQuadImages: features.generateQuadImages,
+      onToggleQuadImages: inputActions.onToggleQuadImages,
+      setCurrentChatSettings: inputActions.setCurrentChatSettings,
+      onSuggestionClick: messageActions.onSuggestionClick,
+      onOrganizeInfoClick: messageActions.onOrganizeInfoClick,
+      showEmptyStateSuggestions,
+      onUpdateMessageContent: inputActions.onEditMessageContent,
+      onAddUserMessage: inputActions.onAddUserMessage,
+      onLiveTranscript: inputActions.onLiveTranscript,
+      liveClientFunctions: inputActions.liveClientFunctions,
+      onToggleBBox: inputActions.onToggleBBox,
+      isBBoxModeActive: features.isBBoxModeActive,
+      onToggleGuide: inputActions.onToggleGuide,
+      isGuideModeActive: features.isGuideModeActive,
+      themeId,
+    }),
+    [
+      appSettings,
+      aspectRatio,
+      commandedInput,
+      editMode,
+      editingMessageId,
+      features.generateQuadImages,
+      features.isBBoxModeActive,
+      features.isCodeExecutionEnabled,
+      features.isDeepSearchEnabled,
+      features.isGoogleSearchEnabled,
+      features.isGuideModeActive,
+      features.isImageEditModel,
+      features.isLocalPythonEnabled,
+      features.isUrlContextEnabled,
+      fileError,
+      header.availableModels,
+      header.isPipActive,
+      header.onNewChat,
+      header.onSelectModel,
+      header.onTogglePip,
+      imageSize,
+      inputActions,
+      isHistorySidebarOpen,
+      isImagenModel,
+      isProcessingFile,
+      messageActions.onOrganizeInfoClick,
+      messageActions.onSuggestionClick,
+      selectedFiles,
+      session.activeSessionId,
+      session.currentChatSettings,
+      session.isEditing,
+      session.isLoading,
+      showEmptyStateSuggestions,
+      setAppFileError,
+      setAspectRatio,
+      setEditingMessageId,
+      setImageSize,
+      setSelectedFiles,
+      shell.t,
+      themeId,
+    ],
+  );
+
+  const providerValue = useMemo(
+    () => ({
+      messageList: messageListValue,
+      input: inputValue,
+    }),
+    [inputValue, messageListValue],
+  );
 
   return (
     <div
-      className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement will-change-[width] transform-gpu"
-      onDragEnter={handleAppDragEnter}
-      onDragOver={handleAppDragOver}
-      onDragLeave={handleAppDragLeave}
-      onDrop={handleAppDrop}
+      className="flex flex-col flex-grow h-full overflow-hidden relative chat-bg-enhancement"
+      onDragEnter={shell.handleAppDragEnter}
+      onDragOver={shell.handleAppDragOver}
+      onDragLeave={shell.handleAppDragLeave}
+      onDrop={shell.handleAppDrop}
     >
-      <DragDropOverlay isDraggingOver={isAppDraggingOver} t={t} />
+      <DragDropOverlay isDraggingOver={shell.isAppDraggingOver} t={shell.t} />
 
       <Header
-        onNewChat={onNewChat}
-        onOpenSettingsModal={onOpenSettingsModal}
-        onOpenScenariosModal={onOpenScenariosModal}
-        onToggleHistorySidebar={onToggleHistorySidebar}
-        isLoading={isLoading}
-        currentModelName={currentModelName}
-        availableModels={availableModels}
-        selectedModelId={selectedModelId}
-        onSelectModel={onSelectModel}
+        onNewChat={header.onNewChat}
+        onOpenSettingsModal={header.onOpenSettingsModal}
+        onOpenScenariosModal={header.onOpenScenariosModal}
+        onToggleHistorySidebar={header.onToggleHistorySidebar}
+        isLoading={session.isLoading}
+        currentModelName={header.currentModelName}
+        availableModels={header.availableModels}
+        selectedModelId={header.selectedModelId}
+        onSelectModel={header.onSelectModel}
         isSwitchingModel={isSwitchingModel}
         isHistorySidebarOpen={isHistorySidebarOpen}
-        onLoadCanvasPrompt={onLoadCanvasPrompt}
-        isCanvasPromptActive={isCanvasPromptActive}
-        t={translator}
-        isKeyLocked={isKeyLocked}
-        isPipSupported={isPipSupported}
-        isPipActive={isPipActive}
-        onTogglePip={onTogglePip}
+        onLoadCanvasPrompt={header.onLoadCanvasPrompt}
+        isCanvasPromptActive={header.isCanvasPromptActive}
+        t={shell.t}
+        isKeyLocked={header.isKeyLocked}
+        isPipSupported={header.isPipSupported}
+        isPipActive={header.isPipActive}
+        onTogglePip={header.onTogglePip}
         themeId={themeId}
-        thinkingLevel={currentChatSettings.thinkingLevel}
-        onSetThinkingLevel={onSetThinkingLevel}
+        thinkingLevel={session.currentChatSettings.thinkingLevel}
+        onSetThinkingLevel={header.onSetThinkingLevel}
         newChatShortcut={newChatShortcut}
         pipShortcut={pipShortcut}
       />
 
-      <ModelsErrorDisplay error={modelsLoadingError} />
+      <ModelsErrorDisplay error={shell.modelsLoadingError} />
 
-      <MessageList
-        messages={messages}
-        sessionTitle={sessionTitle}
-        scrollContainerRef={scrollContainerRef}
-        setScrollContainerRef={setScrollContainerRef}
-        onScrollContainerScroll={onScrollContainerScroll}
-        onEditMessage={onEditMessage}
-        onDeleteMessage={onDeleteMessage}
-        onRetryMessage={onRetryMessage}
-        showThoughts={showThoughts}
-        themeId={themeId}
-        baseFontSize={appSettings.baseFontSize}
-        expandCodeBlocksByDefault={appSettings.expandCodeBlocksByDefault}
-        isMermaidRenderingEnabled={appSettings.isMermaidRenderingEnabled}
-        isGraphvizRenderingEnabled={appSettings.isGraphvizRenderingEnabled ?? true}
-        onSuggestionClick={onSuggestionClick}
-        onOrganizeInfoClick={onOrganizeInfoClick}
-        onFollowUpSuggestionClick={onFollowUpSuggestionClick}
-        onTextToSpeech={onTextToSpeech}
-        onGenerateCanvas={onGenerateCanvas}
-        onContinueGeneration={onContinueGeneration}
-        ttsMessageId={ttsMessageId}
-        onQuickTTS={onQuickTTS}
-        t={t}
-        language={language}
-        chatInputHeight={chatInputHeight}
-        appSettings={appSettings}
-        currentModelId={currentChatSettings.modelId}
-        onOpenSidePanel={onOpenSidePanel}
-        onUpdateMessageFile={onUpdateMessageFile}
-        onQuote={handleQuote}
-        onInsert={handleInsert}
-        activeSessionId={activeSessionId}
-      />
+      <ChatAreaProvider value={providerValue}>
+        <MessageList />
 
-      <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
-        <div className="pointer-events-auto">
-          <ChatInput
-            appSettings={appSettings}
-            currentChatSettings={currentChatSettings}
-            setAppFileError={setAppFileError}
-            activeSessionId={activeSessionId}
-            commandedInput={commandedInput}
-            onMessageSent={onMessageSent}
-            selectedFiles={selectedFiles}
-            setSelectedFiles={setSelectedFiles}
-            onSendMessage={onSendMessage}
-            isLoading={isLoading}
-            isEditing={isEditing}
-            editMode={editMode}
-            editingMessageId={editingMessageId}
-            setEditingMessageId={setEditingMessageId}
-            onStopGenerating={onStopGenerating}
-            onCancelEdit={onCancelEdit}
-            onProcessFiles={onProcessFiles}
-            onAddFileById={onAddFileById}
-            onCancelUpload={onCancelUpload}
-            onTranscribeAudio={onTranscribeAudio}
-            isProcessingFile={isProcessingFile}
-            fileError={fileError}
-            isImagenModel={isImagenModel}
-            isImageEditModel={props.isImageEditModel}
-            aspectRatio={aspectRatio}
-            setAspectRatio={setAspectRatio}
-            imageSize={imageSize}
-            setImageSize={setImageSize}
-            t={t}
-            isGoogleSearchEnabled={isGoogleSearchEnabled}
-            onToggleGoogleSearch={onToggleGoogleSearch}
-            isCodeExecutionEnabled={isCodeExecutionEnabled}
-            onToggleCodeExecution={onToggleCodeExecution}
-            isLocalPythonEnabled={isLocalPythonEnabled}
-            onToggleLocalPython={onToggleLocalPython}
-            isUrlContextEnabled={isUrlContextEnabled}
-            onToggleUrlContext={onToggleUrlContext}
-            isDeepSearchEnabled={isDeepSearchEnabled}
-            onToggleDeepSearch={onToggleDeepSearch}
-            onClearChat={onClearChat}
-            onNewChat={onNewChat}
-            onOpenSettings={onOpenSettings}
-            onToggleCanvasPrompt={onToggleCanvasPrompt}
-            onSelectModel={onSelectModel}
-            availableModels={availableModels}
-            onTogglePinCurrentSession={onTogglePinCurrentSession}
-            onRetryLastTurn={onRetryLastTurn}
-            onEditLastUserMessage={onEditLastUserMessage}
-            onTogglePip={onTogglePip}
-            isPipActive={isPipActive}
-            isHistorySidebarOpen={isHistorySidebarOpen}
-            generateQuadImages={generateQuadImages}
-            onToggleQuadImages={onToggleQuadImages}
-            setCurrentChatSettings={setCurrentChatSettings}
-            onSuggestionClick={onSuggestionClick}
-            onOrganizeInfoClick={onOrganizeInfoClick}
-            showEmptyStateSuggestions={messages.length === 0}
-            onUpdateMessageContent={onEditMessageContent}
-            onAddUserMessage={onAddUserMessage}
-            onLiveTranscript={onLiveTranscript}
-            onToggleBBox={onToggleBBox}
-            isBBoxModeActive={isBBoxModeActive}
-            onToggleGuide={onToggleGuide}
-            isGuideModeActive={isGuideModeActive}
-            themeId={themeId}
-          />
+        <div ref={chatInputContainerRef} className="absolute bottom-0 left-0 right-0 z-30 pointer-events-none">
+          <div className="pointer-events-auto">
+            <ChatInput />
+          </div>
         </div>
-      </div>
+      </ChatAreaProvider>
     </div>
   );
 };

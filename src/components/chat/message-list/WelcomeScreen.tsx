@@ -11,6 +11,10 @@ interface WelcomeScreenProps {
 }
 
 const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
+    const prefersReducedMotion = useMemo(
+        () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        []
+    );
     const [displayedText, setDisplayedText] = useState('');
     const [status, setStatus] = useState<'typing' | 'deleting' | 'paused' | 'blank'>('typing');
     const [targetPhrase, setTargetPhrase] = useState(text);
@@ -30,17 +34,26 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         "Made on Earth by humans."
     ], []);
 
-    const activeTargetPhrase = !isHovering && targetPhrase !== text ? text : targetPhrase;
-    const activeStatus =
-        !isHovering && targetPhrase !== text
-            ? 'deleting'
-            : status === 'typing' && displayedText === activeTargetPhrase
-                ? 'paused'
-                : status === 'deleting' && displayedText === ''
-                    ? 'blank'
-                : status;
+    // Sync target phrase when prop changes (e.g. language switch) OR when hover ends to restore greeting
+    useEffect(() => {
+        if (prefersReducedMotion) {
+            return;
+        }
+
+        // Only trigger reset if we are NOT currently showing the greeting (targetPhrase !== text)
+        // This prevents the greeting from being re-typed if the user hovers for < 3s and leaves.
+        if (!isHovering && targetPhrase !== text) {
+            setTargetPhrase(text);
+            // Trigger deletion to transition to new text if we were showing something else
+            setStatus('deleting');
+        }
+    }, [text, isHovering, prefersReducedMotion, targetPhrase]);
 
     useEffect(() => {
+        if (prefersReducedMotion) {
+            return;
+        }
+
         let timeout: ReturnType<typeof setTimeout>;
         
         const baseTypeSpeed = 50;
@@ -48,36 +61,44 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         const pauseDuration = 4000; 
         const blankDuration = 2000;
 
-        if (activeStatus === 'typing') {
-            let currentDelay = baseTypeSpeed;
-            const lastChar = displayedText.slice(-1);
-            
-            // 1. Punctuation pauses
-            if ([',', ';', ':'].includes(lastChar)) {
-                currentDelay = 400; 
-            } else if (['.', '?', '!'].includes(lastChar)) {
-                currentDelay = 800; 
-            }
-            
-            // 2. Semantic pauses for dramatic effect
-            if (displayedText.toLowerCase().endsWith("wait")) {
-                currentDelay = 500;
-            } else if (displayedText.toLowerCase().endsWith("i'm sorry")) {
-                currentDelay = 600;
-            }
+        if (status === 'typing') {
+            if (displayedText === targetPhrase) {
+                setStatus('paused');
+            } else {
+                let currentDelay = baseTypeSpeed;
+                const lastChar = displayedText.slice(-1);
+                
+                // 1. Punctuation pauses
+                if ([',', ';', ':'].includes(lastChar)) {
+                    currentDelay = 400; 
+                } else if (['.', '?', '!'].includes(lastChar)) {
+                    currentDelay = 800; 
+                }
+                
+                // 2. Semantic pauses for dramatic effect
+                if (displayedText.toLowerCase().endsWith("wait")) {
+                    currentDelay = 500;
+                } else if (displayedText.toLowerCase().endsWith("i'm sorry")) {
+                    currentDelay = 600;
+                }
 
-            // 3. Random variance (simulating keystroke inconsistency)
-            currentDelay += Math.random() * 50 - 10;
+                // 3. Random variance (simulating keystroke inconsistency)
+                currentDelay += Math.random() * 50 - 10;
 
-            timeout = setTimeout(() => {
-                setDisplayedText(activeTargetPhrase.slice(0, displayedText.length + 1));
-            }, Math.max(20, currentDelay));
-        } else if (activeStatus === 'deleting') {
-            timeout = setTimeout(() => {
-                setDisplayedText(prev => prev.slice(0, -1));
-            }, deleteSpeed);
-        } else if (activeStatus === 'paused') {
-            if (activeTargetPhrase === text) {
+                timeout = setTimeout(() => {
+                    setDisplayedText(targetPhrase.slice(0, displayedText.length + 1));
+                }, Math.max(20, currentDelay));
+            }
+        } else if (status === 'deleting') {
+            if (displayedText === '') {
+                setStatus('blank');
+            } else {
+                timeout = setTimeout(() => {
+                    setDisplayedText(prev => prev.slice(0, -1));
+                }, deleteSpeed);
+            }
+        } else if (status === 'paused') {
+            if (targetPhrase === text) {
                 // Showing the main greeting
                 if (isHovering) {
                     // Easter Egg: If hovered for 3 seconds, start deleting to show quotes
@@ -97,7 +118,7 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
                     // Initialize or refill the bag if empty
                     if (unusedQuotesRef.current.length === 0) {
                         // Refill with all quotes except the current one to prevent immediate repetition on cycle reset
-                        unusedQuotesRef.current = quotes.filter(q => q !== activeTargetPhrase);
+                        unusedQuotesRef.current = quotes.filter(q => q !== targetPhrase);
                     }
 
                     // Pick a random index from the available bag
@@ -116,7 +137,15 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         }
 
         return () => clearTimeout(timeout);
-    }, [displayedText, activeStatus, activeTargetPhrase, isHovering, text, quotes]);
+    }, [displayedText, status, targetPhrase, isHovering, prefersReducedMotion, text, quotes]);
+
+    if (prefersReducedMotion) {
+        return (
+            <span className="flex w-full h-full items-center justify-center min-h-[1.5em] font-mono tracking-tight cursor-default select-none">
+                {text}
+            </span>
+        );
+    }
 
     return (
         <span 
@@ -125,7 +154,7 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
             onMouseLeave={() => setIsHovering(false)}
         >
             {displayedText}
-            {activeStatus !== 'paused' && (
+            {status !== 'paused' && (
                 <span className="inline-block w-[0.6em] h-[1em] bg-[var(--theme-text-primary)] ml-1 align-text-bottom animate-cursor-blink" />
             )}
         </span>

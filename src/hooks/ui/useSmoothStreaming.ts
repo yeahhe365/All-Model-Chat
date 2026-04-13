@@ -17,6 +17,7 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
     
     // Throttle reference to limit React state updates (UI rendering)
     const lastRenderTimeRef = useRef<number>(0);
+    const shouldBypassAnimation = document.hidden && isStreaming;
 
     // Sync target text ref whenever input changes
     useEffect(() => {
@@ -26,11 +27,18 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
         // Browser pauses rAF when hidden, but state updates can pile up or be ignored
         if (document.hidden && isStreaming) {
             displayedTextRef.current = safeText;
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+                animationFrameRef.current = null;
+            }
+            return;
         }
         
         // If we stopped streaming, snap to full text immediately to ensure consistency
         if (!isStreaming) {
-            displayedTextRef.current = safeText;
+            if (displayedTextRef.current !== safeText) {
+                displayedTextRef.current = safeText;
+            }
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
                 animationFrameRef.current = null;
@@ -38,30 +46,15 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
         }
     }, [safeText, isStreaming]);
 
-    useEffect(() => {
-        if (!isStreaming) {
-            return undefined;
-        }
-
-        const handleVisibilityChange = () => {
-            if (!document.hidden) {
-                setDisplayedText(displayedTextRef.current);
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [isStreaming]);
-
     // Animation Loop
     useEffect(() => {
-        if (!isStreaming) return;
+        if (!isStreaming || document.hidden) return;
 
         const animate = (time: DOMHighResTimeStamp) => {
-            // Extra safety: If hidden, stop animating (resumed by effect above)
+            // Extra safety: If hidden, stop animating immediately.
             if (document.hidden) {
-                 animationFrameRef.current = requestAnimationFrame(animate);
-                 return;
+                animationFrameRef.current = null;
+                return;
             }
 
             const currentLen = displayedTextRef.current.length;
@@ -92,19 +85,23 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
                     setDisplayedText(nextText);
                     lastRenderTimeRef.current = time;
                 }
-                
-                animationFrameRef.current = requestAnimationFrame(animate);
+
+                if (isFinishedCatchingUp) {
+                    animationFrameRef.current = null;
+                } else {
+                    animationFrameRef.current = requestAnimationFrame(animate);
+                }
             } else if (currentLen > targetLen) {
                 displayedTextRef.current = targetTextRef.current;
                 setDisplayedText(targetTextRef.current);
                 lastRenderTimeRef.current = time;
-                animationFrameRef.current = requestAnimationFrame(animate);
+                animationFrameRef.current = null;
             } else {
-                animationFrameRef.current = requestAnimationFrame(animate);
+                animationFrameRef.current = null;
             }
         };
 
-        if (!animationFrameRef.current) {
+        if (!animationFrameRef.current && displayedTextRef.current !== targetTextRef.current) {
             animationFrameRef.current = requestAnimationFrame(animate);
         }
 
@@ -114,7 +111,7 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
                 animationFrameRef.current = null;
             }
         };
-    }, [isStreaming]);
+    }, [isStreaming, safeText]);
 
-    return isStreaming ? displayedText : safeText;
+    return shouldBypassAnimation ? safeText : isStreaming ? displayedText : safeText;
 };

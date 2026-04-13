@@ -9,7 +9,7 @@ import { RecordControls } from './actions/RecordControls';
 import { UtilityControls } from './actions/UtilityControls';
 import { SendControls } from './actions/SendControls';
 
-export interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
+interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
     editMode?: 'update' | 'resend';
     isNativeAudioModel?: boolean;
     onStartLiveSession?: () => void;
@@ -59,8 +59,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onFastSendMessage,
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 w-full">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+    <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
             <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t as any} />
             
             {isNativeAudioModel && (
@@ -91,7 +91,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             />
         </div>
 
-        <div className="ml-auto flex flex-shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
             {!isLiveConnected && !isNativeAudioModel && (
                 <RecordControls 
                     isRecording={!!isRecording}

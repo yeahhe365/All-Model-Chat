@@ -68,9 +68,11 @@ export interface AppSettings extends ChatSettings {
  themeId: 'system' | 'onyx' | 'pearl';
  baseFontSize: number;
  useCustomApiConfig: boolean;
+ serverManagedApi?: boolean;
  apiKey: string | null;
  apiProxyUrl: string | null;
  useApiProxy?: boolean;
+ liveApiEphemeralTokenEndpoint?: string | null;
  language: 'en' | 'zh' | 'system';
  isStreamingEnabled: boolean;
  transcriptionModelId: string;

@@ -1,22 +1,21 @@
 
 import React from 'react';
-import { Document } from 'react-pdf';
 import { UploadedFile } from '../../../types';
 import { usePdfViewer } from '../../../hooks/ui/usePdfViewer';
 import { PdfSidebar } from './pdf-viewer/PdfSidebar';
 import { PdfMainContent } from './pdf-viewer/PdfMainContent';
 import { PdfToolbar } from './pdf-viewer/PdfToolbar';
-import { translations } from '../../../utils/appUtils';
 
 interface PdfViewerProps {
     file: UploadedFile;
-    t: (key: keyof typeof translations) => string;
 }
 
-const PdfViewerContent: React.FC<PdfViewerProps> = ({ file, t }) => {
+export const PdfViewer: React.FC<PdfViewerProps> = ({ file }) => {
     const {
         numPages,
         currentPage,
+        pageInput,
+        setPageInput,
         scale,
         rotation,
         isLoading,
@@ -35,58 +34,50 @@ const PdfViewerContent: React.FC<PdfViewerProps> = ({ file, t }) => {
         handleZoomOut,
         handleRotate,
         toggleSidebar
-    } = usePdfViewer(file, t);
+    } = usePdfViewer(file);
 
     return (
         <div className="w-full h-full relative flex flex-row bg-gray-900 overflow-hidden select-none">
-            <Document
-                file={file.dataUrl}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={onDocumentLoadError}
-                loading={null}
-                error={null}
-                className="flex w-full h-full min-w-0"
-            >
-                <PdfSidebar 
+            
+            <PdfSidebar 
+                fileUrl={file.dataUrl}
+                numPages={numPages}
+                currentPage={currentPage}
+                showSidebar={showSidebar}
+                onPageClick={scrollToPage}
+                sidebarRef={sidebarRef}
+            />
+
+            <div className="flex-grow h-full relative flex flex-col min-w-0">
+                <PdfMainContent
+                    fileUrl={file.dataUrl}
                     numPages={numPages}
-                    currentPage={currentPage}
-                    showSidebar={showSidebar}
-                    onPageClick={scrollToPage}
-                    sidebarRef={sidebarRef}
+                    scale={scale}
+                    rotation={rotation}
+                    isLoading={isLoading}
+                    error={error}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
+                    setPageRef={setPageRef}
+                    containerRef={containerRef}
                 />
 
-                <div className="flex-grow h-full relative flex flex-col min-w-0">
-                    <PdfMainContent
-                        numPages={numPages}
-                        scale={scale}
-                        rotation={rotation}
-                        isLoading={isLoading}
-                        error={error}
-                        setPageRef={setPageRef}
-                        containerRef={containerRef}
-                        t={t}
-                    />
-
-                    <PdfToolbar 
-                        currentPage={currentPage}
-                        numPages={numPages}
-                        scale={scale}
-                        showSidebar={showSidebar}
-                        onPageInputCommit={handlePageInputCommit}
-                        onPrevPage={previousPage}
-                        onNextPage={nextPage}
-                        onZoomIn={handleZoomIn}
-                        onZoomOut={handleZoomOut}
-                        onRotate={handleRotate}
-                        onToggleSidebar={toggleSidebar}
-                        t={t}
-                    />
-                </div>
-            </Document>
+                <PdfToolbar 
+                    currentPage={currentPage}
+                    numPages={numPages}
+                    scale={scale}
+                    showSidebar={showSidebar}
+                    pageInput={pageInput}
+                    onPageInputChange={setPageInput}
+                    onPageInputCommit={handlePageInputCommit}
+                    onPrevPage={previousPage}
+                    onNextPage={nextPage}
+                    onZoomIn={handleZoomIn}
+                    onZoomOut={handleZoomOut}
+                    onRotate={handleRotate}
+                    onToggleSidebar={toggleSidebar}
+                />
+            </div>
         </div>
     );
 };
-
-export const PdfViewer: React.FC<PdfViewerProps> = (props) => (
-    <PdfViewerContent key={props.file.id} {...props} />
-);

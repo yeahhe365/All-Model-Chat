@@ -117,22 +117,26 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
     return URL.createObjectURL(blob);
 };
 
+/**
+ * Combines microphone stream with system audio stream (screen share) if requested.
+ * Returns the resulting mixed stream and a cleanup function.
+ */
 type ExtendedDisplayMediaStreamOptions = DisplayMediaStreamOptions & {
     systemAudio?: 'include' | 'exclude';
     selfBrowserSurface?: 'include' | 'exclude';
 };
 
-/**
- * Combines microphone stream with system audio stream (screen share) if requested.
- * Returns the resulting mixed stream and a cleanup function.
- */
+type WindowWithWebkitAudioContext = Window & typeof globalThis & {
+    webkitAudioContext?: typeof AudioContext;
+};
+
 export const getMixedAudioStream = async (micStream: MediaStream, includeSystemAudio: boolean = false): Promise<{ stream: MediaStream; cleanup: () => void }> => {
     if (!includeSystemAudio) {
         return { stream: micStream, cleanup: () => {} };
     }
 
     try {
-        const displayMediaOptions: ExtendedDisplayMediaStreamOptions = {
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
             video: {
                 width: 1,
                 height: 1, // Request minimal video size as we only need audio
@@ -144,8 +148,7 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
             },
             systemAudio: 'include',
             selfBrowserSurface: 'include'
-        };
-        const displayStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+        } as ExtendedDisplayMediaStreamOptions);
 
         // Check if audio track exists (user might have unchecked "Share Audio")
         if (displayStream.getAudioTracks().length === 0) {
@@ -154,7 +157,7 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
             return { stream: micStream, cleanup: () => {} };
         }
 
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
         const ctx = new AudioContextClass();
         const dest = ctx.createMediaStreamDestination();
 

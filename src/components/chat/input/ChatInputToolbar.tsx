@@ -65,19 +65,17 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             {showTtsVoice && <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} t={t as (key: string) => string} />}
             {isTtsModel && onEditTtsContext && (
                 <button
-                    type="button"
                     onClick={onEditTtsContext}
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 border focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${
                         ttsContext && ttsContext.trim() 
                         ? 'bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border-[var(--theme-border-focus)] font-medium' 
                         : 'bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] border-[var(--theme-border-secondary)] hover:border-[var(--theme-border-focus)]'
                     }`}
-                    title={t('tts_context_title')}
-                    aria-label={t('tts_context_label')}
+                    title="TTS Director's Notes"
                 >
                     <div className="flex items-center gap-2">
                         <Clapperboard size={16} strokeWidth={1.5} className={ttsContext && ttsContext.trim() ? "text-[var(--theme-text-link)]" : "text-[var(--theme-text-tertiary)]"} />
-                        <span>{t('tts_context_label')}</span>
+                        <span>Context</span>
                     </div>
                     {ttsContext && ttsContext.trim() && <div className="w-1.5 h-1.5 rounded-full bg-[var(--theme-text-link)]" />}
                 </button>

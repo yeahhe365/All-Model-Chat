@@ -44,7 +44,6 @@ const thresholdLabels: Record<HarmBlockThreshold, string> = {
   [HarmBlockThreshold.BLOCK_LOW_AND_ABOVE]: 'safety_threshold_BLOCK_LOW_AND_ABOVE',
 };
 
-// Colors for the slider track/label based on index
 const stepTextColors = ['text-red-500', 'text-orange-500', 'text-yellow-500', 'text-blue-500', 'text-green-500'];
 
 type SliderValueMap = Record<HarmCategory, number>;
@@ -186,7 +185,7 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
 
       <div className="flex items-center justify-center gap-2 text-xs text-[var(--theme-text-tertiary)] pt-4">
         <Info size={14} />
-        <span>{t('safety_changes_apply')}</span>
+        <span>Changes apply to new messages.</span>
       </div>
     </div>
   );

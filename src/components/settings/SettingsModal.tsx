@@ -1,38 +1,27 @@
 
 import React from 'react';
 import { AppSettings, ModelOption } from '../../types';
-import { translations, Translator } from '../../utils/appUtils';
-import { Theme } from '../../types/theme';
 import { Modal } from '../shared/Modal';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { useSettingsLogic } from '../../hooks/features/useSettingsLogic';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsContent } from './SettingsContent';
+import { SettingsTransferProps } from './settingsTypes';
 
-interface SettingsModalProps {
+interface SettingsModalProps extends SettingsTransferProps {
   isOpen: boolean;
   onClose: () => void;
   currentSettings: AppSettings; 
   availableModels: ModelOption[];
-  availableThemes: Theme[]; 
   onSave: (newSettings: AppSettings) => void; 
   onClearAllHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: () => void;
-  onInstallPwa: () => void;
-  isInstallable: boolean;
-  onImportSettings: (file: File) => void;
-  onExportSettings: () => void;
-  onImportHistory: (file: File) => void;
-  onExportHistory: () => void;
-  onImportScenarios: (file: File) => void;
-  onExportScenarios: () => void;
-  t: (key: keyof typeof translations) => string;
   setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
-  isOpen, onClose, currentSettings, availableModels, availableThemes: _availableThemes,
+  isOpen, onClose, currentSettings, availableModels,
   onSave, onClearAllHistory, onClearCache, onOpenLogViewer,
   onInstallPwa, isInstallable, t, 
   onImportSettings, onExportSettings,
@@ -58,12 +47,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       tabs
   } = useSettingsLogic({
       isOpen,
-      onClose,
       currentSettings,
       onSave,
       onClearAllHistory,
       onClearCache,
-      onOpenLogViewer,
       onImportHistory,
       t
   });
@@ -121,7 +108,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onExportHistory={onExportHistory}
                         onImportScenarios={onImportScenarios}
                         onExportScenarios={onExportScenarios}
-                        t={t as Translator}
+                        t={t}
                     />
                 </div>
             </main>

@@ -1,9 +1,8 @@
 import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage, InputCommand } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
-import { createNewSession, rehydrateSessionFiles, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
+import { createNewSession, rehydrateSessionFiles, logService, cleanupFilePreviewUrls, resolveSupportedModelId } from '../../../utils/appUtils';
 import { dbService } from '../../../utils/db';
-import { useWindowContext } from '../../../contexts/useWindowContext';
 
 interface UseSessionLoaderProps {
     appSettings: AppSettings;
@@ -16,7 +15,7 @@ interface UseSessionLoaderProps {
     setCommandedInput: Dispatch<SetStateAction<InputCommand | null>>;
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
     activeChat: SavedChatSession | undefined;
-    userScrolledUpRef: React.MutableRefObject<boolean>;
+    userScrolledUp: React.MutableRefObject<boolean>;
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
@@ -34,17 +33,20 @@ export const useSessionLoader = ({
     setCommandedInput,
     updateAndPersistSessions,
     activeChat,
-    userScrolledUpRef,
+    userScrolledUp,
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
     savedSessions,
 }: UseSessionLoaderProps) => {
-    const { document: targetDocument } = useWindowContext();
 
-    const focusChatInput = useCallback(() => {
-        targetDocument.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
-    }, [targetDocument]);
+    const sanitizeSessionModel = useCallback((session: SavedChatSession): SavedChatSession => ({
+        ...session,
+        settings: {
+            ...session.settings,
+            modelId: resolveSupportedModelId(session.settings?.modelId, DEFAULT_CHAT_SETTINGS.modelId),
+        },
+    }), []);
 
     const startNewChat = useCallback((explicitTemplateSession?: SavedChatSession) => {
         // If we are already on an empty chat, just focus input and don't create a duplicate
@@ -57,13 +59,13 @@ export const useSessionLoader = ({
             setEditingMessageId(null);
 
             setTimeout(() => {
-                focusChatInput();
+                document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
             }, 0);
             return;
         }
 
         logService.info('Starting new chat session.');
-        userScrolledUpRef.current = false;
+        userScrolledUp.current = false;
         
         // Save current files to draft before switching
         if (activeSessionId) {
@@ -83,16 +85,17 @@ export const useSessionLoader = ({
         const templateSession = explicitTemplateSession || (savedSessions.length > 0 ? savedSessions[0] : undefined);
         
         if (templateSession) {
+            const sanitizedTemplate = sanitizeSessionModel(templateSession);
             settingsForNewChat = {
                 ...settingsForNewChat,
-                modelId: templateSession.settings.modelId,
-                isGoogleSearchEnabled: templateSession.settings.isGoogleSearchEnabled,
-                isCodeExecutionEnabled: templateSession.settings.isCodeExecutionEnabled,
-                isUrlContextEnabled: templateSession.settings.isUrlContextEnabled,
-                isDeepSearchEnabled: templateSession.settings.isDeepSearchEnabled,
-                thinkingBudget: templateSession.settings.thinkingBudget,
-                thinkingLevel: templateSession.settings.thinkingLevel,
-                ttsVoice: templateSession.settings.ttsVoice,
+                modelId: sanitizedTemplate.settings.modelId,
+                isGoogleSearchEnabled: sanitizedTemplate.settings.isGoogleSearchEnabled,
+                isCodeExecutionEnabled: sanitizedTemplate.settings.isCodeExecutionEnabled,
+                isUrlContextEnabled: sanitizedTemplate.settings.isUrlContextEnabled,
+                isDeepSearchEnabled: sanitizedTemplate.settings.isDeepSearchEnabled,
+                thinkingBudget: sanitizedTemplate.settings.thinkingBudget,
+                thinkingLevel: sanitizedTemplate.settings.thinkingLevel,
+                ttsVoice: sanitizedTemplate.settings.ttsVoice,
             };
         }
 
@@ -110,13 +113,13 @@ export const useSessionLoader = ({
         setEditingMessageId(null);
         
         setTimeout(() => {
-            focusChatInput();
+            document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, focusChatInput]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, sanitizeSessionModel]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
         logService.info(`Loading chat session: ${sessionId}`);
-        userScrolledUpRef.current = false;
+        userScrolledUp.current = false;
         
         // Save current files to draft before switching
         if (activeSessionId && activeSessionId !== sessionId) {
@@ -133,7 +136,7 @@ export const useSessionLoader = ({
             const sessionToLoad = await dbService.getSession(sessionId);
 
             if (sessionToLoad) {
-                const rehydrated = rehydrateSessionFiles(sessionToLoad);
+                const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(sessionToLoad));
                 
                 // Set Active Messages and ID
                 setActiveMessages(rehydrated.messages);
@@ -144,11 +147,11 @@ export const useSessionLoader = ({
                     const exists = prev.some(s => s.id === sessionId);
                     if (exists) {
                          // Update metadata if needed, but strip messages
-                         const { messages: _messages, ...metadata } = rehydrated;
+                         const { messages, ...metadata } = rehydrated;
                          return prev.map(s => s.id === sessionId ? { ...s, ...metadata, messages: [] } : s);
                     } else {
                          // Add if missing (rare case of direct load)
-                         const { messages: _messages, ...metadata } = rehydrated;
+                         const { messages, ...metadata } = rehydrated;
                          return [{ ...metadata, messages: [] } as SavedChatSession, ...prev];
                     }
                 });
@@ -159,7 +162,7 @@ export const useSessionLoader = ({
                 
                 setEditingMessageId(null);
                 setTimeout(() => {
-                    focusChatInput();
+                    document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
                 }, 0);
             } else {
                 logService.warn(`Session ${sessionId} not found. Starting new chat.`);
@@ -169,7 +172,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat session:", error);
             startNewChat();
         }
-    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat, focusChatInput]);
+    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat, sanitizeSessionModel]);
 
     const loadInitialData = useCallback(async () => {
         try {
@@ -200,7 +203,7 @@ export const useSessionLoader = ({
                 const fullActiveSession = await dbService.getSession(initialActiveId);
                 if (fullActiveSession) {
                     logService.info(`Loaded full content for active session: ${initialActiveId}`);
-                    const rehydrated = rehydrateSessionFiles(fullActiveSession);
+                    const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(fullActiveSession));
                     setActiveMessages(rehydrated.messages);
                     setActiveSessionId(initialActiveId);
                     
@@ -214,7 +217,7 @@ export const useSessionLoader = ({
             }
 
             // 3. Set List State (Metadata only)
-            const sortedList = metadataList.sort((a,b) => {
+            const sortedList = metadataList.map(sanitizeSessionModel).sort((a,b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
                 return b.timestamp - a.timestamp;
@@ -234,7 +237,7 @@ export const useSessionLoader = ({
                     const fullSession = await dbService.getSession(mostRecent.id);
                     if (fullSession && fullSession.messages.length === 0 && !fullSession.settings.systemInstruction) {
                         logService.info(`Reusing empty recent session: ${mostRecent.id}`);
-                        const rehydrated = rehydrateSessionFiles(fullSession);
+                        const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(fullSession));
                         setActiveMessages(rehydrated.messages);
                         setActiveSessionId(rehydrated.id);
                         
@@ -258,7 +261,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat history:", error);
             startNewChat();
         }
-    }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setActiveMessages, setSelectedFiles, fileDraftsRef]);
+    }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setActiveMessages, setSelectedFiles, fileDraftsRef, sanitizeSessionModel]);
 
     // Handle Browser Back/Forward navigation
     useEffect(() => {

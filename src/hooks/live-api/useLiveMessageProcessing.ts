@@ -1,16 +1,16 @@
+
 import { useCallback, useRef } from 'react';
-import type { LiveServerMessage, Session } from '@google/genai';
+import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
-import { ThoughtSupportingPart } from '../../types';
+import type { LiveClientFunctions, ThoughtSupportingPart } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
-import { getLiveInlineAudioData, getLiveModelTurnParts } from '../../platform/genai/liveApi';
 
 interface UseLiveMessageProcessingProps {
     playAudioChunk: (data: string) => Promise<void>;
     stopAudioPlayback: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
-    clientFunctions?: Record<string, (args: any) => Promise<any>>;
-    sessionRef: React.MutableRefObject<Promise<Session> | null>;
+    clientFunctions?: LiveClientFunctions;
+    sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
     setSessionHandle: (handle: string | null) => void;
     sessionHandleRef: React.MutableRefObject<string | null>;
 }
@@ -42,45 +42,44 @@ export const useLiveMessageProcessing = ({
     }, [onTranscript]);
 
     const handleMessage = useCallback(async (msg: LiveServerMessage) => {
-        const modelTurnParts = getLiveModelTurnParts(msg);
+        // 1. Handle Text/Code/Audio Content (Gemini 3.1 may return multiple parts per event)
+        if (msg.serverContent?.modelTurn?.parts) {
+            for (const part of msg.serverContent.modelTurn.parts) {
+                const anyPart = part as ThoughtSupportingPart;
 
-        // 1. Handle Audio Output and content parts in the same event
-        for (const part of modelTurnParts) {
-            const audioData = getLiveInlineAudioData(part);
-            if (audioData) {
-                audioChunksRef.current.push(audioData);
-                await playAudioChunk(audioData);
-            }
-
-            // 2. Handle Text/Code Content (e.g., Code Execution, Search results, Thoughts, or direct text)
-            const anyPart = part as ThoughtSupportingPart;
-
-            if (anyPart.thought && onTranscript) {
-                const thoughtText = typeof anyPart.thought === 'string' ? anyPart.thought : (anyPart.text || "");
-                if (thoughtText) {
-                    onTranscript(thoughtText, 'model', false, 'thought');
+                if (part.inlineData?.data) {
+                    audioChunksRef.current.push(part.inlineData.data);
+                    await playAudioChunk(part.inlineData.data);
                 }
-            } else if (part.text && onTranscript) {
-                onTranscript(part.text, 'model', false, 'content');
-            }
 
-            if (part.executableCode) {
-                const codeLanguage = part.executableCode.language?.toLowerCase() || 'text';
-                const codeBlock = `\n\`\`\`${codeLanguage}\n${part.executableCode.code}\n\`\`\`\n`;
-                if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
-            }
-            if (part.codeExecutionResult) {
-                const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
-                if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
+                // Handle thoughts vs content
+                if (anyPart.thought && onTranscript) {
+                    const thoughtText = typeof anyPart.thought === 'string' ? anyPart.thought : (anyPart.text || "");
+                    if (thoughtText) {
+                        onTranscript(thoughtText, 'model', false, 'thought');
+                    }
+                } else if (part.text && onTranscript) {
+                    onTranscript(part.text, 'model', false, 'content');
+                }
+
+                if (part.executableCode) {
+                    const language = part.executableCode.language?.toLowerCase() || 'python';
+                    const codeBlock = `\n\`\`\`${language}\n${part.executableCode.code}\n\`\`\`\n`;
+                    if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
+                }
+                if (part.codeExecutionResult) {
+                    const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                    if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
+                }
             }
         }
 
-        // 3. Handle Tool Calls (Client-side Function Calling)
+        // 2. Handle Tool Calls (Client-side Function Calling)
         if (msg.toolCall) {
             await handleToolCall(msg.toolCall);
         }
 
-        // 4. Handle Interruption
+        // 3. Handle Interruption
         if (msg.serverContent?.interrupted) {
             stopAudioPlayback();
             // Finalize what we have so far
@@ -91,7 +90,7 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 5. Handle Transcriptions (ASR for user, TTS transcript for model audio)
+        // 4. Handle Transcriptions (ASR for user, TTS transcript for model audio)
         if (msg.serverContent?.inputTranscription && onTranscript) {
             const text = msg.serverContent.inputTranscription.text;
             if (text) {
@@ -105,7 +104,7 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 6. Handle Turn Complete (Finalize transcripts in UI)
+        // 5. Handle Turn Complete (Finalize transcripts in UI)
         if (msg.serverContent?.turnComplete) {
             finalizeAudio();
             if (onTranscript) {
@@ -114,7 +113,7 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 7. Handle Session Resumption Update
+        // 6. Handle Session Resumption Update
         if (msg.sessionResumptionUpdate && msg.sessionResumptionUpdate.resumable && msg.sessionResumptionUpdate.newHandle) {
             const newHandle = msg.sessionResumptionUpdate.newHandle;
             setSessionHandle(newHandle);
