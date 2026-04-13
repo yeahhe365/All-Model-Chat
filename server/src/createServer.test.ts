@@ -217,7 +217,9 @@ describe('createServer', () => {
     expect(response.statusCode).toBe(202);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
 
-    const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    const firstCall = fetchImpl.mock.calls[0];
+    expect(firstCall).toBeDefined();
+    const [, init] = firstCall as unknown as [string, RequestInit];
     const headers = init.headers as Headers;
 
     expect(headers.get('content-type')).toBe('application/json');
