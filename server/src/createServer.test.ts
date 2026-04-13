@@ -176,4 +176,79 @@ describe('createServer', () => {
     expect(upstreamRequests[0].headers['x-goog-api-key']).toBe('server-key');
     expect(upstreamRequests[0].headers['x-client-header']).toBe('present');
   });
+
+  it('filters hop-by-hop and sensitive request headers before proxying', async () => {
+    const fetchImpl = vi.fn(async () => new Response('proxied', { status: 202 }));
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      { fetchImpl },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await new Promise<{ statusCode: number }>((resolve, reject) => {
+      const request = http.request(`${started.baseUrl}/api/gemini/v1beta/models`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          connection: 'keep-alive',
+          te: 'trailers',
+          authorization: 'Bearer user-token',
+          cookie: 'session=abc',
+          'accept-encoding': 'gzip',
+          'x-client-header': 'present',
+        },
+      });
+
+      request.on('response', (proxyResponse) => {
+        proxyResponse.resume();
+        proxyResponse.on('end', () => {
+          resolve({ statusCode: proxyResponse.statusCode ?? 0 });
+        });
+      });
+      request.on('error', reject);
+      request.end(JSON.stringify({ prompt: 'hello' }));
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+    const [, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    const headers = init.headers as Headers;
+
+    expect(headers.get('content-type')).toBe('application/json');
+    expect(headers.get('x-client-header')).toBe('present');
+    expect(headers.get('x-goog-api-key')).toBe('server-key');
+    expect(headers.get('connection')).toBeNull();
+    expect(headers.get('te')).toBeNull();
+    expect(headers.get('authorization')).toBeNull();
+    expect(headers.get('cookie')).toBeNull();
+    expect(headers.get('accept-encoding')).toBeNull();
+  });
+
+  it('returns a 502 JSON error when Gemini upstream fetch fails', async () => {
+    const fetchImpl = vi.fn(async () => {
+      throw new Error('network down');
+    });
+    const app = createServer(
+      {
+        geminiApiBase: 'https://example.test',
+        geminiApiKey: 'server-key',
+      },
+      { fetchImpl },
+    );
+    const started = await startHttpServer(app);
+    cleanupCallbacks.push(started.close);
+
+    const response = await fetch(`${started.baseUrl}/api/gemini/v1beta/models`);
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(502);
+    expect(body).toEqual({
+      error: 'Gemini upstream request failed: network down',
+    });
+  });
 });
