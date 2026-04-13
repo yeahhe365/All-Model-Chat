@@ -124,7 +124,7 @@ describe('settingsStore', () => {
     });
 
     it('sets isSettingsLoaded when no stored settings', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined as any);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
     });
@@ -146,7 +146,7 @@ describe('settingsStore', () => {
           apiProxyUrl: null,
         },
       }));
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined as any);
       await useSettingsStore.getState().loadSettings();
       const { appSettings } = useSettingsStore.getState();
       expect(appSettings.useCustomApiConfig).toBe(true);

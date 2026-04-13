@@ -1,4 +1,4 @@
-import { AppSettings } from '../types';
+import type { AppSettings } from '../types/settings';
 
 type RuntimeConfigKey = 'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl';
 

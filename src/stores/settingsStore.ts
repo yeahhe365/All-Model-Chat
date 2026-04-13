@@ -42,7 +42,11 @@ function computeTheme(themeId: string): Theme {
 
 // BroadcastChannel singleton for settings sync
 let settingsChannel: BroadcastChannel | null = null;
-function getSettingsChannel(): BroadcastChannel {
+function getSettingsChannel(): BroadcastChannel | null {
+  if (typeof BroadcastChannel === 'undefined') {
+    return null;
+  }
+
   if (!settingsChannel) {
     settingsChannel = new BroadcastChannel('all_model_chat_sync_v1');
   }
@@ -71,7 +75,7 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
       // Persist to IndexedDB
       if (state.isSettingsLoaded) {
         dbService.setAppSettings(next)
-          .then(() => getSettingsChannel().postMessage({ type: 'SETTINGS_UPDATED' }))
+          .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
           .catch((e) => logService.error('Failed to save settings', { error: e }));
       }
 
@@ -109,20 +113,22 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
   },
 
   broadcastSettingsUpdate: () => {
-    getSettingsChannel().postMessage({ type: 'SETTINGS_UPDATED' });
+    getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' });
   },
 }));
 
 // Setup BroadcastChannel listener for multi-tab settings sync
 if (typeof BroadcastChannel !== 'undefined') {
   const channel = getSettingsChannel();
-  channel.onmessage = (event) => {
-    const msg = event.data;
-    if (msg.type === 'SETTINGS_UPDATED') {
-      logService.info('[Sync] Reloading settings from DB');
-      useSettingsStore.getState().loadSettings();
-    }
-  };
+  if (channel) {
+    channel.onmessage = (event) => {
+      const msg = event.data;
+      if (msg.type === 'SETTINGS_UPDATED') {
+        logService.info('[Sync] Reloading settings from DB');
+        useSettingsStore.getState().loadSettings();
+      }
+    };
+  }
 }
 
 // Listen for system theme changes when using 'system' theme
