@@ -2,7 +2,7 @@
 
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
-import { Part } from "@google/genai";
+import type { Part } from "@google/genai";
 import { blobToBase64 } from "../../../utils/appUtils";
 
 export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> => {
@@ -87,10 +87,6 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
             config.thinkingConfig = {
                 includeThoughts: false,
                 thinkingLevel: "MINIMAL"
-            };
-        } else if (modelId === 'gemini-2.5-pro') {
-            config.thinkingConfig = {
-                thinkingBudget: 128,
             };
         } else if (modelId.includes('flash')) {
             // Both 2.5 Flash and Flash Lite

@@ -1,0 +1,6 @@
+{
+  "ignoreDependencies": [
+    "pdfjs-dist",
+    "pyodide"
+  ]
+}

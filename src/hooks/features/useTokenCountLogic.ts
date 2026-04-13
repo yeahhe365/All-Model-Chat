@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { UploadedFile, AppSettings, ModelOption } from '../../types';
+import { UploadedFile, AppSettings } from '../../types';
 import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 

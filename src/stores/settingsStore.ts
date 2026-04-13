@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { AppSettings } from '../types';
+import type { SyncMessage } from '../types/sync';
 import { Theme } from '../types/theme';
 import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { logService } from '../utils/appUtils';
+import { logService, resolveSupportedModelId } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 
 interface SettingsState {
@@ -37,11 +38,23 @@ function resolveLanguage(language: string): 'en' | 'zh' {
 
 function computeTheme(themeId: string): Theme {
   const resolvedId = resolveThemeId(themeId);
-  return AVAILABLE_THEMES.find(t => t.id === resolvedId) || AVAILABLE_THEMES.find(t => t.id === DEFAULT_THEME_ID)!;
+  return AVAILABLE_THEMES.find((t) => t.id === resolvedId) || AVAILABLE_THEMES.find((t) => t.id === DEFAULT_THEME_ID)!;
 }
 
-// BroadcastChannel singleton for settings sync
+function sanitizeAppSettings(settings: AppSettings): AppSettings {
+  const defaultSettings = getDefaultAppSettings();
+  return {
+    ...settings,
+    modelId: resolveSupportedModelId(settings.modelId, defaultSettings.modelId),
+    transcriptionModelId: resolveSupportedModelId(
+      settings.transcriptionModelId,
+      defaultSettings.transcriptionModelId,
+    ),
+  };
+}
+
 let settingsChannel: BroadcastChannel | null = null;
+
 function getSettingsChannel(): BroadcastChannel | null {
   if (typeof BroadcastChannel === 'undefined') {
     return null;
@@ -50,6 +63,7 @@ function getSettingsChannel(): BroadcastChannel | null {
   if (!settingsChannel) {
     settingsChannel = new BroadcastChannel('all_model_chat_sync_v1');
   }
+
   return settingsChannel;
 }
 
@@ -69,17 +83,17 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
   setAppSettings: (v) => {
     set((state) => {
       const next = typeof v === 'function' ? v(state.appSettings) : v;
-      const currentTheme = computeTheme(next.themeId);
-      const language = resolveLanguage(next.language);
+      const sanitizedNext = sanitizeAppSettings(next);
+      const currentTheme = computeTheme(sanitizedNext.themeId);
+      const language = resolveLanguage(sanitizedNext.language);
 
-      // Persist to IndexedDB
       if (state.isSettingsLoaded) {
-        dbService.setAppSettings(next)
+        dbService.setAppSettings(sanitizedNext)
           .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
           .catch((e) => logService.error('Failed to save settings', { error: e }));
       }
 
-      return { appSettings: next, currentTheme, language };
+      return { appSettings: sanitizedNext, currentTheme, language };
     });
   },
 
@@ -87,8 +101,9 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
     try {
       const defaultSettings = getDefaultAppSettings();
       const storedSettings = await dbService.getAppSettings();
+
       if (storedSettings) {
-        const newSettings = { ...defaultSettings, ...storedSettings };
+        const newSettings = sanitizeAppSettings({ ...defaultSettings, ...storedSettings });
         if (storedSettings.filesApiConfig) {
           newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
         }
@@ -117,11 +132,10 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
   },
 }));
 
-// Setup BroadcastChannel listener for multi-tab settings sync
 if (typeof BroadcastChannel !== 'undefined') {
   const channel = getSettingsChannel();
   if (channel) {
-    channel.onmessage = (event) => {
+    channel.onmessage = (event: MessageEvent<SyncMessage>) => {
       const msg = event.data;
       if (msg.type === 'SETTINGS_UPDATED') {
         logService.info('[Sync] Reloading settings from DB');
@@ -131,7 +145,6 @@ if (typeof BroadcastChannel !== 'undefined') {
   }
 }
 
-// Listen for system theme changes when using 'system' theme
 if (typeof window !== 'undefined') {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
   mediaQuery.addEventListener('change', () => {

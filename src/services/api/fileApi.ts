@@ -1,5 +1,5 @@
 
-import { File as GeminiFile } from "@google/genai";
+import type { File as GeminiFile } from "@google/genai";
 import { getConfiguredApiClient } from './baseApi';
 import { logService } from "../logService";
 

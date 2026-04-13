@@ -2,7 +2,6 @@
 import React from 'react';
 import { X, Loader2, Download } from 'lucide-react';
 import { Modal } from '../shared/Modal';
-import { translations } from '../../utils/appUtils';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { ExportOptions } from '../message/buttons/export/ExportOptions';
 
@@ -11,10 +10,9 @@ interface ExportChatModalProps {
   onClose: () => void;
   onExport: (format: 'png' | 'html' | 'txt' | 'json') => void;
   exportStatus: 'idle' | 'exporting';
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
-export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClose, onExport, exportStatus, t }) => {
+export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClose, onExport, exportStatus }) => {
     const headingIconSize = useResponsiveValue(20, 24);
     const isLoading = exportStatus === 'exporting';
 

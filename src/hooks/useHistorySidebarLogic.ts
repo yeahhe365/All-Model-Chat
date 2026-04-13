@@ -6,7 +6,6 @@ import { translations } from '../utils/appUtils';
 import { dbService } from '../utils/db';
 
 interface UseHistorySidebarLogicProps {
-    isOpen: boolean;
     onToggle: () => void;
     sessions: SavedChatSession[];
     groups: ChatGroup[];
@@ -20,7 +19,6 @@ interface UseHistorySidebarLogicProps {
 }
 
 export const useHistorySidebarLogic = ({
-    isOpen,
     onToggle,
     sessions,
     groups,
@@ -77,10 +75,7 @@ export const useHistorySidebarLogic = ({
     // Search Effect - Async Content Search
     useEffect(() => {
         const trimmedQuery = searchQuery.trim();
-        if (!trimmedQuery) {
-            setSearchResults(null);
-            return;
-        }
+        if (!trimmedQuery) return;
 
         const handler = setTimeout(async () => {
             try {

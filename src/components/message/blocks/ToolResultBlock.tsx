@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react';
 import { Download, Check, FileOutput } from 'lucide-react';
-import { triggerDownload } from '../../../utils/exportUtils';
+import { triggerDownload } from '../../../utils/export/core';
 import { extractTextFromNode } from '../../../utils/uiUtils';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { UploadedFile } from '../../../types';
 import { FileDisplay } from '../FileDisplay';
 
-export interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElement> {
+interface ToolResultBlockProps extends React.HTMLAttributes<HTMLDivElement> {
     files?: UploadedFile[];
     onImageClick?: (file: UploadedFile) => void;
 }

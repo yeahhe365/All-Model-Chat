@@ -49,19 +49,27 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
                 return val;
             };
 
-            const metadata: VideoMetadata = {
-                startOffset: normalize(startOffset),
-                endOffset: normalize(endOffset)
-            };
+            const metadata: VideoMetadata = {};
+            const normalizedStartOffset = normalize(startOffset);
+            const normalizedEndOffset = normalize(endOffset);
+
+            if (normalizedStartOffset) {
+                metadata.startOffset = normalizedStartOffset;
+            }
+
+            if (normalizedEndOffset) {
+                metadata.endOffset = normalizedEndOffset;
+            }
 
             const fpsNum = parseFloat(fps);
             if (!isNaN(fpsNum) && fpsNum > 0) {
                 metadata.fps = fpsNum;
             }
             
-            // Only update if there are changes or it was previously set
-            if (Object.keys(metadata).length > 0 || file.videoMetadata) {
+            if (Object.keys(metadata).length > 0) {
                 updates.videoMetadata = metadata;
+            } else if (file.videoMetadata) {
+                updates.videoMetadata = undefined;
             }
         }
 

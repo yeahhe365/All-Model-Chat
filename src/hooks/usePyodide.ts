@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { pyodideService, PyodideFile } from '../services/pyodideService';
 
-export interface PyodideState {
+interface PyodideState {
     isRunning: boolean;
     output: string | null;
     image: string | null;

@@ -1,16 +1,15 @@
 
 import { useCallback, useRef } from 'react';
-import { LiveServerMessage, LiveSession } from '@google/genai';
+import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
 import { useLiveTools } from './useLiveTools';
-import { logService } from '../../utils/appUtils';
-import { ThoughtSupportingPart } from '../../types';
+import type { LiveClientFunctions, ThoughtSupportingPart } from '../../types';
 import { createWavBlobFromPCMChunks } from '../../utils/audio/audioProcessing';
 
 interface UseLiveMessageProcessingProps {
     playAudioChunk: (data: string) => Promise<void>;
     stopAudioPlayback: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
-    clientFunctions?: Record<string, (args: any) => Promise<any>>;
+    clientFunctions?: LiveClientFunctions;
     sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
     setSessionHandle: (handle: string | null) => void;
     sessionHandleRef: React.MutableRefObject<string | null>;
@@ -43,20 +42,15 @@ export const useLiveMessageProcessing = ({
     }, [onTranscript]);
 
     const handleMessage = useCallback(async (msg: LiveServerMessage) => {
-        // 1. Handle Audio Output
-        const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-        if (audioData) {
-            // Buffer the audio data for saving
-            audioChunksRef.current.push(audioData);
-            // Play immediately
-            await playAudioChunk(audioData);
-        }
-
-        // 2. Handle Text/Code Content (e.g., Code Execution, Search results, Thoughts, or direct text)
-        // The model might generate code or text along with audio
+        // 1. Handle Text/Code/Audio Content (Gemini 3.1 may return multiple parts per event)
         if (msg.serverContent?.modelTurn?.parts) {
             for (const part of msg.serverContent.modelTurn.parts) {
                 const anyPart = part as ThoughtSupportingPart;
+
+                if (part.inlineData?.data) {
+                    audioChunksRef.current.push(part.inlineData.data);
+                    await playAudioChunk(part.inlineData.data);
+                }
 
                 // Handle thoughts vs content
                 if (anyPart.thought && onTranscript) {
@@ -69,7 +63,8 @@ export const useLiveMessageProcessing = ({
                 }
 
                 if (part.executableCode) {
-                    const codeBlock = `\n\`\`\`${part.executableCode.language.toLowerCase()}\n${part.executableCode.code}\n\`\`\`\n`;
+                    const language = part.executableCode.language?.toLowerCase() || 'python';
+                    const codeBlock = `\n\`\`\`${language}\n${part.executableCode.code}\n\`\`\`\n`;
                     if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
                 }
                 if (part.codeExecutionResult) {
@@ -79,12 +74,12 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 3. Handle Tool Calls (Client-side Function Calling)
+        // 2. Handle Tool Calls (Client-side Function Calling)
         if (msg.toolCall) {
             await handleToolCall(msg.toolCall);
         }
 
-        // 4. Handle Interruption
+        // 3. Handle Interruption
         if (msg.serverContent?.interrupted) {
             stopAudioPlayback();
             // Finalize what we have so far
@@ -95,7 +90,7 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 5. Handle Transcriptions (ASR for user, TTS transcript for model audio)
+        // 4. Handle Transcriptions (ASR for user, TTS transcript for model audio)
         if (msg.serverContent?.inputTranscription && onTranscript) {
             const text = msg.serverContent.inputTranscription.text;
             if (text) {
@@ -109,7 +104,7 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 6. Handle Turn Complete (Finalize transcripts in UI)
+        // 5. Handle Turn Complete (Finalize transcripts in UI)
         if (msg.serverContent?.turnComplete) {
             finalizeAudio();
             if (onTranscript) {
@@ -118,7 +113,7 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 7. Handle Session Resumption Update
+        // 6. Handle Session Resumption Update
         if (msg.sessionResumptionUpdate && msg.sessionResumptionUpdate.resumable && msg.sessionResumptionUpdate.newHandle) {
             const newHandle = msg.sessionResumptionUpdate.newHandle;
             setSessionHandle(newHandle);

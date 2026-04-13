@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { getKeyForRequest, logService } from '../../utils/appUtils';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 import { geminiServiceInstance } from '../../services/geminiService';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -79,11 +80,9 @@ export const useSuggestions = ({
             const { messages, id: sessionId, settings } = activeChat;
             
             // Filter out non-text models (Imagen, TTS, Audio, etc.)
-            const lowerModelId = settings.modelId.toLowerCase();
-            const isImageModel = lowerModelId.includes('imagen') || lowerModelId.includes('flash-image') || lowerModelId.includes('image-preview');
-            const isAudioModel = lowerModelId.includes('tts') || lowerModelId.includes('native-audio');
+            const capabilities = getModelCapabilities(settings.modelId);
             
-            if (isImageModel || isAudioModel) {
+            if (capabilities.isImagenModel || capabilities.isTtsModel || capabilities.isNativeAudioModel) {
                 prevIsLoadingRef.current = isLoading;
                 return;
             }

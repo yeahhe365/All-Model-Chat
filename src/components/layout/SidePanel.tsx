@@ -1,12 +1,47 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef, useCallback } from 'react';
 import { X, Code, Eye, Download, FileCode2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { SideViewContent } from '../../types';
-import { MermaidBlock } from '../message/blocks/MermaidBlock';
-import { GraphvizBlock } from '../message/blocks/GraphvizBlock';
-import { triggerDownload, sanitizeFilename } from '../../utils/exportUtils';
-import { CodeEditor } from '../shared/CodeEditor';
+import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { useIsMobile } from '../../hooks/useDevice';
+
+interface PanelTabButtonProps {
+    activeTab: 'code' | 'preview';
+    id: 'code' | 'preview';
+    icon: LucideIcon;
+    label: string;
+    onSelect: (id: 'code' | 'preview') => void;
+}
+
+const PanelTabButton: React.FC<PanelTabButtonProps> = ({ activeTab, id, icon: Icon, label, onSelect }) => (
+    <button
+        onClick={() => onSelect(id)}
+        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+            activeTab === id
+            ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] shadow-sm'
+            : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-secondary)]/50'
+        }`}
+    >
+        <Icon size={14} strokeWidth={1.5} />
+        <span className="hidden sm:inline">{label}</span>
+    </button>
+);
+
+const LazyMermaidBlock = lazy(async () => {
+    const module = await import('../message/blocks/MermaidBlock');
+    return { default: module.MermaidBlock };
+});
+
+const LazyGraphvizBlock = lazy(async () => {
+    const module = await import('../message/blocks/GraphvizBlock');
+    return { default: module.GraphvizBlock };
+});
+
+const LazyCodeEditor = lazy(async () => {
+    const module = await import('../shared/CodeEditor');
+    return { default: module.CodeEditor };
+});
 
 interface SidePanelProps {
     content: SideViewContent | null;
@@ -28,21 +63,6 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
     const sidebarRef = useRef<HTMLDivElement>(null);
 
     const isMobile = useIsMobile();
-    
-    // Sync state when content prop changes (e.g. opening different file while panel is open)
-    useEffect(() => {
-        if (content) {
-            setLocalCode(content.content);
-            setDebouncedCode(content.content);
-            // Reset to preview tab when new content is loaded for better UX
-            if (activeTab === 'code' && content.type === 'html') {
-                // Optional: Force preview for HTML, or keep current tab? 
-                // Keeping current tab is usually better for persistent editing, 
-                // but if opening new file, preview is expected.
-                // Let's stick to user preference or default to preview if type changed.
-            }
-        }
-    }, [content]);
 
     // Debounce code updates for preview to avoid excessive rendering during edits
     useEffect(() => {
@@ -102,6 +122,12 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
         triggerDownload(url, `${sanitizeFilename(content.title || 'snippet')}.${ext}`);
     };
 
+    const previewFallback = (
+        <div className="w-full h-full flex items-center justify-center text-[var(--theme-text-secondary)]">
+            Loading preview...
+        </div>
+    );
+
     const renderPreview = () => {
         if (content.type === 'html') {
             return (
@@ -122,13 +148,15 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
             return (
                 <div className="w-full h-full overflow-auto bg-white dark:bg-[#0d1117] p-4 flex items-center justify-center">
                     <div className="w-full flex justify-center">
-                        <MermaidBlock 
-                            code={debouncedCode} 
-                            onImageClick={() => {}} 
-                            isLoading={false} 
-                            themeId={themeId} 
-                            onOpenSidePanel={() => {}} 
-                        />
+                        <Suspense fallback={previewFallback}>
+                            <LazyMermaidBlock 
+                                code={debouncedCode} 
+                                onImageClick={() => {}} 
+                                isLoading={false} 
+                                themeId={themeId} 
+                                onOpenSidePanel={() => {}} 
+                            />
+                        </Suspense>
                     </div>
                 </div>
             );
@@ -137,33 +165,21 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
             return (
                 <div className="w-full h-full overflow-auto bg-white dark:bg-[#0d1117] p-4 flex items-center justify-center">
                     <div className="w-full flex justify-center">
-                        <GraphvizBlock 
-                            code={debouncedCode} 
-                            onImageClick={() => {}} 
-                            isLoading={false} 
-                            themeId={themeId} 
-                            onOpenSidePanel={() => {}} 
-                        />
+                        <Suspense fallback={previewFallback}>
+                            <LazyGraphvizBlock 
+                                code={debouncedCode} 
+                                onImageClick={() => {}} 
+                                isLoading={false} 
+                                themeId={themeId} 
+                                onOpenSidePanel={() => {}} 
+                            />
+                        </Suspense>
                     </div>
                 </div>
             );
         }
         return <div className="p-4 text-[var(--theme-text-tertiary)] flex items-center justify-center h-full">Preview not supported for this type.</div>;
     };
-
-    const TabButton = ({ id, icon: Icon, label }: { id: typeof activeTab, icon: any, label: string }) => (
-        <button
-            onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                activeTab === id 
-                ? 'bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)] shadow-sm' 
-                : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-secondary)]/50'
-            }`}
-        >
-            <Icon size={14} strokeWidth={1.5} />
-            <span className="hidden sm:inline">{label}</span>
-        </button>
-    );
 
     const editorLanguage = content.language || (
         content.type === 'html' ? 'html' :
@@ -212,8 +228,8 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                 <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] flex-shrink-0">
                     {/* Left: Tabs */}
                     <div className="flex bg-[var(--theme-bg-input)] p-1 rounded-lg border border-[var(--theme-border-secondary)] flex-shrink-0">
-                        <TabButton id="preview" icon={PreviewIcon} label={previewLabel} />
-                        <TabButton id="code" icon={Code} label="Code" />
+                        <PanelTabButton activeTab={activeTab} id="preview" icon={PreviewIcon} label={previewLabel} onSelect={setActiveTab} />
+                        <PanelTabButton activeTab={activeTab} id="code" icon={Code} label="Code" onSelect={setActiveTab} />
                     </div>
 
                     {/* Right: Actions */}
@@ -230,11 +246,13 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
                 {/* Content Body */}
                 <div className="flex-grow flex flex-col min-h-0 bg-[var(--theme-bg-primary)] relative">
                     <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'code' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-                        <CodeEditor 
-                            value={localCode}
-                            onChange={setLocalCode}
-                            language={editorLanguage}
-                        />
+                        <Suspense fallback={previewFallback}>
+                            <LazyCodeEditor 
+                                value={localCode}
+                                onChange={setLocalCode}
+                                language={editorLanguage}
+                            />
+                        </Suspense>
                     </div>
                     <div className={`absolute inset-0 transition-opacity duration-200 ${activeTab === 'preview' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
                         {renderPreview()}

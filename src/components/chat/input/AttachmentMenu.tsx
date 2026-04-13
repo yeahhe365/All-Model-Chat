@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, FolderUp } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
@@ -13,9 +13,8 @@ import {
   IconFileEdit,
   IconZip
 } from '../../icons/CustomIcons';
-import { useWindowContext } from '../../../contexts/WindowContext';
-import { useClickOutside } from '../../../hooks/useClickOutside';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
+import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 
 export type AttachmentAction = 'upload' | 'gallery' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot' | 'folder' | 'zip';
 
@@ -29,74 +28,19 @@ const attachIconSize = 20;
 const menuIconSize = 18; // Consistent icon size for menu items
 
 export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({});
-    const containerRef = useRef<HTMLDivElement>(null);
-    const buttonRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-    
-    const { window: targetWindow } = useWindowContext();
-
-    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
-
-    // Prevent click-outside logic from firing when interacting with the portaled menu
-    useEffect(() => {
-        if (!isOpen || !menuRef.current) return;
-        
-        const stopProp = (e: Event) => e.stopPropagation();
-        const menuEl = menuRef.current;
-        
-        // Stop bubbling to document so useClickOutside doesn't see it
-        menuEl.addEventListener('mousedown', stopProp);
-        menuEl.addEventListener('touchstart', stopProp);
-        
-        return () => {
-            menuEl.removeEventListener('mousedown', stopProp);
-            menuEl.removeEventListener('touchstart', stopProp);
-        };
-    }, [isOpen]);
-
-    // Dynamic fixed positioning
-    useLayoutEffect(() => {
-        if (isOpen && buttonRef.current && targetWindow) {
-            const buttonRect = buttonRef.current.getBoundingClientRect();
-            const viewportWidth = targetWindow.innerWidth;
-            const viewportHeight = targetWindow.innerHeight;
-            
-            const MENU_WIDTH = 240; 
-            const BUTTON_MARGIN = 10;
-            const GAP = 8;
-            
-            const newStyle: React.CSSProperties = {
-                position: 'fixed',
-                zIndex: 9999, // Ensure it sits on top of everything including toolbar
-            };
-
-            // Horizontal Alignment
-            if (buttonRect.left + MENU_WIDTH > viewportWidth - BUTTON_MARGIN) {
-                // Align right edge of menu with right edge of button
-                newStyle.left = buttonRect.right - MENU_WIDTH;
-                newStyle.transformOrigin = 'bottom right';
-            } else {
-                // Align left
-                newStyle.left = buttonRect.left;
-                newStyle.transformOrigin = 'bottom left';
-            }
-
-            // Vertical Alignment (Anchored to bottom of viewport relative to button top)
-            newStyle.bottom = viewportHeight - buttonRect.top + GAP;
-
-            // Height Constraint
-            const availableHeight = buttonRect.top - BUTTON_MARGIN;
-            newStyle.maxHeight = `${Math.max(150, availableHeight)}px`;
-            newStyle.overflowY = 'auto'; // Allow scrolling if constrained
-
-            setMenuPosition(newStyle);
-        }
-    }, [isOpen, targetWindow]);
+    const {
+        isOpen,
+        menuPosition,
+        containerRef,
+        buttonRef,
+        menuRef,
+        targetWindow,
+        closeMenu,
+        toggleMenu,
+    } = usePortaledMenu({ constrainHeight: true });
 
     const handleAction = (action: AttachmentAction) => {
-        setIsOpen(false);
+        closeMenu();
         onAction(action);
     };
     
@@ -117,7 +61,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
             <button
                 ref={buttonRef}
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={toggleMenu}
                 disabled={disabled}
                 className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] rotate-45' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)] rotate-0'}`}
                 aria-label={t('attachMenu_aria')}

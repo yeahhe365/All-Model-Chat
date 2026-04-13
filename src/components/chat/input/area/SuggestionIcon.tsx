@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Languages, ScanText, AudioWaveform, Captions, Lightbulb, FileText, Sparkles, AppWindow, Scan } from 'lucide-react';
 
 export const SuggestionIcon = ({ iconName, className }: { iconName?: string, className?: string }) => {

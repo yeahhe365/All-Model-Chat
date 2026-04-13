@@ -1,4 +1,5 @@
 
+/* eslint-disable react-hooks/refs */
 import React from 'react';
 import { ChatInputToolbar } from './ChatInputToolbar';
 import { ChatInputActions } from './ChatInputActions';
@@ -53,7 +54,7 @@ export interface ChatInputAreaProps {
         initialTextareaHeight: number;
         isConverting: boolean;
     };
-    fileInputRefs: {
+    fileInputs: {
         fileInputRef: React.RefObject<HTMLInputElement>;
         imageInputRef: React.RefObject<HTMLInputElement>;
         folderInputRef: React.RefObject<HTMLInputElement>;
@@ -94,7 +95,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     inputProps,
     quoteProps,
     layoutProps,
-    fileInputRefs,
+    fileInputs,
     formProps,
     suggestionsProps,
     liveStatusProps,
@@ -121,6 +122,16 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     const inputContainerClass = isFullscreen
         ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200 relative"
         : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
+
+    const hiddenFileInputs = (
+        <>
+            <input type="file" ref={fileInputs.fileInputRef} onChange={fileInputs.handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+            <input type="file" ref={fileInputs.imageInputRef} onChange={fileInputs.handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
+            <input type="file" ref={fileInputs.folderInputRef} onChange={fileInputs.handleFolderChange} className="hidden" aria-hidden="true" {...({ webkitdirectory: "", directory: "" } as { webkitdirectory: string; directory: string })} multiple />
+            <input type="file" ref={fileInputs.zipInputRef} onChange={fileInputs.handleZipChange} accept=".zip" className="hidden" aria-hidden="true" />
+            <input type="file" ref={fileInputs.cameraInputRef} onChange={fileInputs.handleFileChange} accept="image/*" capture="environment" className="hidden" aria-hidden="true" />
+        </>
+    );
 
     return (
         <div className={wrapperClass} aria-hidden={isUIBlocked}>
@@ -196,13 +207,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
 
                         <div className="flex items-center justify-between w-full flex-shrink-0 mt-auto pt-1 relative z-10">
                             <ChatInputActions {...actionsProps} />
-                            
-                            {/* Hidden inputs */}
-                            <input type="file" ref={fileInputRefs.fileInputRef} onChange={fileInputRefs.handleFileChange} accept={ALL_SUPPORTED_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                            <input type="file" ref={fileInputRefs.imageInputRef} onChange={fileInputRefs.handleFileChange} accept={SUPPORTED_IMAGE_MIME_TYPES.join(',')} className="hidden" aria-hidden="true" multiple />
-                            <input type="file" ref={fileInputRefs.folderInputRef} onChange={fileInputRefs.handleFolderChange} className="hidden" aria-hidden="true" {...({ webkitdirectory: "", directory: "" } as any)} multiple />
-                            <input type="file" ref={fileInputRefs.zipInputRef} onChange={fileInputRefs.handleZipChange} accept=".zip" className="hidden" aria-hidden="true" />
-                            <input type="file" ref={fileInputRefs.cameraInputRef} onChange={fileInputRefs.handleFileChange} accept="image/*" capture="environment" className="hidden" aria-hidden="true" />
+                            {hiddenFileInputs}
                         </div>
                     </div>
                 </form>

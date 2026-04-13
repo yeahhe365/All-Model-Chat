@@ -1,13 +1,12 @@
 
 import { useCallback } from 'react';
-import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
+import { AppSettings, SavedScenario, ChatGroup } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
-import { triggerDownload } from '../../utils/exportUtils';
+import { triggerDownload } from '../../utils/export/core';
 import { dbService } from '../../utils/db';
 
 interface UseDataExportProps {
     appSettings: AppSettings;
-    savedSessions: SavedChatSession[];
     savedGroups: ChatGroup[];
     savedScenarios: SavedScenario[];
     t: (key: string) => string;
@@ -15,7 +14,6 @@ interface UseDataExportProps {
 
 export const useDataExport = ({
     appSettings,
-    savedSessions,
     savedGroups,
     savedScenarios,
     t

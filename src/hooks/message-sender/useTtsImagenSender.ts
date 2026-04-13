@@ -1,10 +1,9 @@
 
-import React, { Dispatch, SetStateAction, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
-import { APP_LOGO_SVG_DATA_URI } from '../../constants/appConstants';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -87,6 +86,7 @@ export const useTtsImagenSender = ({
                 }
 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
+                    const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
                     showNotification('Audio Ready', { body: 'Text-to-speech audio has been generated.', icon: APP_LOGO_SVG_DATA_URI });
                 }
 
@@ -113,6 +113,7 @@ export const useTtsImagenSender = ({
                 }
 
                 if (appSettings.isCompletionNotificationEnabled && document.hidden) {
+                    const { APP_LOGO_SVG_DATA_URI } = await import('../../constants/assets');
                     showNotification('Image Ready', { body: 'Your image has been generated.', icon: APP_LOGO_SVG_DATA_URI });
                 }
             }

@@ -4,9 +4,7 @@ import { ModelOption } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
-import { useChatStore } from '../../stores/chatStore';
-import { useSettingsStore } from '../../stores/settingsStore';
-import { useUIStore } from '../../stores/uiStore';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 
 interface HeaderProps {
   onNewChat: () => void;
@@ -36,7 +34,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onNewChat,
-  onOpenSettingsModal,
+  onOpenSettingsModal: _onOpenSettingsModal,
   onOpenScenariosModal,
   onToggleHistorySidebar,
   isLoading,
@@ -44,29 +42,21 @@ export const Header: React.FC<HeaderProps> = ({
   availableModels,
   selectedModelId,
   onSelectModel,
-  isSwitchingModel: propsIsSwitchingModel,
-  isHistorySidebarOpen: propsIsHistorySidebarOpen,
+  isSwitchingModel = false,
+  isHistorySidebarOpen = false,
   onLoadCanvasPrompt,
   isCanvasPromptActive,
   t,
-  isKeyLocked,
+  isKeyLocked: _isKeyLocked,
   isPipSupported,
   isPipActive,
   onTogglePip,
-  themeId: propsThemeId,
+  themeId = 'pearl',
   thinkingLevel,
   onSetThinkingLevel,
   newChatShortcut,
   pipShortcut,
 }) => {
-  // Read directly from stores with fallback to props
-  const storeIsSwitchingModel = useChatStore(s => s.isSwitchingModel);
-  const storeIsHistorySidebarOpen = useUIStore(s => s.isHistorySidebarOpen);
-  const storeThemeId = useSettingsStore(s => s.currentTheme.id);
-  const isSwitchingModel = storeIsSwitchingModel ?? propsIsSwitchingModel;
-  const isHistorySidebarOpen = storeIsHistorySidebarOpen ?? propsIsHistorySidebarOpen;
-  const themeId = storeThemeId ?? propsThemeId;
-  
   const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95";
   const headerButtonInactive = "bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] active:bg-[var(--theme-bg-tertiary)] active:text-[var(--theme-text-primary)]";
   const headerButtonActive = "text-[var(--theme-text-link)] bg-[var(--theme-bg-accent)]/10 hover:bg-[var(--theme-bg-accent)]/20";
@@ -81,13 +71,10 @@ export const Header: React.FC<HeaderProps> = ({
   const iconSize = 20; 
   const strokeWidth = 2; 
 
-  const lowerModelId = selectedModelId?.toLowerCase() || '';
-  const isNativeAudioModel = lowerModelId.includes('native-audio');
-  const isImageModel = lowerModelId.includes('image') || lowerModelId.includes('imagen');
-  const isTtsModel = lowerModelId.includes('tts');
+  const { isNativeAudioModel, isImagenModel, isTtsModel } = getModelCapabilities(selectedModelId || '');
   
   // Only show Canvas button for standard chat models (not specialized audio/image models)
-  const showTextTools = !isNativeAudioModel && !isImageModel && !isTtsModel;
+  const showTextTools = !isNativeAudioModel && !isImagenModel && !isTtsModel;
 
   return (
     <header className={`${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} p-2 sm:p-3 flex items-center justify-between gap-2 sm:gap-3 flex-shrink-0 relative z-20`}>
@@ -110,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
             onSelectModel={onSelectModel}
             isSwitchingModel={isSwitchingModel}
             isLoading={isLoading}
-            t={t}
+            t={t as any}
             thinkingLevel={thinkingLevel}
             onSetThinkingLevel={onSetThinkingLevel}
         />

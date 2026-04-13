@@ -74,7 +74,9 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
                     if (JSON.stringify(newValue) !== JSON.stringify(quotes)) {
                         setQuotes(newValue);
                     }
-                } catch (e) {}
+                } catch {
+                    // Ignore malformed cross-tab quote payloads.
+                }
             } else if (e.key === ttsKey) {
                 const newValue = e.newValue || '';
                 if (newValue !== ttsContext) {

@@ -1,12 +1,36 @@
 import { ChatMessage, ContentPart, UploadedFile, ChatHistoryItem } from '../../types';
+import type { PartMediaResolutionLevel } from '@google/genai';
 import { logService } from '../../services/logService';
 import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
 
+const PART_MEDIA_RESOLUTION_LEVEL = {
+  MEDIA_RESOLUTION_UNSPECIFIED: 'MEDIA_RESOLUTION_UNSPECIFIED',
+  MEDIA_RESOLUTION_LOW: 'MEDIA_RESOLUTION_LOW',
+  MEDIA_RESOLUTION_MEDIUM: 'MEDIA_RESOLUTION_MEDIUM',
+  MEDIA_RESOLUTION_HIGH: 'MEDIA_RESOLUTION_HIGH',
+  MEDIA_RESOLUTION_ULTRA_HIGH: 'MEDIA_RESOLUTION_ULTRA_HIGH',
+} as const;
+
+const toPartMediaResolutionLevel = (resolution: MediaResolution): PartMediaResolutionLevel => {
+  switch (resolution) {
+    case MediaResolution.MEDIA_RESOLUTION_LOW:
+      return PART_MEDIA_RESOLUTION_LEVEL.MEDIA_RESOLUTION_LOW as PartMediaResolutionLevel;
+    case MediaResolution.MEDIA_RESOLUTION_MEDIUM:
+      return PART_MEDIA_RESOLUTION_LEVEL.MEDIA_RESOLUTION_MEDIUM as PartMediaResolutionLevel;
+    case MediaResolution.MEDIA_RESOLUTION_HIGH:
+      return PART_MEDIA_RESOLUTION_LEVEL.MEDIA_RESOLUTION_HIGH as PartMediaResolutionLevel;
+    case MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH:
+      return PART_MEDIA_RESOLUTION_LEVEL.MEDIA_RESOLUTION_ULTRA_HIGH as PartMediaResolutionLevel;
+    default:
+      return PART_MEDIA_RESOLUTION_LEVEL.MEDIA_RESOLUTION_UNSPECIFIED as PartMediaResolutionLevel;
+  }
+};
+
 export const buildContentParts = async (
   text: string, 
-  files: UploadedFile[] | undefined,
+  files?: UploadedFile[],
   modelId?: string,
   mediaResolution?: MediaResolution
 ): Promise<{
@@ -72,7 +96,7 @@ export const buildContentParts = async (
                 let base64DataForApi: string | undefined;
                 
                 // Prioritize rawFile (Blob/File) for conversion
-                if (fileSource && (fileSource instanceof Blob || fileSource instanceof File)) {
+                if (fileSource && fileSource instanceof Blob) {
                     try {
                         base64DataForApi = await blobToBase64(fileSource);
                     } catch (error) {
@@ -125,10 +149,10 @@ export const buildContentParts = async (
     const effectiveResolution = file.mediaResolution || mediaResolution;
     
     if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED) {
-        const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
-        if (shouldInject) {
-            part.mediaResolution = { level: effectiveResolution };
-        }
+      const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
+      if (shouldInject) {
+            part.mediaResolution = { level: toPartMediaResolutionLevel(effectiveResolution) };
+      }
     }
     
     return { file: newFile, part };
@@ -152,7 +176,8 @@ export const buildContentParts = async (
 
 export const createChatHistoryForApi = async (
     msgs: ChatMessage[],
-    stripThinking: boolean = false
+    stripThinking: boolean = false,
+    modelId?: string
 ): Promise<ChatHistoryItem[]> => {
     const historyItems: ChatHistoryItem[] = [];
     
@@ -160,43 +185,38 @@ export const createChatHistoryForApi = async (
         if (msg.excludeFromContext) continue;
         if (msg.role !== 'user' && msg.role !== 'model') continue;
 
-        let parts: ContentPart[] = [];
-        
-        if (msg.role === 'model' && msg.apiParts && msg.apiParts.length > 0) {
-            // Use natively saved parts to retain executableCode and codeExecutionResult exactly as the API provided
-            // Create deep copies to avoid accidental mutation
-            const filteredParts = msg.apiParts.filter(p => {
-                if (stripThinking && p.thought) return false;
-                return true;
-            });
+        const apiParts = msg.role === 'model' ? msg.apiParts : undefined;
+        const hasApiParts = !!apiParts && apiParts.length > 0;
+        const parts: ContentPart[] = hasApiParts
+            ? apiParts
+                .filter(p => !(stripThinking && p.thought))
+                .map(p => {
+                    const partCopy = JSON.parse(JSON.stringify(p));
 
-            parts = filteredParts.map(p => {
-                const partCopy = JSON.parse(JSON.stringify(p));
-
-                // --- MEMORY OPTIMIZATION & API COMPATIBILITY ---
-                // Intercept and handle generated files (inlineData)
-                // Since we stripped the base64 data to save memory in `appendApiPart`, we MUST convert this
-                // into a text note. Furthermore, passing model-generated media back into history is generally discouraged/rejected.
-                if (partCopy.inlineData) {
-                    const mimeType = partCopy.inlineData.mimeType || 'unknown';
-                    return { 
-                        text: `[System Note: The model previously generated a media file of type '${mimeType}'. Content omitted from history to preserve memory and context window.]` 
-                    };
+                    // --- MEMORY OPTIMIZATION & API COMPATIBILITY ---
+                    // Intercept and handle generated files (inlineData)
+                    // Since we stripped the base64 data to save memory in `appendApiPart`, we MUST convert this
+                    // into a text note. Furthermore, passing model-generated media back into history is generally discouraged/rejected.
+                    if (partCopy.inlineData) {
+                        const mimeType = partCopy.inlineData.mimeType || 'unknown';
+                        return {
+                            text: `[System Note: The model previously generated a media file of type '${mimeType}'. Content omitted from history to preserve memory and context window.]`
+                        };
+                    }
+                    return partCopy;
+                })
+            : await (async () => {
+                let contentToUse = msg.content;
+                if (stripThinking) {
+                    // Remove <thinking> blocks including tags from the content
+                    contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
                 }
-                return partCopy;
-            });
-        } else {
-            let contentToUse = msg.content;
-            if (stripThinking) {
-                // Remove <thinking> blocks including tags from the content
-                contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
-            }
-            const { contentParts } = await buildContentParts(contentToUse, msg.files);
-            parts = contentParts;
-        }
+                const { contentParts } = await buildContentParts(contentToUse, msg.files, modelId);
+                return contentParts;
+            })();
 
-        // Attach Thought Signatures (Crucial for Gemini 3 Pro reasoning continuity)
-        if (msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0 && parts.length > 0) {
+        // Fallback for older sessions that only stored a flat list of signatures.
+        if (!hasApiParts && msg.role === 'model' && msg.thoughtSignatures && msg.thoughtSignatures.length > 0 && parts.length > 0) {
             parts[parts.length - 1].thoughtSignature = msg.thoughtSignatures[msg.thoughtSignatures.length - 1];
         }
 

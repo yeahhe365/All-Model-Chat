@@ -4,15 +4,14 @@
 import { useCallback } from 'react';
 import { generateUniqueId, getKeyForRequest, getTranslator, createMessage } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { CANVAS_SYSTEM_PROMPT } from '../../constants/appConstants';
+import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/baseApi';
-import { ChatMessage } from '../../types';
 import { CanvasGeneratorProps } from './types';
+import { loadCanvasSystemPrompt } from '../../constants/promptHelpers';
 
 export const useCanvasGenerator = ({
     appSettings,
     currentChatSettings,
-    messages,
     activeSessionId,
     updateAndPersistSessions,
     setSessionLoading,
@@ -60,8 +59,9 @@ export const useCanvasGenerator = ({
         setSessionLoading(activeSessionId, true);
         activeJobs.current.set(generationId, newAbortController);
 
-        const canvasModelId = appSettings.autoCanvasModelId || 'gemini-3-flash-preview';
+        const canvasModelId = appSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID;
         const canvasThinkingLevel = 'HIGH';
+        const canvasSystemPrompt = await loadCanvasSystemPrompt();
         
         const canvasSettings = {
             ...currentChatSettings,
@@ -79,9 +79,9 @@ export const useCanvasGenerator = ({
             canvasSettings
         );
 
-        const config = buildGenerationConfig(
+        const config = await buildGenerationConfig(
             canvasModelId,
-            CANVAS_SYSTEM_PROMPT,
+            canvasSystemPrompt,
             { temperature: 0.7, topP: 0.95 },
             true,
             0,
@@ -118,7 +118,7 @@ export const useCanvasGenerator = ({
             streamOnError(error instanceof Error ? error : new Error(String(error)));
         }
 
-    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setSessionLoading, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, messages, language]);
+    }, [appSettings, currentChatSettings, activeSessionId, updateAndPersistSessions, setSessionLoading, activeJobs, getStreamHandlers, setAppFileError, aspectRatio, language]);
 
     return { handleGenerateCanvas };
 };

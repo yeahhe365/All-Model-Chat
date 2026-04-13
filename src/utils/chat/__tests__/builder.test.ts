@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { buildContentParts, createChatHistoryForApi } from '../builder';
-import { UploadedFile, ChatMessage } from '../../../types';
-import { MediaResolution } from '../../../types/settings';
+import { UploadedFile, ChatMessage, MediaResolution } from '../../../types';
 
 // Mock fileHelpers to avoid real file I/O
 vi.mock('../../../utils/fileHelpers', () => ({
@@ -36,7 +35,7 @@ const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   ...overrides,
 });
 
-const makeMessage = (role: 'user' | 'model', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
+const makeMessage = (role: 'user' | 'model' | 'error', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
   id: `msg-${Math.random().toString(36).slice(2, 8)}`,
   role,
   content,
@@ -168,12 +167,20 @@ describe('createChatHistoryForApi', () => {
     expect(history[0].parts).toHaveLength(2);
   });
 
-  it('attaches thoughtSignatures to last part of model messages', async () => {
+  it('replays thought signatures on their original apiParts without moving them to the last part', async () => {
     const msgs = [
-      makeMessage('model', 'Response', { thoughtSignatures: ['sig-1'] }),
+      makeMessage('model', '', {
+        thoughtSignatures: ['sig-1'],
+        apiParts: [
+          { text: 'First', thoughtSignature: 'sig-1' },
+          { text: 'Second' },
+        ],
+      }),
     ];
     const history = await createChatHistoryForApi(msgs);
-    expect(history[0].parts[0].thoughtSignature).toBe('sig-1');
+    expect(history[0].parts[0]).toMatchObject({ text: 'First', thoughtSignature: 'sig-1' });
+    expect(history[0].parts[1]).toEqual({ text: 'Second' });
+    expect(history[0].parts[1]).not.toHaveProperty('thoughtSignature');
   });
 
   it('strips thinking blocks when stripThinking is true', async () => {
@@ -216,5 +223,29 @@ describe('createChatHistoryForApi', () => {
     const history = await createChatHistoryForApi(msgs, true);
     expect(history[0].parts).toHaveLength(1);
     expect(history[0].parts[0].text).toBe('visible');
+  });
+
+  it('preserves per-part media resolution for Gemini 3 history rebuilds', async () => {
+    const msgs = [
+      makeMessage('user', 'Inspect this', {
+        files: [
+          makeFile({
+            fileUri: 'files/abc123',
+            mediaResolution: MediaResolution.MEDIA_RESOLUTION_HIGH,
+          }),
+        ],
+      }),
+    ];
+
+    const history = await (createChatHistoryForApi as any)(
+      msgs,
+      false,
+      'gemini-3.1-pro-preview'
+    );
+
+    expect(history[0].parts[0]).toEqual({
+      fileData: { mimeType: 'image/png', fileUri: 'files/abc123' },
+      mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
+    });
   });
 });

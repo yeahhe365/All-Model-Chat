@@ -12,6 +12,7 @@ interface UseMessageListScrollProps {
 export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSessionId }: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [atBottom, setAtBottom] = useState(true);
+    const [visibleStartIndex, setVisibleStartIndex] = useState(0);
     const [scrollerRef, setInternalScrollerRef] = useState<HTMLElement | null>(null);
     const visibleRangeRef = useRef({ startIndex: 0, endIndex: 0 });
     
@@ -35,6 +36,13 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
         visibleRangeRef.current = { startIndex, endIndex };
+        setVisibleStartIndex(startIndex);
+    }, []);
+
+    const handleScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
+        if (ref === null || ref instanceof HTMLElement) {
+            setInternalScrollerRef(ref);
+        }
     }, []);
 
     // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
@@ -181,18 +189,20 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     // Attach listener manually to the scroller ref
     useEffect(() => {
         const container = scrollerRef;
-        if (container) {
-            container.addEventListener('scroll', handleScroll, { passive: true });
-            return () => container.removeEventListener('scroll', handleScroll);
+        if (!container) {
+            return undefined;
         }
+
+        container.addEventListener('scroll', handleScroll, { passive: true });
+        return () => container.removeEventListener('scroll', handleScroll);
     }, [scrollerRef, handleScroll]);
 
     const showScrollDown = !atBottom;
-    const showScrollUp = messages.length > 2 && visibleRangeRef.current.startIndex > 0;
+    const showScrollUp = messages.length > 2 && visibleStartIndex > 0;
 
     return {
         virtuosoRef,
-        setInternalScrollerRef,
+        handleScrollerRef,
         setAtBottom,
         onRangeChanged,
         scrollToPrevTurn,

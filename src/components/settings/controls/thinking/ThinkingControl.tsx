@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
-import { isGemini3Model } from '../../../../utils/appUtils';
+import { getModelCapabilities, isGemini3Model } from '../../../../utils/modelHelpers';
 import { ThinkingModeSelector } from './ThinkingModeSelector';
 import { ThinkingLevelSelector } from './ThinkingLevelSelector';
 import { ThinkingBudgetSlider } from './ThinkingBudgetSlider';
@@ -19,6 +19,8 @@ interface ThinkingControlProps {
   t: (key: string) => string;
 }
 
+type ThinkingLevelOption = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+
 export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   modelId,
   thinkingBudget,
@@ -30,9 +32,19 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   t
 }) => {
   const isGemini3 = isGemini3Model(modelId);
+  const capabilities = getModelCapabilities(modelId);
   const isFlash3 = isGemini3 && modelId.toLowerCase().includes('flash');
+  const isGemini31FlashImage = modelId.toLowerCase().includes('gemini-3.1-flash-image');
+  const isGemini3ProImage = modelId === 'gemini-3-pro-image-preview';
+  const isImageThinkingLevelOnly = isGemini31FlashImage;
   const isGemma = modelId.toLowerCase().includes('gemma');
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
+  const supportedThinkingLevels: ThinkingLevelOption[] =
+    isImageThinkingLevelOnly
+      ? ['MINIMAL', 'HIGH']
+      : (isGemini3
+          ? (isFlash3 ? ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] : ['LOW', 'MEDIUM', 'HIGH'])
+          : []);
   
   const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
 
@@ -68,6 +80,20 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
           setCustomBudgetValue(String(maxBudget));
       }
   }, [maxBudget, thinkingBudget, setThinkingBudget]);
+
+  useEffect(() => {
+    if (!isImageThinkingLevelOnly || thinkingBudget === -1) return;
+    setThinkingBudget(-1);
+  }, [isImageThinkingLevelOnly, thinkingBudget, setThinkingBudget]);
+
+  useEffect(() => {
+    if (!isImageThinkingLevelOnly || !setThinkingLevel) return;
+
+    const normalizedLevel = thinkingLevel === 'HIGH' ? 'HIGH' : 'MINIMAL';
+    if (thinkingLevel !== normalizedLevel) {
+      setThinkingLevel(normalizedLevel);
+    }
+  }, [isImageThinkingLevelOnly, thinkingLevel, setThinkingLevel]);
 
   const handleModeChange = (newMode: 'auto' | 'off' | 'custom') => {
       if (newMode === 'auto') {
@@ -132,6 +158,8 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
     );
   }
 
+  if (capabilities.isGemini3ImageModel && isGemini3ProImage) return null;
+
   if (!showThinkingControls) return null;
 
   const showContent = (isGemini3 && mode === 'auto') || mode === 'custom' || mode === 'off';
@@ -150,7 +178,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                         <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
                     </Tooltip>
                 </label>
-                {mode !== 'off' && (
+                {(mode !== 'off' || isImageThinkingLevelOnly) && (
                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
                         {isGemini3 ? 'Gemini 3.0 Capabilities' : 'Reasoning Enabled'}
                     </span>
@@ -158,30 +186,31 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             </div>
             
             {/* Segmented Control (Tabs) */}
-            <ThinkingModeSelector
-                mode={mode}
-                onModeChange={handleModeChange}
-                isGemini3={isGemini3}
-                isMandatoryThinking={isMandatoryThinking}
-                t={t}
-            />
+            {!isImageThinkingLevelOnly && (
+              <ThinkingModeSelector
+                  mode={mode}
+                  onModeChange={handleModeChange}
+                  isGemini3={isGemini3}
+                  isMandatoryThinking={isMandatoryThinking}
+                  t={t}
+              />
+            )}
 
             {/* Content Area */}
-            {showContent && (
+            {(showContent || isImageThinkingLevelOnly) && (
                 <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     
                     {/* 1. Gemini 3.0 Preset Level Selector */}
-                    {isGemini3 && mode === 'auto' && setThinkingLevel && (
+                    {((isGemini3 && mode === 'auto') || isImageThinkingLevelOnly) && setThinkingLevel && (
                         <ThinkingLevelSelector
                             thinkingLevel={thinkingLevel}
                             setThinkingLevel={setThinkingLevel}
-                            isFlash3={isFlash3}
-                            hideMedium={false}
+                            supportedLevels={supportedThinkingLevels}
                         />
                     )}
 
                     {/* 2. Custom Budget Slider & Input */}
-                    {mode === 'custom' && (
+                    {!isImageThinkingLevelOnly && mode === 'custom' && (
                         <ThinkingBudgetSlider
                             minBudget={minBudget}
                             maxBudget={maxBudget}
@@ -191,7 +220,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                     )}
 
                     {/* 3. Off State Message */}
-                    {mode === 'off' && (
+                    {!isImageThinkingLevelOnly && mode === 'off' && (
                         <div className="flex items-center justify-center py-1">
                             <p className="text-xs text-[var(--theme-text-tertiary)] italic flex items-center gap-2">
                                 Thinking process is disabled.

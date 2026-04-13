@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AlertCircle, ArrowRight, Sparkles, RotateCcw } from 'lucide-react';
+import { AlertCircle, ArrowRight, RotateCcw } from 'lucide-react';
 import { Toggle } from '../../../shared/Toggle';
 import { SETTINGS_INPUT_CLASS } from '../../../../constants/appConstants';
 
@@ -17,25 +17,12 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     setUseApiProxy,
     apiProxyUrl,
     setApiProxyUrl,
-    t
+    t: _t
 }) => {
     const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
     
     const defaultBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     const defaultProxyUrl = 'https://api-proxy.de/gemini/v1beta';
-    const VERTEX_URL = "https://aiplatform.googleapis.com/v1";
-    
-    const isVertexExpressActive = useApiProxy && apiProxyUrl === VERTEX_URL;
-
-    const handleSetVertexExpress = () => {
-        if (isVertexExpressActive) {
-            setUseApiProxy(false);
-            setApiProxyUrl(defaultBaseUrl);
-        } else {
-            setUseApiProxy(true);
-            setApiProxyUrl(VERTEX_URL);
-        }
-    };
 
     const handleResetProxy = () => {
         setApiProxyUrl(defaultProxyUrl);
@@ -57,19 +44,6 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
                     <label htmlFor="use-api-proxy-toggle" className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] cursor-pointer">
                         API Proxy
                     </label>
-                    <button
-                        type="button"
-                        onClick={handleSetVertexExpress}
-                        className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors border ${
-                            isVertexExpressActive 
-                                ? 'bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] border-transparent' 
-                                : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] border-transparent hover:border-[var(--theme-border-secondary)]'
-                        }`}
-                        title={t('apiConfig_vertexExpress')}
-                    >
-                        <Sparkles size={10} strokeWidth={isVertexExpressActive ? 2 : 1.5} />
-                        <span>{t('apiConfig_vertexExpress_btn')}</span>
-                    </button>
                     <button
                         type="button"
                         onClick={handleResetProxy}

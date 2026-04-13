@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Download } from 'lucide-react';
-import { triggerDownload } from '../../utils/exportUtils';
+import { triggerDownload } from '../../utils/export/core';
 
 interface AudioPlayerProps {
   src: string;

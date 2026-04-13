@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ChatMessage } from '../../../types';
 
 interface MessageListFooterProps {

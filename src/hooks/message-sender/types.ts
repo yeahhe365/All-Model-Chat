@@ -1,7 +1,7 @@
 
-import React, { Dispatch, SetStateAction } from 'react';
-import { AppSettings, ChatMessage, UploadedFile, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
-import { UsageMetadata } from '@google/genai';
+import React from 'react';
+import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
+import type { UsageMetadata } from '@google/genai';
 
 export type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -40,9 +40,6 @@ export interface CanvasGeneratorProps extends BaseSenderProps {
 
 export interface StandardChatProps extends BaseSenderProps {
     messages: ChatMessage[];
-    selectedFiles: UploadedFile[];
-    setSelectedFiles: (files: UploadedFile[] | ((prev: UploadedFile[]) => UploadedFile[])) => void;
-    editingMessageId: string | null;
     setEditingMessageId: (id: string | null) => void;
     aspectRatio: string;
     imageSize?: string;

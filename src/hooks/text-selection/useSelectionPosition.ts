@@ -2,11 +2,19 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 
+type ContainerRefLike = React.RefObject<HTMLElement> | HTMLElement | null;
+
 interface UseSelectionPositionProps {
-    containerRef: React.RefObject<HTMLElement>;
+    containerRef: ContainerRefLike;
     isAudioActive: boolean;
     toolbarRef: React.RefObject<HTMLDivElement>;
 }
+
+const resolveContainerElement = (containerRef: ContainerRefLike): HTMLElement | null => {
+    if (!containerRef) return null;
+    if ('current' in containerRef) return containerRef.current;
+    return containerRef;
+};
 
 export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -30,7 +38,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             const commonAncestor = range.commonAncestorContainer;
             
             // Context checks
-            const containerEl = containerRef.current;
+            const containerEl = resolveContainerElement(containerRef);
             if (containerEl && !containerEl.contains(commonAncestor)) {
                 setPosition(null);
                 selectionBoundsRef.current = null;

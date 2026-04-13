@@ -1,9 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { LiveSession, Tool } from '@google/genai';
+import type { Session as LiveSession, Tool } from '@google/genai';
 import { AppSettings, ChatSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
-import { getKeyForRequest } from '../../utils/apiUtils';
-import { getConfiguredApiClient, getLiveApiClientFromEphemeralTokenEndpoint } from '../../services/api/baseApi';
+import { getLiveApiClient } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 
 interface UseLiveConnectionProps {
@@ -100,21 +99,8 @@ export const useLiveConnection = ({
         isUserDisconnectRef.current = false; // Reset user disconnect flag
 
         try {
-            let ai;
-            const liveApiEphemeralTokenEndpoint = appSettings.liveApiEphemeralTokenEndpoint?.trim();
-
-            if (liveApiEphemeralTokenEndpoint) {
-                ai = await getLiveApiClientFromEphemeralTokenEndpoint(liveApiEphemeralTokenEndpoint);
-            } else {
-                // Get API Key using the current chat settings to respect locked keys or rotation
-                const keyResult = getKeyForRequest(appSettings, chatSettings, { skipIncrement: true });
-                if ('error' in keyResult) {
-                    throw new Error(keyResult.error);
-                }
-
-                // Specify API version v1alpha for Live API support
-                ai = await getConfiguredApiClient(keyResult.key, { apiVersion: 'v1alpha' });
-            }
+            // Specify API version v1alpha for Live API support
+            const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' });
             
             // Initialize Audio (Mic & Worklet)
             // We pass a callback that sends the encoded audio to the session
@@ -127,7 +113,7 @@ export const useLiveConnection = ({
                     sessionRef.current.then(session => {
                         try {
                             session.sendRealtimeInput({
-                                media: {
+                                audio: {
                                     mimeType: 'audio/pcm;rate=16000',
                                     data: base64Data
                                 }
@@ -161,6 +147,7 @@ export const useLiveConnection = ({
                     onmessage: handleMessage,
                     onclose: (e) => {
                         logService.info("Live API Closed", e);
+                        sessionRef.current = null;
                         
                         // 同步修改 Ref 防止报错
                         isConnectedRef.current = false;
@@ -181,6 +168,7 @@ export const useLiveConnection = ({
                     },
                     onerror: (err) => {
                         logService.error("Live API Error", err);
+                        sessionRef.current = null;
                         
                         // 同步修改 Ref
                         isConnectedRef.current = false;
@@ -210,6 +198,14 @@ export const useLiveConnection = ({
             // 同步修改 Ref
             isConnectedRef.current = false;
             setIsConnected(false);
+
+            if (err?.name === 'LiveApiAuthConfigurationError') {
+                setIsReconnecting(false);
+                setError(err.message || "Failed to start session");
+                cleanupAudio();
+                stopVideo();
+                return;
+            }
             
             if (!isUserDisconnectRef.current) {
                 triggerReconnect();
@@ -224,7 +220,7 @@ export const useLiveConnection = ({
         if (!sessionRef.current) return;
         try {
             const session = await sessionRef.current;
-            await session.sendClientContent({ turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true });
+            session.sendRealtimeInput({ text });
             logService.info("Sent text to Live API", { textLength: text.length });
         } catch (e) {
             logService.error("Failed to send text to Live API", e);
@@ -243,6 +239,7 @@ export const useLiveConnection = ({
         if (sessionRef.current) {
             sessionRef.current.then((session: any) => session.close());
         }
+        sessionRef.current = null;
         
         cleanupAudio();
         stopVideo(); // Stop video stream if active

@@ -121,6 +121,15 @@ export const createWavBlobFromPCMChunks = (chunks: string[], sampleRate = 24000)
  * Combines microphone stream with system audio stream (screen share) if requested.
  * Returns the resulting mixed stream and a cleanup function.
  */
+type ExtendedDisplayMediaStreamOptions = DisplayMediaStreamOptions & {
+    systemAudio?: 'include' | 'exclude';
+    selfBrowserSurface?: 'include' | 'exclude';
+};
+
+type WindowWithWebkitAudioContext = Window & typeof globalThis & {
+    webkitAudioContext?: typeof AudioContext;
+};
+
 export const getMixedAudioStream = async (micStream: MediaStream, includeSystemAudio: boolean = false): Promise<{ stream: MediaStream; cleanup: () => void }> => {
     if (!includeSystemAudio) {
         return { stream: micStream, cleanup: () => {} };
@@ -137,11 +146,9 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
                 noiseSuppression: false,
                 autoGainControl: false,
             },
-            // @ts-ignore
             systemAudio: 'include',
-            // @ts-ignore
             selfBrowserSurface: 'include'
-        } as any);
+        } as ExtendedDisplayMediaStreamOptions);
 
         // Check if audio track exists (user might have unchecked "Share Audio")
         if (displayStream.getAudioTracks().length === 0) {
@@ -150,7 +157,7 @@ export const getMixedAudioStream = async (micStream: MediaStream, includeSystemA
             return { stream: micStream, cleanup: () => {} };
         }
 
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
         const ctx = new AudioContextClass();
         const dest = ctx.createMediaStreamDestination();
 

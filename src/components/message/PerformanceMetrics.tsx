@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Zap } from 'lucide-react';
 import { ChatMessage } from '../../types';
-import { translations } from '../../utils/appUtils';
 
 interface PerformanceMetricsProps {
     message: ChatMessage;
-    t: (key: keyof typeof translations) => string;
     hideTimer?: boolean;
 }
 
-export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, t, hideTimer }) => {
+export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, hideTimer }) => {
     const { 
         promptTokens, 
         completionTokens, 
@@ -21,22 +19,28 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
         isLoading 
     } = message;
 
-    const [elapsedTime, setElapsedTime] = useState<number>(0);
+    const [liveElapsedTime, setLiveElapsedTime] = useState<number>(() => {
+        if (!generationStartTime) return 0;
+        return (Date.now() - new Date(generationStartTime).getTime()) / 1000;
+    });
 
     useEffect(() => {
-        if (!generationStartTime) return;
+        if (!generationStartTime || !isLoading) return;
         const startTime = new Date(generationStartTime).getTime();
-        
-        if (isLoading) {
-            const updateTimer = () => setElapsedTime((Date.now() - startTime) / 1000);
-            updateTimer();
-            const intervalId = setInterval(updateTimer, 100);
-            return () => clearInterval(intervalId);
-        } else if (generationEndTime) {
+        const updateTimer = () => setLiveElapsedTime((Date.now() - startTime) / 1000);
+        const intervalId = setInterval(updateTimer, 100);
+        return () => clearInterval(intervalId);
+    }, [generationStartTime, isLoading]);
+
+    const elapsedTime = (() => {
+        if (!generationStartTime) return 0;
+        if (generationEndTime && !isLoading) {
+            const startTime = new Date(generationStartTime).getTime();
             const endTime = new Date(generationEndTime).getTime();
-            setElapsedTime((endTime - startTime) / 1000);
+            return (endTime - startTime) / 1000;
         }
-    }, [generationStartTime, generationEndTime, isLoading]);
+        return liveElapsedTime;
+    })();
 
     // Calculate tokens per second
     // Include thought tokens in speed calculation as they are generated content

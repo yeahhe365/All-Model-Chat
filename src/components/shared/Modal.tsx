@@ -17,7 +17,7 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   contentClassName = '',
-  backdropClassName = 'bg-black bg-opacity-60 backdrop-blur-sm',
+  backdropClassName = 'bg-black/60 backdrop-blur-sm',
   noPadding = false,
 }) => {
   const [isActuallyOpen, setIsActuallyOpen] = useState(isOpen);
@@ -27,11 +27,27 @@ export const Modal: React.FC<ModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setIsActuallyOpen(true);
-    } else {
-      const timer = setTimeout(() => setIsActuallyOpen(false), 300); // Corresponds to modal-exit-animation duration
-      return () => clearTimeout(timer);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const modalNode = modalContentRef.current;
+    if (!modalNode) {
+      return undefined;
+    }
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.target === modalNode && !isOpen) {
+        setIsActuallyOpen(false);
+      }
+    };
+
+    modalNode.addEventListener('animationend', handleAnimationEnd);
+
+    return () => {
+      modalNode.removeEventListener('animationend', handleAnimationEnd);
+    };
+  }, [isOpen, isActuallyOpen]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

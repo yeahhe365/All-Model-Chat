@@ -11,6 +11,10 @@ interface WelcomeScreenProps {
 }
 
 const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
+    const prefersReducedMotion = useMemo(
+        () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        []
+    );
     const [displayedText, setDisplayedText] = useState('');
     const [status, setStatus] = useState<'typing' | 'deleting' | 'paused' | 'blank'>('typing');
     const [targetPhrase, setTargetPhrase] = useState(text);
@@ -32,6 +36,10 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
 
     // Sync target phrase when prop changes (e.g. language switch) OR when hover ends to restore greeting
     useEffect(() => {
+        if (prefersReducedMotion) {
+            return;
+        }
+
         // Only trigger reset if we are NOT currently showing the greeting (targetPhrase !== text)
         // This prevents the greeting from being re-typed if the user hovers for < 3s and leaves.
         if (!isHovering && targetPhrase !== text) {
@@ -39,9 +47,13 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
             // Trigger deletion to transition to new text if we were showing something else
             setStatus('deleting');
         }
-    }, [text, isHovering, targetPhrase]);
+    }, [text, isHovering, prefersReducedMotion, targetPhrase]);
 
     useEffect(() => {
+        if (prefersReducedMotion) {
+            return;
+        }
+
         let timeout: ReturnType<typeof setTimeout>;
         
         const baseTypeSpeed = 50;
@@ -125,7 +137,15 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         }
 
         return () => clearTimeout(timeout);
-    }, [displayedText, status, targetPhrase, isHovering, text, quotes]);
+    }, [displayedText, status, targetPhrase, isHovering, prefersReducedMotion, text, quotes]);
+
+    if (prefersReducedMotion) {
+        return (
+            <span className="flex w-full h-full items-center justify-center min-h-[1.5em] font-mono tracking-tight cursor-default select-none">
+                {text}
+            </span>
+        );
+    }
 
     return (
         <span 

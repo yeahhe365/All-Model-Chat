@@ -1,6 +1,33 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { convertHtmlToMarkdown } from '../utils/htmlToMarkdown';
 
+type Html2PdfInstance = {
+    set: (options: unknown) => Html2PdfInstance;
+    from: (element: HTMLElement) => Html2PdfInstance;
+    output: (type: 'blob') => Promise<Blob>;
+    save: () => Promise<void>;
+};
+
+type Html2PdfFactory = () => Html2PdfInstance;
+
+let html2PdfFactoryPromise: Promise<Html2PdfFactory> | null = null;
+
+const loadHtml2PdfFactory = async (): Promise<Html2PdfFactory> => {
+    if (!html2PdfFactoryPromise) {
+        html2PdfFactoryPromise = import('html2pdf.js').then((module: any) => {
+            const factory = module.default ?? module;
+
+            if (typeof factory !== 'function') {
+                throw new Error('html2pdf.js did not expose a callable factory.');
+            }
+
+            return factory as Html2PdfFactory;
+        });
+    }
+
+    return html2PdfFactoryPromise;
+};
+
 export const SUPPORTED_EXTENSIONS = [
   '.md', '.pdf', '.txt', '.json', '.js', '.ts', '.py', '.html', '.css', '.csv', '.xml', '.yaml', '.sql'
 ];
@@ -153,12 +180,8 @@ export const useCreateFileEditor = ({
         if (!container) return null;
         
         try {
-            // @ts-ignore
-            if (window.html2pdf) {
-                // @ts-ignore
-                return await window.html2pdf().set(getPdfOpt('temp')).from(container).output('blob');
-            }
-            return null;
+            const html2pdf = await loadHtml2PdfFactory();
+            return await html2pdf().set(getPdfOpt('temp')).from(container).output('blob');
         } finally {
             if (document.body.contains(container)) {
                 document.body.removeChild(container);
@@ -208,19 +231,14 @@ export const useCreateFileEditor = ({
         if (!container) return;
         
         setIsExportingPdf(true);
-        let finalName = filenameBase.trim() || 'document';
+        const finalName = filenameBase.trim() || 'document';
     
         try {
           // Wait briefly for fonts/images to stabilize in the clone
           await new Promise(resolve => setTimeout(resolve, 300));
 
-          // @ts-ignore
-          if (window.html2pdf) {
-            // @ts-ignore
-            await window.html2pdf().set(getPdfOpt(finalName)).from(container).save();
-          } else {
-            alert("PDF generator not loaded.");
-          }
+          const html2pdf = await loadHtml2PdfFactory();
+          await html2pdf().set(getPdfOpt(finalName)).from(container).save();
         } catch (error) {
           console.error("PDF Export failed:", error);
         } finally {
@@ -348,6 +366,7 @@ export const useCreateFileEditor = ({
             }, 100);
             return () => clearTimeout(timer);
         }
+        return undefined;
     }, [isEditing, isPreviewMode]);
 
     // Auto-disable preview for unsupported types

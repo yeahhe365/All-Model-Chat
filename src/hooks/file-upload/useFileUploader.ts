@@ -1,7 +1,7 @@
 import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { getKeyForRequest, logService } from '../../utils/appUtils';
-import { checkBatchNeedsApiKey } from './utils';
+import { checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
 
 interface UseFileUploaderProps {
@@ -28,6 +28,7 @@ export const useFileUploader = ({
 
         // Calculate if ANY file requires API upload to handle key rotation logic first
         const needsApiKeyForUpload = checkBatchNeedsApiKey(filesArray, appSettings);
+        const filesRequiringApi = getFilesRequiringFileApi(filesArray, appSettings);
 
         let keyToUse: string | null = null;
         if (needsApiKeyForUpload) {
@@ -52,6 +53,7 @@ export const useFileUploader = ({
         const uploadPromises = filesArray.map(file => uploadFileItem({
             file,
             keyToUse,
+            forceFileApi: filesRequiringApi.has(file),
             defaultResolution,
             appSettings,
             setSelectedFiles,

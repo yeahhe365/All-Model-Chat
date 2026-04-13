@@ -6,13 +6,13 @@ import {
     SUPPORTED_IMAGE_MIME_TYPES,
     SUPPORTED_PDF_MIME_TYPES,
     SUPPORTED_AUDIO_MIME_TYPES,
-    SUPPORTED_VIDEO_MIME_TYPES,
-    SUPPORTED_DOC_MIME_TYPES
+    SUPPORTED_VIDEO_MIME_TYPES
 } from '../../constants/fileConstants';
 import { AppSettings } from '../../types';
 import { isTextFile } from '../../utils/appUtils';
 
-export const LARGE_FILE_THRESHOLD = 19 * 1024 * 1024; // 19MB margin for 20MB limit
+const INLINE_MAX_REQUEST_BYTES = 100 * 1024 * 1024;
+const INLINE_MAX_PDF_BYTES = 50 * 1024 * 1024;
 
 export const formatSpeed = (bytesPerSecond: number): string => {
     if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
@@ -22,7 +22,7 @@ export const formatSpeed = (bytesPerSecond: number): string => {
 };
 
 export const getEffectiveMimeType = (file: File): string => {
-    let effectiveMimeType = file.type;
+    const effectiveMimeType = file.type;
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
 
     // 1. Force text/plain for code/text extensions
@@ -42,19 +42,45 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
     const effectiveMimeType = getEffectiveMimeType(file);
     if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
 
-    let userPrefersFileApi = false;
-    if (SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.images;
-    else if (SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.pdfs;
-    else if (SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.audio;
-    else if (SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.video;
-    else if (SUPPORTED_DOC_MIME_TYPES.includes(effectiveMimeType)) userPrefersFileApi = appSettings.filesApiConfig.text; // Treat docs as text config
-    else userPrefersFileApi = appSettings.filesApiConfig.text; // Fallback for text/code
+    const userPrefersFileApi =
+        SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.images :
+        SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.pdfs :
+        SUPPORTED_AUDIO_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.audio :
+        SUPPORTED_VIDEO_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.video :
+        appSettings.filesApiConfig.text;
 
-    // Respect the user's toggle strictly. 
-    // If OFF, send inline regardless of size (even if > 20MB, though API might reject it).
-    return userPrefersFileApi;
+    const inlineLimitBytes = SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)
+        ? INLINE_MAX_PDF_BYTES
+        : INLINE_MAX_REQUEST_BYTES;
+
+    return userPrefersFileApi || file.size > inlineLimitBytes;
+};
+
+export const getFilesRequiringFileApi = (files: File[], appSettings: AppSettings): Set<File> => {
+    const filesRequiringApi = new Set<File>();
+    const inlineCandidates: File[] = [];
+    let inlinePayloadBytes = 0;
+
+    for (const file of files) {
+        const effectiveMimeType = getEffectiveMimeType(file);
+        if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) continue;
+
+        if (shouldUseFileApi(file, appSettings)) {
+            filesRequiringApi.add(file);
+            continue;
+        }
+
+        inlineCandidates.push(file);
+        inlinePayloadBytes += file.size;
+    }
+
+    if (inlinePayloadBytes > INLINE_MAX_REQUEST_BYTES) {
+        inlineCandidates.forEach((file) => filesRequiringApi.add(file));
+    }
+
+    return filesRequiringApi;
 };
 
 export const checkBatchNeedsApiKey = (files: File[], appSettings: AppSettings): boolean => {
-    return files.some(file => shouldUseFileApi(file, appSettings));
+    return getFilesRequiringFileApi(files, appSettings).size > 0;
 };

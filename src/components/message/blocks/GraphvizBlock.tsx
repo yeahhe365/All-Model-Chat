@@ -1,13 +1,18 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Loader2, Repeat } from 'lucide-react';
 import { SideViewContent, UploadedFile } from '../../../types';
-import { exportSvgAsImage } from '../../../utils/exportUtils';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { DiagramWrapper } from './parts/DiagramWrapper';
 
-declare var Viz: any;
-
 const graphvizCache = new Map<string, string>();
+let vizInstancePromise: Promise<any> | null = null;
+
+const loadVizInstance = async () => {
+  if (!vizInstancePromise) {
+    vizInstancePromise = import('@viz-js/viz').then(({ instance }) => instance());
+  }
+  return vizInstancePromise;
+};
 
 interface GraphvizBlockProps {
   code: string;
@@ -45,13 +50,21 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   const vizInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-      if (typeof Viz !== 'undefined' && !vizInstanceRef.current) {
-          try {
-              vizInstanceRef.current = new Viz();
-          } catch (e) {
+      let isActive = true;
+
+      loadVizInstance()
+          .then(instance => {
+              if (isActive) {
+                  vizInstanceRef.current = instance;
+              }
+          })
+          .catch((e) => {
               console.error("Failed to initialize Viz", e);
-          }
-      }
+          });
+
+      return () => {
+          isActive = false;
+      };
   }, []);
 
   const renderGraph = useCallback(async () => {
@@ -74,7 +87,11 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         return;
     }
 
-    if (!vizInstanceRef.current || !code) return;
+    if (!code) return;
+
+    if (!vizInstanceRef.current) {
+        vizInstanceRef.current = await loadVizInstance();
+    }
     
     setIsRendering(true);
 
@@ -149,36 +166,16 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
 
   useEffect(() => {
     let isMounted = true;
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const performRender = async () => {
+    const timeoutId = setTimeout(() => {
         if (!isMounted) return;
-        if (!vizInstanceRef.current) {
-             if (typeof Viz !== 'undefined') {
-                 vizInstanceRef.current = new Viz();
-             } else {
-                 return;
-             }
-        }
-        await renderGraph();
-    };
-
-    timeoutId = setTimeout(performRender, 500);
-
-    let pollInterval: number;
-    if (typeof Viz === 'undefined') {
-        pollInterval = window.setInterval(() => {
-            if (typeof Viz !== 'undefined') {
-                clearInterval(pollInterval);
-                performRender();
-            }
-        }, 100);
-    }
+        renderGraph().catch((e) => {
+            console.error("Failed to render Graphviz diagram", e);
+        });
+    }, 500);
 
     return () => {
         isMounted = false;
         clearTimeout(timeoutId);
-        if (pollInterval) clearInterval(pollInterval);
     };
   }, [renderGraph]);
 
@@ -190,6 +187,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
     if (!svgContent || isDownloading) return;
     setIsDownloading(true);
     try {
+        const { exportSvgAsImage } = await import('../../../utils/export/image');
         await exportSvgAsImage(svgContent, `graphviz-diagram-${Date.now()}.jpg`, 5, 'image/jpeg');
     } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to export diagram.');

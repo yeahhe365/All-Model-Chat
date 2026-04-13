@@ -1,7 +1,7 @@
 
 import React, { useCallback, useRef, useEffect } from 'react';
 import { SavedChatSession, ChatMessage, UploadedFile, VideoMetadata, AppSettings, ChatSettings as IndividualChatSettings } from '../../../types';
-import { generateUniqueId, logService, createNewSession, createMessage } from '../../../utils/appUtils';
+import { logService, createNewSession, createMessage } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 
@@ -119,8 +119,8 @@ export const useMessageUpdates = ({
             if (s.id !== currentSessionId) return s;
 
             // Determine which ID we are currently tracking for this role
-            let currentId = role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
-            let messages = [...s.messages];
+            const currentId = role === 'user' ? liveConversationRefs.current.userId : liveConversationRefs.current.modelId;
+            const messages = [...s.messages];
             
             // Find the index of the existing message, if any
             let messageIndex = currentId ? messages.findIndex(m => m.id === currentId) : -1;

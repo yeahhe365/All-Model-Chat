@@ -1,6 +1,7 @@
 
 import React, { useRef, useEffect } from 'react';
-import hljs from 'highlight.js';
+import type { HLJSApi } from 'highlight.js';
+import { registerHighlightLanguages } from '../../utils/highlightConfig';
 
 interface CodeEditorProps {
     value: string;
@@ -14,6 +15,12 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, languag
     const preRef = useRef<HTMLElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+    const getHighlighter = async (): Promise<HLJSApi> => {
+        const { default: hljs } = await import('highlight.js/lib/core');
+        registerHighlightLanguages(hljs);
+        return hljs;
+    };
+
     const handleScroll = () => {
         if (textareaRef.current && preRef.current) {
             preRef.current.scrollTop = textareaRef.current.scrollTop;
@@ -22,18 +29,32 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, languag
     };
 
     useEffect(() => {
-        if (preRef.current) {
-            // Handle trailing newlines for visualization consistency
+        let isMounted = true;
+
+        const highlightContent = async () => {
+            if (!preRef.current) return;
+
             const content = value.endsWith('\n') ? value + ' ' : value;
-            
+
             try {
+                const hljs = await getHighlighter();
+                if (!isMounted || !preRef.current) return;
+
                 const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
                 const result = hljs.highlight(content, { language: validLanguage });
                 preRef.current.innerHTML = result.value;
             } catch (e) {
-                preRef.current.textContent = content;
+                if (isMounted && preRef.current) {
+                    preRef.current.textContent = content;
+                }
             }
-        }
+        };
+
+        highlightContent();
+
+        return () => {
+            isMounted = false;
+        };
     }, [value, language]);
 
     return (

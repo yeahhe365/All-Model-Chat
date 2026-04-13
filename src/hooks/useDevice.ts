@@ -17,9 +17,6 @@ export const useIsMobile = () => {
     
     const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     
-    // Set initial value based on media query specifically to ensure sync
-    setIsMobile(mediaQuery.matches);
-
     // Modern browsers
     mediaQuery.addEventListener('change', handleChange);
 
@@ -41,8 +38,6 @@ export const useIsDesktop = () => {
     const mediaQuery = targetWindow.matchMedia('(pointer: fine)');
     
     const handleChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    
-    setIsDesktop(mediaQuery.matches);
     
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);

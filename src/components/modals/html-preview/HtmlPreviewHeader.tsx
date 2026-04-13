@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, Image as ImageIcon, Expand, Atom, FileCode2 } from 'lucide-react';
+import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, Image as ImageIcon, Expand, Atom } from 'lucide-react';
 import { IconHtml5 } from '../../icons/CustomIcons';
 
 interface HtmlPreviewHeaderProps {

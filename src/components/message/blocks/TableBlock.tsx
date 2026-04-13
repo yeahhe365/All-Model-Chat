@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check } from 'lucide-react';
 import { useWindowContext } from '../../../contexts/WindowContext';
-import { triggerDownload } from '../../../utils/exportUtils';
+import { triggerDownload } from '../../../utils/export/core';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { translations } from '../../../utils/appUtils';
 import { convertHtmlToMarkdown } from '../../../utils/htmlToMarkdown';
@@ -59,7 +59,6 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
         
         try {
             // Dynamically import xlsx to avoid heavy bundle size if not used
-            // @ts-ignore - xlsx is provided via importmap
             const XLSX = await import('xlsx');
             
             if (XLSX && XLSX.utils && XLSX.writeFile) {

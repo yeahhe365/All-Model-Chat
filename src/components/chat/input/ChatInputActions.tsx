@@ -9,7 +9,7 @@ import { RecordControls } from './actions/RecordControls';
 import { UtilityControls } from './actions/UtilityControls';
 import { SendControls } from './actions/SendControls';
 
-export interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
+interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
     editMode?: 'update' | 'resend';
     isNativeAudioModel?: boolean;
     onStartLiveSession?: () => void;

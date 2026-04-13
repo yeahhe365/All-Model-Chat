@@ -1,13 +1,12 @@
 
 
-import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
-import { useClickOutside } from '../../../hooks/useClickOutside';
 import { IconYoutube, IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
-import { useWindowContext } from '../../../contexts/WindowContext';
+import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 
 interface ToolsMenuProps {
     isGoogleSearchEnabled: boolean;
@@ -64,71 +63,21 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     onAddYouTubeVideo, onCountTokens,
     disabled, t, isNativeAudioModel
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [menuPosition, setMenuPosition] = useState<React.CSSProperties>({});
-    const containerRef = useRef<HTMLDivElement>(null);
-    const buttonRef = useRef<HTMLButtonElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-    
-    const { window: targetWindow } = useWindowContext();
-
-    useClickOutside(containerRef, () => setIsOpen(false), isOpen);
-
-    // Prevent click-outside logic from firing when interacting with the portaled menu
-    useEffect(() => {
-        if (!isOpen || !menuRef.current) return;
-        
-        const stopProp = (e: Event) => e.stopPropagation();
-        const menuEl = menuRef.current;
-        
-        // Stop bubbling to document so useClickOutside doesn't see it
-        menuEl.addEventListener('mousedown', stopProp);
-        menuEl.addEventListener('touchstart', stopProp);
-        
-        return () => {
-            menuEl.removeEventListener('mousedown', stopProp);
-            menuEl.removeEventListener('touchstart', stopProp);
-        };
-    }, [isOpen]);
-
-    // Dynamic fixed positioning
-    useLayoutEffect(() => {
-        if (isOpen && buttonRef.current && targetWindow) {
-            const buttonRect = buttonRef.current.getBoundingClientRect();
-            const viewportWidth = targetWindow.innerWidth;
-            const viewportHeight = targetWindow.innerHeight;
-            
-            const MENU_WIDTH = 240; // w-60 approx 240px
-            const BUTTON_MARGIN = 10;
-            const GAP = 8;
-            
-            const newStyle: React.CSSProperties = {
-                position: 'fixed',
-                zIndex: 9999, // Ensure it sits on top of everything including toolbar
-            };
-
-            // Horizontal Alignment
-            if (buttonRect.left + MENU_WIDTH > viewportWidth - BUTTON_MARGIN) {
-                // Align right edge of menu with right edge of button
-                newStyle.left = buttonRect.right - MENU_WIDTH;
-                newStyle.transformOrigin = 'bottom right';
-            } else {
-                // Align left
-                newStyle.left = buttonRect.left;
-                newStyle.transformOrigin = 'bottom left';
-            }
-
-            // Vertical Alignment (Anchored to bottom of viewport relative to button top)
-            newStyle.bottom = viewportHeight - buttonRect.top + GAP;
-
-            setMenuPosition(newStyle);
-        }
-    }, [isOpen, targetWindow]);
+    const {
+        isOpen,
+        menuPosition,
+        containerRef,
+        buttonRef,
+        menuRef,
+        targetWindow,
+        closeMenu,
+        toggleMenu,
+    } = usePortaledMenu();
 
     const handleToggle = (toggleFunc?: () => void) => {
         if (toggleFunc) {
             toggleFunc();
-            setIsOpen(false);
+            closeMenu();
         }
     };
     
@@ -141,8 +90,8 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
       { labelKey: 'code_execution_label', icon: <Terminal size={18} strokeWidth={2} />, isEnabled: isCodeExecutionEnabled, action: () => handleToggle(onToggleCodeExecution) },
       { labelKey: 'local_python_label', icon: <IconPython size={18} strokeWidth={2} />, isEnabled: !!isLocalPythonEnabled, action: () => handleToggle(onToggleLocalPython) },
       { labelKey: 'url_context_label', icon: <Link size={18} strokeWidth={2} />, isEnabled: isUrlContextEnabled, action: () => handleToggle(onToggleUrlContext) },
-      { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); setIsOpen(false); } },
-      { labelKey: 'tools_token_count_label', icon: <Calculator size={18} strokeWidth={2} />, isEnabled: false, action: () => { onCountTokens(); setIsOpen(false); } }
+      { labelKey: 'attachMenu_addByUrl', icon: <IconYoutube size={18} strokeWidth={2} />, isEnabled: false, action: () => { onAddYouTubeVideo(); closeMenu(); } },
+      { labelKey: 'tools_token_count_label', icon: <Calculator size={18} strokeWidth={2} />, isEnabled: false, action: () => { onCountTokens(); closeMenu(); } }
     ];
 
     const filteredItems = menuItems.filter(item => {
@@ -168,7 +117,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             <button
                 ref={buttonRef}
                 type="button"
-                onClick={() => setIsOpen(p => !p)}
+                onClick={toggleMenu}
                 disabled={disabled}
                 className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`}
                 aria-label={t('tools_button')}

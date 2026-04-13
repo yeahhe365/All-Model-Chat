@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Mic, Info, AudioLines } from 'lucide-react';
-import { AVAILABLE_TRANSCRIPTION_MODELS, AVAILABLE_TTS_VOICES } from '../../../constants/appConstants';
+import { AVAILABLE_TRANSCRIPTION_MODELS } from '../../../constants/settingsModelOptions';
+import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
 import { Tooltip } from '../../shared/Tooltip';
 import { Select } from '../../shared/Select';
 

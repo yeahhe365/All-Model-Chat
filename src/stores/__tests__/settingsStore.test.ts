@@ -4,7 +4,6 @@ const { mockGetRuntimeConfigAppSettingsOverrides } = vi.hoisted(() => ({
   mockGetRuntimeConfigAppSettingsOverrides: vi.fn(() => ({})),
 }));
 
-// Hoisted mocks
 vi.mock('../../utils/db', () => ({
   dbService: {
     getAppSettings: vi.fn(),
@@ -28,7 +27,6 @@ describe('settingsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetRuntimeConfigAppSettingsOverrides.mockReturnValue({});
-    // Reset store state between tests
     useSettingsStore.setState({
       appSettings: DEFAULT_APP_SETTINGS,
       currentTheme: { id: 'pearl', name: 'Pearl', colors: {} } as any,
@@ -36,8 +34,6 @@ describe('settingsStore', () => {
       isSettingsLoaded: false,
     });
   });
-
-  // ── setAppSettings ──
 
   describe('setAppSettings', () => {
     it('updates appSettings with new object', () => {
@@ -49,7 +45,7 @@ describe('settingsStore', () => {
     });
 
     it('updates appSettings with updater function', () => {
-      useSettingsStore.getState().setAppSettings(prev => ({
+      useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
         topP: 0.8,
       }));
@@ -57,7 +53,7 @@ describe('settingsStore', () => {
     });
 
     it('resolves theme when themeId changes to onyx', () => {
-      useSettingsStore.getState().setAppSettings(prev => ({
+      useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
         themeId: 'onyx',
       }));
@@ -65,7 +61,7 @@ describe('settingsStore', () => {
     });
 
     it('resolves language when language changes to zh', () => {
-      useSettingsStore.getState().setAppSettings(prev => ({
+      useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
         language: 'zh',
       }));
@@ -74,11 +70,10 @@ describe('settingsStore', () => {
 
     it('persists to IndexedDB when settings are loaded', async () => {
       useSettingsStore.setState({ isSettingsLoaded: true });
-      useSettingsStore.getState().setAppSettings(prev => ({
+      useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
         temperature: 0.3,
       }));
-      // Wait for async persist
       await vi.waitFor(() => {
         expect(dbService.setAppSettings).toHaveBeenCalled();
       });
@@ -86,7 +81,7 @@ describe('settingsStore', () => {
 
     it('broadcasts settings update after persist', async () => {
       useSettingsStore.setState({ isSettingsLoaded: true });
-      useSettingsStore.getState().setAppSettings(prev => ({
+      useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
         temperature: 0.3,
       }));
@@ -98,15 +93,13 @@ describe('settingsStore', () => {
 
     it('does not persist when settings are not loaded yet', () => {
       useSettingsStore.setState({ isSettingsLoaded: false });
-      useSettingsStore.getState().setAppSettings(prev => ({
+      useSettingsStore.getState().setAppSettings((prev) => ({
         ...prev,
         temperature: 0.3,
       }));
       expect(dbService.setAppSettings).not.toHaveBeenCalled();
     });
   });
-
-  // ── loadSettings ──
 
   describe('loadSettings', () => {
     it('loads settings from DB and merges with defaults', async () => {
@@ -118,13 +111,12 @@ describe('settingsStore', () => {
       const state = useSettingsStore.getState();
       expect(state.appSettings.temperature).toBe(0.5);
       expect(state.appSettings.language).toBe('zh');
-      // Other fields come from defaults
       expect(state.appSettings.topP).toBe(0.95);
       expect(state.isSettingsLoaded).toBe(true);
     });
 
     it('sets isSettingsLoaded when no stored settings', async () => {
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
     });
@@ -146,7 +138,7 @@ describe('settingsStore', () => {
           apiProxyUrl: null,
         },
       }));
-      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined as any);
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(undefined);
       await useSettingsStore.getState().loadSettings();
       const { appSettings } = useSettingsStore.getState();
       expect(appSettings.useCustomApiConfig).toBe(true);
@@ -169,9 +161,20 @@ describe('settingsStore', () => {
       expect(useSettingsStore.getState().language).toBe('zh');
       Object.defineProperty(navigator, 'language', { value: originalLang, configurable: true });
     });
-  });
 
-  // ── broadcastSettingsUpdate ──
+    it('falls back when stored settings reference removed Gemini 2.5 Flash preview models', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue({
+        modelId: 'gemini-2.5-flash-preview-09-2025',
+        transcriptionModelId: 'gemini-2.5-flash-lite-preview-09-2025',
+      } as any);
+
+      await useSettingsStore.getState().loadSettings();
+
+      const state = useSettingsStore.getState();
+      expect(state.appSettings.modelId).toBe('gemini-3-flash-preview');
+      expect(state.appSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+    });
+  });
 
   describe('broadcastSettingsUpdate', () => {
     it('calls broadcastSettingsUpdate', () => {

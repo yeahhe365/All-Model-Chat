@@ -1,5 +1,5 @@
 // utils/folderImportUtils.ts
-import { fileToString } from './domainUtils';
+import { fileToString } from './fileHelpers';
 
 const IGNORED_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.svg', '.ico', '.webp',
@@ -80,11 +80,10 @@ const processFileEntries = async (entries: ProcessingEntry[], rootName: string):
         // 2. Tree Building
         const parts = entry.path.split('/').filter(p => p);
         let parentNode: FileNode | undefined = undefined;
-        let currentPath = '';
 
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i];
-            currentPath = parts.slice(0, i + 1).join('/');
+            const currentPath = parts.slice(0, i + 1).join('/');
             
             let currentNode = nodeMap.get(currentPath);
             
@@ -161,7 +160,7 @@ export const generateFolderContext = async (files: FileList | File[] | { file: F
         } else {
              // Standard File object
              file = item as File;
-             path = (file as any).webkitRelativePath || file.name;
+             path = file.webkitRelativePath || file.name;
         }
         
         return {
@@ -315,7 +314,7 @@ self.onmessage = async function(e) {
 `;
 
 export const generateZipContext = async (zipFile: File): Promise<File> => {
-    let rootName = zipFile.name.replace(/\.zip$/i, '');
+    const rootName = zipFile.name.replace(/\.zip$/i, '');
     
     return new Promise<File>((resolve, reject) => {
         const blob = new Blob([ZIP_WORKER_CODE], { type: 'application/javascript' });

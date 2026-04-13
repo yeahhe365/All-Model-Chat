@@ -2,7 +2,7 @@
 import React, { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
-import { createNewSession, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget } from '../../../utils/appUtils';
+import { createNewSession, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../../utils/appUtils';
 import { MediaResolution } from '../../../types/settings';
 
 interface UseModelSelectionProps {
@@ -50,7 +50,7 @@ export const useModelSelection = ({
         // 3. Determine new settings
         const newMediaResolution = cached?.mediaResolution ?? sourceSettings.mediaResolution ?? MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
         let newThinkingBudget = cached?.thinkingBudget ?? sourceSettings.thinkingBudget;
-        let newThinkingLevel = cached?.thinkingLevel ?? sourceSettings.thinkingLevel;
+        const newThinkingLevel = cached?.thinkingLevel ?? getDefaultThinkingLevelForModel(modelId, sourceSettings.thinkingLevel);
 
 
         // 4. Validating range compatibility using shared helper

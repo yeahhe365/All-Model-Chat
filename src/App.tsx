@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { useAppLogic } from './hooks/app/useAppLogic';
-import { useAppProps } from './hooks/app/useAppProps';
+import { useApp } from './hooks/app/useApp';
 import { WindowProvider } from './contexts/WindowContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
@@ -17,16 +16,12 @@ const App: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const logic = useAppLogic();
+  const app = useApp();
   const {
     currentTheme,
     pipState,
-    sidePanelContent,
-    handleCloseSidePanel,
     uiState,
-  } = logic;
-
-  const { sidebarProps, chatAreaProps, appModalsProps } = useAppProps(logic);
+  } = app;
 
   return (
     <div 
@@ -43,16 +38,7 @@ const AppContent: React.FC = () => {
                         onTouchStart={uiState.handleTouchStart}
                         onTouchEnd={uiState.handleTouchEnd}
                     >
-                        <MainContent
-                            sidebarProps={sidebarProps}
-                            chatAreaProps={chatAreaProps}
-                            appModalsProps={appModalsProps}
-                            isHistorySidebarOpen={uiState.isHistorySidebarOpen}
-                            setIsHistorySidebarOpen={uiState.setIsHistorySidebarOpen}
-                            sidePanelContent={sidePanelContent}
-                            onCloseSidePanel={handleCloseSidePanel}
-                            themeId={currentTheme.id}
-                        />
+                        <MainContent app={app} />
                     </div>
                   </WindowProvider>,
                   pipState.pipContainer
@@ -61,16 +47,7 @@ const AppContent: React.FC = () => {
           </>
       ) : (
           <WindowProvider>
-            <MainContent
-                sidebarProps={sidebarProps}
-                chatAreaProps={chatAreaProps}
-                appModalsProps={appModalsProps}
-                isHistorySidebarOpen={uiState.isHistorySidebarOpen}
-                setIsHistorySidebarOpen={uiState.setIsHistorySidebarOpen}
-                sidePanelContent={sidePanelContent}
-                onCloseSidePanel={handleCloseSidePanel}
-                themeId={currentTheme.id}
-            />
+            <MainContent app={app} />
           </WindowProvider>
       )}
     </div>

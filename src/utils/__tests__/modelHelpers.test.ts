@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   sortModels,
   isGemini3Model,
+  getModelCapabilities,
+  getDefaultThinkingLevelForModel,
+  sanitizeModelOptions,
+  resolveSupportedModelId,
   calculateTokenStats,
   adjustThinkingBudget,
 } from '../modelHelpers';
@@ -46,7 +50,7 @@ describe('sortModels', () => {
 
   it('prioritizes gemini-3 among pinned models of same category', () => {
     const models: ModelOption[] = [
-      { id: 'gemini-2.5-pro', name: '2.5 Pro', isPinned: true },
+      { id: 'gemini-2.5-flash', name: '2.5 Flash', isPinned: true },
       { id: 'gemini-3-flash', name: '3 Flash', isPinned: true },
     ];
     const result = sortModels(models);
@@ -84,12 +88,62 @@ describe('isGemini3Model', () => {
     expect(isGemini3Model('models/gemini-3-flash-preview')).toBe(true);
   });
 
-  it('returns false for gemini-2.5-pro', () => {
-    expect(isGemini3Model('gemini-2.5-pro')).toBe(false);
+  it('returns false for gemini-2.5-flash', () => {
+    expect(isGemini3Model('gemini-2.5-flash')).toBe(false);
   });
 
   it('is case insensitive', () => {
     expect(isGemini3Model('Gemini-3-Flash-Preview')).toBe(true);
+  });
+});
+
+describe('getModelCapabilities', () => {
+  it('treats flash live preview models as live audio models', () => {
+    expect(getModelCapabilities('gemini-3.1-flash-live-preview').isNativeAudioModel).toBe(true);
+  });
+
+  it('exposes the latest Gemini 3.1 Flash Image ratios and sizes', () => {
+    const capabilities = getModelCapabilities('gemini-3.1-flash-image-preview');
+
+    expect(capabilities.supportedAspectRatios).toEqual(
+      expect.arrayContaining(['1:4', '4:1', '1:8', '8:1']),
+    );
+    expect(capabilities.supportedImageSizes).toEqual(
+      expect.arrayContaining(['512', '1K', '2K', '4K']),
+    );
+  });
+});
+
+describe('getDefaultThinkingLevelForModel', () => {
+  it('defaults Gemini 3.1 Flash Live to MINIMAL', () => {
+    expect(getDefaultThinkingLevelForModel('gemini-3.1-flash-live-preview', 'HIGH')).toBe('MINIMAL');
+  });
+
+  it('defaults Gemini 3.1 Flash Image to MINIMAL', () => {
+    expect(getDefaultThinkingLevelForModel('gemini-3.1-flash-image-preview', 'HIGH')).toBe('MINIMAL');
+  });
+
+  it('keeps fallback thinking level for non-special models', () => {
+    expect(getDefaultThinkingLevelForModel('gemini-2.5-flash', 'HIGH')).toBe('HIGH');
+  });
+});
+
+describe('supported model sanitization', () => {
+  it('filters removed 2.5 preview ids from custom model lists', () => {
+    const models: ModelOption[] = [
+      { id: 'gemini-2.5-flash-preview-09-2025', name: 'Old Flash' },
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro' },
+    ];
+
+    expect(sanitizeModelOptions(models).map((model) => model.id)).toEqual([
+      'gemini-3.1-pro-preview',
+    ]);
+  });
+
+  it('falls back only for explicitly removed preview ids', () => {
+    expect(resolveSupportedModelId('gemini-2.5-flash-preview-09-2025', 'gemini-3-flash-preview')).toBe(
+      'gemini-3-flash-preview',
+    );
   });
 });
 
@@ -138,11 +192,11 @@ describe('calculateTokenStats', () => {
 
 describe('adjustThinkingBudget', () => {
   it('clamps to max when budget exceeds range', () => {
-    expect(adjustThinkingBudget('gemini-2.5-pro', 50000)).toBe(32768);
+    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 50000)).toBe(24576);
   });
 
   it('clamps to min when budget is below range', () => {
-    expect(adjustThinkingBudget('gemini-2.5-pro', 10)).toBe(128);
+    expect(adjustThinkingBudget('gemini-3.1-pro-preview', 10)).toBe(128);
   });
 
   it('returns budget unchanged for unknown models', () => {
@@ -150,16 +204,11 @@ describe('adjustThinkingBudget', () => {
   });
 
   it('converts auto (-1) to max for non-Gemini-3 models', () => {
-    expect(adjustThinkingBudget('gemini-2.5-pro', -1)).toBe(32768);
+    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', -1)).toBe(24576);
   });
 
   it('keeps auto (-1) for Gemini 3 models', () => {
     expect(adjustThinkingBudget('gemini-3-flash-preview', -1)).toBe(-1);
-  });
-
-  it('forces mandatory thinking models with 0 budget to max (non-G3)', () => {
-    // gemini-2.5-pro is mandatory thinking, not G3
-    expect(adjustThinkingBudget('gemini-2.5-pro', 0)).toBe(32768);
   });
 
   it('forces mandatory thinking models with 0 budget to -1 (G3)', () => {
@@ -168,6 +217,6 @@ describe('adjustThinkingBudget', () => {
   });
 
   it('keeps valid budget within range', () => {
-    expect(adjustThinkingBudget('gemini-2.5-pro', 1000)).toBe(1000);
+    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 1000)).toBe(1000);
   });
 });

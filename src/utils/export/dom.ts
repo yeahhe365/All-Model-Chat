@@ -46,7 +46,7 @@ export const gatherPageStyles = async (): Promise<string> => {
  * This allows the HTML to be self-contained (offline-capable).
  * @param clone The cloned HTMLElement to process.
  */
-export const embedImagesInClone = async (clone: HTMLElement): Promise<void> => {
+const embedImagesInClone = async (clone: HTMLElement): Promise<void> => {
     const images = Array.from(clone.querySelectorAll('img'));
     await Promise.all(images.map(async (img) => {
         try {

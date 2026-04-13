@@ -3,6 +3,14 @@
  * Captures the current screen content as an image Blob.
  * Handles browser support checks, stream acquisition, and fallback to video element capture.
  */
+type WindowWithImageCapture = Window & typeof globalThis & {
+    ImageCapture?: new (track: MediaStreamTrack) => { grabFrame: () => Promise<ImageBitmap> };
+};
+
+type DisplayMediaVideoConstraints = MediaTrackConstraints & {
+    mediaSource?: 'screen' | 'window' | 'application' | 'browser';
+};
+
 export const captureScreenImage = async (): Promise<Blob | null> => {
     if (!('getDisplayMedia' in navigator.mediaDevices)) {
         alert("Your browser does not support screen capture.");
@@ -12,7 +20,7 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
     let stream: MediaStream;
     try {
         stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { mediaSource: "screen" } as any, 
+            video: { mediaSource: "screen" } as DisplayMediaVideoConstraints,
             audio: false,
         });
     } catch (err) {
@@ -52,13 +60,12 @@ export const captureScreenImage = async (): Promise<Blob | null> => {
         };
 
         // Attempt to use ImageCapture API (Chrome/Edge)
-        // @ts-ignore
-        if (typeof ImageCapture !== 'undefined') {
-            // @ts-ignore
-            const imageCapture = new ImageCapture(track);
+        const ImageCaptureCtor = (window as WindowWithImageCapture).ImageCapture;
+        if (ImageCaptureCtor) {
+            const imageCapture = new ImageCaptureCtor(track) as unknown as { grabFrame: () => Promise<ImageBitmap> };
             imageCapture.grabFrame()
                 .then(processBitmap)
-                .catch((err: any) => {
+                .catch((err: unknown) => {
                     console.warn("ImageCapture failed, falling back to video element:", err);
                     fallbackToVideo();
                 });

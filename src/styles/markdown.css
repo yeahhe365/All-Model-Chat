@@ -9,6 +9,113 @@
   line-height: 1.8 !important; /* Increased line spacing */
 }
 
+.markdown-body h1 { font-size: 1.8em !important; font-weight: 800 !important; }
+.markdown-body h2 { font-size: 1.55em !important; font-weight: 750 !important; }
+.markdown-body h3 { font-size: 1.3em !important; font-weight: 700 !important; }
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 { font-weight: 650 !important; }
+
+.markdown-body pre {
+  padding: 1rem !important;
+  border-radius: 0.75rem !important;
+  overflow-x: auto !important;
+  border: 1px solid var(--theme-border-secondary) !important;
+}
+
+.markdown-body strong {
+  color: var(--theme-text-primary) !important;
+  font-weight: 700 !important;
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+.markdown-body .hljs {
+  display: block;
+  overflow-x: auto;
+  color: inherit;
+}
+
+.theme-onyx .hljs {
+  color: #e8eef6;
+}
+
+.theme-onyx .hljs-comment,
+.theme-onyx .hljs-quote {
+  color: #8b9bb4;
+}
+
+.theme-onyx .hljs-keyword,
+.theme-onyx .hljs-selector-tag,
+.theme-onyx .hljs-subst {
+  color: #ffb86c;
+}
+
+.theme-onyx .hljs-string,
+.theme-onyx .hljs-doctag,
+.theme-onyx .hljs-title,
+.theme-onyx .hljs-section,
+.theme-onyx .hljs-selector-id {
+  color: #7ee787;
+}
+
+.theme-onyx .hljs-number,
+.theme-onyx .hljs-literal,
+.theme-onyx .hljs-variable,
+.theme-onyx .hljs-template-variable,
+.theme-onyx .hljs-tag .hljs-attr {
+  color: #79c0ff;
+}
+
+.theme-onyx .hljs-built_in,
+.theme-onyx .hljs-type,
+.theme-onyx .hljs-symbol,
+.theme-onyx .hljs-bullet,
+.theme-onyx .hljs-link {
+  color: #d2a8ff;
+}
+
+.theme-pearl .hljs {
+  color: #243244;
+}
+
+.theme-pearl .hljs-comment,
+.theme-pearl .hljs-quote {
+  color: #6b7280;
+}
+
+.theme-pearl .hljs-keyword,
+.theme-pearl .hljs-selector-tag,
+.theme-pearl .hljs-subst {
+  color: #b45309;
+}
+
+.theme-pearl .hljs-string,
+.theme-pearl .hljs-doctag,
+.theme-pearl .hljs-title,
+.theme-pearl .hljs-section,
+.theme-pearl .hljs-selector-id {
+  color: #047857;
+}
+
+.theme-pearl .hljs-number,
+.theme-pearl .hljs-literal,
+.theme-pearl .hljs-variable,
+.theme-pearl .hljs-template-variable,
+.theme-pearl .hljs-tag .hljs-attr {
+  color: #1d4ed8;
+}
+
+.theme-pearl .hljs-built_in,
+.theme-pearl .hljs-type,
+.theme-pearl .hljs-symbol,
+.theme-pearl .hljs-bullet,
+.theme-pearl .hljs-link {
+  color: #7c3aed;
+}
+
 /* Tighter line height for headers */
 .markdown-body h1, 
 .markdown-body h2, 

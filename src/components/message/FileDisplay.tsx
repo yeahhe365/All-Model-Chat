@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
 import { Check, Copy, Download, SlidersHorizontal, Scissors, Settings2 } from 'lucide-react'; 
-import { triggerDownload } from '../../utils/exportUtils';
+import { triggerDownload } from '../../utils/export/core';
 import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
-import { formatFileSize } from '../../utils/domainUtils';
-import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
+import { formatFileSize } from '../../utils/fileHelpers';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -97,7 +96,12 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                     {canConfigure ? (
                         <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); onConfigure && onConfigure(); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (onConfigure) {
+                                    onConfigure();
+                                }
+                            }}
                             title={file.mediaResolution ? `Configure (Resolution: ${file.mediaResolution})` : "Configure"}
                             className={`p-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm transition-colors ${getResolutionColor(file.mediaResolution)}`}
                         >
@@ -178,7 +182,12 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
             {canConfigure && (
                 <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); onConfigure && onConfigure(); }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (onConfigure) {
+                            onConfigure();
+                        }
+                    }}
                     title="Configure"
                     className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                 >

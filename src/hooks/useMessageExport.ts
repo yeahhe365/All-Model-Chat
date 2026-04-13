@@ -2,17 +2,7 @@
 
 import { useState } from 'react';
 import { ChatMessage } from '../types';
-import {
-    exportHtmlStringAsFile,
-    exportTextStringAsFile,
-    triggerDownload,
-    sanitizeFilename,
-    generateExportHtmlTemplate,
-    generateExportTxtTemplate,
-    gatherPageStyles,
-    prepareElementForExport,
-    generateSnapshotPng
-} from '../utils/exportUtils';
+import { triggerDownload, sanitizeFilename } from '../utils/export/core';
 
 interface UseMessageExportProps {
     message: ChatMessage;
@@ -55,6 +45,22 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
 
+            const loadExportModules = async () => {
+                const [files, dom, image, templates] = await Promise.all([
+                    import('../utils/export/files'),
+                    import('../utils/export/dom'),
+                    import('../utils/export/image'),
+                    import('../utils/export/templates'),
+                ]);
+
+                return {
+                    ...files,
+                    ...dom,
+                    ...image,
+                    ...templates,
+                };
+            };
+
             // Find the rendered DOM bubble to preserve Math/Syntax/Diagrams
             // We use the data-message-id attribute which is present in the Message component
             const messageWrapper = document.querySelector(`[data-message-id="${message.id}"]`);
@@ -67,6 +73,14 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 if (!contentNodeSource) {
                     throw new Error("Could not find message content in DOM. Please ensure the message is visible.");
                 }
+
+                const {
+                    exportHtmlStringAsFile,
+                    gatherPageStyles,
+                    prepareElementForExport,
+                    generateSnapshotPng,
+                    generateExportHtmlTemplate,
+                } = await loadExportModules();
 
                 // Use unified helper to clone, clean, and embed images
                 // For PNG, we want expanded details visible. For HTML, we want them collapsed by default but interactive.
@@ -114,6 +128,7 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                 }
 
             } else if (type === 'txt') {
+                const { exportTextStringAsFile, generateExportTxtTemplate } = await loadExportModules();
                 const txtContent = generateExportTxtTemplate({
                     title: `Message Export ${shortId}`,
                     date: dateStr,

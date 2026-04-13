@@ -3,18 +3,7 @@
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
-import { 
-    sanitizeFilename, 
-    exportHtmlStringAsFile, 
-    exportTextStringAsFile, 
-    gatherPageStyles, 
-    triggerDownload,
-    generateExportHtmlTemplate,
-    generateExportTxtTemplate,
-    prepareElementForExport,
-    generateSnapshotPng
-} from '../../utils/exportUtils';
-import DOMPurify from 'dompurify';
+import { sanitizeFilename, triggerDownload } from '../../utils/export/core';
 
 interface UseChatSessionExportProps {
     activeChat: SavedChatSession | undefined;
@@ -34,6 +23,17 @@ export const useChatSessionExport = ({
 
     const exportChatLogic = useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
         if (!activeChat) return;
+
+        const [files, dom, image, templates] = await Promise.all([
+            import('../../utils/export/files'),
+            import('../../utils/export/dom'),
+            import('../../utils/export/image'),
+            import('../../utils/export/templates'),
+        ]);
+        const { exportHtmlStringAsFile, exportTextStringAsFile } = files;
+        const { gatherPageStyles, prepareElementForExport } = dom;
+        const { generateSnapshotPng } = image;
+        const { generateExportHtmlTemplate, generateExportTxtTemplate } = templates;
         
         const safeTitle = sanitizeFilename(activeChat.title);
         const dateObj = new Date();
@@ -66,6 +66,7 @@ export const useChatSessionExport = ({
                 );
             } else {
                 // HTML Export
+                const { default: DOMPurify } = await import('dompurify');
                 // Gather Styles & Generate Template
                 const styles = await gatherPageStyles();
                 const bodyClasses = document.body.className;

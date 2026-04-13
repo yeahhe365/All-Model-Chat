@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { LiveSession } from '@google/genai';
+import type { Session as LiveSession } from '@google/genai';
 
 interface UseLiveFrameCaptureProps {
     isConnected: boolean;
@@ -31,18 +31,22 @@ export const useLiveFrameCapture = ({
             const base64Data = captureFrame();
             if (base64Data && sessionRef.current) {
                 sessionRef.current.then(session => {
-                    session.sendRealtimeInput({
-                        media: {
-                            mimeType: 'image/jpeg',
-                            data: base64Data
-                        }
-                    });
+                    try {
+                        session.sendRealtimeInput({
+                            video: {
+                                mimeType: 'image/jpeg',
+                                data: base64Data
+                            }
+                        });
+                    } catch {
+                        // Ignore transient sends racing with session teardown.
+                    }
                 });
             }
         };
 
-        // 5 FPS = 200ms interval
-        frameIntervalRef.current = window.setInterval(sendFrame, 200);
+        // Live API docs recommend a maximum of 1 frame per second.
+        frameIntervalRef.current = window.setInterval(sendFrame, 1000);
 
         return () => {
             if (frameIntervalRef.current) clearInterval(frameIntervalRef.current);

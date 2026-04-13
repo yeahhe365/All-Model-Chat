@@ -1,7 +1,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { LiveSession } from '@google/genai';
-import { AppSettings, ChatSettings } from '../types';
+import type { Session as LiveSession } from '@google/genai';
+import type { AppSettings, ChatSettings, LiveClientFunctions } from '../types';
 import { useLiveAudio } from './live-api/useLiveAudio';
 import { useLiveVideo } from './live-api/useLiveVideo';
 import { useLiveConfig } from './live-api/useLiveConfig';
@@ -16,7 +16,7 @@ interface UseLiveAPIProps {
     modelId: string;
     onClose?: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
-    clientFunctions?: Record<string, (args: any) => Promise<any>>; // Registry for client-side tools
+    clientFunctions?: LiveClientFunctions;
 }
 
 export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript, clientFunctions }: UseLiveAPIProps) => {

@@ -8,13 +8,10 @@ interface ThinkingTimerProps {
 }
 
 export const ThinkingTimer: React.FC<ThinkingTimerProps> = ({ startTime, t }) => {
-    const [seconds, setSeconds] = useState(0);
+    const [seconds, setSeconds] = useState(() => Math.floor((Date.now() - new Date(startTime).getTime()) / 1000));
 
     useEffect(() => {
         const start = new Date(startTime).getTime();
-        
-        // Initial calculation
-        setSeconds(Math.floor((Date.now() - start) / 1000));
 
         // Use a faster polling interval (100ms) instead of 1000ms.
         // During heavy streaming/rendering, a 1s interval often drifts or gets delayed,
