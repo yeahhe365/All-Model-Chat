@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { buildGenerationConfig } from '../baseApi';
 import { MediaResolution } from '../../../types/settings';
 
@@ -35,6 +35,10 @@ import {
 import { dbService } from '../../../utils/db';
 
 // ── getClient ──
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('getClient', () => {
   beforeEach(() => {
