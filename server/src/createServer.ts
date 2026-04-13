@@ -292,6 +292,8 @@ export function createServer(
       }
 
       if (method === 'GET' && path === '/api/live-token') {
+        response.setHeader('cache-control', 'no-store');
+
         if (!resolvedConfig.geminiApiKey) {
           sendJson(
             request,

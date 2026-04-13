@@ -104,6 +104,7 @@ describe('createServer', () => {
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(body).toEqual({ name: 'tokens/server-key' });
     expect(createLiveToken).toHaveBeenCalledWith('server-key');
   });

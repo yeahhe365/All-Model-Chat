@@ -156,6 +156,11 @@ docker compose up -d --build
 
 默认访问 `http://localhost:8080`。如需关闭后台运行可执行 `docker compose down`。
 
+> ⚠️ 安全边界说明
+> 当前 `web + api` 代理方案定位为 **受信任/自托管环境**（trusted self-hosted deployment）。
+> 它用于隐藏服务端 `GEMINI_API_KEY` 并转发请求，但**本身并不足以**作为公开互联网下“无鉴权多用户 API 网关”。
+> 若要对公网开放，请额外引入鉴权、配额/限流、滥用防护、审计与租户隔离等能力。
+
 ### 运行时配置与环境变量
 
 部署时请区分两类配置：
