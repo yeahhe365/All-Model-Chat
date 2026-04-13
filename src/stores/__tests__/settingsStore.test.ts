@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const { mockGetRuntimeConfigAppSettingsOverrides } = vi.hoisted(() => ({
+  mockGetRuntimeConfigAppSettingsOverrides: vi.fn(() => ({})),
+}));
+
 // Mock BroadcastChannel
 const mockPostMessage = vi.fn();
 // Mock BroadcastChannel - store creates its own singleton, capture it
@@ -26,12 +30,7 @@ vi.mock('../../services/logService', () => ({
 }));
 
 vi.mock('../../runtime/runtimeConfig', () => ({
-  getRuntimeConfigAppSettingsOverrides: vi.fn(() => ({
-    serverManagedApi: true,
-    useCustomApiConfig: true,
-    useApiProxy: true,
-    apiProxyUrl: 'https://runtime-proxy.example.com/v1beta',
-  })),
+  getRuntimeConfigAppSettingsOverrides: mockGetRuntimeConfigAppSettingsOverrides,
 }));
 
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
@@ -41,6 +40,7 @@ import { dbService } from '../../utils/db';
 describe('settingsStore', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetRuntimeConfigAppSettingsOverrides.mockReturnValue({});
     // Reset store state between tests
     useSettingsStore.setState({
       appSettings: DEFAULT_APP_SETTINGS,
@@ -145,6 +145,22 @@ describe('settingsStore', () => {
     });
 
     it('uses runtime-backed defaults when no stored settings exist', async () => {
+      mockGetRuntimeConfigAppSettingsOverrides.mockReturnValue({
+        serverManagedApi: true,
+        useCustomApiConfig: true,
+        useApiProxy: true,
+        apiProxyUrl: 'https://runtime-proxy.example.com/v1beta',
+      });
+      useSettingsStore.setState((state) => ({
+        ...state,
+        appSettings: {
+          ...state.appSettings,
+          serverManagedApi: false,
+          useCustomApiConfig: false,
+          useApiProxy: false,
+          apiProxyUrl: null,
+        },
+      }));
       vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
       await useSettingsStore.getState().loadSettings();
       const { appSettings } = useSettingsStore.getState();

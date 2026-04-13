@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { getRuntimeConfigAppSettingsOverrides } from './runtimeConfig';
 
-declare global {
-  interface Window {
-    __AMC_RUNTIME_CONFIG__?: Record<string, unknown>;
-  }
-}
-
 describe('runtimeConfig', () => {
   afterEach(() => {
     delete window.__AMC_RUNTIME_CONFIG__;
@@ -22,8 +16,7 @@ describe('runtimeConfig', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.runtime.example/v1beta',
-      ignored: 'value',
-    };
+    } as any;
 
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({
       serverManagedApi: true,

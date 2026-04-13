@@ -58,7 +58,6 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
 };
 
 export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
-const runtimeAppSettingsOverrides = getRuntimeConfigAppSettingsOverrides();
 
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
@@ -82,7 +81,7 @@ export const DEFAULT_CHAT_SETTINGS = {
   mediaResolution: DEFAULT_MEDIA_RESOLUTION,
 };
 
-export const DEFAULT_APP_SETTINGS: AppSettings = {
+const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
   ...DEFAULT_CHAT_SETTINGS,
   themeId: 'pearl', 
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
@@ -114,8 +113,16 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isPasteAsTextFileEnabled: true,
   isSystemAudioRecordingEnabled: false,
   customShortcuts: {}, // Empty object implies using defaults
-  ...runtimeAppSettingsOverrides,
 };
+
+export function getDefaultAppSettings(): AppSettings {
+  return {
+    ...BASE_DEFAULT_APP_SETTINGS,
+    ...getRuntimeConfigAppSettingsOverrides(),
+  };
+}
+
+export const DEFAULT_APP_SETTINGS: AppSettings = getDefaultAppSettings();
 
 export const SUGGESTIONS_KEYS = [
   { titleKey: 'suggestion_html_title', descKey: 'suggestion_html_desc', shortKey: 'suggestion_html_short', specialAction: 'organize', icon: 'AppWindow' },

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { AppSettings } from '../types';
 import { Theme } from '../types/theme';
-import { DEFAULT_APP_SETTINGS, DEFAULT_FILES_API_CONFIG } from '../constants/appConstants';
+import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
 import { logService } from '../utils/appUtils';
 import { dbService } from '../utils/db';
@@ -49,10 +49,17 @@ function getSettingsChannel(): BroadcastChannel {
   return settingsChannel;
 }
 
+function buildDefaultSettingsState() {
+  const appSettings = getDefaultAppSettings();
+  return {
+    appSettings,
+    currentTheme: computeTheme(appSettings.themeId),
+    language: resolveLanguage(appSettings.language),
+  };
+}
+
 export const useSettingsStore = create<SettingsState & SettingsActions>((set) => ({
-  appSettings: DEFAULT_APP_SETTINGS,
-  currentTheme: computeTheme(DEFAULT_APP_SETTINGS.themeId),
-  language: resolveLanguage(DEFAULT_APP_SETTINGS.language),
+  ...buildDefaultSettingsState(),
   isSettingsLoaded: false,
 
   setAppSettings: (v) => {
@@ -74,9 +81,10 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
 
   loadSettings: async () => {
     try {
+      const defaultSettings = getDefaultAppSettings();
       const storedSettings = await dbService.getAppSettings();
       if (storedSettings) {
-        const newSettings = { ...DEFAULT_APP_SETTINGS, ...storedSettings };
+        const newSettings = { ...defaultSettings, ...storedSettings };
         if (storedSettings.filesApiConfig) {
           newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
         }
@@ -88,9 +96,9 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
         });
       } else {
         set({
-          appSettings: DEFAULT_APP_SETTINGS,
-          currentTheme: computeTheme(DEFAULT_APP_SETTINGS.themeId),
-          language: resolveLanguage(DEFAULT_APP_SETTINGS.language),
+          appSettings: defaultSettings,
+          currentTheme: computeTheme(defaultSettings.themeId),
+          language: resolveLanguage(defaultSettings.language),
           isSettingsLoaded: true,
         });
       }
