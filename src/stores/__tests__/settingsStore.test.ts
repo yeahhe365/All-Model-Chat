@@ -4,19 +4,6 @@ const { mockGetRuntimeConfigAppSettingsOverrides } = vi.hoisted(() => ({
   mockGetRuntimeConfigAppSettingsOverrides: vi.fn(() => ({})),
 }));
 
-// Mock BroadcastChannel
-const mockPostMessage = vi.fn();
-// Mock BroadcastChannel - store creates its own singleton, capture it
-let capturedChannel: any = null;
-globalThis.BroadcastChannel = vi.fn(() => {
-  capturedChannel = {
-    postMessage: mockPostMessage,
-    onmessage: null as any,
-    close: vi.fn(),
-  };
-  return capturedChannel;
-}) as any;
-
 // Hoisted mocks
 vi.mock('../../utils/db', () => ({
   dbService: {
@@ -106,8 +93,6 @@ describe('settingsStore', () => {
       await vi.waitFor(() => {
         expect(dbService.setAppSettings).toHaveBeenCalled();
       });
-      // The store uses a singleton channel created on first access.
-      // Verify that setAppSettings + persist completed without error.
       expect(useSettingsStore.getState().appSettings.temperature).toBe(0.3);
     });
 
@@ -190,8 +175,6 @@ describe('settingsStore', () => {
 
   describe('broadcastSettingsUpdate', () => {
     it('calls broadcastSettingsUpdate', () => {
-      // broadcastSettingsUpdate calls getSettingsChannel().postMessage
-      // The channel is a module-level singleton, we just verify it doesn't throw
       expect(() => useSettingsStore.getState().broadcastSettingsUpdate()).not.toThrow();
     });
   });
