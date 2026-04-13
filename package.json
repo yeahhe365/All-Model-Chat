@@ -6,12 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:api": "tsc -p server/tsconfig.json",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
     "typecheck": "tsc --noEmit",
+    "start:api": "node server/dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
