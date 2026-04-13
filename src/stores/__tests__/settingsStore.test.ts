@@ -25,6 +25,16 @@ vi.mock('../../services/logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('../../runtime/runtimeConfig', () => ({
+  getRuntimeConfigAppSettingsOverrides: vi.fn(() => ({
+    serverManagedApi: true,
+    useCustomApiConfig: true,
+    useApiProxy: true,
+    apiProxyUrl: 'https://runtime-proxy.example.com/v1beta',
+  })),
+}));
+
+import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { useSettingsStore } from '../settingsStore';
 import { dbService } from '../../utils/db';
 
@@ -33,36 +43,7 @@ describe('settingsStore', () => {
     vi.clearAllMocks();
     // Reset store state between tests
     useSettingsStore.setState({
-      appSettings: {
-        modelId: 'gemini-3-flash-preview',
-        temperature: 1,
-        topP: 0.95,
-        topK: 64,
-        showThoughts: true,
-        systemInstruction: '',
-        ttsVoice: 'Zephyr',
-        thinkingBudget: -1,
-        thinkingLevel: 'HIGH',
-        themeId: 'pearl',
-        baseFontSize: 16,
-        useCustomApiConfig: false,
-        apiKey: null,
-        apiProxyUrl: '',
-        useApiProxy: false,
-        language: 'system',
-        isStreamingEnabled: true,
-        transcriptionModelId: 'gemini-3-flash-preview',
-        filesApiConfig: { images: false, pdfs: true, audio: true, video: true, text: false },
-        expandCodeBlocksByDefault: false,
-        isAutoTitleEnabled: true,
-        isMermaidRenderingEnabled: true,
-        isCompletionNotificationEnabled: false,
-        isSuggestionsEnabled: true,
-        isAudioCompressionEnabled: true,
-        autoCanvasVisualization: false,
-        autoCanvasModelId: 'gemini-3-flash-preview',
-        customShortcuts: {},
-      } as any,
+      appSettings: DEFAULT_APP_SETTINGS,
       currentTheme: { id: 'pearl', name: 'Pearl', colors: {} } as any,
       language: 'en',
       isSettingsLoaded: false,
@@ -161,6 +142,16 @@ describe('settingsStore', () => {
       vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
       await useSettingsStore.getState().loadSettings();
       expect(useSettingsStore.getState().isSettingsLoaded).toBe(true);
+    });
+
+    it('uses runtime-backed defaults when no stored settings exist', async () => {
+      vi.mocked(dbService.getAppSettings).mockResolvedValue(null);
+      await useSettingsStore.getState().loadSettings();
+      const { appSettings } = useSettingsStore.getState();
+      expect(appSettings.useCustomApiConfig).toBe(true);
+      expect(appSettings.useApiProxy).toBe(true);
+      expect(appSettings.apiProxyUrl).toBe('https://runtime-proxy.example.com/v1beta');
+      expect(appSettings.serverManagedApi).toBe(true);
     });
 
     it('handles DB errors gracefully', async () => {

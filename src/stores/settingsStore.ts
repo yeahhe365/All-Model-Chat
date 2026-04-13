@@ -87,7 +87,12 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
           isSettingsLoaded: true,
         });
       } else {
-        set({ isSettingsLoaded: true });
+        set({
+          appSettings: DEFAULT_APP_SETTINGS,
+          currentTheme: computeTheme(DEFAULT_APP_SETTINGS.themeId),
+          language: resolveLanguage(DEFAULT_APP_SETTINGS.language),
+          isSettingsLoaded: true,
+        });
       }
     } catch (error) {
       logService.error('Failed to load settings from IndexedDB', { error });

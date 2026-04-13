@@ -21,6 +21,7 @@ import {
     DEFAULT_TRANSCRIPTION_MODEL_ID
 } from './modelConstants';
 import { DEFAULT_SYSTEM_INSTRUCTION } from './promptConstants';
+import { getRuntimeConfigAppSettingsOverrides } from '../runtime/runtimeConfig';
 
 // Define constants that are truly app-level
 export const DEFAULT_IS_STREAMING_ENABLED = true; 
@@ -57,6 +58,7 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
 };
 
 export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+const runtimeAppSettingsOverrides = getRuntimeConfigAppSettingsOverrides();
 
 // Composite default objects
 export const DEFAULT_CHAT_SETTINGS = {
@@ -85,6 +87,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   themeId: 'pearl', 
   baseFontSize: DEFAULT_BASE_FONT_SIZE,
   useCustomApiConfig: false,
+  serverManagedApi: false,
   apiKey: null,
   apiProxyUrl: "https://api-proxy.de/gemini/v1beta",
   useApiProxy: false,
@@ -111,6 +114,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isPasteAsTextFileEnabled: true,
   isSystemAudioRecordingEnabled: false,
   customShortcuts: {}, // Empty object implies using defaults
+  ...runtimeAppSettingsOverrides,
 };
 
 export const SUGGESTIONS_KEYS = [
