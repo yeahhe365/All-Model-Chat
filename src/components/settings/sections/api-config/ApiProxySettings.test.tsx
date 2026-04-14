@@ -21,7 +21,7 @@ describe('ApiProxySettings', () => {
     document.body.innerHTML = '';
   });
 
-  it('does not render a Vertex Express shortcut button', () => {
+  it('renders a standard Gemini proxy request preview', () => {
     act(() => {
       root.render(
         <ApiProxySettings
@@ -34,7 +34,8 @@ describe('ApiProxySettings', () => {
       );
     });
 
-    expect(document.body).not.toHaveTextContent('Vertex Express');
-    expect(document.body).not.toHaveTextContent('apiConfig_vertexExpress_btn');
+    expect(document.body).toHaveTextContent(
+      'https://api-proxy.de/gemini/v1beta/models/gemini-2.5-flash:generateContent'
+    );
   });
 });

@@ -81,8 +81,7 @@
 
 ### 企业级 API 管理
 - **多 Key 轮询**：支持填入多个 API Key 自动分担压力
-- **API 代理**：内置 Network Interceptor（Fetch 拦截），动态重写请求路径
-- **Vertex AI 兼容**：原生支持 Vertex AI Express 端点，自动修复路径映射
+- **API 代理**：支持通过 SDK 原生 `baseUrl` 配置接入自定义 Gemini API 代理
 
 ### 多语言界面
 - 支持中文 / 英文 / 跟随系统三种语言设置
@@ -231,7 +230,7 @@ npm run preview  # 本地预览构建结果
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
-| **网络拦截** | 自定义 Fetch Interceptor，动态重写 SDK 请求路径以兼容代理与 Vertex AI |
+| **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
 | **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
 | **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API / HTML import map 零构建 |
 
@@ -315,7 +314,6 @@ All-Model-Chat/
 │   │   └── generationApi.ts    # 生成 API 聚合
 │   ├── geminiService.ts        # Gemini 服务层（统一接口）
 │   ├── logService.ts           # 日志服务
-│   ├── networkInterceptor.ts   # 网络拦截器（Fetch Monkey-Patch）
 │   ├── pyodideService.ts       # Pyodide Python 运行时（Web Worker）
 │   └── streamingStore.ts       # 流式数据存储
 ├── styles/                     # 样式文件

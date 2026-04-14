@@ -42,16 +42,20 @@ export const getClient = async (apiKey: string, baseUrl?: string | null, httpOpt
       }
       
       const config: any = { apiKey: sanitizedApiKey };
-      
-      // Use the SDK's native baseUrl support if provided.
-      // This is more robust than the network interceptor for SDK-generated requests.
+      const mergedHttpOptions = httpOptions ? { ...httpOptions } : undefined;
+
+      // Route proxy traffic through the SDK-supported HTTP options path.
       if (baseUrl && baseUrl.trim().length > 0) {
-          // Remove trailing slash for consistency
-          config.baseUrl = baseUrl.trim().replace(/\/$/, '');
+          const sanitizedBaseUrl = baseUrl.trim().replace(/\/$/, '');
+          if (mergedHttpOptions) {
+              mergedHttpOptions.baseUrl = sanitizedBaseUrl;
+          } else {
+              config.httpOptions = { baseUrl: sanitizedBaseUrl };
+          }
       }
 
-      if (httpOptions) {
-          config.httpOptions = httpOptions;
+      if (mergedHttpOptions) {
+          config.httpOptions = mergedHttpOptions;
       }
 
       const GoogleGenAIConstructor = await loadGoogleGenAI();

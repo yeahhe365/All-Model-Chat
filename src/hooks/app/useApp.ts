@@ -38,7 +38,7 @@ export const useApp = () => {
   const { appSettings, setAppSettings, currentTheme, language } = useAppSettings();
   const t = useMemo(() => getTranslator(language), [language]);
 
-  useAppInitialization(appSettings);
+  useAppInitialization();
 
   const chatState = useChat(appSettings, setAppSettings, language);
   const {

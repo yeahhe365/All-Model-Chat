@@ -51,16 +51,30 @@ describe('getClient', () => {
     expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: "test's-key-value" });
   });
 
-  it('passes baseUrl when provided', async () => {
+  it('passes proxy baseUrl via httpOptions when provided', async () => {
     await getClient('key', 'https://proxy.example.com/');
-    expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: 'key', baseUrl: 'https://proxy.example.com' });
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'key',
+      httpOptions: { baseUrl: 'https://proxy.example.com' },
+    });
   });
 
-  it('strips trailing slash from baseUrl', async () => {
+  it('strips trailing slash from proxy baseUrl', async () => {
     await getClient('key', 'https://proxy.example.com/');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      baseUrl: 'https://proxy.example.com',
+      httpOptions: { baseUrl: 'https://proxy.example.com' },
     }));
+  });
+
+  it('merges proxy baseUrl into existing httpOptions', async () => {
+    await getClient('key', 'https://proxy.example.com/', { apiVersion: 'v1alpha' });
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'key',
+      httpOptions: {
+        apiVersion: 'v1alpha',
+        baseUrl: 'https://proxy.example.com',
+      },
+    });
   });
 
   it('throws on invalid initialization', async () => {
@@ -99,7 +113,7 @@ describe('getConfiguredApiClient', () => {
     } as any);
     await getConfiguredApiClient('key');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      baseUrl: 'https://proxy.example.com',
+      httpOptions: { baseUrl: 'https://proxy.example.com' },
     }));
   });
 
@@ -115,7 +129,7 @@ describe('getConfiguredApiClient', () => {
     }));
     // baseUrl should not be in the config
     const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as any;
-    expect(callArgs.baseUrl).toBeUndefined();
+    expect(callArgs.httpOptions?.baseUrl).toBeUndefined();
   });
 });
 
@@ -147,6 +161,35 @@ describe('getLiveApiClient', () => {
     expect(GoogleGenAI).toHaveBeenCalledWith({
       apiKey: 'ephemeral-token-name',
       httpOptions: { apiVersion: 'v1alpha' },
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('applies proxy baseUrl to the live client when proxying is enabled', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ token: 'ephemeral-token-name' }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClient(
+      {
+        liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
+        useCustomApiConfig: true,
+        useApiProxy: true,
+        apiProxyUrl: 'https://proxy.example.com/v1beta/',
+      } as any,
+      { apiVersion: 'v1alpha' },
+    );
+
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'ephemeral-token-name',
+      httpOptions: {
+        apiVersion: 'v1alpha',
+        baseUrl: 'https://proxy.example.com/v1beta',
+      },
     });
 
     vi.unstubAllGlobals();
