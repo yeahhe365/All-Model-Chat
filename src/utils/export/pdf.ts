@@ -74,7 +74,10 @@ export const waitForElementToBecomeStable = async (
 
   await new Promise<void>((resolve, reject) => {
     let settledTimer: number | undefined;
-    let timeoutTimer: number | undefined;
+    const timeoutTimer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error('Timed out waiting for the PDF preview to finish rendering.'));
+    }, timeoutMs);
 
     const cleanup = () => {
       if (settledTimer !== undefined) {
@@ -127,11 +130,6 @@ export const waitForElementToBecomeStable = async (
       characterData: true,
       attributes: true,
     });
-
-    timeoutTimer = window.setTimeout(() => {
-      cleanup();
-      reject(new Error('Timed out waiting for the PDF preview to finish rendering.'));
-    }, timeoutMs);
 
     schedule();
   });

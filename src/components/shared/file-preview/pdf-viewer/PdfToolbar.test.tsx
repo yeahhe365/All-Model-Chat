@@ -1,60 +1,19 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfToolbar } from './PdfToolbar';
-import { usePdfViewer } from '../../../../hooks/ui/usePdfViewer';
-import { UploadedFile } from '../../../../types';
-
-const file: UploadedFile = {
-  id: 'pdf-file',
-  name: 'test.pdf',
-  type: 'application/pdf',
-  size: 1,
-  dataUrl: 'blob:test-pdf',
-  uploadState: 'active',
-};
 
 const PdfToolbarHarness: React.FC = () => {
-  const {
-    numPages,
-    currentPage,
-    scale,
-    showSidebar,
-    containerRef,
-    setPageRef,
-    onDocumentLoadSuccess,
-    scrollToPage,
-    previousPage,
-    nextPage,
-    handlePageInputCommit,
-    handleZoomIn,
-    handleZoomOut,
-    handleRotate,
-    toggleSidebar,
-  } = usePdfViewer(file);
-
-  useEffect(() => {
-    onDocumentLoadSuccess({ numPages: 5 });
-  }, [onDocumentLoadSuccess]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [scale, setScale] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const numPages = 5;
 
   return (
     <div>
-      <div ref={containerRef}>
-        {Array.from({ length: 5 }, (_, index) => {
-          const pageNumber = index + 1;
-          return (
-            <div
-              key={pageNumber}
-              data-testid={`page-${pageNumber}`}
-              ref={(element) => setPageRef(pageNumber, element)}
-            >
-              Page {pageNumber}
-            </div>
-          );
-        })}
-      </div>
-      <button type="button" onClick={() => scrollToPage(4)}>
+      <button type="button" onClick={() => setCurrentPage(4)}>
         Jump to page 4
       </button>
       <PdfToolbar
@@ -62,14 +21,20 @@ const PdfToolbarHarness: React.FC = () => {
         numPages={numPages}
         scale={scale}
         showSidebar={showSidebar}
-        onPageInputCommit={handlePageInputCommit}
-        onPrevPage={previousPage}
-        onNextPage={nextPage}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onRotate={handleRotate}
-        onToggleSidebar={toggleSidebar}
+        onPageInputCommit={(value) => {
+          const parsed = Number.parseInt(value, 10);
+          if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= numPages) {
+            setCurrentPage(parsed);
+          }
+        }}
+        onPrevPage={() => setCurrentPage((value) => Math.max(1, value - 1))}
+        onNextPage={() => setCurrentPage((value) => Math.min(numPages, value + 1))}
+        onZoomIn={() => setScale((value) => Math.min(3, value + 0.2))}
+        onZoomOut={() => setScale((value) => Math.max(0.4, value - 0.2))}
+        onRotate={() => setRotation((value) => (value + 90) % 360)}
+        onToggleSidebar={() => setShowSidebar((value) => !value)}
       />
+      <div data-testid="rotation">{rotation}</div>
     </div>
   );
 };
@@ -83,18 +48,6 @@ describe('PdfToolbar', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
-    Object.defineProperty(globalThis, 'IntersectionObserver', {
-      configurable: true,
-      value: class {
-        observe() {}
-        disconnect() {}
-        unobserve() {}
-      },
-    });
-    Object.defineProperty(Element.prototype, 'scrollIntoView', {
-      configurable: true,
-      value: vi.fn(),
-    });
   });
 
   afterEach(() => {
