@@ -196,7 +196,7 @@ export interface PyodideFile {
     type: string;
 }
 
-interface ExecutionResult {
+export interface ExecutionResult {
     output: string;
     image?: string;
     files?: PyodideFile[];
@@ -205,25 +205,61 @@ interface ExecutionResult {
     status: 'success' | 'error';
 }
 
-class PyodideService {
+interface PyodideServiceDependencies {
+    baseUri?: string;
+    createWorker?: (url: string) => Worker;
+    createObjectUrl?: (blob: Blob) => string;
+    revokeObjectUrl?: (url: string) => void;
+    setTimeoutFn?: typeof setTimeout;
+    createRequestId?: () => string;
+}
+
+export const buildPyodideWorkerScript = (baseUri: string) => {
+    const pyodideBaseUrl = new URL('pyodide/', baseUri).toString();
+
+    return {
+        pyodideBaseUrl,
+        workerCode: WORKER_CODE_TEMPLATE.replace(/__PYODIDE_BASE_URL__/g, pyodideBaseUrl),
+    };
+};
+
+export class PyodideService {
     private worker: Worker | null = null;
     private pendingPromises = new Map<string, { resolve: (val: any) => void, reject: (err: any) => void }>();
+    private readonly baseUri: string | undefined;
+    private readonly createWorker: (url: string) => Worker;
+    private readonly createObjectUrl: (blob: Blob) => string;
+    private readonly revokeObjectUrl: (url: string) => void;
+    private readonly setTimeoutFn: typeof setTimeout;
+    private readonly createRequestId: () => string;
+
+    constructor({
+        baseUri,
+        createWorker,
+        createObjectUrl,
+        revokeObjectUrl,
+        setTimeoutFn,
+        createRequestId,
+    }: PyodideServiceDependencies = {}) {
+        this.baseUri = baseUri;
+        this.createWorker = createWorker ?? ((url) => new Worker(url));
+        this.createObjectUrl = createObjectUrl ?? ((blob) => URL.createObjectURL(blob));
+        this.revokeObjectUrl = revokeObjectUrl ?? ((url) => URL.revokeObjectURL(url));
+        this.setTimeoutFn = setTimeoutFn ?? setTimeout;
+        this.createRequestId = createRequestId ?? (() => Math.random().toString(36).substring(7));
+    }
 
     private initWorker() {
         if (!this.worker) {
-            // Dynamically construct the base URL for Pyodide based on the current location.
-            // This ensures it works both in dev (localhost) and production (domain.com/base/pyodide/).
-            const pyodideBaseUrl = new URL('pyodide/', document.baseURI).toString();
-
-            const workerCode = WORKER_CODE_TEMPLATE.replace(/__PYODIDE_BASE_URL__/g, pyodideBaseUrl);
+            const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript(this.baseUri ?? document.baseURI);
             const blob = new Blob([workerCode], { type: 'application/javascript' });
-            const url = URL.createObjectURL(blob);
+            const url = this.createObjectUrl(blob);
             
-            this.worker = new Worker(url);
+            this.worker = this.createWorker(url);
             this.worker.onmessage = this.handleMessage.bind(this);
             
             // Clean up the object URL after worker creation
-            URL.revokeObjectURL(url);
+            this.revokeObjectUrl(url);
             
             logService.info("Pyodide Worker initialized (Local Mode)", { baseUrl: pyodideBaseUrl });
         }
@@ -236,7 +272,7 @@ class PyodideService {
         if (promise) {
             if (status === 'success') {
                 if (type === 'MOUNT_COMPLETE') {
-                    promise.resolve(true);
+                    promise.resolve(undefined);
                 } else {
                     promise.resolve({ output, image, files, result });
                 }
@@ -249,7 +285,7 @@ class PyodideService {
 
     public async mountFiles(files: UploadedFile[]): Promise<void> {
         this.initWorker();
-        const id = Math.random().toString(36).substring(7);
+        const id = this.createRequestId();
 
         // Filter and read files that have raw data
         const filesToMount = await Promise.all(files.map(async (f) => {
@@ -277,7 +313,7 @@ class PyodideService {
              }, buffers);
 
              // Shorter timeout for mounting
-             setTimeout(() => {
+             this.setTimeoutFn(() => {
                 if (this.pendingPromises.has(id)) {
                     this.pendingPromises.delete(id);
                     // Don't reject, just warn, as execution might still work if files weren't critical
@@ -290,14 +326,14 @@ class PyodideService {
 
     public async runPython(code: string): Promise<ExecutionResult> {
         this.initWorker();
-        const id = Math.random().toString(36).substring(7);
+        const id = this.createRequestId();
         
         return new Promise<ExecutionResult>((resolve, reject) => {
             this.pendingPromises.set(id, { resolve, reject });
             this.worker?.postMessage({ id, code });
             
             // Timeout safety
-            setTimeout(() => {
+            this.setTimeoutFn(() => {
                 if (this.pendingPromises.has(id)) {
                     this.pendingPromises.delete(id);
                     reject(new Error("Execution timed out (60s)"));

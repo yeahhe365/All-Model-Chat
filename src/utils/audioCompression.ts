@@ -43,6 +43,75 @@ self.onmessage = function(e) {
 };
 `;
 
+interface EncodeMp3WithWorkerOptions {
+    pcmData: Float32Array;
+    sampleRate: number;
+    kbps: number;
+    file: File | Blob;
+    signal?: AbortSignal;
+    createWorker?: (url: string) => Worker;
+    createObjectUrl?: (blob: Blob) => string;
+    revokeObjectUrl?: (url: string) => void;
+}
+
+export const createAudioCompressionWorkerCode = () => WORKER_CODE;
+
+export const encodeMp3WithWorker = async ({
+    pcmData,
+    sampleRate,
+    kbps,
+    file,
+    signal,
+    createWorker,
+    createObjectUrl,
+    revokeObjectUrl,
+}: EncodeMp3WithWorkerOptions): Promise<File> => {
+    return new Promise((resolve, reject) => {
+        const workerBlob = new Blob([createAudioCompressionWorkerCode()], { type: 'application/javascript' });
+        const workerUrl = (createObjectUrl ?? URL.createObjectURL)(workerBlob);
+        const worker = (createWorker ?? ((url: string) => new Worker(url)))(workerUrl);
+
+        const cleanup = () => {
+            worker.terminate();
+            (revokeObjectUrl ?? URL.revokeObjectURL)(workerUrl);
+        };
+
+        if (signal) {
+            if (signal.aborted) {
+                cleanup();
+                reject(new DOMException('Aborted', 'AbortError'));
+                return;
+            }
+            signal.addEventListener('abort', () => {
+                cleanup();
+                reject(new DOMException('Aborted', 'AbortError'));
+            }, { once: true });
+        }
+
+        worker.onmessage = (e) => {
+            if (e.data.type === 'success') {
+                const mp3Blob = new Blob(e.data.buffers, { type: 'audio/mpeg' });
+                const originalName = (file as File).name || `audio-${Date.now()}`;
+                const newName = originalName.replace(/\.[^/.]+$/, "") + ".mp3";
+                cleanup();
+                resolve(new File([mp3Blob], newName, { type: 'audio/mpeg' }));
+            } else {
+                cleanup();
+                const originalName = (file as File).name || `recording-${Date.now()}.wav`;
+                resolve(new File([file], originalName, { type: file.type || "audio/wav" }));
+            }
+        };
+
+        worker.onerror = () => {
+            cleanup();
+            const originalName = (file as File).name || `recording-${Date.now()}.wav`;
+            resolve(new File([file], originalName, { type: file.type || "audio/wav" }));
+        };
+
+        worker.postMessage({ pcmData, sampleRate, kbps }, [pcmData.buffer]);
+    });
+};
+
 export const compressAudioToMp3 = async (file: File | Blob, signal?: AbortSignal): Promise<File> => {
     const checkAbort = () => {
         if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
@@ -97,48 +166,12 @@ export const compressAudioToMp3 = async (file: File | Blob, signal?: AbortSignal
         checkAbort();
         const pcmData = renderedBuffer.getChannelData(0);
 
-        return new Promise((resolve, reject) => {
-            const blob = new Blob([WORKER_CODE], { type: 'application/javascript' });
-            const workerUrl = URL.createObjectURL(blob);
-            const worker = new Worker(workerUrl);
-
-            const cleanup = () => {
-                worker.terminate();
-                URL.revokeObjectURL(workerUrl);
-            };
-
-            if (signal) {
-                if (signal.aborted) {
-                    cleanup();
-                    return reject(new DOMException('Aborted', 'AbortError'));
-                }
-                signal.addEventListener('abort', () => {
-                    cleanup();
-                    reject(new DOMException('Aborted', 'AbortError'));
-                });
-            }
-
-            worker.onmessage = (e) => {
-                if (e.data.type === 'success') {
-                    const mp3Blob = new Blob(e.data.buffers, { type: 'audio/mpeg' });
-                    const originalName = (file as File).name || `audio-${Date.now()}`;
-                    const newName = originalName.replace(/\.[^/.]+$/, "") + ".mp3";
-                    cleanup();
-                    resolve(new File([mp3Blob], newName, { type: 'audio/mpeg' }));
-                } else {
-                    fallbackToOriginal();
-                }
-            };
-
-            worker.onerror = () => fallbackToOriginal();
-
-            const fallbackToOriginal = () => {
-                cleanup();
-                const originalName = (file as File).name || `recording-${Date.now()}.wav`;
-                resolve(new File([file], originalName, { type: file.type || "audio/wav" }));
-            };
-
-            worker.postMessage({ pcmData, sampleRate: targetSampleRate, kbps: 64 }, [pcmData.buffer]);
+        return encodeMp3WithWorker({
+            pcmData,
+            sampleRate: targetSampleRate,
+            kbps: 64,
+            file,
+            signal,
         });
     } catch (error) {
         if ((error instanceof DOMException && error.name === 'AbortError') || (error instanceof Error && error.name === 'AbortError')) {

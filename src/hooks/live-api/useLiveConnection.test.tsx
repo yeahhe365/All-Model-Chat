@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   mockGetLiveApiClient,
@@ -62,7 +62,12 @@ const renderHook = <T,>(callback: () => T) => {
 describe('useLiveConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
     mockFloat32ToPCM16Base64.mockReturnValue('pcm-base64');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('sends text with sendRealtimeInput for live sessions', async () => {
@@ -184,6 +189,7 @@ describe('useLiveConnection', () => {
 
     await act(async () => {
       await result.current.connect();
+      await Promise.resolve();
     });
 
     expect(audioCallback).not.toBeNull();
@@ -233,6 +239,236 @@ describe('useLiveConnection', () => {
 
     expect(result.current.error).toBe('Live API requires an ephemeral token endpoint.');
     expect(result.current.isReconnecting).toBe(false);
+    unmount();
+  });
+
+  it('reconnects with exponential backoff after unexpected disconnects', async () => {
+    vi.useFakeTimers();
+
+    const callbacksByAttempt: Array<{
+      onopen?: () => void;
+      onclose?: (event: unknown) => void;
+    }> = [];
+
+    const connectLiveSession = vi.fn(({ callbacks }) => {
+      callbacksByAttempt.push(callbacks);
+      callbacks.onopen?.();
+      return Promise.resolve({
+        sendRealtimeInput: vi.fn(),
+        close: vi.fn(),
+      });
+    });
+
+    mockGetLiveApiClient
+      .mockResolvedValueOnce({
+        live: {
+          connect: connectLiveSession,
+        },
+      })
+      .mockRejectedValueOnce(new Error('temporary outage'))
+      .mockResolvedValueOnce({
+        live: {
+          connect: connectLiveSession,
+        },
+      });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        chatSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(connectLiveSession).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      callbacksByAttempt[0]?.onclose?.({ reason: 'network-blip' });
+      await Promise.resolve();
+    });
+
+    expect(vi.getTimerCount()).toBe(1);
+
+    act(() => {
+      vi.advanceTimersByTime(999);
+    });
+    expect(connectLiveSession).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(mockGetLiveApiClient).toHaveBeenCalledTimes(2);
+    expect(connectLiveSession).toHaveBeenCalledTimes(1);
+
+    expect(vi.getTimerCount()).toBe(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1999);
+      await Promise.resolve();
+    });
+    expect(mockGetLiveApiClient).toHaveBeenCalledTimes(2);
+    expect(connectLiveSession).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1);
+      await Promise.resolve();
+    });
+    expect(mockGetLiveApiClient).toHaveBeenCalledTimes(3);
+    expect(connectLiveSession).toHaveBeenCalledTimes(2);
+
+    unmount();
+  });
+
+  it('cancels a pending reconnect when the user disconnects manually', async () => {
+    vi.useFakeTimers();
+
+    const callbacksByAttempt: Array<{
+      onopen?: () => void;
+      onclose?: (event: unknown) => void;
+    }> = [];
+    const close = vi.fn();
+    const sessionRef = { current: null as any };
+    const sessionHandleRef = { current: null as string | null };
+
+    const connectLiveSession = vi.fn(({ callbacks }) => {
+      callbacksByAttempt.push(callbacks);
+      callbacks.onopen?.();
+      return Promise.resolve({
+        sendRealtimeInput: vi.fn(),
+        close,
+      });
+    });
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: connectLiveSession,
+      },
+    });
+
+    const onClose = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        chatSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        onClose,
+        setSessionHandle: vi.fn(),
+        sessionHandleRef,
+        sessionRef,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.connect();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      callbacksByAttempt[0]?.onclose?.({ reason: 'unexpected-drop' });
+      await Promise.resolve();
+    });
+
+    expect(vi.getTimerCount()).toBe(1);
+
+    await act(async () => {
+      result.current.disconnect();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(30_000);
+      await Promise.resolve();
+    });
+
+    expect(connectLiveSession).toHaveBeenCalledTimes(1);
+    expect(close).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it('does not queue duplicate reconnect timers for one disconnect event burst', async () => {
+    vi.useFakeTimers();
+
+    const callbacksByAttempt: Array<{
+      onopen?: () => void;
+      onclose?: (event: unknown) => void;
+      onerror?: (error: Error) => void;
+    }> = [];
+
+    const connectLiveSession = vi.fn(({ callbacks }) => {
+      callbacksByAttempt.push(callbacks);
+      callbacks.onopen?.();
+      return Promise.resolve({
+        sendRealtimeInput: vi.fn(),
+        close: vi.fn(),
+      });
+    });
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: connectLiveSession,
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        chatSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.connect();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      callbacksByAttempt[0]?.onerror?.(new Error('socket error'));
+      callbacksByAttempt[0]?.onclose?.({ reason: 'socket closed' });
+      await Promise.resolve();
+    });
+
+    expect(vi.getTimerCount()).toBe(1);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
+
+    expect(connectLiveSession).toHaveBeenCalledTimes(2);
+
     unmount();
   });
 });

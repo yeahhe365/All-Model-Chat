@@ -44,11 +44,17 @@ export const useLiveConnection = ({
 
     // Ref to track connection state synchronously for audio callbacks
     const isConnectedRef = useRef(false);
+    const isReconnectingRef = useRef(false);
+    const disconnectRef = useRef<() => void>(() => {});
 
     // Sync Ref with State (Keep as a fallback for external state changes)
     useEffect(() => {
         isConnectedRef.current = isConnected;
     }, [isConnected]);
+
+    useEffect(() => {
+        isReconnectingRef.current = isReconnecting;
+    }, [isReconnecting]);
 
     // Reconnection Refs
     const retryCountRef = useRef(0);
@@ -60,6 +66,10 @@ export const useLiveConnection = ({
     const baseDelay = 1000;
 
     const triggerReconnect = useCallback(() => {
+        if (reconnectTimeoutRef.current) {
+            return;
+        }
+
         if (retryCountRef.current >= maxRetries) {
             logService.error("Max reconnection attempts reached.");
             setError("Connection lost. Please try again.");
@@ -83,6 +93,7 @@ export const useLiveConnection = ({
         setError(`Connection lost. Reconnecting... (${attempt}/${maxRetries})`);
         
         reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
             retryCountRef.current++;
             connectRef.current(); // Call the latest connect function
         }, delay);
@@ -259,15 +270,19 @@ export const useLiveConnection = ({
         connectRef.current = connect;
     }, [connect]);
 
+    useEffect(() => {
+        disconnectRef.current = disconnect;
+    }, [disconnect]);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
             isUserDisconnectRef.current = true;
-            if (isConnected || isReconnecting) {
-                disconnect();
+            if (isConnectedRef.current || isReconnectingRef.current) {
+                disconnectRef.current();
             }
         };
-    }, [disconnect, isConnected, isReconnecting]);
+    }, []);
 
     return {
         isConnected,
