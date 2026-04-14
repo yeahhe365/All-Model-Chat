@@ -1,22 +1,23 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { CodeBlock } from './blocks/CodeBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { ToolResultBlock } from './blocks/ToolResultBlock';
+import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
 import { UploadedFile, SideViewContent } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { InlineCode } from './code-block/InlineCode';
 
-const LazyMermaidBlock = lazy(async () => {
+const loadMermaidBlock = async () => {
   const module = await import('./blocks/MermaidBlock');
   return { default: module.MermaidBlock };
-});
+};
 
-const LazyGraphvizBlock = lazy(async () => {
+const loadGraphvizBlock = async () => {
   const module = await import('./blocks/GraphvizBlock');
   return { default: module.GraphvizBlock };
-});
+};
 
 export interface MarkdownRendererProps {
   content: string;
@@ -32,6 +33,8 @@ export interface MarkdownRendererProps {
   onOpenSidePanel: (content: SideViewContent) => void;
   hideThinkingInContext?: boolean;
   files?: UploadedFile[];
+  diagramLoadMode?: 'deferred' | 'eager';
+  diagramRenderDelayMs?: number;
 }
 
 interface BaseMarkdownRendererProps extends MarkdownRendererProps {
@@ -52,21 +55,11 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
   onOpenSidePanel,
   hideThinkingInContext,
   files,
+  diagramLoadMode = 'deferred',
+  diagramRenderDelayMs = 500,
   remarkPlugins,
   rehypePlugins,
 }) => {
-  const mermaidFallback = useMemo(() => (
-    <div className="my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] p-4 text-sm text-[var(--theme-text-secondary)]">
-      Loading Mermaid renderer...
-    </div>
-  ), []);
-
-  const graphvizFallback = useMemo(() => (
-    <div className="my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] p-4 text-sm text-[var(--theme-text-secondary)]">
-      Loading diagram renderer...
-    </div>
-  ), []);
-
   const components = useMemo(() => ({
     code: (props: any) => {
       return <InlineCode {...props} />;
@@ -154,17 +147,37 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
 
       if (isMermaidRenderingEnabled && language === 'mermaid' && typeof rawCode === 'string') {
         return (
-          <Suspense fallback={mermaidFallback}>
-            <LazyMermaidBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} onOpenSidePanel={onOpenSidePanel} />
-          </Suspense>
+          <DeferredDiagramBlock
+            label={`Mermaid ${t('preview')}`}
+            load={loadMermaidBlock}
+            componentProps={{
+              code: rawCode,
+              onImageClick,
+              isLoading,
+              renderDelayMs: diagramRenderDelayMs,
+              themeId,
+              onOpenSidePanel,
+            }}
+            eager={diagramLoadMode === 'eager'}
+          />
         );
       }
 
       if (isGraphvizRenderingEnabled && isGraphviz && typeof rawCode === 'string') {
         return (
-          <Suspense fallback={graphvizFallback}>
-            <LazyGraphvizBlock code={rawCode} onImageClick={onImageClick} isLoading={isLoading} themeId={themeId} onOpenSidePanel={onOpenSidePanel} />
-          </Suspense>
+          <DeferredDiagramBlock
+            label={`Graphviz ${t('preview')}`}
+            load={loadGraphvizBlock}
+            componentProps={{
+              code: rawCode,
+              onImageClick,
+              isLoading,
+              renderDelayMs: diagramRenderDelayMs,
+              themeId,
+              onOpenSidePanel,
+            }}
+            eager={diagramLoadMode === 'eager'}
+          />
         );
       }
 
@@ -181,7 +194,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         </CodeBlock>
       );
     }
-  }), [onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files, mermaidFallback, graphvizFallback]);
+  }), [diagramLoadMode, diagramRenderDelayMs, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files]);
 
   const processedContent = useMemo(() => {
     if (!content) return '';
