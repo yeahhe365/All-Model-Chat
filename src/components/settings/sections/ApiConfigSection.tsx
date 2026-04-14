@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound } from 'lucide-react';
 import type { ModelOption } from '../../../types';
+import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
@@ -28,7 +29,6 @@ interface ApiConfigSectionProps {
   availableModels?: ModelOption[];
   liveApiEphemeralTokenEndpoint?: string | null;
   setLiveApiEphemeralTokenEndpoint?: (value: string | null) => void;
-  t: (key: string) => string;
 }
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
@@ -43,8 +43,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   serverManagedApi = false,
   liveApiEphemeralTokenEndpoint = null,
   setLiveApiEphemeralTokenEndpoint,
-  t,
 }) => {
+  const { t } = useI18n();
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
@@ -157,7 +157,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           useCustomApiConfig={useCustomApiConfig}
           setUseCustomApiConfig={handleUseCustomApiConfigChange}
           hasEnvKey={hasEnvKey}
-          t={t}
         />
 
         <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
@@ -168,7 +167,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 setApiKey(val);
                 setTestStatus('idle');
               }}
-              t={t}
             />
 
             <ApiProxySettings
@@ -182,7 +180,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 setApiProxyUrl(val);
                 setTestStatus('idle');
               }}
-              t={t}
             />
 
             <div className="space-y-2 pt-2">
@@ -214,7 +211,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               availableModels={CONNECTION_TEST_MODELS}
               testModelId={testModelId}
               onModelChange={setTestModelId}
-              t={t}
             />
           </div>
         </div>

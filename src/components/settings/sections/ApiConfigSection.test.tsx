@@ -1,6 +1,8 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../contexts/I18nContext';
+import { useSettingsStore } from '../../../stores/settingsStore';
 import { SERVER_MANAGED_API_KEY } from '../../../utils/apiUtils';
 import { ApiConfigSection } from './ApiConfigSection';
 
@@ -30,6 +32,7 @@ vi.mock('../../../services/logService', () => ({
 describe('ApiConfigSection', () => {
   let container: HTMLDivElement;
   let root: Root;
+  const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
     (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -51,29 +54,34 @@ describe('ApiConfigSection', () => {
       root.unmount();
     });
     container.remove();
+    useSettingsStore.setState(initialState);
   });
 
   it('allows running connection test in server-managed mode without a browser-held key', async () => {
     await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
       root.render(
-        <ApiConfigSection
-          useCustomApiConfig
-          setUseCustomApiConfig={vi.fn()}
-          apiKey={null}
-          setApiKey={vi.fn()}
-          apiProxyUrl="https://proxy.example.com/v1beta"
-          setApiProxyUrl={vi.fn()}
-          useApiProxy
-          setUseApiProxy={vi.fn()}
-          serverManagedApi
-          availableModels={[]}
-          t={(key) => key}
-        />
+        <I18nProvider>
+          <ApiConfigSection
+            useCustomApiConfig
+            setUseCustomApiConfig={vi.fn()}
+            apiKey={null}
+            setApiKey={vi.fn()}
+            apiProxyUrl="https://proxy.example.com/v1beta"
+            setApiProxyUrl={vi.fn()}
+            useApiProxy
+            setUseApiProxy={vi.fn()}
+            serverManagedApi
+            availableModels={[]}
+          />
+        </I18nProvider>
       );
     });
 
+    expect(container.textContent).toContain('API Configuration');
+
     const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('apiConfig_testConnection')
+      button.textContent?.includes('Test Connection')
     );
 
     expect(testButton).toBeDefined();
@@ -97,5 +105,36 @@ describe('ApiConfigSection', () => {
         contents: 'Hello',
       });
     });
+  });
+
+  it('updates translated labels when the global language changes', async () => {
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <ApiConfigSection
+            useCustomApiConfig
+            setUseCustomApiConfig={vi.fn()}
+            apiKey={null}
+            setApiKey={vi.fn()}
+            apiProxyUrl={null}
+            setApiProxyUrl={vi.fn()}
+            useApiProxy={false}
+            setUseApiProxy={vi.fn()}
+            availableModels={[]}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.textContent).toContain('API Configuration');
+    expect(container.textContent).toContain('Test Connection');
+
+    act(() => {
+      useSettingsStore.setState({ language: 'zh' });
+    });
+
+    expect(container.textContent).toContain('API 配置');
+    expect(container.textContent).toContain('测试连通性');
   });
 });

@@ -1,13 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { Github, Star, ExternalLink } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
 import { AppLogo } from '../../icons/AppLogo';
 import { useResponsiveValue } from '../../../hooks/useDevice';
-
-interface AboutSectionProps {
-  t: (key: keyof typeof translations) => string;
-}
 
 const compareVersions = (v1: string, v2: string) => {
   const parts1 = v1.replace(/^v/, '').split('.').map(Number);
@@ -22,7 +18,8 @@ const compareVersions = (v1: string, v2: string) => {
   return 0; // Equal
 };
 
-export const AboutSection: React.FC<AboutSectionProps> = ({ t }) => {
+export const AboutSection: React.FC = () => {
+  const { t } = useI18n();
   const iconSize = useResponsiveValue(18, 20);
   const currentVersion = "1.8.8"; 
   const [stars, setStars] = useState<number | null>(null);
