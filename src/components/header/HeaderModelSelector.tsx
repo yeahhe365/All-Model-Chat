@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import { Zap } from 'lucide-react';
 import { ModelOption } from '../../types';
+import { useI18n } from '../../contexts/I18nContext';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
 import { ModelPicker } from '../shared/ModelPicker';
 import { getModelCapabilities } from '../../utils/modelHelpers';
@@ -13,7 +14,6 @@ interface HeaderModelSelectorProps {
   onSelectModel: (modelId: string) => void;
   isSwitchingModel: boolean;
   isLoading: boolean;
-  t: (key: string) => string;
   thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
   onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
 }
@@ -25,10 +25,10 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   onSelectModel,
   isSwitchingModel,
   isLoading,
-  t,
   thinkingLevel,
   onSetThinkingLevel,
 }) => {
+  const { t } = useI18n();
   const displayModelName = currentModelName;
 
   const abbreviatedModelName = useMemo(() => {

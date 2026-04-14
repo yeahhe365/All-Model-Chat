@@ -1,6 +1,7 @@
 
 import React, { Suspense, lazy, useMemo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
+import { useI18n } from '../../contexts/I18nContext';
 import { Message } from '../message/Message';
 import { WelcomeScreen } from './message-list/WelcomeScreen';
 import { ScrollNavigation } from './message-list/ScrollNavigation';
@@ -23,6 +24,7 @@ const LazyFilePreviewModal = lazy(async () => {
 });
 
 const MessageListComponent: React.FC = () => {
+  const { t } = useI18n();
   const {
     messages,
     sessionTitle,
@@ -46,7 +48,6 @@ const MessageListComponent: React.FC = () => {
     onContinueGeneration,
     ttsMessageId,
     onQuickTTS,
-    t,
     chatInputHeight,
     appSettings,
     currentModelId,

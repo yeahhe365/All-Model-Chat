@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 interface MutableRequest<T> {
   result: T;
@@ -64,7 +64,7 @@ describe('dbService IndexedDB version fallback', () => {
   it('retries without an explicit version when the stored database version is newer', async () => {
     const existingDb = createMockDb();
     const versionError = new DOMException(
-      'The requested version (3) is less than the existing version (4).',
+      'The requested version (4) is less than the existing version (5).',
       'VersionError'
     );
 

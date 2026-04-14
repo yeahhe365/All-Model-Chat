@@ -122,7 +122,6 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       handleAppDragOver: vi.fn(),
       handleAppDragLeave: vi.fn(),
       handleAppDrop: vi.fn(),
-      t: ((key: string) => key) as any,
     },
     header: {
       currentModelName: 'Gemini 3.1 Pro',

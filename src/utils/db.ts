@@ -1,10 +1,16 @@
-import { AppSettings, ChatGroup, SavedChatSession, SavedScenario } from '../types';
+import { AppSettings, ChatGroup, PersistedSessionFileRecord, SavedChatSession, SavedScenario } from '../types';
 import { LogEntry } from '../services/logService';
+import {
+  attachPersistedSessionFiles,
+  extractPersistedSessionFileRecords,
+  stripSessionFilePayloads,
+} from './chat/session';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const SESSIONS_STORE = 'sessions';
+const FILES_STORE = 'files';
 const GROUPS_STORE = 'groups';
 const SCENARIOS_STORE = 'scenarios';
 const KEY_VALUE_STORE = 'keyValueStore';
@@ -46,12 +52,20 @@ const getDb = (): Promise<IDBDatabase> => {
           }
         }
 
-        // Version 3+: Add future migrations here
-        // if (oldVersion < 3) { ... }
+        if (oldVersion < 4) {
+          if (!db.objectStoreNames.contains(FILES_STORE)) {
+            const fileStore = db.createObjectStore(FILES_STORE, { keyPath: 'id' });
+            fileStore.createIndex('sessionId', 'sessionId', { unique: false });
+          }
+        }
 
         // Safety net: ensure all expected stores exist (e.g. if DB was partially created)
         if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(FILES_STORE)) {
+          const fileStore = db.createObjectStore(FILES_STORE, { keyPath: 'id' });
+          fileStore.createIndex('sessionId', 'sessionId', { unique: false });
         }
         if (!db.objectStoreNames.contains(GROUPS_STORE)) {
           db.createObjectStore(GROUPS_STORE, { keyPath: 'id' });
@@ -146,23 +160,98 @@ async function setAll<T>(storeName: string, values: T[]): Promise<void> {
   });
 }
 
-async function put<T>(storeName: string, value: T): Promise<void> {
+const getSessionFileRecords = async (sessionId: string): Promise<PersistedSessionFileRecord[]> => {
+  const db = await getDb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(FILES_STORE, 'readonly');
+    const index = tx.objectStore(FILES_STORE).index('sessionId');
+    const request = index.getAll(sessionId);
+    request.onsuccess = () => resolve((request.result as PersistedSessionFileRecord[]) || []);
+    request.onerror = () => reject(request.error);
+  });
+};
+
+const persistSessionRecord = async (session: SavedChatSession): Promise<void> => {
   return withWriteLock(async () => {
     const db = await getDb();
-    const tx = db.transaction(storeName, 'readwrite');
-    tx.objectStore(storeName).put(value);
+    const tx = db.transaction([SESSIONS_STORE, FILES_STORE], 'readwrite');
+    const sessionStore = tx.objectStore(SESSIONS_STORE);
+    const fileStore = tx.objectStore(FILES_STORE);
+    const fileIndex = fileStore.index('sessionId');
+
+    const sanitizedSession = stripSessionFilePayloads(session);
+    const fileRecords = extractPersistedSessionFileRecords(session);
+    const nextFileIds = new Set(fileRecords.map((record) => record.id));
+
+    sessionStore.put(sanitizedSession);
+    fileRecords.forEach((record) => fileStore.put(record));
+
+    const cleanupRequest = fileIndex.openCursor(IDBKeyRange.only(session.id));
+    cleanupRequest.onsuccess = () => {
+      const cursor = cleanupRequest.result;
+      if (!cursor) {
+        return;
+      }
+
+      if (!nextFileIds.has(cursor.primaryKey as string)) {
+        fileStore.delete(cursor.primaryKey);
+      }
+      cursor.continue();
+    };
+    cleanupRequest.onerror = () => {
+      tx.abort();
+    };
+
     return transactionToPromise(tx);
   });
-}
+};
 
-async function deleteItem(storeName: string, key: string): Promise<void> {
+const persistAllSessionRecords = async (sessions: SavedChatSession[]): Promise<void> => {
   return withWriteLock(async () => {
-      const db = await getDb();
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).delete(key);
-      return transactionToPromise(tx);
+    const db = await getDb();
+    const tx = db.transaction([SESSIONS_STORE, FILES_STORE], 'readwrite');
+    const sessionStore = tx.objectStore(SESSIONS_STORE);
+    const fileStore = tx.objectStore(FILES_STORE);
+
+    sessionStore.clear();
+    fileStore.clear();
+
+    sessions.forEach((session) => {
+      sessionStore.put(stripSessionFilePayloads(session));
+      extractPersistedSessionFileRecords(session).forEach((record) => fileStore.put(record));
+    });
+
+    return transactionToPromise(tx);
   });
-}
+};
+
+const deleteSessionRecord = async (id: string): Promise<void> => {
+  return withWriteLock(async () => {
+    const db = await getDb();
+    const tx = db.transaction([SESSIONS_STORE, FILES_STORE], 'readwrite');
+    const sessionStore = tx.objectStore(SESSIONS_STORE);
+    const fileStore = tx.objectStore(FILES_STORE);
+    const fileIndex = fileStore.index('sessionId');
+
+    sessionStore.delete(id);
+
+    const cleanupRequest = fileIndex.openCursor(IDBKeyRange.only(id));
+    cleanupRequest.onsuccess = () => {
+      const cursor = cleanupRequest.result;
+      if (!cursor) {
+        return;
+      }
+
+      fileStore.delete(cursor.primaryKey);
+      cursor.continue();
+    };
+    cleanupRequest.onerror = () => {
+      tx.abort();
+    };
+
+    return transactionToPromise(tx);
+  });
+};
 
 async function getKeyValue<T>(key: string): Promise<T | undefined> {
   const db = await getDb();
@@ -179,10 +268,35 @@ async function setKeyValue<T>(key: string, value: T): Promise<void> {
 }
 
 export const dbService = {
-  getAllSessions: () => getAll<SavedChatSession>(SESSIONS_STORE),
+  getAllSessions: async () => {
+    const sessions = await getAll<SavedChatSession>(SESSIONS_STORE);
+    return Promise.all(sessions.map((session) => dbService.getSession(session.id))).then((results) =>
+      results.filter((session): session is SavedChatSession => !!session),
+    );
+  },
   
   // New method: Fetches a single session by ID
-  getSession: (id: string) => getItem<SavedChatSession>(SESSIONS_STORE, id),
+  getSession: async (id: string) => {
+      const session = await getItem<SavedChatSession>(SESSIONS_STORE, id);
+      if (!session) {
+        return session;
+      }
+
+      const persistedRecords = await getSessionFileRecords(id);
+      const inlineRecords = extractPersistedSessionFileRecords(session);
+      const combinedRecords = new Map<string, PersistedSessionFileRecord>();
+
+      persistedRecords.forEach((record) => combinedRecords.set(record.id, record));
+      inlineRecords.forEach((record) => combinedRecords.set(record.id, record));
+
+      const hydratedSession = attachPersistedSessionFiles(stripSessionFilePayloads(session), combinedRecords);
+
+      if (inlineRecords.length > 0) {
+        await persistSessionRecord(hydratedSession);
+      }
+
+      return hydratedSession;
+  },
 
   // New method: Fetches all sessions but excludes the heavy 'messages' array
   getAllSessionMetadata: async (): Promise<SavedChatSession[]> => {
@@ -246,9 +360,9 @@ export const dbService = {
       });
   },
 
-  setAllSessions: (sessions: SavedChatSession[]) => setAll<SavedChatSession>(SESSIONS_STORE, sessions),
-  saveSession: (session: SavedChatSession) => put<SavedChatSession>(SESSIONS_STORE, session),
-  deleteSession: (id: string) => deleteItem(SESSIONS_STORE, id),
+  setAllSessions: (sessions: SavedChatSession[]) => persistAllSessionRecords(sessions),
+  saveSession: (session: SavedChatSession) => persistSessionRecord(session),
+  deleteSession: (id: string) => deleteSessionRecord(id),
   
   getAllGroups: () => getAll<ChatGroup>(GROUPS_STORE),
   setAllGroups: (groups: ChatGroup[]) => setAll<ChatGroup>(GROUPS_STORE, groups),
@@ -307,7 +421,7 @@ export const dbService = {
   }),
   clearAllData: () => withWriteLock(async () => {
       const db = await getDb();
-      const storeNames = [SESSIONS_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
+      const storeNames = [SESSIONS_STORE, FILES_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
       const tx = db.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) tx.objectStore(storeName).clear();
       return transactionToPromise(tx);

@@ -3,6 +3,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MessageList } from './MessageList';
 import { ChatMessage, UploadedFile } from '../../types';
+import { I18nProvider } from '../../contexts/I18nContext';
 import { ChatAreaProvider, ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
 
 vi.mock('react-virtuoso', () => ({
@@ -105,8 +106,6 @@ describe('MessageList image preview', () => {
       onContinueGeneration: () => {},
       ttsMessageId: null,
       onQuickTTS: async () => null,
-      t: (key) => (key === 'imageZoom_title' ? 'Preview {filename}' : String(key)),
-      language: 'zh',
       chatInputHeight: 0,
       appSettings: { showWelcomeSuggestions: true } as any,
       currentModelId: 'gemini-2.5-flash',
@@ -141,7 +140,6 @@ describe('MessageList image preview', () => {
       onTranscribeAudio: async () => null,
       isProcessingFile: false,
       fileError: null,
-      t: (key) => key as any,
       isImagenModel: false,
       isImageEditModel: false,
       aspectRatio: '1:1',
@@ -208,9 +206,11 @@ describe('MessageList image preview', () => {
   it('shows the file preview after clicking an image', async () => {
     act(() => {
       root.render(
-        <ChatAreaProvider value={createProviderValue()}>
-          <MessageList />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={createProviderValue()}>
+            <MessageList />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 

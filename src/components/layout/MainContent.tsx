@@ -28,8 +28,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   const {
     appSettings,
     currentTheme,
-    language,
-    t,
     chatState,
     uiState,
     pipState,
@@ -294,9 +292,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         onToggleGroupExpansion: chatState.handleToggleGroupExpansion,
         onOpenSettingsModal: openSettingsModal,
         onOpenScenariosModal: openScenariosModal,
-        t,
         themeId: currentTheme.id,
-        language,
       }),
     [
       appSettings,
@@ -316,12 +312,10 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       chatState.savedSessions,
       chatState.startNewChat,
       currentTheme.id,
-      language,
       openExportModal,
       openScenariosModal,
       openSettingsModal,
       selectSession,
-      t,
       toggleHistorySidebar,
       uiState.isHistorySidebarOpen,
     ],
@@ -358,7 +352,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         isLogViewerOpen,
         setIsLogViewerOpen,
         currentChatSettings: chatState.currentChatSettings,
-        t,
         setAvailableModels: chatState.setApiModels,
       }),
     [
@@ -391,7 +384,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       setIsPreloadedMessagesModalOpen,
       setIsSettingsModalOpen,
       settingsForModal,
-      t,
     ],
   );
 
@@ -401,7 +393,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         appSettings,
         sessionTitle,
         currentModelName,
-        t,
         activeSessionId: chatState.activeSessionId,
         currentChatSettings: chatState.currentChatSettings,
         messages: chatState.messages,
@@ -433,7 +424,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       pipState.isPipSupported,
       sessionTitle,
       shellHandlers,
-      t,
     ],
   );
 

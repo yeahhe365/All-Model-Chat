@@ -10,7 +10,6 @@ import type {
   UploadedFile,
   VideoMetadata,
 } from '../../../types';
-import type { translations } from '../../../utils/appUtils';
 import type { MediaResolution } from '../../../types/settings';
 
 export interface ChatAreaMessageListContextValue {
@@ -40,8 +39,6 @@ export interface ChatAreaMessageListContextValue {
   onContinueGeneration: (messageId: string) => void;
   ttsMessageId: string | null;
   onQuickTTS: (text: string) => Promise<string | null>;
-  t: (key: keyof typeof translations, fallback?: string) => string;
-  language: 'en' | 'zh';
   chatInputHeight: number;
   appSettings: AppSettings;
   currentModelId: string;
@@ -71,7 +68,6 @@ export interface ChatAreaInputContextValue {
   onTranscribeAudio: (file: File) => Promise<string | null>;
   isProcessingFile: boolean;
   fileError: string | null;
-  t: (key: keyof typeof translations, fallback?: string) => string;
   isImagenModel?: boolean;
   isImageEditModel?: boolean;
   aspectRatio?: string;
@@ -173,7 +169,6 @@ export interface ChatAreaHeaderProps {
   onToggleHistorySidebar: () => void;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  t: (key: keyof typeof translations, fallback?: string) => string;
   isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
@@ -192,5 +187,4 @@ export interface ChatAreaShellProps {
   handleAppDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
   handleAppDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   modelsLoadingError: string | null;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }

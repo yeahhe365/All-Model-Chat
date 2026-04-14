@@ -1,13 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import {
+  attachPersistedSessionFiles,
   createMessage,
   createNewSession,
+  extractPersistedSessionFileRecords,
   generateSessionTitle,
   performOptimisticSessionUpdate,
   sanitizeSessionForExport,
+  stripSessionFilePayloads,
   updateSessionWithNewMessages,
 } from '../session';
-import { ChatMessage, SavedChatSession, ChatSettings } from '../../../types';
+import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 
 const makeMessage = (role: 'user' | 'model' | 'error', content: string, extra?: Partial<ChatMessage>): ChatMessage => ({
@@ -263,7 +266,7 @@ describe('sanitizeSessionForExport', () => {
     expect(result.messages[0].files![0].dataUrl).toBeUndefined();
   });
 
-  it('preserves non-blob dataUrl (e.g. base64)', () => {
+  it('removes inline base64 dataUrl because it is persisted separately', () => {
     const session = makeSession({
       messages: [makeMessage('user', 'Hi', {
         files: [{
@@ -276,7 +279,7 @@ describe('sanitizeSessionForExport', () => {
       })],
     });
     const result = sanitizeSessionForExport(session);
-    expect(result.messages[0].files![0].dataUrl).toBe('data:image/png;base64,abc123');
+    expect(result.messages[0].files![0].dataUrl).toBeUndefined();
   });
 
   it('removes abortController from files', () => {
@@ -301,6 +304,101 @@ describe('sanitizeSessionForExport', () => {
     });
     const result = sanitizeSessionForExport(session);
     expect(result.messages[0].files).toBeUndefined();
+  });
+});
+
+describe('session file persistence helpers', () => {
+  it('extracts file blobs into persisted file records', () => {
+    const rawFile = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    const session = makeSession({
+      id: 'session-with-file',
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'file-1',
+              name: 'note.txt',
+              type: 'text/plain',
+              size: rawFile.size,
+              rawFile,
+            } as any,
+          ],
+        }),
+      ],
+    });
+
+    const records = extractPersistedSessionFileRecords(session);
+
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({
+      id: 'file-1',
+      sessionId: 'session-with-file',
+      name: 'note.txt',
+      type: 'text/plain',
+    });
+    expect(records[0].rawFile).toBe(rawFile);
+  });
+
+  it('strips runtime-only file payloads from persisted session metadata', () => {
+    const rawFile = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    const session = makeSession({
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'file-1',
+              name: 'note.txt',
+              type: 'text/plain',
+              size: rawFile.size,
+              rawFile,
+              dataUrl: 'blob:http://localhost/file-1',
+              abortController: new AbortController(),
+            } as any,
+          ],
+        }),
+      ],
+    });
+
+    const stripped = stripSessionFilePayloads(session);
+
+    expect(stripped.messages[0].files?.[0].rawFile).toBeUndefined();
+    expect(stripped.messages[0].files?.[0].dataUrl).toBeUndefined();
+    expect(stripped.messages[0].files?.[0].abortController).toBeUndefined();
+  });
+
+  it('attaches persisted file records back onto session metadata', () => {
+    const rawFile = new File(['hello'], 'note.txt', { type: 'text/plain' });
+    const session = makeSession({
+      messages: [
+        makeMessage('user', 'Hi', {
+          files: [
+            {
+              id: 'file-1',
+              name: 'note.txt',
+              type: 'text/plain',
+              size: rawFile.size,
+            } as any,
+          ],
+        }),
+      ],
+    });
+    const records = new Map<string, PersistedSessionFileRecord>([
+      [
+        'file-1',
+        {
+          id: 'file-1',
+          sessionId: session.id,
+          messageId: session.messages[0].id,
+          name: 'note.txt',
+          type: 'text/plain',
+          rawFile,
+        },
+      ],
+    ]);
+
+    const hydrated = attachPersistedSessionFiles(session, records);
+
+    expect(hydrated.messages[0].files?.[0].rawFile).toBe(rawFile);
   });
 });
 

@@ -3,6 +3,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from './hooks/app/useApp';
 import { WindowProvider } from './contexts/WindowContext';
+import { I18nProvider } from './contexts/I18nContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
@@ -10,7 +11,9 @@ import { ErrorBoundary } from './components/shared/ErrorBoundary';
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <AppContent />
+      <I18nProvider>
+        <AppContent />
+      </I18nProvider>
     </ErrorBoundary>
   );
 };

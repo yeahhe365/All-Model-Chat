@@ -1,7 +1,7 @@
 import React from 'react';
 import { Wand2, PictureInPicture, PictureInPicture2 } from 'lucide-react';
 import { ModelOption } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { useI18n } from '../../contexts/I18nContext';
 import { IconNewChat, IconSidebarToggle, IconScenarios } from '../icons/CustomIcons';
 import { HeaderModelSelector } from './HeaderModelSelector';
 import { getModelCapabilities } from '../../utils/modelHelpers';
@@ -20,7 +20,6 @@ interface HeaderProps {
   isHistorySidebarOpen?: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  t: (key: keyof typeof translations) => string;
   isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
@@ -46,7 +45,6 @@ export const Header: React.FC<HeaderProps> = ({
   isHistorySidebarOpen = false,
   onLoadCanvasPrompt,
   isCanvasPromptActive,
-  t,
   isKeyLocked: _isKeyLocked,
   isPipSupported,
   isPipActive,
@@ -57,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   newChatShortcut,
   pipShortcut,
 }) => {
+  const { t } = useI18n();
   const headerButtonBase = "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ease-[cubic-bezier(0.19,1,0.22,1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-primary)] focus-visible:ring-[var(--theme-border-focus)] hover:scale-105 active:scale-95";
   const headerButtonInactive = "bg-transparent text-[var(--theme-icon-settings)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] active:bg-[var(--theme-bg-tertiary)] active:text-[var(--theme-text-primary)]";
   const headerButtonActive = "text-[var(--theme-text-link)] bg-[var(--theme-bg-accent)]/10 hover:bg-[var(--theme-bg-accent)]/20";
@@ -97,7 +96,6 @@ export const Header: React.FC<HeaderProps> = ({
             onSelectModel={onSelectModel}
             isSwitchingModel={isSwitchingModel}
             isLoading={isLoading}
-            t={t as any}
             thinkingLevel={thinkingLevel}
             onSetThinkingLevel={onSetThinkingLevel}
         />

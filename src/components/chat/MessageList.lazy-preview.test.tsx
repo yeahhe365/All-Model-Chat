@@ -44,8 +44,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onContinueGeneration: () => {},
     ttsMessageId: null,
     onQuickTTS: async () => null,
-    t: (key) => (key === 'imageZoom_title' ? 'Preview {filename}' : String(key)),
-    language: 'zh',
     chatInputHeight: 0,
     appSettings: { showWelcomeSuggestions: true } as any,
     currentModelId: 'gemini-2.5-flash',
@@ -80,7 +78,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onTranscribeAudio: async () => null,
     isProcessingFile: false,
     fileError: null,
-    t: (key) => key as any,
     isImagenModel: false,
     isImageEditModel: false,
     aspectRatio: '1:1',
@@ -210,10 +207,12 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
 
   const module = await import('./MessageList');
   const contextModule = await import('../layout/chat-area/ChatAreaContext');
+  const i18nModule = await import('../../contexts/I18nContext');
 
   return {
     MessageList: module.MessageList,
     ChatAreaProvider: contextModule.ChatAreaProvider,
+    I18nProvider: i18nModule.I18nProvider,
   };
 };
 
@@ -243,15 +242,17 @@ describe('MessageList preview chunking', () => {
 
   it('does not load the file preview modal module until the user opens a preview', async () => {
     const moduleLoadTracker = { count: 0 };
-    const { MessageList, ChatAreaProvider } = await loadMessageList(moduleLoadTracker);
+    const { MessageList, ChatAreaProvider, I18nProvider } = await loadMessageList(moduleLoadTracker);
 
     expect(moduleLoadTracker.count).toBe(0);
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={createProviderValue()}>
-          <MessageList />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={createProviderValue()}>
+            <MessageList />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 

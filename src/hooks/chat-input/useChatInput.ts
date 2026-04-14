@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
+import { useI18n } from '../../contexts/I18nContext';
 import { useChatInputState } from './useChatInputState';
 import { useIsDesktop } from '../useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { getModelCapabilities } from '../../utils/modelHelpers';
-import { useChatInputModals } from './useChatInputModals';
 import { useVoiceInput } from '../useVoiceInput';
 import { useSlashCommands } from '../useSlashCommands';
-import { useChatInputEffects } from './useChatInputEffects';
-import { useChatInputLocalState } from './useChatInputLocalState';
 import { useLiveAPI } from '../useLiveAPI';
 import { useTextAreaInsert } from '../useTextAreaInsert';
 import { processClipboardData } from '../../utils/clipboardUtils';
@@ -19,7 +17,11 @@ import { geminiServiceInstance } from '../../services/geminiService';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import { useImageNavigation } from '../ui/useImageNavigation';
 import { useChatAreaInput } from '../../components/layout/chat-area/ChatAreaContext';
+import type { AttachmentAction } from '../../components/chat/input/AttachmentMenu';
 import { useChatStore } from '../../stores/chatStore';
+import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
+import { captureScreenImage } from '../../utils/mediaUtils';
+import { isTextFile } from '../../utils/fileHelpers';
 import {
   areFilesStillProcessing,
   buildPendingChatInputSubmission,
@@ -30,6 +32,7 @@ import {
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
 export const useChatInput = () => {
+  const { t } = useI18n();
   const chatInput = useChatAreaInput();
   const {
     appSettings,
@@ -37,7 +40,6 @@ export const useChatInput = () => {
     activeSessionId,
     isEditing,
     onProcessFiles,
-    t,
     commandedInput,
     onSendMessage,
     onMessageSent,
@@ -95,19 +97,226 @@ export const useChatInput = () => {
     clientFunctions: liveClientFunctions,
   });
 
-  const modalsState = useChatInputModals({
-    onProcessFiles: (files) => onProcessFiles(files),
-    justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
-    textareaRef: inputState.textareaRef,
-  });
+  const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
+  const [editingFile, setEditingFile] = useState<UploadedFile | null>(null);
+  const [showRecorder, setShowRecorder] = useState(false);
+  const [showAddByIdInput, setShowAddByIdInput] = useState(false);
+  const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [showTtsContextEditor, setShowTtsContextEditor] = useState(false);
 
-  const localFileState = useChatInputLocalState({
-    setSelectedFiles,
-    handleConfirmCreateTextFile: modalsState.handleConfirmCreateTextFile,
-    setShowCreateTextFileEditor: modalsState.setShowCreateTextFileEditor,
-    setEditingFile: modalsState.setEditingFile,
-    editingFile: modalsState.editingFile,
-  });
+  const [configuringFile, setConfiguringFile] = useState<UploadedFile | null>(null);
+  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
+  const [isPreviewEditable, setIsPreviewEditable] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
+  const [showTokenModal, setShowTokenModal] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const zipInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScreenshot = useCallback(async () => {
+    const blob = await captureScreenImage();
+
+    if (!blob) {
+      return;
+    }
+
+    const fileName = `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:]/g, '-')}.png`;
+    const file = new File([blob], fileName, { type: 'image/png' });
+    inputState.justInitiatedFileOpRef.current = true;
+    await onProcessFiles([file]);
+  }, [inputState.justInitiatedFileOpRef, onProcessFiles]);
+
+  const handleAttachmentAction = useCallback(
+    (action: AttachmentAction) => {
+      setShowAddByIdInput(false);
+      setShowAddByUrlInput(false);
+
+      switch (action) {
+        case 'upload':
+          fileInputRef.current?.click();
+          break;
+        case 'gallery':
+          imageInputRef.current?.click();
+          break;
+        case 'folder':
+          folderInputRef.current?.click();
+          break;
+        case 'zip':
+          zipInputRef.current?.click();
+          break;
+        case 'camera':
+          cameraInputRef.current?.click();
+          break;
+        case 'recorder':
+          setShowRecorder(true);
+          break;
+        case 'id':
+          setShowAddByIdInput(true);
+          break;
+        case 'url':
+          setShowAddByUrlInput(true);
+          break;
+        case 'text':
+          setEditingFile(null);
+          setShowCreateTextFileEditor(true);
+          break;
+        case 'screenshot':
+          void handleScreenshot();
+          break;
+      }
+    },
+    [handleScreenshot],
+  );
+
+  const handleConfirmCreateTextFile = useCallback(
+    async (content: string | Blob, filename: string) => {
+      inputState.justInitiatedFileOpRef.current = true;
+
+      const sanitizeFilename = (name: string) => name.trim().replace(/[<>:"/\\|?*]+/g, '_');
+
+      let finalFilename = filename.trim() ? sanitizeFilename(filename) : `file-${Date.now()}.txt`;
+
+      if (!finalFilename.includes('.')) {
+        finalFilename += '.md';
+      }
+
+      const extension = `.${finalFilename.split('.').pop()?.toLowerCase()}`;
+      const mimeType = EXTENSION_TO_MIME[extension] || 'text/plain';
+      const newFile = new File([content], finalFilename, { type: mimeType });
+
+      setShowCreateTextFileEditor(false);
+      setEditingFile(null);
+      await onProcessFiles([newFile]);
+    },
+    [inputState.justInitiatedFileOpRef, onProcessFiles],
+  );
+
+  const handleAudioRecord = useCallback(
+    async (file: File) => {
+      inputState.justInitiatedFileOpRef.current = true;
+      setShowRecorder(false);
+      await onProcessFiles([file]);
+      inputState.textareaRef.current?.focus();
+    },
+    [inputState.justInitiatedFileOpRef, inputState.textareaRef, onProcessFiles],
+  );
+
+  const handleEditFile = useCallback((file: UploadedFile) => {
+    setEditingFile(file);
+    setShowCreateTextFileEditor(true);
+  }, []);
+
+  const handleSaveTextFile = useCallback(
+    async (content: string | Blob, filename: string) => {
+      if (editingFile) {
+        const size = content instanceof Blob ? content.size : content.length;
+        const type = content instanceof Blob ? content.type : 'text/markdown';
+
+        setSelectedFiles((prev) =>
+          prev.map((file) =>
+            file.id === editingFile.id
+              ? {
+                  ...file,
+                  name: filename.includes('.') ? filename : `${filename}.md`,
+                  textContent: typeof content === 'string' ? content : undefined,
+                  size,
+                  rawFile: new File([content], filename, { type }),
+                  dataUrl: content instanceof Blob ? URL.createObjectURL(content) : file.dataUrl,
+                }
+              : file,
+          ),
+        );
+        setShowCreateTextFileEditor(false);
+        setEditingFile(null);
+        return;
+      }
+
+      await handleConfirmCreateTextFile(content, filename);
+    },
+    [editingFile, handleConfirmCreateTextFile, setSelectedFiles],
+  );
+
+  const handleSavePreviewTextFile = useCallback(
+    (fileId: string, content: string, newName: string) => {
+      setSelectedFiles((prev) =>
+        prev.map((file) =>
+          file.id === fileId
+            ? {
+                ...file,
+                name: newName,
+                textContent: content,
+                size: content.length,
+                dataUrl: URL.createObjectURL(new File([content], newName, { type: 'text/plain' })),
+                rawFile: new File([content], newName, { type: 'text/plain' }),
+              }
+            : file,
+        ),
+      );
+    },
+    [setSelectedFiles],
+  );
+
+  const handleConfigureFile = useCallback((file: UploadedFile) => {
+    if (isTextFile(file)) {
+      setPreviewFile(file);
+      setIsPreviewEditable(true);
+      return;
+    }
+
+    setConfiguringFile(file);
+  }, []);
+
+  const handlePreviewFile = useCallback((file: UploadedFile) => {
+    setPreviewFile(file);
+    setIsPreviewEditable(false);
+  }, []);
+
+  const modalsState = {
+    showCreateTextFileEditor,
+    setShowCreateTextFileEditor,
+    editingFile,
+    setEditingFile,
+    showRecorder,
+    setShowRecorder,
+    showAddByIdInput,
+    setShowAddByIdInput,
+    showAddByUrlInput,
+    setShowAddByUrlInput,
+    isHelpModalOpen,
+    setIsHelpModalOpen,
+    showTtsContextEditor,
+    setShowTtsContextEditor,
+    fileInputRef,
+    imageInputRef,
+    folderInputRef,
+    zipInputRef,
+    cameraInputRef,
+    handleAttachmentAction,
+    handleConfirmCreateTextFile,
+    handleAudioRecord,
+    handleEditFile,
+  };
+
+  const localFileState = {
+    configuringFile,
+    setConfiguringFile,
+    previewFile,
+    setPreviewFile,
+    isPreviewEditable,
+    setIsPreviewEditable,
+    isConverting,
+    setIsConverting,
+    showTokenModal,
+    setShowTokenModal,
+    handleSaveTextFile,
+    handleSavePreviewTextFile,
+    handleConfigureFile,
+    handlePreviewFile,
+  };
 
   const voiceState = useVoiceInput({
     onTranscribeAudio,
@@ -778,20 +987,145 @@ export const useChatInput = () => {
     ],
   );
 
-  useChatInputEffects({
-    commandedInput,
-    setInputText: inputState.setInputText,
-    setQuotes: inputState.setQuotes,
-    textareaRef: inputState.textareaRef,
-    prevIsProcessingFileRef: inputState.prevIsProcessingFileRef,
-    isProcessingFile,
-    isAddingById: inputState.isAddingById,
-    justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
-    selectedFiles,
-    isModalOpen: isAnyModalOpen,
-    handlePasteAction,
-    appSettings,
-  });
+  useEffect(() => {
+    if (!commandedInput) {
+      return;
+    }
+
+    if (commandedInput.mode === 'quote') {
+      inputState.setQuotes((prev) => [...prev, commandedInput.text]);
+    } else if (commandedInput.mode === 'append') {
+      inputState.setInputText((prev) => prev + (prev ? '\n' : '') + commandedInput.text);
+    } else if (commandedInput.mode === 'insert') {
+      insertText(commandedInput.text);
+    } else {
+      inputState.setInputText(commandedInput.text);
+    }
+
+    if (commandedInput.mode === 'insert') {
+      return;
+    }
+
+    setTimeout(() => {
+      const textarea = inputState.textareaRef.current;
+      if (!textarea) {
+        return;
+      }
+
+      textarea.focus();
+      const textLength = textarea.value.length;
+      textarea.setSelectionRange(textLength, textLength);
+    }, 0);
+  }, [commandedInput, inputState, insertText]);
+
+  useEffect(() => {
+    if (inputState.prevIsProcessingFileRef.current && !isProcessingFile && !inputState.isAddingById) {
+      inputState.textareaRef.current?.focus();
+      inputState.justInitiatedFileOpRef.current = false;
+    }
+    inputState.prevIsProcessingFileRef.current = isProcessingFile;
+  }, [inputState, isProcessingFile]);
+
+  useEffect(() => {
+    const handleGlobalPaste = async (event: ClipboardEvent) => {
+      if (isAnyModalOpen) {
+        return;
+      }
+
+      const target = event.target as HTMLElement;
+      const isInput =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if (isInput) {
+        return;
+      }
+
+      const didHandle = await handlePasteAction(event.clipboardData, { forceTextInsertion: true });
+
+      if (!didHandle) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      const textarea = inputState.textareaRef.current;
+      if (!textarea) {
+        return;
+      }
+
+      textarea.focus();
+      setTimeout(() => {
+        const len = textarea.value.length;
+        textarea.setSelectionRange(len, len);
+        textarea.scrollTop = textarea.scrollHeight;
+      }, 0);
+    };
+
+    document.addEventListener('paste', handleGlobalPaste);
+    return () => document.removeEventListener('paste', handleGlobalPaste);
+  }, [handlePasteAction, inputState.textareaRef, isAnyModalOpen]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (isAnyModalOpen) {
+        return;
+      }
+
+      const target = event.target as HTMLElement;
+      const isInput =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable;
+
+      if (isShortcutPressed(event as any, 'input.clearDraft', appSettings)) {
+        if (isInput && target !== inputState.textareaRef.current) {
+          return;
+        }
+        event.preventDefault();
+        inputState.setInputText('');
+        inputState.textareaRef.current?.focus();
+        return;
+      }
+
+      if (isInput || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+
+      if (event.key.length !== 1) {
+        return;
+      }
+
+      const textarea = inputState.textareaRef.current;
+      if (!textarea) {
+        return;
+      }
+
+      event.preventDefault();
+      textarea.focus();
+      inputState.setInputText((prev) => prev + event.key);
+      setTimeout(() => {
+        const len = textarea.value.length;
+        textarea.setSelectionRange(len, len);
+        textarea.scrollTop = textarea.scrollHeight;
+      }, 0);
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => document.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [appSettings, inputState, isAnyModalOpen]);
+
+  const prevFileCountRef = useRef(selectedFiles.length);
+  useEffect(() => {
+    if (selectedFiles.length > prevFileCountRef.current) {
+      setTimeout(() => {
+        inputState.textareaRef.current?.focus();
+      }, 50);
+    }
+
+    prevFileCountRef.current = selectedFiles.length;
+  }, [inputState.textareaRef, selectedFiles.length]);
 
   return {
     chatInput,

@@ -1,6 +1,7 @@
 import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../contexts/I18nContext';
 import {
   ChatAreaProvider,
   ChatAreaProviderValue,
@@ -45,8 +46,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onContinueGeneration: vi.fn(),
     ttsMessageId: null,
     onQuickTTS: vi.fn(async () => null),
-    t: (key: string) => key,
-    language: 'zh',
     chatInputHeight: 0,
     appSettings: { showWelcomeSuggestions: true } as any,
     currentModelId: 'gemini-3.1-pro-preview',
@@ -82,7 +81,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onTranscribeAudio: vi.fn(async () => null),
     isProcessingFile: false,
     fileError: null,
-    t: (key: string) => key as any,
     isImagenModel: false,
     isImageEditModel: false,
     aspectRatio: '1:1',
@@ -192,9 +190,11 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={value}>
-          <HookProbe />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={value}>
+            <HookProbe />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 
@@ -210,9 +210,11 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={initialValue}>
-          <MessageListRenderProbe onRender={onRender} />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={initialValue}>
+            <MessageListRenderProbe onRender={onRender} />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 
@@ -228,9 +230,11 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={updatedValue}>
-          <MessageListRenderProbe onRender={onRender} />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={updatedValue}>
+            <MessageListRenderProbe onRender={onRender} />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 

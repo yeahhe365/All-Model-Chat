@@ -41,6 +41,15 @@ export interface UploadedFile {
   mediaResolution?: MediaResolution; // Added for Gemini 3 per-part resolution
 }
 
+export interface PersistedSessionFileRecord {
+  id: string;
+  sessionId: string;
+  messageId: string;
+  name: string;
+  type: string;
+  rawFile: Blob;
+}
+
 export interface InputCommand {
   text: string;
   id: number;

@@ -27,7 +27,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
   // Read values from stores directly (no longer passed as props)
   const appSettings = useSettingsStore(s => s.appSettings);
   const themeId = useSettingsStore(s => s.currentTheme.id);
-  const language = useSettingsStore(s => s.language);
   const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
   const isHistorySidebarOpen = useUIStore(s => s.isHistorySidebarOpen);
   const commandedInput = useChatStore(s => s.commandedInput);
@@ -76,8 +75,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onContinueGeneration: messageActions.onContinueGeneration,
       ttsMessageId,
       onQuickTTS: messageActions.onQuickTTS,
-      t: shell.t,
-      language,
       chatInputHeight,
       appSettings,
       currentModelId: session.currentChatSettings.modelId,
@@ -91,14 +88,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       chatInputHeight,
       handleInsert,
       handleQuote,
-      language,
       messageActions,
       session.activeSessionId,
       session.currentChatSettings,
       session.messages,
       session.sessionTitle,
       session.showThoughts,
-      shell.t,
       themeId,
       ttsMessageId,
     ]
@@ -134,7 +129,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       setAspectRatio,
       imageSize,
       setImageSize,
-      t: shell.t,
       isGoogleSearchEnabled: features.isGoogleSearchEnabled,
       onToggleGoogleSearch: inputActions.onToggleGoogleSearch,
       isCodeExecutionEnabled: features.isCodeExecutionEnabled,
@@ -212,7 +206,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       setEditingMessageId,
       setImageSize,
       setSelectedFiles,
-      shell.t,
       themeId,
     ],
   );
@@ -233,7 +226,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onDragLeave={shell.handleAppDragLeave}
       onDrop={shell.handleAppDrop}
     >
-      <DragDropOverlay isDraggingOver={shell.isAppDraggingOver} t={shell.t} />
+      <DragDropOverlay isDraggingOver={shell.isAppDraggingOver} />
 
       <Header
         onNewChat={header.onNewChat}
@@ -249,7 +242,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
         isHistorySidebarOpen={isHistorySidebarOpen}
         onLoadCanvasPrompt={header.onLoadCanvasPrompt}
         isCanvasPromptActive={header.isCanvasPromptActive}
-        t={shell.t}
         isKeyLocked={header.isKeyLocked}
         isPipSupported={header.isPipSupported}
         isPipActive={header.isPipActive}

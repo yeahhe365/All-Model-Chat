@@ -1,7 +1,7 @@
 
 import React, { Suspense, lazy } from 'react';
 import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { useI18n } from '../../contexts/I18nContext';
 
 const LazySettingsModal = lazy(async () => {
     const module = await import('../settings/SettingsModal');
@@ -57,11 +57,11 @@ export interface AppModalsProps {
   setIsLogViewerOpen?: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
   currentChatSettings: ChatSettings;
 
-  t: (key: keyof typeof translations | string, fallback?: string) => string;
   setAvailableModels: (models: ModelOption[]) => void;
 }
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
+    const { t } = useI18n();
     const {
         isSettingsModalOpen = false,
         setIsSettingsModalOpen = () => {},
@@ -81,7 +81,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         isLogViewerOpen = false,
         setIsLogViewerOpen = () => {},
         currentChatSettings,
-        t, setAvailableModels
+        setAvailableModels
     } = props;
     
     return (

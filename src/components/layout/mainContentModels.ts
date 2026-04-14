@@ -1,4 +1,3 @@
-import type { AppViewModel } from '../../hooks/app/useApp';
 import type { AppSettings, ChatSettings, SideViewContent } from '../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import {
@@ -53,9 +52,7 @@ interface BuildHistorySidebarPropsArgs {
   onToggleGroupExpansion: HistorySidebarProps['onToggleGroupExpansion'];
   onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
-  t: HistorySidebarProps['t'];
   themeId: string;
-  language: HistorySidebarProps['language'];
 }
 
 export const buildHistorySidebarProps = ({
@@ -81,9 +78,7 @@ export const buildHistorySidebarProps = ({
   onToggleGroupExpansion,
   onOpenSettingsModal,
   onOpenScenariosModal,
-  t,
   themeId,
-  language,
 }: BuildHistorySidebarPropsArgs): HistorySidebarProps => ({
   isOpen,
   onToggle,
@@ -106,9 +101,7 @@ export const buildHistorySidebarProps = ({
   onToggleGroupExpansion,
   onOpenSettingsModal,
   onOpenScenariosModal,
-  t,
   themeId,
-  language,
   newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
 });
 
@@ -145,7 +138,6 @@ interface BuildChatAreaModelArgs {
   appSettings: AppSettings;
   sessionTitle: string;
   currentModelName: string;
-  t: AppViewModel['t'];
   activeSessionId: string | null;
   currentChatSettings: ChatAreaModel['session']['currentChatSettings'];
   messages: ChatAreaModel['session']['messages'];
@@ -165,7 +157,6 @@ export const buildChatAreaModel = ({
   appSettings,
   sessionTitle,
   currentModelName,
-  t,
   activeSessionId,
   currentChatSettings,
   messages,
@@ -193,7 +184,6 @@ export const buildChatAreaModel = ({
     isAppDraggingOver,
     modelsLoadingError: null,
     ...shellHandlers,
-    t,
   },
   header: {
     currentModelName,

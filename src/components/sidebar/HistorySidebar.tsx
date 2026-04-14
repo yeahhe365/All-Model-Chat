@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { SavedChatSession, ChatGroup } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { useI18n, type Translator } from '../../contexts/I18nContext';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
 import { SessionItem } from './SessionItem';
@@ -32,7 +32,7 @@ export interface HistorySidebarProps {
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  t?: Translator;
   language?: 'en' | 'zh';
   themeId?: string;
   newChatShortcut?: string;
@@ -97,13 +97,15 @@ const SessionListGroup = ({
 };
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
+  const i18n = useI18n();
   const {
     isOpen = false, onToggle, sessions = [], groups = [], activeSessionId = null, loadingSessionIds = new Set(),
     generatingTitleSessionIds = new Set(), onOpenExportModal, onAddNewGroup,
-    onDeleteGroup, onToggleGroupExpansion, themeId = 'pearl', t,
+    onDeleteGroup, onToggleGroupExpansion, themeId = 'pearl', t: explicitT,
     onNewChat, onDeleteSession, onTogglePinSession, onDuplicateSession,
-    onOpenSettingsModal, onRenameSession, onRenameGroup, onMoveSessionToGroup, onSelectSession, language = 'en', newChatShortcut
+    onOpenSettingsModal, onRenameSession, onRenameGroup, onMoveSessionToGroup, onSelectSession, newChatShortcut
   } = props;
+  const t = explicitT ?? i18n.t;
 
   const {
     searchQuery, setSearchQuery,
@@ -136,8 +138,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     onRenameGroup,
     onMoveSessionToGroup,
     onSelectSession,
-    t,
-    language,
   });
 
   const ungroupedSessions = sessionsByGroupId.get(null) || [];

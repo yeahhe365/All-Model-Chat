@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { createPortal } from 'react-dom';
 import { ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { useChatInput } from '../../../hooks/chat-input/useChatInput';
@@ -8,6 +9,7 @@ import { ChatInputArea, ChatInputAreaProps } from './ChatInputArea';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 
 const ChatInputComponent: React.FC = () => {
+  const { t } = useI18n();
   // 1. 获取所有核心逻辑和状态
   const {
     chatInput,
@@ -57,7 +59,7 @@ const ChatInputComponent: React.FC = () => {
     },
     isAddingByUrl: inputState.isAddingByUrl,
     isLoading: chatInput.isLoading,
-    t: chatInput.t as any,
+    t: t as any,
     generateQuadImages: chatInput.generateQuadImages,
     onToggleQuadImages: chatInput.onToggleQuadImages,
     supportedAspectRatios: capabilities.supportedAspectRatios,
@@ -101,7 +103,7 @@ const ChatInputComponent: React.FC = () => {
     onCancelEdit: chatInput.onCancelEdit,
     canSend: canSend,
     isWaitingForUpload: inputState.isWaitingForUpload,
-    t: chatInput.t as any,
+    t: t as any,
     onTranslate: handlers.handleTranslate,
     isTranslating: inputState.isTranslating,
     inputText: inputState.inputText,
@@ -140,7 +142,7 @@ const ChatInputComponent: React.FC = () => {
       onKeyDown: handlers.handleKeyDown,
       onPaste: handlers.handlePaste,
       textareaRef: inputState.textareaRef,
-      placeholder: chatInput.t('chatInputPlaceholder'),
+      placeholder: t('chatInputPlaceholder'),
       disabled:
         isAnyModalOpen ||
         voiceState.isTranscribing ||
@@ -199,7 +201,7 @@ const ChatInputComponent: React.FC = () => {
       error: liveAPI.error,
       onDisconnect: liveAPI.disconnect,
     },
-    t: chatInput.t as any,
+    t: t as any,
     themeId: chatInput.themeId,
   };
 
@@ -227,7 +229,7 @@ const ChatInputComponent: React.FC = () => {
         allCommandsForHelp={slashCommandState.allCommandsForHelp}
         isProcessingFile={chatInput.isProcessingFile}
         isLoading={chatInput.isLoading}
-        t={chatInput.t as any}
+        t={t as any}
         initialContent={modalsState.editingFile?.textContent || ''}
         initialFilename={modalsState.editingFile?.name || ''}
         isSystemAudioRecordingEnabled={chatInput.appSettings.isSystemAudioRecordingEnabled}
@@ -251,7 +253,7 @@ const ChatInputComponent: React.FC = () => {
         appSettings={chatInput.appSettings}
         availableModels={chatInput.availableModels}
         currentModelId={chatInput.currentChatSettings.modelId}
-        t={chatInput.t as any}
+        t={t as any}
         isGemini3={capabilities.isGemini3}
         isPreviewEditable={localFileState.isPreviewEditable}
         onSaveTextFile={localFileState.handleSavePreviewTextFile}

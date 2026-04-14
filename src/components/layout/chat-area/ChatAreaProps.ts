@@ -8,7 +8,6 @@ import type {
   VideoMetadata,
 } from '../../../types';
 import type { UploadedFile } from '../../../types/chat';
-import type { translations } from '../../../utils/appUtils';
 import type { MediaResolution } from '../../../types/settings';
 
 export interface ChatAreaSessionModel {
@@ -28,7 +27,6 @@ export interface ChatAreaShellModel {
   handleAppDragOver: (e: DragEvent<HTMLDivElement>) => void;
   handleAppDragLeave: (e: DragEvent<HTMLDivElement>) => void;
   handleAppDrop: (e: DragEvent<HTMLDivElement>) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export interface ChatAreaHeaderModel {
