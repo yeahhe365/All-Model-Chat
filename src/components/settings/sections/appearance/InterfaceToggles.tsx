@@ -2,21 +2,20 @@
 
 
 import React from 'react';
-import { translations } from '../../../../utils/appUtils';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { ToggleItem } from '../../../shared/ToggleItem';
 import { AppSettings } from '../../../../types';
 
 interface InterfaceTogglesProps {
   settings: AppSettings;
   onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  t: (key: keyof typeof translations) => string;
 }
 
 export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
   settings,
   onUpdate,
-  t,
 }) => {
+  const { t } = useI18n();
   const handleNotificationToggle = async (enabled: boolean) => {
     if (enabled) {
       if (!('Notification' in window)) {

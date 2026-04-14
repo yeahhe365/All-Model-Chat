@@ -9,7 +9,6 @@ interface ApiProxySettingsProps {
     setUseApiProxy: (value: boolean) => void;
     apiProxyUrl: string | null;
     setApiProxyUrl: (value: string | null) => void;
-    t: (key: string) => string;
 }
 
 export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
@@ -17,7 +16,6 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     setUseApiProxy,
     apiProxyUrl,
     setApiProxyUrl,
-    t: _t
 }) => {
     const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
     

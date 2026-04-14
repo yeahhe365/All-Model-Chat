@@ -98,7 +98,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     <AppearanceSection
                         settings={currentSettings}
                         onUpdate={updateSetting}
-                        t={t}
                     />
                 </div>
             )}
@@ -117,7 +116,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         liveApiEphemeralTokenEndpoint={currentSettings.liveApiEphemeralTokenEndpoint ?? null}
                         setLiveApiEphemeralTokenEndpoint={(val) => updateSetting('liveApiEphemeralTokenEndpoint', val)}
                         availableModels={availableModels}
-                        t={t as any}
                     />
                 </div>
             )}
@@ -137,7 +135,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         onImportScenarios={onImportScenarios}
                         onExportScenarios={onExportScenarios}
                         onReset={onReset}
-                        t={t}
                     />
                 </div>
             )}
@@ -150,7 +147,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     />
                 </div>
             )}
-            {activeTab === 'about' && <div className={animClass}><AboutSection t={t} /></div>}
+            {activeTab === 'about' && <div className={animClass}><AboutSection /></div>}
         </div>
     );
 };
