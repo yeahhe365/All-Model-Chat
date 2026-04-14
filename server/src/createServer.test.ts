@@ -179,7 +179,9 @@ describe('createServer', () => {
   });
 
   it('filters hop-by-hop and sensitive request headers before proxying', async () => {
-    const fetchImpl = vi.fn(async () => new Response('proxied', { status: 202 }));
+    const fetchImpl = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => {
+      return new Response('proxied', { status: 202 });
+    });
     const app = createServer(
       {
         geminiApiBase: 'https://example.test',
@@ -219,8 +221,21 @@ describe('createServer', () => {
 
     const firstCall = fetchImpl.mock.calls[0];
     expect(firstCall).toBeDefined();
-    const [, init] = firstCall as unknown as [string, RequestInit];
-    const headers = init.headers as Headers;
+    if (!firstCall) {
+      throw new Error('Expected fetchImpl to be called once');
+    }
+
+    const init = firstCall[1];
+    expect(init).toBeDefined();
+    if (!init) {
+      throw new Error('Expected fetchImpl to receive RequestInit');
+    }
+
+    const headers = init.headers;
+    expect(headers).toBeInstanceOf(Headers);
+    if (!(headers instanceof Headers)) {
+      throw new Error('Expected proxy request headers to be a Headers instance');
+    }
 
     expect(headers.get('content-type')).toBe('application/json');
     expect(headers.get('x-client-header')).toBe('present');

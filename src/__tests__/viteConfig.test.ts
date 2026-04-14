@@ -29,12 +29,14 @@ describe('vite.config runtime ownership', () => {
 });
 
 describe('BaseMarkdownRenderer lazy diagram boundaries', () => {
-  it('keeps MermaidBlock and GraphvizBlock behind React.lazy imports', () => {
+  it('keeps MermaidBlock and GraphvizBlock behind deferred dynamic imports', () => {
     const source = fs.readFileSync(baseMarkdownRendererPath, 'utf8');
 
-    expect(source).toMatch(/lazy\(async\s*\(\)\s*=>\s*\{\s*const module = await import\('\.\/blocks\/MermaidBlock'\)/s);
+    expect(source).toContain("import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock'");
+    expect(source).toMatch(/const loadMermaidBlock = async \(\) => \{\s*const module = await import\('\.\/blocks\/MermaidBlock'\)/s);
     expect(source).toMatch(
-      /lazy\(async\s*\(\)\s*=>\s*\{\s*const module = await import\('\.\/blocks\/GraphvizBlock'\)/s,
+      /const loadGraphvizBlock = async \(\) => \{\s*const module = await import\('\.\/blocks\/GraphvizBlock'\)/s,
     );
+    expect(source).toContain('<DeferredDiagramBlock');
   });
 });

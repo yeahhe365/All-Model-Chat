@@ -18,7 +18,6 @@ const getInitialScale = () => {
 export const usePdfViewer = (file: UploadedFile) => {
     const [numPages, setNumPages] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageInput, setPageInput] = useState("1");
     const [scale, setScale] = useState(getInitialScale);
     const [rotation, setRotation] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +32,6 @@ export const usePdfViewer = (file: UploadedFile) => {
     useEffect(() => {
         setNumPages(null);
         setCurrentPage(1);
-        setPageInput("1");
         setRotation(0);
         setScale(getInitialScale());
         setIsLoading(true);
@@ -71,13 +69,7 @@ export const usePdfViewer = (file: UploadedFile) => {
         return () => observer.disconnect();
     }, [numPages, isLoading]);
 
-    // Sync input with current page when scrolling (auto-update input value if not user-focused)
     useEffect(() => {
-        // We use a simplified check here since we don't have direct access to the input ref in the hook easily 
-        // without passing it back and forth. Instead, we just update the state.
-        // The Toolbar component handles not overwriting if focused via its own logic or simply responding to this state update.
-        setPageInput(String(currentPage));
-        
         // Auto-scroll sidebar to keep current page thumbnail in view
         if (showSidebar && sidebarRef.current) {
             const thumbnail = sidebarRef.current.querySelector(`[data-thumbnail-page="${currentPage}"]`);
@@ -103,7 +95,6 @@ export const usePdfViewer = (file: UploadedFile) => {
         if (el) {
             el.scrollIntoView({ behavior: 'auto', block: 'start' });
             setCurrentPage(pageNum);
-            setPageInput(String(pageNum));
         }
     };
 
@@ -117,12 +108,10 @@ export const usePdfViewer = (file: UploadedFile) => {
         scrollToPage(next);
     };
 
-    const handlePageInputCommit = () => {
+    const handlePageInputCommit = (pageInput: string) => {
         const page = parseInt(pageInput, 10);
         if (!isNaN(page) && page >= 1 && page <= (numPages || 1)) {
             scrollToPage(page);
-        } else {
-            setPageInput(String(currentPage));
         }
     };
 
@@ -143,8 +132,6 @@ export const usePdfViewer = (file: UploadedFile) => {
     return {
         numPages,
         currentPage,
-        pageInput,
-        setPageInput,
         scale,
         rotation,
         isLoading,

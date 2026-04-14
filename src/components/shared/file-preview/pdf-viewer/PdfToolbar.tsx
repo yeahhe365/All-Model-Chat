@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw, PanelLeft } from 'lucide-react';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider, ToolbarLabel } from '../FloatingToolbar';
 
@@ -8,9 +8,7 @@ interface PdfToolbarProps {
     numPages: number | null;
     scale: number;
     showSidebar: boolean;
-    pageInput: string;
-    onPageInputChange: (value: string) => void;
-    onPageInputCommit: () => void;
+    onPageInputCommit: (value: string) => void;
     onPrevPage: () => void;
     onNextPage: () => void;
     onZoomIn: () => void;
@@ -24,8 +22,6 @@ export const PdfToolbar: React.FC<PdfToolbarProps> = ({
     numPages,
     scale,
     showSidebar,
-    pageInput,
-    onPageInputChange,
     onPageInputCommit,
     onPrevPage,
     onNextPage,
@@ -35,11 +31,32 @@ export const PdfToolbar: React.FC<PdfToolbarProps> = ({
     onToggleSidebar
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
+    const [pageInputDraft, setPageInputDraft] = useState(String(currentPage));
+    const [isEditingPageInput, setIsEditingPageInput] = useState(false);
+
+    const pageInput = isEditingPageInput ? pageInputDraft : String(currentPage);
+
+    const handlePageInputChange = (value: string) => {
+        if (!isEditingPageInput) {
+            setIsEditingPageInput(true);
+        }
+        setPageInputDraft(value);
+    };
+
+    const handlePageInputFocus = () => {
+        setIsEditingPageInput(true);
+        setPageInputDraft(String(currentPage));
+    };
+
+    const commitPageInput = () => {
+        onPageInputCommit(pageInputDraft);
+        setIsEditingPageInput(false);
+    };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            onPageInputCommit();
+            commitPageInput();
             inputRef.current?.blur();
         }
     };
@@ -65,9 +82,10 @@ export const PdfToolbar: React.FC<PdfToolbarProps> = ({
                             ref={inputRef}
                             type="text" 
                             value={pageInput}
-                            onChange={(e) => onPageInputChange(e.target.value)}
+                            onChange={(e) => handlePageInputChange(e.target.value)}
+                            onFocus={handlePageInputFocus}
                             onKeyDown={handleKeyDown}
-                            onBlur={onPageInputCommit}
+                            onBlur={commitPageInput}
                             className="w-8 bg-transparent text-center font-mono text-sm text-white border-b border-white/20 focus:border-white/80 outline-none p-0 transition-colors"
                             aria-label="Page number"
                         />

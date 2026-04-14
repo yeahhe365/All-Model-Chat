@@ -10,12 +10,10 @@ interface PdfViewerProps {
     file: UploadedFile;
 }
 
-export const PdfViewer: React.FC<PdfViewerProps> = ({ file }) => {
+const PdfViewerContent: React.FC<PdfViewerProps> = ({ file }) => {
     const {
         numPages,
         currentPage,
-        pageInput,
-        setPageInput,
         scale,
         rotation,
         isLoading,
@@ -67,8 +65,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file }) => {
                     numPages={numPages}
                     scale={scale}
                     showSidebar={showSidebar}
-                    pageInput={pageInput}
-                    onPageInputChange={setPageInput}
                     onPageInputCommit={handlePageInputCommit}
                     onPrevPage={previousPage}
                     onNextPage={nextPage}
@@ -81,3 +77,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({ file }) => {
         </div>
     );
 };
+
+export const PdfViewer: React.FC<PdfViewerProps> = (props) => (
+    <PdfViewerContent key={props.file.id} {...props} />
+);

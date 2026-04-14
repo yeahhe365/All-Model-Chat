@@ -15,6 +15,7 @@ interface CreateFileFooterProps {
     isProcessing: boolean;
     isLoading: boolean;
     isExportingPdf: boolean;
+    isPdfPreviewReady: boolean;
     hasContent: boolean;
     t: (key: keyof typeof translations | string) => string;
 }
@@ -30,6 +31,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
     isProcessing,
     isLoading,
     isExportingPdf,
+    isPdfPreviewReady,
     hasContent,
     t
 }) => {
@@ -68,7 +70,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
                 <button
                   type="button"
                   onClick={onSave}
-                  disabled={(!hasContent && !filenameBase.trim()) || isProcessing || isLoading || isExportingPdf}
+                  disabled={(!hasContent && !filenameBase.trim()) || isProcessing || isLoading || isExportingPdf || (isPdf && !isPdfPreviewReady)}
                   className="h-9 px-3 sm:px-4 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95 whitespace-nowrap flex-shrink-0"
                   title={isEditing ? t('save') : t('createText_create_button')}
                 >
