@@ -16,7 +16,7 @@
 - Modify: `src/hooks/ui/useCodeBlock.ts`
 - Test: `src/hooks/ui/useCodeBlock.test.tsx`
 
-- [ ] **Step 1: Write the failing regression test**
+- [x] **Step 1: Write the failing regression test**
 
 ```tsx
 it('keeps following the bottom when layout growth fires a scroll event without user scroll intent', () => {
@@ -25,12 +25,12 @@ it('keeps following the bottom when layout growth fires a scroll event without u
 });
 ```
 
-- [ ] **Step 2: Run the focused test to verify it fails**
+- [x] **Step 2: Run the focused test to verify it fails**
 
 Run: `npm test -- src/hooks/ui/useCodeBlock.test.tsx`
 Expected: FAIL because the hook marks `userHasScrolledUp` during a layout-driven scroll event.
 
-- [ ] **Step 3: Implement the minimal fix**
+- [x] **Step 3: Implement the minimal fix**
 
 ```ts
 const lastKnownScrollTop = useRef(0);
@@ -52,7 +52,7 @@ const handleScroll = useCallback(() => {
 }, []);
 ```
 
-- [ ] **Step 4: Re-run the focused test**
+- [x] **Step 4: Re-run the focused test**
 
 Run: `npm test -- src/hooks/ui/useCodeBlock.test.tsx`
 Expected: PASS
@@ -63,7 +63,7 @@ Expected: PASS
 - Modify: `src/components/shared/Modal.tsx`
 - Test: `src/components/shared/Modal.test.tsx`
 
-- [ ] **Step 1: Rewrite the teardown test around animation events**
+- [x] **Step 1: Rewrite the teardown test around animation events**
 
 ```tsx
 it('stays mounted until the exit animation ends', () => {
@@ -71,12 +71,12 @@ it('stays mounted until the exit animation ends', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused modal tests to verify the exit test fails**
+- [x] **Step 2: Run the focused modal tests to verify the exit test fails**
 
 Run: `npm test -- src/components/shared/Modal.test.tsx`
 Expected: FAIL because the component still depends on the fixed-duration timeout.
 
-- [ ] **Step 3: Replace timeout-based close logic with animation-end handling**
+- [x] **Step 3: Replace timeout-based close logic with animation-end handling**
 
 ```tsx
 useEffect(() => {
@@ -92,7 +92,7 @@ const handleAnimationEnd = (event: React.AnimationEvent<HTMLDivElement>) => {
 };
 ```
 
-- [ ] **Step 4: Re-run the focused modal tests**
+- [x] **Step 4: Re-run the focused modal tests**
 
 Run: `npm test -- src/components/shared/Modal.test.tsx`
 Expected: PASS
@@ -103,7 +103,7 @@ Expected: PASS
 - Modify: `src/styles/main.css`
 - Test: `src/__tests__/animations.test.ts`
 
-- [ ] **Step 1: Extend the CSS guardrail test**
+- [x] **Step 1: Extend the CSS guardrail test**
 
 ```ts
 it('limits theme color transitions to dedicated surfaces instead of broad layout selectors', () => {
@@ -111,12 +111,12 @@ it('limits theme color transitions to dedicated surfaces instead of broad layout
 });
 ```
 
-- [ ] **Step 2: Run the focused animation guardrail tests to verify they fail**
+- [x] **Step 2: Run the focused animation guardrail tests to verify they fail**
 
 Run: `npm test -- src/__tests__/animations.test.ts`
 Expected: FAIL because the broad selector list is still present in `main.css`.
 
-- [ ] **Step 3: Reduce the global selector list**
+- [x] **Step 3: Reduce the global selector list**
 
 ```css
 body,
@@ -126,7 +126,7 @@ body,
 }
 ```
 
-- [ ] **Step 4: Re-run the focused animation guardrail tests**
+- [x] **Step 4: Re-run the focused animation guardrail tests**
 
 Run: `npm test -- src/__tests__/animations.test.ts`
 Expected: PASS
@@ -136,19 +136,19 @@ Expected: PASS
 **Files:**
 - Modify: `docs/superpowers/plans/2026-04-12-animation-stability-regressions.md`
 
-- [ ] **Step 1: Record current findings about the upload animation claim**
+- [x] **Step 1: Record current findings about the upload animation claim**
 
 ```md
 - `src/services/api/fileApi.ts` now uses the SDK uploader and only invokes `onProgress` once at completion, so the previously reported high-frequency progress churn is not reproducible in the current code.
 ```
 
-- [ ] **Step 2: Record current findings about the welcome typewriter timer**
+- [x] **Step 2: Record current findings about the welcome typewriter timer**
 
 ```md
 - The current effect schedules at most one timeout per render pass and cleans that timeout in the effect cleanup, so no failing reproduction was found yet for the reported leak.
 ```
 
-- [ ] **Step 3: Verify the notes are present before wrapping up**
+- [x] **Step 3: Verify the notes are present before wrapping up**
 
 Run: `sed -n '1,220p' docs/superpowers/plans/2026-04-12-animation-stability-regressions.md`
 Expected: includes both investigation notes so future work can pick up without re-tracing the same assumptions

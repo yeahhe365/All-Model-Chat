@@ -16,10 +16,10 @@
 - Create: `src/hooks/chat-input/chatInputUtils.test.ts`
 - Create: `src/hooks/chat-input/chatInputUtils.ts`
 
-- [ ] Add a failing test for submit text composition with quotes and TTS context.
-- [ ] Add a failing test for the quoted-message formatting path without TTS context.
-- [ ] Implement the pure helpers used by the tests.
-- [ ] Run `npm run test -- src/hooks/chat-input/chatInputUtils.test.ts`.
+- [x] Add a failing test for submit text composition with quotes and TTS context.
+- [x] Add a failing test for the quoted-message formatting path without TTS context.
+- [x] Implement the pure helpers used by the tests.
+- [x] Run `npm run test -- src/hooks/chat-input/chatInputUtils.test.ts`.
 
 ### Task 2: Collapse Chat Input Handler Splitting
 
@@ -33,10 +33,10 @@
 - Delete: `src/hooks/chat-input/handlers/useKeyboardHandlers.ts`
 - Delete: `src/hooks/chat-input/handlers/useSubmissionHandlers.ts`
 
-- [ ] Inline the handler-only sub-hooks into the chat input entry hook.
-- [ ] Replace duplicated inline formatting with the tested helper module from Task 1.
-- [ ] Rename the entry hook to reflect domain ownership rather than orchestration.
-- [ ] Run the chat-input helper test again after the refactor.
+- [x] Inline the handler-only sub-hooks into the chat input entry hook.
+- [x] Replace duplicated inline formatting with the tested helper module from Task 1.
+- [x] Rename the entry hook to reflect domain ownership rather than orchestration.
+- [x] Run the chat-input helper test again after the refactor.
 
 ### Task 3: Collapse App Props/Logic Layers
 
@@ -53,10 +53,10 @@
 - Delete: `src/hooks/app/useAppProps.ts`
 - Delete: `src/hooks/useDataManagement.ts`
 
-- [ ] Inline app handler composition and data-management composition into the app entry hook.
-- [ ] Build `MainContent` props in `App.tsx` instead of via hook-based props builders.
-- [ ] Remove the `props/` layer entirely.
-- [ ] Run `npm run typecheck`.
+- [x] Inline app handler composition and data-management composition into the app entry hook.
+- [x] Build `MainContent` props in `App.tsx` instead of via hook-based props builders.
+- [x] Remove the `props/` layer entirely.
+- [x] Run `npm run typecheck`.
 
 ### Task 4: Collapse Message Sender Forwarding Layers
 
@@ -72,10 +72,10 @@
 - Delete: `src/hooks/message-sender/standard/useSessionUpdate.ts`
 - Delete: `src/hooks/useMessageHandler.ts`
 
-- [ ] Merge the `standard/` flow into `useStandardChat`.
-- [ ] Compose `useMessageSender`, message actions, and text-to-speech directly in `useChat`.
-- [ ] Remove forwarding-only wrapper hooks.
-- [ ] Run `npm run typecheck`.
+- [x] Merge the `standard/` flow into `useStandardChat`.
+- [x] Compose `useMessageSender`, message actions, and text-to-speech directly in `useChat`.
+- [x] Remove forwarding-only wrapper hooks.
+- [x] Run `npm run typecheck`.
 
 ### Task 5: Simplify `useChat` Store Wiring
 
@@ -83,15 +83,20 @@
 - Modify: `src/hooks/chat/useChat.ts`
 - Modify: `src/stores/chatStore.ts`
 
-- [ ] Replace local adapter wrappers with direct store actions where the store already supports updater semantics.
-- [ ] Keep only the minimum local glue needed for computed chat state.
-- [ ] Run `npm run test`.
+- [x] Replace local adapter wrappers with direct store actions where the store already supports updater semantics.
+- [x] Keep only the minimum local glue needed for computed chat state.
+- [x] Run `npm run test`.
 
 ### Task 6: Final Verification
 
 **Files:**
 - No code changes required
 
-- [ ] Run `npm run test`.
-- [ ] Run `npm run typecheck`.
-- [ ] Summarize the deleted hook layers and the remaining domain entry hooks.
+- [x] Run `npm run test`.
+- [x] Run `npm run typecheck`.
+- [x] Summarize the deleted hook layers and the remaining domain entry hooks.
+
+## Status Notes
+
+- The chat-input handler fan-out now lives under `src/hooks/chat-input/useChatInput.ts`, with pure text composition and pending-submission behavior isolated in helper modules instead of wrapper hooks.
+- The old hook `props/`, app `logic/`, chat-input `handlers/`, and `message-sender/standard/` layers are gone; the remaining top-level domain entry hooks are `useApp`, `useChat`, `useChatInput`, and `useMessageSender`.

@@ -16,7 +16,7 @@
 - Create: `src/components/layout/chat-area/ChatAreaContext.test.tsx`
 - Create: `src/components/layout/chat-area/ChatAreaContext.tsx`
 
-- [ ] **Step 1: Write a failing provider guard test**
+- [x] **Step 1: Write a failing provider guard test**
 
 ```tsx
 it('throws when a chat-area slice hook is used outside the provider', () => {
@@ -26,12 +26,12 @@ it('throws when a chat-area slice hook is used outside the provider', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx`
 Expected: FAIL because `ChatAreaContext` hooks do not exist yet.
 
-- [ ] **Step 3: Write a failing slice exposure test**
+- [x] **Step 3: Write a failing slice exposure test**
 
 ```tsx
 it('exposes the message-list and chat-input slices from one root model', () => {
@@ -41,7 +41,7 @@ it('exposes the message-list and chat-input slices from one root model', () => {
 });
 ```
 
-- [ ] **Step 4: Implement the provider and hooks**
+- [x] **Step 4: Implement the provider and hooks**
 
 ```tsx
 export const ChatAreaProvider = ({ value, children }: Props) => (
@@ -55,7 +55,7 @@ export const ChatAreaProvider = ({ value, children }: Props) => (
 );
 ```
 
-- [ ] **Step 5: Run the provider test again**
+- [x] **Step 5: Run the provider test again**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx`
 Expected: PASS
@@ -68,7 +68,7 @@ Expected: PASS
 - Modify: `src/components/layout/chat-area/ChatAreaProps.ts`
 - Modify: `src/components/layout/MainContent.tsx`
 
-- [ ] **Step 1: Write the failing integration expectation in the provider test**
+- [x] **Step 1: Write the failing integration expectation in the provider test**
 
 ```tsx
 it('lets leaf components read their slice without receiving leaf props', () => {
@@ -76,12 +76,12 @@ it('lets leaf components read their slice without receiving leaf props', () => {
 });
 ```
 
-- [ ] **Step 2: Run the provider test to verify it fails**
+- [x] **Step 2: Run the provider test to verify it fails**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx`
 Expected: FAIL because `ChatArea` still forwards leaf props directly.
 
-- [ ] **Step 3: Shrink the ChatArea root contract and build memoized slices in ChatArea**
+- [x] **Step 3: Shrink the ChatArea root contract and build memoized slices in ChatArea**
 
 ```tsx
 const contextValue = useMemo(
@@ -94,13 +94,13 @@ const contextValue = useMemo(
 );
 ```
 
-- [ ] **Step 4: Stop MainContent from assembling MessageList and ChatInput prop bags**
+- [x] **Step 4: Stop MainContent from assembling MessageList and ChatInput prop bags**
 
 ```tsx
 <ChatArea chatArea={chatArea} />
 ```
 
-- [ ] **Step 5: Run the provider test again**
+- [x] **Step 5: Run the provider test again**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx`
 Expected: PASS
@@ -110,7 +110,7 @@ Expected: PASS
 **Files:**
 - Modify: `src/components/chat/MessageList.tsx`
 
-- [ ] **Step 1: Write a failing component test that renders MessageList through the provider**
+- [x] **Step 1: Write a failing component test that renders MessageList through the provider**
 
 ```tsx
 it('renders from the chat-area message-list slice', () => {
@@ -119,12 +119,12 @@ it('renders from the chat-area message-list slice', () => {
 });
 ```
 
-- [ ] **Step 2: Run the message-list test to verify it fails**
+- [x] **Step 2: Run the message-list test to verify it fails**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx src/components/chat/MessageList.preview.test.tsx`
 Expected: FAIL because `MessageList` still requires direct props.
 
-- [ ] **Step 3: Replace the exported MessageList props contract with the provider hook**
+- [x] **Step 3: Replace the exported MessageList props contract with the provider hook**
 
 ```tsx
 export const MessageList: React.FC = () => {
@@ -136,7 +136,7 @@ export const MessageList: React.FC = () => {
   } = useChatAreaMessageList();
 ```
 
-- [ ] **Step 4: Re-run the targeted message-list tests**
+- [x] **Step 4: Re-run the targeted message-list tests**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx src/components/chat/MessageList.preview.test.tsx`
 Expected: PASS
@@ -148,7 +148,7 @@ Expected: PASS
 - Modify: `src/hooks/chat-input/useChatInput.ts`
 - Modify: `src/types/chat.ts`
 
-- [ ] **Step 1: Write a failing provider-backed chat-input test**
+- [x] **Step 1: Write a failing provider-backed chat-input test**
 
 ```tsx
 it('renders chat input from the chat-area input slice', () => {
@@ -157,12 +157,12 @@ it('renders chat input from the chat-area input slice', () => {
 });
 ```
 
-- [ ] **Step 2: Run the targeted test to verify it fails**
+- [x] **Step 2: Run the targeted test to verify it fails**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx`
 Expected: FAIL because `ChatInput` still requires direct props.
 
-- [ ] **Step 3: Move ChatInput to the provider hook and reduce the exported prop type**
+- [x] **Step 3: Move ChatInput to the provider hook and reduce the exported prop type**
 
 ```tsx
 export const ChatInput: React.FC = () => {
@@ -173,7 +173,7 @@ export const ChatInput: React.FC = () => {
   } = useChatInput(props);
 ```
 
-- [ ] **Step 4: Re-run the targeted provider test**
+- [x] **Step 4: Re-run the targeted provider test**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx`
 Expected: PASS
@@ -183,17 +183,17 @@ Expected: PASS
 **Files:**
 - No code changes required
 
-- [ ] **Step 1: Run targeted refactor tests**
+- [x] **Step 1: Run targeted refactor tests**
 
 Run: `npm run test -- src/components/layout/chat-area/ChatAreaContext.test.tsx src/components/chat/MessageList.preview.test.tsx`
 Expected: PASS
 
-- [ ] **Step 2: Run type checking**
+- [x] **Step 2: Run type checking**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 3: Summarize the reduced boundary**
+- [x] **Step 3: Summarize the reduced boundary**
 
 ```text
 MainContent now passes one chat-area root model.

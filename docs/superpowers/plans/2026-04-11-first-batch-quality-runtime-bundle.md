@@ -30,9 +30,9 @@
 - Modify: `src/stores/chatStore.ts`
 - Modify: `src/stores/__tests__/chatStore.test.ts`
 
-- [ ] Add a failing test covering `setActiveSessionId(null)` while the app is on `/chat/:id`.
-- [ ] Update URL sync logic so clearing the active session always normalizes back to `/`.
-- [ ] Run `npm run test -- src/stores/__tests__/chatStore.test.ts` or the equivalent Vitest target and confirm the regression passes.
+- [x] Add a failing test covering `setActiveSessionId(null)` while the app is on `/chat/:id`.
+- [x] Update URL sync logic so clearing the active session always normalizes back to `/`.
+- [x] Run `npm run test -- src/stores/__tests__/chatStore.test.ts` or the equivalent Vitest target and confirm the regression passes.
 
 ### Task 3: Remove Runtime CDN Styles
 
@@ -43,10 +43,10 @@
 - Modify: `src/utils/uiUtils.ts`
 - Modify: `src/components/message/code-block/LanguageIcon.tsx`
 
-- [ ] Remove CDN stylesheet tags from the HTML shell.
-- [ ] Move syntax/markdown presentation into repo-owned CSS and local imports.
-- [ ] Replace the Font Awesome dependency in code language badges with local `lucide-react` icons.
-- [ ] Run `npm run build` and verify the app still ships with local stylesheet ownership only.
+- [x] Remove CDN stylesheet tags from the HTML shell.
+- [x] Move syntax/markdown presentation into repo-owned CSS and local imports.
+- [x] Replace the Font Awesome dependency in code language badges with local `lucide-react` icons.
+- [x] Run `npm run build` and verify the app still ships with local stylesheet ownership only.
 
 ### Task 4: Tighten Export and Diagram Bundles
 
@@ -67,10 +67,10 @@
 - Modify: `src/components/shared/file-preview/FilePreviewHeader.tsx`
 - Modify: `vite.config.ts`
 
-- [ ] Replace broad `exportUtils` imports with direct submodule imports so dynamic loading can split correctly.
-- [ ] Keep heavy export/image functionality lazy at usage sites.
-- [ ] Adjust Vite chunking only where it materially improves current output.
-- [ ] Run `npm run build` and compare warning output/chunking against the current baseline.
+- [x] Replace broad `exportUtils` imports with direct submodule imports so dynamic loading can split correctly.
+- [x] Keep heavy export/image functionality lazy at usage sites.
+- [x] Adjust Vite chunking only where it materially improves current output.
+- [x] Run `npm run build` and compare warning output/chunking against the current baseline.
 
 ### Task 5: Final Verification
 
@@ -78,6 +78,13 @@
 - No code changes required
 
 - [ ] Run `npm run lint`.
-- [ ] Run `npm run test`.
-- [ ] Run `npm run build`.
-- [ ] Summarize what improved, what warnings remain, and any follow-up work that should be queued separately.
+- [x] Run `npm run test`.
+- [x] Run `npm run build`.
+- [x] Summarize what improved, what warnings remain, and any follow-up work that should be queued separately.
+
+## Status Notes
+
+- URL state now normalizes back to `/` when the active `/chat/:id` session is cleared, and the regression coverage exists in `src/stores/__tests__/chatStore.test.ts`.
+- Runtime CDN stylesheet dependencies and Font Awesome badge usage are gone from `index.html`, with styling owned by repo-managed CSS and local icon components.
+- Export and diagram bundling now rely on direct lazy imports and the current Vite chunk map; `npm run build` succeeds, but still reports large chunk warnings for `html-export-vendor`, `mermaid-vendor`, and `graphviz-vendor`.
+- `npm run lint` still fails in the current tree with 2 errors and a large backlog of warnings, so Task 1 and the final lint verification remain incomplete.

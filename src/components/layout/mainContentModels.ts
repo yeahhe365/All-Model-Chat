@@ -134,6 +134,10 @@ export const buildSettingsForModal = ({
 
 export const buildAppModalsProps = (props: AppModalsProps): AppModalsProps => props;
 
+export const buildChatAreaInputActions = (
+  props: ChatAreaModel['inputActions'],
+): ChatAreaModel['inputActions'] => props;
+
 interface BuildChatAreaModelArgs {
   appSettings: AppSettings;
   sessionTitle: string;

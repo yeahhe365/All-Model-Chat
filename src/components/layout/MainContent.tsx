@@ -8,6 +8,7 @@ import { useChatStore } from '../../stores/chatStore';
 import {
   buildAppModalsProps,
   buildChatAreaModel,
+  buildChatAreaInputActions,
   buildHistorySidebarProps,
   buildSettingsForModal,
   buildSidePanelKey,
@@ -197,7 +198,8 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const inputActions: ChatAreaProps['chatArea']['inputActions'] = useMemo(
-    () => ({
+    () =>
+      buildChatAreaInputActions({
       onMessageSent,
       onSendMessage,
       onStopGenerating: chatState.handleStopGenerating,
@@ -221,6 +223,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       setCurrentChatSettings: chatState.setCurrentChatSettings,
       onAddUserMessage: chatState.handleAddUserMessage,
       onLiveTranscript: chatState.handleLiveTranscript,
+      liveClientFunctions: chatState.liveClientFunctions,
       onEditMessageContent: chatState.handleUpdateMessageContent,
       onToggleBBox: handleToggleBBoxMode,
       onToggleGuide: handleToggleGuideMode,
@@ -239,6 +242,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       chatState.handleTranscribeAudio,
       chatState.handleTogglePinCurrentSession,
       chatState.handleUpdateMessageContent,
+      chatState.liveClientFunctions,
       chatState.setCurrentChatSettings,
       chatState.toggleCodeExecution,
       chatState.toggleDeepSearch,

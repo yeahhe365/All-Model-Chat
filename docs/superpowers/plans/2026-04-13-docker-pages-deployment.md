@@ -76,7 +76,7 @@
 - Test: `src/runtime/runtimeConfig.test.ts`
 - Test: `src/stores/__tests__/settingsStore.test.ts`
 
-- [ ] **Step 1: Write the failing runtime-config tests**
+- [x] **Step 1: Write the failing runtime-config tests**
 
 ```ts
 import { afterEach, describe, expect, it } from 'vitest';
@@ -130,12 +130,12 @@ it('keeps runtime defaults when no settings are stored yet', async () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [x] **Step 2: Run the focused tests to verify they fail**
 
 Run: `npm test -- src/runtime/runtimeConfig.test.ts src/stores/__tests__/settingsStore.test.ts`
 Expected: FAIL because the runtime-config module and the new `serverManagedApi` defaults do not exist yet.
 
-- [ ] **Step 3: Implement the runtime-config layer and default merge**
+- [x] **Step 3: Implement the runtime-config layer and default merge**
 
 ```html
 <!-- index.html -->
@@ -254,7 +254,7 @@ const sanitizeAppSettings = (settings: AppSettings): AppSettings => {
 };
 ```
 
-- [ ] **Step 4: Re-run the focused runtime-config tests**
+- [x] **Step 4: Re-run the focused runtime-config tests**
 
 Run: `npm test -- src/runtime/runtimeConfig.test.ts src/stores/__tests__/settingsStore.test.ts`
 Expected: PASS
@@ -270,7 +270,7 @@ Expected: PASS
 - Test: `src/utils/__tests__/apiUtils.test.ts`
 - Test: `src/components/settings/sections/ApiConfigSection.test.tsx`
 
-- [ ] **Step 1: Write the failing key-selection and settings tests**
+- [x] **Step 1: Write the failing key-selection and settings tests**
 
 ```ts
 import { describe, expect, it, vi } from 'vitest';
@@ -350,12 +350,12 @@ it('tests the proxy path with the server-managed marker key when no local key is
 });
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [x] **Step 2: Run the focused tests to verify they fail**
 
 Run: `npm test -- src/utils/__tests__/apiUtils.test.ts src/components/settings/sections/ApiConfigSection.test.tsx`
 Expected: FAIL because server-managed mode does not exist yet and the connection tester still hard-fails when no local key is present.
 
-- [ ] **Step 3: Implement the server-managed branch in the request helpers and settings UI**
+- [x] **Step 3: Implement the server-managed branch in the request helpers and settings UI**
 
 ```ts
 // src/utils/apiUtils.ts
@@ -488,7 +488,7 @@ if (serverManagedApi && !keyToTest) {
 />
 ```
 
-- [ ] **Step 4: Re-run the focused server-managed tests**
+- [x] **Step 4: Re-run the focused server-managed tests**
 
 Run: `npm test -- src/utils/__tests__/apiUtils.test.ts src/components/settings/sections/ApiConfigSection.test.tsx`
 Expected: PASS
@@ -505,7 +505,7 @@ Expected: PASS
 - Modify: `vitest.config.ts`
 - Test: `server/src/createServer.test.ts`
 
-- [ ] **Step 1: Write the failing Node-side API service tests**
+- [x] **Step 1: Write the failing Node-side API service tests**
 
 ```ts
 // @vitest-environment node
@@ -602,12 +602,12 @@ describe('createServer', () => {
 });
 ```
 
-- [ ] **Step 2: Run the API service tests to verify they fail**
+- [x] **Step 2: Run the API service tests to verify they fail**
 
 Run: `npm test -- server/src/createServer.test.ts`
 Expected: FAIL because the `server/` sources and Vitest include path do not exist yet.
 
-- [ ] **Step 3: Implement the backend service and test support**
+- [x] **Step 3: Implement the backend service and test support**
 
 ```json
 // package.json
@@ -766,7 +766,7 @@ test: {
 }
 ```
 
-- [ ] **Step 4: Re-run the API service tests**
+- [x] **Step 4: Re-run the API service tests**
 
 Run: `npm test -- server/src/createServer.test.ts`
 Expected: PASS
@@ -782,7 +782,7 @@ Expected: PASS
 - Create: `docker-compose.yml`
 - Modify: `public/runtime-config.js`
 
-- [ ] **Step 1: Write the Docker config expectations as a lightweight checklist**
+- [x] **Step 1: Write the Docker config expectations as a lightweight checklist**
 
 ```md
 - `web` serves the static app on port 8080
@@ -791,12 +791,12 @@ Expected: PASS
 - `runtime-config.js` defaults to same-origin `/api/gemini` and `/api/live-token`
 ```
 
-- [ ] **Step 2: Run `docker compose config` to verify it currently fails**
+- [x] **Step 2: Run `docker compose config` to verify it currently fails**
 
 Run: `docker compose config`
 Expected: FAIL because `docker-compose.yml` does not exist yet.
 
-- [ ] **Step 3: Add the Docker and Nginx assets**
+- [x] **Step 3: Add the Docker and Nginx assets**
 
 ```dockerfile
 # Dockerfile.web
@@ -905,7 +905,7 @@ AMC_DEFAULT_LIVE_TOKEN_ENDPOINT=/api/live-token
 ALLOWED_ORIGINS=https://pages.example.com
 ```
 
-- [ ] **Step 4: Re-run Docker config validation**
+- [x] **Step 4: Re-run Docker config validation**
 
 Run: `docker compose config`
 Expected: PASS
@@ -915,7 +915,7 @@ Expected: PASS
 **Files:**
 - Modify: `README.md`
 
-- [ ] **Step 1: Update README deployment sections**
+- [x] **Step 1: Update README deployment sections**
 
 ````md
 ## Docker Compose 部署
@@ -936,32 +936,32 @@ docker compose up --build
 - 长期 `GEMINI_API_KEY` 仅保留在 API 服务环境变量中
 ````
 
-- [ ] **Step 2: Run the targeted regression suite**
+- [x] **Step 2: Run the targeted regression suite**
 
 Run: `npm test -- src/runtime/runtimeConfig.test.ts src/utils/__tests__/apiUtils.test.ts src/components/settings/sections/ApiConfigSection.test.tsx server/src/createServer.test.ts`
 Expected: PASS
 
-- [ ] **Step 3: Run typecheck**
+- [x] **Step 3: Run typecheck**
 
 Run: `npm run typecheck`
 Expected: PASS
 
-- [ ] **Step 4: Run the frontend build**
+- [x] **Step 4: Run the frontend build**
 
 Run: `npm run build`
 Expected: PASS
 
-- [ ] **Step 5: Run the API build**
+- [x] **Step 5: Run the API build**
 
 Run: `npm run build:api`
 Expected: PASS
 
-- [ ] **Step 6: Smoke-check the compose file**
+- [x] **Step 6: Smoke-check the compose file**
 
 Run: `docker compose up --build`
 Expected: the frontend is reachable on `http://localhost:8080`, `docker compose exec api wget -qO- http://127.0.0.1:3001/health` returns JSON, and the browser app defaults to `/api/gemini` plus `/api/live-token` without asking for a local key.
 
-- [ ] **Step 7: Commit the deployment batch**
+- [x] **Step 7: Commit the deployment batch**
 
 ```bash
 git add public/runtime-config.js index.html src/runtime src/utils/__tests__/apiUtils.test.ts src/utils/apiUtils.ts src/components/settings/sections/ApiConfigSection.tsx src/components/settings/sections/ApiConfigSection.test.tsx src/components/settings/SettingsContent.tsx src/constants/appConstants.ts src/types/settings.ts src/stores/settingsStore.ts src/stores/__tests__/settingsStore.test.ts server package.json vitest.config.ts Dockerfile.web Dockerfile.api docker/nginx.conf docker/web-entrypoint.sh docker-compose.yml .env.example README.md

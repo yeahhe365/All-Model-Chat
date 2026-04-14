@@ -96,10 +96,12 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
 
     const filteredItems = menuItems.filter(item => {
         if (isNativeAudioModel) {
-            // For Live API:
-            // 1. Code Execution is NOT supported.
-            // 2. Web Search is supported but moved to the main toolbar.
-            // 3. Other tools are not explicitly supported/tested in this mode yet.
+            if (item.labelKey === 'local_python_label') {
+                return !!onToggleLocalPython;
+            }
+
+            // In Live mode, web search has a dedicated toggle and the remaining
+            // server-side tools in this menu are intentionally hidden for now.
             return false;
         }
         // Only show Local Python if handler is provided (it's new feature)
@@ -160,7 +162,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         
         {!isNativeAudioModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
 
-        {!isNativeAudioModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<IconPython size={14} strokeWidth={2} />} />}
+        {isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<IconPython size={14} strokeWidth={2} />} />}
         
         {!isNativeAudioModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
       </div>

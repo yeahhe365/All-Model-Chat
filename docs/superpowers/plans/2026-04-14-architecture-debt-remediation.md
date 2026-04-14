@@ -17,12 +17,12 @@
 - Create: `e2e/chat-core.spec.ts`
 - Modify: `playwright.config.ts`
 
-- [ ] Add a browser test that boots the app with seeded local state, sends a plain text prompt through the chat UI, and verifies a mocked streamed model reply renders.
-- [ ] Add a browser test that intercepts the core text-generation network path with `page.route(...)` and verifies the message list updates incrementally or at least completes with the mocked content.
-- [ ] Reuse the existing browser-seeding utilities from `chat-smoke.spec.ts` where possible instead of re-seeding state in multiple incompatible ways.
-- [ ] Run `npm run test:e2e -- e2e/chat-core.spec.ts` and make the new test fail for the intended missing behavior before support changes.
-- [ ] Implement the minimal Playwright or test-seeding helpers needed to make the new browser tests pass.
-- [ ] Re-run `npm run test:e2e -- e2e/chat-smoke.spec.ts e2e/chat-core.spec.ts`.
+- [x] Add a browser test that boots the app with seeded local state, sends a plain text prompt through the chat UI, and verifies a mocked streamed model reply renders.
+- [x] Add a browser test that intercepts the core text-generation network path with `page.route(...)` and verifies the message list updates incrementally or at least completes with the mocked content.
+- [x] Reuse the existing browser-seeding utilities from `chat-smoke.spec.ts` where possible instead of re-seeding state in multiple incompatible ways.
+- [x] Run `npm run test:e2e -- e2e/chat-core.spec.ts` and make the new test fail for the intended missing behavior before support changes.
+- [x] Implement the minimal Playwright or test-seeding helpers needed to make the new browser tests pass.
+- [x] Re-run `npm run test:e2e -- e2e/chat-smoke.spec.ts e2e/chat-core.spec.ts`.
 
 ### Task 2: Introduce Global I18n Context
 
@@ -38,12 +38,12 @@
 - Modify: `src/components/chat/input/ChatInput.tsx`
 - Modify: component and hook files that currently only receive `t` via props/context but can read it directly
 
-- [ ] Create an I18n provider/hook that exposes `{ language, t }` globally and memoizes the translator from the current app language.
-- [ ] Wrap the app tree with that provider so all windows/portals still receive the same translation source of truth.
-- [ ] Remove `t` from ChatArea context slices and top-level ChatArea prop models, then update leaf components to call `useI18n()` directly.
-- [ ] Remove `t` from ChatInput, MessageList, Header, modal, sidebar, and settings component props where those props only exist for translation lookups.
-- [ ] Run `npm run typecheck` after each batch and keep the public prop interfaces shrinking rather than growing.
-- [ ] Add or update at least one focused test proving that language changes still update UI text without full-page reload assumptions.
+- [x] Create an I18n provider/hook that exposes `{ language, t }` globally and memoizes the translator from the current app language.
+- [x] Wrap the app tree with that provider so all windows/portals still receive the same translation source of truth.
+- [x] Remove `t` from ChatArea context slices and top-level ChatArea prop models, then update leaf components to call `useI18n()` directly.
+- [x] Remove `t` from ChatInput, MessageList, Header, modal, sidebar, and settings component props where those props only exist for translation lookups.
+- [x] Run `npm run typecheck` after each batch and keep the public prop interfaces shrinking rather than growing.
+- [x] Add or update at least one focused test proving that language changes still update UI text without full-page reload assumptions.
 
 ### Task 3: Flatten Chat Input Hook Orchestration
 
@@ -56,11 +56,11 @@
 - Modify: `src/components/chat/input/ChatInput.tsx`
 - Create or modify: helper modules under `src/hooks/chat-input/` when pure logic extraction is justified
 
-- [ ] Move effectful orchestration that is only used by `useChatInput` back into the main hook so the domain flow is readable in one place.
-- [ ] Keep only focused reusable subunits that own true local state boundaries or pure helper logic.
-- [ ] Reduce long parameter lists by passing narrower domain objects or extracting pure helper functions instead of routing everything through wrapper hooks.
-- [ ] Re-run the existing `chatInputUtils` and pending-submission tests while refactoring.
-- [ ] Add focused tests for any extracted pure helper that replaces current wrapper behavior.
+- [x] Move effectful orchestration that is only used by `useChatInput` back into the main hook so the domain flow is readable in one place.
+- [x] Keep only focused reusable subunits that own true local state boundaries or pure helper logic.
+- [x] Reduce long parameter lists by passing narrower domain objects or extracting pure helper functions instead of routing everything through wrapper hooks.
+- [x] Re-run the existing `chatInputUtils` and pending-submission tests while refactoring.
+- [x] Add focused tests for any extracted pure helper that replaces current wrapper behavior.
 
 ### Task 4: Split Session Files Into Dedicated IndexedDB Storage
 
@@ -74,19 +74,24 @@
 - Modify: `src/hooks/data-management/useChatSessionExport.ts`
 - Modify: tests under `src/utils/__tests__/db.test.ts`, `src/utils/chat/__tests__/session.test.ts`, and store/history tests
 
-- [ ] Add a dedicated IndexedDB `files` object store and a forward migration that preserves compatibility with existing databases.
-- [ ] Store durable file blobs and metadata in that new store while keeping session records lightweight through file references.
-- [ ] Rehydrate message files by resolving file references on session load, including backward-compatible fallback for legacy embedded payloads.
-- [ ] Ensure exports still strip non-serializable fields and remain portable even though runtime persistence now uses detached file records.
-- [ ] Add/update tests for migrations, save/load round-trips, and legacy-session rehydration.
-- [ ] Validate that chat history loading still works when sessions contain multiple media files.
+- [x] Add a dedicated IndexedDB `files` object store and a forward migration that preserves compatibility with existing databases.
+- [x] Store durable file blobs and metadata in that new store while keeping session records lightweight through file references.
+- [x] Rehydrate message files by resolving file references on session load, including backward-compatible fallback for legacy embedded payloads.
+- [x] Ensure exports still strip non-serializable fields and remain portable even though runtime persistence now uses detached file records.
+- [x] Add/update tests for migrations, save/load round-trips, and legacy-session rehydration.
+- [x] Validate that chat history loading still works when sessions contain multiple media files.
 
 ### Task 5: Final Verification
 
 **Files:**
 - Modify: `README.md` only if new test commands or storage behavior need documentation
 
-- [ ] Run `npm run test`.
-- [ ] Run `npm run typecheck`.
-- [ ] Run `npm run test:e2e -- e2e/chat-smoke.spec.ts e2e/chat-core.spec.ts`.
-- [ ] Summarize remaining known risk around real external APIs versus mocked browser coverage.
+- [x] Run `npm run test`.
+- [x] Run `npm run typecheck`.
+- [x] Run `npm run test:e2e -- e2e/chat-smoke.spec.ts e2e/chat-core.spec.ts`.
+- [x] Summarize remaining known risk around real external APIs versus mocked browser coverage.
+
+## Status Notes
+
+- Core chat browser coverage now exists through Playwright smoke plus mocked non-streaming and streaming chat flows, translation lookups come from `I18nProvider`, and IndexedDB persistence uses a dedicated `files` store with backward-compatible session rehydration.
+- The main remaining validation gap is behavior that still depends on real external APIs or device/browser media subsystems rather than deterministic mocks.

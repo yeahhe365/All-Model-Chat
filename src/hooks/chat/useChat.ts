@@ -1,7 +1,6 @@
 
 
-
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { useModels } from '../core/useModels';
 import { useChatHistory } from './useChatHistory';
@@ -20,6 +19,8 @@ import { useLocalPythonAgent } from '../features/useLocalPythonAgent';
 import { useChatStore } from '../../stores/chatStore';
 import { useMessageActions } from './messages/useMessageActions';
 import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
+import { createLiveClientFunctions } from '../live-api/liveClientFunctions';
+import { pyodideService } from '../../services/pyodideService';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
 
@@ -151,6 +152,18 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleSendMessage: messageSender.handleSendMessage,
         setSessionLoading,
     });
+
+    const liveClientFunctions = useMemo(
+        () =>
+            createLiveClientFunctions({
+                isLocalPythonEnabled:
+                    !!currentChatSettings.isLocalPythonEnabled || !!appSettings.isLocalPythonEnabled,
+                selectedFiles,
+                mountFiles: (files) => pyodideService.mountFiles(files),
+                runPython: (code) => pyodideService.runPython(code),
+            }),
+        [appSettings.isLocalPythonEnabled, currentChatSettings.isLocalPythonEnabled, selectedFiles],
+    );
 
     const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler({
         appSettings,
@@ -314,5 +327,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleUpdateMessageFile: chatActions.handleUpdateMessageFile,
         handleAddUserMessage: chatActions.handleAddUserMessage,
         handleLiveTranscript: chatActions.handleLiveTranscript,
+        liveClientFunctions,
     };
 };
