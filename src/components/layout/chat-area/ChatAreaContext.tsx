@@ -152,3 +152,35 @@ function useRequiredContext<T>(context: React.Context<T | null>, name: string): 
 export const useChatAreaMessageList = () => useRequiredContext(ChatAreaMessageListContext, 'useChatAreaMessageList');
 
 export const useChatAreaInput = () => useRequiredContext(ChatAreaInputContext, 'useChatAreaInput');
+
+export interface ChatAreaHeaderProps {
+  isLoading: boolean;
+  currentModelName: string;
+  availableModels: ModelOption[];
+  selectedModelId: string;
+  onSelectModel: (modelId: string) => void;
+  isSwitchingModel: boolean;
+  isHistorySidebarOpen: boolean;
+  onNewChat: () => void;
+  onOpenScenariosModal: () => void;
+  onToggleHistorySidebar: () => void;
+  onLoadCanvasPrompt: () => void;
+  isCanvasPromptActive: boolean;
+  isPipSupported: boolean;
+  isPipActive: boolean;
+  onTogglePip: () => void;
+  themeId: string;
+  thinkingLevel: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+  onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
+  newChatShortcut: string;
+  pipShortcut: string;
+}
+
+export interface ChatAreaShellProps {
+  isAppDraggingOver: boolean;
+  handleAppDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleAppDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleAppDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+  handleAppDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  modelsLoadingError: string | null;
+}

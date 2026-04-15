@@ -1,13 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Session as LiveSession, Tool } from '@google/genai';
-import { AppSettings, ChatSettings } from '../../types';
+import { AppSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
 import { getLiveApiClient } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 
 interface UseLiveConnectionProps {
     appSettings: AppSettings;
-    chatSettings: ChatSettings;
     modelId: string;
     liveConfig: any;
     tools: Tool[];
@@ -24,7 +23,6 @@ interface UseLiveConnectionProps {
 
 export const useLiveConnection = ({
     appSettings,
-    chatSettings,
     modelId,
     liveConfig,
     tools,
@@ -225,7 +223,7 @@ export const useLiveConnection = ({
                 cleanupAudio();
             }
         }
-    }, [appSettings, chatSettings, modelId, onClose, onTranscript, initializeAudio, cleanupAudio, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
+    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, cleanupAudio, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
 
     const sendText = useCallback(async (text: string) => {
         if (!sessionRef.current) return;

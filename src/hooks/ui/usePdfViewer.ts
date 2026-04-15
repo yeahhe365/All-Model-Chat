@@ -15,7 +15,7 @@ const getInitialScale = () => {
     return 1.1;
 };
 
-export const usePdfViewer = (file: UploadedFile) => {
+export const usePdfViewer = (_file: UploadedFile) => {
     const [numPages, setNumPages] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [scale, setScale] = useState(getInitialScale);
@@ -27,17 +27,6 @@ export const usePdfViewer = (file: UploadedFile) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const pageRefs = useRef<Map<number, HTMLDivElement>>(new Map());
     const sidebarRef = useRef<HTMLDivElement>(null);
-
-    // Reset state when file changes
-    useEffect(() => {
-        setNumPages(null);
-        setCurrentPage(1);
-        setRotation(0);
-        setScale(getInitialScale());
-        setIsLoading(true);
-        setError(null);
-        pageRefs.current.clear();
-    }, [file.id]);
 
     // Intersection Observer to update current page number on scroll
     useEffect(() => {

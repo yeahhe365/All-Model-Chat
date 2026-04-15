@@ -51,20 +51,19 @@ describe('MessageActions', () => {
   it('does not render a read-aloud action for model messages', () => {
     act(() => {
       root.render(
-        <I18nProvider>
-          <WindowProvider window={window} document={document}>
-            <MessageActions
-              message={message}
-              isGrouped={false}
-              onEditMessage={() => {}}
-              onDeleteMessage={() => {}}
-              onRetryMessage={() => {}}
-              onGenerateCanvas={() => {}}
-              onContinueGeneration={() => {}}
-              themeId="pearl"
-            />
-          </WindowProvider>
-        </I18nProvider>
+        <WindowProvider window={window} document={document}>
+          <MessageActions
+            message={message}
+            isGrouped={false}
+            onEditMessage={() => {}}
+            onDeleteMessage={() => {}}
+            onRetryMessage={() => {}}
+            onGenerateCanvas={() => {}}
+            onContinueGeneration={() => {}}
+            themeId="pearl"
+            t={(key) => String(key)}
+          />
+        </WindowProvider>
       );
     });
 

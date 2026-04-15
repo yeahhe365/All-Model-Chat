@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadedFile } from '../../../types';
-import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal, Settings2, Edit3 } from 'lucide-react';
-import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
+import { Ban, X, Loader2, CheckCircle, Copy, Check, Scissors, SlidersHorizontal } from 'lucide-react';
+import { CATEGORY_STYLES, getResolutionColor } from '../../../utils/uiUtils';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { formatFileSize } from '../../../utils/fileHelpers';
+import { getFileCardMeta } from '../../../utils/fileCardUtils';
 
 interface SelectedFileDisplayProps {
   file: UploadedFile;
@@ -48,31 +49,24 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const isUploading = file.uploadState === 'uploading';
   const isProcessing = file.uploadState === 'processing_api' || file.isProcessing;
   const isFailed = file.uploadState === 'failed' || !!file.error;
-  const isActive = file.uploadState === 'active';
   const isCancelled = file.uploadState === 'cancelled';
 
   const isCancellable = isUploading || (isProcessing && file.uploadState !== 'processing_api');
-  
-  const category = getFileTypeCategory(file.type, file.error);
+  const {
+    category,
+    isActive,
+    isText,
+    canConfigure,
+    ConfigIcon,
+  } = getFileCardMeta(file, {
+    isGemini3,
+    includeTextEditing: true,
+    requireActiveForConfigure: true,
+    canConfigure: !!onConfigure,
+  });
   const { Icon, colorClass, bgClass } = CATEGORY_STYLES[category] || CATEGORY_STYLES['code'];
-  
-  const isVideo = category === 'video' || category === 'youtube';
-  const isImage = category === 'image';
-  const isPdf = category === 'pdf';
-  const isText = category === 'code'; // Based on getFileTypeCategory logic
-  
-  // Determine if this file supports configuration (Video Clipping OR Gemini 3 Resolution OR Text Editing)
-  const canConfigure = onConfigure && isActive && !file.error && (
-      isVideo || (isGemini3 && (isImage || isPdf)) || isText
-  );
 
   const ErrorIcon = CATEGORY_STYLES['error'].Icon;
-
-  // Icon Selection Logic:
-  // If it's a text file, use Edit icon
-  // If it's Gemini 3, we support resolution settings. Use Sliders icon.
-  // If it's NOT Gemini 3 but is Video, we only support clipping. Use Scissors.
-  const ConfigIcon = isText ? Edit3 : (isGemini3 ? SlidersHorizontal : (isVideo ? Scissors : Settings2));
 
   return (
     <div className={`group relative flex flex-col w-24 flex-shrink-0 ${isNewlyActive ? 'newly-active-file-animate' : ''} select-none`}>

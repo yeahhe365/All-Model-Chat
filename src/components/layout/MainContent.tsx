@@ -53,6 +53,9 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     handleImportHistory,
     handleImportAllScenarios,
   } = app;
+  const { setAppSettings } = app;
+  const { setIsHistorySidebarOpen } = uiState;
+  const { loadChatSession, handleSendMessage } = chatState;
 
   const isSettingsModalOpen = useUIStore((state) => state.isSettingsModalOpen);
   const setIsSettingsModalOpen = useUIStore((state) => state.setIsSettingsModalOpen);
@@ -70,18 +73,18 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   }, [setIsPreloadedMessagesModalOpen]);
 
   const toggleHistorySidebar = useCallback(() => {
-    uiState.setIsHistorySidebarOpen((prev) => !prev);
-  }, [uiState]);
+    setIsHistorySidebarOpen((prev) => !prev);
+  }, [setIsHistorySidebarOpen]);
 
   const closeHistorySidebar = useCallback(() => {
-    uiState.setIsHistorySidebarOpen(false);
-  }, [uiState]);
+    setIsHistorySidebarOpen(false);
+  }, [setIsHistorySidebarOpen]);
 
   const selectSession = useCallback(
     (id: string) => {
-      chatState.loadChatSession(id);
+      loadChatSession(id);
     },
-    [chatState],
+    [loadChatSession],
   );
 
   const openExportModal = useCallback(() => {
@@ -115,17 +118,17 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
 
   const onSendMessage = useCallback(
     (text: string, options?: { isFastMode?: boolean }) => {
-      chatState.handleSendMessage({ text, ...options });
+      handleSendMessage({ text, ...options });
     },
-    [chatState],
+    [handleSendMessage],
   );
 
   const onToggleQuadImages = useCallback(() => {
-    app.setAppSettings((prev) => ({
+    setAppSettings((prev) => ({
       ...prev,
       generateQuadImages: !prev.generateQuadImages,
     }));
-  }, [app]);
+  }, [setAppSettings]);
 
   const headerActions: MainContentChatAreaHeaderActions = useMemo(
     () => ({
@@ -192,36 +195,35 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const inputActions: ChatAreaProps['chatArea']['inputActions'] = useMemo(
-    () =>
-      ({
-        onMessageSent,
-        onSendMessage,
-        onStopGenerating: chatState.handleStopGenerating,
-        onCancelEdit: chatState.handleCancelEdit,
-        onProcessFiles: chatState.handleProcessAndAddFiles,
-        onAddFileById: chatState.handleAddFileById,
-        onCancelUpload: chatState.handleCancelFileUpload,
-        onTranscribeAudio: chatState.handleTranscribeAudio,
-        onToggleGoogleSearch: chatState.toggleGoogleSearch,
-        onToggleCodeExecution: chatState.toggleCodeExecution,
-        onToggleLocalPython: chatState.toggleLocalPython,
-        onToggleUrlContext: chatState.toggleUrlContext,
-        onToggleDeepSearch: chatState.toggleDeepSearch,
-        onClearChat: chatState.handleClearCurrentChat,
-        onOpenSettings: openSettingsModal,
-        onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
-        onTogglePinCurrentSession: chatState.handleTogglePinCurrentSession,
-        onRetryLastTurn: chatState.handleRetryLastTurn,
-        onEditLastUserMessage: chatState.handleEditLastUserMessage,
-        onToggleQuadImages,
-        setCurrentChatSettings: chatState.setCurrentChatSettings,
-        onAddUserMessage: chatState.handleAddUserMessage,
-        onLiveTranscript: chatState.handleLiveTranscript,
-        liveClientFunctions: chatState.liveClientFunctions,
-        onEditMessageContent: chatState.handleUpdateMessageContent,
-        onToggleBBox: handleToggleBBoxMode,
-        onToggleGuide: handleToggleGuideMode,
-      }),
+    () => ({
+      onMessageSent,
+      onSendMessage,
+      onStopGenerating: chatState.handleStopGenerating,
+      onCancelEdit: chatState.handleCancelEdit,
+      onProcessFiles: chatState.handleProcessAndAddFiles,
+      onAddFileById: chatState.handleAddFileById,
+      onCancelUpload: chatState.handleCancelFileUpload,
+      onTranscribeAudio: chatState.handleTranscribeAudio,
+      onToggleGoogleSearch: chatState.toggleGoogleSearch,
+      onToggleCodeExecution: chatState.toggleCodeExecution,
+      onToggleLocalPython: chatState.toggleLocalPython,
+      onToggleUrlContext: chatState.toggleUrlContext,
+      onToggleDeepSearch: chatState.toggleDeepSearch,
+      onClearChat: chatState.handleClearCurrentChat,
+      onOpenSettings: openSettingsModal,
+      onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
+      onTogglePinCurrentSession: chatState.handleTogglePinCurrentSession,
+      onRetryLastTurn: chatState.handleRetryLastTurn,
+      onEditLastUserMessage: chatState.handleEditLastUserMessage,
+      onToggleQuadImages,
+      setCurrentChatSettings: chatState.setCurrentChatSettings,
+      onAddUserMessage: chatState.handleAddUserMessage,
+      onLiveTranscript: chatState.handleLiveTranscript,
+      liveClientFunctions: chatState.liveClientFunctions,
+      onEditMessageContent: chatState.handleUpdateMessageContent,
+      onToggleBBox: handleToggleBBoxMode,
+      onToggleGuide: handleToggleGuideMode,
+    }),
     [
       chatState.handleAddFileById,
       chatState.handleAddUserMessage,
@@ -318,8 +320,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const appModalsProps = useMemo(
-    () =>
-      ({
+    () => ({
         isSettingsModalOpen,
         setIsSettingsModalOpen,
         appSettings: settingsForModal,

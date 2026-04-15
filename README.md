@@ -35,7 +35,7 @@
 当前仓库围绕 **Vite + React SPA** 作为唯一主线构建形态：
 - **标准模式**：本地通过 Vite 开发 / 构建，适合日常开发与静态部署
 - **Docker 部署模式**：`web + api` 双服务部署，前端走 `/api/gemini/*` 与 `/api/live-token`
-- **静态前端 + 独立 API**：前端发布 `dist/`，后端单独部署 Node API 服务
+- **静态前端 + 独立 API 模式**：前端部署到 Pages/CDN，后端单独托管 Node API 服务
 
 ---
 
@@ -217,7 +217,7 @@ npm run preview  # 本地预览构建结果
 | 层级 | 技术栈 |
 | :--- | :--- |
 | **核心框架** | React 18 + TypeScript 5.5 + Vite 5 |
-| **样式方案** | Tailwind CSS 4.2（通过 Vite 插件集成）+ CSS 变量主题系统 |
+| **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
@@ -226,7 +226,6 @@ npm run preview  # 本地预览构建结果
 | **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
 | **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
 | **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API |
-
 生产部署若采用服务端托管 API，前端默认请求后端端点：
 - `/api/gemini/*`
 - `/api/live-token`
@@ -327,7 +326,7 @@ All-Model-Chat/
 │   └── ...                     # 其他工具（剪贴板、日期、域名校验、快捷键等）
 ├── App.tsx                     # 应用入口组件
 ├── index.tsx                   # 渲染入口（挂载 React、导入样式）
-├── index.html                  # HTML 入口（CDN 资源、import map、PWA meta）
+├── index.html                  # HTML 入口（应用壳与运行时 meta）
 ├── manifest.json               # PWA 应用清单
 ├── sw.js                       # Service Worker（离线缓存）
 ├── vite.config.ts              # Vite 配置（React 插件、Pyodide 静态复制、外部化配置）

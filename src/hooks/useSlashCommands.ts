@@ -16,7 +16,7 @@ interface UseSlashCommandsProps {
   onToggleCanvasPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
-  onAttachmentAction: (action: AttachmentAction) => void;
+  onAttachmentAction: (action: any) => void;
   availableModels: ModelOption[];
   onSelectModel: (modelId: string) => void;
   onMessageSent: () => void;
