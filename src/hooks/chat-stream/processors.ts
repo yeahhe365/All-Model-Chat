@@ -167,8 +167,8 @@ export const finalizeMessages = (
     language: 'en' | 'zh',
     firstContentPartTime: Date | null,
     usageMetadata?: UsageMetadata,
-    groundingMetadata?: any,
-    urlContextMetadata?: any,
+    groundingMetadata?: unknown,
+    urlContextMetadata?: unknown,
     isAborted?: boolean
 ): { updatedMessages: ChatMessage[], completedMessageForNotification: ChatMessage | null } => {
     const t = getTranslator(language);

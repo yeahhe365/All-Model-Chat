@@ -7,8 +7,8 @@ export type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatS
 
 export interface StreamHandlerFunctions {
     streamOnError: (error: Error) => void;
-    streamOnComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => void;
-    streamOnPart: (part: any) => void;
+    streamOnComplete: (usageMetadata?: UsageMetadata, groundingMetadata?: unknown, urlContextMetadata?: unknown) => void;
+    streamOnPart: (part: Part) => void;
     onThoughtChunk: (thoughtChunk: string) => void;
 }
 

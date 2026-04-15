@@ -75,14 +75,14 @@ export interface ChatMessage {
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
   audioAutoplay?: boolean; // Controls whether the audioSrc should play automatically on render
-  groundingMetadata?: any;
-  urlContextMetadata?: any;
+  groundingMetadata?: unknown;
+  urlContextMetadata?: unknown;
   suggestions?: string[];
   isGeneratingSuggestions?: boolean;
   stoppedByUser?: boolean;
   thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
   excludeFromContext?: boolean; // Added to exclude message from API history context
-  apiParts?: any[]; // Natively preserves API parts like executableCode and codeExecutionResult
+  apiParts?: Part[]; // Natively preserves API parts like executableCode and codeExecutionResult
 }
 
 export type ContentPart = Part;

@@ -11,8 +11,8 @@ import { SearchSources } from './grounded-response/SearchSources';
 
 interface GroundedResponseProps {
   text: string;
-  metadata: any;
-  urlContextMetadata?: any;
+  metadata: unknown;
+  urlContextMetadata?: unknown;
   isLoading: boolean;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
