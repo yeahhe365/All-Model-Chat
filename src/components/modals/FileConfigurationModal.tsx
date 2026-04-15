@@ -39,9 +39,9 @@ const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps
     onClose,
     file,
     onSave,
-    t,
     isGemini3,
 }) => {
+    const { t } = useI18n();
     const [draft, setDraft] = useState<FileConfigurationDraft>(() => buildDraft(file));
 
     const handleSave = () => {

@@ -3,6 +3,8 @@ import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { I18nProvider } from '../../contexts/I18nContext';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { FileConfigurationModal } from './FileConfigurationModal';
 import { UploadedFile } from '../../types';
 

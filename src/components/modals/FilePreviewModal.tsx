@@ -33,7 +33,6 @@ interface FilePreviewModalContentProps extends Omit<FilePreviewModalProps, 'file
 const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
     file,
     onClose,
-    t,
     onPrev,
     onNext,
     hasPrev = false,
@@ -138,7 +137,6 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
         <FilePreviewHeader
           file={file}
           onClose={onClose}
-          t={t as (key: string) => string}
           isEditable={isEditing}
           onToggleEdit={isText && onSaveText ? handleToggleEdit : undefined}
           onSave={handleSave}
@@ -248,7 +246,6 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
 export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
     file,
     onClose,
-    t,
     onPrev,
     onNext,
     hasPrev = false,
@@ -265,7 +262,6 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
             key={`${file.id}:${initialEditMode ? 'edit' : 'view'}`}
             file={file}
             onClose={onClose}
-            t={t}
             onPrev={onPrev}
             onNext={onNext}
             hasPrev={hasPrev}

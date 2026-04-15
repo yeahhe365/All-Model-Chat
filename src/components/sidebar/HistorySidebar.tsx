@@ -31,8 +31,6 @@ export interface HistorySidebarProps {
   onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
-  onOpenScenariosModal: () => void;
-  t?: Translator;
   themeId?: string;
   newChatShortcut?: string;
 }

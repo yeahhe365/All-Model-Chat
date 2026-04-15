@@ -51,7 +51,6 @@ export const useAudioRecorder = () => {
     });
 
     const startRecording = useCallback((opts?: { captureSystemAudio?: boolean }) => {
-        setViewState('recording');
         startCore(opts);
     }, [startCore]);
 
