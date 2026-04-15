@@ -25,6 +25,10 @@ interface GroundedResponseProps {
   files?: UploadedFile[];
 }
 
+interface SearchQueryMetadata {
+  webSearchQueries?: string[];
+}
+
 export const GroundedResponse: React.FC<GroundedResponseProps> = ({ 
     text, 
     metadata, 
@@ -43,7 +47,13 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
   
   const content = useMemo(() => insertCitations(text, metadata), [text, metadata]);
   const sources = useMemo(() => extractSources(metadata), [metadata]);
-  const searchQueries = useMemo(() => metadata?.webSearchQueries || [], [metadata]);
+  const searchQueries = useMemo(
+    () =>
+      typeof metadata === 'object' && metadata !== null
+        ? ((metadata as SearchQueryMetadata).webSearchQueries ?? [])
+        : [],
+    [metadata],
+  );
 
   return (
     <div className="space-y-4">

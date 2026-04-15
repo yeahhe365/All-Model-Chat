@@ -98,5 +98,5 @@ export interface GeminiService {
 }
 
 export interface ThoughtSupportingPart extends Part {
-    thought?: string | boolean;
+    thought?: boolean;
 }

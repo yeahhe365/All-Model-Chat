@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
-import type { UsageMetadata } from '@google/genai';
+import type { Part, UsageMetadata } from '@google/genai';
 
 export type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 

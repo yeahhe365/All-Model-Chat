@@ -3,12 +3,12 @@ import type { Part, UsageMetadata } from '@google/genai';
 import { generateUniqueId, calculateTokenStats, createUploadedFileFromBase64, getTranslator } from '../../utils/appUtils';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
-export const appendApiPart = (parts: any[] = [], newPart: any) => {
+export const appendApiPart = (parts: Part[] = [], newPart: Part) => {
     const newParts = [...parts];
-    if (newPart.text) {
+    if ('text' in newPart && typeof newPart.text === 'string') {
         const lastPart = newParts[newParts.length - 1];
-        if (lastPart && typeof lastPart.text === 'string' && !lastPart.thought) {
-            newParts[newParts.length - 1] = { ...lastPart, text: lastPart.text + newPart.text };
+        if (lastPart && 'text' in lastPart && typeof lastPart.text === 'string' && !('thought' in lastPart && lastPart.thought)) {
+            newParts[newParts.length - 1] = { ...lastPart, text: lastPart.text + newPart.text } as Part;
             return newParts;
         }
     }
@@ -16,7 +16,7 @@ export const appendApiPart = (parts: any[] = [], newPart: any) => {
     // --- MEMORY OPTIMIZATION ---
     // 剔除巨大的 Base64 数据以防内存泄漏。UI 渲染依赖的是已生成的 UploadedFile (Blob URL)，
     // 保留原始 apiParts 中的 base64 会导致内存翻倍且无法回收。
-    const partToStore = { ...newPart };
+    const partToStore = { ...newPart } as Part & { inlineData?: { mimeType: string; data?: string } };
     if (partToStore.inlineData && partToStore.inlineData.data) {
         partToStore.inlineData = {
             ...partToStore.inlineData,
@@ -54,7 +54,6 @@ const applyPartToMessages = (
     _newModelMessageIds: Set<string>,
     firstContentPartTime: Date | null
 ) => {
-    const anyPart = part as any;
     const now = Date.now();
     const lastMessageIndex = findLoadingModelMessageIndex(messages, generationStartTime);
 
@@ -73,8 +72,9 @@ const applyPartToMessages = (
         messages[lastMessageIndex] = lastMessage;
     }
 
-    if (anyPart.inlineData) {
-        const { mimeType, data } = anyPart.inlineData;
+    const partWithInlineData = part as Part & { inlineData?: { mimeType: string; data?: string } };
+    if (partWithInlineData.inlineData) {
+        const { mimeType, data } = partWithInlineData.inlineData;
         
         const isSupportedFile = 
             mimeType.startsWith('image/') || 
@@ -82,7 +82,7 @@ const applyPartToMessages = (
             mimeType.startsWith('video/') ||
             SUPPORTED_GENERATED_MIME_TYPES.has(mimeType);
 
-        if (isSupportedFile) {
+        if (isSupportedFile && data) {
             let baseName = 'generated-file';
             if (mimeType.startsWith('image/')) {
                 baseName = `generated-plot-${generateUniqueId().slice(-4)}`;
@@ -97,7 +97,12 @@ const applyPartToMessages = (
     }
 
     // Capture thought signatures
-    const thoughtSignature = anyPart.thoughtSignature || anyPart.thought_signature;
+    const partWithThoughtSignature = part as Part & {
+        thoughtSignature?: string;
+        thought_signature?: string;
+    };
+    const thoughtSignature =
+        partWithThoughtSignature.thoughtSignature || partWithThoughtSignature.thought_signature;
     if (thoughtSignature) {
         const newSignatures = [...(lastMessage.thoughtSignatures || [])];
         if (!newSignatures.includes(thoughtSignature)) {

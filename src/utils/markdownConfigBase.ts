@@ -3,9 +3,10 @@ import remarkBreaks from 'remark-breaks';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import type { PluggableList } from 'unified';
 import { HIGHLIGHT_ALIASES, HIGHLIGHT_LANGUAGES, HIGHLIGHT_PLAINTEXT } from './highlightConfig';
 
-export const getBaseRehypePlugins = (allowHtml: boolean) => {
+export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
   const sanitizeSchema = {
     ...defaultSchema,
     tagNames: [
@@ -35,23 +36,26 @@ export const getBaseRehypePlugins = (allowHtml: boolean) => {
     clobberPrefix: '',
   };
 
-  const plugins: any[] = [];
+  const plugins: PluggableList = [];
 
   if (allowHtml) {
     plugins.push(rehypeRaw);
   }
 
-  plugins.push([rehypeSanitize, sanitizeSchema]);
-  plugins.push([rehypeHighlight, {
-    ignoreMissing: true,
-    detect: true,
-    languages: HIGHLIGHT_LANGUAGES,
-    aliases: HIGHLIGHT_ALIASES,
-    plainText: HIGHLIGHT_PLAINTEXT,
-    subset: Object.keys(HIGHLIGHT_LANGUAGES),
-  }]);
+  plugins.push([rehypeSanitize, sanitizeSchema] as const);
+  plugins.push([
+    rehypeHighlight,
+    {
+      ignoreMissing: true,
+      detect: true,
+      languages: HIGHLIGHT_LANGUAGES,
+      aliases: HIGHLIGHT_ALIASES,
+      plainText: HIGHLIGHT_PLAINTEXT,
+      subset: Object.keys(HIGHLIGHT_LANGUAGES),
+    },
+  ] as const);
 
   return plugins;
 };
 
-export const baseRemarkPlugins = [remarkGfm, remarkBreaks];
+export const baseRemarkPlugins: PluggableList = [remarkGfm, remarkBreaks];

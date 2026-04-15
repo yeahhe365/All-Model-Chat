@@ -114,7 +114,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                             className: `${codeElement.props.className || ''} !p-4 ${isOverflowing ? '!pb-14' : ''} !block font-mono text-[13px] sm:text-sm leading-relaxed !cursor-text`,
                             onClick: undefined,
                             title: undefined,
-                        } as any)
+                        })
                     ) : (
                         <span className={`block p-4 font-mono text-sm ${isOverflowing ? 'pb-14' : ''}`}>{props.children}</span>
                     )}

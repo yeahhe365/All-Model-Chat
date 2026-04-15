@@ -119,7 +119,7 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
         const result = await ai.models.generateContentStream({
             model: modelId,
             contents,
-            config: config
+            config: config as Parameters<typeof ai.models.generateContentStream>[0]['config'],
         });
 
         for await (const chunkResponse of result) {
@@ -192,7 +192,7 @@ export const sendStatelessMessageNonStreamApi: NonStreamMessageSender = async (
         const response = await ai.models.generateContent({
             model: modelId,
             contents,
-            config: config
+            config: config as Parameters<typeof ai.models.generateContent>[0]['config'],
         });
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }

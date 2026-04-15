@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
+import type { PluggableList } from 'unified';
 import { CodeBlock } from './blocks/CodeBlock';
 import { TableBlock } from './blocks/TableBlock';
 import { ToolResultBlock } from './blocks/ToolResultBlock';
@@ -37,9 +38,27 @@ export interface MarkdownRendererProps {
   diagramRenderDelayMs?: number;
 }
 
+type MarkdownCodeProps = React.ComponentPropsWithoutRef<'code'> & {
+  inline?: boolean;
+  children?: React.ReactNode;
+};
+type MarkdownImageProps = React.ComponentPropsWithoutRef<'img'>;
+type MarkdownTableProps = React.ComponentPropsWithoutRef<'table'>;
+type MarkdownAnchorProps = React.ComponentPropsWithoutRef<'a'>;
+type MarkdownDivProps = React.ComponentPropsWithoutRef<'div'>;
+type MarkdownPreProps = React.ComponentPropsWithoutRef<'pre'> & {
+  children?: React.ReactNode;
+};
+type CodeElementProps = {
+  className?: string;
+  children?: React.ReactNode;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  title?: string;
+};
+
 interface BaseMarkdownRendererProps extends MarkdownRendererProps {
-  remarkPlugins: any[];
-  rehypePlugins: any[];
+  remarkPlugins: PluggableList;
+  rehypePlugins: PluggableList;
 }
 
 export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.memo(({
@@ -61,10 +80,10 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
   rehypePlugins,
 }) => {
   const components = useMemo(() => ({
-    code: (props: any) => {
+    code: (props: MarkdownCodeProps) => {
       return <InlineCode {...props} />;
     },
-    img: (props: any) => {
+    img: (props: MarkdownImageProps) => {
       const { src, alt, className, ...rest } = props;
       return (
         <img
@@ -100,8 +119,8 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         />
       );
     },
-    table: (props: any) => <TableBlock {...props} t={t} />,
-    a: (props: any) => {
+    table: (props: MarkdownTableProps) => <TableBlock {...props} t={t} />,
+    a: (props: MarkdownAnchorProps) => {
       const { href, children, ...rest } = props;
       const isInternal = href && (href.startsWith('#') || href.startsWith('/'));
 
@@ -116,28 +135,28 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         </a>
       );
     },
-    div: (props: any) => {
+    div: (props: MarkdownDivProps) => {
       const { className, children, ...rest } = props;
       if (className?.includes('tool-result')) {
         return <ToolResultBlock className={className} files={files} onImageClick={onImageClick} {...rest}>{children}</ToolResultBlock>;
       }
       return <div className={className} {...rest}>{children}</div>;
     },
-    pre: (props: any) => {
+    pre: (props: MarkdownPreProps) => {
       const { children, ...rest } = props;
 
       const codeElement = React.Children.toArray(children).find(
-        (child: any) => {
-          return React.isValidElement(child) && (
+        (child): child is React.ReactElement<CodeElementProps> => {
+          return React.isValidElement<CodeElementProps>(child) && (
             child.type === 'code' ||
-            (child.props as any).className?.includes('language-') ||
+            child.props.className?.includes('language-') ||
             true
           );
         }
-      ) as React.ReactElement | undefined;
+      );
 
-      const codeClassName = (codeElement?.props as any)?.className || '';
-      const codeContent = (codeElement?.props as any)?.children;
+      const codeClassName = codeElement?.props.className || '';
+      const codeContent = codeElement?.props.children;
 
       const rawCode = extractTextFromNode(codeContent);
 
@@ -152,11 +171,11 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
             load={loadMermaidBlock}
             componentProps={{
               code: rawCode,
-              onImageClick,
-              isLoading,
-              renderDelayMs: diagramRenderDelayMs,
+                onImageClick,
+                isLoading,
+                renderDelayMs: diagramRenderDelayMs,
               themeId,
-              onOpenSidePanel,
+                onOpenSidePanel,
             }}
             eager={diagramLoadMode === 'eager'}
           />
@@ -174,7 +193,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
               isLoading,
               renderDelayMs: diagramRenderDelayMs,
               themeId,
-              onOpenSidePanel,
+                onOpenSidePanel,
             }}
             eager={diagramLoadMode === 'eager'}
           />
@@ -261,8 +280,8 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
   return (
     <div className={isLoading ? 'is-loading' : ''}>
       <ReactMarkdown
-        remarkPlugins={remarkPlugins as any}
-        rehypePlugins={rehypePlugins as any}
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
         components={components}
         urlTransform={(url) => url}
       >
