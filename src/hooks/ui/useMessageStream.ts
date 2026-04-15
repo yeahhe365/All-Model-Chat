@@ -24,5 +24,5 @@ export const useMessageStream = (messageId: string, isStreaming: boolean) => {
     const streamContent = useSyncExternalStore(subscribe, getContentSnapshot, () => '');
     const streamThoughts = useSyncExternalStore(subscribe, getThoughtsSnapshot, () => '');
 
-    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+    return { streamContent, streamThoughts };
 };
