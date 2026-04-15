@@ -34,10 +34,8 @@ export interface ChatAreaMessageListContextValue {
   onSuggestionClick?: (suggestion: string) => void;
   onOrganizeInfoClick?: (suggestion: string) => void;
   onFollowUpSuggestionClick?: (suggestion: string) => void;
-  onTextToSpeech: (messageId: string, text: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
-  ttsMessageId: string | null;
   onQuickTTS: (text: string) => Promise<string | null>;
   chatInputHeight: number;
   appSettings: AppSettings;
@@ -164,12 +162,10 @@ export interface ChatAreaHeaderProps {
   isSwitchingModel: boolean;
   isHistorySidebarOpen: boolean;
   onNewChat: () => void;
-  onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
   onToggleHistorySidebar: () => void;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onTogglePip: () => void;

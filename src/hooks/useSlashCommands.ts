@@ -16,7 +16,6 @@ interface UseSlashCommandsProps {
   onToggleCanvasPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
-  onStopGenerating: () => void;
   onAttachmentAction: (action: any) => void;
   availableModels: ModelOption[];
   onSelectModel: (modelId: string) => void;
@@ -35,7 +34,7 @@ export const useSlashCommands = ({
   t,
   onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext,
   onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
-  onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction,
+  onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction,
   availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
   textareaRef, onEditLastUserMessage, onTogglePip, setInputText,
   currentModelId, onSetThinkingLevel, thinkingLevel
@@ -84,7 +83,7 @@ export const useSlashCommands = ({
         const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
         onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
     }},
-  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
+  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
   
   const allCommandsForHelp = useMemo(() => [
     ...commands.map(c => ({ name: `/${c.name}`, description: c.description, icon: c.icon })),

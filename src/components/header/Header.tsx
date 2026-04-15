@@ -8,7 +8,6 @@ import { getModelCapabilities } from '../../utils/modelHelpers';
 
 interface HeaderProps {
   onNewChat: () => void;
-  onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
   onToggleHistorySidebar: () => void;
   isLoading: boolean;
@@ -20,7 +19,6 @@ interface HeaderProps {
   isHistorySidebarOpen?: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
-  isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onTogglePip: () => void;
@@ -33,7 +31,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   onNewChat,
-  onOpenSettingsModal: _onOpenSettingsModal,
   onOpenScenariosModal,
   onToggleHistorySidebar,
   isLoading,
@@ -45,7 +42,6 @@ export const Header: React.FC<HeaderProps> = ({
   isHistorySidebarOpen = false,
   onLoadCanvasPrompt,
   isCanvasPromptActive,
-  isKeyLocked: _isKeyLocked,
   isPipSupported,
   isPipActive,
   onTogglePip,

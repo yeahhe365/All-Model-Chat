@@ -194,18 +194,7 @@ export const attachPersistedSessionFiles = (
  * Prepares a session object for export by stripping out non-serializable properties
  * like Blobs, Files, and ephemeral URL references.
  */
-export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession => {
-    return {
-        ...session,
-        messages: session.messages.map(msg => {
-            if (!msg.files) return msg;
-            return {
-                ...msg,
-                files: msg.files.map(sanitizeStoredFileMetadata)
-            };
-        })
-    };
-};
+export const sanitizeSessionForExport = stripSessionFilePayloads;
 
 /**
  * Core helper to update session list state.

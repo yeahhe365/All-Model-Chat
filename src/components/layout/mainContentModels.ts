@@ -6,7 +6,6 @@ import {
   isHdGuideSystemInstruction,
 } from '../../constants/promptHelpers';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
-import type { AppModalsProps } from '../modals/AppModals';
 import type { HistorySidebarProps } from '../sidebar/HistorySidebar';
 import type { ChatAreaProps } from './ChatArea';
 
@@ -15,7 +14,6 @@ type ChatAreaModel = ChatAreaProps['chatArea'];
 export type MainContentChatAreaHeaderActions = Pick<
   ChatAreaModel['header'],
   | 'onNewChat'
-  | 'onOpenSettingsModal'
   | 'onOpenScenariosModal'
   | 'onToggleHistorySidebar'
   | 'onLoadCanvasPrompt'
@@ -132,12 +130,6 @@ export const buildSettingsForModal = ({
   };
 };
 
-export const buildAppModalsProps = (props: AppModalsProps): AppModalsProps => props;
-
-export const buildChatAreaInputActions = (
-  props: ChatAreaModel['inputActions'],
-): ChatAreaModel['inputActions'] => props;
-
 interface BuildChatAreaModelArgs {
   appSettings: AppSettings;
   sessionTitle: string;
@@ -194,7 +186,6 @@ export const buildChatAreaModel = ({
     availableModels,
     selectedModelId: currentChatSettings.modelId || appSettings.modelId,
     isCanvasPromptActive: isCanvasSystemInstruction(currentChatSettings.systemInstruction),
-    isKeyLocked: !!currentChatSettings.lockedApiKey,
     isPipSupported: isPipSupported && appSettings.useCustomApiConfig,
     isPipActive,
     ...headerActions,

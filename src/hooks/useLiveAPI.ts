@@ -56,9 +56,8 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
 
     // 3. Configuration Hook
     const { liveConfig, tools } = useLiveConfig({ 
-        appSettings, 
         chatSettings, 
-        sessionHandle: sessionHandleRef.current,
+        sessionHandle,
         clientFunctions
     });
 
@@ -83,7 +82,6 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         sendText 
     } = useLiveConnection({
         appSettings,
-        chatSettings,
         modelId,
         liveConfig,
         tools,

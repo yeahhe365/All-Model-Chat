@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
@@ -17,41 +16,48 @@ interface FileConfigurationModalProps {
     isGemini3: boolean;
 }
 
-export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ isOpen, onClose, file, onSave, t, isGemini3 }) => {
-    // Video Metadata
-    const [startOffset, setStartOffset] = useState('');
-    const [endOffset, setEndOffset] = useState('');
-    const [fps, setFps] = useState('');
-    
-    // Media Resolution
-    const [mediaResolution, setMediaResolution] = useState<MediaResolution | ''>('');
+interface FileConfigurationDraft {
+    startOffset: string;
+    endOffset: string;
+    fps: string;
+    mediaResolution: MediaResolution | '';
+}
 
-    useEffect(() => {
-        if (isOpen && file) {
-            setStartOffset(file.videoMetadata?.startOffset || '');
-            setEndOffset(file.videoMetadata?.endOffset || '');
-            setFps(file.videoMetadata?.fps ? String(file.videoMetadata.fps) : '');
-            setMediaResolution(file.mediaResolution || '');
-        }
-    }, [isOpen, file]);
+const buildDraft = (file: UploadedFile): FileConfigurationDraft => ({
+    startOffset: file.videoMetadata?.startOffset || '',
+    endOffset: file.videoMetadata?.endOffset || '',
+    fps: file.videoMetadata?.fps ? String(file.videoMetadata.fps) : '',
+    mediaResolution: file.mediaResolution || '',
+});
+
+type FileConfigurationModalContentProps = Omit<FileConfigurationModalProps, 'file'> & {
+    file: UploadedFile;
+};
+
+const FileConfigurationModalContent: React.FC<FileConfigurationModalContentProps> = ({
+    isOpen,
+    onClose,
+    file,
+    onSave,
+    t,
+    isGemini3,
+}) => {
+    const [draft, setDraft] = useState<FileConfigurationDraft>(() => buildDraft(file));
 
     const handleSave = () => {
-        if (!file) return;
-        
         const updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution } = {};
 
-        // Process Video Metadata
         if (file.type.startsWith('video/')) {
-            const normalize = (val: string) => {
-                val = val.trim();
-                if (!val) return undefined;
-                if (/^\d+$/.test(val)) return `${val}s`; 
-                return val;
+            const normalize = (value: string) => {
+                const trimmedValue = value.trim();
+                if (!trimmedValue) return undefined;
+                if (/^\d+$/.test(trimmedValue)) return `${trimmedValue}s`;
+                return trimmedValue;
             };
 
             const metadata: VideoMetadata = {};
-            const normalizedStartOffset = normalize(startOffset);
-            const normalizedEndOffset = normalize(endOffset);
+            const normalizedStartOffset = normalize(draft.startOffset);
+            const normalizedEndOffset = normalize(draft.endOffset);
 
             if (normalizedStartOffset) {
                 metadata.startOffset = normalizedStartOffset;
@@ -61,11 +67,11 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
                 metadata.endOffset = normalizedEndOffset;
             }
 
-            const fpsNum = parseFloat(fps);
+            const fpsNum = parseFloat(draft.fps);
             if (!isNaN(fpsNum) && fpsNum > 0) {
                 metadata.fps = fpsNum;
             }
-            
+
             if (Object.keys(metadata).length > 0) {
                 updates.videoMetadata = metadata;
             } else if (file.videoMetadata) {
@@ -73,11 +79,9 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
             }
         }
 
-        // Process Resolution (Gemini 3 Only)
-        if (isGemini3 && mediaResolution) {
-            updates.mediaResolution = mediaResolution as MediaResolution;
-        } else if (isGemini3 && file.mediaResolution && !mediaResolution) {
-            // If clearing setting
+        if (isGemini3 && draft.mediaResolution) {
+            updates.mediaResolution = draft.mediaResolution as MediaResolution;
+        } else if (isGemini3 && file.mediaResolution && !draft.mediaResolution) {
             updates.mediaResolution = undefined;
         }
 
@@ -85,37 +89,37 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
         onClose();
     };
 
-    if (!file) return null;
-
     const isVideo = file.type.startsWith('video/');
-    // Supported types for per-part resolution: Images, Video, PDF
     const isImage = file.type.startsWith('image/');
     const isPdf = file.type === 'application/pdf';
     const showResolutionSettings = isGemini3 && (isImage || isVideo || isPdf);
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} contentClassName="bg-[var(--theme-bg-primary)] rounded-xl shadow-2xl max-w-md w-full border border-[var(--theme-border-primary)]">
-            <FileConfigHeader 
-                onClose={onClose} 
-                t={t} 
-                showResolutionSettings={showResolutionSettings} 
-                isVideo={isVideo} 
+            <FileConfigHeader
+                onClose={onClose}
+                t={t}
+                showResolutionSettings={showResolutionSettings}
+                isVideo={isVideo}
             />
-            
+
             <div className="p-6 space-y-6">
                 {showResolutionSettings && (
-                    <ResolutionConfig 
-                        mediaResolution={mediaResolution} 
-                        setMediaResolution={(val) => setMediaResolution(val)} 
-                        t={t} 
+                    <ResolutionConfig
+                        mediaResolution={draft.mediaResolution}
+                        setMediaResolution={(value) => setDraft((prev) => ({ ...prev, mediaResolution: value }))}
+                        t={t}
                     />
                 )}
 
                 {isVideo && (
-                    <VideoConfig 
-                        startOffset={startOffset} setStartOffset={setStartOffset}
-                        endOffset={endOffset} setEndOffset={setEndOffset}
-                        fps={fps} setFps={setFps}
+                    <VideoConfig
+                        startOffset={draft.startOffset}
+                        setStartOffset={(value) => setDraft((prev) => ({ ...prev, startOffset: value }))}
+                        endOffset={draft.endOffset}
+                        setEndOffset={(value) => setDraft((prev) => ({ ...prev, endOffset: value }))}
+                        fps={draft.fps}
+                        setFps={(value) => setDraft((prev) => ({ ...prev, fps: value }))}
                         t={t}
                     />
                 )}
@@ -124,4 +128,12 @@ export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ 
             </div>
         </Modal>
     );
+};
+
+export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = (props) => {
+    const { file, isOpen } = props;
+
+    if (!file) return null;
+
+    return <FileConfigurationModalContent key={`${file.id}:${isOpen ? 'open' : 'closed'}`} {...props} file={file} />;
 };

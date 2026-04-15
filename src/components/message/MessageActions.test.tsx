@@ -57,10 +57,8 @@ describe('MessageActions', () => {
             onEditMessage={() => {}}
             onDeleteMessage={() => {}}
             onRetryMessage={() => {}}
-            onTextToSpeech={() => {}}
             onGenerateCanvas={() => {}}
             onContinueGeneration={() => {}}
-            ttsMessageId={null}
             themeId="pearl"
             t={(key) => String(key)}
           />

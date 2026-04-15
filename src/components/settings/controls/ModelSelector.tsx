@@ -8,7 +8,6 @@ interface ModelSelectorProps {
   availableModels: ModelOption[];
   selectedModelId: string;
   onSelectModel: (id: string) => void;
-  t: (key: string) => string;
   setAvailableModels: (models: ModelOption[]) => void;
 }
 

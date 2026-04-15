@@ -43,10 +43,8 @@ const MessageListComponent: React.FC = () => {
     onSuggestionClick,
     onOrganizeInfoClick,
     onFollowUpSuggestionClick,
-    onTextToSpeech,
     onGenerateCanvas,
     onContinueGeneration,
-    ttsMessageId,
     onQuickTTS,
     chatInputHeight,
     appSettings,
@@ -136,10 +134,8 @@ const MessageListComponent: React.FC = () => {
                         expandCodeBlocksByDefault={expandCodeBlocksByDefault}
                         isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                        onTextToSpeech={onTextToSpeech}
                         onGenerateCanvas={onGenerateCanvas}
                         onContinueGeneration={onContinueGeneration}
-                        ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
                         t={t}
                         appSettings={appSettings}

@@ -53,7 +53,6 @@ describe('useLiveConfig', () => {
   it('enables session resumption from the first connection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        appSettings: {} as any,
         chatSettings: baseChatSettings as any,
         sessionHandle: null,
       }),
@@ -66,7 +65,6 @@ describe('useLiveConfig', () => {
   it('uses thinkingLevel for Gemini 3.1 Flash Live sessions', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        appSettings: {} as any,
         chatSettings: baseChatSettings as any,
         sessionHandle: null,
       }),
@@ -82,7 +80,6 @@ describe('useLiveConfig', () => {
   it('declares client-side function tools when provided', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConfig({
-        appSettings: {} as any,
         chatSettings: baseChatSettings as any,
         sessionHandle: null,
         clientFunctions: {

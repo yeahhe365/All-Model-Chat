@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
-import { Check, Copy, Download, SlidersHorizontal, Scissors, Settings2 } from 'lucide-react'; 
+import { Check, Copy, Download, SlidersHorizontal, Scissors } from 'lucide-react'; 
 import { triggerDownload } from '../../utils/export/core';
-import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
+import { CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
 import { formatFileSize } from '../../utils/fileHelpers';
+import { getFileCardMeta } from '../../utils/fileCardUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;
@@ -40,7 +41,16 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
   const [idCopied, setIdCopied] = useState(false);
 
   const isClickable = file.uploadState === 'active' && !file.error && onFileClick && file.dataUrl;
-  const category = getFileTypeCategory(file.type, file.error);
+  const {
+    category,
+    canConfigure,
+    ConfigIcon,
+  } = getFileCardMeta(file, {
+    isGemini3,
+    includeTextEditing: false,
+    requireActiveForConfigure: false,
+    canConfigure: !!onConfigure,
+  });
 
   const handleCopyId = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -67,17 +77,6 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
           onFileClick(file);
       }
   };
-
-  const isVideo = category === 'video' || category === 'youtube';
-  const isImage = category === 'image';
-  const isPdf = category === 'pdf';
-
-  // Configuration check logic matches SelectedFileDisplay
-  const canConfigure = onConfigure && !file.error && (
-      isVideo || (isGemini3 && (isImage || isPdf))
-  );
-
-  const ConfigIcon = (isGemini3) ? SlidersHorizontal : (isVideo ? Scissors : Settings2);
 
   // Render Image Content specifically
   if (category === 'image' && file.dataUrl && !file.error) {

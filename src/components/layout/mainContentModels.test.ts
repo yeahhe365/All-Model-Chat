@@ -1,46 +1,26 @@
-import { describe, expect, it, vi } from 'vitest';
-import { buildChatAreaInputActions } from './mainContentModels';
+import { describe, expect, it } from 'vitest';
+import { buildSettingsForModal } from './mainContentModels';
 
-describe('buildChatAreaInputActions', () => {
-  it('preserves live client functions in the chat-area input actions model', () => {
-    const liveClientFunctions = {
-      run_local_python: {
-        declaration: { name: 'run_local_python', description: 'Runs Python locally.' },
-        handler: vi.fn(async () => ({ output: 'ok' })),
-      },
+describe('buildSettingsForModal', () => {
+  it('overlays current chat settings onto app settings for the active session', () => {
+    const appSettings = {
+      modelId: 'gemini-2.5-pro',
+      systemInstruction: 'app-level instruction',
+      thinkingLevel: 'HIGH',
     };
 
-    const inputActions = buildChatAreaInputActions({
-      onMessageSent: vi.fn(),
-      onSendMessage: vi.fn(),
-      onStopGenerating: vi.fn(),
-      onCancelEdit: vi.fn(),
-      onProcessFiles: vi.fn(async () => undefined),
-      onAddFileById: vi.fn(async () => undefined),
-      onCancelUpload: vi.fn(),
-      onTranscribeAudio: vi.fn(async () => null),
-      onToggleGoogleSearch: vi.fn(),
-      onToggleCodeExecution: vi.fn(),
-      onToggleLocalPython: vi.fn(),
-      onToggleUrlContext: vi.fn(),
-      onToggleDeepSearch: vi.fn(),
-      onClearChat: vi.fn(),
-      onOpenSettings: vi.fn(),
-      onToggleCanvasPrompt: vi.fn(),
-      onTogglePinCurrentSession: vi.fn(),
-      onRetryLastTurn: vi.fn(),
-      onEditLastUserMessage: vi.fn(),
-      onToggleQuadImages: vi.fn(),
-      setCurrentChatSettings: vi.fn(),
-      onAddUserMessage: vi.fn(),
-      onLiveTranscript: vi.fn(),
-      liveClientFunctions,
-      onEditMessageContent: vi.fn(),
-      onToggleBBox: vi.fn(),
-      onToggleGuide: vi.fn(),
-    } as any);
+    const settings = buildSettingsForModal({
+      appSettings: appSettings as any,
+      activeSessionId: 'session-1',
+      currentChatSettings: {
+        modelId: 'gemini-3.1-flash-live-preview',
+        systemInstruction: 'session-level instruction',
+        thinkingLevel: 'LOW',
+      } as any,
+    });
 
-    expect(inputActions.liveClientFunctions).toBe(liveClientFunctions);
-    expect(inputActions.onToggleLocalPython).toBeDefined();
+    expect(settings.modelId).toBe('gemini-3.1-flash-live-preview');
+    expect(settings.systemInstruction).toBe('session-level instruction');
+    expect(settings.thinkingLevel).toBe('LOW');
   });
 });

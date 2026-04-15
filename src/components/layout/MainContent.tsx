@@ -6,9 +6,7 @@ import type { AppViewModel } from '../../hooks/app/useApp';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
 import {
-  buildAppModalsProps,
   buildChatAreaModel,
-  buildChatAreaInputActions,
   buildHistorySidebarProps,
   buildSettingsForModal,
   buildSidePanelKey,
@@ -55,6 +53,9 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     handleImportHistory,
     handleImportAllScenarios,
   } = app;
+  const { setAppSettings } = app;
+  const { setIsHistorySidebarOpen } = uiState;
+  const { loadChatSession, handleSendMessage } = chatState;
 
   const isSettingsModalOpen = useUIStore((state) => state.isSettingsModalOpen);
   const setIsSettingsModalOpen = useUIStore((state) => state.setIsSettingsModalOpen);
@@ -72,18 +73,18 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   }, [setIsPreloadedMessagesModalOpen]);
 
   const toggleHistorySidebar = useCallback(() => {
-    uiState.setIsHistorySidebarOpen((prev) => !prev);
-  }, [uiState.setIsHistorySidebarOpen]);
+    setIsHistorySidebarOpen((prev) => !prev);
+  }, [setIsHistorySidebarOpen]);
 
   const closeHistorySidebar = useCallback(() => {
-    uiState.setIsHistorySidebarOpen(false);
-  }, [uiState.setIsHistorySidebarOpen]);
+    setIsHistorySidebarOpen(false);
+  }, [setIsHistorySidebarOpen]);
 
   const selectSession = useCallback(
     (id: string) => {
-      chatState.loadChatSession(id);
+      loadChatSession(id);
     },
-    [chatState.loadChatSession],
+    [loadChatSession],
   );
 
   const openExportModal = useCallback(() => {
@@ -117,22 +118,21 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
 
   const onSendMessage = useCallback(
     (text: string, options?: { isFastMode?: boolean }) => {
-      chatState.handleSendMessage({ text, ...options });
+      handleSendMessage({ text, ...options });
     },
-    [chatState.handleSendMessage],
+    [handleSendMessage],
   );
 
   const onToggleQuadImages = useCallback(() => {
-    app.setAppSettings((prev) => ({
+    setAppSettings((prev) => ({
       ...prev,
       generateQuadImages: !prev.generateQuadImages,
     }));
-  }, [app.setAppSettings]);
+  }, [setAppSettings]);
 
   const headerActions: MainContentChatAreaHeaderActions = useMemo(
     () => ({
       onNewChat: chatState.startNewChat,
-      onOpenSettingsModal: openSettingsModal,
       onOpenScenariosModal: openScenariosModal,
       onToggleHistorySidebar: toggleHistorySidebar,
       onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
@@ -146,7 +146,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       handleLoadCanvasPromptAndSave,
       handleSetThinkingLevel,
       openScenariosModal,
-      openSettingsModal,
       pipState.togglePip,
       toggleHistorySidebar,
     ],
@@ -173,7 +172,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       onSuggestionClick,
       onOrganizeInfoClick,
       onFollowUpSuggestionClick,
-      onTextToSpeech: chatState.handleTextToSpeech,
       onGenerateCanvas: chatState.handleGenerateCanvas,
       onContinueGeneration: chatState.handleContinueGeneration,
       onQuickTTS: chatState.handleQuickTTS,
@@ -186,7 +184,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       chatState.handleGenerateCanvas,
       chatState.handleQuickTTS,
       chatState.handleRetryMessage,
-      chatState.handleTextToSpeech,
       chatState.handleUpdateMessageFile,
       chatState.onScrollContainerScroll,
       chatState.setScrollContainerRef,
@@ -198,8 +195,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const inputActions: ChatAreaProps['chatArea']['inputActions'] = useMemo(
-    () =>
-      buildChatAreaInputActions({
+    () => ({
       onMessageSent,
       onSendMessage,
       onStopGenerating: chatState.handleStopGenerating,
@@ -326,8 +322,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const appModalsProps = useMemo(
-    () =>
-      buildAppModalsProps({
+    () => ({
         isSettingsModalOpen,
         setIsSettingsModalOpen,
         appSettings: settingsForModal,

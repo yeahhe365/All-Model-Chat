@@ -38,7 +38,7 @@
 支持三种运行模式：
 - **标准模式**：克隆仓库后通过 Vite 开发/构建，传统 SPA 部署
 - **Docker 部署模式**：`web + api` 双服务部署，前端走 `/api/gemini/*` 与 `/api/live-token`
-- **零构建模式**：利用 HTML import map 直接在浏览器中加载依赖，可在 Google AI Studio 中一键运行
+- **静态前端 + 独立 API 模式**：前端部署到 Pages/CDN，后端单独托管 Node API 服务
 
 ---
 
@@ -206,10 +206,6 @@ RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-
 ```
 4. 在后端环境设置 `GEMINI_API_KEY`，并按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
 
-### 方式四：Google AI Studio（零构建）
-
-直接在 [Google AI Studio](https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true) 中打开，所有依赖通过 CDN 加载，无需本地构建流程。
-
 ### 构建与预览
 
 ```bash
@@ -224,7 +220,7 @@ npm run preview  # 本地预览构建结果
 | 层级 | 技术栈 |
 | :--- | :--- |
 | **核心框架** | React 18 + TypeScript 5.5 + Vite 5 |
-| **样式方案** | Tailwind CSS 3.4 (CDN) + CSS 变量主题系统 |
+| **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
@@ -232,15 +228,7 @@ npm run preview  # 本地预览构建结果
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
 | **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
 | **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
-| **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API / HTML import map 零构建 |
-
-### 前端双模式说明（与部署形态独立）
-
-项目通过 `index.html` 中的 `<script type="importmap">` 实现双模式运行：
-
-- **Vite 模式**：`vite.config.ts` 将 React、react-pdf 等标记为 `external`，由 Vite 处理打包
-- **零构建模式**：import map 直接指向 esm.sh CDN，浏览器原生解析模块依赖，适合 Google AI Studio 等不支持构建的环境
-
+| **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API |
 生产部署若采用服务端托管 API，前端默认请求后端端点：
 - `/api/gemini/*`
 - `/api/live-token`
@@ -341,7 +329,7 @@ All-Model-Chat/
 │   └── ...                     # 其他工具（剪贴板、日期、域名校验、快捷键等）
 ├── App.tsx                     # 应用入口组件
 ├── index.tsx                   # 渲染入口（挂载 React、导入样式）
-├── index.html                  # HTML 入口（CDN 资源、import map、PWA meta）
+├── index.html                  # HTML 入口（应用壳与运行时 meta）
 ├── manifest.json               # PWA 应用清单
 ├── sw.js                       # Service Worker（离线缓存）
 ├── vite.config.ts              # Vite 配置（React 插件、Pyodide 静态复制、外部化配置）

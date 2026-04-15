@@ -33,7 +33,6 @@ export interface HistorySidebarProps {
   onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
   t?: Translator;
-  language?: 'en' | 'zh';
   themeId?: string;
   newChatShortcut?: string;
 }

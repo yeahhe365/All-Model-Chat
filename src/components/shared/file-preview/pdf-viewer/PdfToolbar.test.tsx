@@ -15,7 +15,14 @@ const file: UploadedFile = {
   uploadState: 'active',
 };
 
-const PdfToolbarHarness: React.FC = () => {
+const secondFile: UploadedFile = {
+  ...file,
+  id: 'pdf-file-2',
+  name: 'test-2.pdf',
+  dataUrl: 'blob:test-pdf-2',
+};
+
+const PdfToolbarHarnessInner: React.FC<{ file: UploadedFile }> = ({ file }) => {
   const {
     numPages,
     currentPage,
@@ -74,6 +81,10 @@ const PdfToolbarHarness: React.FC = () => {
   );
 };
 
+const PdfToolbarHarness: React.FC<{ file: UploadedFile }> = ({ file }) => (
+  <PdfToolbarHarnessInner key={file.id} file={file} />
+);
+
 describe('PdfToolbar', () => {
   let container: HTMLDivElement;
   let root: Root;
@@ -107,7 +118,7 @@ describe('PdfToolbar', () => {
 
   it('keeps the typed page draft while the current page changes before commit', async () => {
     await act(async () => {
-      root.render(<PdfToolbarHarness />);
+      root.render(<PdfToolbarHarness file={file} />);
     });
 
     const input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
@@ -136,5 +147,31 @@ describe('PdfToolbar', () => {
     });
 
     expect(input!.value).toBe('12');
+  });
+
+  it('resets to the first page when a new keyed file is mounted', async () => {
+    await act(async () => {
+      root.render(<PdfToolbarHarness file={file} />);
+    });
+
+    const jumpButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent?.includes('Jump to page 4'),
+    );
+
+    expect(jumpButton).toBeTruthy();
+
+    await act(async () => {
+      jumpButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    let input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    expect(input?.value).toBe('4');
+
+    await act(async () => {
+      root.render(<PdfToolbarHarness file={secondFile} />);
+    });
+
+    input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    expect(input?.value).toBe('1');
   });
 });

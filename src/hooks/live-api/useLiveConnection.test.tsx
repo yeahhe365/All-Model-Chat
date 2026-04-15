@@ -85,7 +85,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -123,7 +122,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -171,7 +169,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -219,7 +216,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -275,7 +271,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -364,7 +359,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],
@@ -435,7 +429,6 @@ describe('useLiveConnection', () => {
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
         appSettings: {} as any,
-        chatSettings: {} as any,
         modelId: 'gemini-3.1-flash-live-preview',
         liveConfig: {},
         tools: [],

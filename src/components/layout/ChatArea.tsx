@@ -42,7 +42,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
   const setAspectRatio = useChatStore(s => s.setAspectRatio);
   const imageSize = useChatStore(s => s.imageSize);
   const setImageSize = useChatStore(s => s.setImageSize);
-  const ttsMessageId = useChatStore(s => s.ttsMessageId);
 
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea({
     currentChatSettings: session.currentChatSettings,
@@ -70,10 +69,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       onSuggestionClick: messageActions.onSuggestionClick,
       onOrganizeInfoClick: messageActions.onOrganizeInfoClick,
       onFollowUpSuggestionClick: messageActions.onFollowUpSuggestionClick,
-      onTextToSpeech: messageActions.onTextToSpeech,
       onGenerateCanvas: messageActions.onGenerateCanvas,
       onContinueGeneration: messageActions.onContinueGeneration,
-      ttsMessageId,
       onQuickTTS: messageActions.onQuickTTS,
       chatInputHeight,
       appSettings,
@@ -95,7 +92,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       session.sessionTitle,
       session.showThoughts,
       themeId,
-      ttsMessageId,
     ]
   );
 
@@ -230,7 +226,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
 
       <Header
         onNewChat={header.onNewChat}
-        onOpenSettingsModal={header.onOpenSettingsModal}
         onOpenScenariosModal={header.onOpenScenariosModal}
         onToggleHistorySidebar={header.onToggleHistorySidebar}
         isLoading={session.isLoading}
@@ -242,7 +237,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
         isHistorySidebarOpen={isHistorySidebarOpen}
         onLoadCanvasPrompt={header.onLoadCanvasPrompt}
         isCanvasPromptActive={header.isCanvasPromptActive}
-        isKeyLocked={header.isKeyLocked}
         isPipSupported={header.isPipSupported}
         isPipActive={header.isPipActive}
         onTogglePip={header.onTogglePip}

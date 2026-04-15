@@ -41,10 +41,8 @@ interface MessageActionsProps {
     onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void;
-    onTextToSpeech: (messageId: string, text: string) => void;
     onGenerateCanvas: (messageId: string, text: string) => void;
     onContinueGeneration: (messageId: string) => void;
-    ttsMessageId: string | null;
     themeId: string;
     t: (key: keyof typeof translations) => string;
 }
@@ -57,10 +55,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
-    onTextToSpeech: _onTextToSpeech,
     onGenerateCanvas,
     onContinueGeneration,
-    ttsMessageId: _ttsMessageId,
     themeId,
     t
 }) => {

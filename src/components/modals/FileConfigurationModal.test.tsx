@@ -1,8 +1,13 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'fs';
+import path from 'path';
 import { FileConfigurationModal } from './FileConfigurationModal';
 import { UploadedFile } from '../../types';
+
+const projectRoot = path.resolve(__dirname, '../../..');
+const modalPath = path.join(projectRoot, 'src/components/modals/FileConfigurationModal.tsx');
 
 describe('FileConfigurationModal', () => {
   let container: HTMLDivElement;
@@ -138,5 +143,15 @@ describe('FileConfigurationModal', () => {
     });
 
     expect(onSave).toHaveBeenCalledWith(file.id, { videoMetadata: undefined });
+  });
+
+  it('avoids per-field mirrored state plus a file-sync effect', () => {
+    const source = fs.readFileSync(modalPath, 'utf8');
+
+    expect(source).not.toContain("const [startOffset, setStartOffset] = useState('')");
+    expect(source).not.toContain("const [endOffset, setEndOffset] = useState('')");
+    expect(source).not.toContain("const [fps, setFps] = useState('')");
+    expect(source).not.toContain("const [mediaResolution, setMediaResolution] = useState<MediaResolution | ''>('')");
+    expect(source).not.toMatch(/useEffect\(\(\) => \{\s*if \(isOpen && file\) \{\s*setStartOffset/s);
   });
 });

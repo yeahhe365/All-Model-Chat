@@ -78,7 +78,6 @@ export const useChatInput = () => {
 
   const inputState = useChatInputState(activeSessionId, isEditing);
   const {
-    setInputText,
     setIsWaitingForUpload,
   } = inputState;
   const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
@@ -338,7 +337,6 @@ export const useChatInput = () => {
     onToggleCanvasPrompt,
     onTogglePinCurrentSession,
     onRetryLastTurn,
-    onStopGenerating,
     onAttachmentAction: modalsState.handleAttachmentAction,
     availableModels,
     onSelectModel,
@@ -646,9 +644,8 @@ export const useChatInput = () => {
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
       slashCommandState.handleInputChange(event.target.value);
-      setInputText(event.target.value);
     },
-    [setInputText, slashCommandState],
+    [slashCommandState],
   );
 
   const performSubmit = useCallback(

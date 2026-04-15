@@ -16,13 +16,8 @@ export const DeferredDiagramBlock: React.FC<DeferredDiagramBlockProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
-  const [isLoading, setIsLoading] = useState(eager);
-
-  useEffect(() => {
-    if (eager && !Component) {
-      setIsLoading(true);
-    }
-  }, [Component, eager]);
+  const [loadRequested, setLoadRequested] = useState(eager);
+  const isLoading = eager || loadRequested;
 
   useEffect(() => {
     if (eager || Component || isLoading) {
@@ -40,7 +35,7 @@ export const DeferredDiagramBlock: React.FC<DeferredDiagramBlockProps> = ({
           return;
         }
 
-        setIsLoading(true);
+        setLoadRequested(true);
         observer.disconnect();
       },
       { rootMargin: '300px 0px' },
@@ -68,18 +63,18 @@ export const DeferredDiagramBlock: React.FC<DeferredDiagramBlockProps> = ({
       })
       .catch((error) => {
         console.error(`Failed to load ${label}`, error);
-        if (!isCancelled) {
-          setIsLoading(false);
+        if (!isCancelled && !eager) {
+          setLoadRequested(false);
         }
       });
 
     return () => {
       isCancelled = true;
     };
-  }, [Component, isLoading, label, load]);
+  }, [Component, eager, isLoading, label, load]);
 
   const handleLoad = () => {
-    setIsLoading(true);
+    setLoadRequested(true);
   };
 
   if (Component) {

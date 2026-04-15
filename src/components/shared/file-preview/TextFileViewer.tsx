@@ -88,7 +88,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     useEffect(() => {
         // If content is provided (e.g. from parent state during edit), use it
         if (content !== undefined && content !== null) {
-            setLocalContent(content);
+            setIsLoading(false);
             return;
         }
 

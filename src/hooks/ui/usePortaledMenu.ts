@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { useClickOutside } from '../useClickOutside';
 
@@ -27,23 +27,10 @@ export const usePortaledMenu = ({
 
     useClickOutside(containerRef, () => setIsOpen(false), isOpen);
 
-    useEffect(() => {
-        if (!isOpen || !menuRef.current) return;
-
-        const stopPropagation = (event: Event) => event.stopPropagation();
-        const menuElement = menuRef.current;
-
-        menuElement.addEventListener('mousedown', stopPropagation);
-        menuElement.addEventListener('touchstart', stopPropagation);
-
-        return () => {
-            menuElement.removeEventListener('mousedown', stopPropagation);
-            menuElement.removeEventListener('touchstart', stopPropagation);
-        };
-    }, [isOpen]);
-
-    useLayoutEffect(() => {
-        if (!isOpen || !buttonRef.current || !targetWindow) return;
+    const computeMenuPosition = useCallback((): CSSProperties => {
+        if (!buttonRef.current || !targetWindow) {
+            return {};
+        }
 
         const buttonRect = buttonRef.current.getBoundingClientRect();
         const viewportWidth = targetWindow.innerWidth;
@@ -69,8 +56,53 @@ export const usePortaledMenu = ({
             nextPosition.overflowY = 'auto';
         }
 
-        setMenuPosition(nextPosition);
-    }, [buttonMargin, constrainHeight, gap, isOpen, menuWidth, minHeight, targetWindow]);
+        return nextPosition;
+    }, [buttonMargin, constrainHeight, gap, menuWidth, minHeight, targetWindow]);
+
+    useEffect(() => {
+        if (!isOpen || !menuRef.current) return;
+
+        const stopPropagation = (event: Event) => event.stopPropagation();
+        const menuElement = menuRef.current;
+
+        menuElement.addEventListener('mousedown', stopPropagation);
+        menuElement.addEventListener('touchstart', stopPropagation);
+
+        return () => {
+            menuElement.removeEventListener('mousedown', stopPropagation);
+            menuElement.removeEventListener('touchstart', stopPropagation);
+        };
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen || !targetWindow) return;
+
+        const updatePosition = () => {
+            setMenuPosition(computeMenuPosition());
+        };
+
+        targetWindow.addEventListener('resize', updatePosition);
+        targetWindow.addEventListener('scroll', updatePosition, true);
+
+        return () => {
+            targetWindow.removeEventListener('resize', updatePosition);
+            targetWindow.removeEventListener('scroll', updatePosition, true);
+        };
+    }, [computeMenuPosition, isOpen, targetWindow]);
+
+    const closeMenu = useCallback(() => {
+        setIsOpen(false);
+    }, []);
+
+    const toggleMenu = useCallback(() => {
+        setIsOpen((prev) => {
+            const next = !prev;
+            if (next) {
+                setMenuPosition(computeMenuPosition());
+            }
+            return next;
+        });
+    }, [computeMenuPosition]);
 
     return {
         isOpen,
@@ -79,7 +111,7 @@ export const usePortaledMenu = ({
         buttonRef,
         menuRef,
         targetWindow,
-        closeMenu: () => setIsOpen(false),
-        toggleMenu: () => setIsOpen(prev => !prev),
+        closeMenu,
+        toggleMenu,
     };
 };

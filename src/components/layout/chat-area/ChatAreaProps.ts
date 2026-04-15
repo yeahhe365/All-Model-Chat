@@ -34,11 +34,9 @@ export interface ChatAreaHeaderModel {
   availableModels: ModelOption[];
   selectedModelId: string;
   isCanvasPromptActive: boolean;
-  isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onNewChat: () => void;
-  onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
   onToggleHistorySidebar: () => void;
   onLoadCanvasPrompt: () => void;
@@ -61,7 +59,6 @@ export interface ChatAreaMessageActionsModel {
   onSuggestionClick: (suggestion: string) => void;
   onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
-  onTextToSpeech: (messageId: string, text: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;

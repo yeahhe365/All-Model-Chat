@@ -5,7 +5,6 @@ import { useRecorder } from './core/useRecorder';
 export type RecorderState = 'idle' | 'recording' | 'review';
 
 export const useAudioRecorder = () => {
-    const [viewState, setViewState] = useState<RecorderState>('idle');
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
@@ -16,10 +15,25 @@ export const useAudioRecorder = () => {
         };
     }, [audioUrl]);
 
+    const resetPreview = useCallback(() => {
+        setAudioBlob(null);
+        setAudioUrl((currentUrl) => {
+            if (currentUrl) {
+                URL.revokeObjectURL(currentUrl);
+            }
+            return null;
+        });
+    }, []);
+
     const handleRecordingComplete = useCallback((blob: Blob) => {
+        const nextAudioUrl = URL.createObjectURL(blob);
         setAudioBlob(blob);
-        setAudioUrl(URL.createObjectURL(blob));
-        setViewState('review');
+        setAudioUrl((currentUrl) => {
+            if (currentUrl) {
+                URL.revokeObjectURL(currentUrl);
+            }
+            return nextAudioUrl;
+        });
     }, []);
 
     const { 
@@ -33,7 +47,7 @@ export const useAudioRecorder = () => {
         cancelRecording: cancelCore 
     } = useRecorder({
         onStop: handleRecordingComplete,
-        onError: () => setViewState('idle')
+        onError: resetPreview,
     });
 
     const startRecording = useCallback((opts?: { captureSystemAudio?: boolean }) => {
@@ -41,19 +55,12 @@ export const useAudioRecorder = () => {
     }, [startCore]);
 
     const discardRecording = useCallback(() => {
-        setAudioBlob(null);
-        if (audioUrl) URL.revokeObjectURL(audioUrl);
-        setAudioUrl(null);
-        setViewState('idle');
+        resetPreview();
         cancelCore(); // Ensures stream is closed if in weird state
-    }, [audioUrl, cancelCore]);
+    }, [cancelCore, resetPreview]);
 
-    // Sync viewState with recorder status for recording phase
-    useEffect(() => {
-        if (status === 'recording') {
-            setViewState('recording');
-        }
-    }, [status]);
+    const viewState: RecorderState =
+        audioBlob ? 'review' : status === 'recording' ? 'recording' : 'idle';
 
     return {
         viewState,

@@ -57,10 +57,6 @@ const PDF_VIEWER_PACKAGES = ['react-pdf'];
 
 const PDFJS_PACKAGES = ['pdfjs-dist'];
 
-const HTML_EXPORT_PACKAGES = ['html2canvas', 'html2pdf.js', 'jspdf'];
-
-const MERMAID_PACKAGES = ['mermaid'];
-
 const GRAPHVIZ_PACKAGES = ['@viz-js/viz'];
 
 const DATA_PACKAGES = ['xlsx'];
@@ -107,10 +103,6 @@ export const getManualChunk = (id: string) => {
     return 'state-vendor';
   }
 
-  if (isPackagePath(id, MERMAID_PACKAGES)) {
-    return 'mermaid-vendor';
-  }
-
   if (isPackagePath(id, GRAPHVIZ_PACKAGES)) {
     return 'graphviz-vendor';
   }
@@ -121,10 +113,6 @@ export const getManualChunk = (id: string) => {
 
   if (isPackagePath(id, ['react-virtuoso'])) {
     return 'ui-vendor';
-  }
-
-  if (isPackagePath(id, HTML_EXPORT_PACKAGES)) {
-    return 'html-export-vendor';
   }
 
   if (isPackagePath(id, PDFJS_PACKAGES)) {
@@ -218,6 +206,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
           manualChunks: getManualChunk,
