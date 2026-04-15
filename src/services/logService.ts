@@ -10,7 +10,7 @@ export interface LogEntry {
   level: LogLevel;
   category: LogCategory;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface TokenUsageStats {
@@ -21,6 +21,15 @@ export interface TokenUsageStats {
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
 type TokenUsageListener = (usage: Map<string, TokenUsageStats>) => void;
+
+interface LogOptions {
+  category?: LogCategory;
+  data?: unknown;
+}
+
+interface ErrorLogOptions extends LogOptions {
+  error?: unknown;
+}
 
 const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
 const TOKEN_USAGE_STORAGE_KEY = 'chatTokenUsageData';
@@ -38,7 +47,7 @@ class LogServiceImpl {
   
   // Batching Buffer
   private logBuffer: LogEntry[] = [];
-  private flushTimer: any = null;
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.loadApiKeyUsage();
@@ -49,7 +58,7 @@ class LogServiceImpl {
 
   // --- Core Logging Logic ---
 
-  private createLogEntry(level: LogLevel, category: LogCategory, message: string, data?: any): LogEntry {
+  private createLogEntry(level: LogLevel, category: LogCategory, message: string, data?: unknown): LogEntry {
     return {
       timestamp: new Date(),
       level,
@@ -59,12 +68,12 @@ class LogServiceImpl {
     };
   }
 
-  private safeSerialize(data: any): any {
+  private safeSerialize(data: unknown): unknown {
     if (data === undefined || data === null) return undefined;
     try {
       // Simple circular reference handler
-      const seen = new WeakSet();
-      return JSON.parse(JSON.stringify(data, (_key, value) => {
+      const seen = new WeakSet<object>();
+      return JSON.parse(JSON.stringify(data, (_key: string, value: unknown) => {
         if (typeof value === 'object' && value !== null) {
           if (seen.has(value)) return '[Circular]';
           seen.add(value);
@@ -78,6 +87,22 @@ class LogServiceImpl {
     } catch {
       return '[Serialization Failed]';
     }
+  }
+
+  private isLogOptions(value: unknown): value is LogOptions {
+    return typeof value === 'object' && value !== null && ('category' in value || 'data' in value);
+  }
+
+  private isErrorLogOptions(value: unknown): value is ErrorLogOptions {
+    return typeof value === 'object' && value !== null && ('error' in value || 'category' in value || 'data' in value);
+  }
+
+  private resolveCategory(options: unknown): LogCategory {
+    return this.isLogOptions(options) && options.category ? options.category : 'SYSTEM';
+  }
+
+  private resolveData(options: unknown): unknown {
+    return this.isLogOptions(options) ? options.data : options;
   }
 
   private queueLog(entry: LogEntry) {
@@ -206,43 +231,52 @@ class LogServiceImpl {
    * Data argument is optional. 
    * Category defaults to SYSTEM if not specified in options or inferred.
    */
-  public info(message: string, options?: { category?: LogCategory, data?: any } | any) {
-    // Backwards compatibility: if options is just data object
-    const category = options?.category || 'SYSTEM';
-    const data = options?.category ? options.data : options;
+  public info(message: string, options?: LogOptions | unknown) {
+    const category = this.resolveCategory(options);
+    const data = this.resolveData(options);
     this.queueLog(this.createLogEntry('INFO', category, message, data));
   }
 
-  public warn(message: string, options?: { category?: LogCategory, data?: any } | any) {
-    const category = options?.category || 'SYSTEM';
-    const data = options?.category ? options.data : options;
+  public warn(message: string, options?: LogOptions | unknown) {
+    const category = this.resolveCategory(options);
+    const data = this.resolveData(options);
     this.queueLog(this.createLogEntry('WARN', category, message, data));
   }
 
-  public error(message: string, options?: { category?: LogCategory, data?: any, error?: any } | any) {
-    const category = options?.category || 'SYSTEM';
+  public error(message: string, options?: ErrorLogOptions | unknown) {
+    const category = this.resolveCategory(options);
     // Extract 'error' object if passed explicitly for better stack tracing
-    let data = options?.category ? options.data : options;
-    if (options?.error) {
-        data = { ...data, error: this.serializeError(options.error) };
+    const dataCandidate = this.resolveData(options);
+    let data =
+      typeof dataCandidate === 'object' && dataCandidate !== null
+        ? { ...(dataCandidate as Record<string, unknown>) }
+        : dataCandidate;
+
+    if (this.isErrorLogOptions(options) && options.error !== undefined) {
+        const serializedError = this.serializeError(options.error);
+        data =
+          typeof data === 'object' && data !== null
+            ? { ...(data as Record<string, unknown>), error: serializedError }
+            : { error: serializedError, data };
     }
     this.queueLog(this.createLogEntry('ERROR', category, message, data));
   }
 
-  public debug(message: string, options?: { category?: LogCategory, data?: any } | any) {
-    const category = options?.category || 'SYSTEM';
-    const data = options?.category ? options.data : options;
+  public debug(message: string, options?: LogOptions | unknown) {
+    const category = this.resolveCategory(options);
+    const data = this.resolveData(options);
     this.queueLog(this.createLogEntry('DEBUG', category, message, data));
   }
 
   // Helper to extract stack traces
-  private serializeError(error: any) {
+  private serializeError(error: unknown): unknown {
       if (error instanceof Error) {
+          const normalizedError = error as Error & { cause?: unknown };
           return {
               message: error.message,
               name: error.name,
               stack: error.stack,
-              cause: (error as any).cause
+              cause: normalizedError.cause
           };
       }
       return error;
