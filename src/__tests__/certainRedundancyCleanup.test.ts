@@ -18,7 +18,8 @@ describe('certain redundancy cleanup guards', () => {
   it('reuses stripSessionFilePayloads for sanitizeSessionForExport', () => {
     const source = readProjectFile('src/utils/chat/session.ts');
 
-    expect(source).toContain('export const sanitizeSessionForExport = stripSessionFilePayloads;');
+    expect(source).toContain('export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>');
+    expect(source).toContain('stripSessionFilePayloads(session);');
   });
 
   it('avoids writing input text twice in the chat input change handler', () => {

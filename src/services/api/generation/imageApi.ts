@@ -1,3 +1,4 @@
+import type { GenerateImagesConfig } from '@google/genai';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 
@@ -16,7 +17,7 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
-        const config: any = { 
+        const config: GenerateImagesConfig = { 
             numberOfImages: 1, 
             outputMimeType: 'image/png', 
             aspectRatio: aspectRatio 

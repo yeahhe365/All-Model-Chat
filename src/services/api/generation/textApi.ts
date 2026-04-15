@@ -86,7 +86,7 @@ ASSISTANT: "${modelContent}"`;
             throw new Error("Suggestions generation returned an empty response.");
         }
         const parsed = JSON.parse(jsonStr);
-        if (parsed.suggestions && Array.isArray(parsed.suggestions) && parsed.suggestions.every((s: any) => typeof s === 'string')) {
+        if (parsed.suggestions && Array.isArray(parsed.suggestions) && parsed.suggestions.every((suggestion: unknown) => typeof suggestion === 'string')) {
             return parsed.suggestions.slice(0, 3); // Ensure only 3
         } else {
             throw new Error("Suggestions generation returned an invalid format.");

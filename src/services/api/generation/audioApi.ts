@@ -1,5 +1,6 @@
 
 
+import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import type { Part } from "@google/genai";
@@ -78,27 +79,25 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
             text: "Transcribe audio.",
         };
         
-        const config: any = {
+        const config: GenerateContentConfig = {
           systemInstruction: "请准确转录语音内容。使用正确的标点符号。不要描述音频、回答问题或添加对话填充词，仅返回文本。若音频中无语音或仅有背景噪音，请不要输出任何文字。",
         };
 
+        const thinkingConfig: ThinkingConfig = {};
+
         // Apply specific defaults based on model
         if (modelId.includes('gemini-3')) {
-            config.thinkingConfig = {
-                includeThoughts: false,
-                thinkingLevel: "MINIMAL"
-            };
+            thinkingConfig.includeThoughts = false;
+            thinkingConfig.thinkingLevel = "MINIMAL" as ThinkingConfig['thinkingLevel'];
         } else if (modelId.includes('flash')) {
             // Both 2.5 Flash and Flash Lite
-            config.thinkingConfig = {
-                thinkingBudget: 512,
-            };
+            thinkingConfig.thinkingBudget = 512;
         } else {
             // Disable thinking for other models by default
-            config.thinkingConfig = {
-                thinkingBudget: 0,
-            };
+            thinkingConfig.thinkingBudget = 0;
         }
+
+        config.thinkingConfig = thinkingConfig;
 
         const response = await ai.models.generateContent({
             model: modelId,

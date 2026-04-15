@@ -14,6 +14,42 @@ const IMAGE_TEXT_MODALITIES = ['IMAGE', 'TEXT'] as const;
 
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
+type ClientHttpOptions = {
+  apiVersion?: 'v1alpha';
+  baseUrl?: string;
+};
+
+type ClientConfig = {
+  apiKey: string;
+  httpOptions?: ClientHttpOptions;
+};
+
+type GenerationConfig = {
+  responseModalities?: readonly ['IMAGE', 'TEXT'];
+  responseMimeType?: string;
+  responseSchema?: Record<string, unknown>;
+  imageConfig?: {
+    aspectRatio?: string;
+    imageSize?: string;
+  };
+  thinkingConfig?: {
+    includeThoughts: boolean;
+    thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+    thinkingBudget?: number;
+  };
+  tools?: Array<
+    | { googleSearch: Record<string, never> }
+    | { codeExecution: Record<string, never> }
+    | { urlContext: Record<string, never> }
+  >;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
+  systemInstruction?: string;
+  safetySettings?: SafetySetting[];
+  mediaResolution?: MediaResolution;
+};
+
 export class LiveApiAuthConfigurationError extends Error {
   constructor(message: string) {
     super(message);
@@ -26,7 +62,11 @@ const loadGoogleGenAI = async () => {
   return GoogleGenAI;
 };
 
-export const getClient = async (apiKey: string, baseUrl?: string | null, httpOptions?: any): Promise<GoogleGenAI> => {
+export const getClient = async (
+  apiKey: string,
+  baseUrl?: string | null,
+  httpOptions?: ClientHttpOptions,
+): Promise<GoogleGenAI> => {
   try {
       // Sanitize the API key to replace common non-ASCII characters that might
       // be introduced by copy-pasting from rich text editors. This prevents
@@ -41,7 +81,7 @@ export const getClient = async (apiKey: string, baseUrl?: string | null, httpOpt
           logService.warn("API key was sanitized. Non-ASCII characters were replaced.");
       }
       
-      const config: any = { apiKey: sanitizedApiKey };
+      const config: ClientConfig = { apiKey: sanitizedApiKey };
       const mergedHttpOptions = httpOptions ? { ...httpOptions } : undefined;
 
       // Route proxy traffic through the SDK-supported HTTP options path.
@@ -67,7 +107,11 @@ export const getClient = async (apiKey: string, baseUrl?: string | null, httpOpt
   }
 };
 
-export const getApiClient = async (apiKey?: string | null, baseUrl?: string | null, httpOptions?: any): Promise<GoogleGenAI> => {
+export const getApiClient = async (
+  apiKey?: string | null,
+  baseUrl?: string | null,
+  httpOptions?: ClientHttpOptions,
+): Promise<GoogleGenAI> => {
     if (!apiKey) {
         const silentError = new Error("API key is not configured in settings or provided.");
         silentError.name = "SilentError";
@@ -80,7 +124,10 @@ export const getApiClient = async (apiKey?: string | null, baseUrl?: string | nu
  * Async helper to get an API client with settings (proxy, etc) loaded from DB.
  * Respects the `useApiProxy` toggle.
  */
-export const getConfiguredApiClient = async (apiKey: string, httpOptions?: any): Promise<GoogleGenAI> => {
+export const getConfiguredApiClient = async (
+  apiKey: string,
+  httpOptions?: ClientHttpOptions,
+): Promise<GoogleGenAI> => {
     const settings = await dbService.getAppSettings();
     
     // Only use the proxy URL if Custom Config AND Use Proxy are both enabled
@@ -126,7 +173,7 @@ const extractLiveApiToken = (payload: unknown): string | null => {
 
 export const getLiveApiClient = async (
     appSettings: Pick<AppSettings, 'liveApiEphemeralTokenEndpoint' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'>,
-    httpOptions?: any,
+    httpOptions?: ClientHttpOptions,
 ): Promise<GoogleGenAI> => {
     const endpoint = appSettings.liveApiEphemeralTokenEndpoint?.trim();
 
@@ -197,12 +244,12 @@ export const buildGenerationConfig = async (
     safetySettings?: SafetySetting[],
     mediaResolution?: MediaResolution,
     isLocalPythonEnabled?: boolean
-): Promise<any> => {
+): Promise<GenerationConfig> => {
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
-        const imageConfig: any = {};
+        const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {};
         if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
         
-        const config: any = {
+        const config: GenerationConfig = {
             responseModalities: IMAGE_TEXT_MODALITIES,
         };
         if (Object.keys(imageConfig).length > 0) {
@@ -212,14 +259,14 @@ export const buildGenerationConfig = async (
     }
 
     if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
-         const imageConfig: any = {
+         const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {
             imageSize: imageSize || '1K',
          };
          if (aspectRatio && aspectRatio !== 'Auto') {
             imageConfig.aspectRatio = aspectRatio;
          }
          
-         const config: any = {
+         const config: GenerationConfig = {
             responseModalities: ['IMAGE', 'TEXT'],
             imageConfig,
          };
@@ -264,7 +311,7 @@ export const buildGenerationConfig = async (
             : '<|think|>';
     }
 
-    const generationConfig: any = {
+    const generationConfig: GenerationConfig = {
         ...config,
         systemInstruction: finalSystemInstruction || undefined,
         safetySettings: safetySettings || undefined,

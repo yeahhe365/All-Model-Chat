@@ -219,14 +219,14 @@ describe('buildGenerationConfig', () => {
       false, false, false, undefined, '1:1', false, '2K'
     );
     expect(config.responseModalities).toEqual(['IMAGE', 'TEXT']);
-    expect(config.imageConfig.imageSize).toBe('2K');
+    expect(config.imageConfig!.imageSize).toBe('2K');
   });
 
   it('defaults imageSize to 1K for gemini-3-pro-image-preview', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
     );
-    expect(config.imageConfig.imageSize).toBe('1K');
+    expect(config.imageConfig!.imageSize).toBe('1K');
   });
 
   it('includes thinkingConfig for gemini-3.1-flash-image-preview', async () => {
@@ -256,14 +256,14 @@ describe('buildGenerationConfig', () => {
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
     );
     expect(config.thinkingConfig).toBeDefined();
-    expect(config.thinkingConfig.includeThoughts).toBe(true);
+    expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
   it('uses thinkingBudget when > 0 for Gemini 3', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 8000,
     );
-    expect(config.thinkingConfig.thinkingBudget).toBe(8000);
+    expect(config.thinkingConfig!.thinkingBudget).toBe(8000);
   });
 
   it('uses thinkingLevel when budget is 0 for Gemini 3', async () => {
@@ -271,14 +271,14 @@ describe('buildGenerationConfig', () => {
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
       false, false, false, 'LOW'
     );
-    expect(config.thinkingConfig.thinkingLevel).toBe('LOW');
+    expect(config.thinkingConfig!.thinkingLevel).toBe('LOW');
   });
 
   it('defaults thinkingLevel to HIGH for Gemini 3', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
     );
-    expect(config.thinkingConfig.thinkingLevel).toBe('HIGH');
+    expect(config.thinkingConfig!.thinkingLevel).toBe('HIGH');
   });
 
   it('downgrades ULTRA_HIGH to HIGH for non-Gemini 3 global media resolution', async () => {
@@ -306,8 +306,8 @@ describe('buildGenerationConfig', () => {
     const config = await buildGenerationConfig(
       'gemini-2.5-flash', 'sys', baseConfig, false, 8000,
     );
-    expect(config.thinkingConfig.thinkingBudget).toBe(8000);
-    expect(config.thinkingConfig.includeThoughts).toBe(true);
+    expect(config.thinkingConfig!.thinkingBudget).toBe(8000);
+    expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
   it('adds googleSearch tool when enabled', async () => {
