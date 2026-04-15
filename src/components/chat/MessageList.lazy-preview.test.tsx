@@ -1,8 +1,22 @@
+import type { ComponentType, ReactNode } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage, UploadedFile } from '../../types';
+import type { AppSettings, ChatMessage, ChatSettings, UploadedFile } from '../../types';
 import type { ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
+
+interface VirtuosoMockProps<T> {
+  data: T[];
+  itemContent: (index: number, item: T) => ReactNode;
+  components?: {
+    Footer?: ComponentType;
+  };
+}
+
+interface MessageMockProps {
+  message: ChatMessage;
+  onImageClick: (file: UploadedFile) => void;
+}
 
 const file: UploadedFile = {
   id: 'file-1',
@@ -39,13 +53,11 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     expandCodeBlocksByDefault: false,
     isMermaidRenderingEnabled: false,
     isGraphvizRenderingEnabled: false,
-    onTextToSpeech: () => {},
     onGenerateCanvas: () => {},
     onContinueGeneration: () => {},
-    ttsMessageId: null,
     onQuickTTS: async () => null,
     chatInputHeight: 0,
-    appSettings: { showWelcomeSuggestions: true } as any,
+    appSettings: { showWelcomeSuggestions: true } as AppSettings,
     currentModelId: 'gemini-2.5-flash',
     onOpenSidePanel: () => {},
     onQuote: () => {},
@@ -55,12 +67,12 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     appSettings: {
       isSystemAudioRecordingEnabled: false,
       isPasteRichTextAsMarkdownEnabled: true,
-    } as any,
+    } as AppSettings,
     currentChatSettings: {
       modelId: 'gemini-3.1-pro-preview',
       ttsVoice: 'Aoede',
       thinkingLevel: 'MEDIUM',
-    } as any,
+    } as ChatSettings,
     setAppFileError: () => {},
     activeSessionId: 'session-1',
     commandedInput: null,
@@ -108,7 +120,7 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     isHistorySidebarOpen: false,
     generateQuadImages: false,
     onToggleQuadImages: () => {},
-    setCurrentChatSettings: () => ({}) as any,
+    setCurrentChatSettings: vi.fn(),
     onSuggestionClick: () => {},
     onOrganizeInfoClick: () => {},
     showEmptyStateSuggestions: false,
@@ -142,20 +154,20 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   vi.resetModules();
 
   vi.doMock('react-virtuoso', () => ({
-    Virtuoso: ({ data, itemContent, components }: any) => (
+    Virtuoso: ({ data, itemContent, components }: VirtuosoMockProps<ChatMessage>) => (
       <div data-testid="virtuoso">
-        {data.map((item: any, index: number) => itemContent(index, item))}
+        {data.map((item, index) => itemContent(index, item))}
         {components?.Footer ? <components.Footer /> : null}
       </div>
     ),
   }));
 
   vi.doMock('../message/Message', () => ({
-    Message: ({ message, onImageClick }: any) => (
+    Message: ({ message, onImageClick }: MessageMockProps) => (
       <button
         type="button"
         data-testid={`open-preview-${message.id}`}
-        onClick={() => onImageClick(message.files[0])}
+        onClick={() => onImageClick(message.files![0])}
       >
         Open preview
       </button>
@@ -179,6 +191,7 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
     useMessageListScroll: () => ({
       virtuosoRef: { current: null },
       handleScrollerRef: () => {},
+      handleScroll: () => {},
       setAtBottom: () => {},
       onRangeChanged: () => {},
       scrollToPrevTurn: () => {},

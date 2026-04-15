@@ -1,11 +1,11 @@
-export interface Html2PdfChain {
+interface Html2PdfChain {
   set: (options: unknown) => Html2PdfChain;
   from: (element: HTMLElement) => Html2PdfChain;
   output: (type: 'blob') => Promise<Blob>;
   save: () => Promise<void>;
 }
 
-export type Html2PdfFactory = () => Html2PdfChain;
+type Html2PdfFactory = () => Html2PdfChain;
 
 const nextAnimationFrame = () =>
   new Promise<void>((resolve) => {

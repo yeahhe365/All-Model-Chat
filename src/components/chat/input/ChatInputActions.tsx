@@ -43,7 +43,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onCancelEdit,
   canSend,
   isWaitingForUpload,
-  t,
   onCancelRecording,
   onTranslate,
   isTranslating,
@@ -61,14 +60,13 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   return (
     <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} t={t as any} />
+            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} />
             
             {isNativeAudioModel && (
                 <WebSearchToggle 
                     isGoogleSearchEnabled={isGoogleSearchEnabled} 
                     onToggleGoogleSearch={onToggleGoogleSearch} 
-                    disabled={disabled} 
-                    t={t as any} 
+                    disabled={disabled}
                 />
             )}
 
@@ -86,7 +84,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 onAddYouTubeVideo={onAddYouTubeVideo}
                 onCountTokens={onCountTokens}
                 disabled={disabled}
-                t={t as any}
                 isNativeAudioModel={isNativeAudioModel}
             />
         </div>
@@ -100,7 +97,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                     onRecordButtonClick={onRecordButtonClick}
                     onCancelRecording={onCancelRecording}
                     disabled={disabled}
-                    t={t as any}
                 />
             )}
             
@@ -112,7 +108,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                     onTranslate={onTranslate}
                     disabled={disabled}
                     canTranslate={!!inputText.trim() && !isEditing && !isTranscribing && !isMicInitializing}
-                    t={t as any}
                 />
             )}
 
@@ -137,7 +132,6 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 onStopGenerating={onStopGenerating}
                 onCancelEdit={onCancelEdit}
                 onFastSendMessage={onFastSendMessage}
-                t={t as any}
             />
         </div>
     </div>

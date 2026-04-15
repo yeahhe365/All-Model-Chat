@@ -72,7 +72,6 @@ describe('ApiConfigSection', () => {
             useApiProxy
             setUseApiProxy={vi.fn()}
             serverManagedApi
-            availableModels={[]}
           />
         </I18nProvider>
       );
@@ -121,7 +120,6 @@ describe('ApiConfigSection', () => {
             setApiProxyUrl={vi.fn()}
             useApiProxy={false}
             setUseApiProxy={vi.fn()}
-            availableModels={[]}
           />
         </I18nProvider>,
       );

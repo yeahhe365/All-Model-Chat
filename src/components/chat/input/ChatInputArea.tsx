@@ -6,7 +6,6 @@ import { ChatInputActions } from './ChatInputActions';
 import { SlashCommandMenu, Command } from './SlashCommandMenu';
 import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { ALL_SUPPORTED_MIME_TYPES, SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
-import { translations } from '../../../utils/appUtils';
 import { ChatSuggestions } from './area/ChatSuggestions';
 import { ChatQuoteDisplay } from './area/ChatQuoteDisplay';
 import { ChatFilePreviewList } from './area/ChatFilePreviewList';
@@ -83,7 +82,6 @@ export interface ChatInputAreaProps {
         onDisconnect: () => void;
         error: string | null;
     };
-    t: (key: keyof typeof translations) => string;
     themeId: string;
 }
 
@@ -99,7 +97,6 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     formProps,
     suggestionsProps,
     liveStatusProps,
-    t,
     themeId,
 }) => {
     const { isFullscreen, isPipActive, isAnimatingSend, isMobile, initialTextareaHeight, isConverting } = layoutProps;
@@ -145,7 +142,6 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                         isBBoxModeActive={suggestionsProps.isBBoxModeActive}
                         onToggleGuide={suggestionsProps.onToggleGuide}
                         isGuideModeActive={suggestionsProps.isGuideModeActive}
-                        t={t}
                         isFullscreen={isFullscreen}
                     />
                 )}
@@ -184,7 +180,6 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({
                                 quotes={quoteProps.quotes}
                                 onRemoveQuote={quoteProps.onRemoveQuote}
                                 themeId={themeId}
-                                t={t}
                             />
                         )}
                         

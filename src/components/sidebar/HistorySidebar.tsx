@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { SavedChatSession, ChatGroup } from '../../types';
-import { useI18n, type Translator } from '../../contexts/I18nContext';
+import { useI18n } from '../../contexts/I18nContext';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
 import { SessionItem } from './SessionItem';
@@ -31,9 +31,6 @@ export interface HistorySidebarProps {
   onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
-  onOpenScenariosModal: () => void;
-  t?: Translator;
-  language?: 'en' | 'zh';
   themeId?: string;
   newChatShortcut?: string;
 }
@@ -97,15 +94,14 @@ const SessionListGroup = ({
 };
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
-  const i18n = useI18n();
+  const { t } = useI18n();
   const {
     isOpen = false, onToggle, sessions = [], groups = [], activeSessionId = null, loadingSessionIds = new Set(),
     generatingTitleSessionIds = new Set(), onOpenExportModal, onAddNewGroup,
-    onDeleteGroup, onToggleGroupExpansion, themeId = 'pearl', t: explicitT,
+    onDeleteGroup, onToggleGroupExpansion, themeId = 'pearl',
     onNewChat, onDeleteSession, onTogglePinSession, onDuplicateSession,
     onOpenSettingsModal, onRenameSession, onRenameGroup, onMoveSessionToGroup, onSelectSession, newChatShortcut
   } = props;
-  const t = explicitT ?? i18n.t;
 
   const {
     searchQuery, setSearchQuery,

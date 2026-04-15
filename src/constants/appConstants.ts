@@ -21,14 +21,10 @@ import {
 } from './modelConstants';
 import { getRuntimeConfigAppSettingsOverrides } from '../runtime/runtimeConfig';
 
-export const DEFAULT_IS_STREAMING_ENABLED = true;
-export const DEFAULT_BASE_FONT_SIZE = 16;
-export const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
+const DEFAULT_IS_STREAMING_ENABLED = true;
+const DEFAULT_BASE_FONT_SIZE = 16;
+const DEFAULT_IS_AUDIO_COMPRESSION_ENABLED = true;
 
-export const APP_SETTINGS_KEY = 'chatAppSettings';
-export const PRELOADED_SCENARIO_KEY = 'chatPreloadedScenario';
-export const CHAT_HISTORY_SESSIONS_KEY = 'chatHistorySessions';
-export const CHAT_HISTORY_GROUPS_KEY = 'chatHistoryGroups';
 export const ACTIVE_CHAT_SESSION_ID_KEY = 'activeChatSessionId';
 export const API_KEY_LAST_USED_INDEX_KEY = 'chatApiKeyLastUsedIndex';
 export const CREATE_TEXT_FILE_EDITOR_LAST_EXTENSION_KEY = 'createTextFileEditorLastExtension';
@@ -53,7 +49,7 @@ export const DEFAULT_FILES_API_CONFIG: FilesApiConfig = {
     text: false,
 };
 
-export const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
+const DEFAULT_MEDIA_RESOLUTION = MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED;
 
 export const DEFAULT_CHAT_SETTINGS = {
     modelId: DEFAULT_MODEL_ID,

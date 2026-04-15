@@ -6,10 +6,16 @@ import { ChatMessage } from '../../../../types';
 interface UseMessageListScrollProps {
     messages: ChatMessage[];
     setScrollContainerRef: (node: HTMLDivElement | null) => void;
+    onScrollContainerScroll: () => void;
     activeSessionId: string | null;
 }
 
-export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSessionId }: UseMessageListScrollProps) => {
+export const useMessageListScroll = ({
+    messages,
+    setScrollContainerRef,
+    onScrollContainerScroll,
+    activeSessionId,
+}: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [atBottom, setAtBottom] = useState(true);
     const [visibleStartIndex, setVisibleStartIndex] = useState(0);
@@ -157,8 +163,10 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
                     localStorage.setItem(`chat_scroll_pos_${activeSessionId}`, scrollTop.toString());
                 }, 300);
             }
+
+            onScrollContainerScroll();
         }
-    }, [scrollerRef, atBottom, activeSessionId, messages.length]);
+    }, [scrollerRef, atBottom, activeSessionId, messages.length, onScrollContainerScroll]);
 
     // Restore scroll position on session change
     useEffect(() => {
@@ -185,17 +193,6 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
              }
         }
     }, [activeSessionId, messages.length]);
-
-    // Attach listener manually to the scroller ref
-    useEffect(() => {
-        const container = scrollerRef;
-        if (!container) {
-            return undefined;
-        }
-
-        container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [scrollerRef, handleScroll]);
 
     const showScrollDown = !atBottom;
     const showScrollUp = messages.length > 2 && visibleStartIndex > 0;

@@ -6,12 +6,12 @@ import type { UsageMetadata } from '@google/genai';
 
 // --- Model Sorting & Defaults ---
 
-export const REMOVED_MODEL_IDS = [
+const REMOVED_MODEL_IDS = [
     'gemini-2.5-flash-preview-09-2025',
     'gemini-2.5-flash-lite-preview-09-2025',
 ] as const;
 
-export const isRemovedModelId = (modelId: string | null | undefined): boolean =>
+const isRemovedModelId = (modelId: string | null | undefined): boolean =>
     !!modelId && REMOVED_MODEL_IDS.includes(modelId as (typeof REMOVED_MODEL_IDS)[number]);
 
 export const sanitizeModelOptions = (models: ModelOption[]): ModelOption[] =>

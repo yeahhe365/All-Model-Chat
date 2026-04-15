@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2, Mic } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
 
 interface RecordControlsProps {
@@ -9,7 +10,6 @@ interface RecordControlsProps {
     onRecordButtonClick: () => void;
     onCancelRecording: () => void;
     disabled: boolean;
-    t: (key: string) => string;
 }
 
 export const RecordControls: React.FC<RecordControlsProps> = ({
@@ -18,9 +18,9 @@ export const RecordControls: React.FC<RecordControlsProps> = ({
     isMicInitializing,
     onRecordButtonClick,
     onCancelRecording,
-    disabled,
-    t
+    disabled
 }) => {
+    const { t } = useI18n();
     const micIconSize = 20;
     
     return (

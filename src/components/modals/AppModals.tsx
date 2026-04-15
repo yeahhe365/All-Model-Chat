@@ -23,7 +23,7 @@ const LazyExportChatModal = lazy(async () => {
     return { default: module.ExportChatModal };
 });
 
-export interface AppModalsProps {
+interface AppModalsProps {
   isSettingsModalOpen?: boolean;
   setIsSettingsModalOpen?: (isOpen: boolean) => void;
   appSettings?: AppSettings;

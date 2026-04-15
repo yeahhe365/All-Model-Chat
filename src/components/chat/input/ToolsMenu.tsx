@@ -3,7 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
 import { IconYoutube, IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
@@ -22,7 +22,6 @@ interface ToolsMenuProps {
     onAddYouTubeVideo: () => void;
     onCountTokens: () => void;
     disabled: boolean;
-    t: (key: keyof typeof translations) => string;
     isNativeAudioModel?: boolean;
 }
 
@@ -61,8 +60,9 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isUrlContextEnabled, onToggleUrlContext,
     isDeepSearchEnabled, onToggleDeepSearch,
     onAddYouTubeVideo, onCountTokens,
-    disabled, t, isNativeAudioModel
+    disabled, isNativeAudioModel
 }) => {
+    const { t } = useI18n();
     const {
         isOpen,
         menuPosition,
@@ -145,7 +145,7 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
                       >
                         <div className="flex items-center gap-3.5">
                             <span className={item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}>{item.icon}</span>
-                            <span className="font-medium">{t(item.labelKey as any)}</span>
+                            <span className="font-medium">{t(item.labelKey)}</span>
                         </div>
                         {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
                       </button>

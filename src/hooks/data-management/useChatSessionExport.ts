@@ -3,7 +3,8 @@
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
-import { sanitizeFilename, triggerDownload } from '../../utils/export/core';
+import { formatExportDateTime, sanitizeFilename, triggerDownload } from '../../utils/export/core';
+import { loadExportModules } from '../../utils/export/loaders';
 
 interface UseChatSessionExportProps {
     activeChat: SavedChatSession | undefined;
@@ -24,20 +25,19 @@ export const useChatSessionExport = ({
     const exportChatLogic = useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
         if (!activeChat) return;
 
-        const [files, dom, image, templates] = await Promise.all([
-            import('../../utils/export/files'),
-            import('../../utils/export/dom'),
-            import('../../utils/export/image'),
-            import('../../utils/export/templates'),
-        ]);
-        const { exportHtmlStringAsFile, exportTextStringAsFile } = files;
-        const { gatherPageStyles, prepareElementForExport } = dom;
-        const { generateSnapshotPng } = image;
-        const { generateExportHtmlTemplate, generateExportTxtTemplate } = templates;
+        const {
+            exportHtmlStringAsFile,
+            exportTextStringAsFile,
+            gatherPageStyles,
+            prepareElementForExport,
+            generateSnapshotPng,
+            generateExportHtmlTemplate,
+            generateExportTxtTemplate,
+        } = await loadExportModules();
         
         const safeTitle = sanitizeFilename(activeChat.title);
         const dateObj = new Date();
-        const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
+        const dateStr = formatExportDateTime(dateObj);
         const isoDate = dateObj.toISOString().slice(0, 10);
         const filename = `chat-${safeTitle}-${isoDate}.${format}`;
         const scrollContainer = scrollContainerRef.current;

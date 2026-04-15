@@ -124,6 +124,18 @@ export interface CommandInfo {
   icon?: string;
 }
 
+export type AttachmentAction =
+  | 'upload'
+  | 'gallery'
+  | 'camera'
+  | 'recorder'
+  | 'id'
+  | 'url'
+  | 'text'
+  | 'screenshot'
+  | 'folder'
+  | 'zip';
+
 export interface SideViewContent {
   type: 'html' | 'mermaid' | 'graphviz' | 'svg';
   content: string;
@@ -169,7 +181,7 @@ export interface ChatInputToolbarProps {
 }
 
 export interface ChatInputActionsProps {
-  onAttachmentAction: (action: any) => void;
+  onAttachmentAction: (action: AttachmentAction) => void;
   disabled: boolean;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
@@ -192,7 +204,6 @@ export interface ChatInputActionsProps {
   onCancelEdit: () => void;
   canSend: boolean;
   isWaitingForUpload: boolean;
-  t: (key: string) => string;
   onCancelRecording: () => void;
   onTranslate: () => void;
   isTranslating: boolean;

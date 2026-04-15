@@ -22,6 +22,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
         audioUrl,
         error,
         stream,
+        status,
         startRecording,
         stopRecording,
         discardRecording
@@ -82,7 +83,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                 )}
 
                 {/* State: Idle / Initializing */}
-                {viewState === 'idle' && !error && (
+                {(viewState === 'idle' || (viewState === 'recording' && status !== 'recording')) && !error && (
                     <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-300">
                         <div className="relative">
                             <div className="absolute inset-0 bg-[var(--theme-bg-accent)]/20 rounded-full animate-ping"></div>

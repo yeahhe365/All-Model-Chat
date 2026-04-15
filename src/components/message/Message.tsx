@@ -2,7 +2,6 @@
 import React from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
 import { MessageContent } from './MessageContent';
-import { translations } from '../../utils/appUtils';
 import { MessageActions } from './MessageActions';
 
 interface MessageProps {
@@ -21,12 +20,9 @@ interface MessageProps {
     expandCodeBlocksByDefault: boolean;
     isMermaidRenderingEnabled: boolean;
     isGraphvizRenderingEnabled: boolean;
-    onTextToSpeech: (messageId: string, text: string) => void;
     onGenerateCanvas: (messageId: string, text: string) => void;
     onContinueGeneration: (messageId: string) => void;
-    ttsMessageId: string | null;
     onSuggestionClick?: (suggestion: string) => void;
-    t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
     onOpenSidePanel: (content: SideViewContent) => void;
     onConfigureFile?: (file: UploadedFile, messageId: string) => void;

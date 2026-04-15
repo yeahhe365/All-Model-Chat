@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UploadedFile, ChatMessage, VideoMetadata } from '../types';
 import { MediaResolution } from '../types/settings';
-import { useImageNavigation } from './ui/useImageNavigation';
+import { useFilePreviewState } from './ui/useFilePreviewState';
 
 interface UseMessageListUIProps {
     messages: ChatMessage[];
@@ -10,32 +10,25 @@ interface UseMessageListUIProps {
 }
 
 export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageListUIProps) => {
-    const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
     const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
     const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
     const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
     const [configuringFile, setConfiguringFile] = useState<{ file: UploadedFile, messageId: string } | null>(null);
 
+    const allFiles = useMemo(() => messages.flatMap((message) => message.files || []), [messages]);
+    const {
+        previewFile,
+        setPreviewFile,
+        closePreviewFile,
+        allImages,
+        currentImageIndex,
+        handlePrevImage,
+        handleNextImage,
+    } = useFilePreviewState(allFiles);
+
     const handleFileClick = useCallback((file: UploadedFile) => {
         setPreviewFile(file);
-    }, []);
-
-    const closeFilePreviewModal = useCallback(() => {
-        setPreviewFile(null);
-    }, []);
-
-    // Flatten all files from messages for navigation context
-    const allFiles = useMemo(() => {
-        return messages.flatMap(m => m.files || []);
-    }, [messages]);
-
-    // Use unified navigation hook
-    const { 
-        images: allImages, 
-        currentIndex: currentImageIndex, 
-        handlePrev: handlePrevImage, 
-        handleNext: handleNextImage 
-    } = useImageNavigation(allFiles, previewFile, setPreviewFile);
+    }, [setPreviewFile]);
 
     const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
         setHtmlToPreview(htmlContent);
@@ -68,7 +61,7 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
         configuringFile,
         setConfiguringFile,
         handleFileClick,
-        closeFilePreviewModal,
+        closeFilePreviewModal: closePreviewFile,
         allImages,
         currentImageIndex,
         handlePrevImage,

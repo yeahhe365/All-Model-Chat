@@ -2,7 +2,7 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { UploadedFile } from '../../types';
 import { ChevronLeft, ChevronRight, FileCode2, FileAudio } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../constants/fileConstants';
 import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
@@ -19,7 +19,6 @@ const LazyPdfViewer = lazy(async () => {
 interface FilePreviewModalProps {
   file: UploadedFile | null;
   onClose: () => void;
-  t: (key: keyof typeof translations) => string;
   onPrev?: () => void;
   onNext?: () => void;
   hasPrev?: boolean;
@@ -29,10 +28,11 @@ interface FilePreviewModalProps {
 }
 
 export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ 
-    file, onClose, t, 
+    file, onClose,
     onPrev, onNext, hasPrev = false, hasNext = false,
     onSaveText, initialEditMode = false
 }) => {
+  const { t } = useI18n();
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [editedContent, setEditedContent] = useState('');
   const [editedName, setEditedName] = useState('');
@@ -140,7 +140,6 @@ export const FilePreviewModal: React.FC<FilePreviewModalProps> = ({
         <FilePreviewHeader 
             file={file} 
             onClose={onClose} 
-            t={t as (key: string) => string} 
             isEditable={isEditing}
             onToggleEdit={isText && onSaveText ? handleToggleEdit : undefined}
             onSave={handleSave}

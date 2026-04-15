@@ -4,7 +4,7 @@ const DB_NAME = 'AllModelChatDB';
 const DB_VERSION = 4;
 const ACTIVE_SESSION_STORAGE_KEY = 'activeChatSessionId';
 
-export interface SeededSession {
+interface SeededSession {
   id: string;
   title: string;
   timestamp?: number;
@@ -18,7 +18,7 @@ export interface SeededSession {
   settings: Record<string, unknown>;
 }
 
-export type SeededAppSettings = Record<string, unknown>;
+type SeededAppSettings = Record<string, unknown>;
 
 export async function installMockPyodideWorker(page: Page) {
   await page.addInitScript(() => {

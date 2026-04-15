@@ -15,9 +15,8 @@ import { generateFolderContext } from '../../utils/folderImportUtils';
 import { generateUniqueId, getKeyForRequest } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
-import { useImageNavigation } from '../ui/useImageNavigation';
 import { useChatAreaInput } from '../../components/layout/chat-area/ChatAreaContext';
-import type { AttachmentAction } from '../../components/chat/input/AttachmentMenu';
+import type { AttachmentAction } from '../../types';
 import { useChatStore } from '../../stores/chatStore';
 import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
 import { captureScreenImage } from '../../utils/mediaUtils';
@@ -28,6 +27,7 @@ import {
   PendingChatInputSubmission,
   shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
+import { useFilePreviewState } from '../ui/useFilePreviewState';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -106,10 +106,18 @@ export const useChatInput = () => {
   const [showTtsContextEditor, setShowTtsContextEditor] = useState(false);
 
   const [configuringFile, setConfiguringFile] = useState<UploadedFile | null>(null);
-  const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
   const [isPreviewEditable, setIsPreviewEditable] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
+
+  const {
+    previewFile,
+    setPreviewFile,
+    allImages: inputImages,
+    currentImageIndex,
+    handlePrevImage,
+    handleNextImage,
+  } = useFilePreviewState(selectedFiles);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -338,7 +346,6 @@ export const useChatInput = () => {
     onToggleCanvasPrompt,
     onTogglePinCurrentSession,
     onRetryLastTurn,
-    onStopGenerating,
     onAttachmentAction: modalsState.handleAttachmentAction,
     availableModels,
     onSelectModel,
@@ -930,13 +937,6 @@ export const useChatInput = () => {
     [setSelectedFiles],
   );
 
-  const {
-    images: inputImages,
-    currentIndex: currentImageIndex,
-    handlePrev: handlePrevImage,
-    handleNext: handleNextImage,
-  } = useImageNavigation(selectedFiles, localFileState.previewFile, localFileState.setPreviewFile);
-
   const handlers = useMemo(
     () => ({
       handleFileChange,
@@ -960,7 +960,6 @@ export const useChatInput = () => {
       handleNextImage,
       inputImages,
       currentImageIndex,
-      adjustTextareaHeight: () => {},
     }),
     [
       currentImageIndex,

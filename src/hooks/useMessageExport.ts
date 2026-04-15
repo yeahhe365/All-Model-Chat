@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { ChatMessage } from '../types';
-import { triggerDownload, sanitizeFilename } from '../utils/export/core';
+import { formatExportDateTime, triggerDownload, sanitizeFilename } from '../utils/export/core';
+import { loadExportModules } from '../utils/export/loaders';
 
 interface UseMessageExportProps {
     message: ChatMessage;
@@ -38,28 +39,12 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
             }
 
             const dateObj = new Date(message.timestamp);
-            const dateStr = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString();
+            const dateStr = formatExportDateTime(dateObj);
 
             // Small delay to allow UI to update to "Exporting..." state
             if (type !== 'png') {
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
-
-            const loadExportModules = async () => {
-                const [files, dom, image, templates] = await Promise.all([
-                    import('../utils/export/files'),
-                    import('../utils/export/dom'),
-                    import('../utils/export/image'),
-                    import('../utils/export/templates'),
-                ]);
-
-                return {
-                    ...files,
-                    ...dom,
-                    ...image,
-                    ...templates,
-                };
-            };
 
             // Find the rendered DOM bubble to preserve Math/Syntax/Diagrams
             // We use the data-message-id attribute which is present in the Message component

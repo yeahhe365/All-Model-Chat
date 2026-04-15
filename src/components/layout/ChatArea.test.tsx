@@ -30,7 +30,6 @@ const mockState = vi.hoisted(() => ({
     setAspectRatio: vi.fn(),
     imageSize: '1K',
     setImageSize: vi.fn(),
-    ttsMessageId: null as string | null,
   },
   ui: {
     isHistorySidebarOpen: false,
@@ -128,11 +127,9 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       availableModels: [],
       selectedModelId: 'gemini-3.1-pro-preview',
       isCanvasPromptActive: false,
-      isKeyLocked: false,
       isPipSupported: false,
       isPipActive: false,
       onNewChat: vi.fn(),
-      onOpenSettingsModal: vi.fn(),
       onOpenScenariosModal: vi.fn(),
       onToggleHistorySidebar: vi.fn(),
       onLoadCanvasPrompt: vi.fn(),
@@ -150,7 +147,6 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       onSuggestionClick: vi.fn(),
       onOrganizeInfoClick: vi.fn(),
       onFollowUpSuggestionClick: vi.fn(),
-      onTextToSpeech: vi.fn(),
       onGenerateCanvas: vi.fn(),
       onContinueGeneration: vi.fn(),
       onQuickTTS: vi.fn(async () => null),
@@ -221,7 +217,6 @@ describe('ChatArea provider slice memoization', () => {
     mockState.chat.selectedFiles = [];
     mockState.chat.editingMessageId = null;
     mockState.chat.appFileError = null;
-    mockState.chat.ttsMessageId = null;
     mockState.ui.isHistorySidebarOpen = false;
     mockState.renders.messageList.mockClear();
     mockState.renders.chatInput.mockClear();

@@ -13,16 +13,13 @@
     <a href="https://github.com/yeahhe365/All-Model-Chat/releases" target="_blank">
       <img src="https://img.shields.io/github/v/release/yeahhe365/All-Model-Chat?style=for-the-badge&color=3b82f6" alt="Release">
     </a>
-    <a href="https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true" target="_blank">
-      <img src="https://img.shields.io/badge/Google%20AI%20Studio-Try_it_now-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Try in AI Studio">
-    </a>
     <img src="https://img.shields.io/badge/许可证-MIT-green?style=for-the-badge" alt="License">
   </p>
 
   <p>
     <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React">
     <img src="https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
-    <img src="https://img.shields.io/badge/Tailwind-3.4-38BDB8?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind">
+    <img src="https://img.shields.io/badge/Tailwind-4.2-38BDF8?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind">
     <img src="https://img.shields.io/badge/Gemini_SDK-1.2+-8E75B2?style=flat-square&logo=google&logoColor=white" alt="Gemini SDK">
     <img src="https://img.shields.io/badge/PWA-Supported-5A0FC8?style=flat-square&logo=pwa&logoColor=white" alt="PWA">
   </p>
@@ -35,10 +32,10 @@
 
 **All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持新增的独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
 
-支持三种运行模式：
-- **标准模式**：克隆仓库后通过 Vite 开发/构建，传统 SPA 部署
+当前仓库围绕 **Vite + React SPA** 作为唯一主线构建形态：
+- **标准模式**：本地通过 Vite 开发 / 构建，适合日常开发与静态部署
 - **Docker 部署模式**：`web + api` 双服务部署，前端走 `/api/gemini/*` 与 `/api/live-token`
-- **零构建模式**：利用 HTML import map 直接在浏览器中加载依赖，可在 Google AI Studio 中一键运行
+- **静态前端 + 独立 API**：前端发布 `dist/`，后端单独部署 Node API 服务
 
 ---
 
@@ -206,10 +203,6 @@ RUNTIME_LIVE_API_EPHEMERAL_TOKEN_ENDPOINT=https://your-api.example.com/api/live-
 ```
 4. 在后端环境设置 `GEMINI_API_KEY`，并按需配置 `ALLOWED_ORIGINS=https://your-pages-domain.pages.dev`。
 
-### 方式四：Google AI Studio（零构建）
-
-直接在 [Google AI Studio](https://ai.studio/apps/drive/1Y2timylzWs4cngOe85xjpD3vO0eznyAX?fullscreenApplet=true) 中打开，所有依赖通过 CDN 加载，无需本地构建流程。
-
 ### 构建与预览
 
 ```bash
@@ -224,7 +217,7 @@ npm run preview  # 本地预览构建结果
 | 层级 | 技术栈 |
 | :--- | :--- |
 | **核心框架** | React 18 + TypeScript 5.5 + Vite 5 |
-| **样式方案** | Tailwind CSS 3.4 (CDN) + CSS 变量主题系统 |
+| **样式方案** | Tailwind CSS 4.2（通过 Vite 插件集成）+ CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
@@ -232,14 +225,7 @@ npm run preview  # 本地预览构建结果
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
 | **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
 | **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
-| **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API / HTML import map 零构建 |
-
-### 前端双模式说明（与部署形态独立）
-
-项目通过 `index.html` 中的 `<script type="importmap">` 实现双模式运行：
-
-- **Vite 模式**：`vite.config.ts` 将 React、react-pdf 等标记为 `external`，由 Vite 处理打包
-- **零构建模式**：import map 直接指向 esm.sh CDN，浏览器原生解析模块依赖，适合 Google AI Studio 等不支持构建的环境
+| **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API |
 
 生产部署若采用服务端托管 API，前端默认请求后端端点：
 - `/api/gemini/*`

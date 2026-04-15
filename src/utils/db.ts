@@ -310,9 +310,8 @@ export const dbService = {
         request.onsuccess = (event) => {
           const cursor = (event.target as IDBRequest<IDBCursorWithValue>).result;
           if (cursor) {
-            const { messages, ...rest } = cursor.value;
             // Return with empty messages to save memory
-            results.push({ ...rest, messages: [] });
+            results.push({ ...cursor.value, messages: [] });
             cursor.continue();
           } else {
             resolve(results);

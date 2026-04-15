@@ -39,7 +39,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const isAppProcessingFile = useChatStore(s => s.isAppProcessingFile);
     const aspectRatio = useChatStore(s => s.aspectRatio);
     const imageSize = useChatStore(s => s.imageSize);
-    const ttsMessageId = useChatStore(s => s.ttsMessageId);
     const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
 
     const setActiveSessionId = useChatStore((s) => s.setActiveSessionId);
@@ -53,7 +52,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const setEditMode = useChatStore((s) => s.setEditMode);
     const setIsAppProcessingFile = useChatStore((s) => s.setIsAppProcessingFile);
     const setAspectRatio = useChatStore((s) => s.setAspectRatio);
-    const setTtsMessageId = useChatStore((s) => s.setTtsMessageId);
     const setIsSwitchingModel = useChatStore((s) => s.setIsSwitchingModel);
     const setGeneratingTitleSessionIds = useChatStore((s) => s.setGeneratingTitleSessionIds);
     const updateAndPersistSessions = useChatStore((s) => s.updateAndPersistSessions);
@@ -165,12 +163,9 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         [appSettings.isLocalPythonEnabled, currentChatSettings.isLocalPythonEnabled, selectedFiles],
     );
 
-    const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler({
+    const { handleQuickTTS } = useTextToSpeechHandler({
         appSettings,
         currentChatSettings,
-        ttsMessageId,
-        setTtsMessageId,
-        updateAndPersistSessions,
     });
 
     useAutoTitling({ appSettings, activeChat, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
@@ -254,7 +249,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         isSwitchingModel,
         aspectRatio,
         imageSize,
-        ttsMessageId,
 
         // Persistence
         updateAndPersistSessions,
@@ -301,7 +295,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleDeleteMessage: messageActions.handleDeleteMessage,
         handleRetryMessage: messageActions.handleRetryMessage,
         handleRetryLastTurn: messageActions.handleRetryLastTurn,
-        handleTextToSpeech,
         handleQuickTTS,
         handleEditLastUserMessage: messageActions.handleEditLastUserMessage,
         handleContinueGeneration: messageActions.handleContinueGeneration,

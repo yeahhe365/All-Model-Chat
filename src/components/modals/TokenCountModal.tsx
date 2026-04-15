@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, AppSettings, ModelOption } from '../../types';
 import { X, Calculator } from 'lucide-react';
@@ -17,11 +18,11 @@ interface TokenCountModalProps {
     appSettings: AppSettings;
     availableModels: ModelOption[];
     currentModelId: string;
-    t: (key: string) => string;
 }
 
 export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
-    const { isOpen, onClose, t, availableModels } = props;
+    const { t } = useI18n();
+    const { isOpen, onClose, availableModels } = props;
     
     const {
         text, setText,

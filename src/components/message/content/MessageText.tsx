@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../../types';
-import { translations } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
 import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
 import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
@@ -14,7 +14,6 @@ interface MessageTextProps {
     message: ChatMessage;
     showThoughts: boolean;
     appSettings: AppSettings;
-    t: (key: keyof typeof translations) => string;
     themeId: string;
     baseFontSize: number;
     onImageClick: (file: UploadedFile) => void;
@@ -29,7 +28,6 @@ export const MessageText: React.FC<MessageTextProps> = ({
     message,
     showThoughts,
     appSettings,
-    t,
     themeId,
     baseFontSize,
     onImageClick,
@@ -39,6 +37,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
     isGraphvizRenderingEnabled,
     onOpenSidePanel
 }) => {
+    const { t } = useI18n();
     const { content, audioSrc, groundingMetadata, urlContextMetadata, thoughts } = message;
     const isLoading = message.isLoading ?? false;
     

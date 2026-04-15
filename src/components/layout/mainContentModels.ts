@@ -6,7 +6,6 @@ import {
   isHdGuideSystemInstruction,
 } from '../../constants/promptHelpers';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
-import type { AppModalsProps } from '../modals/AppModals';
 import type { HistorySidebarProps } from '../sidebar/HistorySidebar';
 import type { ChatAreaProps } from './ChatArea';
 
@@ -15,7 +14,6 @@ type ChatAreaModel = ChatAreaProps['chatArea'];
 export type MainContentChatAreaHeaderActions = Pick<
   ChatAreaModel['header'],
   | 'onNewChat'
-  | 'onOpenSettingsModal'
   | 'onOpenScenariosModal'
   | 'onToggleHistorySidebar'
   | 'onLoadCanvasPrompt'
@@ -51,7 +49,6 @@ interface BuildHistorySidebarPropsArgs {
   onMoveSessionToGroup: HistorySidebarProps['onMoveSessionToGroup'];
   onToggleGroupExpansion: HistorySidebarProps['onToggleGroupExpansion'];
   onOpenSettingsModal: () => void;
-  onOpenScenariosModal: () => void;
   themeId: string;
 }
 
@@ -77,7 +74,6 @@ export const buildHistorySidebarProps = ({
   onMoveSessionToGroup,
   onToggleGroupExpansion,
   onOpenSettingsModal,
-  onOpenScenariosModal,
   themeId,
 }: BuildHistorySidebarPropsArgs): HistorySidebarProps => ({
   isOpen,
@@ -100,7 +96,6 @@ export const buildHistorySidebarProps = ({
   onMoveSessionToGroup,
   onToggleGroupExpansion,
   onOpenSettingsModal,
-  onOpenScenariosModal,
   themeId,
   newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
 });
@@ -131,12 +126,6 @@ export const buildSettingsForModal = ({
     ...sessionOverrides,
   };
 };
-
-export const buildAppModalsProps = (props: AppModalsProps): AppModalsProps => props;
-
-export const buildChatAreaInputActions = (
-  props: ChatAreaModel['inputActions'],
-): ChatAreaModel['inputActions'] => props;
 
 interface BuildChatAreaModelArgs {
   appSettings: AppSettings;
@@ -194,7 +183,6 @@ export const buildChatAreaModel = ({
     availableModels,
     selectedModelId: currentChatSettings.modelId || appSettings.modelId,
     isCanvasPromptActive: isCanvasSystemInstruction(currentChatSettings.systemInstruction),
-    isKeyLocked: !!currentChatSettings.lockedApiKey,
     isPipSupported: isPipSupported && appSettings.useCustomApiConfig,
     isPipActive,
     ...headerActions,

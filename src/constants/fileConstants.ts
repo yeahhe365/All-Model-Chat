@@ -69,7 +69,7 @@ export const SUPPORTED_SPREADSHEET_MIME_TYPES = [
     'text/csv',
 ];
 
-export const SUPPORTED_DOC_MIME_TYPES = [
+const SUPPORTED_DOC_MIME_TYPES = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/msword',
 ];

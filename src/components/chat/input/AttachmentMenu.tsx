@@ -2,7 +2,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, FolderUp } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
+import type { AttachmentAction } from '../../../types';
 import { 
   IconUpload, 
   IconGallery, 
@@ -16,18 +17,16 @@ import {
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 
-export type AttachmentAction = 'upload' | 'gallery' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot' | 'folder' | 'zip';
-
 interface AttachmentMenuProps {
     onAction: (action: AttachmentAction) => void;
     disabled: boolean;
-    t: (key: keyof typeof translations) => string;
 }
 
 const attachIconSize = 20;
-const menuIconSize = 18; // Consistent icon size for menu items
+const menuIconSize = 18;
 
-export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
+export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled }) => {
+    const { t } = useI18n();
     const {
         isOpen,
         menuPosition,
@@ -44,7 +43,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         onAction(action);
     };
     
-    const menuItems: { labelKey: keyof typeof translations, icon: React.ReactNode, action: AttachmentAction }[] = [
+    const menuItems = [
         { labelKey: 'attachMenu_upload', icon: <IconUpload size={menuIconSize} />, action: 'upload' },
         { labelKey: 'attachMenu_importFolder', icon: <FolderUp size={menuIconSize} />, action: 'folder' },
         { labelKey: 'attachMenu_importZip', icon: <IconZip size={menuIconSize} />, action: 'zip' },
@@ -54,7 +53,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_recordAudio', icon: <IconMicrophone size={menuIconSize} />, action: 'recorder' },
         { labelKey: 'attachMenu_addById', icon: <IconLink size={menuIconSize} />, action: 'id' },
         { labelKey: 'attachMenu_createText', icon: <IconFileEdit size={menuIconSize} />, action: 'text' }
-    ];
+    ] as const;
 
     return (
         <div className="relative" ref={containerRef}>

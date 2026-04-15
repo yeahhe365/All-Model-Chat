@@ -1,6 +1,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
 import { SuggestionIcon } from './SuggestionIcon';
 import { translations } from '../../../../utils/appUtils';
@@ -13,11 +14,11 @@ interface ChatSuggestionsProps {
     isBBoxModeActive?: boolean;
     onToggleGuide?: () => void;
     isGuideModeActive?: boolean;
-    t: (key: keyof typeof translations) => string;
     isFullscreen: boolean;
 }
 
-export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, onToggleBBox, isBBoxModeActive, onToggleGuide, isGuideModeActive, t, isFullscreen }) => {
+export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSuggestionClick, onOrganizeInfoClick, onToggleBBox, isBBoxModeActive, onToggleGuide, isGuideModeActive, isFullscreen }) => {
+    const { t } = useI18n();
     const suggestionsRef = useRef<HTMLDivElement>(null);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
@@ -65,8 +66,8 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                         <button
                             type="button"
                             onClick={() => {
-                                const text = t(s.descKey as any);
-                                if ((s as any).specialAction === 'organize' && onOrganizeInfoClick) {
+                                const text = t(s.descKey as keyof typeof translations);
+                                if (s.specialAction === 'organize' && onOrganizeInfoClick) {
                                     onOrganizeInfoClick(text);
                                 } else if (onSuggestionClick) {
                                     onSuggestionClick(text);
@@ -81,12 +82,12 @@ export const ChatSuggestions: React.FC<ChatSuggestionsProps> = ({ show, onSugges
                                 transition-all active:scale-95 shadow-sm
                             "
                         >
-                            <SuggestionIcon iconName={(s as any).icon} />
-                            <span>{t(s.titleKey as any)}</span>
+                            <SuggestionIcon iconName={s.icon} />
+                            <span>{t(s.titleKey as keyof typeof translations)}</span>
                         </button>
                         
                         {/* Insert BBox and Guide Buttons after "Smart Board" (organize action) if available */}
-                        {(s as any).specialAction === 'organize' && (
+                        {s.specialAction === 'organize' && (
                             <>
                                 {onToggleBBox && (
                                     <button

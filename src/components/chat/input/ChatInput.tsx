@@ -59,7 +59,7 @@ const ChatInputComponent: React.FC = () => {
     },
     isAddingByUrl: inputState.isAddingByUrl,
     isLoading: chatInput.isLoading,
-    t: t as any,
+    t,
     generateQuadImages: chatInput.generateQuadImages,
     onToggleQuadImages: chatInput.onToggleQuadImages,
     supportedAspectRatios: capabilities.supportedAspectRatios,
@@ -103,7 +103,6 @@ const ChatInputComponent: React.FC = () => {
     onCancelEdit: chatInput.onCancelEdit,
     canSend: canSend,
     isWaitingForUpload: inputState.isWaitingForUpload,
-    t: t as any,
     onTranslate: handlers.handleTranslate,
     isTranslating: inputState.isTranslating,
     inputText: inputState.inputText,
@@ -201,7 +200,6 @@ const ChatInputComponent: React.FC = () => {
       error: liveAPI.error,
       onDisconnect: liveAPI.disconnect,
     },
-    t: t as any,
     themeId: chatInput.themeId,
   };
 
@@ -229,7 +227,6 @@ const ChatInputComponent: React.FC = () => {
         allCommandsForHelp={slashCommandState.allCommandsForHelp}
         isProcessingFile={chatInput.isProcessingFile}
         isLoading={chatInput.isLoading}
-        t={t as any}
         initialContent={modalsState.editingFile?.textContent || ''}
         initialFilename={modalsState.editingFile?.name || ''}
         isSystemAudioRecordingEnabled={chatInput.appSettings.isSystemAudioRecordingEnabled}
@@ -253,7 +250,6 @@ const ChatInputComponent: React.FC = () => {
         appSettings={chatInput.appSettings}
         availableModels={chatInput.availableModels}
         currentModelId={chatInput.currentChatSettings.modelId}
-        t={t as any}
         isGemini3={capabilities.isGemini3}
         isPreviewEditable={localFileState.isPreviewEditable}
         onSaveTextFile={localFileState.handleSavePreviewTextFile}

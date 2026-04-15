@@ -1,26 +1,16 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { I18nProvider } from '../../../contexts/I18nContext';
+import { useSettingsStore } from '../../../stores/settingsStore';
 import { ToolsMenu } from './ToolsMenu';
-
-const t = (key: string) =>
-  ({
-    tools_button: 'Tools',
-    deep_search_label: 'Deep Search',
-    web_search_label: 'Web Search',
-    code_execution_label: 'Code Execution',
-    local_python_label: 'Pyodide',
-    url_context_label: 'URL Context',
-    attachMenu_addByUrl: 'Add by URL',
-    tools_token_count_label: 'Count Tokens',
-    local_python_short: 'Pyodide',
-  })[key] ?? key;
 
 describe('ToolsMenu', () => {
   let container: HTMLDivElement;
   let root: Root;
 
   beforeEach(() => {
+    useSettingsStore.setState({ language: 'en' });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -37,23 +27,24 @@ describe('ToolsMenu', () => {
   it('keeps local Python available for native audio models', () => {
     act(() => {
       root.render(
-        <ToolsMenu
-          isGoogleSearchEnabled={false}
-          onToggleGoogleSearch={() => {}}
-          isCodeExecutionEnabled={false}
-          onToggleCodeExecution={() => {}}
-          isLocalPythonEnabled
-          onToggleLocalPython={() => {}}
-          isUrlContextEnabled={false}
-          onToggleUrlContext={() => {}}
-          isDeepSearchEnabled={false}
-          onToggleDeepSearch={() => {}}
-          onAddYouTubeVideo={() => {}}
-          onCountTokens={() => {}}
-          disabled={false}
-          t={t as any}
-          isNativeAudioModel
-        />,
+        <I18nProvider>
+          <ToolsMenu
+            isGoogleSearchEnabled={false}
+            onToggleGoogleSearch={() => {}}
+            isCodeExecutionEnabled={false}
+            onToggleCodeExecution={() => {}}
+            isLocalPythonEnabled
+            onToggleLocalPython={() => {}}
+            isUrlContextEnabled={false}
+            onToggleUrlContext={() => {}}
+            isDeepSearchEnabled={false}
+            onToggleDeepSearch={() => {}}
+            onAddYouTubeVideo={() => {}}
+            onCountTokens={() => {}}
+            disabled={false}
+            isNativeAudioModel
+          />
+        </I18nProvider>,
       );
     });
 

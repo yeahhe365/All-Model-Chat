@@ -37,6 +37,7 @@ export const useAudioRecorder = () => {
     });
 
     const startRecording = useCallback((opts?: { captureSystemAudio?: boolean }) => {
+        setViewState('recording');
         startCore(opts);
     }, [startCore]);
 
@@ -48,13 +49,6 @@ export const useAudioRecorder = () => {
         cancelCore(); // Ensures stream is closed if in weird state
     }, [audioUrl, cancelCore]);
 
-    // Sync viewState with recorder status for recording phase
-    useEffect(() => {
-        if (status === 'recording') {
-            setViewState('recording');
-        }
-    }, [status]);
-
     return {
         viewState,
         isInitializing,
@@ -63,6 +57,7 @@ export const useAudioRecorder = () => {
         audioUrl,
         error,
         stream,
+        status,
         startRecording,
         stopRecording,
         discardRecording

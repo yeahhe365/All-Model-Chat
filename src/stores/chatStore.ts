@@ -107,9 +107,7 @@ interface ChatState {
   isAppProcessingFile: boolean;
   aspectRatio: string;
   imageSize: string;
-  ttsMessageId: string | null;
   isSwitchingModel: boolean;
-  scrollContainerRef: React.RefObject<HTMLDivElement> | null;
 
   // Read-only refs (accessed via helpers, not reactive)
   _activeJobs: { current: Map<string, AbortController> };
@@ -135,9 +133,7 @@ interface ChatActions {
   setIsAppProcessingFile: (v: UpdaterOrValue<boolean>) => void;
   setAspectRatio: (v: UpdaterOrValue<string>) => void;
   setImageSize: (v: UpdaterOrValue<string>) => void;
-  setTtsMessageId: (v: UpdaterOrValue<string | null>) => void;
   setIsSwitchingModel: (v: UpdaterOrValue<boolean>) => void;
-  setScrollContainerRef: (ref: UpdaterOrValue<React.RefObject<HTMLDivElement> | null>) => void;
 
   // Persistence
   updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
@@ -167,9 +163,7 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   isAppProcessingFile: false,
   aspectRatio: '1:1',
   imageSize: '1K',
-  ttsMessageId: null,
   isSwitchingModel: false,
-  scrollContainerRef: null,
 
   _activeJobs,
   _userScrolledUp,
@@ -237,19 +231,10 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     set((state) => ({
       imageSize: typeof value === 'function' ? value(state.imageSize) : value,
     })),
-  setTtsMessageId: (value) =>
-    set((state) => ({
-      ttsMessageId: typeof value === 'function' ? value(state.ttsMessageId) : value,
-    })),
   setIsSwitchingModel: (value) =>
     set((state) => ({
       isSwitchingModel:
         typeof value === 'function' ? value(state.isSwitchingModel) : value,
-    })),
-  setScrollContainerRef: (value) =>
-    set((state) => ({
-      scrollContainerRef:
-        typeof value === 'function' ? value(state.scrollContainerRef) : value,
     })),
 
   // ── Persistence Actions ──

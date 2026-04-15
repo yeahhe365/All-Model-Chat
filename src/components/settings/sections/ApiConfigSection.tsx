@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound } from 'lucide-react';
-import type { ModelOption } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
@@ -26,7 +25,6 @@ interface ApiConfigSectionProps {
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
   serverManagedApi?: boolean;
-  availableModels?: ModelOption[];
   liveApiEphemeralTokenEndpoint?: string | null;
   setLiveApiEphemeralTokenEndpoint?: (value: string | null) => void;
 }

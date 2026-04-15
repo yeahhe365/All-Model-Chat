@@ -1,4 +1,15 @@
 {
+  "entry": [
+    "src/index.tsx",
+    "server/src/index.ts",
+    "public/runtime-config.js"
+  ],
+  "ignore": [
+    "src/utils/export/dom.ts",
+    "src/utils/export/files.ts",
+    "src/utils/export/image.ts",
+    "src/utils/export/templates.ts"
+  ],
   "ignoreDependencies": [
     "pdfjs-dist",
     "pyodide"

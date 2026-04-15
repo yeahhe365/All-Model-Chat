@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
 import { getTranslator } from '../utils/translations';
 
-export type Translator = ReturnType<typeof getTranslator>;
+type Translator = ReturnType<typeof getTranslator>;
 
 interface I18nContextValue {
   language: 'en' | 'zh';
@@ -27,9 +27,4 @@ export const useI18n = () => {
   }
 
   return value;
-};
-
-export const useResolvedTranslator = (translator?: Translator) => {
-  const { t } = useI18n();
-  return translator ?? t;
 };

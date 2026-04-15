@@ -10,10 +10,9 @@ export const countTokensApi = async (apiKey: string, modelId: string, parts: Par
         // We MUST retain mediaResolution and videoMetadata as they significantly affect token counts
         // for Gemini 3.0 models (resolution) and video inputs (cropping).
         const sanitizedParts = parts.map(p => {
-            // Create a shallow copy to avoid mutating the original array elements
-            // Only exclude internal app fields like thoughtSignature
-            const { thoughtSignature, ...rest } = p as any;
-            return rest as Part;
+            const sanitized = { ...(p as Record<string, unknown>) };
+            delete (sanitized as { thoughtSignature?: unknown }).thoughtSignature;
+            return sanitized as Part;
         });
         const contents = [{ role: 'user', parts: sanitizedParts }];
         const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));

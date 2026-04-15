@@ -2,6 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { X, Check, Download, ClipboardCopy, Loader2, FileText, ImageIcon, FileVideo, FileAudio, FileCode2, Save, Edit3 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
+import { useI18n } from '../../../contexts/I18nContext';
 import { triggerDownload } from '../../../utils/export/core';
 import { SUPPORTED_IMAGE_MIME_TYPES } from '../../../constants/fileConstants';
 import { copyFileToClipboard, formatFileSize } from '../../../utils/fileHelpers';
@@ -10,7 +11,6 @@ import { FloatingToolbar, ToolbarButton, ToolbarDivider } from './FloatingToolba
 interface FilePreviewHeaderProps {
     file: UploadedFile;
     onClose: () => void;
-    t: (key: string) => string;
     isEditable?: boolean;
     onToggleEdit?: () => void;
     onSave?: () => void;
@@ -23,7 +23,6 @@ interface FilePreviewHeaderProps {
 export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({ 
     file, 
     onClose, 
-    t,
     isEditable = false,
     onToggleEdit,
     onSave,
@@ -32,6 +31,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
     onCopy,
     isCopied: externalIsCopied
 }) => {
+    const { t } = useI18n();
     const [isDownloading, setIsDownloading] = useState(false);
     const [internalIsCopied, setInternalIsCopied] = useState(false);
     

@@ -104,7 +104,6 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
             selectedModelId={modelId}
             onSelectModel={setModelId}
             setAvailableModels={setAvailableModels}
-            t={t}
           />
 
           {/* Thinking Controls */}

@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../contexts/I18nContext';
 import { MessageActions } from './MessageActions';
 import { WindowProvider } from '../../contexts/WindowContext';
 import type { ChatMessage } from '../../types';
@@ -50,21 +51,20 @@ describe('MessageActions', () => {
   it('does not render a read-aloud action for model messages', () => {
     act(() => {
       root.render(
-        <WindowProvider window={window} document={document}>
-          <MessageActions
-            message={message}
-            isGrouped={false}
-            onEditMessage={() => {}}
-            onDeleteMessage={() => {}}
-            onRetryMessage={() => {}}
-            onTextToSpeech={() => {}}
-            onGenerateCanvas={() => {}}
-            onContinueGeneration={() => {}}
-            ttsMessageId={null}
-            themeId="pearl"
-            t={(key) => String(key)}
-          />
-        </WindowProvider>
+        <I18nProvider>
+          <WindowProvider window={window} document={document}>
+            <MessageActions
+              message={message}
+              isGrouped={false}
+              onEditMessage={() => {}}
+              onDeleteMessage={() => {}}
+              onRetryMessage={() => {}}
+              onGenerateCanvas={() => {}}
+              onContinueGeneration={() => {}}
+              themeId="pearl"
+            />
+          </WindowProvider>
+        </I18nProvider>
       );
     });
 

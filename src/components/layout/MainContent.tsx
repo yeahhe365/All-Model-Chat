@@ -6,9 +6,7 @@ import type { AppViewModel } from '../../hooks/app/useApp';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
 import {
-  buildAppModalsProps,
   buildChatAreaModel,
-  buildChatAreaInputActions,
   buildHistorySidebarProps,
   buildSettingsForModal,
   buildSidePanelKey,
@@ -73,17 +71,17 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
 
   const toggleHistorySidebar = useCallback(() => {
     uiState.setIsHistorySidebarOpen((prev) => !prev);
-  }, [uiState.setIsHistorySidebarOpen]);
+  }, [uiState]);
 
   const closeHistorySidebar = useCallback(() => {
     uiState.setIsHistorySidebarOpen(false);
-  }, [uiState.setIsHistorySidebarOpen]);
+  }, [uiState]);
 
   const selectSession = useCallback(
     (id: string) => {
       chatState.loadChatSession(id);
     },
-    [chatState.loadChatSession],
+    [chatState],
   );
 
   const openExportModal = useCallback(() => {
@@ -119,7 +117,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     (text: string, options?: { isFastMode?: boolean }) => {
       chatState.handleSendMessage({ text, ...options });
     },
-    [chatState.handleSendMessage],
+    [chatState],
   );
 
   const onToggleQuadImages = useCallback(() => {
@@ -127,12 +125,11 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       ...prev,
       generateQuadImages: !prev.generateQuadImages,
     }));
-  }, [app.setAppSettings]);
+  }, [app]);
 
   const headerActions: MainContentChatAreaHeaderActions = useMemo(
     () => ({
       onNewChat: chatState.startNewChat,
-      onOpenSettingsModal: openSettingsModal,
       onOpenScenariosModal: openScenariosModal,
       onToggleHistorySidebar: toggleHistorySidebar,
       onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
@@ -146,7 +143,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       handleLoadCanvasPromptAndSave,
       handleSetThinkingLevel,
       openScenariosModal,
-      openSettingsModal,
       pipState.togglePip,
       toggleHistorySidebar,
     ],
@@ -173,7 +169,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       onSuggestionClick,
       onOrganizeInfoClick,
       onFollowUpSuggestionClick,
-      onTextToSpeech: chatState.handleTextToSpeech,
       onGenerateCanvas: chatState.handleGenerateCanvas,
       onContinueGeneration: chatState.handleContinueGeneration,
       onQuickTTS: chatState.handleQuickTTS,
@@ -186,7 +181,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       chatState.handleGenerateCanvas,
       chatState.handleQuickTTS,
       chatState.handleRetryMessage,
-      chatState.handleTextToSpeech,
       chatState.handleUpdateMessageFile,
       chatState.onScrollContainerScroll,
       chatState.setScrollContainerRef,
@@ -199,35 +193,35 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
 
   const inputActions: ChatAreaProps['chatArea']['inputActions'] = useMemo(
     () =>
-      buildChatAreaInputActions({
-      onMessageSent,
-      onSendMessage,
-      onStopGenerating: chatState.handleStopGenerating,
-      onCancelEdit: chatState.handleCancelEdit,
-      onProcessFiles: chatState.handleProcessAndAddFiles,
-      onAddFileById: chatState.handleAddFileById,
-      onCancelUpload: chatState.handleCancelFileUpload,
-      onTranscribeAudio: chatState.handleTranscribeAudio,
-      onToggleGoogleSearch: chatState.toggleGoogleSearch,
-      onToggleCodeExecution: chatState.toggleCodeExecution,
-      onToggleLocalPython: chatState.toggleLocalPython,
-      onToggleUrlContext: chatState.toggleUrlContext,
-      onToggleDeepSearch: chatState.toggleDeepSearch,
-      onClearChat: chatState.handleClearCurrentChat,
-      onOpenSettings: openSettingsModal,
-      onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
-      onTogglePinCurrentSession: chatState.handleTogglePinCurrentSession,
-      onRetryLastTurn: chatState.handleRetryLastTurn,
-      onEditLastUserMessage: chatState.handleEditLastUserMessage,
-      onToggleQuadImages,
-      setCurrentChatSettings: chatState.setCurrentChatSettings,
-      onAddUserMessage: chatState.handleAddUserMessage,
-      onLiveTranscript: chatState.handleLiveTranscript,
-      liveClientFunctions: chatState.liveClientFunctions,
-      onEditMessageContent: chatState.handleUpdateMessageContent,
-      onToggleBBox: handleToggleBBoxMode,
-      onToggleGuide: handleToggleGuideMode,
-    }),
+      ({
+        onMessageSent,
+        onSendMessage,
+        onStopGenerating: chatState.handleStopGenerating,
+        onCancelEdit: chatState.handleCancelEdit,
+        onProcessFiles: chatState.handleProcessAndAddFiles,
+        onAddFileById: chatState.handleAddFileById,
+        onCancelUpload: chatState.handleCancelFileUpload,
+        onTranscribeAudio: chatState.handleTranscribeAudio,
+        onToggleGoogleSearch: chatState.toggleGoogleSearch,
+        onToggleCodeExecution: chatState.toggleCodeExecution,
+        onToggleLocalPython: chatState.toggleLocalPython,
+        onToggleUrlContext: chatState.toggleUrlContext,
+        onToggleDeepSearch: chatState.toggleDeepSearch,
+        onClearChat: chatState.handleClearCurrentChat,
+        onOpenSettings: openSettingsModal,
+        onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
+        onTogglePinCurrentSession: chatState.handleTogglePinCurrentSession,
+        onRetryLastTurn: chatState.handleRetryLastTurn,
+        onEditLastUserMessage: chatState.handleEditLastUserMessage,
+        onToggleQuadImages,
+        setCurrentChatSettings: chatState.setCurrentChatSettings,
+        onAddUserMessage: chatState.handleAddUserMessage,
+        onLiveTranscript: chatState.handleLiveTranscript,
+        liveClientFunctions: chatState.liveClientFunctions,
+        onEditMessageContent: chatState.handleUpdateMessageContent,
+        onToggleBBox: handleToggleBBoxMode,
+        onToggleGuide: handleToggleGuideMode,
+      }),
     [
       chatState.handleAddFileById,
       chatState.handleAddUserMessage,
@@ -295,7 +289,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         onMoveSessionToGroup: chatState.handleMoveSessionToGroup,
         onToggleGroupExpansion: chatState.handleToggleGroupExpansion,
         onOpenSettingsModal: openSettingsModal,
-        onOpenScenariosModal: openScenariosModal,
         themeId: currentTheme.id,
       }),
     [
@@ -317,7 +310,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       chatState.startNewChat,
       currentTheme.id,
       openExportModal,
-      openScenariosModal,
       openSettingsModal,
       selectSession,
       toggleHistorySidebar,
@@ -327,7 +319,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
 
   const appModalsProps = useMemo(
     () =>
-      buildAppModalsProps({
+      ({
         isSettingsModalOpen,
         setIsSettingsModalOpen,
         appSettings: settingsForModal,

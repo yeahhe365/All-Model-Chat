@@ -27,7 +27,6 @@ interface ChatInputFileModalsProps {
     appSettings: AppSettings;
     availableModels: ModelOption[];
     currentModelId: string;
-    t: (key: string) => string;
     isGemini3: boolean;
     isPreviewEditable?: boolean;
     onSaveTextFile?: (fileId: string, content: string, newName: string) => void;
@@ -52,7 +51,6 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
     appSettings,
     availableModels,
     currentModelId,
-    t,
     isGemini3,
     isPreviewEditable,
     onSaveTextFile,
@@ -65,7 +63,6 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                 onClose={() => setConfiguringFile(null)} 
                 file={configuringFile}
                 onSave={handlers.handleSaveFileConfig}
-                t={t}
                 isGemini3={isGemini3}
             />
 
@@ -78,7 +75,6 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                     appSettings={appSettings}
                     availableModels={availableModels}
                     currentModelId={currentModelId}
-                    t={t}
                 />
             </Suspense>
 
@@ -86,7 +82,6 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                 <LazyFilePreviewModal
                     file={previewFile}
                     onClose={() => setPreviewFile(null)}
-                    t={t as any}
                     onPrev={handlers.handlePrevImage}
                     onNext={handlers.handleNextImage}
                     hasPrev={handlers.currentImageIndex > 0}

@@ -43,10 +43,8 @@ const MessageListComponent: React.FC = () => {
     onSuggestionClick,
     onOrganizeInfoClick,
     onFollowUpSuggestionClick,
-    onTextToSpeech,
     onGenerateCanvas,
     onContinueGeneration,
-    ttsMessageId,
     onQuickTTS,
     chatInputHeight,
     appSettings,
@@ -86,8 +84,9 @@ const MessageListComponent: React.FC = () => {
       scrollToNextTurn,
       showScrollDown,
       showScrollUp,
-      scrollerRef
-  } = useMessageListScroll({ messages, setScrollContainerRef, activeSessionId });
+      scrollerRef,
+      handleScroll,
+  } = useMessageListScroll({ messages, setScrollContainerRef, onScrollContainerScroll, activeSessionId });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => isGemini3Model(currentModelId), [currentModelId]);
@@ -113,7 +112,7 @@ const MessageListComponent: React.FC = () => {
             rangeChanged={onRangeChanged}
             increaseViewportBy={800} 
             className="custom-scrollbar"
-            onScroll={onScrollContainerScroll} // Pass scroll event to parent handler
+            onScroll={handleScroll}
             components={{
                 Footer: () => <MessageListFooter messages={messages} chatInputHeight={chatInputHeight} />
             }}
@@ -136,12 +135,9 @@ const MessageListComponent: React.FC = () => {
                         expandCodeBlocksByDefault={expandCodeBlocksByDefault}
                         isMermaidRenderingEnabled={isMermaidRenderingEnabled}
                         isGraphvizRenderingEnabled={isGraphvizRenderingEnabled}
-                        onTextToSpeech={onTextToSpeech}
                         onGenerateCanvas={onGenerateCanvas}
                         onContinueGeneration={onContinueGeneration}
-                        ttsMessageId={ttsMessageId}
                         onSuggestionClick={onFollowUpSuggestionClick}
-                        t={t}
                         appSettings={appSettings}
                         onOpenSidePanel={onOpenSidePanel}
                         onConfigureFile={msg.role === 'user' ? handleConfigureFile : undefined}
@@ -176,7 +172,6 @@ const MessageListComponent: React.FC = () => {
           <LazyFilePreviewModal 
               file={previewFile} 
               onClose={closeFilePreviewModal}
-              t={t}
               onPrev={handlePrevImage}
               onNext={handleNextImage}
               hasPrev={currentImageIndex > 0}
@@ -201,7 +196,6 @@ const MessageListComponent: React.FC = () => {
           onClose={() => setConfiguringFile(null)} 
           file={configuringFile?.file || null}
           onSave={handleSaveFileConfig}
-          t={t as any}
           isGemini3={isGemini3}
       />
     </>

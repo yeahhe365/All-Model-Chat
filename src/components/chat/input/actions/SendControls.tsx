@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Save, Edit2, Loader2, ArrowUp } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { IconStop } from '../../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
 
@@ -13,7 +14,6 @@ interface SendControlsProps {
     onStopGenerating: () => void;
     onCancelEdit: () => void;
     onFastSendMessage?: () => void;
-    t: (key: string, fallback?: string) => string;
 }
 
 interface Ripple {
@@ -31,9 +31,9 @@ export const SendControls: React.FC<SendControlsProps> = ({
     editMode,
     onStopGenerating,
     onCancelEdit,
-    onFastSendMessage,
-    t
+    onFastSendMessage
 }) => {
+    const { t } = useI18n();
     const iconSize = 20;
     const [ripples, setRipples] = useState<Ripple[]>([]);
 
@@ -126,7 +126,11 @@ export const SendControls: React.FC<SendControlsProps> = ({
         title = t('sendMessage_title') + t('sendMessage_fast_suffix', " (Right-click for Fast Mode ⚡)");
     }
 
-    const renderIcon = (active: boolean, Icon: React.ElementType, props: any = {}) => (
+    const renderIcon = (
+        active: boolean,
+        Icon: React.ElementType,
+        props: React.SVGProps<SVGSVGElement> & { size?: number } = {},
+    ) => (
         <div 
             className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${active ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}
             aria-hidden={!active}

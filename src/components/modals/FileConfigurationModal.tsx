@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
+import { useI18n } from '../../contexts/I18nContext';
 import { FileConfigHeader } from './file-config/FileConfigHeader';
 import { ResolutionConfig } from './file-config/ResolutionConfig';
 import { VideoConfig } from './file-config/VideoConfig';
@@ -13,11 +14,11 @@ interface FileConfigurationModalProps {
     onClose: () => void;
     file: UploadedFile | null;
     onSave: (fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => void;
-    t: (key: string) => string;
     isGemini3: boolean;
 }
 
-export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ isOpen, onClose, file, onSave, t, isGemini3 }) => {
+export const FileConfigurationModal: React.FC<FileConfigurationModalProps> = ({ isOpen, onClose, file, onSave, isGemini3 }) => {
+    const { t } = useI18n();
     // Video Metadata
     const [startOffset, setStartOffset] = useState('');
     const [endOffset, setEndOffset] = useState('');
