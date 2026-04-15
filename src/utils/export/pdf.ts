@@ -74,7 +74,7 @@ export const waitForElementToBecomeStable = async (
 
   await new Promise<void>((resolve, reject) => {
     let settledTimer: number | undefined;
-    let timeoutTimer: number | undefined;
+    let timeoutTimer: number | undefined = undefined;
 
     const cleanup = () => {
       if (settledTimer !== undefined) {

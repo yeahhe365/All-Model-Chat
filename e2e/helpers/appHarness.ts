@@ -18,7 +18,7 @@ export interface SeededSession {
   settings: Record<string, unknown>;
 }
 
-export interface SeededAppSettings extends Record<string, unknown> {}
+export type SeededAppSettings = Record<string, unknown>;
 
 export async function installMockPyodideWorker(page: Page) {
   await page.addInitScript(() => {
