@@ -49,6 +49,6 @@
 - `SelectedFileDisplay` and `FileDisplay` now consume the shared helper for category flags, configurability, and config-icon selection instead of each maintaining the same decision tree locally.
 - Focused helper coverage now lives in `src/utils/fileCardUtils.test.ts`, while `SelectedFileDisplay.test.tsx` still guards the preview frame class used by animations.
 - `npm run typecheck` passes.
-- `npm run lint` passes with `331` warnings.
-- `npm test` passes with `68` files and `314` tests green.
+- Later cleanup follow-up work on `main` removed the remaining warning backlog entirely, so `npm run lint` is now clean.
+- `npm test` now passes with `70` files and `325` tests green.
 - `npm run build` passes and keeps the earlier bundle-warning cleanup intact.

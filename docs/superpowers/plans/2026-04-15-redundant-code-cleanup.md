@@ -51,6 +51,6 @@
 - `DeferredDiagramBlock` now derives loading from `eager || loadRequested`, so the old eager-to-loading synchronization effect is gone.
 - `useSlashCommands` no longer accepts or depends on the unused `onStopGenerating` callback, and `useChatInput` no longer passes it.
 - New guardrail coverage lives in `src/components/modals/FileConfigurationModal.test.tsx`, `src/components/__tests__/deferredDiagramBlock.test.tsx`, and `src/hooks/useSlashCommands.test.ts`.
-- `npm test` passes with `64` files and `300` tests green.
-- `npm run build` passes and preserves the earlier bundle-warning cleanup.
-- `npm run lint` passes with `342` warnings, down from the previous `344`; the remaining backlog is still mostly `@typescript-eslint/no-explicit-any` plus other deferred React warning clusters.
+- `npm test` now passes with `70` files and `325` tests green after the later cleanup follow-up work on `main`.
+- `npm run build` still passes and preserves the earlier bundle-warning cleanup.
+- Later cleanup follow-up work on `main` removed the remaining warning backlog entirely, so `npm run lint` is now clean.

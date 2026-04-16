@@ -60,6 +60,6 @@
 - README sections that described importmap/CDN zero-build runtime ownership were rewritten to match the current Vite-first architecture, while keeping the deployment guidance focused on standard builds and hosted API options.
 - New source guard coverage now lives in `src/__tests__/headerMessageActionsReadmeCleanup.test.ts`.
 - `npm run typecheck` passes.
-- `npm run lint` passes with `332` warnings.
-- `npm test` passes with `65` files and `304` tests green.
+- Later cleanup follow-up work on `main` removed the remaining warning backlog entirely, so `npm run lint` is now clean.
+- `npm test` now passes with `70` files and `325` tests green.
 - `npm run build` passes and keeps the earlier bundle-warning cleanup intact.

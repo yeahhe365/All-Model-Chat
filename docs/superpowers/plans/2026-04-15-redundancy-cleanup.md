@@ -32,11 +32,11 @@
 - Modify: `src/constants/appConstants.ts`
 - Modify: `src/components/icons/CustomIcons.tsx`
 
-- [ ] Delete identity builders and wire direct object literals from `MainContent.tsx`.
-- [ ] Remove unused header/sidebar/settings props and update the full prop chain so interfaces match real consumption.
-- [ ] Remove message-level TTS passthrough props that no longer affect rendering.
-- [ ] Remove the placeholder `adjustTextareaHeight` return value, unused console refs, duplicate icon export, and stale localStorage-era constants.
-- [ ] Update or delete tests that only verified removed pass-through behavior.
+- [x] Delete identity builders and wire direct object literals from `MainContent.tsx`.
+- [x] Remove unused header/sidebar/settings props and update the full prop chain so interfaces match real consumption.
+- [x] Remove message-level TTS passthrough props that no longer affect rendering.
+- [x] Remove the placeholder `adjustTextareaHeight` return value, unused console refs, duplicate icon export, and stale localStorage-era constants.
+- [x] Update or delete tests that only verified removed pass-through behavior.
 
 ### Task 2: Consolidate Scroll Handling
 
@@ -46,9 +46,9 @@
 - Modify: `src/components/chat/MessageList.tsx`
 - Modify: `src/components/layout/ChatArea.tsx`
 
-- [ ] Choose one scroll owner for the message list and remove duplicated listener/state bookkeeping.
-- [ ] Preserve current session scroll restoration, turn navigation, and bottom-state UI.
-- [ ] Update affected tests if the public props/context surface changes.
+- [x] Choose one scroll owner for the message list and remove duplicated listener/state bookkeeping.
+- [x] Preserve current session scroll restoration, turn navigation, and bottom-state UI.
+- [x] Update affected tests if the public props/context surface changes.
 
 ### Task 3: Consolidate Preview And Export Plumbing
 
@@ -59,9 +59,9 @@
 - Modify: `src/hooks/data-management/useChatSessionExport.ts`
 - Create or modify shared helpers under `src/utils/export/` and/or `src/hooks/ui/`
 
-- [ ] Extract shared preview/config state helpers where message-list and chat-input logic currently duplicate the same responsibilities.
-- [ ] Extract shared export-module loading and filename/template plumbing used by both single-message and session export flows.
-- [ ] Keep existing modal behavior and export formats intact.
+- [x] Extract shared preview/config state helpers where message-list and chat-input logic currently duplicate the same responsibilities.
+- [x] Extract shared export-module loading and filename/template plumbing used by both single-message and session export flows.
+- [x] Keep existing modal behavior and export formats intact.
 
 ### Task 4: Tooling And Docs Sync
 
@@ -70,17 +70,25 @@
 - Modify: `knip.json`
 - Modify: `README.md`
 
-- [ ] Enable `knip` in the actual toolchain with a runnable package script.
-- [ ] Update README to match the current Vite-based build/runtime structure instead of the older zero-build/importmap description.
-- [ ] Keep docs aligned with the resulting code surface after cleanup.
+- [x] Enable `knip` in the actual toolchain with a runnable package script.
+- [x] Update README to match the current Vite-based build/runtime structure instead of the older zero-build/importmap description.
+- [x] Keep docs aligned with the resulting code surface after cleanup.
 
 ### Task 5: Verification
 
 **Files:**
 - Verify only
 
-- [ ] Run targeted tests for layout, message list, settings, and file preview/export flows if present.
-- [ ] Run `npm test`.
-- [ ] Run `npm run lint`.
-- [ ] Run `npm run typecheck`.
-- [ ] Run `npm run build`.
+- [x] Run targeted tests for layout, message list, settings, and file preview/export flows if present.
+- [x] Run `npm test`.
+- [x] Run `npm run lint`.
+- [x] Run `npm run typecheck`.
+- [x] Run `npm run build`.
+
+## Status Notes
+
+- Dead interface cleanup landed across `MainContent`, `ChatArea`, `Header`, `HistorySidebar`, message actions, settings props, and the old `mainContentModels` identity wrappers/test file.
+- Scroll ownership now lives in the message-list path, with shared container refs preserved for session export and focused coverage added around restoration/navigation behavior.
+- Shared file preview/config state and export runtime plumbing now live under reusable helpers (`useFileModalState`, `src/utils/export/runtime.ts`) and are consumed by both message-list and chat-input/session export flows.
+- Tooling/docs sync landed via `npm run verify`, active `knip` integration, and the Vite-first README/runtime structure refresh.
+- Subsequent follow-up work on `main` eliminated the remaining lint debt and test stderr noise from this batch; the current `npm run verify` passes cleanly.

@@ -83,4 +83,4 @@
 ## Status Notes
 
 - Unit and integration coverage now includes Live API reconnect backoff, worker-isolated Pyodide execution seams, and audio-compression worker behavior, while Playwright covers the first runnable browser smoke path and mocked core chat flows.
-- Remaining E2E risk is concentrated in behavior that still depends on real external APIs or browser-only media paths rather than controlled mocks.
+- Remaining E2E risk is still concentrated in behavior that depends on real external APIs or browser-only media paths rather than controlled mocks; later cleanup follow-up work improved unit/integration noise and lint debt, but did not eliminate this architectural test gap.

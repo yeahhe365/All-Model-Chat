@@ -86,5 +86,5 @@
 
 - URL state now normalizes back to `/` when the active `/chat/:id` session is cleared, and the regression coverage exists in `src/stores/__tests__/chatStore.test.ts`.
 - Runtime CDN stylesheet dependencies and Font Awesome badge usage are gone from `index.html`, with styling owned by repo-managed CSS and local icon components.
-- Export and diagram bundling now rely on direct lazy imports and the current Vite chunk map; `npm run build` succeeds, but still reports large chunk warnings for `html-export-vendor`, `mermaid-vendor`, and `graphviz-vendor`.
-- `npm run lint` now exits with code 0 after clearing the last blocking errors in `e2e/helpers/appHarness.ts` and `src/utils/export/pdf.ts`; the warning backlog remains and should be handled as separate follow-up work.
+- Export and diagram bundling now rely on direct lazy imports and the current Vite chunk map; subsequent follow-up work on `main` removed the remaining chunk warnings, and `npm run build` now completes without the earlier bundle-size warning output.
+- `npm run lint` still exited with code 0 in this batch, and later cleanup follow-up work on `main` removed the remaining warning backlog entirely.

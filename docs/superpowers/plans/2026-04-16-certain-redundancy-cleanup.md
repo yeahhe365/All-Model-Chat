@@ -66,7 +66,7 @@
   - `src/hooks/live-api/useLiveConnection.ts` (`chatSettings`)
   - `src/components/sidebar/HistorySidebar.tsx` (`language`)
 - Guardrail coverage now lives in `src/__tests__/certainRedundancyCleanup.test.ts`.
-- Focused tests pass for `mainContentModels`, `session`, `useLiveConfig`, and `useLiveConnection`, and `npm test` passes with `65` files and `304` tests green.
+- Focused tests pass for `mainContentModels`, `session`, `useLiveConfig`, and `useLiveConnection`, and later follow-up work on `main` brings full `npm test` coverage to `70` files and `325` tests green.
 - `npm run typecheck` passes.
-- `npm run lint` passes with `332` warnings, down from the previous `342`.
+- Later cleanup follow-up work on `main` removed the remaining warning backlog entirely, so `npm run lint` is now clean.
 - `npm run build` passes and preserves the earlier bundle-warning cleanup.

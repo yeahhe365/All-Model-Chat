@@ -50,6 +50,6 @@
 - `FilePreviewModal` now resets file-derived state by remounting a keyed inner content component instead of synchronizing with a `file` effect, and it only passes controlled content to `TextFileViewer` while editing.
 - Source guard coverage now lives in `src/__tests__/filePreviewStateCleanup.test.ts`.
 - `npm run typecheck` passes.
-- `npm run lint` passes with `331` warnings, down from the previous `332`.
-- `npm test` passes with `67` files and `310` tests green.
+- Later cleanup follow-up work on `main` removed the remaining warning backlog entirely, so `npm run lint` is now clean.
+- `npm test` now passes with `70` files and `325` tests green.
 - `npm run build` passes and keeps the earlier bundle-warning cleanup intact.
