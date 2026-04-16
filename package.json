@@ -14,6 +14,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
     "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run knip && npm run build",
     "start:api": "node server/dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",

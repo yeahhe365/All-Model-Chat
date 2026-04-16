@@ -21,7 +21,7 @@ interface ChatInputFileModalsProps {
     showTokenModal: boolean;
     setShowTokenModal: (show: boolean) => void;
     previewFile: UploadedFile | null;
-    setPreviewFile: (file: UploadedFile | null) => void;
+    onClosePreview: () => void;
     inputText: string;
     selectedFiles: UploadedFile[];
     appSettings: AppSettings;
@@ -45,7 +45,7 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
     showTokenModal,
     setShowTokenModal,
     previewFile,
-    setPreviewFile,
+    onClosePreview,
     inputText,
     selectedFiles,
     appSettings,
@@ -81,7 +81,7 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
             <Suspense fallback={null}>
                 <LazyFilePreviewModal
                     file={previewFile}
-                    onClose={() => setPreviewFile(null)}
+                    onClose={onClosePreview}
                     onPrev={handlers.handlePrevImage}
                     onNext={handlers.handleNextImage}
                     hasPrev={handlers.currentImageIndex > 0}

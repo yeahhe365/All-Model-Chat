@@ -111,7 +111,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setActiveSessionId,
     });
 
-    const scrollHandler = useChatScroll({ userScrolledUp });
+    const scrollHandler = useChatScroll();
 
     const messageSender = useMessageSender({
         appSettings,
@@ -257,7 +257,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         // Scroll
         scrollContainerRef: scrollHandler.scrollContainerRef,
         setScrollContainerRef: scrollHandler.setScrollContainerRef,
-        onScrollContainerScroll: scrollHandler.handleScroll,
 
         // History handlers
         loadChatSession,

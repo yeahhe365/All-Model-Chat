@@ -15,9 +15,8 @@ import type { MediaResolution } from '../../../types/settings';
 
 export interface ChatAreaMessageListContextValue {
   messages: ChatMessage[];
-  sessionTitle?: string;
+  sessionTitle: string;
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
-  onScrollContainerScroll: () => void;
   onEditMessage: (messageId: string, mode?: 'update' | 'resend') => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
@@ -94,7 +93,6 @@ export interface ChatAreaInputContextValue {
   onEditLastUserMessage: () => void;
   onTogglePip: () => void;
   isPipActive?: boolean;
-  isHistorySidebarOpen?: boolean;
   generateQuadImages: boolean;
   onToggleQuadImages: () => void;
   setCurrentChatSettings: (updater: (prevSettings: ChatSettings) => ChatSettings) => void;

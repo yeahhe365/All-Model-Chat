@@ -27,7 +27,7 @@ import {
   PendingChatInputSubmission,
   shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
-import { useFilePreviewState } from '../ui/useFilePreviewState';
+import { useFileModalState } from '../ui/useFileModalState';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -103,20 +103,22 @@ export const useChatInput = () => {
   const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [showTtsContextEditor, setShowTtsContextEditor] = useState(false);
-
-  const [configuringFile, setConfiguringFile] = useState<UploadedFile | null>(null);
-  const [isPreviewEditable, setIsPreviewEditable] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
 
   const {
     previewFile,
-    setPreviewFile,
+    closePreview,
     allImages: inputImages,
     currentImageIndex,
     handlePrevImage,
     handleNextImage,
-  } = useFilePreviewState(selectedFiles);
+    configuringFile,
+    setConfiguringFile,
+    openPreview,
+    openConfiguration,
+    isPreviewEditable,
+  } = useFileModalState<UploadedFile>(selectedFiles);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -269,18 +271,16 @@ export const useChatInput = () => {
 
   const handleConfigureFile = useCallback((file: UploadedFile) => {
     if (isTextFile(file)) {
-      setPreviewFile(file);
-      setIsPreviewEditable(true);
+      openPreview(file, { editable: true });
       return;
     }
 
-    setConfiguringFile(file);
-  }, []);
+    openConfiguration(file);
+  }, [openConfiguration, openPreview]);
 
   const handlePreviewFile = useCallback((file: UploadedFile) => {
-    setPreviewFile(file);
-    setIsPreviewEditable(false);
-  }, []);
+    openPreview(file);
+  }, [openPreview]);
 
   const modalsState = {
     showCreateTextFileEditor,
@@ -312,9 +312,8 @@ export const useChatInput = () => {
     configuringFile,
     setConfiguringFile,
     previewFile,
-    setPreviewFile,
+    closePreviewFile: closePreview,
     isPreviewEditable,
-    setIsPreviewEditable,
     isConverting,
     setIsConverting,
     showTokenModal,

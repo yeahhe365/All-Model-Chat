@@ -244,7 +244,7 @@ const ChatInputComponent: React.FC = () => {
         showTokenModal={localFileState.showTokenModal}
         setShowTokenModal={localFileState.setShowTokenModal}
         previewFile={localFileState.previewFile}
-        setPreviewFile={localFileState.setPreviewFile}
+        onClosePreview={localFileState.closePreviewFile}
         inputText={inputState.inputText}
         selectedFiles={chatInput.selectedFiles}
         appSettings={chatInput.appSettings}

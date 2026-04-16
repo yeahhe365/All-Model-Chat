@@ -35,8 +35,8 @@ const ErrorMsgIcon: React.FC = () => {
 
 interface MessageActionsProps {
     message: ChatMessage;
-    sessionTitle?: string;
-    messageIndex?: number;
+    sessionTitle: string;
+    messageIndex: number;
     isGrouped: boolean;
     onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
     onDeleteMessage: (messageId: string) => void;

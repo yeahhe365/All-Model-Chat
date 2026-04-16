@@ -6,12 +6,14 @@ import type { AppViewModel } from '../../hooks/app/useApp';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
 import {
-  buildChatAreaModel,
-  buildHistorySidebarProps,
+  isBboxSystemInstruction,
+  isCanvasSystemInstruction,
+  isHdGuideSystemInstruction,
+} from '../../constants/promptHelpers';
+import { getShortcutDisplay } from '../../utils/shortcutUtils';
+import {
   buildSettingsForModal,
   buildSidePanelKey,
-  MainContentChatAreaHeaderActions,
-  MainContentChatAreaShellHandlers,
 } from './mainContentModels';
 
 const LazySidePanel = lazy(async () => {
@@ -130,41 +132,9 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     }));
   }, [setAppSettings]);
 
-  const headerActions: MainContentChatAreaHeaderActions = useMemo(
-    () => ({
-      onNewChat: chatState.startNewChat,
-      onOpenScenariosModal: openScenariosModal,
-      onToggleHistorySidebar: toggleHistorySidebar,
-      onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
-      onSelectModel: chatState.handleSelectModelInHeader,
-      onSetThinkingLevel: handleSetThinkingLevel,
-      onTogglePip: pipState.togglePip,
-    }),
-    [
-      chatState.handleSelectModelInHeader,
-      chatState.startNewChat,
-      handleLoadCanvasPromptAndSave,
-      handleSetThinkingLevel,
-      openScenariosModal,
-      pipState.togglePip,
-      toggleHistorySidebar,
-    ],
-  );
-
-  const shellHandlers: MainContentChatAreaShellHandlers = useMemo(
-    () => ({
-      handleAppDragEnter: chatState.handleAppDragEnter,
-      handleAppDragOver: chatState.handleAppDragOver,
-      handleAppDragLeave: chatState.handleAppDragLeave,
-      handleAppDrop: chatState.handleAppDrop,
-    }),
-    [chatState.handleAppDragEnter, chatState.handleAppDragLeave, chatState.handleAppDragOver, chatState.handleAppDrop],
-  );
-
   const messageActions: ChatAreaProps['chatArea']['messageActions'] = useMemo(
     () => ({
       setScrollContainerRef: chatState.setScrollContainerRef,
-      onScrollContainerScroll: chatState.onScrollContainerScroll,
       onEditMessage: chatState.handleEditMessage,
       onDeleteMessage: chatState.handleDeleteMessage,
       onRetryMessage: chatState.handleRetryMessage,
@@ -185,7 +155,6 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       chatState.handleQuickTTS,
       chatState.handleRetryMessage,
       chatState.handleUpdateMessageFile,
-      chatState.onScrollContainerScroll,
       chatState.setScrollContainerRef,
       handleOpenSidePanel,
       onFollowUpSuggestionClick,
@@ -268,31 +237,30 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const sidebarProps = useMemo(
-    () =>
-      buildHistorySidebarProps({
-        appSettings,
-        isOpen: uiState.isHistorySidebarOpen,
-        onToggle: toggleHistorySidebar,
-        sessions: chatState.savedSessions,
-        groups: chatState.savedGroups,
-        activeSessionId: chatState.activeSessionId,
-        loadingSessionIds: chatState.loadingSessionIds,
-        generatingTitleSessionIds: chatState.generatingTitleSessionIds,
-        onSelectSession: selectSession,
-        onNewChat: chatState.startNewChat,
-        onDeleteSession: chatState.handleDeleteChatHistorySession,
-        onRenameSession: chatState.handleRenameSession,
-        onTogglePinSession: chatState.handleTogglePinCurrentSession,
-        onDuplicateSession: chatState.handleDuplicateSession,
-        onOpenExportModal: openExportModal,
-        onAddNewGroup: chatState.handleAddNewGroup,
-        onDeleteGroup: chatState.handleDeleteGroup,
-        onRenameGroup: chatState.handleRenameGroup,
-        onMoveSessionToGroup: chatState.handleMoveSessionToGroup,
-        onToggleGroupExpansion: chatState.handleToggleGroupExpansion,
-        onOpenSettingsModal: openSettingsModal,
-        themeId: currentTheme.id,
-      }),
+    () => ({
+      isOpen: uiState.isHistorySidebarOpen,
+      onToggle: toggleHistorySidebar,
+      sessions: chatState.savedSessions,
+      groups: chatState.savedGroups,
+      activeSessionId: chatState.activeSessionId,
+      loadingSessionIds: chatState.loadingSessionIds,
+      generatingTitleSessionIds: chatState.generatingTitleSessionIds,
+      onSelectSession: selectSession,
+      onNewChat: chatState.startNewChat,
+      onDeleteSession: chatState.handleDeleteChatHistorySession,
+      onRenameSession: chatState.handleRenameSession,
+      onTogglePinSession: chatState.handleTogglePinCurrentSession,
+      onDuplicateSession: chatState.handleDuplicateSession,
+      onOpenExportModal: openExportModal,
+      onAddNewGroup: chatState.handleAddNewGroup,
+      onDeleteGroup: chatState.handleDeleteGroup,
+      onRenameGroup: chatState.handleRenameGroup,
+      onMoveSessionToGroup: chatState.handleMoveSessionToGroup,
+      onToggleGroupExpansion: chatState.handleToggleGroupExpansion,
+      onOpenSettingsModal: openSettingsModal,
+      themeId: currentTheme.id,
+      newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
+    }),
     [
       appSettings,
       chatState.activeSessionId,
@@ -385,42 +353,79 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   );
 
   const chatArea: ChatAreaProps['chatArea'] = useMemo(
-    () =>
-      buildChatAreaModel({
-        appSettings,
-        sessionTitle,
-        currentModelName,
+    () => ({
+      session: {
         activeSessionId: chatState.activeSessionId,
+        sessionTitle,
         currentChatSettings: chatState.currentChatSettings,
         messages: chatState.messages,
         isLoading: chatState.isLoading,
         isEditing: !!chatState.editingMessageId,
+        showThoughts: chatState.currentChatSettings.showThoughts,
+      },
+      shell: {
         isAppDraggingOver: chatState.isAppDraggingOver,
+        modelsLoadingError: null,
+        handleAppDragEnter: chatState.handleAppDragEnter,
+        handleAppDragOver: chatState.handleAppDragOver,
+        handleAppDragLeave: chatState.handleAppDragLeave,
+        handleAppDrop: chatState.handleAppDrop,
+      },
+      header: {
+        currentModelName,
         availableModels: chatState.apiModels,
-        isPipSupported: pipState.isPipSupported,
+        selectedModelId: chatState.currentChatSettings.modelId || appSettings.modelId,
+        isCanvasPromptActive: isCanvasSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isPipSupported: pipState.isPipSupported && appSettings.useCustomApiConfig,
         isPipActive: pipState.isPipActive,
-        headerActions,
-        shellHandlers,
-        messageActions,
-        inputActions,
-      }),
+        onNewChat: chatState.startNewChat,
+        onOpenScenariosModal: openScenariosModal,
+        onToggleHistorySidebar: toggleHistorySidebar,
+        onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
+        onSelectModel: chatState.handleSelectModelInHeader,
+        onSetThinkingLevel: handleSetThinkingLevel,
+        onTogglePip: pipState.togglePip,
+      },
+      messageActions,
+      inputActions,
+      features: {
+        isImageEditModel: chatState.currentChatSettings.modelId?.includes('image-preview'),
+        isBBoxModeActive: isBboxSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isGuideModeActive: isHdGuideSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        generateQuadImages: appSettings.generateQuadImages ?? false,
+        isGoogleSearchEnabled: !!chatState.currentChatSettings.isGoogleSearchEnabled,
+        isCodeExecutionEnabled: !!chatState.currentChatSettings.isCodeExecutionEnabled,
+        isLocalPythonEnabled: !!chatState.currentChatSettings.isLocalPythonEnabled,
+        isUrlContextEnabled: !!chatState.currentChatSettings.isUrlContextEnabled,
+        isDeepSearchEnabled: !!chatState.currentChatSettings.isDeepSearchEnabled,
+      },
+    }),
     [
       appSettings,
       chatState.activeSessionId,
       chatState.apiModels,
       chatState.currentChatSettings,
       chatState.editingMessageId,
+      chatState.handleAppDragEnter,
+      chatState.handleAppDragLeave,
+      chatState.handleAppDragOver,
+      chatState.handleAppDrop,
+      chatState.handleSelectModelInHeader,
       chatState.isAppDraggingOver,
       chatState.isLoading,
       chatState.messages,
+      chatState.startNewChat,
       currentModelName,
-      headerActions,
       inputActions,
       messageActions,
+      openScenariosModal,
       pipState.isPipActive,
       pipState.isPipSupported,
+      pipState.togglePip,
       sessionTitle,
-      shellHandlers,
+      toggleHistorySidebar,
+      handleLoadCanvasPromptAndSave,
+      handleSetThinkingLevel,
     ],
   );
 

@@ -6,14 +6,12 @@ import { ChatMessage } from '../../../../types';
 interface UseMessageListScrollProps {
     messages: ChatMessage[];
     setScrollContainerRef: (node: HTMLDivElement | null) => void;
-    onScrollContainerScroll: () => void;
     activeSessionId: string | null;
 }
 
 export const useMessageListScroll = ({
     messages,
     setScrollContainerRef,
-    onScrollContainerScroll,
     activeSessionId,
 }: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
@@ -32,13 +30,6 @@ export const useMessageListScroll = ({
     const prevMsgCount = useRef(messages.length);
     const prevSessionIdForAnchor = useRef(activeSessionId);
 
-    // Sync internal scroller ref with parent's expectations
-    useEffect(() => {
-        if (scrollerRef) {
-            setScrollContainerRef(scrollerRef as HTMLDivElement);
-        }
-    }, [scrollerRef, setScrollContainerRef]);
-
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
         visibleRangeRef.current = { startIndex, endIndex };
@@ -48,8 +39,9 @@ export const useMessageListScroll = ({
     const handleScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
         if (ref === null || ref instanceof HTMLElement) {
             setInternalScrollerRef(ref);
+            setScrollContainerRef(ref as HTMLDivElement | null);
         }
-    }, []);
+    }, [setScrollContainerRef]);
 
     // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
     useEffect(() => {
@@ -164,9 +156,16 @@ export const useMessageListScroll = ({
                 }, 300);
             }
 
-            onScrollContainerScroll();
         }
-    }, [scrollerRef, atBottom, activeSessionId, messages.length, onScrollContainerScroll]);
+    }, [scrollerRef, atBottom, activeSessionId, messages.length]);
+
+    useEffect(() => {
+        return () => {
+            if (scrollSaveTimeoutRef.current) {
+                clearTimeout(scrollSaveTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Restore scroll position on session change
     useEffect(() => {

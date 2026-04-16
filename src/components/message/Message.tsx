@@ -6,7 +6,7 @@ import { MessageActions } from './MessageActions';
 
 interface MessageProps {
     message: ChatMessage;
-    sessionTitle?: string;
+    sessionTitle: string;
     prevMessage?: ChatMessage;
     messageIndex: number;
     onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
@@ -73,11 +73,52 @@ export const Message: React.FC<MessageProps> = React.memo((props) => {
             data-message-role={message.role}
         >
             <div className={`${messageContainerClasses}`}>
-                {message.role !== 'user' && <MessageActions {...props} isGrouped={isGrouped} />}
+                {message.role !== 'user' && (
+                    <MessageActions
+                        message={message}
+                        sessionTitle={props.sessionTitle}
+                        messageIndex={props.messageIndex}
+                        isGrouped={isGrouped}
+                        onEditMessage={props.onEditMessage}
+                        onDeleteMessage={props.onDeleteMessage}
+                        onRetryMessage={props.onRetryMessage}
+                        onGenerateCanvas={props.onGenerateCanvas}
+                        onContinueGeneration={props.onContinueGeneration}
+                        themeId={props.themeId}
+                    />
+                )}
                 <div className={`${bubbleClasses}`}>
-                    <MessageContent {...props} />
+                    <MessageContent
+                        message={message}
+                        onImageClick={props.onImageClick}
+                        onOpenHtmlPreview={props.onOpenHtmlPreview}
+                        showThoughts={props.showThoughts}
+                        baseFontSize={props.baseFontSize}
+                        expandCodeBlocksByDefault={props.expandCodeBlocksByDefault}
+                        isMermaidRenderingEnabled={props.isMermaidRenderingEnabled}
+                        isGraphvizRenderingEnabled={props.isGraphvizRenderingEnabled}
+                        onSuggestionClick={props.onSuggestionClick}
+                        appSettings={props.appSettings}
+                        themeId={props.themeId}
+                        onOpenSidePanel={props.onOpenSidePanel}
+                        onConfigureFile={props.onConfigureFile}
+                        isGemini3={props.isGemini3}
+                    />
                 </div>
-                {message.role === 'user' && <MessageActions {...props} isGrouped={isGrouped} />}
+                {message.role === 'user' && (
+                    <MessageActions
+                        message={message}
+                        sessionTitle={props.sessionTitle}
+                        messageIndex={props.messageIndex}
+                        isGrouped={isGrouped}
+                        onEditMessage={props.onEditMessage}
+                        onDeleteMessage={props.onDeleteMessage}
+                        onRetryMessage={props.onRetryMessage}
+                        onGenerateCanvas={props.onGenerateCanvas}
+                        onContinueGeneration={props.onContinueGeneration}
+                        themeId={props.themeId}
+                    />
+                )}
             </div>
         </div>
     );

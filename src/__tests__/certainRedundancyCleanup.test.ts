@@ -15,6 +15,57 @@ describe('certain redundancy cleanup guards', () => {
     expect(source).not.toContain('export const buildChatAreaInputActions =');
   });
 
+  it('inlines main content prop assembly and trims related interface surface', () => {
+    const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
+    const mainContentModelsSource = readProjectFile('src/components/layout/mainContentModels.ts');
+    const chatAreaContextSource = readProjectFile('src/components/layout/chat-area/ChatAreaContext.tsx');
+    const headerSource = readProjectFile('src/components/header/Header.tsx');
+    const historySidebarSource = readProjectFile('src/components/sidebar/HistorySidebar.tsx');
+    const apiConfigSource = readProjectFile('src/components/settings/sections/ApiConfigSection.tsx');
+    const customIconsSource = readProjectFile('src/components/icons/CustomIcons.tsx');
+
+    expect(mainContentSource).not.toContain('buildHistorySidebarProps(');
+    expect(mainContentSource).not.toContain('buildChatAreaModel(');
+    expect(mainContentModelsSource).not.toContain('export const buildHistorySidebarProps =');
+    expect(mainContentModelsSource).not.toContain('export const buildChatAreaModel =');
+    expect(chatAreaContextSource).not.toContain('isHistorySidebarOpen?: boolean;');
+    expect(headerSource).not.toContain('currentModelName?: string;');
+    expect(historySidebarSource).not.toContain('isOpen?: boolean;');
+    expect(apiConfigSource).not.toContain('serverManagedApi?: boolean;');
+    expect(apiConfigSource).not.toContain('setLiveApiEphemeralTokenEndpoint?:');
+    expect(customIconsSource).not.toContain("export * from './iconUtils';");
+  });
+
+  it('removes the dedicated mainContentModels test file', () => {
+    const filePath = path.join(projectRoot, 'src/components/layout/mainContentModels.test.ts');
+
+    expect(fs.existsSync(filePath)).toBe(false);
+  });
+
+  it('keeps message-list scroll ownership local instead of routing scroll events back through chat state', () => {
+    const chatScrollSource = readProjectFile('src/hooks/chat/useChatScroll.ts');
+    const chatAreaContextSource = readProjectFile('src/components/layout/chat-area/ChatAreaContext.tsx');
+    const chatAreaPropsSource = readProjectFile('src/components/layout/chat-area/ChatAreaProps.ts');
+    const messageListSource = readProjectFile('src/components/chat/MessageList.tsx');
+
+    expect(chatScrollSource).not.toContain('handleScroll =');
+    expect(chatAreaContextSource).not.toContain('onScrollContainerScroll: () => void;');
+    expect(chatAreaPropsSource).not.toContain('onScrollContainerScroll: () => void;');
+    expect(messageListSource).not.toContain('onScrollContainerScroll');
+  });
+
+  it('routes preview and export plumbing through shared helpers', () => {
+    const messageListUiSource = readProjectFile('src/hooks/useMessageListUI.ts');
+    const chatInputSource = readProjectFile('src/hooks/chat-input/useChatInput.ts');
+    const messageExportSource = readProjectFile('src/hooks/useMessageExport.ts');
+    const chatSessionExportSource = readProjectFile('src/hooks/data-management/useChatSessionExport.ts');
+
+    expect(messageListUiSource).toContain('useFileModalState');
+    expect(chatInputSource).toContain('useFileModalState');
+    expect(messageExportSource).toContain("from '../utils/export/runtime'");
+    expect(chatSessionExportSource).toContain("from '../../utils/export/runtime'");
+  });
+
   it('reuses stripSessionFilePayloads for sanitizeSessionForExport', () => {
     const source = readProjectFile('src/utils/chat/session.ts');
 

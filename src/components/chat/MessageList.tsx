@@ -29,7 +29,6 @@ const MessageListComponent: React.FC = () => {
     messages,
     sessionTitle,
     setScrollContainerRef,
-    onScrollContainerScroll,
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
@@ -86,7 +85,7 @@ const MessageListComponent: React.FC = () => {
       showScrollUp,
       scrollerRef,
       handleScroll,
-  } = useMessageListScroll({ messages, setScrollContainerRef, onScrollContainerScroll, activeSessionId });
+  } = useMessageListScroll({ messages, setScrollContainerRef, activeSessionId });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => isGemini3Model(currentModelId), [currentModelId]);

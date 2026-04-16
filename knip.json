@@ -1,10 +1,9 @@
 {
   "entry": [
-    "src/index.tsx",
-    "server/src/index.ts",
-    "public/runtime-config.js"
+    "server/src/index.ts"
   ],
   "ignore": [
+    "public/runtime-config.js",
     "src/utils/export/dom.ts",
     "src/utils/export/files.ts",
     "src/utils/export/image.ts",

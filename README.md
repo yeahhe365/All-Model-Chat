@@ -210,6 +210,19 @@ npm run build    # 构建生产版本
 npm run preview  # 本地预览构建结果
 ```
 
+### 质量检查
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run knip
+npm run build
+
+# 或者一次性执行
+npm run verify
+```
+
 ---
 
 ## 技术架构
@@ -236,103 +249,33 @@ npm run preview  # 本地预览构建结果
 
 ```
 All-Model-Chat/
-├── components/                 # UI 组件
-│   ├── chat/                   # 聊天核心
-│   │   ├── input/              # 输入区域（文本框、工具栏、文件选择、Slash 命令、Live 状态）
-│   │   │   ├── actions/        # 操作按钮（发送、录音、Live 控制、搜索切换）
-│   │   │   ├── area/           # 输入框本体（文本域、文件预览、引用显示、建议）
-│   │   │   └── toolbar/        # 工具栏（URL 添加、图片尺寸、宽高比、分辨率、TTS 语音）
-│   │   ├── message-list/       # 消息列表（滚动导航、文本选择工具栏、欢迎页）
-│   │   └── overlays/           # 覆盖层（拖拽上传、错误提示）
-│   ├── header/                 # 头部（模型选择器）
-│   ├── icons/                  # 图标库（自定义 SVG 图标、图标工具函数）
-│   ├── layout/                 # 布局（主内容区、聊天区域、侧面板、画中画占位）
-│   ├── log-viewer/             # 开发者日志面板（API 调用、Token 统计、控制台）
-│   ├── message/                # 消息渲染
-│   │   ├── blocks/             # 内容块（代码块、Mermaid、Graphviz、表格、工具结果）
-│   │   ├── buttons/            # 消息操作按钮（复制、导出）
-│   │   ├── content/            # 消息内容区（文本、文件、思考过程、Footer）
-│   │   └── grounded-response/  # 搜索引用（来源 URL、搜索查询、上下文）
-│   ├── modals/                 # 弹窗集合（HTML 预览、Token 计数、文件配置、音频录制、导出、文本编辑器）
-│   ├── recorder/               # 录音器（音频可视化、控制面板）
-│   ├── scenarios/              # 场景编辑器（预置消息、系统提示词编辑）
-│   ├── settings/               # 设置面板
-│   │   ├── controls/           # 控件（模型选择器、思维链控制、语音控制）
-│   │   └── sections/           # 设置分区（API 配置、外观、聊天行为、数据管理、安全、快捷键、关于）
-│   ├── shared/                 # 共享组件（Modal、代码编辑器、PDF 查看器、音频播放器、Toggle、Select）
-│   └── sidebar/                # 侧边栏（历史记录、分组管理、会话操作）
-├── constants/                  # 常量定义
-│   ├── prompts/                # Canvas 生成提示词、深度搜索提示词
-│   ├── scenarios/              # 预置场景（冒险、演示、越狱、工具）
-│   ├── appConstants.ts         # 应用级常量（默认设置、UI 样式类名）
-│   ├── modelConstants.ts       # 模型常量（默认模型、思维等级、TTS 语音列表、Imagen 模型）
-│   ├── promptConstants.ts      # 系统提示词（Python 沙箱、目标检测、引导标注）
-│   ├── shortcuts.ts            # 快捷键注册表
-│   └── themeConstants.ts       # 主题颜色定义
-├── contexts/                   # React Context
-│   └── WindowContext.tsx        # 窗口上下文（画中画窗口管理）
-├── hooks/                      # React Hooks（逻辑层）
-│   ├── app/                    # 应用层（初始化、事件处理、Props 编排）
-│   ├── chat-input/             # 输入逻辑（键盘处理、文件管理、提交、粘贴）
-│   ├── chat-stream/            # 流式处理（处理器、工具函数）
-│   ├── chat/                   # 聊天核心（消息操作、会话管理、自动标题、建议）
-│   │   ├── actions/            # 聊天动作（音频、会话、模型选择）
-│   │   ├── history/            # 历史管理（分组、清除、加载）
-│   │   ├── messages/           # 消息操作（文本转语音）
-│   │   └── state/              # 状态管理（辅助状态、会话持久化）
-│   ├── core/                   # 核心功能（应用设置、模型列表、画中画、多标签同步、后台保活）
-│   ├── data-management/        # 数据管理（会话导出、全量导出/导入）
-│   ├── features/               # 功能特性（Python 沙箱、场景管理、Token 计数、设置逻辑）
-│   ├── file-upload/            # 文件上传（预处理、压缩、轮询、ID 分配）
-│   ├── files/                  # 文件处理（拖拽、上传、轮询）
-│   ├── live-api/               # Live API（音频、视频、连接、配置、工具调用、帧捕获）
-│   ├── message-sender/         # 消息发送（标准发送、Canvas 生成、图片编辑、TTS/Imagen、流处理）
-│   ├── text-selection/         # 文本选择（音频播放、拖拽、定位）
-│   ├── ui/                     # UI 相关（代码块、全屏、HTML 预览、PDF 查看器、平滑流式）
-│   └── (根级 hooks)            # 通用 hooks（录音、剪贴板、设备检测、消息列表、Slash 命令等）
-├── services/                   # 外部服务
-│   ├── api/                    # API 层
-│   │   ├── generation/         # 生成 API（音频、图片、文本、Token）
-│   │   ├── baseApi.ts          # API 基础封装
-│   │   ├── chatApi.ts          # 聊天 API（流式 / 非流式消息）
-│   │   ├── fileApi.ts          # 文件 API（上传、元数据）
-│   │   └── generationApi.ts    # 生成 API 聚合
-│   ├── geminiService.ts        # Gemini 服务层（统一接口）
-│   ├── logService.ts           # 日志服务
-│   ├── pyodideService.ts       # Pyodide Python 运行时（Web Worker）
-│   └── streamingStore.ts       # 流式数据存储
-├── styles/                     # 样式文件
-│   ├── main.css                # 全局样式与 CSS 变量
-│   ├── animations.css          # 动画样式
-│   └── markdown.css            # Markdown 渲染样式
-├── types/                      # TypeScript 类型定义
-│   ├── api.ts                  # API 相关类型
-│   ├── chat.ts                 # 聊天相关类型
-│   ├── settings.ts             # 设置相关类型（ChatSettings, AppSettings, SafetySetting）
-│   └── theme.ts                # 主题相关类型
-├── utils/                      # 工具函数
-│   ├── audio/                  # 音频处理（编解码、AudioWorklet 代码）
-│   ├── chat/                   # 聊天工具（消息构建、ID 生成、解析、会话）
-│   ├── export/                 # 导出工具（核心、DOM、文件、图片、模板）
-│   ├── translations/           # 国际化翻译（中/英，覆盖全部 UI）
-│   │   └── settings/           # 设置页面翻译细分
-│   ├── apiUtils.ts             # API 工具
-│   ├── appUtils.ts             # 应用工具（日志服务、通用函数）
-│   ├── db.ts                   # IndexedDB 封装（会话、分组、场景、设置、日志）
-│   ├── fileHelpers.ts          # 文件辅助
-│   ├── folderImportUtils.ts    # 文件夹导入
-│   ├── markdownConfig.ts       # Markdown 渲染配置
-│   ├── modelHelpers.ts         # 模型辅助
-│   └── ...                     # 其他工具（剪贴板、日期、域名校验、快捷键等）
-├── App.tsx                     # 应用入口组件
-├── index.tsx                   # 渲染入口（挂载 React、导入样式）
-├── index.html                  # HTML 入口（应用壳与运行时 meta）
-├── manifest.json               # PWA 应用清单
-├── sw.js                       # Service Worker（离线缓存）
-├── vite.config.ts              # Vite 配置（React 插件、Pyodide 静态复制、外部化配置）
-├── tsconfig.json               # TypeScript 配置
-├── package.json                # 项目依赖
-└── LICENSE                     # MIT 许可证
+├── src/                        # 前端应用源码（Vite SPA）
+│   ├── components/             # UI 组件（chat / message / layout / settings / modals 等）
+│   ├── hooks/                  # 业务 hooks（app / chat / chat-input / data-management / live-api / ui）
+│   ├── services/               # Gemini / Pyodide / API / 日志等基础设施
+│   ├── stores/                 # Zustand 状态（chat / settings / ui）
+│   ├── utils/                  # 导出、会话、IndexedDB、Markdown、文件处理等工具
+│   ├── runtime/                # 运行时配置读取与公开配置映射
+│   ├── contexts/               # I18n / WindowContext 等上下文
+│   ├── constants/              # 模型、提示词、快捷键、主题等常量
+│   ├── types/                  # TypeScript 类型定义
+│   ├── styles/                 # 全局样式、动画、Markdown 样式
+│   ├── App.tsx                 # 应用入口组件
+│   └── index.tsx               # React 挂载入口
+├── server/                     # 独立 Node API（/api/gemini/* 与 /api/live-token）
+│   ├── src/
+│   └── tsconfig.json
+├── public/                     # 静态资源与 runtime-config.js 模板
+├── e2e/                        # Playwright 端到端测试
+├── docs/                       # 计划、规范与文档
+├── docker/                     # 部署辅助脚本
+├── vite.config.ts              # Vite 配置（React、静态复制、手工分包）
+├── playwright.config.ts        # E2E 配置
+├── vitest.config.ts            # 单元/集成测试配置
+├── eslint.config.js            # ESLint 配置
+├── knip.json                   # 未使用文件/导出分析配置
+├── package.json                # 前端依赖与脚本
+└── docker-compose.yml          # web + api 双服务部署入口
 ```
 
 ---

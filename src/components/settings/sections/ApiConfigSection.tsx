@@ -24,9 +24,9 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
-  serverManagedApi?: boolean;
-  liveApiEphemeralTokenEndpoint?: string | null;
-  setLiveApiEphemeralTokenEndpoint?: (value: string | null) => void;
+  serverManagedApi: boolean;
+  liveApiEphemeralTokenEndpoint: string | null;
+  setLiveApiEphemeralTokenEndpoint: (value: string | null) => void;
 }
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
@@ -38,8 +38,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
-  serverManagedApi = false,
-  liveApiEphemeralTokenEndpoint = null,
+  serverManagedApi,
+  liveApiEphemeralTokenEndpoint,
   setLiveApiEphemeralTokenEndpoint,
 }) => {
   const { t } = useI18n();
@@ -193,7 +193,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 value={liveApiEphemeralTokenEndpoint || ''}
                 onChange={(e) => {
                   const value = e.target.value.trim();
-                  setLiveApiEphemeralTokenEndpoint?.(value || null);
+                  setLiveApiEphemeralTokenEndpoint(value || null);
                 }}
                 className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
                 placeholder={t('settingsLiveTokenEndpointPlaceholder')}

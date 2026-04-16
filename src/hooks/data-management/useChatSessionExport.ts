@@ -3,8 +3,12 @@
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
-import { formatExportDateTime, sanitizeFilename, triggerDownload } from '../../utils/export/core';
-import { loadExportModules } from '../../utils/export/loaders';
+import { triggerDownload } from '../../utils/export/core';
+import {
+    buildChatExportFilename,
+    createExportDateMeta,
+    loadExportRuntime,
+} from '../../utils/export/runtime';
 
 interface UseChatSessionExportProps {
     activeChat: SavedChatSession | undefined;
@@ -24,26 +28,24 @@ export const useChatSessionExport = ({
 
     const exportChatLogic = useCallback(async (format: 'png' | 'html' | 'txt' | 'json') => {
         if (!activeChat) return;
-
-        const {
-            exportHtmlStringAsFile,
-            exportTextStringAsFile,
-            gatherPageStyles,
-            prepareElementForExport,
-            generateSnapshotPng,
-            generateExportHtmlTemplate,
-            generateExportTxtTemplate,
-        } = await loadExportModules();
-        
-        const safeTitle = sanitizeFilename(activeChat.title);
         const dateObj = new Date();
-        const dateStr = formatExportDateTime(dateObj);
-        const isoDate = dateObj.toISOString().slice(0, 10);
-        const filename = `chat-${safeTitle}-${isoDate}.${format}`;
+        const { dateStr } = createExportDateMeta(dateObj);
+        const filename = buildChatExportFilename({
+            title: activeChat.title,
+            format,
+            date: dateObj,
+        });
         const scrollContainer = scrollContainerRef.current;
 
         if (format === 'png' || format === 'html') {
             if (!scrollContainer) return;
+
+            const {
+                exportHtmlStringAsFile,
+                prepareElementForExport,
+                generateSnapshotPng,
+                buildHtmlDocument,
+            } = await loadExportRuntime();
 
             // Use unified helper to clone, clean, and embed images.
             // For PNG, force expand details to ensure visibility in static image.
@@ -67,28 +69,22 @@ export const useChatSessionExport = ({
             } else {
                 // HTML Export
                 const { default: DOMPurify } = await import('dompurify');
-                // Gather Styles & Generate Template
-                const styles = await gatherPageStyles();
-                const bodyClasses = document.body.className;
-                const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
                 const chatHtml = chatClone.innerHTML;
 
-                const fullHtml = generateExportHtmlTemplate({
+                const fullHtml = await buildHtmlDocument({
                     title: DOMPurify.sanitize(activeChat.title),
                     date: dateStr,
                     model: activeChat.settings.modelId,
                     contentHtml: chatHtml,
-                    styles,
                     themeId: currentTheme.id,
                     language,
-                    rootBgColor,
-                    bodyClasses
                 });
                 
                 exportHtmlStringAsFile(fullHtml, filename);
             }
         } else if (format === 'txt') {
-            const txtContent = generateExportTxtTemplate({
+            const { exportTextStringAsFile, buildTextDocument } = await loadExportRuntime();
+            const txtContent = buildTextDocument({
                 title: activeChat.title,
                 date: dateStr,
                 model: activeChat.settings.modelId,

@@ -10,14 +10,14 @@ import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
 import { useHistorySidebarLogic } from '../../hooks/useHistorySidebarLogic';
 
-export interface HistorySidebarProps {
-  isOpen?: boolean;
+interface HistorySidebarProps {
+  isOpen: boolean;
   onToggle: () => void;
-  sessions?: SavedChatSession[];
-  groups?: ChatGroup[];
-  activeSessionId?: string | null;
-  loadingSessionIds?: Set<string>;
-  generatingTitleSessionIds?: Set<string>;
+  sessions: SavedChatSession[];
+  groups: ChatGroup[];
+  activeSessionId: string | null;
+  loadingSessionIds: Set<string>;
+  generatingTitleSessionIds: Set<string>;
   onSelectSession: (sessionId: string) => void;
   onNewChat: () => void;
   onDeleteSession: (sessionId: string) => void;
@@ -31,8 +31,8 @@ export interface HistorySidebarProps {
   onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
   onToggleGroupExpansion: (groupId: string) => void;
   onOpenSettingsModal: () => void;
-  themeId?: string;
-  newChatShortcut?: string;
+  themeId: string;
+  newChatShortcut: string;
 }
 
 const MiniSidebarButton = ({ onClick, icon: Icon, title, href }: { onClick: () => void, icon: React.ElementType, title: string, href?: string }) => {
@@ -96,9 +96,9 @@ const SessionListGroup = ({
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const { t } = useI18n();
   const {
-    isOpen = false, onToggle, sessions = [], groups = [], activeSessionId = null, loadingSessionIds = new Set(),
-    generatingTitleSessionIds = new Set(), onOpenExportModal, onAddNewGroup,
-    onDeleteGroup, onToggleGroupExpansion, themeId = 'pearl',
+    isOpen, onToggle, sessions, groups, activeSessionId, loadingSessionIds,
+    generatingTitleSessionIds, onOpenExportModal, onAddNewGroup,
+    onDeleteGroup, onToggleGroupExpansion, themeId,
     onNewChat, onDeleteSession, onTogglePinSession, onDuplicateSession,
     onOpenSettingsModal, onRenameSession, onRenameGroup, onMoveSessionToGroup, onSelectSession, newChatShortcut
   } = props;

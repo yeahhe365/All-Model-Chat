@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import { ChatMessage } from '../types';
-import { formatExportDateTime, triggerDownload, sanitizeFilename } from '../utils/export/core';
-import { loadExportModules } from '../utils/export/loaders';
+import { triggerDownload } from '../utils/export/core';
+import {
+    buildMessageExportFilenameBase,
+    createExportDateMeta,
+    loadExportRuntime,
+} from '../utils/export/runtime';
 
 interface UseMessageExportProps {
     message: ChatMessage;
@@ -25,21 +29,15 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
             const markdownContent = message.content || '';
             const messageId = message.id;
             const shortId = messageId.slice(-6);
-
-            let filenameBase = `message-${shortId}`;
-
-            if (sessionTitle) {
-                const safeTitle = sanitizeFilename(sessionTitle);
-                const indexStr = messageIndex !== undefined ? `_msg_${messageIndex + 1}` : '';
-                filenameBase = `${safeTitle}${indexStr}`;
-            } else {
-                const contentSnippet = markdownContent.replace(/[^\w\s]/gi, '').split(' ').slice(0, 5).join('_');
-                const safeSnippet = sanitizeFilename(contentSnippet) || 'message';
-                filenameBase = `${safeSnippet}-${shortId}`;
-            }
+            const filenameBase = buildMessageExportFilenameBase({
+                messageId,
+                markdownContent,
+                sessionTitle,
+                messageIndex,
+            });
 
             const dateObj = new Date(message.timestamp);
-            const dateStr = formatExportDateTime(dateObj);
+            const { dateStr } = createExportDateMeta(dateObj);
 
             // Small delay to allow UI to update to "Exporting..." state
             if (type !== 'png') {
@@ -61,11 +59,10 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
 
                 const {
                     exportHtmlStringAsFile,
-                    gatherPageStyles,
                     prepareElementForExport,
                     generateSnapshotPng,
-                    generateExportHtmlTemplate,
-                } = await loadExportModules();
+                    buildHtmlDocument,
+                } = await loadExportRuntime();
 
                 // Use unified helper to clone, clean, and embed images
                 // For PNG, we want expanded details visible. For HTML, we want them collapsed by default but interactive.
@@ -86,35 +83,27 @@ export const useMessageExport = ({ message, sessionTitle, messageIndex, themeId 
                         }
                     );
                 } else {
-                    // HTML Export
-                    const styles = await gatherPageStyles();
-                    const bodyClasses = document.body.className;
-                    const rootBgColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-primary');
-                    
                     // Wrap the cleaned content
                     const wrapper = document.createElement('div');
                     wrapper.className = 'markdown-body';
                     wrapper.appendChild(cleanedContent);
                     const chatHtml = wrapper.outerHTML;
 
-                    const fullHtml = generateExportHtmlTemplate({
+                    const fullHtml = await buildHtmlDocument({
                         title: `Message ${shortId}`,
                         date: dateStr,
                         model: `ID: ${shortId}`,
                         contentHtml: chatHtml,
-                        styles,
                         themeId,
                         language: 'en',
-                        rootBgColor,
-                        bodyClasses
                     });
 
                     exportHtmlStringAsFile(fullHtml, `${filenameBase}.html`);
                 }
 
             } else if (type === 'txt') {
-                const { exportTextStringAsFile, generateExportTxtTemplate } = await loadExportModules();
-                const txtContent = generateExportTxtTemplate({
+                const { exportTextStringAsFile, buildTextDocument } = await loadExportRuntime();
+                const txtContent = buildTextDocument({
                     title: `Message Export ${shortId}`,
                     date: dateStr,
                     model: 'N/A',

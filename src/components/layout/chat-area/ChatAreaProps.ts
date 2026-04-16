@@ -12,7 +12,7 @@ import type { MediaResolution } from '../../../types/settings';
 
 export interface ChatAreaSessionModel {
   activeSessionId: string | null;
-  sessionTitle?: string;
+  sessionTitle: string;
   currentChatSettings: ChatSettings;
   messages: ChatMessage[];
   isLoading: boolean;
@@ -47,7 +47,6 @@ export interface ChatAreaHeaderModel {
 
 export interface ChatAreaMessageActionsModel {
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
-  onScrollContainerScroll: () => void;
   onEditMessage: (messageId: string, mode?: 'update' | 'resend') => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;

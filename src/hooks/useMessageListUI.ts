@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UploadedFile, ChatMessage, VideoMetadata } from '../types';
 import { MediaResolution } from '../types/settings';
-import { useFilePreviewState } from './ui/useFilePreviewState';
+import { useFileModalState } from './ui/useFileModalState';
 
 interface UseMessageListUIProps {
     messages: ChatMessage[];
@@ -13,22 +13,24 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
     const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
     const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
     const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
-    const [configuringFile, setConfiguringFile] = useState<{ file: UploadedFile, messageId: string } | null>(null);
 
     const allFiles = useMemo(() => messages.flatMap((message) => message.files || []), [messages]);
     const {
         previewFile,
-        setPreviewFile,
-        closePreviewFile,
+        closePreview,
         allImages,
         currentImageIndex,
         handlePrevImage,
         handleNextImage,
-    } = useFilePreviewState(allFiles);
+        configuringFile,
+        setConfiguringFile,
+        openPreview,
+        openConfiguration,
+    } = useFileModalState<{ file: UploadedFile, messageId: string }>(allFiles);
 
     const handleFileClick = useCallback((file: UploadedFile) => {
-        setPreviewFile(file);
-    }, [setPreviewFile]);
+        openPreview(file);
+    }, [openPreview]);
 
     const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
         setHtmlToPreview(htmlContent);
@@ -43,8 +45,8 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
     }, []);
 
     const handleConfigureFile = useCallback((file: UploadedFile, messageId: string) => {
-        setConfiguringFile({ file, messageId });
-    }, []);
+        openConfiguration({ file, messageId });
+    }, [openConfiguration]);
 
     const handleSaveFileConfig = useCallback((fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => {
         if (configuringFile) {
@@ -54,14 +56,13 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
 
     return {
         previewFile,
-        setPreviewFile,
         isHtmlPreviewModalOpen,
         htmlToPreview,
         initialTrueFullscreenRequest,
         configuringFile,
         setConfiguringFile,
         handleFileClick,
-        closeFilePreviewModal: closePreviewFile,
+        closeFilePreviewModal: closePreview,
         allImages,
         currentImageIndex,
         handlePrevImage,

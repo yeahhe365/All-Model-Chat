@@ -139,7 +139,6 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
     },
     messageActions: {
       setScrollContainerRef: vi.fn(),
-      onScrollContainerScroll: vi.fn(),
       onEditMessage: vi.fn(),
       onDeleteMessage: vi.fn(),
       onRetryMessage: vi.fn(),

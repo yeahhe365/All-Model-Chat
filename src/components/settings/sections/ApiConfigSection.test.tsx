@@ -72,6 +72,8 @@ describe('ApiConfigSection', () => {
             useApiProxy
             setUseApiProxy={vi.fn()}
             serverManagedApi
+            liveApiEphemeralTokenEndpoint={null}
+            setLiveApiEphemeralTokenEndpoint={vi.fn()}
           />
         </I18nProvider>
       );
@@ -120,6 +122,9 @@ describe('ApiConfigSection', () => {
             setApiProxyUrl={vi.fn()}
             useApiProxy={false}
             setUseApiProxy={vi.fn()}
+            serverManagedApi={false}
+            liveApiEphemeralTokenEndpoint={null}
+            setLiveApiEphemeralTokenEndpoint={vi.fn()}
           />
         </I18nProvider>,
       );

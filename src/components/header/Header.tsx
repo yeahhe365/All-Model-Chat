@@ -11,22 +11,22 @@ interface HeaderProps {
   onOpenScenariosModal: () => void;
   onToggleHistorySidebar: () => void;
   isLoading: boolean;
-  currentModelName?: string;
+  currentModelName: string;
   availableModels: ModelOption[];
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
-  isSwitchingModel?: boolean;
-  isHistorySidebarOpen?: boolean;
+  isSwitchingModel: boolean;
+  isHistorySidebarOpen: boolean;
   onLoadCanvasPrompt: () => void;
   isCanvasPromptActive: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onTogglePip: () => void;
-  themeId?: string;
+  themeId: string;
   thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
   onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
-  newChatShortcut?: string;
-  pipShortcut?: string;
+  newChatShortcut: string;
+  pipShortcut: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -38,14 +38,14 @@ export const Header: React.FC<HeaderProps> = ({
   availableModels,
   selectedModelId,
   onSelectModel,
-  isSwitchingModel = false,
-  isHistorySidebarOpen = false,
+  isSwitchingModel,
+  isHistorySidebarOpen,
   onLoadCanvasPrompt,
   isCanvasPromptActive,
   isPipSupported,
   isPipActive,
   onTogglePip,
-  themeId = 'pearl',
+  themeId,
   thinkingLevel,
   onSetThinkingLevel,
   newChatShortcut,

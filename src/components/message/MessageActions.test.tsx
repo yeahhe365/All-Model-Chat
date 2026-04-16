@@ -55,6 +55,8 @@ describe('MessageActions', () => {
           <WindowProvider window={window} document={document}>
             <MessageActions
               message={message}
+              sessionTitle="Session"
+              messageIndex={0}
               isGrouped={false}
               onEditMessage={() => {}}
               onDeleteMessage={() => {}}
