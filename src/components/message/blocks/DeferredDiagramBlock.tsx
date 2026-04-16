@@ -1,21 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
-interface DeferredDiagramBlockProps {
-  load: () => Promise<{ default: React.ComponentType<any> }>;
-  componentProps: Record<string, unknown>;
+interface DeferredDiagramBlockProps<TProps extends object> {
+  load: () => Promise<{ default: React.ComponentType<TProps> }>;
+  componentProps: TProps;
   label: string;
   eager?: boolean;
 }
 
-export const DeferredDiagramBlock: React.FC<DeferredDiagramBlockProps> = ({
+export const DeferredDiagramBlock = <TProps extends object>({
   load,
   componentProps,
   label,
   eager = false,
-}) => {
+}: DeferredDiagramBlockProps<TProps>) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
+  const [Component, setComponent] = useState<React.ComponentType<TProps> | null>(null);
   const [loadRequested, setLoadRequested] = useState(eager);
   const isLoading = eager || loadRequested;
 

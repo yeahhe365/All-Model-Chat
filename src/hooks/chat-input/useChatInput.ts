@@ -7,7 +7,7 @@ import { useIsDesktop } from '../useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import { useVoiceInput } from '../useVoiceInput';
-import { useSlashCommands } from '../useSlashCommands';
+import { useSlashCommands, type SlashCommandState } from '../useSlashCommands';
 import { useLiveAPI } from '../useLiveAPI';
 import { useTextAreaInsert } from '../useTextAreaInsert';
 import { processClipboardData } from '../../utils/clipboardUtils';
@@ -282,7 +282,7 @@ export const useChatInput = () => {
     openPreview(file);
   }, [openPreview]);
 
-  const modalsState = {
+  const modalsState = useMemo(() => ({
     showCreateTextFileEditor,
     setShowCreateTextFileEditor,
     editingFile,
@@ -306,9 +306,21 @@ export const useChatInput = () => {
     handleConfirmCreateTextFile,
     handleAudioRecord,
     handleEditFile,
-  };
+  }), [
+    editingFile,
+    handleAttachmentAction,
+    handleAudioRecord,
+    handleConfirmCreateTextFile,
+    handleEditFile,
+    isHelpModalOpen,
+    showAddByIdInput,
+    showAddByUrlInput,
+    showCreateTextFileEditor,
+    showRecorder,
+    showTtsContextEditor,
+  ]);
 
-  const localFileState = {
+  const localFileState = useMemo(() => ({
     configuringFile,
     setConfiguringFile,
     previewFile,
@@ -322,7 +334,19 @@ export const useChatInput = () => {
     handleSavePreviewTextFile,
     handleConfigureFile,
     handlePreviewFile,
-  };
+  }), [
+    closePreview,
+    configuringFile,
+    handleConfigureFile,
+    handlePreviewFile,
+    handleSavePreviewTextFile,
+    handleSaveTextFile,
+    isConverting,
+    isPreviewEditable,
+    previewFile,
+    setConfiguringFile,
+    showTokenModal,
+  ]);
 
   const voiceState = useVoiceInput({
     onTranscribeAudio,
@@ -749,7 +773,7 @@ export const useChatInput = () => {
       if (slashCommandState.slashCommandState.isOpen) {
         if (event.key === 'ArrowDown') {
           event.preventDefault();
-          slashCommandState.setSlashCommandState((prev: any) => {
+          slashCommandState.setSlashCommandState((prev: SlashCommandState) => {
             const length = prev.filteredCommands?.length || 0;
             if (length === 0) {
               return prev;
@@ -762,7 +786,7 @@ export const useChatInput = () => {
 
         if (event.key === 'ArrowUp') {
           event.preventDefault();
-          slashCommandState.setSlashCommandState((prev: any) => {
+          slashCommandState.setSlashCommandState((prev: SlashCommandState) => {
             const length = prev.filteredCommands?.length || 0;
             if (length === 0) {
               return prev;
@@ -806,7 +830,7 @@ export const useChatInput = () => {
 
         if (slashCommandState.slashCommandState.isOpen) {
           event.preventDefault();
-          slashCommandState.setSlashCommandState((prev: any) => ({ ...prev, isOpen: false }));
+          slashCommandState.setSlashCommandState((prev: SlashCommandState) => ({ ...prev, isOpen: false }));
           return;
         }
 
@@ -1075,7 +1099,7 @@ export const useChatInput = () => {
         target.tagName === 'SELECT' ||
         target.isContentEditable;
 
-      if (isShortcutPressed(event as any, 'input.clearDraft', appSettings)) {
+      if (isShortcutPressed(event, 'input.clearDraft', appSettings)) {
         if (isInput && target !== inputState.textareaRef.current) {
           return;
         }

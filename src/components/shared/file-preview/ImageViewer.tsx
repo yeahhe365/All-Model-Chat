@@ -24,6 +24,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file }) => {
 
     // Reset view when file changes
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setScale(1);
         setPosition({ x: 0, y: 0 });
     }, [file.id]);

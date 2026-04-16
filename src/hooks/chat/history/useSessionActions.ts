@@ -3,7 +3,7 @@ import { SavedChatSession } from '../../../types';
 import { createNewSession, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
 
 interface UseSessionActionsProps {
-    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
+    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void | Promise<void>;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
 }
 

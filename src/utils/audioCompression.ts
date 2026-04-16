@@ -129,7 +129,8 @@ export const compressAudioToMp3 = async (file: File | Blob, signal?: AbortSignal
         const arrayBuffer = await file.arrayBuffer();
         checkAbort();
 
-        const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContextClass();
         const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
         checkAbort();
 

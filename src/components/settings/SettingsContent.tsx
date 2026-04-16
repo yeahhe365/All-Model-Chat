@@ -49,8 +49,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     const animClass = "animate-in fade-in zoom-in-95 duration-200 ease-out";
 
     const handleBatchUpdate = (updates: Partial<AppSettings>) => {
-        Object.entries(updates).forEach(([key, value]) => {
-            updateSetting(key as keyof AppSettings, value as any);
+        (Object.entries(updates) as Array<[keyof AppSettings, AppSettings[keyof AppSettings]]>).forEach(([key, value]) => {
+            updateSetting(key, value);
         });
     };
 
@@ -88,7 +88,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
                         setAutoCanvasModelId={(v) => updateSetting('autoCanvasModelId', v)}
                         availableModels={availableModels}
-                        t={t as any}
+                        t={t}
                         setAvailableModels={setAvailableModels}
                     />
                 </div>
@@ -142,7 +142,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     <ShortcutsSection
                         currentSettings={currentSettings}
                         onUpdateSettings={handleBatchUpdate}
-                        t={t as any}
+                        t={t}
                     />
                 </div>
             )}

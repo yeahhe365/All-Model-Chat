@@ -164,16 +164,18 @@ export const useApp = () => {
       setAppSettings(newSettings);
 
       if (activeSessionId) {
-        setCurrentChatSettings((prevChatSettings) => {
-          const nextSettings = { ...prevChatSettings, lockedApiKey: null };
+      setCurrentChatSettings((prevChatSettings) => {
+          const sessionOverrides = Object.fromEntries(
+            (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>)
+              .filter((key) => key !== 'lockedApiKey' && key in newSettings)
+              .map((key) => [key, newSettings[key]])
+          ) as Partial<ChatSettings>;
 
-          (Object.keys(DEFAULT_CHAT_SETTINGS) as Array<keyof ChatSettings>).forEach((key) => {
-            if (key !== 'lockedApiKey' && key in newSettings) {
-              (nextSettings as any)[key] = (newSettings as any)[key];
-            }
-          });
-
-          return nextSettings;
+          return {
+            ...prevChatSettings,
+            ...sessionOverrides,
+            lockedApiKey: null,
+          };
         });
       }
     },

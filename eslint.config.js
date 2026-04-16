@@ -25,4 +25,13 @@ export default tseslint.config(
       'react-hooks/static-components': 'warn',
     },
   },
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.d.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/refs': 'off',
+    },
+  },
 );

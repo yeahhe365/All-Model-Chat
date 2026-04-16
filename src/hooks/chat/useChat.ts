@@ -61,7 +61,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
 
     // Non-state values from store
     const activeJobs = useChatStore.getState()._activeJobs;
-    const userScrolledUp = useChatStore.getState()._userScrolledUp;
+    const userScrolledUpRef = useChatStore.getState()._userScrolledUp;
     const fileDraftsRef = useChatStore.getState()._fileDrafts;
 
     // Aliases
@@ -79,8 +79,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const historyHandler = useChatHistory({
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setActiveMessages,
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs,
-        updateAndPersistSessions: updateAndPersistSessions as any, activeChat, language, updateAndPersistGroups: updateAndPersistGroups as any,
-        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
+        updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
+        userScrolledUpRef, selectedFiles, fileDraftsRef, activeSessionId,
         savedSessions
     });
 
@@ -107,7 +107,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const scenarioHandler = usePreloadedScenarios({
         appSettings,
         setAppSettings,
-        updateAndPersistSessions: updateAndPersistSessions as any,
+        updateAndPersistSessions,
         setActiveSessionId,
     });
 
@@ -124,7 +124,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setAppFileError,
         aspectRatio,
         imageSize,
-        userScrolledUp,
+        userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
         activeJobs,
@@ -146,7 +146,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setEditMode,
         setAppFileError,
         updateAndPersistSessions,
-        userScrolledUp,
+        userScrolledUpRef,
         handleSendMessage: messageSender.handleSendMessage,
         setSessionLoading,
     });
@@ -188,7 +188,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleStopGenerating: messageActions.handleStopGenerating,
         startNewChat,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
-        userScrolledUp
+        userScrolledUpRef
     });
 
     // Auto-Agent for Local Python

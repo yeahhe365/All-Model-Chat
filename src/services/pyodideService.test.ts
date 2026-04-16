@@ -114,6 +114,7 @@ describe('PyodideService', () => {
     worker.emit(payload);
 
     await expect(runPromise).resolves.toEqual({
+      status: 'success',
       output: 'hello',
       image: 'base64-image',
       files: [{ name: 'chart.png', data: 'Zm9v', type: 'image/png' }],

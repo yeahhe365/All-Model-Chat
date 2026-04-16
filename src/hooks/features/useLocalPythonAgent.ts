@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { ChatMessage, AppSettings, SavedChatSession } from '../../types';
+import { ChatMessage, AppSettings, SavedChatSession, ChatSettings } from '../../types';
 import { usePyodide } from '../usePyodide';
 import { logService, createUploadedFileFromBase64 } from '../../utils/appUtils';
+import type { PyodideFile } from '../../services/pyodideService';
 
 // Global Set to persist processed message IDs across React component remounts 
 // (e.g., when toggling Picture-in-Picture or resizing triggering re-renders)
@@ -10,7 +11,7 @@ const globalProcessedMessageIds = new Set<string>();
 interface UseLocalPythonAgentProps {
     messages: ChatMessage[];
     appSettings: AppSettings;
-    currentChatSettings: any; // ChatSettings type
+    currentChatSettings: ChatSettings;
     isLoading: boolean;
     activeSessionId: string | null;
     updateMessageContent: (messageId: string, content: string) => void;
@@ -88,7 +89,7 @@ export const useLocalPythonAgent = ({
                     }
                     
                     if (result.files && result.files.length > 0) {
-                        result.files.forEach((f: any) => {
+                        result.files.forEach((f: PyodideFile) => {
                             newFiles.push(createUploadedFileFromBase64(f.data, f.type, f.name));
                         });
                     }

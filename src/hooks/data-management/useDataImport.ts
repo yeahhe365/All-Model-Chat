@@ -15,6 +15,22 @@ interface UseDataImportProps {
     t: (key: string) => string;
 }
 
+type ImportedSettingsPayload = {
+    type: 'AllModelChat-Settings';
+    settings: Partial<AppSettings>;
+};
+
+type ImportedHistoryPayload = {
+    type: 'AllModelChat-History';
+    history: SavedChatSession[];
+    groups?: ChatGroup[];
+};
+
+type ImportedScenariosPayload = {
+    type: 'AllModelChat-Scenarios';
+    scenarios: SavedScenario[];
+};
+
 export const useDataImport = ({
     setAppSettings,
     updateAndPersistSessions,
@@ -23,7 +39,7 @@ export const useDataImport = ({
     t
 }: UseDataImportProps) => {
 
-    const handleImportFile = useCallback((file: File, expectedType: string, onValid: (data: any) => void) => {
+    const handleImportFile = useCallback(<T extends { type: string }>(file: File, expectedType: T['type'], onValid: (data: T) => void) => {
         logService.info(`Importing ${expectedType} from file: ${file.name}`);
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -48,15 +64,15 @@ export const useDataImport = ({
     }, [t]);
 
     const handleImportSettings = useCallback((file: File) => {
-        handleImportFile(file, 'AllModelChat-Settings', (data) => {
+        handleImportFile<ImportedSettingsPayload>(file, 'AllModelChat-Settings', (data) => {
             const importedSettings = data.settings;
-            const newSettings = { ...DEFAULT_APP_SETTINGS };
+            const newSettings: AppSettings = { ...DEFAULT_APP_SETTINGS };
             for (const key of Object.keys(DEFAULT_APP_SETTINGS) as Array<keyof AppSettings>) {
                 if (Object.prototype.hasOwnProperty.call(importedSettings, key)) {
                     const importedValue = importedSettings[key];
                     const defaultValue = DEFAULT_APP_SETTINGS[key];
                     if (typeof importedValue === typeof defaultValue || (['apiKey', 'apiProxyUrl', 'liveApiEphemeralTokenEndpoint', 'lockedApiKey'].includes(key) && (typeof importedValue === 'string' || importedValue === null))) {
-                        (newSettings as any)[key] = importedValue;
+                        Object.assign(newSettings, { [key]: importedValue } as Partial<AppSettings>);
                     } else {
                         logService.warn(`Type mismatch for setting "${key}" during import. Using default.`);
                     }
@@ -68,7 +84,7 @@ export const useDataImport = ({
     }, [handleImportFile, setAppSettings, t]);
 
     const handleImportHistory = useCallback((file: File) => {
-        handleImportFile(file, 'AllModelChat-History', (data) => {
+        handleImportFile<ImportedHistoryPayload>(file, 'AllModelChat-History', (data) => {
             if (data.history && Array.isArray(data.history)) {
                 updateAndPersistSessions((prev) => {
                     const existingIds = new Set(prev.map(s => s.id));
@@ -77,9 +93,10 @@ export const useDataImport = ({
                 });
 
                 if (data.groups && Array.isArray(data.groups)) {
+                    const importedGroups = data.groups;
                     updateAndPersistGroups((prev) => {
                         const existingIds = new Set(prev.map(g => g.id));
-                        const newGroups = data.groups.filter((g: ChatGroup) => !existingIds.has(g.id));
+                        const newGroups = importedGroups.filter((g: ChatGroup) => !existingIds.has(g.id));
                         return [...prev, ...newGroups];
                     });
                 }
@@ -92,7 +109,7 @@ export const useDataImport = ({
     }, [handleImportFile, t, updateAndPersistSessions, updateAndPersistGroups]);
 
     const handleImportAllScenarios = useCallback((file: File) => {
-        handleImportFile(file, 'AllModelChat-Scenarios', (data) => {
+        handleImportFile<ImportedScenariosPayload>(file, 'AllModelChat-Scenarios', (data) => {
             if (data.scenarios && Array.isArray(data.scenarios)) {
                 handleSaveAllScenarios(data.scenarios);
                 alert(t('scenarios_feedback_imported'));

@@ -58,7 +58,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
                 <Filter size={14} className="text-[var(--theme-text-tertiary)]" />
                 <select 
                     value={activeCategory} 
-                    onChange={(e) => setActiveCategory(e.target.value as any)}
+                    onChange={(e) => setActiveCategory(e.target.value as LogCategory | 'ALL')}
                     className="bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] text-xs rounded border border-[var(--theme-border-secondary)] px-2 py-1 focus:outline-none"
                 >
                     <option value="ALL">All Categories</option>

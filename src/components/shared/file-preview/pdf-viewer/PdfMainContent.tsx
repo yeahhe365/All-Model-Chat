@@ -70,6 +70,8 @@ const LazyPdfPage = ({
 
     // 当缩放或旋转改变时，清空缓存的尺寸，让 react-pdf 重新计算新尺寸
     useEffect(() => {
+        // Intentional cached-size reset on transform changes.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDimensions({ width: 0, height: 0 });
     }, [scale, rotation]);
 

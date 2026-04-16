@@ -12,7 +12,7 @@ interface CodeEditorProps {
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, language, className, readOnly }) => {
-    const preRef = useRef<HTMLElement>(null);
+    const preRef = useRef<HTMLPreElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const getHighlighter = async (): Promise<HLJSApi> => {
@@ -43,7 +43,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, languag
                 const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
                 const result = hljs.highlight(content, { language: validLanguage });
                 preRef.current.innerHTML = result.value;
-            } catch (e) {
+            } catch {
                 if (isMounted && preRef.current) {
                     preRef.current.textContent = content;
                 }
@@ -61,7 +61,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, languag
         <div className={`relative w-full h-full overflow-hidden bg-[var(--theme-bg-code-block)] ${className || ''}`}>
             {/* Syntax Highlight Layer */}
             <pre
-                ref={preRef as any}
+                ref={preRef}
                 aria-hidden="true"
                 className="absolute inset-0 m-0 p-4 font-mono text-sm leading-relaxed pointer-events-none overflow-hidden whitespace-pre hljs !bg-transparent"
                 style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace' }}

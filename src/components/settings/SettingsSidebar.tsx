@@ -9,7 +9,7 @@ interface SettingsSidebarProps {
     activeTab: SettingsTab;
     setActiveTab: (tab: SettingsTab) => void;
     onClose: () => void;
-    t: (key: keyof typeof translations) => string;
+    t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
@@ -58,7 +58,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                             aria-selected={isActive}
                         >
                             <Icon size={18} strokeWidth={isActive ? 2 : 1.5} className={isActive ? "text-[var(--theme-text-primary)]" : "text-[var(--theme-text-tertiary)]"} />
-                            <span>{t(tab.labelKey as any)}</span>
+                            <span>{t(tab.labelKey)}</span>
                         </button>
                     );
                 })}

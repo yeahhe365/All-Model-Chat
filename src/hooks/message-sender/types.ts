@@ -43,7 +43,7 @@ export interface StandardChatProps extends BaseSenderProps {
     setEditingMessageId: (id: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     getStreamHandlers: GetStreamHandlers;

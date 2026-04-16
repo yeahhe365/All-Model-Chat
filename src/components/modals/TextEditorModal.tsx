@@ -31,6 +31,8 @@ export const TextEditorModal: React.FC<TextEditorModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      // Sync the draft only when opening or switching the source document.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalValue(value);
       setTimeout(() => textareaRef.current?.focus(), 100);
     }

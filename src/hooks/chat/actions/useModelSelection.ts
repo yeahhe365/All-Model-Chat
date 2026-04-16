@@ -15,7 +15,7 @@ interface UseModelSelectionProps {
     setCurrentChatSettings: (updater: (prevSettings: IndividualChatSettings) => IndividualChatSettings) => void;
     setIsSwitchingModel: (switching: boolean) => void;
     handleStopGenerating: () => void;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
 export const useModelSelection = ({
@@ -28,7 +28,7 @@ export const useModelSelection = ({
     setCurrentChatSettings,
     setIsSwitchingModel,
     handleStopGenerating,
-    userScrolledUp,
+    userScrolledUpRef,
 }: UseModelSelectionProps) => {
 
     const handleSelectModelInHeader = useCallback((modelId: string) => {
@@ -85,7 +85,7 @@ export const useModelSelection = ({
                 }
             }
         }
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
 
         // Auto-focus input after model selection
         setTimeout(() => {
@@ -94,7 +94,7 @@ export const useModelSelection = ({
                 textarea.focus();
             }
         }, 50);
-    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUp, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
+    }, [isLoading, currentChatSettings, updateAndPersistSessions, activeSessionId, userScrolledUpRef, handleStopGenerating, appSettings, setActiveSessionId, setCurrentChatSettings, setIsSwitchingModel]);
 
     return { handleSelectModelInHeader };
 };

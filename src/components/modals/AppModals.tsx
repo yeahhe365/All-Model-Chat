@@ -32,7 +32,7 @@ interface AppModalsProps {
   clearCacheAndReload: () => void;
   clearAllHistory: () => void;
   handleInstallPwa: () => void;
-  installPromptEvent: any;
+  installPromptEvent: BeforeInstallPromptEvent | null;
   isStandalone: boolean;
 
   handleImportSettings: (file: File) => void;

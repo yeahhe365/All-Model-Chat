@@ -4,8 +4,8 @@ import { ChatGroup, SavedChatSession } from '../../../types';
 import { logService } from '../../../utils/appUtils';
 
 interface UseGroupActionsProps {
-    updateAndPersistGroups: (updater: (prev: ChatGroup[]) => ChatGroup[]) => Promise<void>;
-    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
+    updateAndPersistGroups: (updater: (prev: ChatGroup[]) => ChatGroup[]) => void | Promise<void>;
+    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void | Promise<void>;
     t: (key: string, fallback?: string) => string;
 }
 

@@ -22,6 +22,7 @@ export const useFilePolling = ({
     const pollingIntervals = useRef<Map<string, number>>(new Map());
 
     useEffect(() => {
+        const intervals = pollingIntervals.current;
         const filesCurrentlyPolling = new Set(pollingIntervals.current.keys());
         const filesThatShouldPoll = new Set(
             selectedFiles.filter(f => f.uploadState === 'processing_api' && !f.error).map(f => f.id)
@@ -31,7 +32,7 @@ export const useFilePolling = ({
         for (const fileId of filesCurrentlyPolling) {
             if (!filesThatShouldPoll.has(fileId)) {
                 window.clearInterval(pollingIntervals.current.get(fileId));
-                pollingIntervals.current.delete(fileId);
+                intervals.delete(fileId);
                 logService.info(`Stopped polling for file ${fileId} as it is no longer in a processing state.`);
             }
         }
@@ -78,14 +79,14 @@ export const useFilePolling = ({
                 };
 
                 const intervalId = window.setInterval(poll, POLLING_INTERVAL_MS);
-                pollingIntervals.current.set(fileId, intervalId);
+                intervals.set(fileId, intervalId);
                 poll(); // Run immediately once
             }
         }
 
         // Cleanup on unmount
         return () => {
-            pollingIntervals.current.forEach(intervalId => window.clearInterval(intervalId));
+            intervals.forEach(intervalId => window.clearInterval(intervalId));
         };
     }, [selectedFiles, appSettings, currentChatSettings, setSelectedFiles]);
 };

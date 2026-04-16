@@ -32,9 +32,7 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                 return;
             }
             
-            // Capture key combo
-            // Use standard React synth event utility logic adapted for native event
-            const combo = recordKeyCombination(e as any);
+            const combo = recordKeyCombination(e);
             
             if (combo) {
                 setTempKey(combo);

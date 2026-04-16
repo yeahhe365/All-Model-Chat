@@ -30,7 +30,7 @@ export const useAppEvents = ({
     isLoading,
     onStopGenerating,
 }: AppEventsProps) => {
-    const [installPromptEvent, setInstallPromptEvent] = useState<any>(null);
+    const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
     const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
     const { toggleFullscreen } = useFullscreen();
 
@@ -39,7 +39,7 @@ export const useAppEvents = ({
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             logService.info('PWA install prompt available.');
-            setInstallPromptEvent(e);
+            setInstallPromptEvent(e as BeforeInstallPromptEvent);
         };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

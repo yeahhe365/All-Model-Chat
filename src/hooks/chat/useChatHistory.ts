@@ -8,8 +8,8 @@ import { useGroupActions } from './history/useGroupActions';
 import { useHistoryClearer } from './history/useHistoryClearer';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
-type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => Promise<void>;
+type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void | Promise<void>;
+type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void | Promise<void>;
 
 interface ChatHistoryProps {
     appSettings: AppSettings;
@@ -25,7 +25,7 @@ interface ChatHistoryProps {
     updateAndPersistGroups: GroupsUpdater;
     activeChat: SavedChatSession | undefined;
     language: 'en' | 'zh';
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
@@ -46,7 +46,7 @@ export const useChatHistory = ({
     updateAndPersistGroups,
     activeChat,
     language,
-    userScrolledUp,
+    userScrolledUpRef,
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
@@ -65,7 +65,7 @@ export const useChatHistory = ({
         setCommandedInput,
         updateAndPersistSessions,
         activeChat,
-        userScrolledUp,
+        userScrolledUpRef,
         selectedFiles,
         fileDraftsRef,
         activeSessionId,

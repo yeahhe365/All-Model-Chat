@@ -23,7 +23,7 @@ interface MessageSenderProps {
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
@@ -45,7 +45,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setAppFileError,
         aspectRatio,
         imageSize,
-        userScrolledUp: userScrolledUpRef,
+        userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
         activeJobs,

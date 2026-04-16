@@ -1,5 +1,6 @@
 
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+/* eslint-disable react-hooks/refs */
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 
 type ContainerRefLike = React.RefObject<HTMLElement> | HTMLElement | null;
@@ -86,9 +87,8 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         };
     }, [containerRef, isAudioActive]);
 
-    // Screen boundary clamping
-    useLayoutEffect(() => {
-        if (!position || !toolbarRef.current) return;
+    const clampedPosition = useMemo(() => {
+        if (!position || !toolbarRef.current) return position;
 
         const toolbar = toolbarRef.current;
         const { width, height } = toolbar.getBoundingClientRect();
@@ -122,14 +122,16 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         }
 
         if (Math.abs(correctedLeft - position.left) > 1 || Math.abs(correctedTop - position.top) > 1) {
-            setPosition({ left: correctedLeft, top: correctedTop });
+            return { left: correctedLeft, top: correctedTop };
         }
-    }, [position, selectedText]); // Re-run when text changes (toolbar size might change)
+
+        return position;
+    }, [position, toolbarRef]); // Re-run when text changes (toolbar size might change)
 
     const clearSelection = () => {
         window.getSelection()?.removeAllRanges();
         setPosition(null);
     };
 
-    return { position, setPosition, selectedText, clearSelection };
+    return { position: clampedPosition, setPosition, selectedText, clearSelection };
 };

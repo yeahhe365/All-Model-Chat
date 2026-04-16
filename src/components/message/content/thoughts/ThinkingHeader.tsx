@@ -10,7 +10,7 @@ interface ThinkingHeaderProps {
     thinkingTimeMs?: number;
     generationStartTime?: Date;
     firstTokenTimeMs?: number;
-    t: (key: any, fallback?: string) => string;
+    t: (key: string, fallback?: string) => string;
     isExpanded: boolean;
 }
 
@@ -64,7 +64,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                                 </span>
                                 {firstTokenTimeMs !== undefined && (
                                     <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
-                                        {t('metrics_ttft' as any)}: {(firstTokenTimeMs / 1000).toFixed(2)}s
+                                        {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
                                     </span>
                                 )}
                             </div>
@@ -78,7 +78,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                             </span>
                             {firstTokenTimeMs !== undefined && (
                                 <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
-                                    {t('metrics_ttft' as any)}: {(firstTokenTimeMs / 1000).toFixed(2)}s
+                                    {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
                                 </span>
                             )}
                         </div>

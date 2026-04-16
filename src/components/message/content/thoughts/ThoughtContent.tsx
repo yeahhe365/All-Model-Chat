@@ -15,7 +15,7 @@ interface ThoughtContentProps {
     expandCodeBlocksByDefault: boolean;
     isMermaidRenderingEnabled: boolean;
     isGraphvizRenderingEnabled: boolean;
-    t: (key: any, fallback?: string) => string;
+    t: (key: string, fallback?: string) => string;
     themeId: string;
     onOpenSidePanel: (content: SideViewContent) => void;
 }

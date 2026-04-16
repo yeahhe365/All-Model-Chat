@@ -88,6 +88,8 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     useEffect(() => {
         // If content is provided (e.g. from parent state during edit), use it
         if (content !== undefined && content !== null) {
+            // Intentional sync: externally controlled content means loading is complete.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsLoading(false);
             return;
         }

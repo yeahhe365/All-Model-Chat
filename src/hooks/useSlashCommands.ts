@@ -4,6 +4,13 @@ import { Command } from '../components/chat/input/SlashCommandMenu';
 import { translations } from '../utils/appUtils';
 import { AttachmentAction, ModelOption } from '../types';
 
+export type SlashCommandState = {
+  isOpen: boolean;
+  query: string;
+  filteredCommands: Command[];
+  selectedIndex: number;
+};
+
 interface UseSlashCommandsProps {
   t: (key: keyof typeof translations) => string;
   onToggleGoogleSearch: () => void;
@@ -40,12 +47,7 @@ export const useSlashCommands = ({
   currentModelId, onSetThinkingLevel, thinkingLevel
 }: UseSlashCommandsProps) => {
   
-  const [slashCommandState, setSlashCommandState] = useState<{
-    isOpen: boolean;
-    query: string;
-    filteredCommands: Command[];
-    selectedIndex: number;
-  }>({
+  const [slashCommandState, setSlashCommandState] = useState<SlashCommandState>({
     isOpen: false,
     query: '',
     filteredCommands: [],

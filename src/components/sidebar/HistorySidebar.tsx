@@ -5,7 +5,7 @@ import { useI18n } from '../../contexts/I18nContext';
 import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
 import { SessionItem } from './SessionItem';
-import { GroupItem } from './GroupItem';
+import { GroupItem, type SessionItemPassedProps } from './GroupItem';
 import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
 import { useHistorySidebarLogic } from '../../hooks/useHistorySidebarLogic';
@@ -78,7 +78,7 @@ const SessionListGroup = ({
 }: { 
     title: string; 
     sessions: SavedChatSession[]; 
-    sessionItemProps: any 
+    sessionItemProps: SessionItemPassedProps 
 }) => {
     const [parent] = useAutoAnimate<HTMLUListElement>({ duration: 200 });
     return (

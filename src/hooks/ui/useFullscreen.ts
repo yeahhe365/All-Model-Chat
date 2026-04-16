@@ -8,8 +8,8 @@ export const useFullscreen = () => {
         try {
             if (element.requestFullscreen) {
                 await element.requestFullscreen();
-            } else if ((element as any).webkitRequestFullscreen) {
-                (element as any).webkitRequestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                await element.webkitRequestFullscreen();
             }
         } catch (err) {
             console.error("Error attempting to enable full-screen mode:", err);
@@ -18,16 +18,16 @@ export const useFullscreen = () => {
     }, []);
 
     const exitFullscreen = useCallback(async () => {
-        if (targetDocument.fullscreenElement || (targetDocument as any).webkitFullscreenElement) {
+        if (targetDocument.fullscreenElement || targetDocument.webkitFullscreenElement) {
             if (targetDocument.exitFullscreen) {
                 try {
                     await targetDocument.exitFullscreen();
                 } catch (err) {
                     console.error("Error attempting to disable full-screen mode:", err);
                 }
-            } else if ((targetDocument as any).webkitExitFullscreen) {
+            } else if (targetDocument.webkitExitFullscreen) {
                 try {
-                    await (targetDocument as any).webkitExitFullscreen();
+                    await targetDocument.webkitExitFullscreen();
                 } catch (err) {
                     console.error("Error attempting to disable webkit full-screen mode:", err);
                 }
@@ -36,7 +36,7 @@ export const useFullscreen = () => {
     }, [targetDocument]);
 
     const toggleFullscreen = useCallback(async (element: HTMLElement) => {
-        if (targetDocument.fullscreenElement || (targetDocument as any).webkitFullscreenElement) {
+        if (targetDocument.fullscreenElement || targetDocument.webkitFullscreenElement) {
             await exitFullscreen();
         } else {
             await enterFullscreen(element);

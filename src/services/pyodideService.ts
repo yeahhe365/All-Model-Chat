@@ -225,7 +225,7 @@ export const buildPyodideWorkerScript = (baseUri: string) => {
 
 export class PyodideService {
     private worker: Worker | null = null;
-    private pendingPromises = new Map<string, { resolve: (val: any) => void, reject: (err: any) => void }>();
+    private pendingPromises = new Map<string, { resolve: (val: void | ExecutionResult) => void; reject: (err: unknown) => void }>();
     private readonly baseUri: string | undefined;
     private readonly createWorker: (url: string) => Worker;
     private readonly createObjectUrl: (blob: Blob) => string;
@@ -274,7 +274,7 @@ export class PyodideService {
                 if (type === 'MOUNT_COMPLETE') {
                     promise.resolve(undefined);
                 } else {
-                    promise.resolve({ output, image, files, result });
+                    promise.resolve({ output, image, files, result, status: 'success' });
                 }
             } else {
                 promise.reject(error);
@@ -301,7 +301,7 @@ export class PyodideService {
         if (validFiles.length === 0) return;
 
         return new Promise<void>((resolve, reject) => {
-             this.pendingPromises.set(id, { resolve, reject });
+             this.pendingPromises.set(id, { resolve: resolve as (val: void | ExecutionResult) => void, reject });
              
              // Use transferables for efficiency to avoid copying large buffers
              const buffers = validFiles.map(f => f.data);
@@ -329,7 +329,7 @@ export class PyodideService {
         const id = this.createRequestId();
         
         return new Promise<ExecutionResult>((resolve, reject) => {
-            this.pendingPromises.set(id, { resolve, reject });
+            this.pendingPromises.set(id, { resolve: resolve as (val: void | ExecutionResult) => void, reject });
             this.worker?.postMessage({ id, code });
             
             // Timeout safety

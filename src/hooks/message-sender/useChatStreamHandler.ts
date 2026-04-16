@@ -39,7 +39,7 @@ export const useChatStreamHandler = ({
         let firstTokenTime: Date | null = null; // Track first token (thought or content) for TTFT
         let accumulatedText = "";
         let accumulatedThoughts = "";
-        let accumulatedApiParts: any[] = [];
+        let accumulatedApiParts: Part[] = [];
 
         // Reset store for this new generation
         streamingStore.clear(generationId);
@@ -78,7 +78,7 @@ export const useChatStreamHandler = ({
             streamingStore.clear(generationId);
         };
 
-        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: any, urlContextMetadata?: any) => {
+        const streamOnComplete = (usageMetadata?: UsageMetadata, groundingMetadata?: unknown, urlContextMetadata?: unknown) => {
             const lang = appSettings.language === 'system' 
                 ? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en')
                 : appSettings.language;
@@ -169,7 +169,12 @@ export const useChatStreamHandler = ({
             
             accumulatedApiParts = appendApiPart(accumulatedApiParts, part);
             
-            const anyPart = part as any;
+            const anyPart = part as Part & {
+                text?: string;
+                executableCode?: { language: string; code: string };
+                codeExecutionResult?: { outcome: string; output?: string };
+                inlineData?: { mimeType: string };
+            };
             
             // 1. Accumulate plain text
             if (anyPart.text) {

@@ -27,7 +27,7 @@ export const useStandardChat = ({
   setEditingMessageId,
   aspectRatio,
   imageSize,
-  userScrolledUp,
+  userScrolledUpRef,
   activeSessionId,
   setActiveSessionId,
   activeJobs,
@@ -435,7 +435,7 @@ export const useStandardChat = ({
         shouldLockKey,
       });
 
-      userScrolledUp.current = false;
+      userScrolledUpRef.current = false;
 
       await performApiCall({
         finalSessionId,
@@ -462,7 +462,7 @@ export const useStandardChat = ({
       setActiveSessionId,
       updateAndPersistSessions,
       updateSessionState,
-      userScrolledUp,
+      userScrolledUpRef,
     ]
   );
 

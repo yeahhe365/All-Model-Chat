@@ -57,7 +57,7 @@ export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
           label={t('settingsLanguage')}
           layout="horizontal"
           value={settings.language}
-          onChange={(e) => onUpdate('language', e.target.value as any)}
+          onChange={(e) => onUpdate('language', e.target.value as AppSettings['language'])}
           className="py-3"
           wrapperClassName="relative w-48"
       >
