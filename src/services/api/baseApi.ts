@@ -5,6 +5,7 @@ import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
 import { SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model } from "../../utils/appUtils";
+import { normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 
 
@@ -91,7 +92,7 @@ export const getClient = async (
 
       // Route proxy traffic through the SDK-supported HTTP options path.
       if (baseUrl && baseUrl.trim().length > 0) {
-          const sanitizedBaseUrl = baseUrl.trim().replace(/\/$/, '');
+          const sanitizedBaseUrl = normalizeGeminiApiBaseUrl(baseUrl);
           if (mergedHttpOptions) {
               mergedHttpOptions.baseUrl = sanitizedBaseUrl;
           } else {

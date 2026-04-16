@@ -95,6 +95,7 @@ export const useChatHistory = ({
     });
 
     const { clearAllHistory, clearCacheAndReload } = useHistoryClearer({
+        savedSessions,
         setSavedSessions,
         setSavedGroups,
         startNewChat,

@@ -39,7 +39,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
         <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-grow">
             {/* Icon Area */}
             {isLoading && (
-                <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg transition-colors duration-300 bg-[var(--theme-bg-accent)]/10`}>
+                <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 transition-colors duration-300">
                     <GoogleSpinner size={20} />
                 </div>
             )}

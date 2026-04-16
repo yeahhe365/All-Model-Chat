@@ -78,6 +78,13 @@ describe('getClient', () => {
     }));
   });
 
+  it('normalizes version-suffixed proxy baseUrls before passing them to the SDK', async () => {
+    await getClient('key', 'https://proxy.example.com/gemini/v1beta/');
+    expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
+      httpOptions: { baseUrl: 'https://proxy.example.com/gemini' },
+    }));
+  });
+
   it('merges proxy baseUrl into existing httpOptions', async () => {
     await getClient('key', 'https://proxy.example.com/', { apiVersion: 'v1alpha' });
     expect(GoogleGenAI).toHaveBeenCalledWith({
@@ -209,7 +216,7 @@ describe('getLiveApiClient', () => {
       apiKey: 'ephemeral-token-name',
       httpOptions: {
         apiVersion: 'v1alpha',
-        baseUrl: 'https://proxy.example.com/v1beta',
+        baseUrl: 'https://proxy.example.com',
       },
     });
 

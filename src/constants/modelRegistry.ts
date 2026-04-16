@@ -43,8 +43,9 @@ const MODEL_REGISTRY: RegisteredModel[] = [
   {
     id: 'gemini-3.1-pro-preview',
     name: 'Gemini 3.1 Pro Preview',
-    groups: ['defaultPinned', 'transcription'],
+    groups: ['defaultPinned', 'transcription', 'connectionTest'],
     groupLabels: {
+      connectionTest: 'Gemini 3.1 Pro',
       transcription: 'Gemini 3.1 Pro',
     },
   },

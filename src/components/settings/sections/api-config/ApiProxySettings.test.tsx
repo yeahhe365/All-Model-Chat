@@ -22,14 +22,14 @@ describe('ApiProxySettings', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders a standard Gemini proxy request preview', () => {
+  it('renders the SDK request preview for a root proxy URL', () => {
     act(() => {
       root.render(
         <I18nProvider>
           <ApiProxySettings
             useApiProxy
             setUseApiProxy={vi.fn()}
-            apiProxyUrl="https://api-proxy.de/gemini/v1beta"
+            apiProxyUrl="https://api-proxy.de/gemini"
             setApiProxyUrl={vi.fn()}
           />
         </I18nProvider>

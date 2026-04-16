@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { SavedChatSession } from '../../../types';
 import { createNewSession, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
+import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
 
 interface UseSessionActionsProps {
     updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void | Promise<void>;
@@ -18,10 +19,7 @@ export const useSessionActions = ({
         // --- Fix: LocalStorage fragmentation & infinite growth ---
         // 精准清理特定 session 的 LocalStorage 缓存
         try {
-            localStorage.removeItem(`chatDraft_${sessionId}`);
-            localStorage.removeItem(`chatQuotes_${sessionId}`);
-            localStorage.removeItem(`chatTtsContext_${sessionId}`);
-            localStorage.removeItem(`chat_scroll_pos_${sessionId}`);
+            removeSessionScopedLocalStorageEntries([sessionId]);
         } catch (e) {
             console.error("Failed to clean up session localStorage:", e);
         }

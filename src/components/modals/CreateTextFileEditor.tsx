@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Modal } from '../shared/Modal';
 import { useCreateFileEditor } from '../../hooks/useCreateFileEditor';
 import { CreateFileHeader } from './create-file/CreateFileHeader';
 import { CreateFileBody } from './create-file/CreateFileBody';
 import { CreateFileFooter } from './create-file/CreateFileFooter';
+import { TextEditorModalShell } from './TextEditorModalShell';
 
 interface CreateTextFileEditorProps {
   onConfirm: (content: string | Blob, filename: string) => void;
@@ -58,13 +58,11 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
   });
 
   return (
-    <Modal
-      isOpen={true}
+    <TextEditorModalShell
       onClose={onCancel}
-      noPadding
       contentClassName="w-full h-full max-w-none bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-none flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
-    >
-      <CreateFileHeader 
+      header={(
+        <CreateFileHeader 
           isEditing={isEditing}
           isPdf={isPdf}
           isExportingPdf={isExportingPdf}
@@ -75,9 +73,10 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           handleDownloadPdf={handleDownloadPdf}
           onClose={onCancel}
           t={t}
-      />
-
-      <CreateFileBody 
+        />
+      )}
+      body={(
+        <CreateFileBody 
           textContent={textContent}
           setTextContent={setTextContent}
           debouncedContent={debouncedContent}
@@ -91,9 +90,10 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           handleDrop={handleDrop}
           themeId={themeId}
           t={t}
-      />
-
-      <CreateFileFooter 
+        />
+      )}
+      footer={(
+        <CreateFileFooter 
           filenameBase={filenameBase}
           setFilenameBase={setFilenameBase}
           extension={extension}
@@ -107,7 +107,8 @@ export const CreateTextFileEditor: React.FC<CreateTextFileEditorProps> = (props)
           isPdfPreviewReady={isPdfPreviewReady}
           hasContent={!!textContent.trim()}
           t={t}
-      />
-    </Modal>
+        />
+      )}
+    />
   );
 };

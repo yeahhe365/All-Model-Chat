@@ -79,7 +79,7 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
     useCustomApiConfig: false,
     serverManagedApi: false,
     apiKey: null,
-    apiProxyUrl: "https://api-proxy.de/gemini/v1beta",
+    apiProxyUrl: "https://api-proxy.de/gemini",
     useApiProxy: false,
     liveApiEphemeralTokenEndpoint: null,
     language: 'system',
