@@ -35,7 +35,7 @@ describe('ApiConfigSection', () => {
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
-    (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+    Reflect.set(globalThis, 'IS_REACT_ACT_ENVIRONMENT', true);
     vi.clearAllMocks();
     generateContentMock.mockResolvedValue({});
     getClientMock.mockReturnValue({

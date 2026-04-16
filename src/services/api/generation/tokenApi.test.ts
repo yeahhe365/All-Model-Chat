@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Part } from '@google/genai';
 
 const { mockGetConfiguredApiClient, mockCountTokens } = vi.hoisted(() => ({
   mockGetConfiguredApiClient: vi.fn(),
@@ -39,7 +40,7 @@ describe('countTokensApi', () => {
         },
         mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
         thoughtSignature: 'sig-1',
-      } as any,
+      } as unknown as Part,
     ]);
 
     expect(mockGetConfiguredApiClient).toHaveBeenCalledWith('key', {

@@ -50,6 +50,11 @@ type GenerationConfig = {
   mediaResolution?: MediaResolution;
 };
 
+type BuildGenerationConfigInput = Pick<
+  GenerationConfig,
+  'temperature' | 'topP' | 'topK' | 'responseMimeType' | 'responseSchema'
+>;
+
 export class LiveApiAuthConfigurationError extends Error {
   constructor(message: string) {
     super(message);
@@ -231,7 +236,7 @@ export const getHttpOptionsForContents = (
 export const buildGenerationConfig = async (
     modelId: string,
     systemInstruction: string,
-    config: { temperature?: number; topP?: number; topK?: number },
+    config: BuildGenerationConfigInput,
     showThoughts: boolean,
     thinkingBudget: number,
     isGoogleSearchEnabled?: boolean,

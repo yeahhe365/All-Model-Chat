@@ -2,9 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { buildGenerationConfig } from '../baseApi';
 import { MediaResolution } from '../../../types/settings';
 
+type MockGoogleGenAIConfig = {
+  apiKey: string;
+  httpOptions?: {
+    apiVersion?: 'v1alpha';
+    baseUrl?: string;
+  };
+};
+
+type StoredAppSettings = NonNullable<Awaited<ReturnType<typeof import('../../../utils/db').dbService.getAppSettings>>>;
+
 // Mock @google/genai - must use function syntax for constructor mock
 vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(function(this: any, config: any) { this.config = config; }),
+  GoogleGenAI: vi.fn(function(this: { config: MockGoogleGenAIConfig }, config: MockGoogleGenAIConfig) {
+    this.config = config;
+  }),
 }));
 
 // Mock dbService
@@ -110,7 +122,7 @@ describe('getConfiguredApiClient', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.example.com',
-    } as any);
+    } as StoredAppSettings);
     await getConfiguredApiClient('key');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
       httpOptions: { baseUrl: 'https://proxy.example.com' },
@@ -122,13 +134,13 @@ describe('getConfiguredApiClient', () => {
       useCustomApiConfig: true,
       useApiProxy: false,
       apiProxyUrl: 'https://proxy.example.com',
-    } as any);
+    } as StoredAppSettings);
     await getConfiguredApiClient('key');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
       apiKey: 'key',
     }));
     // baseUrl should not be in the config
-    const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as any;
+    const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as MockGoogleGenAIConfig;
     expect(callArgs.httpOptions?.baseUrl).toBeUndefined();
   });
 });
@@ -136,7 +148,15 @@ describe('getConfiguredApiClient', () => {
 describe('getLiveApiClient', () => {
   it('throws a configuration error when the ephemeral token endpoint is missing', async () => {
     await expect(
-      getLiveApiClient({} as any, { apiVersion: 'v1alpha' }),
+      getLiveApiClient(
+        {
+          liveApiEphemeralTokenEndpoint: null,
+          useCustomApiConfig: false,
+          useApiProxy: false,
+          apiProxyUrl: null,
+        },
+        { apiVersion: 'v1alpha' },
+      ),
     ).rejects.toBeInstanceOf(LiveApiAuthConfigurationError);
   });
 
@@ -153,7 +173,8 @@ describe('getLiveApiClient', () => {
         liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
         useCustomApiConfig: false,
         useApiProxy: false,
-      } as any,
+        apiProxyUrl: null,
+      },
       { apiVersion: 'v1alpha' },
     );
 
@@ -180,7 +201,7 @@ describe('getLiveApiClient', () => {
         useCustomApiConfig: true,
         useApiProxy: true,
         apiProxyUrl: 'https://proxy.example.com/v1beta/',
-      } as any,
+      },
       { apiVersion: 'v1alpha' },
     );
 
@@ -341,7 +362,7 @@ describe('buildGenerationConfig', () => {
       'gemini-2.5-flash', 'sys', baseConfig, false, 0,
       false, true, false, undefined, undefined, false, undefined, undefined, undefined, true
     );
-    const hasCodeExec = config.tools?.some((t: any) => t.codeExecution);
+    const hasCodeExec = config.tools?.some((tool) => 'codeExecution' in tool);
     expect(hasCodeExec).toBeFalsy();
   });
 
@@ -405,7 +426,7 @@ describe('buildGenerationConfig', () => {
             winner: { type: 'STRING' },
           },
         },
-      } as any,
+      },
       false,
       0,
       true

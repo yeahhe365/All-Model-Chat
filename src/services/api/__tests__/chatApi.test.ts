@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Part } from '@google/genai';
 
 const {
   mockGetConfiguredApiClient,
@@ -61,7 +62,7 @@ describe('chatApi media resolution routing', () => {
         {
           text: 'describe this image',
           mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
-        } as any,
+        } as unknown as Part,
       ],
       {},
       new AbortController().signal,
@@ -100,7 +101,7 @@ describe('chatApi media resolution routing', () => {
                 mimeType: 'image/png',
               },
               mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
-            } as any,
+            } as unknown as Part,
           ],
         },
       ],

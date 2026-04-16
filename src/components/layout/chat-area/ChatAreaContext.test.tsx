@@ -2,6 +2,7 @@ import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../contexts/I18nContext';
+import type { AppSettings, ChatSettings } from '../../../types';
 import {
   ChatAreaProvider,
   ChatAreaProviderValue,
@@ -44,7 +45,7 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onContinueGeneration: vi.fn(),
     onQuickTTS: vi.fn(async () => null),
     chatInputHeight: 0,
-    appSettings: { showWelcomeSuggestions: true } as any,
+    appSettings: { showWelcomeSuggestions: true } as AppSettings,
     currentModelId: 'gemini-3.1-pro-preview',
     onOpenSidePanel: vi.fn(),
     onQuote: vi.fn(),
@@ -55,12 +56,12 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     appSettings: {
       isSystemAudioRecordingEnabled: false,
       isPasteRichTextAsMarkdownEnabled: true,
-    } as any,
+    } as AppSettings,
     currentChatSettings: {
       modelId: 'gemini-3.1-pro-preview',
       ttsVoice: 'Aoede',
       thinkingLevel: 'MEDIUM',
-    } as any,
+    } as ChatSettings,
     setAppFileError: vi.fn(),
     activeSessionId: 'session-1',
     commandedInput: null,
@@ -174,11 +175,28 @@ describe('ChatAreaContext', () => {
   });
 
   it('throws when a slice hook is used outside ChatAreaProvider', () => {
-    expect(() => {
-      act(() => {
-        root.render(<OutsideProviderProbe />);
-      });
-    }).toThrow(/ChatAreaProvider/);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const suppressExpectedProviderError = (event: ErrorEvent) => {
+      const message =
+        event.error instanceof Error ? event.error.message : typeof event.message === 'string' ? event.message : '';
+
+      if (message.includes('ChatAreaProvider')) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('error', suppressExpectedProviderError);
+
+    try {
+      expect(() => {
+        act(() => {
+          root.render(<OutsideProviderProbe />);
+        });
+      }).toThrow(/ChatAreaProvider/);
+    } finally {
+      window.removeEventListener('error', suppressExpectedProviderError);
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it('exposes the message-list and chat-input slices from one provider value', () => {

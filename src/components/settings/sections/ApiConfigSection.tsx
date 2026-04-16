@@ -48,9 +48,10 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
   const overflowTimerRef = useRef<number | null>(null);
+  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_GEMINI_API_KEY?: string } }).env;
 
   const iconSize = useResponsiveValue(18, 20);
-  const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
+  const hasEnvKey = !!viteEnv?.VITE_GEMINI_API_KEY;
   const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
   const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
     serverManagedApi,
@@ -91,7 +92,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     const resolveKeyToTest = (): string | null => {
       if (apiKey) return apiKey;
       if (!useCustomApiConfig && hasEnvKey) {
-        return (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
+        return viteEnv?.VITE_GEMINI_API_KEY || null;
       }
       if (canUseServerManagedTestKey) return SERVER_MANAGED_API_KEY;
       return null;
