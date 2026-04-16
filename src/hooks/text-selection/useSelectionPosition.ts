@@ -17,21 +17,40 @@ const resolveContainerElement = (containerRef: ContainerRefLike): HTMLElement | 
     return containerRef;
 };
 
+const isEditableElement = (element: Element | null): boolean => {
+    if (!(element instanceof HTMLElement)) return false;
+
+    return (
+        element.tagName === 'INPUT' ||
+        element.tagName === 'TEXTAREA' ||
+        element.isContentEditable
+    );
+};
+
 export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedText, setSelectedText] = useState('');
     const selectionBoundsRef = useRef<DOMRect | null>(null);
+    const selectedTextRef = useRef('');
 
     // Monitor selection changes
     useEffect(() => {
+        const clearSelectionState = () => {
+            setPosition(null);
+            selectionBoundsRef.current = null;
+            selectedTextRef.current = '';
+            setSelectedText('');
+        };
+
         const handleSelectionChange = () => {
-            if (isAudioActive) return;
+            if (isAudioActive) {
+                clearSelectionState();
+                return;
+            }
 
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !selection.rangeCount) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
-                setSelectedText('');
+                clearSelectionState();
                 return;
             }
 
@@ -41,15 +60,13 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             // Context checks
             const containerEl = resolveContainerElement(containerRef);
             if (containerEl && !containerEl.contains(commonAncestor)) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
+                clearSelectionState();
                 return;
             }
 
             const targetElement = commonAncestor.nodeType === 1 ? commonAncestor as HTMLElement : commonAncestor.parentElement;
-            if (targetElement && (targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA')) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
+            if (isEditableElement(targetElement)) {
+                clearSelectionState();
                 return;
             }
 
@@ -60,14 +77,13 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             const text = convertHtmlToMarkdown(html).trim();
 
             if (!text) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
-                setSelectedText('');
+                clearSelectionState();
                 return;
             }
 
             const rect = range.getBoundingClientRect();
             selectionBoundsRef.current = rect;
+            selectedTextRef.current = text;
             
             setPosition({
                 top: rect.top - 50, 
@@ -86,6 +102,30 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             document.removeEventListener('keyup', handleSelectionChange);
         };
     }, [containerRef, isAudioActive]);
+
+    useEffect(() => {
+        const handleCopy = (e: ClipboardEvent) => {
+            if (isAudioActive) {
+                return;
+            }
+
+            const activeElement = document.activeElement;
+            if (isEditableElement(activeElement)) {
+                return;
+            }
+
+            const text = selectedTextRef.current;
+            if (!text || !e.clipboardData) {
+                return;
+            }
+
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', text);
+        };
+
+        document.addEventListener('copy', handleCopy);
+        return () => document.removeEventListener('copy', handleCopy);
+    }, [isAudioActive]);
 
     const clampedPosition = useMemo(() => {
         if (!position || !toolbarRef.current) return position;
@@ -130,7 +170,10 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
 
     const clearSelection = () => {
         window.getSelection()?.removeAllRanges();
+        selectionBoundsRef.current = null;
+        selectedTextRef.current = '';
         setPosition(null);
+        setSelectedText('');
     };
 
     return { position: clampedPosition, setPosition, selectedText, clearSelection };
