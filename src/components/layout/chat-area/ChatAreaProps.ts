@@ -66,7 +66,7 @@ export interface ChatAreaMessageActionsModel {
 
 export interface ChatAreaInputActionsModel {
   onMessageSent: () => void;
-  onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
+  onSendMessage: (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => void;
   onStopGenerating: () => void;
   onCancelEdit: () => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;

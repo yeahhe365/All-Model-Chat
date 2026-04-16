@@ -56,6 +56,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   isLiveMuted,
   onToggleLiveMute,
   onFastSendMessage,
+  canQueueMessage,
+  onQueueMessage,
 }) => {
   return (
     <div className="flex items-center justify-between w-full">
@@ -132,6 +134,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
                 onStopGenerating={onStopGenerating}
                 onCancelEdit={onCancelEdit}
                 onFastSendMessage={onFastSendMessage}
+                canQueueMessage={canQueueMessage}
+                onQueueMessage={onQueueMessage}
             />
         </div>
     </div>

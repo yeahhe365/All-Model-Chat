@@ -218,4 +218,6 @@ export interface ChatInputActionsProps {
   isLiveMuted?: boolean;
   onToggleLiveMute?: () => void;
   onFastSendMessage?: () => void;
+  canQueueMessage?: boolean;
+  onQueueMessage?: () => void;
 }

@@ -3,6 +3,7 @@ import { HistorySidebar } from '../sidebar/HistorySidebar';
 import { ChatArea, ChatAreaProps } from './ChatArea';
 import { AppModals } from '../modals/AppModals';
 import type { AppViewModel } from '../../hooks/app/useApp';
+import type { UploadedFile } from '../../types';
 import { useUIStore } from '../../stores/uiStore';
 import { useChatStore } from '../../stores/chatStore';
 import {
@@ -119,7 +120,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
   }, []);
 
   const onSendMessage = useCallback(
-    (text: string, options?: { isFastMode?: boolean }) => {
+    (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
       handleSendMessage({ text, ...options });
     },
     [handleSendMessage],

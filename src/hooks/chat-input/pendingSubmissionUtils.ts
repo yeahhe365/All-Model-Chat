@@ -24,6 +24,15 @@ interface BuildPendingChatInputSubmissionParams {
   isFastMode: boolean;
 }
 
+interface BuildQueuedChatInputSubmissionParams {
+  inputText: string;
+  quotes: string[];
+  modelId: string;
+  ttsContext?: string;
+  files: UploadedFile[];
+  isFastMode: boolean;
+}
+
 interface ShouldFlushPendingSubmissionParams {
   pendingSubmission: PendingChatInputSubmission | null;
   previousFiles: UploadedFile[];
@@ -59,6 +68,36 @@ export const buildPendingChatInputSubmission = ({
     isFastMode,
   };
 };
+
+export interface QueuedChatInputSubmission {
+  inputText: string;
+  textToSend: string;
+  files: UploadedFile[];
+  quotes: string[];
+  isFastMode: boolean;
+  createdAt: number;
+}
+
+export const buildQueuedChatInputSubmission = ({
+  inputText,
+  quotes,
+  modelId,
+  ttsContext,
+  files,
+  isFastMode,
+}: BuildQueuedChatInputSubmissionParams): QueuedChatInputSubmission => ({
+  inputText,
+  textToSend: buildChatInputSubmitText({
+    inputText,
+    quotes,
+    modelId,
+    ttsContext,
+  }),
+  files: [...files],
+  quotes: [...quotes],
+  isFastMode,
+  createdAt: Date.now(),
+});
 
 export const areFilesStillProcessing = (files: UploadedFile[]) => files.some((file) => file.isProcessing);
 

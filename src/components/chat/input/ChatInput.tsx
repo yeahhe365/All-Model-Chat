@@ -5,7 +5,8 @@ import { ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { useChatInput } from '../../../hooks/chat-input/useChatInput';
 import { ChatInputModals } from './ChatInputModals';
 import { ChatInputFileModals } from './ChatInputFileModals';
-import { ChatInputArea, ChatInputAreaProps } from './ChatInputArea';
+import { ChatInputArea } from './ChatInputArea';
+import { ChatInputViewModel, ChatInputViewProvider } from './ChatInputViewContext';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 
 const ChatInputComponent: React.FC = () => {
@@ -23,6 +24,8 @@ const ChatInputComponent: React.FC = () => {
     handlers,
     targetDocument,
     canSend,
+    canQueueMessage,
+    queuedSubmission,
     isAnyModalOpen,
   } = useChatInput();
 
@@ -115,10 +118,12 @@ const ChatInputComponent: React.FC = () => {
     isLiveMuted: liveAPI.isMuted,
     onToggleLiveMute: liveAPI.toggleMute,
     onFastSendMessage: handlers.handleFastSubmit,
+    canQueueMessage,
+    onQueueMessage: handlers.queueCurrentSubmission,
   };
 
   // 4. 组装输入区域核心参数
-  const areaProps: ChatInputAreaProps = {
+  const areaProps: ChatInputViewModel = {
     toolbarProps,
     actionsProps,
     slashCommandProps: {
@@ -155,6 +160,18 @@ const ChatInputComponent: React.FC = () => {
       quotes: inputState.quotes,
       onRemoveQuote: (index: number) => inputState.setQuotes((prev) => prev.filter((_, i) => i !== index)),
     },
+    queuedSubmissionProps: queuedSubmission
+      ? {
+          title: 'Next Up',
+          previewText:
+            queuedSubmission.inputText.trim() ||
+            queuedSubmission.textToSend.trim() ||
+            `${queuedSubmission.files.length} attachment${queuedSubmission.files.length > 1 ? 's' : ''}`,
+          fileCount: queuedSubmission.files.length,
+          onEdit: handlers.restoreQueuedSubmission,
+          onRemove: handlers.removeQueuedSubmission,
+        }
+      : undefined,
     layoutProps: {
       isFullscreen: inputState.isFullscreen,
       isPipActive: chatInput.isPipActive,
@@ -204,7 +221,11 @@ const ChatInputComponent: React.FC = () => {
   };
 
   // 5. 渲染 UI
-  const chatInputContent = <ChatInputArea {...areaProps} />;
+  const chatInputContent = (
+    <ChatInputViewProvider value={areaProps}>
+      <ChatInputArea />
+    </ChatInputViewProvider>
+  );
 
   return (
     <>

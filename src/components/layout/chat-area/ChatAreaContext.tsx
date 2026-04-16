@@ -55,7 +55,7 @@ export interface ChatAreaInputContextValue {
   onMessageSent: () => void;
   selectedFiles: UploadedFile[];
   setSelectedFiles: (files: UploadedFile[] | ((prevFiles: UploadedFile[]) => UploadedFile[])) => void;
-  onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
+  onSendMessage: (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => void;
   isLoading: boolean;
   isEditing: boolean;
   onStopGenerating: () => void;
