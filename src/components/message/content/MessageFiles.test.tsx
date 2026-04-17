@@ -53,4 +53,27 @@ describe('MessageFiles', () => {
     expect(images).toHaveLength(2);
     expect(images.every((image) => image.className.includes('object-cover'))).toBe(true);
   });
+
+  it('hides generated files in the top attachment strip when tool results render them inline', () => {
+    act(() => {
+      root.render(
+        <MessageFiles
+          files={[
+            createImageFile('generated-1', 'generated-image-1.png'),
+            createImageFile('plain-1', 'plain-image.png'),
+          ]}
+          content={'<div class="tool-result outcome-ok">done</div>'}
+          onImageClick={() => {}}
+          messageId="message-2"
+          hasContentOrAudio
+        />,
+      );
+    });
+
+    const images = Array.from(container.querySelectorAll('img'));
+    const sources = images.map((image) => image.getAttribute('src'));
+
+    expect(images).toHaveLength(1);
+    expect(sources).toEqual(['data:image/png;base64,plain-1']);
+  });
 });

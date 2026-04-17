@@ -25,7 +25,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     hasContentOrAudio 
 }) => {
     // Check if the message contains a tool execution result block
-    const hasToolResult = content?.includes('class="tool-result"');
+    const hasToolResult = /\btool-result\b/.test(content || '');
 
     // Separate images from other documents to handle layouts differently
     const { imageFiles, documentFiles } = useMemo(() => {
@@ -36,9 +36,9 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
         const imgs: UploadedFile[] = [];
         const docs: UploadedFile[] = [];
         files.forEach(f => {
-            // Prevent duplicate display of auto-generated execution files at the top
-            // if they will be rendered inside the ToolResultBlock at the bottom.
-            if (hasToolResult && (f.name.startsWith('generated-plot') || f.name.startsWith('generated-file'))) {
+            // Tool result blocks already render generated outputs inline.
+            // Hide any generated attachments from the top strip to avoid duplicate previews.
+            if (hasToolResult && f.name.startsWith('generated-')) {
                 return;
             }
 
