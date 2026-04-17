@@ -41,6 +41,10 @@ export const useLiveMessageProcessing = ({
         }
     }, [onTranscript]);
 
+    const clearBufferedAudio = useCallback(() => {
+        audioChunksRef.current = [];
+    }, []);
+
     const handleMessage = useCallback(async (msg: LiveServerMessage) => {
         // 1. Handle Text/Code/Audio Content (Gemini 3.1 may return multiple parts per event)
         if (msg.serverContent?.modelTurn?.parts) {
@@ -122,5 +126,5 @@ export const useLiveMessageProcessing = ({
         }
     }, [playAudioChunk, stopAudioPlayback, onTranscript, handleToolCall, setSessionHandle, sessionHandleRef, finalizeAudio]);
 
-    return { handleMessage };
+    return { handleMessage, clearBufferedAudio };
 };

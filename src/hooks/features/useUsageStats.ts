@@ -7,22 +7,25 @@ export type UsageTimeRange = 'today' | '7d' | '30d' | 'all';
 interface UsageSummary {
   totalRequests: number;
   totalPromptTokens: number;
+  totalCachedPromptTokens: number;
   totalCompletionTokens: number;
   totalTokens: number;
   estimatedCostUsd: number;
+  estimatedCostUsdAvailable: boolean;
 }
 
 export interface UsageModelBreakdown extends UsageSummary {
   modelId: string;
-  estimatedCostUsdAvailable: boolean;
 }
 
 const EMPTY_SUMMARY: UsageSummary = {
   totalRequests: 0,
   totalPromptTokens: 0,
+  totalCachedPromptTokens: 0,
   totalCompletionTokens: 0,
   totalTokens: 0,
   estimatedCostUsd: 0,
+  estimatedCostUsdAvailable: true,
 };
 
 const getRangeBounds = (range: UsageTimeRange) => {
@@ -44,15 +47,31 @@ const getRangeBounds = (range: UsageTimeRange) => {
 
 const buildSummary = (records: ApiUsageRecord[]): UsageSummary =>
   records.reduce<UsageSummary>(
-    (summary, record) => ({
-      totalRequests: summary.totalRequests + 1,
-      totalPromptTokens: summary.totalPromptTokens + record.promptTokens,
-      totalCompletionTokens: summary.totalCompletionTokens + record.completionTokens,
-      totalTokens: summary.totalTokens + record.promptTokens + record.completionTokens,
-      estimatedCostUsd:
-        summary.estimatedCostUsd +
-        (calculateTokenPriceUsd(record.modelId, record.promptTokens, record.completionTokens) ?? 0),
-    }),
+    (summary, record) => {
+      const cachedTokens = record.cachedPromptTokens ?? 0;
+      const inputTokens = Math.max(record.promptTokens - cachedTokens, 0) + (record.toolUsePromptTokens ?? 0);
+      const outputTokens = record.completionTokens + (record.thoughtTokens ?? 0);
+      const totalTokens = inputTokens + cachedTokens + outputTokens;
+      const estimatedCost = calculateTokenPriceUsd(
+        record.modelId,
+        {
+          promptTokens: record.promptTokens,
+          cachedPromptTokens: cachedTokens,
+          inputTokens,
+          completionTokens: outputTokens,
+        },
+      );
+
+      return {
+        totalRequests: summary.totalRequests + 1,
+        totalPromptTokens: summary.totalPromptTokens + inputTokens,
+        totalCachedPromptTokens: summary.totalCachedPromptTokens + cachedTokens,
+        totalCompletionTokens: summary.totalCompletionTokens + outputTokens,
+        totalTokens: summary.totalTokens + totalTokens,
+        estimatedCostUsd: summary.estimatedCostUsd + (estimatedCost ?? 0),
+        estimatedCostUsdAvailable: summary.estimatedCostUsdAvailable && estimatedCost !== null,
+      };
+    },
     EMPTY_SUMMARY,
   );
 
@@ -60,18 +79,31 @@ const buildBreakdown = (records: ApiUsageRecord[]): UsageModelBreakdown[] => {
   const grouped = new Map<string, UsageModelBreakdown>();
 
   records.forEach((record) => {
+    const cachedTokens = record.cachedPromptTokens ?? 0;
+    const inputTokens = Math.max(record.promptTokens - cachedTokens, 0) + (record.toolUsePromptTokens ?? 0);
+    const outputTokens = record.completionTokens + (record.thoughtTokens ?? 0);
+    const totalTokens = inputTokens + cachedTokens + outputTokens;
     const current = grouped.get(record.modelId) ?? {
       modelId: record.modelId,
       ...EMPTY_SUMMARY,
       estimatedCostUsdAvailable: true,
     };
 
-    const estimatedCost = calculateTokenPriceUsd(record.modelId, record.promptTokens, record.completionTokens);
+    const estimatedCost = calculateTokenPriceUsd(
+      record.modelId,
+      {
+        promptTokens: record.promptTokens,
+        cachedPromptTokens: cachedTokens,
+        inputTokens,
+        completionTokens: outputTokens,
+      },
+    );
 
     current.totalRequests += 1;
-    current.totalPromptTokens += record.promptTokens;
-    current.totalCompletionTokens += record.completionTokens;
-    current.totalTokens += record.promptTokens + record.completionTokens;
+    current.totalPromptTokens += inputTokens;
+    current.totalCachedPromptTokens += cachedTokens;
+    current.totalCompletionTokens += outputTokens;
+    current.totalTokens += totalTokens;
     current.estimatedCostUsd += estimatedCost ?? 0;
     current.estimatedCostUsdAvailable = current.estimatedCostUsdAvailable && estimatedCost !== null;
     grouped.set(record.modelId, current);

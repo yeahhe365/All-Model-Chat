@@ -1,9 +1,14 @@
 
 import { getConfiguredApiClient, getHttpOptionsForContents } from '../baseApi';
 import { logService } from "../../logService";
-import type { Part } from "@google/genai";
+import type { CountTokensConfig, Part } from "@google/genai";
 
-export const countTokensApi = async (apiKey: string, modelId: string, parts: Part[]): Promise<number> => {
+export const countTokensApi = async (
+    apiKey: string,
+    modelId: string,
+    parts: Part[],
+    config?: CountTokensConfig,
+): Promise<number> => {
     logService.info(`Counting tokens for model ${modelId}...`);
     try {
         // Sanitize parts to remove custom internal properties.
@@ -19,7 +24,8 @@ export const countTokensApi = async (apiKey: string, modelId: string, parts: Par
 
         const response = await ai.models.countTokens({
             model: modelId,
-            contents
+            contents,
+            ...(config ? { config } : {}),
         });
         return response.totalTokens || 0;
     } catch (error) {

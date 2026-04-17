@@ -26,7 +26,11 @@ export interface ApiUsageRecord {
   timestamp: number;
   modelId: string;
   promptTokens: number;
+  cachedPromptTokens?: number;
   completionTokens: number;
+  thoughtTokens?: number;
+  toolUsePromptTokens?: number;
+  totalTokens?: number;
 }
 
 const isVersionConflictError = (error: unknown): boolean => {

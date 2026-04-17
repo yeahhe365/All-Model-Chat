@@ -464,4 +464,63 @@ describe('useLiveConnection', () => {
 
     unmount();
   });
+
+  it('clears buffered audio and playback immediately before scheduling a reconnect', async () => {
+    vi.useFakeTimers();
+
+    const callbacksByAttempt: Array<{
+      onopen?: () => void;
+      onclose?: (event: unknown) => void;
+    }> = [];
+    const cleanupAudio = vi.fn();
+    const clearBufferedAudio = vi.fn();
+
+    const connectLiveSession = vi.fn(({ callbacks }) => {
+      callbacksByAttempt.push(callbacks);
+      callbacks.onopen?.();
+      return Promise.resolve({
+        sendRealtimeInput: vi.fn(),
+        close: vi.fn(),
+      });
+    });
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: connectLiveSession,
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio,
+        clearBufferedAudio,
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.connect();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      callbacksByAttempt[0]?.onclose?.({ reason: 'network-drop' });
+      await Promise.resolve();
+    });
+
+    expect(cleanupAudio).toHaveBeenCalledTimes(1);
+    expect(clearBufferedAudio).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(1);
+
+    unmount();
+  });
 });

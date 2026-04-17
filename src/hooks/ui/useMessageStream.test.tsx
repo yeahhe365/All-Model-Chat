@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useMessageStream } from './useMessageStream';
 import { streamingStore } from '../../services/streamingStore';
 
@@ -35,11 +35,17 @@ const renderHook = <T,>(callback: () => T) => {
 
 describe('useMessageStream', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     streamingStore.clear('message-stream');
+    streamingStore.clear('stale-stream');
+    streamingStore.clear('active-stream');
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     streamingStore.clear('message-stream');
+    streamingStore.clear('stale-stream');
+    streamingStore.clear('active-stream');
   });
 
   it('returns live store snapshots while streaming and resets when streaming stops', () => {
@@ -67,5 +73,39 @@ describe('useMessageStream', () => {
     expect(result.current.streamThoughts).toBe('');
 
     unmount();
+  });
+
+  it('evicts abandoned stream entries after the gc ttl elapses', () => {
+    vi.useFakeTimers();
+
+    streamingStore.updateContent('stale-stream', 'orphaned');
+    streamingStore.updateThoughts('stale-stream', 'left behind');
+
+    vi.advanceTimersByTime(5 * 60_000 + 1);
+
+    streamingStore.sweepExpiredEntries();
+
+    expect(streamingStore.getContent('stale-stream')).toBe('');
+    expect(streamingStore.getThoughts('stale-stream')).toBe('');
+  });
+
+  it('does not evict stream entries that still have active listeners', () => {
+    vi.useFakeTimers();
+
+    const unsubscribe = streamingStore.subscribe('active-stream', () => undefined);
+
+    streamingStore.updateContent('active-stream', 'still active');
+    vi.advanceTimersByTime(5 * 60_000 + 1);
+
+    streamingStore.sweepExpiredEntries();
+
+    expect(streamingStore.getContent('active-stream')).toBe('still active');
+
+    unsubscribe();
+    vi.advanceTimersByTime(5 * 60_000 + 1);
+
+    streamingStore.sweepExpiredEntries();
+
+    expect(streamingStore.getContent('active-stream')).toBe('');
   });
 });

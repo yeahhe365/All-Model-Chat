@@ -9,6 +9,7 @@ import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
 import { IconYoutube } from '../icons/CustomIcons';
 import { copyFileToClipboard } from '../../utils/fileHelpers';
+import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
 
 const LazyPdfViewer = lazy(async () => {
     const module = await import('../shared/file-preview/PdfViewer');
@@ -41,10 +42,18 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
     initialEditMode = false,
 }) => {
   const { t } = useI18n();
+  const isDocxCandidate = isDocxFile(file);
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [editedContent, setEditedContent] = useState(file.textContent ?? '');
   const [editedName, setEditedName] = useState(file.name);
   const [textContentLoaded, setTextContentLoaded] = useState(file.textContent !== undefined);
+  const [docxPreviewContent, setDocxPreviewContent] = useState<string | null>(file.textContent ?? null);
+  const [docxPreviewError, setDocxPreviewError] = useState<string | null>(
+      isDocxCandidate && file.textContent === undefined && !file.rawFile
+          ? 'Unable to preview this Word document.'
+          : null,
+  );
+  const [isDocxPreviewLoading, setIsDocxPreviewLoading] = useState(false);
 
   const handleCopyShortcut = useCallback(async () => {
       if (!file.dataUrl) return;
@@ -104,12 +113,53 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
   const isVideo = file.type.startsWith('video/') && file.type !== 'video/youtube-link';
   const isYoutube = file.type === 'video/youtube-link';
   const isAudio = file.type.startsWith('audio/');
+  const isDocx = !isImage && !isPdf && !isVideo && !isYoutube && !isAudio && isDocxCandidate;
   const isText =
       !isImage &&
+      !isDocx &&
       (file.type.startsWith('text/') ||
         file.type === 'application/json' ||
         file.type.includes('javascript') ||
         file.type.includes('xml'));
+
+  useEffect(() => {
+      let cancelled = false;
+
+      if (!isDocx || file.textContent !== undefined) {
+          return () => {
+              cancelled = true;
+          };
+      }
+
+      if (!file.rawFile) {
+          return () => {
+              cancelled = true;
+          };
+      }
+
+      // Intentional loading-state transition before async preview extraction begins.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsDocxPreviewLoading(true);
+
+      void extractDocxText(file.rawFile)
+          .then(({ text }) => {
+              if (cancelled) return;
+              setDocxPreviewContent(text);
+          })
+          .catch(() => {
+              if (cancelled) return;
+              setDocxPreviewError('Unable to preview this Word document.');
+          })
+          .finally(() => {
+              if (!cancelled) {
+                  setIsDocxPreviewLoading(false);
+              }
+          });
+
+      return () => {
+          cancelled = true;
+      };
+  }, [file, isDocx]);
 
   const navButtonClass =
       'absolute top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/60 text-white/70 hover:text-white rounded-full backdrop-blur-md transition-all active:scale-95 z-50 focus:outline-none';
@@ -172,7 +222,15 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
         <div className="flex-grow w-full h-full overflow-hidden relative">
           {isImage ? (
               <ImageViewer file={file} />
-          ) : isText ? (
+          ) : isDocxPreviewLoading ? (
+              <div className="w-full h-full flex items-center justify-center text-white/70">
+                  Loading Word preview...
+              </div>
+          ) : isDocx && docxPreviewError ? (
+              <div className="w-full h-full flex items-center justify-center text-white/60 px-6 text-center">
+                  {docxPreviewError}
+              </div>
+          ) : isText || isDocx ? (
               <TextFileViewer
                   file={file}
                   isEditable={isEditing}
@@ -183,7 +241,11 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
                           setTextContentLoaded(true);
                       }
                   }}
-                  content={isEditing && textContentLoaded ? editedContent : undefined}
+                  content={
+                      isDocx
+                          ? (isEditing ? editedContent : docxPreviewContent)
+                          : (isEditing && textContentLoaded ? editedContent : undefined)
+                  }
               />
           ) : isPdf ? (
              <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-white/70">Loading PDF viewer...</div>}>

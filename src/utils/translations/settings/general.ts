@@ -17,6 +17,7 @@ export const generalSettings = {
     usageAllTime: { en: 'All Time', zh: '全部时间' },
     usageTotalRequests: { en: 'Requests', zh: '请求次数' },
     usagePromptTokens: { en: 'Input Tokens', zh: '输入 Token' },
+    usageCachedTokens: { en: 'Cached Tokens', zh: '缓存 Token' },
     usageCompletionTokens: { en: 'Output Tokens', zh: '输出 Token' },
     usageTotalTokens: { en: 'Total Tokens', zh: '总 Token' },
     usageEstimatedCost: { en: 'Estimated Cost', zh: '预估费用' },
@@ -27,5 +28,5 @@ export const generalSettings = {
     usageRequestsColumn: { en: 'Requests', zh: '请求次数' },
     usagePriceColumn: { en: 'Price', zh: '价格' },
     usagePriceUnavailable: { en: 'Unavailable', zh: '不可用' },
-    usagePricingNote: { en: 'Strict official mode: price is shown only when the current stored fields are enough to reproduce an exact official cost. Modality-mixed, image-per-output, or minute-based models show unavailable.', zh: '严格官方模式：仅当当前记录字段足以还原官方精确价格时才显示费用。多模态混合、按图片张数或按分钟计费的模型会显示不可用。' },
+    usagePricingNote: { en: 'Strict official mode: price is shown only when the stored request fields are enough to reproduce the official per-request token cost. Explicit cache storage charges are excluded because cache TTL is not stored. Modality-mixed, image-per-output, or minute-based models show unavailable.', zh: '严格官方模式：仅当已存储的请求字段足以还原官方单次请求 Token 费用时才显示价格。由于没有保存缓存 TTL，显式缓存的存储费用不会计入。多模态混合、按图片张数或按分钟计费的模型会显示不可用。' },
 };

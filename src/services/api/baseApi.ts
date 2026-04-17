@@ -1,5 +1,5 @@
 
-import type { GoogleGenAI, Part } from "@google/genai";
+import type { CountTokensConfig, GoogleGenAI, Part } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
@@ -25,7 +25,7 @@ type ClientConfig = {
   httpOptions?: ClientHttpOptions;
 };
 
-type GenerationConfig = {
+export type GenerationConfig = {
   responseModalities?: readonly ['IMAGE', 'TEXT'];
   responseMimeType?: string;
   responseSchema?: Record<string, unknown>;
@@ -388,4 +388,29 @@ export const buildGenerationConfig = async (
     }
     
     return generationConfig;
+};
+
+export const toCountTokensConfig = (
+    generationConfig?: GenerationConfig,
+): CountTokensConfig | undefined => {
+    if (!generationConfig) {
+        return undefined;
+    }
+
+    const { systemInstruction, tools, ...requestGenerationConfig } = generationConfig;
+    const countTokensConfig: CountTokensConfig = {};
+
+    if (systemInstruction) {
+        countTokensConfig.systemInstruction = systemInstruction;
+    }
+
+    if (tools && tools.length > 0) {
+        countTokensConfig.tools = tools as CountTokensConfig['tools'];
+    }
+
+    if (Object.keys(requestGenerationConfig).length > 0) {
+        countTokensConfig.generationConfig = requestGenerationConfig as CountTokensConfig['generationConfig'];
+    }
+
+    return Object.keys(countTokensConfig).length > 0 ? countTokensConfig : undefined;
 };

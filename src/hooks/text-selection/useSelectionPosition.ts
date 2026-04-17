@@ -44,7 +44,6 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
 
         const handleSelectionChange = () => {
             if (isAudioActive) {
-                clearSelectionState();
                 return;
             }
 

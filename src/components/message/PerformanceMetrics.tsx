@@ -10,14 +10,16 @@ interface PerformanceMetricsProps {
 export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message, hideTimer }) => {
     const { 
         promptTokens, 
+        cachedPromptTokens,
         completionTokens, 
-        totalTokens,
+        toolUsePromptTokens,
         thoughtTokens,
         generationStartTime, 
         generationEndTime, 
         firstTokenTimeMs,
         isLoading 
     } = message;
+    const uncachedInputTokens = Math.max((promptTokens ?? 0) - (cachedPromptTokens ?? 0), 0);
 
     const [liveElapsedTime, setLiveElapsedTime] = useState<number>(() => {
         if (!generationStartTime) return 0;
@@ -66,7 +68,12 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
         ? generatedTokens / generationDuration 
         : 0;
 
-    const showTokens = typeof promptTokens === 'number' || typeof completionTokens === 'number' || typeof totalTokens === 'number';
+    const showTokens =
+        typeof promptTokens === 'number' ||
+        typeof cachedPromptTokens === 'number' ||
+        typeof completionTokens === 'number' ||
+        typeof toolUsePromptTokens === 'number' ||
+        typeof thoughtTokens === 'number';
     const showTimer = (isLoading && !hideTimer) || (generationStartTime && generationEndTime);
 
     if (!showTokens && !showTimer) return null;
@@ -76,8 +83,20 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
             {showTokens && (
                 <div className="flex items-center gap-1.5 bg-[var(--theme-bg-tertiary)]/30 px-2 py-0.5 rounded-md border border-[var(--theme-border-secondary)]/30" title="Token Usage">
                     <span className="flex items-center gap-2">
-                        <span>I: {(promptTokens ?? 0).toLocaleString()}</span>
+                        <span>U: {uncachedInputTokens.toLocaleString()}</span>
                         <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
+                        {cachedPromptTokens !== undefined && cachedPromptTokens > 0 && (
+                            <>
+                                <span>C: {cachedPromptTokens.toLocaleString()}</span>
+                                <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
+                            </>
+                        )}
+                        {toolUsePromptTokens !== undefined && toolUsePromptTokens > 0 && (
+                            <>
+                                <span>T: {toolUsePromptTokens.toLocaleString()}</span>
+                                <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
+                            </>
+                        )}
                         {thoughtTokens !== undefined && thoughtTokens > 0 && (
                             <>
                                 <span className="flex items-center gap-1">
@@ -87,8 +106,6 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ message,
                             </>
                         )}
                         <span>O: {(completionTokens ?? 0).toLocaleString()}</span>
-                        <span className="w-px h-3 bg-[var(--theme-text-primary)]/20"></span>
-                        <span className="font-semibold">Σ: {(totalTokens ?? ((promptTokens||0) + (completionTokens||0))).toLocaleString()}</span>
                     </span>
                 </div>
             )}

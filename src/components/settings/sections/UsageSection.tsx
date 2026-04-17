@@ -66,12 +66,13 @@ export const UsageSection: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <StatCard title={t('usageTotalRequests')} value={summary.totalRequests.toLocaleString()} icon={<Activity size={14} />} />
             <StatCard title={t('usagePromptTokens')} value={summary.totalPromptTokens.toLocaleString()} icon={<BarChart3 size={14} />} />
+            <StatCard title={t('usageCachedTokens')} value={summary.totalCachedPromptTokens.toLocaleString()} icon={<Coins size={14} />} />
             <StatCard title={t('usageCompletionTokens')} value={summary.totalCompletionTokens.toLocaleString()} icon={<Coins size={14} />} />
             <StatCard title={t('usageTotalTokens')} value={summary.totalTokens.toLocaleString()} icon={<Coins size={14} />} />
-            <StatCard title={t('usageEstimatedCost')} value={formatPriceUsd(summary.estimatedCostUsd)} icon={<Coins size={14} />} />
+            <StatCard title={t('usageEstimatedCost')} value={summary.estimatedCostUsdAvailable ? formatPriceUsd(summary.estimatedCostUsd) : '—'} icon={<Coins size={14} />} />
           </div>
 
           <div className="rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-5 shadow-sm">
@@ -98,6 +99,9 @@ export const UsageSection: React.FC = () => {
                         {t('usagePromptTokens')}
                       </th>
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
+                        {t('usageCachedTokens')}
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)]">
                         {t('usageCompletionTokens')}
                       </th>
                       <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-primary)]">
@@ -119,6 +123,9 @@ export const UsageSection: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-right text-sm font-mono text-[var(--theme-text-secondary)]">
                           {item.totalPromptTokens.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-mono text-[var(--theme-text-secondary)]">
+                          {item.totalCachedPromptTokens.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 text-right text-sm font-mono text-[var(--theme-text-secondary)]">
                           {item.totalCompletionTokens.toLocaleString()}

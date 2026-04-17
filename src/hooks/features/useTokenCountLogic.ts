@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { UploadedFile, AppSettings } from '../../types';
 import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
+import { buildGenerationConfig, toCountTokensConfig } from '../../services/api/baseApi';
 
 interface UseTokenCountLogicProps {
     isOpen: boolean;
@@ -51,7 +52,34 @@ export const useTokenCountLogic = ({
                 return;
             }
 
-            const count = await geminiServiceInstance.countTokens(keyResult.key, modelId, contentParts);
+            const generationConfig = await buildGenerationConfig(
+                modelId,
+                appSettings.systemInstruction,
+                {
+                    temperature: appSettings.temperature,
+                    topP: appSettings.topP,
+                    topK: appSettings.topK,
+                },
+                appSettings.showThoughts,
+                appSettings.thinkingBudget,
+                !!appSettings.isGoogleSearchEnabled,
+                !!appSettings.isCodeExecutionEnabled,
+                !!appSettings.isUrlContextEnabled,
+                appSettings.thinkingLevel,
+                undefined,
+                !!appSettings.isDeepSearchEnabled,
+                undefined,
+                appSettings.safetySettings,
+                appSettings.mediaResolution,
+                !!appSettings.isLocalPythonEnabled,
+            );
+
+            const count = await geminiServiceInstance.countTokens(
+                keyResult.key,
+                modelId,
+                contentParts,
+                toCountTokensConfig(generationConfig),
+            );
             setTokenCount(count);
         } catch (err) {
             console.error("Token calculation failed", err);

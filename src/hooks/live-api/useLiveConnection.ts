@@ -12,6 +12,7 @@ interface UseLiveConnectionProps {
     tools: Tool[];
     initializeAudio: (onAudioData: (data: Float32Array) => void) => Promise<void | { audioCtx: AudioContext; inputCtx: AudioContext }>;
     cleanupAudio: () => void;
+    clearBufferedAudio?: () => void;
     stopVideo: () => void;
     handleMessage: (msg: LiveServerMessage) => void;
     onClose?: () => void;
@@ -28,6 +29,7 @@ export const useLiveConnection = ({
     tools,
     initializeAudio,
     cleanupAudio,
+    clearBufferedAudio,
     stopVideo,
     handleMessage,
     onClose,
@@ -63,10 +65,17 @@ export const useLiveConnection = ({
     const maxRetries = 5;
     const baseDelay = 1000;
 
+    const resetAudioState = useCallback(() => {
+        clearBufferedAudio?.();
+        cleanupAudio();
+    }, [clearBufferedAudio, cleanupAudio]);
+
     const triggerReconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
             return;
         }
+
+        resetAudioState();
 
         if (retryCountRef.current >= maxRetries) {
             logService.error("Max reconnection attempts reached.");
@@ -77,7 +86,6 @@ export const useLiveConnection = ({
             isConnectedRef.current = false;
             setIsConnected(false);
             
-            cleanupAudio();
             stopVideo();
             return;
         }
@@ -95,7 +103,7 @@ export const useLiveConnection = ({
             retryCountRef.current++;
             connectRef.current(); // Call the latest connect function
         }, delay);
-    }, [cleanupAudio, stopVideo]);
+    }, [resetAudioState, stopVideo]);
 
     const connect = useCallback(async () => {
         // Clear any pending reconnection timeout if we are manually connecting
@@ -211,7 +219,7 @@ export const useLiveConnection = ({
             if (err instanceof Error && err.name === 'LiveApiAuthConfigurationError') {
                 setIsReconnecting(false);
                 setError(err.message || "Failed to start session");
-                cleanupAudio();
+                resetAudioState();
                 stopVideo();
                 return;
             }
@@ -220,10 +228,10 @@ export const useLiveConnection = ({
                 triggerReconnect();
             } else {
                 setError(err instanceof Error ? err.message : "Failed to start session");
-                cleanupAudio();
+                resetAudioState();
             }
         }
-    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, cleanupAudio, stopVideo, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
+    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, resetAudioState, stopVideo, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
 
     const sendText = useCallback(async (text: string) => {
         if (!sessionRef.current) return;
@@ -250,7 +258,7 @@ export const useLiveConnection = ({
         }
         sessionRef.current = null;
         
-        cleanupAudio();
+        resetAudioState();
         stopVideo(); // Stop video stream if active
 
         // 同步修改 Ref
@@ -261,7 +269,7 @@ export const useLiveConnection = ({
         sessionHandleRef.current = null;
         
         if (onClose) onClose();
-    }, [onClose, cleanupAudio, stopVideo, sessionRef, setSessionHandle, sessionHandleRef]);
+    }, [onClose, resetAudioState, stopVideo, sessionRef, setSessionHandle, sessionHandleRef]);
 
     // Update the ref whenever connect changes so triggerReconnect calls the latest version
     useEffect(() => {

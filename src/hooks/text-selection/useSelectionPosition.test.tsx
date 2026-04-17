@@ -7,9 +7,10 @@ const renderHook = <T,>(callback: () => T) => {
   const container = document.createElement('div');
   const root = createRoot(container);
   const result: { current: T | null } = { current: null };
+  let currentCallback = callback;
 
   const TestComponent = () => {
-    result.current = callback();
+    result.current = currentCallback();
     return null;
   };
 
@@ -19,6 +20,12 @@ const renderHook = <T,>(callback: () => T) => {
 
   return {
     result: result as { current: T },
+    rerender: (nextCallback: () => T) => {
+      currentCallback = nextCallback;
+      act(() => {
+        root.render(<TestComponent />);
+      });
+    },
     unmount: () => {
       act(() => {
         root.unmount();
@@ -238,6 +245,49 @@ describe('useSelectionPosition', () => {
 
     expect(result.current.selectedText).toBe('');
     expect(result.current.position).toBeNull();
+
+    unmount();
+  });
+
+  it('preserves the toolbar anchor while audio playback is active', () => {
+    const host = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.textContent = 'hello world';
+    host.appendChild(strong);
+    document.body.appendChild(host);
+
+    const toolbarRef = createToolbarRef();
+    let isAudioActive = false;
+
+    const { result, rerender, unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive,
+        toolbarRef,
+      }),
+    );
+
+    selectNode(strong);
+
+    expect(result.current.selectedText).toBe('**hello world**');
+    expect(result.current.position).not.toBeNull();
+
+    isAudioActive = true;
+    rerender(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive,
+        toolbarRef,
+      }),
+    );
+
+    window.getSelection()?.removeAllRanges();
+    act(() => {
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+
+    expect(result.current.selectedText).toBe('**hello world**');
+    expect(result.current.position).not.toBeNull();
 
     unmount();
   });

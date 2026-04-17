@@ -268,7 +268,11 @@ const ChatInputComponent: React.FC = () => {
         onClosePreview={localFileState.closePreviewFile}
         inputText={inputState.inputText}
         selectedFiles={chatInput.selectedFiles}
-        appSettings={chatInput.appSettings}
+        appSettings={{
+          ...chatInput.appSettings,
+          ...chatInput.currentChatSettings,
+          modelId: chatInput.currentChatSettings.modelId,
+        }}
         availableModels={chatInput.availableModels}
         currentModelId={chatInput.currentChatSettings.modelId}
         isGemini3={capabilities.isGemini3}

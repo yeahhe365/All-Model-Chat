@@ -17,30 +17,41 @@ import {
 
 class FakeWorker {
   onmessage: ((event: MessageEvent) => void) | null = null;
+  onerror: ((event: ErrorEvent) => void) | null = null;
+  onmessageerror: ((event: MessageEvent) => void) | null = null;
   postMessage = vi.fn();
   terminate = vi.fn();
 
   emit(data: Record<string, unknown>) {
     this.onmessage?.({ data } as MessageEvent);
   }
+
+  emitError(message = 'worker crashed') {
+    this.onerror?.({ message } as ErrorEvent);
+  }
+
+  emitMessageError(data: Record<string, unknown> = {}) {
+    this.onmessageerror?.({ data } as MessageEvent);
+  }
 }
 
 const createService = (overrides: Partial<ConstructorParameters<typeof PyodideService>[0]> = {}) => {
-  const worker = new FakeWorker();
+  const workers = [new FakeWorker(), new FakeWorker(), new FakeWorker()];
   const createObjectUrl = vi.fn(() => 'blob:pyodide-worker');
   const revokeObjectUrl = vi.fn();
-  const ids = ['mount-1', 'run-1', 'run-2'];
+  const createWorker = vi.fn(() => (workers.shift() ?? new FakeWorker()) as unknown as Worker);
+  const ids = ['mount-1', 'run-1', 'run-2', 'run-3', 'run-4'];
 
   const service = new PyodideService({
     baseUri: 'https://example.com/app/index.html',
-    createWorker: vi.fn(() => worker as unknown as Worker),
+    createWorker,
     createObjectUrl,
     revokeObjectUrl,
     createRequestId: () => ids.shift() ?? `req-${Date.now()}`,
     ...overrides,
   });
 
-  return { service, worker, createObjectUrl, revokeObjectUrl };
+  return { service, workers, createWorker, createObjectUrl, revokeObjectUrl };
 };
 
 describe('buildPyodideWorkerScript', () => {
@@ -61,7 +72,8 @@ describe('PyodideService', () => {
   });
 
   it('mounts raw file buffers through the worker and resolves on mount completion', async () => {
-    const { service, worker, createObjectUrl, revokeObjectUrl } = createService();
+    const { service, workers, createObjectUrl, revokeObjectUrl } = createService();
+    const [worker] = workers;
     const csvFile = new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' });
 
     const mountPromise = service.mountFiles([
@@ -93,7 +105,8 @@ describe('PyodideService', () => {
   });
 
   it('resolves execution payloads posted back from the worker', async () => {
-    const { service, worker } = createService();
+    const { service, workers } = createService();
+    const [worker] = workers;
 
     const runPromise = service.runPython('print("hello")');
 
@@ -132,5 +145,94 @@ describe('PyodideService', () => {
     await vi.advanceTimersByTimeAsync(60_000);
 
     await rejection;
+  });
+
+  it('recreates the worker after a timed out execution so the next request can recover', async () => {
+    vi.useFakeTimers();
+
+    const { service, workers, createWorker } = createService();
+    const [firstWorker, secondWorker] = workers;
+
+    const timedOutRun = service.runPython('print("slow")');
+    const timedOutRejection = expect(timedOutRun).rejects.toThrow('Execution timed out (60s)');
+    await vi.advanceTimersByTimeAsync(60_000);
+    await timedOutRejection;
+
+    expect(firstWorker.terminate).toHaveBeenCalledTimes(1);
+
+    const recoveredRun = service.runPython('print("recovered")');
+
+    expect(createWorker).toHaveBeenCalledTimes(2);
+    expect(secondWorker.postMessage).toHaveBeenCalledWith({
+      id: 'run-1',
+      code: 'print("recovered")',
+    });
+
+    secondWorker.emit({
+      id: 'run-1',
+      status: 'success',
+      output: 'recovered',
+    });
+
+    await expect(recoveredRun).resolves.toEqual({
+      status: 'success',
+      output: 'recovered',
+      image: undefined,
+      files: undefined,
+      result: undefined,
+    });
+  });
+
+  it('resets the worker after a fatal worker error and rejects the in-flight request', async () => {
+    const { service, workers, createWorker } = createService();
+    const [firstWorker, secondWorker] = workers;
+
+    const crashedRun = service.runPython('print("boom")');
+    firstWorker.emitError('worker crashed');
+
+    await expect(crashedRun).rejects.toThrow('worker crashed');
+    expect(firstWorker.terminate).toHaveBeenCalledTimes(1);
+
+    const recoveredRun = service.runPython('print("after crash")');
+    expect(createWorker).toHaveBeenCalledTimes(2);
+
+    secondWorker.emit({
+      id: 'run-1',
+      status: 'success',
+      output: 'after crash',
+    });
+
+    await expect(recoveredRun).resolves.toEqual({
+      status: 'success',
+      output: 'after crash',
+      image: undefined,
+      files: undefined,
+      result: undefined,
+    });
+  });
+
+  it('rejects overlapping executions while a request is already running', async () => {
+    const { service, workers } = createService();
+    const [worker] = workers;
+
+    const firstRun = service.runPython('print("first")');
+    const secondRun = service.runPython('print("second")');
+
+    await expect(secondRun).rejects.toThrow('Pyodide request already in progress');
+    expect(worker.postMessage).toHaveBeenCalledTimes(1);
+
+    worker.emit({
+      id: 'mount-1',
+      status: 'success',
+      output: 'first',
+    });
+
+    await expect(firstRun).resolves.toEqual({
+      status: 'success',
+      output: 'first',
+      image: undefined,
+      files: undefined,
+      result: undefined,
+    });
   });
 });

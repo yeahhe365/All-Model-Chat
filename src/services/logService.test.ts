@@ -40,7 +40,14 @@ describe('logService token usage capture', () => {
     const { logService } = await import('./logService');
     mockAddApiUsageRecord.mockClear();
 
-    logService.recordTokenUsage('gemini-3.1-pro-preview', 123, 456);
+    logService.recordTokenUsage('gemini-3.1-pro-preview', {
+      promptTokens: 123,
+      cachedPromptTokens: 78,
+      completionTokens: 456,
+      thoughtTokens: 22,
+      toolUsePromptTokens: 17,
+      totalTokens: 618,
+    });
     await Promise.resolve();
 
     expect(mockAddApiUsageRecord).toHaveBeenCalledWith(
@@ -48,6 +55,10 @@ describe('logService token usage capture', () => {
         modelId: 'gemini-3.1-pro-preview',
         promptTokens: 123,
         completionTokens: 456,
+        cachedPromptTokens: 78,
+        thoughtTokens: 22,
+        toolUsePromptTokens: 17,
+        totalTokens: 618,
         timestamp: expect.any(Number),
       }),
     );

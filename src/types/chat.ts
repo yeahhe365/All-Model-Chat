@@ -69,7 +69,9 @@ export interface ChatMessage {
   thinkingTimeMs?: number;
   firstTokenTimeMs?: number; // Time to First Token (TTFT) in ms
   promptTokens?: number;
+  cachedPromptTokens?: number;
   completionTokens?: number;
+  toolUsePromptTokens?: number;
   totalTokens?: number;
   thoughtTokens?: number; // Added for tracking thinking tokens
   cumulativeTotalTokens?: number; // Added for cumulative token count

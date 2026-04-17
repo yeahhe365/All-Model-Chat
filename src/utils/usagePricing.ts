@@ -1,9 +1,11 @@
 interface TokenPricingRule {
   kind: 'flat' | 'tiered';
   inputPerMillion: number;
+  cachedInputPerMillion?: number;
   outputPerMillion: number;
   thresholdTokens?: number;
   inputPerMillionAboveThreshold?: number;
+  cachedInputPerMillionAboveThreshold?: number;
   outputPerMillionAboveThreshold?: number;
 }
 
@@ -11,15 +13,17 @@ const UNSUPPORTED = null;
 
 const TOKEN_PRICING: Record<string, TokenPricingRule | null> = {
   // Official Google AI Studio / Gemini Developer API token pricing checked on 2026-04-17.
-  // Keep only models whose exact official price can be determined from the
-  // fields we currently store: promptTokens + completionTokens + modelId.
+  // Keep only models whose exact request-time official price can be determined from the
+  // fields we currently store: effective prompt tokens, cached prompt tokens, output tokens, and modelId.
   'gemini-3.1-pro-preview': {
     kind: 'tiered',
-    inputPerMillion: 1,
-    outputPerMillion: 6,
+    inputPerMillion: 2,
+    cachedInputPerMillion: 0.2,
+    outputPerMillion: 12,
     thresholdTokens: 200_000,
-    inputPerMillionAboveThreshold: 2,
-    outputPerMillionAboveThreshold: 9,
+    inputPerMillionAboveThreshold: 4,
+    cachedInputPerMillionAboveThreshold: 0.4,
+    outputPerMillionAboveThreshold: 18,
   },
   // These models have modality-specific, minute-based, or image-per-output
   // pricing. With current records we cannot reconstruct their exact official
@@ -44,24 +48,48 @@ const normalizeModelId = (modelId: string) => modelId.replace(/^models\//, '');
 
 export const calculateTokenPriceUsd = (
   modelId: string,
-  promptTokens: number,
-  completionTokens: number,
+  usage: {
+    promptTokens: number;
+    cachedPromptTokens?: number;
+    inputTokens?: number;
+    completionTokens: number;
+  },
 ): number | null => {
   const pricing = TOKEN_PRICING[normalizeModelId(modelId)];
 
   if (!pricing) {
     return null;
   }
+  const cachedPromptTokens = usage.cachedPromptTokens ?? 0;
+  const thresholdPromptTokens = usage.promptTokens;
+  const inputTokens = usage.inputTokens ?? Math.max(usage.promptTokens - cachedPromptTokens, 0);
+  const completionTokens = usage.completionTokens;
 
   if (pricing.kind === 'flat') {
-    return (promptTokens / 1_000_000) * pricing.inputPerMillion + (completionTokens / 1_000_000) * pricing.outputPerMillion;
+    const cachedRate = pricing.cachedInputPerMillion;
+    if (cachedPromptTokens > 0 && cachedRate === undefined) {
+      return null;
+    }
+
+    return (inputTokens / 1_000_000) * pricing.inputPerMillion
+      + (cachedPromptTokens / 1_000_000) * (cachedRate ?? 0)
+      + (completionTokens / 1_000_000) * pricing.outputPerMillion;
   }
 
-  const useTierTwo = promptTokens > (pricing.thresholdTokens ?? Number.MAX_SAFE_INTEGER);
+  const useTierTwo = thresholdPromptTokens > (pricing.thresholdTokens ?? Number.MAX_SAFE_INTEGER);
   const inputRate = useTierTwo ? pricing.inputPerMillionAboveThreshold ?? pricing.inputPerMillion : pricing.inputPerMillion;
+  const cachedInputRate = useTierTwo
+    ? pricing.cachedInputPerMillionAboveThreshold ?? pricing.cachedInputPerMillion
+    : pricing.cachedInputPerMillion;
   const outputRate = useTierTwo ? pricing.outputPerMillionAboveThreshold ?? pricing.outputPerMillion : pricing.outputPerMillion;
 
-  return (promptTokens / 1_000_000) * inputRate + (completionTokens / 1_000_000) * outputRate;
+  if (cachedPromptTokens > 0 && cachedInputRate === undefined) {
+    return null;
+  }
+
+  return (inputTokens / 1_000_000) * inputRate
+    + (cachedPromptTokens / 1_000_000) * (cachedInputRate ?? 0)
+    + (completionTokens / 1_000_000) * outputRate;
 };
 
 export const formatPriceUsd = (amount: number | null): string => {

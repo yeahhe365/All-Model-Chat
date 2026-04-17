@@ -226,6 +226,7 @@ export const buildPyodideWorkerScript = (baseUri: string) => {
 export class PyodideService {
     private worker: Worker | null = null;
     private pendingPromises = new Map<string, { resolve: (val: void | ExecutionResult) => void; reject: (err: unknown) => void }>();
+    private activeRequestId: string | null = null;
     private readonly baseUri: string | undefined;
     private readonly createWorker: (url: string) => Worker;
     private readonly createObjectUrl: (blob: Blob) => string;
@@ -249,6 +250,70 @@ export class PyodideService {
         this.createRequestId = createRequestId ?? (() => Math.random().toString(36).substring(7));
     }
 
+    private normalizeWorkerError(error: unknown, fallbackMessage: string) {
+        if (error instanceof Error) {
+            return error;
+        }
+
+        if (typeof error === 'string') {
+            return new Error(error);
+        }
+
+        if (
+            typeof error === 'object' &&
+            error !== null &&
+            'message' in error &&
+            typeof (error as { message?: unknown }).message === 'string'
+        ) {
+            return new Error((error as { message: string }).message);
+        }
+
+        return new Error(fallbackMessage);
+    }
+
+    private beginRequest(id: string) {
+        if (this.activeRequestId) {
+            throw new Error('Pyodide request already in progress');
+        }
+
+        this.activeRequestId = id;
+    }
+
+    private completeRequest(id: string) {
+        if (this.activeRequestId === id) {
+            this.activeRequestId = null;
+        }
+    }
+
+    private terminateWorker() {
+        if (!this.worker) {
+            return;
+        }
+
+        this.worker.onmessage = null;
+        this.worker.onerror = null;
+        this.worker.onmessageerror = null;
+        this.worker.terminate();
+        this.worker = null;
+    }
+
+    private resetWorker(reason: unknown, options?: { skipRejectIds?: string[] }) {
+        const normalizedError = this.normalizeWorkerError(reason, 'Pyodide worker terminated unexpectedly.');
+        const skipRejectIds = new Set(options?.skipRejectIds ?? []);
+
+        this.terminateWorker();
+        this.activeRequestId = null;
+
+        for (const [id, promise] of this.pendingPromises.entries()) {
+            if (skipRejectIds.has(id)) {
+                continue;
+            }
+
+            promise.reject(normalizedError);
+            this.pendingPromises.delete(id);
+        }
+    }
+
     private initWorker() {
         if (!this.worker) {
             const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript(this.baseUri ?? document.baseURI);
@@ -257,6 +322,12 @@ export class PyodideService {
             
             this.worker = this.createWorker(url);
             this.worker.onmessage = this.handleMessage.bind(this);
+            this.worker.onerror = (event) => {
+                this.resetWorker(event, { skipRejectIds: [] });
+            };
+            this.worker.onmessageerror = (event) => {
+                this.resetWorker(event, { skipRejectIds: [] });
+            };
             
             // Clean up the object URL after worker creation
             this.revokeObjectUrl(url);
@@ -270,6 +341,9 @@ export class PyodideService {
         const promise = this.pendingPromises.get(id);
         
         if (promise) {
+            this.pendingPromises.delete(id);
+            this.completeRequest(id);
+
             if (status === 'success') {
                 if (type === 'MOUNT_COMPLETE') {
                     promise.resolve(undefined);
@@ -279,7 +353,6 @@ export class PyodideService {
             } else {
                 promise.reject(error);
             }
-            this.pendingPromises.delete(id);
         }
     }
 
@@ -301,6 +374,13 @@ export class PyodideService {
         if (validFiles.length === 0) return;
 
         return new Promise<void>((resolve, reject) => {
+             try {
+                 this.beginRequest(id);
+             } catch (error) {
+                 reject(error);
+                 return;
+             }
+
              this.pendingPromises.set(id, { resolve: resolve as (val: void | ExecutionResult) => void, reject });
              
              // Use transferables for efficiency to avoid copying large buffers
@@ -316,6 +396,8 @@ export class PyodideService {
              this.setTimeoutFn(() => {
                 if (this.pendingPromises.has(id)) {
                     this.pendingPromises.delete(id);
+                    this.completeRequest(id);
+                    this.resetWorker(new Error("File mount timed out"), { skipRejectIds: [id] });
                     // Don't reject, just warn, as execution might still work if files weren't critical
                     console.warn("File mount timed out");
                     resolve(); 
@@ -329,6 +411,13 @@ export class PyodideService {
         const id = this.createRequestId();
         
         return new Promise<ExecutionResult>((resolve, reject) => {
+            try {
+                this.beginRequest(id);
+            } catch (error) {
+                reject(error);
+                return;
+            }
+
             this.pendingPromises.set(id, { resolve: resolve as (val: void | ExecutionResult) => void, reject });
             this.worker?.postMessage({ id, code });
             
@@ -336,6 +425,8 @@ export class PyodideService {
             this.setTimeoutFn(() => {
                 if (this.pendingPromises.has(id)) {
                     this.pendingPromises.delete(id);
+                    this.completeRequest(id);
+                    this.resetWorker(new Error("Execution timed out (60s)"), { skipRejectIds: [id] });
                     reject(new Error("Execution timed out (60s)"));
                 }
             }, 60000);

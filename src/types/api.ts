@@ -1,5 +1,5 @@
 
-import type { Content, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
+import type { Content, CountTokensConfig, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
 import type { SafetySetting } from './settings';
 
 export type ChatHistoryItem = Content & {
@@ -94,7 +94,7 @@ export interface GeminiService {
     imageSize?: string,
     requestConfig?: EditImageRequestConfig,
   ) => Promise<Part[]>;
-  countTokens: (apiKey: string, modelId: string, parts: Part[]) => Promise<number>;
+  countTokens: (apiKey: string, modelId: string, parts: Part[], config?: CountTokensConfig) => Promise<number>;
 }
 
 export interface ThoughtSupportingPart extends Part {

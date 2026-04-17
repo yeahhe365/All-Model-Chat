@@ -14,8 +14,8 @@ export interface LogEntry {
 }
 
 export interface TokenUsageStats {
-    prompt: number;
-    completion: number;
+    input: number;
+    output: number;
 }
 
 type LogListener = (newLogs: LogEntry[]) => void;
@@ -185,13 +185,33 @@ class LogServiceImpl {
 
   // --- Token Usage Tracking ---
 
+  private normalizeTokenUsageStats(stats: unknown): TokenUsageStats {
+      if (!stats || typeof stats !== 'object') {
+          return { input: 0, output: 0 };
+      }
+
+      const usage = stats as {
+          input?: number;
+          output?: number;
+          prompt?: number;
+          completion?: number;
+      };
+
+      return {
+          input: usage.input ?? usage.prompt ?? 0,
+          output: usage.output ?? usage.completion ?? 0,
+      };
+  }
+
   private loadTokenUsage() {
       try {
           const storedUsage = localStorage.getItem(TOKEN_USAGE_STORAGE_KEY);
           if (storedUsage) {
               const parsed = JSON.parse(storedUsage);
               if (Array.isArray(parsed)) {
-                  this.tokenUsage = new Map(parsed);
+                  this.tokenUsage = new Map(
+                    parsed.map(([modelId, stats]) => [modelId, this.normalizeTokenUsageStats(stats)]),
+                  );
               }
           }
       } catch (e) {
@@ -213,20 +233,36 @@ class LogServiceImpl {
     }
   }
 
-  public recordTokenUsage(modelId: string, prompt: number, completion: number) {
+  public recordTokenUsage(
+    modelId: string,
+    usage: {
+      promptTokens: number;
+      cachedPromptTokens?: number;
+      completionTokens: number;
+      thoughtTokens?: number;
+      toolUsePromptTokens?: number;
+      totalTokens?: number;
+    },
+  ) {
     if (!modelId) return;
-    const current = this.tokenUsage.get(modelId) || { prompt: 0, completion: 0 };
+    const current = this.tokenUsage.get(modelId) || { input: 0, output: 0 };
+    const inputTokens = Math.max(usage.promptTokens - (usage.cachedPromptTokens ?? 0), 0) + (usage.toolUsePromptTokens ?? 0);
+    const outputTokens = usage.completionTokens + (usage.thoughtTokens ?? 0);
     this.tokenUsage.set(modelId, {
-        prompt: current.prompt + prompt,
-        completion: current.completion + completion
+        input: current.input + inputTokens,
+        output: current.output + outputTokens,
     });
     this.saveTokenUsage();
     this.notifyTokenUsageListeners();
     void dbService.addApiUsageRecord({
       timestamp: Date.now(),
       modelId,
-      promptTokens: prompt,
-      completionTokens: completion,
+      promptTokens: usage.promptTokens,
+      cachedPromptTokens: usage.cachedPromptTokens ?? 0,
+      completionTokens: usage.completionTokens,
+      thoughtTokens: usage.thoughtTokens ?? 0,
+      toolUsePromptTokens: usage.toolUsePromptTokens ?? 0,
+      totalTokens: usage.totalTokens ?? (inputTokens + outputTokens),
     }).catch((error) => {
       console.error('Failed to persist API usage record:', error);
     });

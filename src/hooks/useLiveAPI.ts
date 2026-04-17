@@ -62,7 +62,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     });
 
     // 4. Message Processing Hook
-    const { handleMessage } = useLiveMessageProcessing({
+    const { handleMessage, clearBufferedAudio } = useLiveMessageProcessing({
         playAudioChunk,
         stopAudioPlayback,
         onTranscript,
@@ -87,6 +87,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         tools,
         initializeAudio,
         cleanupAudio,
+        clearBufferedAudio,
         stopVideo,
         handleMessage,
         onClose,

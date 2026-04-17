@@ -88,11 +88,24 @@ export const useChatStreamHandler = ({
             }
 
             if (usageMetadata) {
-                const { promptTokens, completionTokens } = calculateTokenStats(usageMetadata);
+                const {
+                    promptTokens,
+                    cachedPromptTokens,
+                    completionTokens,
+                    thoughtTokens,
+                    toolUsePromptTokens,
+                    totalTokens,
+                } = calculateTokenStats(usageMetadata);
                 logService.recordTokenUsage(
                     currentChatSettings.modelId,
-                    promptTokens,
-                    completionTokens
+                    {
+                        promptTokens,
+                        cachedPromptTokens,
+                        completionTokens,
+                        thoughtTokens,
+                        toolUsePromptTokens,
+                        totalTokens,
+                    },
                 );
             }
 

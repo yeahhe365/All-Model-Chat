@@ -191,7 +191,14 @@ export const finalizeMessages = (
             const isLastMessageOfRun = m.id === Array.from(newModelMessageIds).pop();
             
             // Token Extraction Logic using helper
-            const { promptTokens, completionTokens, totalTokens, thoughtTokens } = calculateTokenStats(isLastMessageOfRun ? usageMetadata : undefined);
+            const {
+                promptTokens,
+                cachedPromptTokens,
+                completionTokens,
+                totalTokens,
+                thoughtTokens,
+                toolUsePromptTokens,
+            } = calculateTokenStats(isLastMessageOfRun ? usageMetadata : undefined);
             
             if (isLastMessageOfRun) {
                 cumulativeTotal += totalTokens;
@@ -207,7 +214,9 @@ export const finalizeMessages = (
                 groundingMetadata: isLastMessageOfRun ? groundingMetadata : undefined,
                 urlContextMetadata: isLastMessageOfRun ? urlContextMetadata : undefined,
                 promptTokens: isLastMessageOfRun ? promptTokens : undefined,
+                cachedPromptTokens: isLastMessageOfRun ? cachedPromptTokens : undefined,
                 completionTokens: isLastMessageOfRun ? completionTokens : undefined,
+                toolUsePromptTokens: isLastMessageOfRun ? toolUsePromptTokens : undefined,
                 totalTokens: isLastMessageOfRun ? totalTokens : undefined,
                 thoughtTokens: isLastMessageOfRun ? thoughtTokens : undefined, 
                 cumulativeTotalTokens: isLastMessageOfRun ? cumulativeTotal : undefined,
