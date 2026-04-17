@@ -1,5 +1,5 @@
 import { AppSettings, ChatGroup, PersistedSessionFileRecord, SavedChatSession, SavedScenario } from '../types';
-import { LogEntry } from '../services/logService';
+import type { LogEntry } from '../services/logService';
 import {
   attachPersistedSessionFiles,
   extractPersistedSessionFileRecords,
@@ -7,7 +7,7 @@ import {
 } from './chat/session';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const SESSIONS_STORE = 'sessions';
 const FILES_STORE = 'files';
@@ -15,10 +15,19 @@ const GROUPS_STORE = 'groups';
 const SCENARIOS_STORE = 'scenarios';
 const KEY_VALUE_STORE = 'keyValueStore';
 const LOGS_STORE = 'logs';
+const API_USAGE_STORE = 'api_usage';
 
 const LOCK_NAME = 'all_model_chat_db_write_lock';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
+
+export interface ApiUsageRecord {
+  id?: number;
+  timestamp: number;
+  modelId: string;
+  promptTokens: number;
+  completionTokens: number;
+}
 
 const isVersionConflictError = (error: unknown): boolean => {
   if (error instanceof DOMException) {
@@ -59,6 +68,13 @@ const getDb = (): Promise<IDBDatabase> => {
           }
         }
 
+        if (oldVersion < 5) {
+          if (!db.objectStoreNames.contains(API_USAGE_STORE)) {
+            const usageStore = db.createObjectStore(API_USAGE_STORE, { keyPath: 'id', autoIncrement: true });
+            usageStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        }
+
         // Safety net: ensure all expected stores exist (e.g. if DB was partially created)
         if (!db.objectStoreNames.contains(SESSIONS_STORE)) {
           db.createObjectStore(SESSIONS_STORE, { keyPath: 'id' });
@@ -79,6 +95,10 @@ const getDb = (): Promise<IDBDatabase> => {
         if (!db.objectStoreNames.contains(LOGS_STORE)) {
           const logStore = db.createObjectStore(LOGS_STORE, { keyPath: 'id', autoIncrement: true });
           logStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+        if (!db.objectStoreNames.contains(API_USAGE_STORE)) {
+          const usageStore = db.createObjectStore(API_USAGE_STORE, { keyPath: 'id', autoIncrement: true });
+          usageStore.createIndex('timestamp', 'timestamp', { unique: false });
         }
       };
 
@@ -418,9 +438,34 @@ export const dbService = {
       };
       return transactionToPromise(tx);
   }),
+  addApiUsageRecord: (record: ApiUsageRecord) => withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(API_USAGE_STORE, 'readwrite');
+      tx.objectStore(API_USAGE_STORE).add(record);
+      return transactionToPromise(tx);
+  }),
+  getApiUsageByTimeRange: (startTime: number, endTime: number): Promise<ApiUsageRecord[]> =>
+    getDb().then(
+      (db) =>
+        new Promise((resolve, reject) => {
+          const tx = db.transaction(API_USAGE_STORE, 'readonly');
+          const store = tx.objectStore(API_USAGE_STORE);
+          const index = store.index('timestamp');
+          const range = IDBKeyRange.bound(startTime, endTime);
+          const request = index.getAll(range);
+          request.onsuccess = () => resolve((request.result as ApiUsageRecord[]) ?? []);
+          request.onerror = () => reject(request.error);
+        }),
+    ),
+  clearApiUsage: () => withWriteLock(async () => {
+      const db = await getDb();
+      const tx = db.transaction(API_USAGE_STORE, 'readwrite');
+      tx.objectStore(API_USAGE_STORE).clear();
+      return transactionToPromise(tx);
+  }),
   clearAllData: () => withWriteLock(async () => {
       const db = await getDb();
-      const storeNames = [SESSIONS_STORE, FILES_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE];
+      const storeNames = [SESSIONS_STORE, FILES_STORE, GROUPS_STORE, SCENARIOS_STORE, KEY_VALUE_STORE, LOGS_STORE, API_USAGE_STORE];
       const tx = db.transaction(storeNames, 'readwrite');
       for (const storeName of storeNames) tx.objectStore(storeName).clear();
       return transactionToPromise(tx);

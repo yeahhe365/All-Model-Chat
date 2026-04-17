@@ -222,6 +222,14 @@ class LogServiceImpl {
     });
     this.saveTokenUsage();
     this.notifyTokenUsageListeners();
+    void dbService.addApiUsageRecord({
+      timestamp: Date.now(),
+      modelId,
+      promptTokens: prompt,
+      completionTokens: completion,
+    }).catch((error) => {
+      console.error('Failed to persist API usage record:', error);
+    });
   }
 
   // --- Public Interface ---
@@ -324,6 +332,7 @@ class LogServiceImpl {
   public async clearLogs() {
     this.logBuffer = [];
     await dbService.clearLogs();
+    await dbService.clearApiUsage();
     this.apiKeyUsage.clear();
     this.tokenUsage.clear(); // Clear token usage
     this.saveApiKeyUsage();

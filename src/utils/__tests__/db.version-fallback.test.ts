@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const DB_NAME = 'AllModelChatDB';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 interface MutableRequest<T> {
   result: T;
