@@ -390,6 +390,16 @@ describe('buildGenerationConfig', () => {
     expect(config.systemInstruction).not.toBe('Original');
   });
 
+  it('appends local python prompt to systemInstruction when enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3-flash-preview', 'Original', baseConfig, false, 0,
+      false, false, false, undefined, undefined, false, undefined, undefined, undefined, true
+    );
+    expect(config.systemInstruction).toContain('Original');
+    expect(config.systemInstruction).toContain('Return ONLY a single fenced Python code block');
+    expect(config.systemInstruction).toContain('plt.savefig("chart.png")');
+  });
+
   it('injects <|think|> token for Gemma models with showThoughts', async () => {
     const config = await buildGenerationConfig(
       'gemma-4-31b-it', 'sys', baseConfig, true, 0,

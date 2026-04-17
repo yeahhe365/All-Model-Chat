@@ -7,7 +7,6 @@ describe('createLiveClientFunctions', () => {
     const functions = createLiveClientFunctions({
       isLocalPythonEnabled: false,
       selectedFiles: [],
-      mountFiles: vi.fn(),
       runPython: vi.fn(),
     });
 
@@ -22,7 +21,6 @@ describe('createLiveClientFunctions', () => {
         rawFile: new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' }),
       },
     ] as any;
-    const mountFiles = vi.fn(async () => undefined);
     const runPython = vi.fn(async () => ({
       output: '42',
       result: '42',
@@ -33,7 +31,6 @@ describe('createLiveClientFunctions', () => {
     const functions = createLiveClientFunctions({
       isLocalPythonEnabled: true,
       selectedFiles,
-      mountFiles,
       runPython,
     });
 
@@ -64,7 +61,6 @@ describe('createLiveClientFunctions', () => {
       generatedFiles: [{ name: 'chart.png', type: 'image/png' }],
     });
 
-    expect(mountFiles).toHaveBeenCalledWith(selectedFiles);
-    expect(runPython).toHaveBeenCalledWith('print(42)');
+    expect(runPython).toHaveBeenCalledWith('print(42)', { files: selectedFiles });
   });
 });

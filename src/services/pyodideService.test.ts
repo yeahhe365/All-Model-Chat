@@ -54,6 +54,15 @@ const createService = (overrides: Partial<ConstructorParameters<typeof PyodideSe
   return { service, workers, createWorker, createObjectUrl, revokeObjectUrl };
 };
 
+const flushMicrotasks = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
+
+const waitForWorkerPost = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+};
+
 describe('buildPyodideWorkerScript', () => {
   it('injects the resolved pyodide base URL into the worker code', () => {
     const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript(
@@ -63,6 +72,9 @@ describe('buildPyodideWorkerScript', () => {
     expect(pyodideBaseUrl).toBe('https://example.com/nested/app/pyodide/');
     expect(workerCode).toContain('https://example.com/nested/app/pyodide/');
     expect(workerCode).not.toContain('__PYODIDE_BASE_URL__');
+    expect(workerCode).toContain('const runDir =');
+    expect(workerCode).toContain('pyodide.FS.chdir(runDir)');
+    expect(workerCode).toContain('removePath(runDir)');
   });
 });
 
@@ -84,7 +96,7 @@ describe('PyodideService', () => {
       } as any,
     ]);
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await waitForWorkerPost();
 
     expect(createObjectUrl).toHaveBeenCalledTimes(1);
     expect(revokeObjectUrl).toHaveBeenCalledWith('blob:pyodide-worker');
@@ -110,10 +122,17 @@ describe('PyodideService', () => {
 
     const runPromise = service.runPython('print("hello")');
 
-    expect(worker.postMessage).toHaveBeenCalledWith({
-      id: 'mount-1',
-      code: 'print("hello")',
-    });
+    await waitForWorkerPost();
+
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      {
+        id: 'mount-1',
+        type: 'RUN_PYTHON',
+        code: 'print("hello")',
+        files: [],
+      },
+      [],
+    );
 
     const payload: Omit<ExecutionResult, 'status'> & { id: string; status: 'success' } = {
       id: 'mount-1',
@@ -132,6 +151,51 @@ describe('PyodideService', () => {
       image: 'base64-image',
       files: [{ name: 'chart.png', data: 'Zm9v', type: 'image/png' }],
       result: 'None',
+    });
+  });
+
+  it('sends execution-scoped files with each python request', async () => {
+    const { service, workers } = createService();
+    const [worker] = workers;
+    const csvFile = new File(['a,b\n1,2\n'], 'dataset.csv', { type: 'text/csv' });
+
+    const runPromise = service.runPython('print("hello")', {
+      files: [
+        {
+          id: 'file-1',
+          name: 'dataset.csv',
+          rawFile: csvFile,
+        } as any,
+      ],
+    });
+
+    await waitForWorkerPost();
+
+    expect(worker.postMessage).toHaveBeenCalledTimes(1);
+    const [message, transferredBuffers] = worker.postMessage.mock.calls[0];
+
+    expect(message).toMatchObject({
+      id: 'mount-1',
+      type: 'RUN_PYTHON',
+      code: 'print("hello")',
+    });
+    expect(message.files).toHaveLength(1);
+    expect(message.files[0].name).toBe('dataset.csv');
+    expect(message.files[0].data).toBeInstanceOf(ArrayBuffer);
+    expect(transferredBuffers).toHaveLength(1);
+
+    worker.emit({
+      id: 'mount-1',
+      status: 'success',
+      output: 'hello',
+    });
+
+    await expect(runPromise).resolves.toEqual({
+      status: 'success',
+      output: 'hello',
+      image: undefined,
+      files: undefined,
+      result: undefined,
     });
   });
 
@@ -161,12 +225,18 @@ describe('PyodideService', () => {
     expect(firstWorker.terminate).toHaveBeenCalledTimes(1);
 
     const recoveredRun = service.runPython('print("recovered")');
+    await flushMicrotasks();
 
     expect(createWorker).toHaveBeenCalledTimes(2);
-    expect(secondWorker.postMessage).toHaveBeenCalledWith({
-      id: 'run-1',
-      code: 'print("recovered")',
-    });
+    expect(secondWorker.postMessage).toHaveBeenCalledWith(
+      {
+        id: 'run-1',
+        type: 'RUN_PYTHON',
+        code: 'print("recovered")',
+        files: [],
+      },
+      [],
+    );
 
     secondWorker.emit({
       id: 'run-1',
@@ -188,12 +258,14 @@ describe('PyodideService', () => {
     const [firstWorker, secondWorker] = workers;
 
     const crashedRun = service.runPython('print("boom")');
+    await flushMicrotasks();
     firstWorker.emitError('worker crashed');
 
     await expect(crashedRun).rejects.toThrow('worker crashed');
     expect(firstWorker.terminate).toHaveBeenCalledTimes(1);
 
     const recoveredRun = service.runPython('print("after crash")');
+    await flushMicrotasks();
     expect(createWorker).toHaveBeenCalledTimes(2);
 
     secondWorker.emit({
@@ -234,5 +306,45 @@ describe('PyodideService', () => {
       files: undefined,
       result: undefined,
     });
+  });
+
+  it('binds the default timeout implementation so browser native timers do not throw illegal invocation', async () => {
+    const originalSetTimeout = globalThis.setTimeout;
+    const strictSetTimeout = function (
+      this: typeof globalThis,
+      handler: Parameters<typeof setTimeout>[0],
+      timeout?: number,
+    ) {
+      if (this !== globalThis) {
+        throw new TypeError('Illegal invocation');
+      }
+      return originalSetTimeout(handler, timeout);
+    } as typeof setTimeout;
+
+    vi.stubGlobal('setTimeout', strictSetTimeout);
+
+    try {
+      const { service, workers } = createService({ setTimeoutFn: undefined });
+      const [worker] = workers;
+      const runPromise = service.runPython('print("bound")');
+
+      await flushMicrotasks();
+
+      worker.emit({
+        id: 'mount-1',
+        status: 'success',
+        output: 'bound',
+      });
+
+      await expect(runPromise).resolves.toEqual({
+        status: 'success',
+        output: 'bound',
+        image: undefined,
+        files: undefined,
+        result: undefined,
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

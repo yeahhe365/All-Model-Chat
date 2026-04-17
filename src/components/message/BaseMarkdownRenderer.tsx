@@ -22,6 +22,7 @@ const loadGraphvizBlock = async () => {
 
 export interface MarkdownRendererProps {
   content: string;
+  messageId?: string;
   isLoading: boolean;
   onImageClick: (file: UploadedFile) => void;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
@@ -48,6 +49,13 @@ type MarkdownAnchorProps = React.ComponentPropsWithoutRef<'a'>;
 type MarkdownDivProps = React.ComponentPropsWithoutRef<'div'>;
 type MarkdownPreProps = React.ComponentPropsWithoutRef<'pre'> & {
   children?: React.ReactNode;
+  node?: {
+    position?: {
+      start?: {
+        offset?: number;
+      };
+    };
+  };
 };
 type CodeElementProps = {
   className?: string;
@@ -63,6 +71,7 @@ interface BaseMarkdownRendererProps extends MarkdownRendererProps {
 
 export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.memo(({
   content,
+  messageId,
   isLoading,
   onImageClick,
   onOpenHtmlPreview,
@@ -143,7 +152,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
       return <div className={className} {...rest}>{children}</div>;
     },
     pre: (props: MarkdownPreProps) => {
-      const { children, ...rest } = props;
+      const { children, node, ...rest } = props;
 
       const codeElement = React.Children.toArray(children).find(
         (child): child is React.ReactElement<CodeElementProps> => {
@@ -203,6 +212,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
       return (
         <CodeBlock
           {...rest}
+          cacheKey={messageId && node?.position?.start?.offset !== undefined ? `${messageId}:${node.position.start.offset}` : undefined}
           className={codeClassName}
           onOpenHtmlPreview={onOpenHtmlPreview}
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
@@ -213,7 +223,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         </CodeBlock>
       );
     }
-  }), [diagramLoadMode, diagramRenderDelayMs, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files]);
+  }), [diagramLoadMode, diagramRenderDelayMs, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files, messageId]);
 
   const processedContent = useMemo(() => {
     if (!content) return '';

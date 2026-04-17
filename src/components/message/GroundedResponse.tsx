@@ -10,6 +10,7 @@ import { ContextUrls } from './grounded-response/ContextUrls';
 import { SearchSources } from './grounded-response/SearchSources';
 
 interface GroundedResponseProps {
+  messageId?: string;
   text: string;
   metadata: unknown;
   urlContextMetadata?: unknown;
@@ -30,6 +31,7 @@ interface SearchQueryMetadata {
 }
 
 export const GroundedResponse: React.FC<GroundedResponseProps> = ({ 
+    messageId,
     text, 
     metadata, 
     urlContextMetadata, 
@@ -63,6 +65,7 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
       {/* Main Content */}
       <div className="markdown-body">
         <LazyMarkdownRenderer
+          messageId={messageId}
           content={content}
           isLoading={isLoading}
           onImageClick={onImageClick}

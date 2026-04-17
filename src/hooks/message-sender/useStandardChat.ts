@@ -16,7 +16,6 @@ import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } fro
 import { StandardChatProps } from './types';
 import { buildGenerationConfig } from '../../services/api/baseApi';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { pyodideService } from '../../services/pyodideService';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { ContentPart } from '../../types/chat';
 
@@ -214,20 +213,6 @@ export const useStandardChat = ({
         setSessionLoading(finalSessionId, false);
         activeJobs.current.delete(generationId);
         return;
-      }
-
-      if (sessionToUpdate.isLocalPythonEnabled && enrichedFiles.length > 0) {
-        try {
-          const filesToMount = enrichedFiles.filter(
-            (file) => file.rawFile && !file.type.includes('youtube')
-          );
-          if (filesToMount.length > 0) {
-            logService.info(`Mounting ${filesToMount.length} files for Local Python execution.`);
-            await pyodideService.mountFiles(filesToMount);
-          }
-        } catch (error) {
-          logService.error('Failed to mount files to Pyodide:', error);
-        }
       }
 
       const shouldStripThinking =

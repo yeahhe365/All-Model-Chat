@@ -5,14 +5,15 @@ import type { ExecutionResult } from '../../services/pyodideService';
 interface CreateLiveClientFunctionsOptions {
   isLocalPythonEnabled: boolean;
   selectedFiles: UploadedFile[];
-  mountFiles: (files: UploadedFile[]) => Promise<void>;
-  runPython: (code: string) => Promise<Omit<ExecutionResult, 'status'>>;
+  runPython: (
+    code: string,
+    options?: { files?: UploadedFile[] },
+  ) => Promise<Omit<ExecutionResult, 'status'>>;
 }
 
 export const createLiveClientFunctions = ({
   isLocalPythonEnabled,
   selectedFiles,
-  mountFiles,
   runPython,
 }: CreateLiveClientFunctionsOptions): LiveClientFunctions => {
   if (!isLocalPythonEnabled) {
@@ -43,11 +44,7 @@ export const createLiveClientFunctions = ({
           throw new Error('run_local_python requires a non-empty "code" string.');
         }
 
-        if (selectedFiles.length > 0) {
-          await mountFiles(selectedFiles);
-        }
-
-        const result = await runPython(code);
+        const result = await runPython(code, { files: selectedFiles });
 
         return {
           output: result.output || null,

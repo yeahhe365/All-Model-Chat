@@ -157,8 +157,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
                 isLocalPythonEnabled:
                     !!currentChatSettings.isLocalPythonEnabled || !!appSettings.isLocalPythonEnabled,
                 selectedFiles,
-                mountFiles: (files) => pyodideService.mountFiles(files),
-                runPython: (code) => pyodideService.runPython(code),
+                runPython: (code, options) => pyodideService.runPython(code, options),
             }),
         [appSettings.isLocalPythonEnabled, currentChatSettings.isLocalPythonEnabled, selectedFiles],
     );
@@ -198,7 +197,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         currentChatSettings,
         isLoading,
         activeSessionId,
-        updateMessageContent: chatActions.handleUpdateMessageContent,
         onContinueGeneration: messageActions.handleContinueGeneration,
         updateAndPersistSessions
     });

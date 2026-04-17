@@ -53,13 +53,72 @@ function getMimeType(filename) {
     return mimeMap[ext] || 'application/octet-stream';
 }
 
+function ensureDir(path) {
+    const segments = path.split('/').filter(Boolean);
+    let current = '';
+    for (const segment of segments) {
+        current += '/' + segment;
+        try {
+            pyodide.FS.mkdir(current);
+        } catch (error) {
+            if (error && error.errno === 20) {
+                continue;
+            }
+            throw error;
+        }
+    }
+}
+
+function removePath(path) {
+    try {
+        const stat = pyodide.FS.stat(path);
+        if (pyodide.FS.isDir(stat.mode)) {
+            const entries = pyodide.FS.readdir(path);
+            for (const entry of entries) {
+                if (entry === '.' || entry === '..') continue;
+                removePath(path + '/' + entry);
+            }
+            pyodide.FS.rmdir(path);
+            return;
+        }
+        pyodide.FS.unlink(path);
+    } catch (error) {
+        // Best-effort cleanup
+    }
+}
+
+function listFilesRecursively(basePath, currentPath = '.') {
+    const files = [];
+    const entries = pyodide.FS.readdir(currentPath);
+    for (const entry of entries) {
+        if (entry === '.' || entry === '..') continue;
+        const absolutePath = currentPath === '.' ? './' + entry : currentPath + '/' + entry;
+        const stat = pyodide.FS.stat(absolutePath);
+        if (pyodide.FS.isDir(stat.mode)) {
+            files.push(...listFilesRecursively(basePath, absolutePath));
+        } else if (pyodide.FS.isFile(stat.mode)) {
+            const relativePath = absolutePath.replace(/^\\.\\//, '');
+            files.push(relativePath);
+        }
+    }
+    return files;
+}
+
 async function installDependencies(code) {
     try {
         await pyodide.loadPackagesFromImports(code);
-        
-        // Manual mapping for common packages that might be missed or named differently
-        const micropip = pyodide.pyimport("micropip");
+        const packagesToLoad = [];
         const packagesToInstall = [];
+
+        if (code.includes('matplotlib')) {
+            packagesToLoad.push('matplotlib');
+        }
+        if (code.includes('pandas')) {
+            packagesToLoad.push('pandas');
+        }
+        if (code.includes('numpy')) {
+            packagesToLoad.push('numpy');
+        }
         
         if (code.includes('sklearn') || code.includes('scikit-learn')) {
             packagesToInstall.push('scikit-learn');
@@ -70,10 +129,20 @@ async function installDependencies(code) {
         if (code.includes('seaborn')) {
             packagesToInstall.push('seaborn');
         }
-        
-        if (packagesToInstall.length > 0) {
-            await micropip.install(packagesToInstall);
+
+        if (packagesToLoad.length > 0) {
+            await pyodide.loadPackage([...new Set(packagesToLoad)]);
         }
+
+        if (packagesToInstall.length === 0) {
+            return;
+        }
+
+        // Load micropip lazily so simple scripts without extra dependencies do not fail.
+        await pyodide.loadPackage('micropip');
+        const micropip = pyodide.pyimport("micropip");
+        
+        await micropip.install(packagesToInstall);
     } catch (e) {
         console.warn("Dependency resolution warning:", e);
         throw new Error("Failed to install dependencies: " + e.message);
@@ -100,95 +169,124 @@ self.onmessage = async (event) => {
         return;
     }
 
-    // Capture initial file state
-    const initialFiles = new Set();
+    const previousDir = pyodide.FS.cwd();
+    const runDir = '/tmp/local-python-' + id;
+
+    removePath(runDir);
+    ensureDir(runDir);
+
     try {
-        const fsFiles = pyodide.FS.readdir('.');
-        for (const f of fsFiles) initialFiles.add(f);
-    } catch (e) { /* ignore */ }
+      if (files && Array.isArray(files)) {
+          for (const file of files) {
+              const normalizedName = String(file.name || '').replace(/^\\/+/, '');
+              if (!normalizedName) continue;
+              const parentDir = normalizedName.includes('/')
+                  ? runDir + '/' + normalizedName.split('/').slice(0, -1).join('/')
+                  : runDir;
+              ensureDir(parentDir);
+              pyodide.FS.writeFile(runDir + '/' + normalizedName, new Uint8Array(file.data));
+          }
+      }
 
-    // Reset stdout/stderr capture
-    let stdout = [];
-    pyodide.setStdout({ batched: (msg) => stdout.push(msg) });
-    pyodide.setStderr({ batched: (msg) => stdout.push(msg) });
+      pyodide.FS.chdir(runDir);
 
-    // Auto-install packages detected in imports
-    await installDependencies(code);
+      const initialFiles = new Set();
+      try {
+          const fsFiles = listFilesRecursively(runDir);
+          for (const file of fsFiles) initialFiles.add(file);
+      } catch (e) { /* ignore */ }
 
-    // Setup matplotlib backend if needed
-    await pyodide.runPythonAsync(\`
-      try:
-        import matplotlib
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-        plt.clf()
-      except ImportError:
-        pass
-    \`);
+      // Reset stdout/stderr capture
+      let stdout = [];
+      pyodide.setStdout({ batched: (msg) => stdout.push(msg) });
+      pyodide.setStderr({ batched: (msg) => stdout.push(msg) });
 
-    // Execute User Code
-    const result = await pyodide.runPythonAsync(code);
-    
-    // Check for generated plots via matplotlib
-    let image = null;
-    const hasPlot = pyodide.runPython(\`
-      try:
-        import matplotlib.pyplot as plt
-        len(plt.get_fignums()) > 0
-      except:
-        False
-    \`);
+      // Auto-install packages detected in imports
+      await installDependencies(code);
 
-    if (hasPlot) {
-       pyodide.runPython(\`
-         import io, base64
-         buf = io.BytesIO()
-         plt.savefig(buf, format='png', bbox_inches='tight')
-         buf.seek(0)
-         img_str = base64.b64encode(buf.read()).decode('utf-8')
-         plt.clf()
-       \`);
-       image = pyodide.globals.get('img_str');
-       pyodide.runPython("del img_str"); // Cleanup
+      // Setup matplotlib backend if needed
+      await pyodide.runPythonAsync(\`
+        try:
+          import matplotlib
+          matplotlib.use("Agg")
+          import matplotlib.pyplot as plt
+          plt.clf()
+        except ImportError:
+          pass
+      \`);
+
+      // Execute User Code
+      const result = await pyodide.runPythonAsync(code);
+      
+      // Check for generated plots via matplotlib
+      let image = null;
+      const hasPlot = pyodide.runPython(\`
+        try:
+          import matplotlib.pyplot as plt
+          len(plt.get_fignums()) > 0
+        except:
+          False
+      \`);
+
+      if (hasPlot) {
+         pyodide.runPython(\`
+           import io, base64
+           buf = io.BytesIO()
+           plt.savefig(buf, format='png', bbox_inches='tight')
+           buf.seek(0)
+           img_str = base64.b64encode(buf.read()).decode('utf-8')
+           plt.clf()
+         \`);
+         image = pyodide.globals.get('img_str');
+         pyodide.runPython("del img_str"); // Cleanup
+      }
+
+      // Check for new files generated in the execution workspace
+      const generatedFiles = [];
+      try {
+          const finalFiles = listFilesRecursively(runDir);
+          for (const filePath of finalFiles) {
+              if (!initialFiles.has(filePath)) {
+                   const content = pyodide.FS.readFile(filePath);
+                   generatedFiles.push({
+                       name: filePath,
+                       data: arrayBufferToBase64(content),
+                       type: getMimeType(filePath)
+                   });
+              }
+          }
+      } catch (e) {
+          console.error("Error reading output files", e);
+      }
+
+      if (image && generatedFiles.some((file) => file.type.startsWith('image/'))) {
+          image = null;
+      }
+
+      self.postMessage({ 
+        id, 
+        status: 'success', 
+        output: stdout.join('\\n'), 
+        image: image,
+        files: generatedFiles,
+        result: result !== undefined ? String(result) : undefined
+      });
+    } finally {
+      try {
+          pyodide.FS.chdir(previousDir);
+      } catch (error) {
+          // ignore best-effort restore
+      }
+      removePath(runDir);
     }
-
-    // Check for new files generated in file system
-    const generatedFiles = [];
-    try {
-        const finalFiles = pyodide.FS.readdir('.');
-        for (const f of finalFiles) {
-            if (f === '.' || f === '..') continue;
-            if (!initialFiles.has(f)) {
-                 // Check if it's a file (not directory)
-                 const stat = pyodide.FS.stat(f);
-                 if (pyodide.FS.isFile(stat.mode)) {
-                     const content = pyodide.FS.readFile(f);
-                     generatedFiles.push({
-                         name: f,
-                         data: arrayBufferToBase64(content),
-                         type: getMimeType(f)
-                     });
-                 }
-            }
-        }
-    } catch (e) {
-        console.error("Error reading output files", e);
-    }
-
-    self.postMessage({ 
-      id, 
-      status: 'success', 
-      output: stdout.join('\\n'), 
-      image: image,
-      files: generatedFiles,
-      result: result !== undefined ? String(result) : undefined
-    });
 
   } catch (err) {
     self.postMessage({ id, status: 'error', error: err.message });
   }
 };
 `;
+
+const DEFAULT_PYODIDE_BASE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/';
 
 export interface PyodideFile {
     name: string;
@@ -214,13 +312,23 @@ interface PyodideServiceDependencies {
     createRequestId?: () => string;
 }
 
+interface RunPythonOptions {
+    files?: UploadedFile[];
+}
+
 export const buildPyodideWorkerScript = (baseUri: string) => {
-    const pyodideBaseUrl = new URL('pyodide/', baseUri).toString();
+    const pyodideBaseUrl = /(?:\/pyodide\/|\/full\/)$/.test(baseUri)
+        ? baseUri
+        : new URL('pyodide/', baseUri).toString();
 
     return {
         pyodideBaseUrl,
         workerCode: WORKER_CODE_TEMPLATE.replace(/__PYODIDE_BASE_URL__/g, pyodideBaseUrl),
     };
+};
+
+const getBrowserAppBaseUri = () => {
+    return DEFAULT_PYODIDE_BASE_URL;
 };
 
 export class PyodideService {
@@ -246,7 +354,7 @@ export class PyodideService {
         this.createWorker = createWorker ?? ((url) => new Worker(url));
         this.createObjectUrl = createObjectUrl ?? ((blob) => URL.createObjectURL(blob));
         this.revokeObjectUrl = revokeObjectUrl ?? ((url) => URL.revokeObjectURL(url));
-        this.setTimeoutFn = setTimeoutFn ?? setTimeout;
+        this.setTimeoutFn = setTimeoutFn ?? globalThis.setTimeout.bind(globalThis);
         this.createRequestId = createRequestId ?? (() => Math.random().toString(36).substring(7));
     }
 
@@ -316,7 +424,8 @@ export class PyodideService {
 
     private initWorker() {
         if (!this.worker) {
-            const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript(this.baseUri ?? document.baseURI);
+            const appBaseUri = this.baseUri ?? getBrowserAppBaseUri();
+            const { pyodideBaseUrl, workerCode } = buildPyodideWorkerScript(appBaseUri);
             const blob = new Blob([workerCode], { type: 'application/javascript' });
             const url = this.createObjectUrl(blob);
             
@@ -406,9 +515,24 @@ export class PyodideService {
         });
     }
 
-    public async runPython(code: string): Promise<ExecutionResult> {
+    private async prepareExecutionFiles(files: UploadedFile[] = []) {
+        const preparedFiles = await Promise.all(
+            files.map(async (file) => {
+                if (!file.rawFile) return null;
+                const buffer = await file.rawFile.arrayBuffer();
+                return { name: file.name, data: buffer };
+            })
+        );
+
+        return preparedFiles.filter(
+            (file): file is { name: string; data: ArrayBuffer } => file !== null
+        );
+    }
+
+    public async runPython(code: string, options: RunPythonOptions = {}): Promise<ExecutionResult> {
         this.initWorker();
         const id = this.createRequestId();
+        const files = await this.prepareExecutionFiles(options.files);
         
         return new Promise<ExecutionResult>((resolve, reject) => {
             try {
@@ -419,7 +543,8 @@ export class PyodideService {
             }
 
             this.pendingPromises.set(id, { resolve: resolve as (val: void | ExecutionResult) => void, reject });
-            this.worker?.postMessage({ id, code });
+            const buffers = files.map((file) => file.data);
+            this.worker?.postMessage({ id, type: 'RUN_PYTHON', code, files }, buffers);
             
             // Timeout safety
             this.setTimeoutFn(() => {

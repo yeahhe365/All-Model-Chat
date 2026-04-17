@@ -94,6 +94,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
 
             {(effectiveContent && (groundingMetadata || urlContextMetadata)) ? (
               <GroundedResponse 
+                messageId={message.id}
                 text={displayedContent} // Use smoothed text
                 metadata={groundingMetadata} 
                 urlContextMetadata={urlContextMetadata}
@@ -111,6 +112,7 @@ export const MessageText: React.FC<MessageTextProps> = ({
             ) : effectiveContent ? (
                 <div className={`markdown-body ${isLoading ? 'is-loading' : ''}`} style={{ fontSize: `${baseFontSize}px` }}> 
                     <LazyMarkdownRenderer
+                        messageId={message.id}
                         content={displayedContent} // Use smoothed text
                         isLoading={isLoading}
                         onImageClick={onImageClick}
