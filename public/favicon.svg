@@ -1,0 +1,14 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .blue-part{fill:#1a8de9}
+      .teal-part{fill:#1abc9c}
+    </style>
+  </defs>
+  <path class="blue-part" d="M 32,142 L 80,112 L 80,80 A 24 24 0 0 1 104,56 L 152,56 A 24 24 0 0 1 176,80 L 224,80 A 72 72 0 0 0 152,8 L 104,8 A 72 72 0 0 0 32,80 Z"/>
+  <path class="teal-part" d="M 32,142 L 32,176 A 72 72 0 0 0 104,248 L 152,248 A 72 72 0 0 0 224,176 L 176,176 A 24 24 0 0 1 152,200 L 104,200 A 24 24 0 0 1 80,176 L 80,112 Z"/>
+  <circle cx="108" cy="84" r="10" class="blue-part"/>
+  <circle cx="148" cy="84" r="10" class="blue-part"/>
+  <circle cx="108" cy="172" r="10" class="teal-part"/>
+  <circle cx="148" cy="172" r="10" class="teal-part"/>
+</svg>
