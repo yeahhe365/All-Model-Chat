@@ -62,11 +62,16 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-        setActiveTab(initialTab);
-        setActiveUsageTab(initialUsageTab);
-        fetchLogs(true);
+      setActiveTab(initialTab);
+      setActiveUsageTab(initialUsageTab);
     }
-  }, [fetchLogs, initialTab, initialUsageTab, isOpen]);
+  }, [initialTab, initialUsageTab, isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchLogs(true);
+    }
+  }, [fetchLogs, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;

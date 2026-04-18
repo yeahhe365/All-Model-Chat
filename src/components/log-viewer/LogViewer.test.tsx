@@ -41,14 +41,19 @@ const findButton = (label: string) =>
 describe('LogViewer', () => {
   let container: HTMLDivElement;
   let root: Root;
+  let emitLiveLogs: ((logs: Array<{ timestamp: Date; level: string; category: string; message: string }>) => void) | null;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
+    emitLiveLogs = null;
 
     mockGetRecentLogs.mockResolvedValue([]);
-    mockSubscribe.mockImplementation(() => () => {});
+    mockSubscribe.mockImplementation((listener: typeof emitLiveLogs) => {
+      emitLiveLogs = listener;
+      return () => {};
+    });
     mockSubscribeToApiKeys.mockImplementation((listener: (usage: Map<string, number>) => void) => {
       listener(new Map([
         ['key-a', 3],
@@ -120,5 +125,40 @@ describe('LogViewer', () => {
     expect(findButton('Overview')).toBeDefined();
     expect(findButton('Tokens')).toBeDefined();
     expect(document.body.textContent).toContain('Token Usage Statistics');
+  });
+
+  it('keeps the usage tab active after live logs arrive', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <LogViewer
+            isOpen
+            onClose={vi.fn()}
+            appSettings={{ ...DEFAULT_APP_SETTINGS, useCustomApiConfig: true, apiKey: 'key-a\nkey-b' }}
+            currentChatSettings={{ ...DEFAULT_CHAT_SETTINGS, lockedApiKey: 'key-a' }}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    act(() => {
+      findButton('Usage')?.click();
+    });
+
+    expect(findButton('Overview')).toBeDefined();
+
+    act(() => {
+      emitLiveLogs?.([
+        {
+          timestamp: new Date('2026-04-18T13:00:00.000Z'),
+          level: 'INFO',
+          category: 'SYSTEM',
+          message: 'new live log',
+        },
+      ]);
+    });
+
+    expect(findButton('Overview')).toBeDefined();
+    expect(document.body.textContent).not.toContain('Search logs...');
   });
 });
