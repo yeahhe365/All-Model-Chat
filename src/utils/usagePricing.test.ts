@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { calculateApiUsageRecordPriceUsd, calculateTokenPriceUsd } from './usagePricing';
+import { calculateApiUsageRecordPriceUsd } from './usagePricing';
 import type { ApiUsageRecord } from './db';
 
-describe('calculateTokenPriceUsd', () => {
-  it('uses the reduced cached-token rate when a supported model reports cache hits', () => {
-    expect(
-      calculateTokenPriceUsd('gemini-3.1-pro-preview', {
-        promptTokens: 1_000_000,
-        cachedPromptTokens: 500_000,
-        completionTokens: 10_000,
-      }),
-    ).toBeCloseTo(2.38, 6);
-  });
-});
-
 describe('calculateApiUsageRecordPriceUsd', () => {
+  it('keeps legacy Gemini 3.1 Pro records unavailable when exact evidence is missing', () => {
+    const record: ApiUsageRecord = {
+      timestamp: Date.now(),
+      modelId: 'gemini-3.1-pro-preview',
+      promptTokens: 1000,
+      cachedPromptTokens: 0,
+      completionTokens: 500,
+    };
+
+    expect(calculateApiUsageRecordPriceUsd(record)).toBeNull();
+  });
+
   it('prices Gemini 3 Flash exactly when modality token details are present', () => {
     const record: ApiUsageRecord = {
       timestamp: Date.now(),
@@ -82,5 +82,25 @@ describe('calculateApiUsageRecordPriceUsd', () => {
     };
 
     expect(calculateApiUsageRecordPriceUsd(record)).toBeCloseTo(0.08, 6);
+  });
+
+  it('prices Gemini 3.1 Pro exactly when modality evidence exists', () => {
+    const record: ApiUsageRecord = {
+      timestamp: Date.now(),
+      modelId: 'gemini-3.1-pro-preview',
+      promptTokens: 1_000_000,
+      cachedPromptTokens: 500_000,
+      completionTokens: 10_000,
+      totalTokens: 1_010_000,
+      exactPricing: {
+        version: 1,
+        requestKind: 'chat',
+        promptTokensDetails: [{ modality: 'TEXT', tokenCount: 500_000 }],
+        cacheTokensDetails: [{ modality: 'TEXT', tokenCount: 500_000 }],
+        responseTokensDetails: [{ modality: 'TEXT', tokenCount: 10_000 }],
+      },
+    };
+
+    expect(calculateApiUsageRecordPriceUsd(record)).toBeCloseTo(2.38, 6);
   });
 });

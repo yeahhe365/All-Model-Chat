@@ -18,6 +18,7 @@ export type GetStreamHandlers = (
     abortController: AbortController,
     generationStartTime: Date,
     currentChatSettings: IndividualChatSettings,
+    requestParts?: Part[],
     onSuccess?: (generationId: string, finalContent: string) => void
 ) => StreamHandlerFunctions;
 

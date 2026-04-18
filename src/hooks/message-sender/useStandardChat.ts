@@ -253,6 +253,7 @@ export const useStandardChat = ({
           newAbortController,
           generationStartTime,
           sessionToUpdate,
+          finalParts,
           (messageId, content) => {
             if (
               !isContinueMode &&

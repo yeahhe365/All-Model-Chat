@@ -1,51 +1,5 @@
 import type { ApiUsageExactPricing, ApiUsageModalityTokenCount, ApiUsageRecord } from './db';
 
-interface TokenPricingRule {
-  kind: 'flat' | 'tiered';
-  inputPerMillion: number;
-  cachedInputPerMillion?: number;
-  outputPerMillion: number;
-  thresholdTokens?: number;
-  inputPerMillionAboveThreshold?: number;
-  cachedInputPerMillionAboveThreshold?: number;
-  outputPerMillionAboveThreshold?: number;
-}
-
-const UNSUPPORTED = null;
-
-const TOKEN_PRICING: Record<string, TokenPricingRule | null> = {
-  // Official Google AI Studio / Gemini Developer API token pricing checked on 2026-04-17.
-  // Keep only models whose exact request-time official price can be determined from the
-  // fields we currently store: effective prompt tokens, cached prompt tokens, output tokens, and modelId.
-  'gemini-3.1-pro-preview': {
-    kind: 'tiered',
-    inputPerMillion: 2,
-    cachedInputPerMillion: 0.2,
-    outputPerMillion: 12,
-    thresholdTokens: 200_000,
-    inputPerMillionAboveThreshold: 4,
-    cachedInputPerMillionAboveThreshold: 0.4,
-    outputPerMillionAboveThreshold: 18,
-  },
-  // These models have modality-specific, minute-based, or image-per-output
-  // pricing. With current records we cannot reconstruct their exact official
-  // cost, so strict mode leaves them unavailable.
-  'gemini-3-flash-preview': UNSUPPORTED,
-  'gemini-3.1-flash-lite-preview': UNSUPPORTED,
-  'gemini-3.1-flash-live-preview': UNSUPPORTED,
-  'gemini-2.5-pro-preview-tts': UNSUPPORTED,
-  'gemini-2.5-flash-preview-tts': UNSUPPORTED,
-  'gemini-2.5-flash-native-audio-preview-12-2025': UNSUPPORTED,
-  'gemini-2.5-flash-image': UNSUPPORTED,
-  'gemini-3-pro-image-preview': UNSUPPORTED,
-  'gemini-3.1-flash-image-preview': UNSUPPORTED,
-  'imagen-4.0-fast-generate-001': UNSUPPORTED,
-  'imagen-4.0-generate-001': UNSUPPORTED,
-  'imagen-4.0-ultra-generate-001': UNSUPPORTED,
-  'gemma-4-31b-it': UNSUPPORTED,
-  'gemma-4-26b-a4b-it': UNSUPPORTED,
-};
-
 const normalizeModelId = (modelId: string) => modelId.replace(/^models\//, '');
 
 const IMAGE_GENERATION_PRICING: Record<string, { perImage: number } | null> = {
@@ -61,6 +15,11 @@ const MODALITY_TEXT_PRICING: Record<
     cache?: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
     response: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
     tool?: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
+    thresholdTokens?: number;
+    promptAboveThreshold?: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
+    cacheAboveThreshold?: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
+    responseAboveThreshold?: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
+    toolAboveThreshold?: Partial<Record<'TEXT' | 'IMAGE' | 'AUDIO', number>>;
   } | null
 > = {
   'gemini-3-flash-preview': {
@@ -79,6 +38,17 @@ const MODALITY_TEXT_PRICING: Record<
     prompt: { TEXT: 0.5, AUDIO: 3 },
     response: { TEXT: 2, AUDIO: 12 },
     tool: { TEXT: 0.5, AUDIO: 3 },
+  },
+  'gemini-3.1-pro-preview': {
+    prompt: { TEXT: 2 },
+    cache: { TEXT: 0.2 },
+    response: { TEXT: 12 },
+    tool: { TEXT: 2 },
+    thresholdTokens: 200_000,
+    promptAboveThreshold: { TEXT: 4 },
+    cacheAboveThreshold: { TEXT: 0.4 },
+    responseAboveThreshold: { TEXT: 18 },
+    toolAboveThreshold: { TEXT: 4 },
   },
 };
 
@@ -167,10 +137,29 @@ const calculateFromExactPricing = (modelId: string, exactPricing: ApiUsageExactP
     return null;
   }
 
-  const promptCost = sumTokensByRate(exactPricing.promptTokensDetails, modalityPricing.prompt);
-  const cacheCost = sumTokensByRate(exactPricing.cacheTokensDetails, modalityPricing.cache);
-  const responseCost = sumTokensByRate(exactPricing.responseTokensDetails, modalityPricing.response);
-  const toolCost = sumTokensByRate(exactPricing.toolUsePromptTokensDetails, modalityPricing.tool ?? modalityPricing.prompt);
+  const useAboveThreshold = ((): boolean => {
+    if (modalityPricing.thresholdTokens === undefined) {
+      return false;
+    }
+
+    const promptTokens =
+      (exactPricing.promptTokensDetails?.reduce((sum, detail) => sum + detail.tokenCount, 0) ?? 0)
+      + (exactPricing.cacheTokensDetails?.reduce((sum, detail) => sum + detail.tokenCount, 0) ?? 0);
+
+    return promptTokens > modalityPricing.thresholdTokens;
+  })();
+
+  const promptRates = useAboveThreshold ? modalityPricing.promptAboveThreshold ?? modalityPricing.prompt : modalityPricing.prompt;
+  const cacheRates = useAboveThreshold ? modalityPricing.cacheAboveThreshold ?? modalityPricing.cache : modalityPricing.cache;
+  const responseRates = useAboveThreshold ? modalityPricing.responseAboveThreshold ?? modalityPricing.response : modalityPricing.response;
+  const toolRates = useAboveThreshold
+    ? modalityPricing.toolAboveThreshold ?? modalityPricing.tool ?? modalityPricing.promptAboveThreshold ?? modalityPricing.prompt
+    : modalityPricing.tool ?? modalityPricing.prompt;
+
+  const promptCost = sumTokensByRate(exactPricing.promptTokensDetails, promptRates);
+  const cacheCost = sumTokensByRate(exactPricing.cacheTokensDetails, cacheRates);
+  const responseCost = sumTokensByRate(exactPricing.responseTokensDetails, responseRates);
+  const toolCost = sumTokensByRate(exactPricing.toolUsePromptTokensDetails, toolRates);
 
   if (promptCost === null || cacheCost === null || responseCost === null || toolCost === null) {
     return null;
@@ -179,67 +168,13 @@ const calculateFromExactPricing = (modelId: string, exactPricing: ApiUsageExactP
   return promptCost + cacheCost + responseCost + toolCost;
 };
 
-export const calculateTokenPriceUsd = (
-  modelId: string,
-  usage: {
-    promptTokens: number;
-    cachedPromptTokens?: number;
-    inputTokens?: number;
-    completionTokens: number;
-  },
-): number | null => {
-  const pricing = TOKEN_PRICING[normalizeModelId(modelId)];
-
-  if (!pricing) {
-    return null;
-  }
-  const cachedPromptTokens = usage.cachedPromptTokens ?? 0;
-  const thresholdPromptTokens = usage.promptTokens;
-  const inputTokens = usage.inputTokens ?? Math.max(usage.promptTokens - cachedPromptTokens, 0);
-  const completionTokens = usage.completionTokens;
-
-  if (pricing.kind === 'flat') {
-    const cachedRate = pricing.cachedInputPerMillion;
-    if (cachedPromptTokens > 0 && cachedRate === undefined) {
-      return null;
-    }
-
-    return (inputTokens / 1_000_000) * pricing.inputPerMillion
-      + (cachedPromptTokens / 1_000_000) * (cachedRate ?? 0)
-      + (completionTokens / 1_000_000) * pricing.outputPerMillion;
-  }
-
-  const useTierTwo = thresholdPromptTokens > (pricing.thresholdTokens ?? Number.MAX_SAFE_INTEGER);
-  const inputRate = useTierTwo ? pricing.inputPerMillionAboveThreshold ?? pricing.inputPerMillion : pricing.inputPerMillion;
-  const cachedInputRate = useTierTwo
-    ? pricing.cachedInputPerMillionAboveThreshold ?? pricing.cachedInputPerMillion
-    : pricing.cachedInputPerMillion;
-  const outputRate = useTierTwo ? pricing.outputPerMillionAboveThreshold ?? pricing.outputPerMillion : pricing.outputPerMillion;
-
-  if (cachedPromptTokens > 0 && cachedInputRate === undefined) {
-    return null;
-  }
-
-  return (inputTokens / 1_000_000) * inputRate
-    + (cachedPromptTokens / 1_000_000) * (cachedInputRate ?? 0)
-    + (completionTokens / 1_000_000) * outputRate;
-};
-
 export const calculateApiUsageRecordPriceUsd = (record: ApiUsageRecord): number | null => {
   const exactPricing = record.exactPricing;
-  if (exactPricing) {
-    const exactPrice = calculateFromExactPricing(record.modelId, exactPricing);
-    if (exactPrice !== null) {
-      return exactPrice;
-    }
+  if (!exactPricing) {
+    return null;
   }
 
-  return calculateTokenPriceUsd(record.modelId, {
-    promptTokens: record.promptTokens,
-    cachedPromptTokens: record.cachedPromptTokens,
-    inputTokens: Math.max(record.promptTokens - (record.cachedPromptTokens ?? 0), 0) + (record.toolUsePromptTokens ?? 0),
-    completionTokens: record.completionTokens + (record.thoughtTokens ?? 0),
-  });
+  return calculateFromExactPricing(record.modelId, exactPricing);
 };
 
 export const formatPriceUsd = (amount: number | null): string => {

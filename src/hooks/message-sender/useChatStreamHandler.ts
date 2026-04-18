@@ -9,6 +9,7 @@ import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../cha
 import { streamingStore } from '../../services/streamingStore';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
+import { resolveChatExactPricing } from '../../utils/chatPricingEvidence';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -33,6 +34,7 @@ export const useChatStreamHandler = ({
         abortController: AbortController,
         generationStartTime: Date,
         currentChatSettings: IndividualChatSettings,
+        requestParts: Part[] = [],
         onSuccess?: (generationId: string, finalContent: string) => void
     ) => {
         const newModelMessageIds = new Set<string>([generationId]);
@@ -97,6 +99,15 @@ export const useChatStreamHandler = ({
                     toolUsePromptTokens,
                     totalTokens,
                 } = calculateTokenStats(usageMetadata);
+                const exactPricing = resolveChatExactPricing({
+                    providerExactPricing: buildExactPricingFromUsageMetadata('chat', usageMetadata),
+                    requestParts,
+                    responseParts: accumulatedApiParts,
+                    promptTokens,
+                    cachedPromptTokens,
+                    toolUsePromptTokens,
+                    outputTokens: completionTokens + thoughtTokens,
+                });
                 logService.recordTokenUsage(
                     currentChatSettings.modelId,
                     {
@@ -107,7 +118,7 @@ export const useChatStreamHandler = ({
                         toolUsePromptTokens,
                         totalTokens,
                     },
-                    buildExactPricingFromUsageMetadata('chat', usageMetadata),
+                    exactPricing,
                 );
             }
 

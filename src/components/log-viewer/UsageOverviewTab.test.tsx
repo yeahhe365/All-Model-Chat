@@ -74,6 +74,14 @@ describe('UsageOverviewTab', () => {
         thoughtTokens: 10_000,
         toolUsePromptTokens: 25_000,
         totalTokens: 1_035_000,
+        exactPricing: {
+          version: 1,
+          requestKind: 'chat',
+          promptTokensDetails: [{ modality: 'TEXT', tokenCount: 500_000 }],
+          cacheTokensDetails: [{ modality: 'TEXT', tokenCount: 500_000 }],
+          toolUsePromptTokensDetails: [{ modality: 'TEXT', tokenCount: 25_000 }],
+          responseTokensDetails: [{ modality: 'TEXT', tokenCount: 10_000 }],
+        },
       },
       {
         id: 2,
