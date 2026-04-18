@@ -1,7 +1,8 @@
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
+import type { LogViewerProps } from '../log-viewer/LogViewer';
 
 const LazySettingsModal = lazy(async () => {
     const module = await import('../settings/SettingsModal');
@@ -62,6 +63,10 @@ interface AppModalsProps {
 
 export const AppModals: React.FC<AppModalsProps> = (props) => {
     const { t } = useI18n();
+    const [logViewerState, setLogViewerState] = useState<Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>>({
+      initialTab: 'console',
+      initialUsageTab: 'overview',
+    });
     const {
         isSettingsModalOpen = false,
         setIsSettingsModalOpen = () => {},
@@ -83,6 +88,15 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         currentChatSettings,
         setAvailableModels
     } = props;
+
+    const openLogViewer = (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => {
+      setLogViewerState({
+        initialTab: 'console',
+        initialUsageTab: 'overview',
+        ...state,
+      });
+      setIsLogViewerOpen(true);
+    };
     
     return (
         <>
@@ -90,9 +104,14 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
             <Suspense fallback={null}>
                 <LazyLogViewer
                     isOpen={isLogViewerOpen}
-                    onClose={() => setIsLogViewerOpen(false)}
+                    onClose={() => {
+                      setIsLogViewerOpen(false);
+                      setLogViewerState({ initialTab: 'console', initialUsageTab: 'overview' });
+                    }}
                     appSettings={appSettings!}
                     currentChatSettings={currentChatSettings}
+                    initialTab={logViewerState.initialTab}
+                    initialUsageTab={logViewerState.initialUsageTab}
                 />
             </Suspense>
           )}
@@ -106,7 +125,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
                   onSave={handleSaveSettings}
                   onClearAllHistory={clearAllHistory}
                   onClearCache={clearCacheAndReload}
-                  onOpenLogViewer={() => setIsLogViewerOpen(true)}
+                  onOpenLogViewer={openLogViewer}
                   onInstallPwa={handleInstallPwa}
                   isInstallable={!!installPromptEvent && !isStandalone}
                   onImportSettings={handleImportSettings}

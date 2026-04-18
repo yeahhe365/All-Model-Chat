@@ -5,9 +5,9 @@ import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { translations, logService, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../utils/appUtils';
 import { MediaResolution } from '../../types/settings';
 import { IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
-import { Activity, LayoutPanelLeft, SlidersHorizontal } from 'lucide-react';
+import { LayoutPanelLeft, SlidersHorizontal } from 'lucide-react';
 
-export type SettingsTab = 'interface' | 'model' | 'account' | 'usage' | 'data' | 'shortcuts' | 'about';
+export type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'shortcuts' | 'about';
 
 const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 
@@ -33,7 +33,7 @@ export const useSettingsLogic = ({
     const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
         try {
             const saved = localStorage.getItem(SETTINGS_TAB_STORAGE_KEY);
-            const validTabs: SettingsTab[] = ['model', 'interface', 'account', 'usage', 'data', 'shortcuts', 'about'];
+            const validTabs: SettingsTab[] = ['model', 'interface', 'account', 'data', 'shortcuts', 'about'];
             if (saved && validTabs.includes(saved as SettingsTab)) {
                 return saved as SettingsTab;
             }
@@ -181,7 +181,6 @@ export const useSettingsLogic = ({
         { id: 'model' as SettingsTab, labelKey: 'settingsTabModel', icon: SlidersHorizontal },
         { id: 'interface' as SettingsTab, labelKey: 'settingsTabInterface', icon: LayoutPanelLeft },
         { id: 'account' as SettingsTab, labelKey: 'settingsTabAccount', icon: IconApiKey },
-        { id: 'usage' as SettingsTab, labelKey: 'settingsTabUsage', icon: Activity },
         { id: 'data' as SettingsTab, labelKey: 'settingsTabData', icon: IconData },
         { id: 'shortcuts' as SettingsTab, labelKey: 'settingsTabShortcuts', icon: IconKeyboard },
         { id: 'about' as SettingsTab, labelKey: 'settingsTabAbout', icon: IconAbout },

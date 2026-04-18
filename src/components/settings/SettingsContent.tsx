@@ -8,8 +8,8 @@ import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
 import { DataManagementSection } from './sections/DataManagementSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
-import { UsageSection } from './sections/UsageSection';
 import { SettingsTransferProps } from './settingsTypes';
+import type { LogViewerProps } from '../log-viewer/LogViewer';
 
 interface SettingsContentProps extends SettingsTransferProps {
     activeTab: SettingsTab;
@@ -20,7 +20,7 @@ interface SettingsContentProps extends SettingsTransferProps {
     setAvailableModels: (models: ModelOption[]) => void;
     onClearHistory: () => void;
     onClearCache: () => void;
-    onOpenLogViewer: () => void;
+    onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
     onClearLogs: () => void;
     onReset: () => void;
 }
@@ -117,11 +117,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         liveApiEphemeralTokenEndpoint={currentSettings.liveApiEphemeralTokenEndpoint ?? null}
                         setLiveApiEphemeralTokenEndpoint={(val) => updateSetting('liveApiEphemeralTokenEndpoint', val)}
                     />
-                </div>
-            )}
-            {activeTab === 'usage' && (
-                <div className={animClass}>
-                    <UsageSection />
                 </div>
             )}
             {activeTab === 'data' && (

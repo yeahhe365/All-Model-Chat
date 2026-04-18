@@ -8,22 +8,33 @@ import { ConsoleTab } from './ConsoleTab';
 import { TokenUsageTab } from './TokenUsageTab';
 import { ApiUsageTab } from './ApiUsageTab';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
+import { UsageOverviewTab } from './UsageOverviewTab';
 
-interface LogViewerProps {
+export interface LogViewerProps {
   isOpen: boolean;
   onClose: () => void;
   appSettings: AppSettings;
   currentChatSettings: ChatSettings;
+  initialTab?: 'console' | 'usage';
+  initialUsageTab?: 'overview' | 'tokens' | 'api';
 }
 
-export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettings, currentChatSettings }) => {
+export const LogViewer: React.FC<LogViewerProps> = ({
+  isOpen,
+  onClose,
+  appSettings,
+  currentChatSettings,
+  initialTab = 'console',
+  initialUsageTab = 'overview',
+}) => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [apiKeyUsage, setApiKeyUsage] = useState<Map<string, number>>(new Map());
   const [tokenUsage, setTokenUsage] = useState<Map<string, TokenUsageStats>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   
-  const [activeTab, setActiveTab] = useState<'console' | 'api' | 'tokens'>('console');
+  const [activeTab, setActiveTab] = useState<'console' | 'usage'>(initialTab);
+  const [activeUsageTab, setActiveUsageTab] = useState<'overview' | 'tokens' | 'api'>(initialUsageTab);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const fetchLogs = useCallback(async (reset = false) => {
@@ -51,9 +62,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
 
   useEffect(() => {
     if (isOpen) {
+        setActiveTab(initialTab);
+        setActiveUsageTab(initialUsageTab);
         fetchLogs(true);
     }
-  }, [isOpen, fetchLogs]);
+  }, [fetchLogs, initialTab, initialUsageTab, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -109,14 +122,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
             <button onClick={() => setActiveTab('console')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'console' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                 <Terminal size={14} /> Console
             </button>
-            <button onClick={() => setActiveTab('tokens')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'tokens' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
-                <Coins size={14} /> Token Usage
+            <button onClick={() => setActiveTab('usage')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'usage' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                <Coins size={14} /> Usage
             </button>
-            {appSettings.useCustomApiConfig && (
-                <button onClick={() => setActiveTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
-                    <KeyRound size={14} /> API Usage
-                </button>
-            )}
           </nav>
         </div>
         
@@ -132,12 +140,36 @@ export const LogViewer: React.FC<LogViewerProps> = ({ isOpen, onClose, appSettin
             />
           )}
 
-          {activeTab === 'tokens' && (
-            <TokenUsageTab tokenUsage={tokenUsage} />
-          )}
+          {activeTab === 'usage' && (
+            <>
+              <div className="border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] px-4 flex-shrink-0">
+                <nav className="flex space-x-4">
+                  <button onClick={() => setActiveUsageTab('overview')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeUsageTab === 'overview' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                    <Coins size={14} /> Overview
+                  </button>
+                  <button onClick={() => setActiveUsageTab('tokens')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeUsageTab === 'tokens' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                    <Coins size={14} /> Tokens
+                  </button>
+                  {appSettings.useCustomApiConfig && (
+                    <button onClick={() => setActiveUsageTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeUsageTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                      <KeyRound size={14} /> API Keys
+                    </button>
+                  )}
+                </nav>
+              </div>
 
-          {activeTab === 'api' && (
-            <ApiUsageTab apiKeyUsage={apiKeyUsage} appSettings={appSettings} currentChatSettings={currentChatSettings} />
+              {activeUsageTab === 'overview' && (
+                <UsageOverviewTab />
+              )}
+
+              {activeUsageTab === 'tokens' && (
+                <TokenUsageTab tokenUsage={tokenUsage} />
+              )}
+
+              {activeUsageTab === 'api' && (
+                <ApiUsageTab apiKeyUsage={apiKeyUsage} appSettings={appSettings} currentChatSettings={currentChatSettings} />
+              )}
+            </>
           )}
         </div>
       </div>

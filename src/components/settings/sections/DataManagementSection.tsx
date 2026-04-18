@@ -2,11 +2,12 @@
 import React, { useRef } from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database, RefreshCw } from 'lucide-react';
+import type { LogViewerProps } from '../../log-viewer/LogViewer';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
   onClearCache: () => void;
-  onOpenLogViewer: () => void;
+  onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
   onClearLogs: () => void;
   isInstallable: boolean;
   onInstallPwa: () => void;
@@ -97,8 +98,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
           </DataCard>
           
           <DataCard title="System & Logs" icon={<Settings size={14} strokeWidth={1.5} />}>
-              <ActionRow label={t('settingsViewLogs')}>
-                <button onClick={onOpenLogViewer} className={outlineBtnClass}>{t('settingsViewLogs')}</button>
+              <ActionRow label={t('settingsViewLogsAndUsage')}>
+                <button onClick={() => onOpenLogViewer({ initialTab: 'usage', initialUsageTab: 'overview' })} className={outlineBtnClass}>{t('settingsViewLogsAndUsage')}</button>
                 <button onClick={onClearLogs} className={`${outlineBtnClass} text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 hover:text-[var(--theme-text-danger)] border-[var(--theme-bg-danger)]/30`}>
                     <Trash2 size={12} strokeWidth={1.5} /> {t('settingsClearLogs')}
                 </button>
