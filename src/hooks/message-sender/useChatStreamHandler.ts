@@ -8,6 +8,7 @@ import { logService, showNotification, calculateTokenStats, playCompletionSound 
 import { finalizeMessages, updateMessagesWithBatch, appendApiPart } from '../chat-stream/processors';
 import { streamingStore } from '../../services/streamingStore';
 import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
+import { buildExactPricingFromUsageMetadata } from '../../utils/usagePricingTelemetry';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void;
 
@@ -106,6 +107,7 @@ export const useChatStreamHandler = ({
                         toolUsePromptTokens,
                         totalTokens,
                     },
+                    buildExactPricingFromUsageMetadata('chat', usageMetadata),
                 );
             }
 

@@ -83,6 +83,40 @@ describe('logService', () => {
     );
   });
 
+  it('persists exact pricing metadata when usage details are provided', async () => {
+    const { logService } = await import('./logService');
+    mockAddApiUsageRecord.mockClear();
+
+    logService.recordTokenUsage(
+      'gemini-3-flash-preview',
+      {
+        promptTokens: 123,
+        cachedPromptTokens: 23,
+        completionTokens: 45,
+        totalTokens: 168,
+      },
+      {
+        version: 1,
+        requestKind: 'chat',
+        promptTokensDetails: [{ modality: 'TEXT', tokenCount: 100 }],
+        cacheTokensDetails: [{ modality: 'TEXT', tokenCount: 23 }],
+        responseTokensDetails: [{ modality: 'TEXT', tokenCount: 45 }],
+      },
+    );
+    await Promise.resolve();
+
+    expect(mockAddApiUsageRecord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'gemini-3-flash-preview',
+        exactPricing: expect.objectContaining({
+          version: 1,
+          requestKind: 'chat',
+          promptTokensDetails: [{ modality: 'TEXT', tokenCount: 100 }],
+        }),
+      }),
+    );
+  });
+
   it('serializes direct Error arguments with message and stack details', async () => {
     const { logService } = await import('./logService');
     await logService.getRecentLogs();

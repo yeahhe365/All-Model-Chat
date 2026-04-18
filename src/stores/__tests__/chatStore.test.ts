@@ -36,7 +36,7 @@ vi.mock('../../utils/db', () => ({
 
 // Mock appUtils
 vi.mock('../../utils/appUtils', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
   rehydrateSessionFiles: vi.fn((session: any) => session),
   getTranslator: vi.fn(),
   applyThemeToDocument: vi.fn(),

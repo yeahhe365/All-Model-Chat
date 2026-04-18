@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { dbService, type ApiUsageRecord } from '../../utils/db';
-import { calculateTokenPriceUsd } from '../../utils/usagePricing';
+import { calculateApiUsageRecordPriceUsd } from '../../utils/usagePricing';
 
 export type UsageTimeRange = 'today' | '7d' | '30d' | 'all';
 
@@ -52,15 +52,7 @@ const buildSummary = (records: ApiUsageRecord[]): UsageSummary =>
       const inputTokens = Math.max(record.promptTokens - cachedTokens, 0) + (record.toolUsePromptTokens ?? 0);
       const outputTokens = record.completionTokens + (record.thoughtTokens ?? 0);
       const totalTokens = inputTokens + cachedTokens + outputTokens;
-      const estimatedCost = calculateTokenPriceUsd(
-        record.modelId,
-        {
-          promptTokens: record.promptTokens,
-          cachedPromptTokens: cachedTokens,
-          inputTokens,
-          completionTokens: outputTokens,
-        },
-      );
+      const estimatedCost = calculateApiUsageRecordPriceUsd(record);
 
       return {
         totalRequests: summary.totalRequests + 1,
@@ -89,15 +81,7 @@ const buildBreakdown = (records: ApiUsageRecord[]): UsageModelBreakdown[] => {
       estimatedCostUsdAvailable: true,
     };
 
-    const estimatedCost = calculateTokenPriceUsd(
-      record.modelId,
-      {
-        promptTokens: record.promptTokens,
-        cachedPromptTokens: cachedTokens,
-        inputTokens,
-        completionTokens: outputTokens,
-      },
-    );
+    const estimatedCost = calculateApiUsageRecordPriceUsd(record);
 
     current.totalRequests += 1;
     current.totalPromptTokens += inputTokens;

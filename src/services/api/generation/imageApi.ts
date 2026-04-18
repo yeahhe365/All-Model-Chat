@@ -1,6 +1,7 @@
 import type { GenerateImagesConfig } from '@google/genai';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
+import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTelemetry';
 
 const supportsImagenImageSize = (modelId: string): boolean =>
     modelId === 'imagen-4.0-generate-001' || modelId === 'imagen-4.0-ultra-generate-001';
@@ -48,6 +49,16 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
         if (images.length === 0) {
             throw new Error("No images generated. The prompt may have been blocked or the model failed to respond.");
         }
+
+        logService.recordTokenUsage(
+            modelId,
+            {
+                promptTokens: 0,
+                completionTokens: 0,
+                totalTokens: 0,
+            },
+            buildExactImageGenerationPricing(images.length),
+        );
         
         return images;
 

@@ -20,7 +20,7 @@ vi.mock('../baseApi', async () => {
 });
 
 vi.mock('../../logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
 import {

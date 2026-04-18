@@ -1,5 +1,5 @@
 
-import { dbService } from "../utils/db";
+import { dbService, type ApiUsageExactPricing } from "../utils/db";
 
 export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
 export type LogCategory = 'SYSTEM' | 'NETWORK' | 'USER' | 'MODEL' | 'DB' | 'AUTH' | 'FILE';
@@ -316,6 +316,7 @@ class LogServiceImpl {
       toolUsePromptTokens?: number;
       totalTokens?: number;
     },
+    exactPricing?: ApiUsageExactPricing,
   ) {
     if (!modelId) return;
     const current = this.tokenUsage.get(modelId) || { input: 0, output: 0 };
@@ -336,6 +337,7 @@ class LogServiceImpl {
       thoughtTokens: usage.thoughtTokens ?? 0,
       toolUsePromptTokens: usage.toolUsePromptTokens ?? 0,
       totalTokens: usage.totalTokens ?? (inputTokens + outputTokens),
+      ...(exactPricing ? { exactPricing } : {}),
     }).catch((error) => {
       console.error('Failed to persist API usage record:', error);
     });

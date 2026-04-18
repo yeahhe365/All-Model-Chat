@@ -12,7 +12,7 @@ vi.mock('../../utils/db', () => ({
 }));
 
 vi.mock('../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
 vi.mock('../../runtime/runtimeConfig', () => ({

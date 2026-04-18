@@ -6,7 +6,7 @@ import { useSettingsStore } from '../../../stores/settingsStore';
 import { ToolsMenu } from './ToolsMenu';
 
 vi.mock('../../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
 describe('ToolsMenu', () => {

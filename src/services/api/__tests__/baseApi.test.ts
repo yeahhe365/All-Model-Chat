@@ -28,7 +28,7 @@ vi.mock('../../../utils/db', () => ({
 
 // Mock logService
 vi.mock('../../logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
 // Mock appUtils for isGemini3Model

@@ -31,6 +31,25 @@ export interface ApiUsageRecord {
   thoughtTokens?: number;
   toolUsePromptTokens?: number;
   totalTokens?: number;
+  exactPricing?: ApiUsageExactPricing;
+}
+
+export type ApiUsageRequestKind = 'chat' | 'tts' | 'transcription' | 'image_generate';
+export type ApiUsageModality = 'TEXT' | 'IMAGE' | 'AUDIO';
+
+export interface ApiUsageModalityTokenCount {
+  modality: ApiUsageModality;
+  tokenCount: number;
+}
+
+export interface ApiUsageExactPricing {
+  version: 1;
+  requestKind: ApiUsageRequestKind;
+  promptTokensDetails?: ApiUsageModalityTokenCount[];
+  cacheTokensDetails?: ApiUsageModalityTokenCount[];
+  responseTokensDetails?: ApiUsageModalityTokenCount[];
+  toolUsePromptTokensDetails?: ApiUsageModalityTokenCount[];
+  generatedImageCount?: number;
 }
 
 const isVersionConflictError = (error: unknown): boolean => {

@@ -5,6 +5,8 @@ import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import type { Part } from "@google/genai";
 import { blobToBase64 } from "../../../utils/appUtils";
+import { calculateTokenStats } from '../../../utils/modelHelpers';
+import { buildExactPricingFromUsageMetadata } from '../../../utils/usagePricingTelemetry';
 
 export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> => {
     logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
@@ -36,6 +38,28 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
         const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
         if (typeof audioData === 'string' && audioData.length > 0) {
+            if (response.usageMetadata) {
+                const {
+                    promptTokens,
+                    cachedPromptTokens,
+                    completionTokens,
+                    thoughtTokens,
+                    toolUsePromptTokens,
+                    totalTokens,
+                } = calculateTokenStats(response.usageMetadata);
+                logService.recordTokenUsage(
+                    modelId,
+                    {
+                        promptTokens,
+                        cachedPromptTokens,
+                        completionTokens,
+                        thoughtTokens,
+                        toolUsePromptTokens,
+                        totalTokens,
+                    },
+                    buildExactPricingFromUsageMetadata('tts', response.usageMetadata),
+                );
+            }
             return audioData;
         }
         
@@ -106,6 +130,28 @@ export const transcribeAudioApi = async (apiKey: string, audioFile: File, modelI
         });
 
         if (response.text) {
+            if (response.usageMetadata) {
+                const {
+                    promptTokens,
+                    cachedPromptTokens,
+                    completionTokens,
+                    thoughtTokens,
+                    toolUsePromptTokens,
+                    totalTokens,
+                } = calculateTokenStats(response.usageMetadata);
+                logService.recordTokenUsage(
+                    modelId,
+                    {
+                        promptTokens,
+                        cachedPromptTokens,
+                        completionTokens,
+                        thoughtTokens,
+                        toolUsePromptTokens,
+                        totalTokens,
+                    },
+                    buildExactPricingFromUsageMetadata('transcription', response.usageMetadata),
+                );
+            }
             return response.text;
         } else {
             const safetyFeedback = response.candidates?.[0]?.finishReason;

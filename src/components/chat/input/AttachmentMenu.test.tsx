@@ -6,7 +6,7 @@ import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 
 vi.mock('../../../services/logService', () => ({
-  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
 vi.mock('../../../hooks/ui/usePortaledMenu', () => ({
