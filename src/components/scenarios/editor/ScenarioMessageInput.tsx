@@ -2,6 +2,8 @@
 import React from 'react';
 import { User, Bot, Send } from 'lucide-react';
 import { translations } from '../../../utils/appUtils';
+import { useSettingsStore } from '../../../stores/settingsStore';
+import { getShortcutDisplay, isShortcutPressed } from '../../../utils/shortcutUtils';
 
 interface ScenarioMessageInputProps {
     role: 'user' | 'model';
@@ -24,10 +26,14 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
     readOnly,
     t
 }) => {
+    const appSettings = useSettingsStore((state) => state.appSettings);
+    const saveConfirmShortcut = getShortcutDisplay('global.saveConfirm', appSettings);
+
     if (readOnly) return null;
 
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (isShortcutPressed(e, 'global.saveConfirm', appSettings)) {
+            e.preventDefault();
             onAdd();
         }
     };
@@ -71,7 +77,7 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
                 </button>
             </div>
             <div className="text-[10px] text-[var(--theme-text-tertiary)] mt-2 text-center font-medium opacity-60">
-                CMD/CTRL + Enter to Add
+                {saveConfirmShortcut} to Add
             </div>
         </div>
     );

@@ -10,6 +10,8 @@ import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
 import { IconYoutube } from '../icons/CustomIcons';
 import { copyFileToClipboard } from '../../utils/fileHelpers';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
+import { useSettingsStore } from '../../stores/settingsStore';
+import { isShortcutPressed } from '../../utils/shortcutUtils';
 
 const LazyPdfViewer = lazy(async () => {
     const module = await import('../shared/file-preview/PdfViewer');
@@ -42,6 +44,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
     initialEditMode = false,
 }) => {
   const { t } = useI18n();
+  const appSettings = useSettingsStore((state) => state.appSettings);
   const isDocxCandidate = isDocxFile(file);
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [editedContent, setEditedContent] = useState(file.textContent ?? '');
@@ -74,10 +77,10 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
               return;
           }
 
-          if (event.key === 'ArrowLeft' && hasPrev && onPrev) {
+          if (isShortcutPressed(event, 'global.prevFile', appSettings) && hasPrev && onPrev) {
               event.preventDefault();
               onPrev();
-          } else if (event.key === 'ArrowRight' && hasNext && onNext) {
+          } else if (isShortcutPressed(event, 'global.nextFile', appSettings) && hasNext && onNext) {
               event.preventDefault();
               onNext();
           }
@@ -85,7 +88,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
 
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleCopyShortcut, hasNext, hasPrev, isEditing, onNext, onPrev]);
+  }, [appSettings, handleCopyShortcut, hasNext, hasPrev, isEditing, onNext, onPrev]);
 
   const handleSave = useCallback(() => {
       if (!onSaveText) {

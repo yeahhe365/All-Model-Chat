@@ -3,14 +3,23 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
-const { mockExtractDocxText } = vi.hoisted(() => ({
+const { mockExtractDocxText, mockSettingsState } = vi.hoisted(() => ({
   mockExtractDocxText: vi.fn(),
+  mockSettingsState: {
+    appSettings: {
+      customShortcuts: {},
+    },
+  },
 }));
 
 vi.mock('../../contexts/I18nContext', () => ({
   useI18n: () => ({
     t: (key: string) => key,
   }),
+}));
+
+vi.mock('../../stores/settingsStore', () => ({
+  useSettingsStore: (selector: (state: typeof mockSettingsState) => unknown) => selector(mockSettingsState),
 }));
 
 vi.mock('../shared/Modal', () => ({
@@ -56,6 +65,7 @@ describe('FilePreviewModal', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     vi.clearAllMocks();
+    mockSettingsState.appSettings.customShortcuts = {};
   });
 
   afterEach(() => {
@@ -104,5 +114,38 @@ describe('FilePreviewModal', () => {
     });
 
     expect(document.body.textContent).toContain('Unable to preview this Word document.');
+  });
+
+  it('uses configured file navigation shortcuts instead of hard-coded arrows', async () => {
+    mockSettingsState.appSettings.customShortcuts = {
+      'global.prevFile': 'a',
+      'global.nextFile': 'd',
+    };
+
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <FilePreviewModal
+          file={createDocxFile()}
+          onClose={() => {}}
+          onPrev={onPrev}
+          onNext={onNext}
+          hasPrev
+          hasNext
+        />,
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'a' }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd' }));
+    });
+
+    expect(onPrev).toHaveBeenCalledTimes(1);
+    expect(onNext).toHaveBeenCalledTimes(1);
   });
 });

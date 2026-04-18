@@ -126,11 +126,6 @@ export const useAppEvents = ({
                 }
             }
 
-            if (isShortcutPressed(event, 'input.focusInput', appSettings) && !isGenerallyInputFocused) {
-                 event.preventDefault();
-                 const textarea = document.querySelector('textarea[aria-label="Chat message input"]') as HTMLTextAreaElement;
-                 if (textarea) textarea.focus();
-            }
         };
 
         document.addEventListener('keydown', handleKeyDown);
