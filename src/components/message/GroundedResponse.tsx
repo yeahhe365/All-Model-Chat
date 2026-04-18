@@ -28,6 +28,7 @@ interface GroundedResponseProps {
 
 interface SearchQueryMetadata {
   webSearchQueries?: string[];
+  imageSearchQueries?: string[];
 }
 
 export const GroundedResponse: React.FC<GroundedResponseProps> = ({ 
@@ -50,10 +51,17 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
   const content = useMemo(() => insertCitations(text, metadata), [text, metadata]);
   const sources = useMemo(() => extractSources(metadata), [metadata]);
   const searchQueries = useMemo(
-    () =>
-      typeof metadata === 'object' && metadata !== null
-        ? ((metadata as SearchQueryMetadata).webSearchQueries ?? [])
-        : [],
+    () => {
+      if (typeof metadata !== 'object' || metadata === null) {
+        return [];
+      }
+
+      const searchMetadata = metadata as SearchQueryMetadata;
+      return [
+        ...(searchMetadata.webSearchQueries ?? []),
+        ...(searchMetadata.imageSearchQueries ?? []),
+      ];
+    },
     [metadata],
   );
 

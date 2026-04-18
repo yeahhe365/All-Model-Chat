@@ -2,6 +2,9 @@ import type { GenerateImagesConfig } from '@google/genai';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 
+const supportsImagenImageSize = (modelId: string): boolean =>
+    modelId === 'imagen-4.0-generate-001' || modelId === 'imagen-4.0-ultra-generate-001';
+
 export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal): Promise<string[]> => {
     logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio, imageSize });
     
@@ -23,7 +26,7 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
             aspectRatio: aspectRatio 
         };
 
-        if (imageSize) {
+        if (imageSize && supportsImagenImageSize(modelId)) {
             config.imageSize = imageSize;
         }
 

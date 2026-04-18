@@ -78,6 +78,9 @@ const ChatInputComponent: React.FC = () => {
   const actionsProps: ChatInputActionsProps = {
     onAttachmentAction: modalsState.handleAttachmentAction,
     disabled: inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
+    isImageModel: capabilities.isImagenModel || false,
+    isGemini3ImageModel: capabilities.isGemini3ImageModel || false,
+    isRealImagenModel: capabilities.isRealImagenModel || false,
     isGoogleSearchEnabled: chatInput.isGoogleSearchEnabled,
     onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(chatInput.onToggleGoogleSearch),
     isCodeExecutionEnabled: chatInput.isCodeExecutionEnabled,

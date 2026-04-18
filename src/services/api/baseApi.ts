@@ -39,7 +39,14 @@ export type GenerationConfig = {
     thinkingBudget?: number;
   };
   tools?: Array<
-    | { googleSearch: Record<string, never> }
+    | {
+        googleSearch: {
+          searchTypes?: {
+            webSearch?: Record<string, never>;
+            imageSearch?: Record<string, never>;
+          };
+        };
+      }
     | { codeExecution: Record<string, never> }
     | { urlContext: Record<string, never> }
   >;
@@ -251,6 +258,17 @@ export const buildGenerationConfig = async (
     mediaResolution?: MediaResolution,
     isLocalPythonEnabled?: boolean
 ): Promise<GenerationConfig> => {
+    const googleSearchTool = modelId === 'gemini-3.1-flash-image-preview'
+        ? {
+            googleSearch: {
+                searchTypes: {
+                    webSearch: {},
+                    imageSearch: {},
+                },
+            },
+        }
+        : { googleSearch: {} };
+
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {};
         if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
@@ -286,7 +304,7 @@ export const buildGenerationConfig = async (
          
          // Add tools if enabled
          const tools = [];
-         if (isGoogleSearchEnabled || isDeepSearchEnabled) tools.push({ googleSearch: {} });
+         if (isGoogleSearchEnabled) tools.push(googleSearchTool);
          if (tools.length > 0) config.tools = tools;
          
          if (systemInstruction) config.systemInstruction = systemInstruction;
@@ -373,7 +391,7 @@ export const buildGenerationConfig = async (
     const tools = [];
     // Deep Search requires Google Search tool
     if (isGoogleSearchEnabled || isDeepSearchEnabled) {
-        tools.push({ googleSearch: {} });
+        tools.push(googleSearchTool);
     }
     // Only allow server code execution if local python is DISABLED
     if (isCodeExecutionEnabled && !isLocalPythonEnabled) {

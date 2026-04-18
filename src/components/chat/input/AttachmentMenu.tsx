@@ -20,12 +20,13 @@ import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 interface AttachmentMenuProps {
     onAction: (action: AttachmentAction) => void;
     disabled: boolean;
+    isImageModel?: boolean;
 }
 
 const attachIconSize = 20;
 const menuIconSize = 18;
 
-export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled }) => {
+export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, isImageModel }) => {
     const { t } = useI18n();
     const {
         isOpen,
@@ -55,6 +56,16 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_createText', icon: <IconFileEdit size={menuIconSize} />, action: 'text' }
     ] as const;
 
+    const filteredMenuItems = isImageModel
+        ? menuItems.filter((item) =>
+            item.action === 'upload'
+            || item.action === 'gallery'
+            || item.action === 'camera'
+            || item.action === 'screenshot'
+            || item.action === 'id'
+        )
+        : menuItems;
+
     return (
         <div className="relative" ref={containerRef}>
             <button
@@ -78,7 +89,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                     style={menuPosition}
                     role="menu"
                 >
-                    {menuItems.map(item => (
+                    {filteredMenuItems.map(item => (
                         <button key={item.action} onClick={() => handleAction(item.action)} className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3.5 transition-colors" role="menuitem">
                             <span className="text-[var(--theme-text-secondary)]">{item.icon}</span>
                             <span className="font-medium">{t(item.labelKey)}</span>

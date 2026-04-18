@@ -1,32 +1,42 @@
 import { act } from 'react';
-import { createRoot, Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRoot } from 'react-dom/client';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { useSettingsLogic } from './useSettingsLogic';
 
-describe('useSettingsLogic', () => {
-  let container: HTMLDivElement;
-  let root: Root;
+const renderHook = <T,>(callback: () => T) => {
+  const container = document.createElement('div');
+  const root = createRoot(container);
+  const result: { current: T | null } = { current: null };
 
-  beforeEach(() => {
-    localStorage.clear();
-    container = document.createElement('div');
-    document.body.appendChild(container);
-    root = createRoot(container);
+  const TestComponent = () => {
+    result.current = callback();
+    return null;
+  };
+
+  act(() => {
+    root.render(<TestComponent />);
   });
 
-  afterEach(() => {
-    act(() => {
-      root.unmount();
-    });
-    container.remove();
+  return {
+    result: result as { current: T },
+    unmount: () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    },
+  };
+};
+
+describe('useSettingsLogic', () => {
+  beforeEach(() => {
+    localStorage.clear();
   });
 
   it('includes the usage tab in the settings sidebar model', () => {
-    let tabs: Array<{ id: string }> = [];
-
-    const TestComponent = () => {
-      tabs = useSettingsLogic({
+    const { result, unmount } = renderHook(() =>
+      useSettingsLogic({
         isOpen: true,
         currentSettings: DEFAULT_APP_SETTINGS,
         onSave: vi.fn(),
@@ -34,14 +44,10 @@ describe('useSettingsLogic', () => {
         onClearCache: vi.fn(),
         onImportHistory: vi.fn(),
         t: (key: string) => key,
-      }).tabs;
-      return null;
-    };
+      }),
+    );
 
-    act(() => {
-      root.render(<TestComponent />);
-    });
-
-    expect(tabs.map((tab) => tab.id)).toContain('usage');
+    expect(result.current.tabs.map((tab) => tab.id)).toContain('usage');
+    unmount();
   });
 });

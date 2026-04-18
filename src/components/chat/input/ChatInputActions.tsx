@@ -21,6 +21,9 @@ interface ExtendedChatInputActionsProps extends ChatInputActionsProps {
 export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   onAttachmentAction,
   disabled,
+  isImageModel,
+  isGemini3ImageModel,
+  isRealImagenModel,
   isGoogleSearchEnabled,
   onToggleGoogleSearch,
   isCodeExecutionEnabled,
@@ -62,7 +65,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   return (
     <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled} />
+            <AttachmentMenu onAction={onAttachmentAction} disabled={disabled || !!isRealImagenModel} isImageModel={isImageModel} />
             
             {isNativeAudioModel && (
                 <WebSearchToggle 
@@ -73,6 +76,8 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             )}
 
             <ToolsMenu
+                isImageModel={isImageModel}
+                isGemini3ImageModel={isGemini3ImageModel}
                 isGoogleSearchEnabled={isGoogleSearchEnabled}
                 onToggleGoogleSearch={onToggleGoogleSearch}
                 isCodeExecutionEnabled={isCodeExecutionEnabled}

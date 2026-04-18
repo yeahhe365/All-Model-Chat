@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Language, Outcome } from '@google/genai';
 import { buildContentParts, createChatHistoryForApi } from '../builder';
 import { UploadedFile, ChatMessage, MediaResolution } from '../../../types';
 
@@ -290,8 +291,8 @@ describe('createChatHistoryForApi', () => {
       makeMessage('model', '', {
         files: [generatedImage],
         apiParts: [
-          { executableCode: { language: 'PYTHON', code: 'print(1)' } },
-          { codeExecutionResult: { outcome: 'OUTCOME_OK', output: '1\n' } },
+          { executableCode: { language: Language.PYTHON, code: 'print(1)' } },
+          { codeExecutionResult: { outcome: Outcome.OUTCOME_OK, output: '1\n' } },
           { text: 'Here is the chart.' },
           { inlineData: { mimeType: 'image/png', data: '' } },
         ],

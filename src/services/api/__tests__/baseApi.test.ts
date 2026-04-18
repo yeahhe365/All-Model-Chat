@@ -279,6 +279,33 @@ describe('buildGenerationConfig', () => {
     });
   });
 
+  it('uses image search grounding for gemini-3.1-flash-image-preview when search is enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
+      true, false, false, undefined, '1:1', false, '2K'
+    );
+
+    expect(config.tools).toEqual([
+      {
+        googleSearch: {
+          searchTypes: {
+            webSearch: {},
+            imageSearch: {},
+          },
+        },
+      },
+    ]);
+  });
+
+  it('does not enable search for Gemini image models when only deep search is enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
+      false, false, false, undefined, '1:1', true, '2K'
+    );
+
+    expect(config.tools).toBeUndefined();
+  });
+
   it('includes thinkingConfig for Gemini 3 models', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
