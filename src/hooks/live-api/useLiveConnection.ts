@@ -2,8 +2,9 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { LiveServerMessage, Session as LiveSession, Tool } from '@google/genai';
 import { AppSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
-import { getLiveApiClient } from '../../services/api/baseApi';
+import { getLiveApiClient, LiveApiAuthConfigurationError } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
+import type { LiveErrorState } from './liveErrorState';
 
 interface UseLiveConnectionProps {
     appSettings: AppSettings;
@@ -37,15 +38,18 @@ export const useLiveConnection = ({
     setSessionHandle,
     sessionHandleRef,
     sessionRef
-}: UseLiveConnectionProps) => {
-    const [isConnected, setIsConnected] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isReconnecting, setIsReconnecting] = useState(false);
+	}: UseLiveConnectionProps) => {
+	    const [isConnected, setIsConnected] = useState(false);
+	    const [errorState, setErrorState] = useState<LiveErrorState | null>(null);
+		    const [isReconnecting, setIsReconnecting] = useState(false);
 
-    // Ref to track connection state synchronously for audio callbacks
-    const isConnectedRef = useRef(false);
-    const isReconnectingRef = useRef(false);
-    const disconnectRef = useRef<() => void>(() => {});
+	    // Ref to track connection state synchronously for audio callbacks
+	    const isConnectedRef = useRef(false);
+	    const isReconnectingRef = useRef(false);
+	    const isProactiveReconnectRef = useRef(false);
+	    const disconnectRef = useRef<() => void>(() => {});
+	    const setupCompleteResolveRef = useRef<(() => void) | null>(null);
+	    const setupCompleteRejectRef = useRef<((error: Error) => void) | null>(null);
 
     // Sync Ref with State (Keep as a fallback for external state changes)
     useEffect(() => {
@@ -65,10 +69,33 @@ export const useLiveConnection = ({
     const maxRetries = 5;
     const baseDelay = 1000;
 
-    const resetAudioState = useCallback(() => {
-        clearBufferedAudio?.();
-        cleanupAudio();
-    }, [clearBufferedAudio, cleanupAudio]);
+	    const resetAudioState = useCallback(() => {
+	        clearBufferedAudio?.();
+	        cleanupAudio();
+	    }, [clearBufferedAudio, cleanupAudio]);
+
+	    const clearSetupCompleteWaiters = useCallback(() => {
+	        setupCompleteResolveRef.current = null;
+	        setupCompleteRejectRef.current = null;
+	    }, []);
+
+	    const resolveSetupComplete = useCallback(() => {
+	        setupCompleteResolveRef.current?.();
+	        clearSetupCompleteWaiters();
+	    }, [clearSetupCompleteWaiters]);
+
+		    const rejectSetupComplete = useCallback((error: Error) => {
+		        setupCompleteRejectRef.current?.(error);
+		        clearSetupCompleteWaiters();
+		    }, [clearSetupCompleteWaiters]);
+
+        const setTranslationError = useCallback((key: string, fallback?: string, values?: Record<string, string | number>) => {
+            setErrorState({ kind: 'translation', key, fallback, values });
+        }, []);
+
+        const setRawError = useCallback((message: string) => {
+            setErrorState({ kind: 'raw', message });
+        }, []);
 
     const triggerReconnect = useCallback(() => {
         if (reconnectTimeoutRef.current) {
@@ -77,10 +104,10 @@ export const useLiveConnection = ({
 
         resetAudioState();
 
-        if (retryCountRef.current >= maxRetries) {
-            logService.error("Max reconnection attempts reached.");
-            setError("Connection lost. Please try again.");
-            setIsReconnecting(false);
+	        if (retryCountRef.current >= maxRetries) {
+	            logService.error("Max reconnection attempts reached.");
+	            setTranslationError('liveStatus_connection_lost_retry_failed', 'Connection lost. Please try again.');
+	            setIsReconnecting(false);
             
             // 同步修改 Ref 以立即拦截发送
             isConnectedRef.current = false;
@@ -94,33 +121,55 @@ export const useLiveConnection = ({
         // Exponential backoff: 1s, 2s, 4s, 8s, 16s... cap at 30s
         const delay = Math.min(30000, baseDelay * Math.pow(2, retryCountRef.current));
         
-        const attempt = retryCountRef.current + 1;
-        logService.warn(`Live API disconnected. Reconnecting in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
-        setError(`Connection lost. Reconnecting... (${attempt}/${maxRetries})`);
+	        const attempt = retryCountRef.current + 1;
+	        logService.warn(`Live API disconnected. Reconnecting in ${delay}ms... (Attempt ${attempt}/${maxRetries})`);
+	        setTranslationError('liveStatus_reconnecting_attempt', 'Connection lost. Reconnecting... ({attempt}/{maxRetries})', {
+                attempt,
+                maxRetries,
+            });
         
         reconnectTimeoutRef.current = setTimeout(() => {
             reconnectTimeoutRef.current = null;
             retryCountRef.current++;
             connectRef.current(); // Call the latest connect function
         }, delay);
-    }, [resetAudioState, stopVideo]);
+	    }, [resetAudioState, stopVideo, setTranslationError]);
 
-    const connect = useCallback(async () => {
-        // Clear any pending reconnection timeout if we are manually connecting
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-        }
+	    const handleGoAway = useCallback((goAway?: { timeLeft?: string }) => {
+	        if (isUserDisconnectRef.current || isProactiveReconnectRef.current || !sessionHandleRef.current) {
+	            return;
+	        }
 
-        setError(null);
-        isUserDisconnectRef.current = false; // Reset user disconnect flag
+	        logService.info("Live API GoAway received", goAway ?? {});
+	        isProactiveReconnectRef.current = true;
+	        setIsReconnecting(true);
+	        setTranslationError('liveStatus_refreshing', 'Refreshing live session...');
 
-        try {
-            // Specify API version v1alpha for Live API support
-            const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' });
-            
-            // Initialize Audio (Mic & Worklet)
-            // We pass a callback that sends the encoded audio to the session
+	        sessionRef.current?.then((session) => session.close());
+		    }, [sessionHandleRef, sessionRef, setTranslationError]);
+
+	    const connect = useCallback(async () => {
+	        // Clear any pending reconnection timeout if we are manually connecting
+	        if (reconnectTimeoutRef.current) {
+	            clearTimeout(reconnectTimeoutRef.current);
+	            reconnectTimeoutRef.current = null;
+	        }
+
+	        setErrorState(null);
+	        isUserDisconnectRef.current = false; // Reset user disconnect flag
+
+	        isProactiveReconnectRef.current = false;
+
+	        try {
+	            // Specify API version v1alpha for Live API support
+	            const ai = await getLiveApiClient(appSettings, { apiVersion: 'v1alpha' });
+	            const setupCompletePromise = new Promise<void>((resolve, reject) => {
+	                setupCompleteResolveRef.current = resolve;
+	                setupCompleteRejectRef.current = reject;
+	            });
+	            
+	            // Initialize Audio (Mic & Worklet)
+	            // We pass a callback that sends the encoded audio to the session
             await initializeAudio((pcmData) => {
                 // IMPORTANT: If connection is closed/closing, stop sending immediately to prevent WebSocket flood errors
                 if (!isConnectedRef.current) return;
@@ -144,31 +193,32 @@ export const useLiveConnection = ({
             });
 
             // Connect Session
-            const sessionPromise = ai.live.connect({
-                model: modelId,
-                config: liveConfig as Parameters<typeof ai.live.connect>[0]['config'],
-                callbacks: {
-                    onopen: () => {
-                        logService.info("Live API Connected", { tools: tools?.length ?? 0, resumed: !!sessionHandleRef.current });
-                        
-                        // 【核心修复】：在连接建立的瞬间，立即同步修改 Ref 为 true。
-                        // 确保 initializeAudio 回调中的 `!isConnectedRef.current` 检查能立即通过，
-                        // 从而防止首个音频缓冲帧因为 React 渲染周期延迟而被丢弃。
-                        isConnectedRef.current = true;
-                        
-                        setIsConnected(true);
-                        setIsReconnecting(false);
-                        setError(null);
-                        retryCountRef.current = 0; // Reset retries on success
-                    },
-                    onmessage: handleMessage,
-                    onclose: (e) => {
-                        logService.info("Live API Closed", e);
-                        sessionRef.current = null;
-                        
-                        // 同步修改 Ref 防止报错
-                        isConnectedRef.current = false;
-                        setIsConnected(false);
+	            const sessionPromise = ai.live.connect({
+	                model: modelId,
+	                config: liveConfig as Parameters<typeof ai.live.connect>[0]['config'],
+	                callbacks: {
+	                    onopen: () => {
+	                        logService.info("Live API Connected", { tools: tools?.length ?? 0, resumed: !!sessionHandleRef.current });
+	                    },
+	                    onmessage: (msg) => {
+	                        if (msg.setupComplete) {
+	                            isConnectedRef.current = true;
+		                            setIsConnected(true);
+		                            setIsReconnecting(false);
+		                            setErrorState(null);
+	                            retryCountRef.current = 0;
+	                            resolveSetupComplete();
+	                        }
+	                        handleMessage(msg);
+	                    },
+	                    onclose: (e) => {
+	                        logService.info("Live API Closed", e);
+	                        sessionRef.current = null;
+	                        rejectSetupComplete(new Error("Live API connection closed before setup completed."));
+	                        
+	                        // 同步修改 Ref 防止报错
+	                        isConnectedRef.current = false;
+	                        setIsConnected(false);
                         
                         // Finalize any open transcripts
                         if (onTranscript) {
@@ -177,19 +227,26 @@ export const useLiveConnection = ({
                         }
 
                         // Only trigger reconnect if NOT user initiated
-                        if (!isUserDisconnectRef.current) {
-                            triggerReconnect();
-                        } else {
-                            if (onClose) onClose();
-                        }
-                    },
-                    onerror: (err) => {
-                        logService.error("Live API Error", err);
-                        sessionRef.current = null;
-                        
-                        // 同步修改 Ref
-                        isConnectedRef.current = false;
-                        setIsConnected(false);
+	                        if (!isUserDisconnectRef.current) {
+	                            if (isProactiveReconnectRef.current) {
+	                                isProactiveReconnectRef.current = false;
+	                                resetAudioState();
+	                                void connectRef.current();
+	                            } else {
+	                                triggerReconnect();
+	                            }
+	                        } else {
+	                            if (onClose) onClose();
+	                        }
+	                    },
+	                    onerror: (err) => {
+	                        logService.error("Live API Error", err);
+	                        sessionRef.current = null;
+		                        rejectSetupComplete(err instanceof Error ? err : new Error("Connection error"));
+	                        
+	                        // 同步修改 Ref
+	                        isConnectedRef.current = false;
+	                        setIsConnected(false);
                         
                         // Finalize any open transcripts
                         if (onTranscript) {
@@ -198,48 +255,71 @@ export const useLiveConnection = ({
                         }
                         
                         // Only trigger reconnect if NOT user initiated
-                        if (!isUserDisconnectRef.current) {
-                            triggerReconnect();
-                        } else {
-                            setError(err.message || "Connection error");
-                        }
-                    }
-                }
-            });
+	                        if (!isUserDisconnectRef.current) {
+	                            triggerReconnect();
+	                        } else {
+	                            if (err.message) {
+                                    setRawError(err.message);
+                                } else {
+                                    setTranslationError('liveStatus_connection_error', 'Connection error');
+                                }
+	                        }
+	                    }
+	                }
+	            });
 
-            sessionRef.current = sessionPromise;
+	            sessionRef.current = sessionPromise;
+	            await sessionPromise;
+	            await setupCompletePromise;
 
-        } catch (err) {
-            logService.error("Failed to connect to Live API", err);
-            
-            // 同步修改 Ref
-            isConnectedRef.current = false;
+	        } catch (err) {
+	            logService.error("Failed to connect to Live API", err);
+	            clearSetupCompleteWaiters();
+	            
+	            // 同步修改 Ref
+	            isConnectedRef.current = false;
             setIsConnected(false);
 
-            if (err instanceof Error && err.name === 'LiveApiAuthConfigurationError') {
-                setIsReconnecting(false);
-                setError(err.message || "Failed to start session");
-                resetAudioState();
-                stopVideo();
-                return;
-            }
-            
-            if (!isUserDisconnectRef.current) {
-                triggerReconnect();
-            } else {
-                setError(err instanceof Error ? err.message : "Failed to start session");
-                resetAudioState();
-            }
-        }
-    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, resetAudioState, stopVideo, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
+	            if (err instanceof LiveApiAuthConfigurationError || (err instanceof Error && err.name === 'LiveApiAuthConfigurationError')) {
+	                setIsReconnecting(false);
+                    const authError = err as LiveApiAuthConfigurationError & { code?: string };
+                    if (authError.code === 'MISSING_EPHEMERAL_TOKEN_ENDPOINT') {
+                        setTranslationError('liveStatus_missing_token_endpoint', 'Live API requires an ephemeral token endpoint.');
+                    } else if (authError.code === 'INVALID_EPHEMERAL_TOKEN_RESPONSE') {
+                        setTranslationError('liveStatus_invalid_token_response', 'Live API token endpoint must return JSON.');
+                    } else if (authError.code === 'MISSING_EPHEMERAL_TOKEN') {
+                        setTranslationError('liveStatus_missing_token_in_response', 'Live API token endpoint response must include `name` or `token`.');
+                    } else if (err.message) {
+                        setRawError(err.message);
+                    } else {
+                        setTranslationError('liveStatus_failed_to_start', 'Failed to start session');
+                    }
+	                resetAudioState();
+	                stopVideo();
+	                return;
+	            }
+	            
+	            if (!isUserDisconnectRef.current) {
+	                triggerReconnect();
+	            } else {
+	                if (err instanceof Error && err.message) {
+                        setRawError(err.message);
+                    } else {
+                        setTranslationError('liveStatus_failed_to_start', 'Failed to start session');
+                    }
+	                resetAudioState();
+	            }
+	        }
+		    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, resetAudioState, stopVideo, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef, resolveSetupComplete, rejectSetupComplete, clearSetupCompleteWaiters, setRawError, setTranslationError]);
 
-    const sendText = useCallback(async (text: string) => {
-        if (!sessionRef.current) return;
-        try {
-            const session = await sessionRef.current;
-            session.sendRealtimeInput({ text });
-            logService.info("Sent text to Live API", { textLength: text.length });
-        } catch (e) {
+	    const sendText = useCallback(async (text: string) => {
+	        if (!sessionRef.current || !isConnectedRef.current) return;
+	        try {
+	            const session = await sessionRef.current;
+	            if (!isConnectedRef.current) return;
+	            session.sendRealtimeInput({ text });
+	            logService.info("Sent text to Live API", { textLength: text.length });
+	        } catch (e) {
             logService.error("Failed to send text to Live API", e);
         }
     }, [sessionRef]);
@@ -248,13 +328,14 @@ export const useLiveConnection = ({
         isUserDisconnectRef.current = true; // Mark as user initiated
         
         // Cancel pending reconnects
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-        }
+	        if (reconnectTimeoutRef.current) {
+	            clearTimeout(reconnectTimeoutRef.current);
+	            reconnectTimeoutRef.current = null;
+	        }
+	        rejectSetupComplete(new Error("Live API connection closed before setup completed."));
 
-        if (sessionRef.current) {
-            sessionRef.current.then((session) => session.close());
+	        if (sessionRef.current) {
+	            sessionRef.current.then((session) => session.close());
         }
         sessionRef.current = null;
         
@@ -262,14 +343,15 @@ export const useLiveConnection = ({
         stopVideo(); // Stop video stream if active
 
         // 同步修改 Ref
-        isConnectedRef.current = false;
-        setIsConnected(false);
-        setIsReconnecting(false);
-        setSessionHandle(null); // Clear session handle on manual disconnect to start fresh next time
-        sessionHandleRef.current = null;
+	        isConnectedRef.current = false;
+	        setIsConnected(false);
+	        setIsReconnecting(false);
+	        setErrorState(null);
+	        setSessionHandle(null); // Clear session handle on manual disconnect to start fresh next time
+	        sessionHandleRef.current = null;
         
         if (onClose) onClose();
-    }, [onClose, resetAudioState, stopVideo, sessionRef, setSessionHandle, sessionHandleRef]);
+	    }, [onClose, resetAudioState, stopVideo, sessionRef, setSessionHandle, sessionHandleRef, rejectSetupComplete]);
 
     // Update the ref whenever connect changes so triggerReconnect calls the latest version
     useEffect(() => {
@@ -290,12 +372,13 @@ export const useLiveConnection = ({
         };
     }, []);
 
-    return {
-        isConnected,
-        isReconnecting,
-        error,
-        connect,
-        disconnect,
-        sendText
-    };
-};
+	    return {
+	        isConnected,
+	        isReconnecting,
+		        errorState,
+		        connect,
+		        handleGoAway,
+		        disconnect,
+	        sendText
+	    };
+	};

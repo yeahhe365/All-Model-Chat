@@ -46,6 +46,8 @@ describe('useLiveFrameCapture', () => {
       useLiveFrameCapture({
         isConnected: true,
         videoStream,
+        volume: 0.2,
+        isMuted: false,
         captureFrame: () => 'jpeg-base64',
         sessionRef: sessionRef as any,
       }),
@@ -68,6 +70,38 @@ describe('useLiveFrameCapture', () => {
         data: 'jpeg-base64',
       },
     });
+
+    unmount();
+    vi.useRealTimers();
+  });
+
+  it('does not send frames while the user is silent', async () => {
+    const sendRealtimeInput = vi.fn();
+    const sessionRef = {
+      current: Promise.resolve({
+        sendRealtimeInput,
+      }),
+    };
+
+    const videoStream = {} as MediaStream;
+
+    const { unmount } = renderHook(() =>
+      useLiveFrameCapture({
+        isConnected: true,
+        videoStream,
+        volume: 0,
+        isMuted: false,
+        captureFrame: () => 'jpeg-base64',
+        sessionRef: sessionRef as any,
+      }),
+    );
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
+
+    expect(sendRealtimeInput).not.toHaveBeenCalled();
 
     unmount();
     vi.useRealTimers();

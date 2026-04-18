@@ -76,6 +76,7 @@ export interface ChatInputViewModel {
   liveStatusProps?: {
     isConnected: boolean;
     isSpeaking: boolean;
+    isReconnecting: boolean;
     volume: number;
     onDisconnect: () => void;
     error: string | null;

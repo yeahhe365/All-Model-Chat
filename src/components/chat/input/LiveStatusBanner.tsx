@@ -1,10 +1,12 @@
 
 import React from 'react';
 import { Mic, Activity, X } from 'lucide-react';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface LiveStatusBannerProps {
     isConnected: boolean;
     isSpeaking: boolean;
+    isReconnecting: boolean;
     volume: number;
     onDisconnect: () => void;
     error: string | null;
@@ -13,10 +15,41 @@ interface LiveStatusBannerProps {
 export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({ 
     isConnected, 
     isSpeaking, 
+    isReconnecting,
     volume, 
     onDisconnect,
     error
 }) => {
+    const { t } = useI18n();
+
+    if (isReconnecting) {
+        return (
+            <div className="flex items-center justify-between p-2 mb-2 bg-[var(--theme-bg-accent)]/10 border border-[var(--theme-bg-accent)]/20 rounded-xl animate-in fade-in slide-in-from-bottom-2 backdrop-blur-sm">
+                <div className="flex items-center gap-3 pl-2 min-w-0">
+                    <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-[var(--theme-bg-secondary)] text-[var(--theme-text-link)]">
+                        <Activity size={16} className="animate-pulse" />
+                    </div>
+
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-[var(--theme-text-primary)]">
+                            {error || t('liveStatus_refreshing')}
+                        </span>
+                        <span className="text-[10px] text-[var(--theme-text-secondary)] truncate">
+                            {t('liveStatus_reconnecting_automatically')}
+                        </span>
+                    </div>
+                </div>
+
+                <button 
+                    onClick={onDisconnect}
+                    className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors"
+                >
+                    {t('liveStatus_end_call')}
+                </button>
+            </div>
+        );
+    }
+
     if (error) {
         return (
             <div className="flex items-center justify-between p-3 mb-2 bg-[var(--theme-bg-danger)]/10 border border-[var(--theme-bg-danger)]/20 rounded-xl text-[var(--theme-text-danger)] animate-in fade-in slide-in-from-bottom-2">
@@ -48,10 +81,10 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
                 
                 <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold text-[var(--theme-text-primary)]">
-                        {isSpeaking ? "Gemini is speaking..." : "Listening..."}
+                        {isSpeaking ? t('liveStatus_speaking') : t('liveStatus_listening')}
                     </span>
                     <span className="text-[10px] text-[var(--theme-text-secondary)] truncate">
-                        Live Session Active • Type to chat
+                        {t('liveStatus_active_hint')}
                     </span>
                 </div>
             </div>
@@ -60,7 +93,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
                 onClick={onDisconnect}
                 className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors"
             >
-                End Call
+                {t('liveStatus_end_call')}
             </button>
         </div>
     );

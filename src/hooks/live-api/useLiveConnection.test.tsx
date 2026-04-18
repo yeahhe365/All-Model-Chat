@@ -59,6 +59,11 @@ const renderHook = <T,>(callback: () => T) => {
   };
 };
 
+const flushAsyncConnect = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
+
 describe('useLiveConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,14 +78,21 @@ describe('useLiveConnection', () => {
   it('sends text with sendRealtimeInput for live sessions', async () => {
     const sendRealtimeInput = vi.fn();
     const sendClientContent = vi.fn();
+    const sessionRef = { current: null as any };
 
-    const sessionRef = {
-      current: Promise.resolve({
-        sendRealtimeInput,
-        sendClientContent,
-        close: vi.fn(),
-      }),
-    };
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: vi.fn(({ callbacks }) => {
+          callbacks.onopen?.();
+          callbacks.onmessage?.({ setupComplete: {} });
+          return Promise.resolve({
+            sendRealtimeInput,
+            sendClientContent,
+            close: vi.fn(),
+          });
+        }),
+      },
+    });
 
     const { result, unmount } = renderHook(() =>
       useLiveConnection({
@@ -99,6 +111,7 @@ describe('useLiveConnection', () => {
     );
 
     await act(async () => {
+      await result.current.connect();
       await result.current.sendText('Hello live');
     });
 
@@ -156,6 +169,7 @@ describe('useLiveConnection', () => {
       live: {
         connect: vi.fn(({ callbacks }) => {
           callbacks.onopen?.();
+          callbacks.onmessage?.({ setupComplete: {} });
           return Promise.resolve({
             sendRealtimeInput,
             close: vi.fn(),
@@ -186,7 +200,6 @@ describe('useLiveConnection', () => {
 
     await act(async () => {
       await result.current.connect();
-      await Promise.resolve();
     });
 
     expect(audioCallback).not.toBeNull();
@@ -208,8 +221,9 @@ describe('useLiveConnection', () => {
 
   it('surfaces a configuration error when no ephemeral token endpoint is configured', async () => {
     mockGetLiveApiClient.mockRejectedValue(
-      Object.assign(new Error('Live API requires an ephemeral token endpoint.'), {
+      Object.assign(new Error('custom backend message'), {
         name: 'LiveApiAuthConfigurationError',
+        code: 'MISSING_EPHEMERAL_TOKEN_ENDPOINT',
       }),
     );
 
@@ -233,7 +247,11 @@ describe('useLiveConnection', () => {
       await result.current.connect();
     });
 
-    expect(result.current.error).toBe('Live API requires an ephemeral token endpoint.');
+    expect(result.current.errorState).toEqual({
+      kind: 'translation',
+      key: 'liveStatus_missing_token_endpoint',
+      fallback: 'Live API requires an ephemeral token endpoint.',
+    });
     expect(result.current.isReconnecting).toBe(false);
     unmount();
   });
@@ -243,6 +261,7 @@ describe('useLiveConnection', () => {
 
     const callbacksByAttempt: Array<{
       onopen?: () => void;
+      onmessage?: (message: unknown) => void;
       onclose?: (event: unknown) => void;
     }> = [];
 
@@ -285,7 +304,10 @@ describe('useLiveConnection', () => {
     );
 
     await act(async () => {
-      await result.current.connect();
+      const connectPromise = result.current.connect();
+      await flushAsyncConnect();
+      callbacksByAttempt[0]?.onmessage?.({ setupComplete: {} });
+      await connectPromise;
     });
 
     expect(connectLiveSession).toHaveBeenCalledTimes(1);
@@ -333,6 +355,7 @@ describe('useLiveConnection', () => {
 
     const callbacksByAttempt: Array<{
       onopen?: () => void;
+      onmessage?: (message: unknown) => void;
       onclose?: (event: unknown) => void;
     }> = [];
     const close = vi.fn();
@@ -374,8 +397,10 @@ describe('useLiveConnection', () => {
     );
 
     await act(async () => {
-      await result.current.connect();
-      await Promise.resolve();
+      const connectPromise = result.current.connect();
+      await flushAsyncConnect();
+      callbacksByAttempt[0]?.onmessage?.({ setupComplete: {} });
+      await connectPromise;
     });
 
     await act(async () => {
@@ -407,6 +432,7 @@ describe('useLiveConnection', () => {
 
     const callbacksByAttempt: Array<{
       onopen?: () => void;
+      onmessage?: (message: unknown) => void;
       onclose?: (event: unknown) => void;
       onerror?: (error: Error) => void;
     }> = [];
@@ -443,8 +469,10 @@ describe('useLiveConnection', () => {
     );
 
     await act(async () => {
-      await result.current.connect();
-      await Promise.resolve();
+      const connectPromise = result.current.connect();
+      await flushAsyncConnect();
+      callbacksByAttempt[0]?.onmessage?.({ setupComplete: {} });
+      await connectPromise;
     });
 
     await act(async () => {
@@ -470,6 +498,7 @@ describe('useLiveConnection', () => {
 
     const callbacksByAttempt: Array<{
       onopen?: () => void;
+      onmessage?: (message: unknown) => void;
       onclose?: (event: unknown) => void;
     }> = [];
     const cleanupAudio = vi.fn();
@@ -508,8 +537,10 @@ describe('useLiveConnection', () => {
     );
 
     await act(async () => {
-      await result.current.connect();
-      await Promise.resolve();
+      const connectPromise = result.current.connect();
+      await flushAsyncConnect();
+      callbacksByAttempt[0]?.onmessage?.({ setupComplete: {} });
+      await connectPromise;
     });
 
     await act(async () => {
@@ -520,6 +551,128 @@ describe('useLiveConnection', () => {
     expect(cleanupAudio).toHaveBeenCalledTimes(1);
     expect(clearBufferedAudio).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(1);
+
+    unmount();
+  });
+
+  it('does not mark the session connected until setupComplete arrives', async () => {
+    const callbacksByAttempt: Array<{
+      onopen?: () => void;
+      onmessage?: (message: unknown) => void;
+    }> = [];
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: vi.fn(({ callbacks }) => {
+          callbacksByAttempt.push(callbacks);
+          callbacks.onopen?.();
+          return Promise.resolve({
+            sendRealtimeInput: vi.fn(),
+            close: vi.fn(),
+          });
+        }),
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+        sessionRef: { current: null },
+      }),
+    );
+
+    let didResolve = false;
+
+    await act(async () => {
+      const connectPromise = result.current.connect().then(() => {
+        didResolve = true;
+      });
+      await flushAsyncConnect();
+
+      expect(result.current.isConnected).toBe(false);
+      expect(didResolve).toBe(false);
+
+      callbacksByAttempt[0]?.onmessage?.({ setupComplete: {} });
+      await connectPromise;
+    });
+
+    expect(result.current.isConnected).toBe(true);
+    expect(didResolve).toBe(true);
+
+    unmount();
+  });
+
+  it('reconnects immediately when the server sends goAway and a resumable handle is available', async () => {
+    const callbacksByAttempt: Array<{
+      onopen?: () => void;
+      onmessage?: (message: unknown) => void;
+      onclose?: (event: unknown) => void;
+    }> = [];
+    const close = vi.fn();
+    const sessionRef = { current: null as any };
+    const sessionHandleRef = { current: 'resumable-handle' as string | null };
+
+    const connectLiveSession = vi.fn(({ callbacks }) => {
+      callbacksByAttempt.push(callbacks);
+      callbacks.onopen?.();
+      return Promise.resolve({
+        sendRealtimeInput: vi.fn(),
+        close,
+      });
+    });
+
+    mockGetLiveApiClient.mockResolvedValue({
+      live: {
+        connect: connectLiveSession,
+      },
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useLiveConnection({
+        appSettings: {} as any,
+        modelId: 'gemini-3.1-flash-live-preview',
+        liveConfig: {},
+        tools: [],
+        initializeAudio: vi.fn(),
+        cleanupAudio: vi.fn(),
+        stopVideo: vi.fn(),
+        handleMessage: vi.fn(),
+        setSessionHandle: vi.fn(),
+        sessionHandleRef,
+        sessionRef,
+      }),
+    );
+
+    await act(async () => {
+      const connectPromise = result.current.connect();
+      await flushAsyncConnect();
+      callbacksByAttempt[0]?.onmessage?.({ setupComplete: {} });
+      await connectPromise;
+    });
+
+    await act(async () => {
+      result.current.handleGoAway({ timeLeft: '5s' });
+      await Promise.resolve();
+    });
+
+    expect(close).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      callbacksByAttempt[0]?.onclose?.({ reason: 'server-rotation' });
+      callbacksByAttempt[1]?.onmessage?.({ setupComplete: {} });
+      await Promise.resolve();
+    });
+
+    expect(connectLiveSession).toHaveBeenCalledTimes(2);
 
     unmount();
   });

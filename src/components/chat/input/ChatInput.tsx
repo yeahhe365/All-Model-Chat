@@ -216,6 +216,7 @@ const ChatInputComponent: React.FC = () => {
     liveStatusProps: {
       isConnected: liveAPI.isConnected,
       isSpeaking: liveAPI.isSpeaking,
+      isReconnecting: liveAPI.isReconnecting,
       volume: liveAPI.volume,
       error: liveAPI.error,
       onDisconnect: liveAPI.disconnect,

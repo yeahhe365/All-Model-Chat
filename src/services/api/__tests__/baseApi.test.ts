@@ -42,7 +42,6 @@ import {
   getApiClient,
   getConfiguredApiClient,
   getLiveApiClient,
-  LiveApiAuthConfigurationError,
 } from '../baseApi';
 import { dbService } from '../../../utils/db';
 
@@ -164,7 +163,38 @@ describe('getLiveApiClient', () => {
         },
         { apiVersion: 'v1alpha' },
       ),
-    ).rejects.toBeInstanceOf(LiveApiAuthConfigurationError);
+    ).rejects.toMatchObject({
+      name: 'LiveApiAuthConfigurationError',
+      code: 'MISSING_EPHEMERAL_TOKEN_ENDPOINT',
+    });
+  });
+
+  it('assigns a stable error code when the token endpoint returns invalid JSON', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw new Error('bad json');
+      },
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      getLiveApiClient(
+        {
+          liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
+          useCustomApiConfig: false,
+          useApiProxy: false,
+          apiProxyUrl: null,
+        },
+        { apiVersion: 'v1alpha' },
+      ),
+    ).rejects.toMatchObject({
+      name: 'LiveApiAuthConfigurationError',
+      code: 'INVALID_EPHEMERAL_TOKEN_RESPONSE',
+    });
+
+    vi.unstubAllGlobals();
   });
 
   it('creates a client with an ephemeral token from the configured endpoint', async () => {

@@ -8,7 +8,9 @@ import { useLiveConfig } from './live-api/useLiveConfig';
 import { useLiveMessageProcessing } from './live-api/useLiveMessageProcessing';
 import { useLiveConnection } from './live-api/useLiveConnection';
 import { useLiveFrameCapture } from './live-api/useLiveFrameCapture';
+import { resolveLiveErrorText } from './live-api/liveErrorState';
 import { useBackgroundKeepAlive } from './core/useBackgroundKeepAlive';
+import { useI18n } from '../contexts/I18nContext';
 
 interface UseLiveAPIProps {
     appSettings: AppSettings;
@@ -20,7 +22,9 @@ interface UseLiveAPIProps {
 }
 
 export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTranscript, clientFunctions }: UseLiveAPIProps) => {
+    const { t } = useI18n();
     const sessionRef = useRef<Promise<LiveSession> | null>(null);
+    const goAwayHandlerRef = useRef<(goAway: { timeLeft?: string }) => void>(() => {});
 
     // Session Resumption State
     const [sessionHandle, setSessionHandle] = useState<string | null>(null);
@@ -66,6 +70,7 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         playAudioChunk,
         stopAudioPlayback,
         onTranscript,
+        onGoAway: (goAway) => goAwayHandlerRef.current(goAway),
         clientFunctions,
         sessionRef,
         setSessionHandle,
@@ -73,14 +78,15 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
     });
 
     // 5. Connection Management Hook
-    const { 
-        isConnected, 
-        isReconnecting, 
-        error, 
-        connect, 
-        disconnect, 
-        sendText 
-    } = useLiveConnection({
+		    const { 
+		        isConnected, 
+		        isReconnecting, 
+		        errorState, 
+		        connect, 
+		        handleGoAway,
+		        disconnect, 
+	        sendText 
+	    } = useLiveConnection({
         appSettings,
         modelId,
         liveConfig,
@@ -93,14 +99,21 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         onClose,
         onTranscript,
         setSessionHandle,
-        sessionHandleRef,
-        sessionRef
-    });
+	        sessionHandleRef,
+	        sessionRef
+	    });
+		    useEffect(() => {
+		        goAwayHandlerRef.current = handleGoAway;
+		    }, [handleGoAway]);
+
+    const error = useMemo(() => resolveLiveErrorText(errorState, t), [errorState, t]);
 
     // 6. Frame Capture Hook
     useLiveFrameCapture({
         isConnected,
         videoStream,
+        volume,
+        isMuted,
         captureFrame,
         sessionRef
     });

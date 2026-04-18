@@ -9,6 +9,7 @@ interface UseLiveMessageProcessingProps {
     playAudioChunk: (data: string) => Promise<void>;
     stopAudioPlayback: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
+    onGoAway?: (goAway: NonNullable<LiveServerMessage['goAway']>) => void;
     clientFunctions?: LiveClientFunctions;
     sessionRef: React.MutableRefObject<Promise<LiveSession> | null>;
     setSessionHandle: (handle: string | null) => void;
@@ -19,6 +20,7 @@ export const useLiveMessageProcessing = ({
     playAudioChunk,
     stopAudioPlayback,
     onTranscript,
+    onGoAway,
     clientFunctions,
     sessionRef,
     setSessionHandle,
@@ -120,14 +122,19 @@ export const useLiveMessageProcessing = ({
             }
         }
 
-        // 6. Handle Session Resumption Update
+        // 6. Handle GoAway for proactive reconnection
+        if (msg.goAway) {
+            onGoAway?.(msg.goAway);
+        }
+
+        // 7. Handle Session Resumption Update
         if (msg.sessionResumptionUpdate && msg.sessionResumptionUpdate.resumable && msg.sessionResumptionUpdate.newHandle) {
             const newHandle = msg.sessionResumptionUpdate.newHandle;
             setSessionHandle(newHandle);
             // sessionHandleRef is updated via Effect in parent, but we update it here too for immediate consistency
             sessionHandleRef.current = newHandle;
         }
-    }, [playAudioChunk, stopAudioPlayback, onTranscript, handleToolCall, setSessionHandle, sessionHandleRef, finalizeAudio]);
+    }, [playAudioChunk, stopAudioPlayback, onTranscript, onGoAway, handleToolCall, setSessionHandle, sessionHandleRef, finalizeAudio]);
 
     return { handleMessage, clearBufferedAudio };
 };

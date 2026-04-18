@@ -175,4 +175,31 @@ describe('useLiveMessageProcessing', () => {
 
     unmount();
   });
+
+  it('surfaces goAway messages to the connection layer', async () => {
+    const onGoAway = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useLiveMessageProcessing({
+        playAudioChunk: vi.fn(),
+        stopAudioPlayback: vi.fn(),
+        onGoAway,
+        sessionRef: { current: null },
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleMessage({
+        goAway: {
+          timeLeft: '5s',
+        },
+      } as any);
+    });
+
+    expect(onGoAway).toHaveBeenCalledWith({ timeLeft: '5s' });
+
+    unmount();
+  });
 });
