@@ -5,12 +5,14 @@ const {
   mockAddLogs,
   mockPruneLogs,
   mockClearLogs,
+  mockClearApiUsage,
   mockGetLogs,
 } = vi.hoisted(() => ({
   mockAddApiUsageRecord: vi.fn(),
   mockAddLogs: vi.fn(),
   mockPruneLogs: vi.fn(),
   mockClearLogs: vi.fn(),
+  mockClearApiUsage: vi.fn(),
   mockGetLogs: vi.fn(),
 }));
 
@@ -20,11 +22,27 @@ vi.mock('../utils/db', () => ({
     addLogs: mockAddLogs,
     pruneLogs: mockPruneLogs,
     clearLogs: mockClearLogs,
+    clearApiUsage: mockClearApiUsage,
     getLogs: mockGetLogs,
   },
 }));
 
-describe('logService token usage capture', () => {
+const flushMicrotasks = async () => {
+  await Promise.resolve();
+  await Promise.resolve();
+};
+
+const createDeferred = () => {
+  let resolve!: () => void;
+  let reject!: (error?: unknown) => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+
+describe('logService', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -33,6 +51,7 @@ describe('logService token usage capture', () => {
     mockAddLogs.mockResolvedValue(undefined);
     mockPruneLogs.mockResolvedValue(undefined);
     mockClearLogs.mockResolvedValue(undefined);
+    mockClearApiUsage.mockResolvedValue(undefined);
     mockGetLogs.mockResolvedValue([]);
   });
 
@@ -62,5 +81,93 @@ describe('logService token usage capture', () => {
         timestamp: expect.any(Number),
       }),
     );
+  });
+
+  it('serializes direct Error arguments with message and stack details', async () => {
+    const { logService } = await import('./logService');
+    await logService.getRecentLogs();
+    mockAddLogs.mockClear();
+
+    logService.error('Streaming exploded', new Error('kaput'));
+    await logService.getRecentLogs();
+
+    expect(mockAddLogs).toHaveBeenCalledWith([
+      expect.objectContaining({
+        level: 'ERROR',
+        category: 'NETWORK',
+        message: 'Streaming exploded',
+        data: expect.objectContaining({
+          message: 'kaput',
+          name: 'Error',
+          stack: expect.any(String),
+        }),
+      }),
+    ]);
+  });
+
+  it('infers non-system categories when no explicit category is provided', async () => {
+    const { logService } = await import('./logService');
+    await logService.getRecentLogs();
+    mockAddLogs.mockClear();
+
+    logService.warn('Failed to upload file "report.pdf"');
+    await logService.getRecentLogs();
+
+    expect(mockAddLogs).toHaveBeenCalledWith([
+      expect.objectContaining({
+        level: 'WARN',
+        category: 'FILE',
+      }),
+    ]);
+  });
+
+  it('requeues failed flush batches so they can be retried later', async () => {
+    const { logService } = await import('./logService');
+    await logService.getRecentLogs();
+    mockAddLogs.mockReset();
+    mockGetLogs.mockResolvedValue([]);
+    mockAddLogs
+      .mockRejectedValueOnce(new Error('db unavailable'))
+      .mockResolvedValueOnce(undefined);
+
+    logService.info('Retry me');
+    await logService.getRecentLogs();
+    await logService.getRecentLogs();
+
+    expect(mockAddLogs).toHaveBeenCalledTimes(2);
+    expect(mockAddLogs.mock.calls[1][0]).toEqual([
+      expect.objectContaining({
+        message: 'Retry me',
+      }),
+    ]);
+  });
+
+  it('waits for in-flight flushes before clearing and does not recreate logs during clear', async () => {
+    const { logService } = await import('./logService');
+    await logService.getRecentLogs();
+    mockAddLogs.mockReset();
+    mockClearLogs.mockClear();
+    mockClearApiUsage.mockClear();
+    mockGetLogs.mockResolvedValue([]);
+
+    const deferredFlush = createDeferred();
+    mockAddLogs.mockReturnValueOnce(deferredFlush.promise);
+
+    logService.info('Pending log before clear');
+    const pendingRead = logService.getRecentLogs();
+    await flushMicrotasks();
+
+    const clearPromise = logService.clearLogs();
+    await flushMicrotasks();
+
+    expect(mockClearLogs).not.toHaveBeenCalled();
+
+    deferredFlush.resolve();
+    await pendingRead;
+    await clearPromise;
+
+    expect(mockClearLogs).toHaveBeenCalledTimes(1);
+    expect(mockClearApiUsage).toHaveBeenCalledTimes(1);
+    expect(mockAddLogs).toHaveBeenCalledTimes(1);
   });
 });
