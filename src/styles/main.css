@@ -154,3 +154,9 @@ body,
 .thought-process-inner {
   overflow: hidden;
 }
+
+/* Grounded search entry point */
+.search-entry-surface {
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
