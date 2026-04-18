@@ -31,10 +31,22 @@ const renderHook = <T,>(callback: () => T) => {
 
 describe('useSettingsLogic', () => {
   beforeEach(() => {
-    localStorage.clear();
+    const storage = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+    });
   });
 
-  it('includes the usage tab in the settings sidebar model', () => {
+  it('does not include the usage tab in the settings sidebar model', () => {
     const { result, unmount } = renderHook(() =>
       useSettingsLogic({
         isOpen: true,
@@ -47,7 +59,7 @@ describe('useSettingsLogic', () => {
       }),
     );
 
-    expect(result.current.tabs.map((tab) => tab.id)).toContain('usage');
+    expect(result.current.tabs.map((tab) => tab.id)).not.toContain('usage');
     unmount();
   });
 });

@@ -27,6 +27,7 @@ export const dataSettings = {
     settingsImport_success: { en: 'Settings imported successfully!', zh: '设置导入成功！' },
     settingsImport_error: { en: 'Failed to import settings. The file might be corrupted or in the wrong format.', zh: '导入设置失败。文件可能已损坏或格式不正确。' },
     settingsViewLogs: { en: 'View Logs', zh: '查看日志' },
+    settingsViewLogsAndUsage: { en: 'View Logs and Usage', zh: '查看日志和用量' },
     settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
     settingsClearLogs: { en: 'Clear Logs', zh: '清空日志' },

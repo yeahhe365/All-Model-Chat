@@ -25,7 +25,7 @@ describe('SettingsContent', () => {
     container.remove();
   });
 
-  it('renders the usage section when the usage tab is active', () => {
+  it('does not render the obsolete usage section when the removed tab is requested', () => {
     act(() => {
       root.render(
         <SettingsContent
@@ -53,6 +53,6 @@ describe('SettingsContent', () => {
       );
     });
 
-    expect(container.querySelector('[data-testid="usage-section"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="usage-section"]')).toBeNull();
   });
 });

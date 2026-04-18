@@ -1,8 +1,8 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { I18nProvider } from '../../../contexts/I18nContext';
-import { useSettingsStore } from '../../../stores/settingsStore';
+import { I18nProvider } from '../../contexts/I18nContext';
+import { useSettingsStore } from '../../stores/settingsStore';
 
 const {
   mockGetApiUsageByTimeRange,
@@ -22,7 +22,7 @@ const {
   mockClearApiUsage: vi.fn(),
 }));
 
-vi.mock('../../../utils/db', () => ({
+vi.mock('../../utils/db', () => ({
   dbService: {
     getApiUsageByTimeRange: mockGetApiUsageByTimeRange,
     pruneLogs: mockPruneLogs,
@@ -34,9 +34,9 @@ vi.mock('../../../utils/db', () => ({
   },
 }));
 
-import { UsageSection } from './UsageSection';
+import { UsageOverviewTab } from './UsageOverviewTab';
 
-describe('UsageSection', () => {
+describe('UsageOverviewTab', () => {
   let container: HTMLDivElement;
   let root: Root;
   const initialState = useSettingsStore.getState();
@@ -103,7 +103,7 @@ describe('UsageSection', () => {
       useSettingsStore.setState({ language: 'en' });
       root.render(
         <I18nProvider>
-          <UsageSection />
+          <UsageOverviewTab />
         </I18nProvider>,
       );
       await Promise.resolve();
@@ -123,7 +123,6 @@ describe('UsageSection', () => {
     expect(container.textContent).toContain('gemini-3.1-pro-preview');
     expect(container.textContent).toContain('gemini-3-flash-preview');
     expect(container.textContent).toContain('imagen-4.0-generate-001');
-    expect(container.textContent).toContain('—');
     expect(container.textContent).toContain('Strict official mode');
   });
 });

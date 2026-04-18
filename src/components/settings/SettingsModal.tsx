@@ -7,6 +7,7 @@ import { useSettingsLogic } from '../../hooks/features/useSettingsLogic';
 import { SettingsSidebar } from './SettingsSidebar';
 import { SettingsContent } from './SettingsContent';
 import { SettingsTransferProps } from './settingsTypes';
+import type { LogViewerProps } from '../log-viewer/LogViewer';
 
 interface SettingsModalProps extends SettingsTransferProps {
   isOpen: boolean;
@@ -16,7 +17,7 @@ interface SettingsModalProps extends SettingsTransferProps {
   onSave: (newSettings: AppSettings) => void; 
   onClearAllHistory: () => void;
   onClearCache: () => void;
-  onOpenLogViewer: () => void;
+  onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
   setAvailableModels: (models: ModelOption[]) => void;
 }
 

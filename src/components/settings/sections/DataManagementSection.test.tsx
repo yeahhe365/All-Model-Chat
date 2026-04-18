@@ -48,14 +48,14 @@ describe('DataManagementSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('View Logs');
+    expect(container.textContent).toContain('View Logs and Usage');
     expect(container.textContent).toContain('Export');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
-    expect(container.textContent).toContain('查看日志');
+    expect(container.textContent).toContain('查看日志和用量');
     expect(container.textContent).toContain('导出');
   });
 });
