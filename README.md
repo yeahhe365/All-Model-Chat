@@ -28,6 +28,12 @@
 
 ---
 
+## 界面预览
+
+<p align="center">
+  <img src="./docs/screenshots/app-desktop.png" alt="All Model Chat 桌面端界面预览" width="100%">
+</p>
+
 ## 项目简介
 
 **All Model Chat** 是一款基于 React 18 的 AI 交互工作台，深度集成 Google Gemini 系列模型。项目坚持 **Local-First** 原则：聊天数据默认存储于浏览器 IndexedDB，在保障隐私的同时提供流畅体验；同时支持新增的独立后端部署模式，用于服务端托管 Gemini 密钥与代理请求。
@@ -58,7 +64,7 @@
 - 自动 Canvas 生成模式（可配置触发模型）
 
 ### 高级文件处理
-- 客户端音频转码压缩（16kHz MP3），节省 Token 消耗
+- 浏览器端音频预处理与压缩流程，尽量降低音频上传的 Token 与带宽消耗
 - 支持 ZIP / 文件夹拖入，自动解析代码库结构
 - 支持图片、PDF、视频、音频、文本等多种文件类型
 - 可配置各文件类型使用 Gemini Files API 还是直接 Base64 上传
@@ -85,8 +91,8 @@
 - 覆盖所有 UI 组件（聊天、设置、侧边栏、快捷键等）
 
 ### PWA 支持
-- Service Worker 离线缓存，动态 App Shell 发现
-- 可安装为桌面/移动端应用
+- 提供 Web App Manifest 与安装提示事件处理
+- 可安装为桌面/移动端应用（取决于浏览器支持）
 - 支持画中画 (Picture-in-Picture) 模式
 
 ### 多标签同步
@@ -260,11 +266,11 @@ GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
 | **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
-| **音频引擎** | AudioWorklet API (实时流处理) + Lamejs (MP3 压缩) |
+| **音频引擎** | AudioWorklet API（实时流处理）+ 浏览器端 Worker 音频预处理 / 压缩流程 |
 | **渲染引擎** | React-Markdown + KaTeX (公式) + Highlight.js (代码高亮) + Mermaid.js + Graphviz (viz.js) |
 | **Python 沙箱** | Pyodide (WASM)，Web Worker 内执行，预装科学计算库 |
 | **API 代理** | 基于 `@google/genai` SDK `httpOptions.baseUrl` 的 Gemini API 代理配置 |
-| **PWA** | Service Worker + Web App Manifest，动态 App Shell 缓存 |
+| **PWA** | Web App Manifest + `beforeinstallprompt` / `appinstalled` 安装事件处理 |
 | **部署形态** | Vite 标准构建 / Docker Compose（web+api）/ Cloudflare Pages + 独立 API |
 生产部署若采用服务端托管 API，前端默认请求后端端点：
 - `/api/gemini/*`
@@ -311,10 +317,10 @@ All-Model-Chat/
 
 | 类型 | 模型 |
 | :--- | :--- |
-| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
-| **Gemini 2.5** | gemini-2.5-pro, gemini-2.5-flash-preview, gemini-2.5-flash-lite-preview, gemini-2.5-flash-native-audio-preview |
+| **Gemini 3.x** | gemini-3-flash-preview, gemini-3.1-flash-live-preview, gemini-3.1-flash-lite-preview, gemini-3.1-pro-preview |
+| **Gemini 2.5** | gemini-2.5-flash-native-audio-preview-12-2025 |
 | **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
-| **Imagen 4.0** | imagen-4.0-fast-generate, imagen-4.0-generate, imagen-4.0-ultra-generate |
+| **Imagen 4.0** | imagen-4.0-fast-generate-001, imagen-4.0-generate-001, imagen-4.0-ultra-generate-001 |
 | **图片生成** | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview |
 | **TTS** | gemini-2.5-pro-preview-tts, gemini-2.5-flash-preview-tts (30+ 种语音) |
 
