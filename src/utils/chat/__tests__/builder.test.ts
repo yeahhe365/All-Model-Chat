@@ -111,6 +111,45 @@ describe('buildContentParts', () => {
     expect(contentParts[0]).toEqual({ fileData: { fileUri: 'https://youtube.com/watch?v=abc' } });
   });
 
+  it('preserves per-part media resolution for YouTube video parts on Gemini 3', async () => {
+    const file = makeFile({
+      type: 'video/youtube-link',
+      fileUri: 'https://youtube.com/watch?v=abc',
+    });
+
+    const { contentParts } = await buildContentParts(
+      'Describe this',
+      [file],
+      'gemini-3.1-pro-preview',
+      MediaResolution.MEDIA_RESOLUTION_HIGH,
+    );
+
+    expect(contentParts[0]).toEqual({
+      fileData: { fileUri: 'https://youtube.com/watch?v=abc' },
+      mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
+    });
+  });
+
+  it('does not attach per-part media resolution to audio inputs', async () => {
+    const file = makeFile({
+      name: 'clip.mp3',
+      type: 'audio/mp3',
+      rawFile: new Blob(['audio'], { type: 'audio/mp3' }),
+    });
+
+    const { contentParts } = await buildContentParts(
+      'Transcribe this',
+      [file],
+      'gemini-3.1-pro-preview',
+      MediaResolution.MEDIA_RESOLUTION_HIGH,
+    );
+
+    expect(contentParts[0]).toEqual({
+      inlineData: { mimeType: 'audio/mp3', data: 'base64data' },
+    });
+    expect(contentParts[0]).not.toHaveProperty('mediaResolution');
+  });
+
   it('builds text part for text files', async () => {
     const file = makeFile({
       name: 'notes.txt',

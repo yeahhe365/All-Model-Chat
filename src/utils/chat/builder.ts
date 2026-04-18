@@ -51,8 +51,10 @@ export const buildContentParts = async (
       return { file: newFile, part };
     }
     
+    const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
     const isYoutube = file.type === 'video/youtube-link';
+    const isPdf = file.type === 'application/pdf';
     // Check if file should be treated as text content (not base64 inlineData)
     const isTextLike = isTextFile(file);
 
@@ -185,7 +187,8 @@ export const buildContentParts = async (
     const effectiveResolution = file.mediaResolution || mediaResolution;
     
     if (part && isGemini3 && effectiveResolution && effectiveResolution !== MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED) {
-      const shouldInject = (part.fileData && !isYoutube) || (part.inlineData && !isTextLike);
+      const isResolutionEligibleMedia = isImage || isVideo || isPdf;
+      const shouldInject = isResolutionEligibleMedia && Boolean(part.fileData || part.inlineData);
       if (shouldInject) {
             part.mediaResolution = { level: toPartMediaResolutionLevel(effectiveResolution) };
       }
