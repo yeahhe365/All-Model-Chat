@@ -74,6 +74,7 @@ describe('ApiConfigSection', () => {
             serverManagedApi
             liveApiEphemeralTokenEndpoint={null}
             setLiveApiEphemeralTokenEndpoint={vi.fn()}
+            availableModels={[]}
           />
         </I18nProvider>
       );
@@ -125,6 +126,7 @@ describe('ApiConfigSection', () => {
             serverManagedApi={false}
             liveApiEphemeralTokenEndpoint={null}
             setLiveApiEphemeralTokenEndpoint={vi.fn()}
+            availableModels={[]}
           />
         </I18nProvider>,
       );

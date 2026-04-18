@@ -29,7 +29,7 @@ describe('ApiProxySettings', () => {
           <ApiProxySettings
             useApiProxy
             setUseApiProxy={vi.fn()}
-            apiProxyUrl="https://api-proxy.de/gemini"
+            apiProxyUrl="https://api-proxy.de/gemini/v1beta"
             setApiProxyUrl={vi.fn()}
           />
         </I18nProvider>

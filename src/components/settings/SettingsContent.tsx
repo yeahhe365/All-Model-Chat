@@ -116,6 +116,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         serverManagedApi={currentSettings.serverManagedApi ?? false}
                         liveApiEphemeralTokenEndpoint={currentSettings.liveApiEphemeralTokenEndpoint ?? null}
                         setLiveApiEphemeralTokenEndpoint={(val) => updateSetting('liveApiEphemeralTokenEndpoint', val)}
+                        availableModels={availableModels}
                     />
                 </div>
             )}
