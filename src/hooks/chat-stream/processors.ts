@@ -5,9 +5,25 @@ import { SUPPORTED_GENERATED_MIME_TYPES } from '../../constants/fileConstants';
 
 export const appendApiPart = (parts: Part[] = [], newPart: Part) => {
     const newParts = [...parts];
+    const hasThoughtSignature = (part: Part) =>
+        Boolean(
+            (part as Part & { thoughtSignature?: string; thought_signature?: string }).thoughtSignature ||
+            (part as Part & { thoughtSignature?: string; thought_signature?: string }).thought_signature
+        );
+    const isPlainTextOnlyPart = (part: Part) => Object.keys(part).every((key) => key === 'text');
+
     if ('text' in newPart && typeof newPart.text === 'string') {
         const lastPart = newParts[newParts.length - 1];
-        if (lastPart && 'text' in lastPart && typeof lastPart.text === 'string' && !('thought' in lastPart && lastPart.thought)) {
+        if (
+            lastPart &&
+            'text' in lastPart &&
+            typeof lastPart.text === 'string' &&
+            !('thought' in lastPart && lastPart.thought) &&
+            !hasThoughtSignature(lastPart) &&
+            !hasThoughtSignature(newPart) &&
+            isPlainTextOnlyPart(lastPart) &&
+            isPlainTextOnlyPart(newPart)
+        ) {
             newParts[newParts.length - 1] = { ...lastPart, text: lastPart.text + newPart.text } as Part;
             return newParts;
         }

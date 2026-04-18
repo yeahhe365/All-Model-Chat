@@ -223,6 +223,33 @@ npm run build
 npm run verify
 ```
 
+如果只想验证 Gemini Code Execution 相关链路，可以执行：
+
+```bash
+npm run test:code-execution
+```
+
+这个命令覆盖：
+- 文本 / CSV / 代码文件的 MIME 与上传策略
+- Code Execution 请求构造与多轮历史回放
+- 流式 `thoughtSignature` 保留
+- Live API 中 `codeExecutionResult.output` 展示
+
+如果你想用真实 `GEMINI_API_KEY` 做一次手动联调检查，也可以执行：
+
+```bash
+GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
+```
+
+可选环境变量：
+- `CODE_EXECUTION_MODEL`：覆盖默认模型（默认 `gemini-2.5-flash`）
+
+这个脚本会：
+- 上传一个临时 CSV 文件，并显式使用 `text/csv`
+- 发起一次启用 `codeExecution` 的请求
+- 检查响应里是否同时出现 `executableCode` 和 `codeExecutionResult`
+- 复用第一轮完整模型内容发起第二轮追问，验证多轮历史可继续使用
+
 ---
 
 ## 技术架构

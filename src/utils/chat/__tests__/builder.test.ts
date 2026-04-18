@@ -7,7 +7,12 @@ vi.mock('../../../utils/fileHelpers', () => ({
   blobToBase64: vi.fn().mockResolvedValue('base64data'),
   fileToString: vi.fn().mockResolvedValue('file text content'),
   isTextFile: vi.fn((file: { name: string; type: string }) => {
-    return file.type === 'text/plain' || file.name.endsWith('.txt');
+    return (
+      file.type === 'text/plain' ||
+      file.type === 'text/csv' ||
+      file.name.endsWith('.txt') ||
+      file.name.endsWith('.csv')
+    );
   }),
   getExtensionFromMimeType: vi.fn((mimeType: string) => {
     const map: Record<string, string> = { 'image/png': '.png', 'audio/mp3': '.mp3' };
@@ -116,6 +121,31 @@ describe('buildContentParts', () => {
     const textPart = contentParts.find(p => p.text?.includes('START OF FILE'));
     expect(textPart).toBeTruthy();
     expect(textPart!.text).toContain('notes.txt');
+  });
+
+  it('uses inlineData for text files when code execution file I/O is preferred', async () => {
+    const file = makeFile({
+      name: 'dataset.csv',
+      type: 'text/csv',
+      rawFile: new Blob(['a,b\n1,2\n'], { type: 'text/csv' }),
+    });
+
+    const { contentParts } = await buildContentParts(
+      'Analyze this file',
+      [file],
+      'gemini-3.1-pro-preview',
+      MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
+      true,
+    );
+
+    expect(contentParts[0]).toEqual({
+      inlineData: {
+        mimeType: 'text/csv',
+        data: 'base64data',
+      },
+    });
+    expect(contentParts.find(p => p.text?.includes('START OF FILE'))).toBeUndefined();
+    expect(contentParts[1]).toEqual({ text: 'Analyze this file' });
   });
 
   it('returns fallback text for unsupported binary types', async () => {
@@ -247,5 +277,93 @@ describe('createChatHistoryForApi', () => {
       fileData: { mimeType: 'image/png', fileUri: 'files/abc123' },
       mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
     });
+  });
+
+  it('rehydrates generated inline media from stored files when rebuilding history', async () => {
+    const generatedImage = makeFile({
+      name: 'generated-chart.png',
+      type: 'image/png',
+      rawFile: new Blob(['png'], { type: 'image/png' }),
+    });
+
+    const msgs = [
+      makeMessage('model', '', {
+        files: [generatedImage],
+        apiParts: [
+          { executableCode: { language: 'PYTHON', code: 'print(1)' } },
+          { codeExecutionResult: { outcome: 'OUTCOME_OK', output: '1\n' } },
+          { text: 'Here is the chart.' },
+          { inlineData: { mimeType: 'image/png', data: '' } },
+        ],
+      }),
+    ];
+
+    const history = await createChatHistoryForApi(msgs);
+
+    expect(history[0].parts[0]).toEqual({
+      executableCode: { language: 'PYTHON', code: 'print(1)' },
+    });
+    expect(history[0].parts[1]).toEqual({
+      codeExecutionResult: { outcome: 'OUTCOME_OK', output: '1\n' },
+    });
+    expect(history[0].parts[2]).toEqual({
+      text: 'Here is the chart.',
+    });
+    expect(history[0].parts[3]).toEqual({
+      inlineData: { mimeType: 'image/png', data: 'base64data' },
+    });
+  });
+
+  it('keeps non-code-execution generated inline media collapsed to a system note', async () => {
+    const generatedImage = makeFile({
+      name: 'generated-image.png',
+      type: 'image/png',
+      rawFile: new Blob(['png'], { type: 'image/png' }),
+    });
+
+    const msgs = [
+      makeMessage('model', '', {
+        files: [generatedImage],
+        apiParts: [
+          { text: 'Here is an image model result.' },
+          { inlineData: { mimeType: 'image/png', data: '' } },
+        ],
+      }),
+    ];
+
+    const history = await createChatHistoryForApi(msgs);
+
+    expect(history[0].parts[1]).toEqual({
+      text: "[System Note: The model previously generated a media file of type 'image/png'. Content omitted from history to preserve memory and context window.]",
+    });
+  });
+
+  it('rebuilds prior user text files as file inputs when code execution file I/O is preferred', async () => {
+    const msgs = [
+      makeMessage('user', 'Please analyze the attached CSV', {
+        files: [
+          makeFile({
+            name: 'dataset.csv',
+            type: 'text/csv',
+            rawFile: new Blob(['a,b\n1,2\n'], { type: 'text/csv' }),
+          }),
+        ],
+      }),
+    ];
+
+    const history = await createChatHistoryForApi(
+      msgs,
+      false,
+      'gemini-3.1-pro-preview',
+      true,
+    );
+
+    expect(history[0].parts[0]).toEqual({
+      inlineData: {
+        mimeType: 'text/csv',
+        data: 'base64data',
+      },
+    });
+    expect(history[0].parts[1]).toEqual({ text: 'Please analyze the attached CSV' });
   });
 });

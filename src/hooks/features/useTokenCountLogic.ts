@@ -45,7 +45,15 @@ export const useTokenCountLogic = ({
         }
 
         try {
-            const { contentParts } = await buildContentParts(txt, fls, modelId, appSettings.mediaResolution);
+            const preferCodeExecutionFileInputs =
+                !!appSettings.isCodeExecutionEnabled && !appSettings.isLocalPythonEnabled;
+            const { contentParts } = await buildContentParts(
+                txt,
+                fls,
+                modelId,
+                appSettings.mediaResolution,
+                preferCodeExecutionFileInputs,
+            );
             
             if (contentParts.length === 0) {
                 setTokenCount(0);

@@ -72,7 +72,10 @@ export const useLiveMessageProcessing = ({
                     if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
                 }
                 if (part.codeExecutionResult) {
-                    const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                    let resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                    if (part.codeExecutionResult.output) {
+                        resultBlock += `\n\`\`\`\n${part.codeExecutionResult.output}\n\`\`\`\n`;
+                    }
                     if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
                 }
             }

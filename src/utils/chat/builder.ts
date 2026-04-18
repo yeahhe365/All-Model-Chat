@@ -32,7 +32,8 @@ export const buildContentParts = async (
   text: string, 
   files?: UploadedFile[],
   modelId?: string,
-  mediaResolution?: MediaResolution
+  mediaResolution?: MediaResolution,
+  preferCodeExecutionFileInputs: boolean = false
 ): Promise<{
   contentParts: ContentPart[];
   enrichedFiles: UploadedFile[];
@@ -69,19 +70,54 @@ export const buildContentParts = async (
         const urlSource = file.dataUrl;
         
         if (isTextLike) {
-            // Special handling for text/code: Read content and wrap in text part
-            let textContent = '';
-            if (fileSource && (fileSource instanceof File || fileSource instanceof Blob)) {
-                // If it's a File/Blob, read directly
-                textContent = await fileToString(fileSource as File);
-            } else if (urlSource) {
-                // Fallback: Fetch from URL if rawFile is missing
-                const response = await fetch(urlSource);
-                textContent = await response.text();
+            if (preferCodeExecutionFileInputs) {
+                let base64DataForApi: string | undefined;
+
+                if (fileSource && fileSource instanceof Blob) {
+                    try {
+                        base64DataForApi = await blobToBase64(fileSource);
+                    } catch (error) {
+                        logService.error(`Failed to convert text file to base64 for ${file.name}`, { error });
+                    }
+                } else if (urlSource) {
+                    try {
+                        const response = await fetch(urlSource);
+                        const blob = await response.blob();
+                        base64DataForApi = await blobToBase64(blob);
+
+                        if (!newFile.rawFile) {
+                            newFile.rawFile = new File([blob], file.name, { type: file.type || 'text/plain' });
+                        }
+                    } catch (error) {
+                        logService.error(`Failed to fetch text blob and convert to base64 for ${file.name}`, { error });
+                    }
+                }
+
+                if (base64DataForApi) {
+                    part = {
+                        inlineData: {
+                            mimeType: file.type || 'text/plain',
+                            data: base64DataForApi,
+                        },
+                    };
+                }
             }
-            if (textContent) {
-                // Format as a pseudo-file block for the model
-                part = { text: `\n--- START OF FILE ${file.name} ---\n${textContent}\n--- END OF FILE ${file.name} ---\n` };
+
+            if (!part) {
+                // Special handling for text/code: Read content and wrap in text part
+                let textContent = '';
+                if (fileSource && (fileSource instanceof File || fileSource instanceof Blob)) {
+                    // If it's a File/Blob, read directly
+                    textContent = await fileToString(fileSource as File);
+                } else if (urlSource) {
+                    // Fallback: Fetch from URL if rawFile is missing
+                    const response = await fetch(urlSource);
+                    textContent = await response.text();
+                }
+                if (textContent) {
+                    // Format as a pseudo-file block for the model
+                    part = { text: `\n--- START OF FILE ${file.name} ---\n${textContent}\n--- END OF FILE ${file.name} ---\n` };
+                }
             }
         } else {
             // Standard Inline Data (Images, PDFs, Audio, Video if small enough)
@@ -177,7 +213,8 @@ export const buildContentParts = async (
 export const createChatHistoryForApi = async (
     msgs: ChatMessage[],
     stripThinking: boolean = false,
-    modelId?: string
+    modelId?: string,
+    preferCodeExecutionFileInputs: boolean = false
 ): Promise<ChatHistoryItem[]> => {
     const historyItems: ChatHistoryItem[] = [];
     
@@ -188,30 +225,69 @@ export const createChatHistoryForApi = async (
         const apiParts = msg.role === 'model' ? msg.apiParts : undefined;
         const hasApiParts = !!apiParts && apiParts.length > 0;
         const parts: ContentPart[] = hasApiParts
-            ? apiParts
-                .filter(p => !(stripThinking && p.thought))
-                .map(p => {
-                    const partCopy = JSON.parse(JSON.stringify(p));
+            ? await (async () => {
+                const generatedFiles = [...(msg.files || [])];
+                const hasCodeExecutionArtifacts = apiParts.some(
+                    (part) => Boolean(part.executableCode || part.codeExecutionResult)
+                );
 
-                    // --- MEMORY OPTIMIZATION & API COMPATIBILITY ---
-                    // Intercept and handle generated files (inlineData)
-                    // Since we stripped the base64 data to save memory in `appendApiPart`, we MUST convert this
-                    // into a text note. Furthermore, passing model-generated media back into history is generally discouraged/rejected.
-                    if (partCopy.inlineData) {
-                        const mimeType = partCopy.inlineData.mimeType || 'unknown';
-                        return {
-                            text: `[System Note: The model previously generated a media file of type '${mimeType}'. Content omitted from history to preserve memory and context window.]`
-                        };
-                    }
-                    return partCopy;
-                })
+                const takeGeneratedFile = (mimeType?: string) => {
+                    if (generatedFiles.length === 0) return undefined;
+                    if (!mimeType) return generatedFiles.shift();
+
+                    const matchingIndex = generatedFiles.findIndex((file) => file.type === mimeType);
+                    if (matchingIndex === -1) return generatedFiles.shift();
+                    const [file] = generatedFiles.splice(matchingIndex, 1);
+                    return file;
+                };
+
+                return Promise.all(
+                    apiParts
+                        .filter(p => !(stripThinking && p.thought))
+                        .map(async (p) => {
+                            const partCopy = JSON.parse(JSON.stringify(p));
+
+                            if (partCopy.inlineData) {
+                                const mimeType = partCopy.inlineData.mimeType || 'unknown';
+                                const canRehydrateGeneratedMedia =
+                                    hasCodeExecutionArtifacts && mimeType.startsWith('image/');
+                                const generatedFile = canRehydrateGeneratedMedia ? takeGeneratedFile(mimeType) : undefined;
+
+                                if (generatedFile?.rawFile instanceof Blob) {
+                                    try {
+                                        return {
+                                            ...partCopy,
+                                            inlineData: {
+                                                ...partCopy.inlineData,
+                                                data: await blobToBase64(generatedFile.rawFile),
+                                            },
+                                        };
+                                    } catch (error) {
+                                        logService.error(`Failed to rehydrate generated media for history: ${generatedFile.name}`, { error });
+                                    }
+                                }
+
+                                return {
+                                    text: `[System Note: The model previously generated a media file of type '${mimeType}'. Content omitted from history to preserve memory and context window.]`
+                                };
+                            }
+                            return partCopy;
+                        })
+                );
+            })()
             : await (async () => {
                 let contentToUse = msg.content;
                 if (stripThinking) {
                     // Remove <thinking> blocks including tags from the content
                     contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
                 }
-                const { contentParts } = await buildContentParts(contentToUse, msg.files, modelId);
+                const { contentParts } = await buildContentParts(
+                    contentToUse,
+                    msg.files,
+                    modelId,
+                    undefined,
+                    preferCodeExecutionFileInputs
+                );
                 return contentParts;
             })();
 

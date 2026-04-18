@@ -15,6 +15,8 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,css,json}\"",
     "typecheck": "tsc --noEmit",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run knip && npm run build",
+    "test:code-execution": "NODE_OPTIONS=--no-experimental-webstorage vitest run src/hooks/file-upload/utils.test.ts src/hooks/chat-stream/processors.test.ts src/utils/chat/__tests__/builder.test.ts src/hooks/live-api/useLiveMessageProcessing.test.tsx src/services/api/__tests__/chatApi.test.ts src/services/api/generation/tokenApi.test.ts src/services/api/__tests__/baseApi.test.ts",
+    "verify:code-execution:api": "node scripts/verify-code-execution.mjs",
     "start:api": "node server/dist/index.js",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "test:watch": "NODE_OPTIONS=--no-experimental-webstorage vitest",

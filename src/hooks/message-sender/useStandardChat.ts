@@ -220,7 +220,8 @@ export const useStandardChat = ({
       const historyForChat = await createChatHistoryForApi(
         baseMessagesForApi,
         shouldStripThinking,
-        activeModelId
+        activeModelId,
+        !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled
       );
 
       const config = await buildGenerationConfig(
@@ -391,12 +392,15 @@ export const useStandardChat = ({
       const successfullyProcessedFiles = filesToUse.filter(
         (file) => file.uploadState === 'active' && !file.error && !file.isProcessing
       );
+      const preferCodeExecutionFileInputs =
+        !!settingsForApi.isCodeExecutionEnabled && !settingsForApi.isLocalPythonEnabled;
 
       const { contentParts: promptParts, enrichedFiles } = await buildContentParts(
         textToUse.trim(),
         successfullyProcessedFiles,
         activeModelId,
-        settingsForApi.mediaResolution
+        settingsForApi.mediaResolution,
+        preferCodeExecutionFileInputs
       );
 
       const finalSessionId = activeSessionId || generateUniqueId();
