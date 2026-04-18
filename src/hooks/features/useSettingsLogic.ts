@@ -4,8 +4,8 @@ import { AppSettings } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { translations, logService, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../utils/appUtils';
 import { MediaResolution } from '../../types/settings';
-import { IconInterface, IconModel, IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
-import { Activity } from 'lucide-react';
+import { IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
+import { Activity, LayoutPanelLeft, SlidersHorizontal } from 'lucide-react';
 
 export type SettingsTab = 'interface' | 'model' | 'account' | 'usage' | 'data' | 'shortcuts' | 'about';
 
@@ -178,8 +178,8 @@ export const useSettingsLogic = ({
     };
 
     const tabs = useMemo(() => [
-        { id: 'model' as SettingsTab, labelKey: 'settingsTabModel', icon: IconModel },
-        { id: 'interface' as SettingsTab, labelKey: 'settingsTabInterface', icon: IconInterface },
+        { id: 'model' as SettingsTab, labelKey: 'settingsTabModel', icon: SlidersHorizontal },
+        { id: 'interface' as SettingsTab, labelKey: 'settingsTabInterface', icon: LayoutPanelLeft },
         { id: 'account' as SettingsTab, labelKey: 'settingsTabAccount', icon: IconApiKey },
         { id: 'usage' as SettingsTab, labelKey: 'settingsTabUsage', icon: Activity },
         { id: 'data' as SettingsTab, labelKey: 'settingsTabData', icon: IconData },
