@@ -51,4 +51,34 @@ describe('GroundedResponse', () => {
       encodeURIComponent('resplendent quetzal reference'),
     );
   });
+
+  it('renders the API-provided search entry point widget when available', () => {
+    act(() => {
+      root.render(
+        <GroundedResponse
+          text="Grounded text"
+          metadata={{
+            searchEntryPoint: {
+              renderedContent:
+                '<div data-testid="search-entry-widget">Suggested follow-up search</div>',
+            },
+          }}
+          urlContextMetadata={undefined}
+          isLoading={false}
+          onOpenHtmlPreview={() => undefined}
+          expandCodeBlocksByDefault={false}
+          onImageClick={() => undefined}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={() => undefined}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="search-entry-widget"]')?.textContent).toContain(
+      'Suggested follow-up search',
+    );
+  });
 });

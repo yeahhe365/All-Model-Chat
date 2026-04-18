@@ -29,6 +29,9 @@ interface GroundedResponseProps {
 interface SearchQueryMetadata {
   webSearchQueries?: string[];
   imageSearchQueries?: string[];
+  searchEntryPoint?: {
+    renderedContent?: string;
+  };
 }
 
 export const GroundedResponse: React.FC<GroundedResponseProps> = ({ 
@@ -64,9 +67,24 @@ export const GroundedResponse: React.FC<GroundedResponseProps> = ({
     },
     [metadata],
   );
+  const searchEntryPointContent = useMemo(() => {
+    if (typeof metadata !== 'object' || metadata === null) {
+      return undefined;
+    }
+
+    const searchMetadata = metadata as SearchQueryMetadata;
+    return searchMetadata.searchEntryPoint?.renderedContent;
+  }, [metadata]);
 
   return (
     <div className="space-y-4">
+      {searchEntryPointContent ? (
+        <div
+          className="overflow-x-auto rounded-2xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/40 p-3"
+          dangerouslySetInnerHTML={{ __html: searchEntryPointContent }}
+        />
+      ) : null}
+
       {/* Search Queries (Pill Style) */}
       <SearchQueries queries={searchQueries} />
 
