@@ -2,7 +2,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { UploadedFile, ChatMessage, VideoMetadata } from '../types';
 import { MediaResolution } from '../types/settings';
-import { useImageNavigation } from './ui/useImageNavigation';
+import { useFileModalState } from './ui/useFileModalState';
 
 interface UseMessageListUIProps {
     messages: ChatMessage[];
@@ -10,32 +10,27 @@ interface UseMessageListUIProps {
 }
 
 export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageListUIProps) => {
-    const [previewFile, setPreviewFile] = useState<UploadedFile | null>(null);
     const [isHtmlPreviewModalOpen, setIsHtmlPreviewModalOpen] = useState(false);
     const [htmlToPreview, setHtmlToPreview] = useState<string | null>(null);
     const [initialTrueFullscreenRequest, setInitialTrueFullscreenRequest] = useState(false);
-    const [configuringFile, setConfiguringFile] = useState<{ file: UploadedFile, messageId: string } | null>(null);
+
+    const allFiles = useMemo(() => messages.flatMap((message) => message.files || []), [messages]);
+    const {
+        previewFile,
+        closePreview,
+        allImages,
+        currentImageIndex,
+        handlePrevImage,
+        handleNextImage,
+        configuringFile,
+        setConfiguringFile,
+        openPreview,
+        openConfiguration,
+    } = useFileModalState<{ file: UploadedFile, messageId: string }>(allFiles);
 
     const handleFileClick = useCallback((file: UploadedFile) => {
-        setPreviewFile(file);
-    }, []);
-
-    const closeFilePreviewModal = useCallback(() => {
-        setPreviewFile(null);
-    }, []);
-
-    // Flatten all files from messages for navigation context
-    const allFiles = useMemo(() => {
-        return messages.flatMap(m => m.files || []);
-    }, [messages]);
-
-    // Use unified navigation hook
-    const { 
-        images: allImages, 
-        currentIndex: currentImageIndex, 
-        handlePrev: handlePrevImage, 
-        handleNext: handleNextImage 
-    } = useImageNavigation(allFiles, previewFile, setPreviewFile);
+        openPreview(file);
+    }, [openPreview]);
 
     const handleOpenHtmlPreview = useCallback((htmlContent: string, options?: { initialTrueFullscreen?: boolean }) => {
         setHtmlToPreview(htmlContent);
@@ -50,8 +45,8 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
     }, []);
 
     const handleConfigureFile = useCallback((file: UploadedFile, messageId: string) => {
-        setConfiguringFile({ file, messageId });
-    }, []);
+        openConfiguration({ file, messageId });
+    }, [openConfiguration]);
 
     const handleSaveFileConfig = useCallback((fileId: string, updates: { videoMetadata?: VideoMetadata, mediaResolution?: MediaResolution }) => {
         if (configuringFile) {
@@ -61,14 +56,13 @@ export const useMessageListUI = ({ messages, onUpdateMessageFile }: UseMessageLi
 
     return {
         previewFile,
-        setPreviewFile,
         isHtmlPreviewModalOpen,
         htmlToPreview,
         initialTrueFullscreenRequest,
         configuringFile,
         setConfiguringFile,
         handleFileClick,
-        closeFilePreviewModal,
+        closeFilePreviewModal: closePreview,
         allImages,
         currentImageIndex,
         handlePrevImage,

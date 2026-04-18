@@ -1,26 +1,11 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { logService } from '../../utils/appUtils';
 
-declare global {
-    interface Window {
-        documentPictureInPicture?: {
-            requestWindow(options?: { width: number, height: number }): Promise<Window>;
-            readonly window?: Window;
-        };
-    }
-}
-
 export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void) => {
-    const [isPipSupported, setIsPipSupported] = useState(false);
+    const [isPipSupported] = useState(() => 'documentPictureInPicture' in window);
     const [pipWindow, setPipWindow] = useState<Window | null>(null);
     const [pipContainer, setPipContainer] = useState<HTMLElement | null>(null);
-
-    useEffect(() => {
-        if ('documentPictureInPicture' in window) {
-            setIsPipSupported(true);
-        }
-    }, []);
 
     const closePip = useCallback(() => {
         if (pipWindow) {

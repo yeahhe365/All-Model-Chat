@@ -1,7 +1,7 @@
 
 import { GeminiService, ChatHistoryItem } from '../types';
 import type { EditImageRequestConfig } from '../types';
-import type { Part, File as GeminiFile } from "@google/genai";
+import type { CountTokensConfig, Part, File as GeminiFile } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi } from './api/generation/imageApi';
 import { generateSpeechApi, transcribeAudioApi } from './api/generation/audioApi';
@@ -55,8 +55,8 @@ class GeminiServiceImpl implements GeminiService {
         return generateSuggestionsApi(apiKey, userContent, modelContent, language);
     }
 
-    async countTokens(apiKey: string, modelId: string, parts: Part[]): Promise<number> {
-        return countTokensApi(apiKey, modelId, parts);
+    async countTokens(apiKey: string, modelId: string, parts: Part[], config?: CountTokensConfig): Promise<number> {
+        return countTokensApi(apiKey, modelId, parts, config);
     }
 
     async editImage(

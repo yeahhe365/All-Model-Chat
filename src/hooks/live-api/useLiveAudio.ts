@@ -20,7 +20,7 @@ export const useLiveAudio = () => {
     const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
     const initializeAudio = useCallback(async (onAudioData: (data: Float32Array) => void) => {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         
         // Output Context (Playback)
         const audioCtx = new AudioContextClass({ sampleRate: 24000 });
@@ -146,7 +146,7 @@ export const useLiveAudio = () => {
 
     const stopAudioPlayback = useCallback(() => {
         sourcesRef.current.forEach(s => {
-            try { s.stop(); } catch (e) { /* ignore already stopped */ }
+            try { s.stop(); } catch { /* ignore already stopped */ }
         });
         sourcesRef.current.clear();
         nextStartTimeRef.current = 0;

@@ -2,7 +2,12 @@
 import React from 'react';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 
-export const InlineCode = ({ className, children, inline, ...props }: any) => {
+type InlineCodeProps = React.ComponentPropsWithoutRef<'code'> & {
+    children?: React.ReactNode;
+    inline?: boolean;
+};
+
+export const InlineCode = ({ className, children, inline: _inline, ...props }: InlineCodeProps) => {
     const { isCopied, copyToClipboard } = useCopyToClipboard(1500);
 
     const handleCopy = (e: React.MouseEvent) => {

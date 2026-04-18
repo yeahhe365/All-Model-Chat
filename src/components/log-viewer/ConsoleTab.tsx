@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Filter, Download, Trash2, RefreshCw, Terminal } from 'lucide-react';
 import { LogEntry, LogLevel, LogCategory } from '../../services/logService';
 import { LOG_LEVEL_COLORS, CATEGORY_COLORS } from './constants';
@@ -18,10 +18,6 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
     const [visibleLevels, setVisibleLevels] = useState<Record<LogLevel, boolean>>({
         INFO: true, WARN: true, ERROR: true, DEBUG: true,
     });
-    
-    const logContainerRef = useRef<HTMLDivElement>(null);
-    const logsEndRef = useRef<HTMLDivElement>(null);
-
     const toggleLevel = (level: LogLevel) => setVisibleLevels(prev => ({ ...prev, [level]: !prev[level] }));
 
     const filteredLogs = logs.filter(log => {
@@ -62,7 +58,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
                 <Filter size={14} className="text-[var(--theme-text-tertiary)]" />
                 <select 
                     value={activeCategory} 
-                    onChange={(e) => setActiveCategory(e.target.value as any)}
+                    onChange={(e) => setActiveCategory(e.target.value as LogCategory | 'ALL')}
                     className="bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] text-xs rounded border border-[var(--theme-border-secondary)] px-2 py-1 focus:outline-none"
                 >
                     <option value="ALL">All Categories</option>
@@ -90,7 +86,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
             </div>
 
             {/* List */}
-            <div ref={logContainerRef} className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar bg-[var(--theme-bg-primary)]">
+            <div className="flex-grow overflow-y-auto overflow-x-hidden custom-scrollbar bg-[var(--theme-bg-primary)]">
             {filteredLogs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--theme-text-tertiary)] opacity-50">
                     <Terminal size={48} className="mb-2" />
@@ -113,7 +109,6 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
                     </button>
                 </div>
             )}
-            <div ref={logsEndRef} />
             </div>
         </>
     );

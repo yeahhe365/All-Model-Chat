@@ -82,19 +82,17 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     onLoad
 }) => {
     const [localContent, setLocalContent] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const hasProvidedContent = content !== undefined && content !== null;
+    const [isLoading, setIsLoading] = useState(() => !hasProvidedContent && !!file.dataUrl);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        // If content is provided (e.g. from parent state during edit), use it
-        if (content !== undefined && content !== null) {
-            setLocalContent(content);
+        if (hasProvidedContent) {
             return;
         }
 
         // Otherwise fetch from dataUrl
         if (file.dataUrl) {
-            setIsLoading(true);
             fetch(file.dataUrl)
                 .then(res => res.text())
                 .then(text => {
@@ -108,7 +106,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
                     setIsLoading(false);
                 });
         }
-    }, [file, content, onLoad]);
+    }, [file, hasProvidedContent, onLoad]);
 
     useEffect(() => {
         if (isEditable && textareaRef.current) {
@@ -119,10 +117,11 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     const displayContent = content ?? localContent;
     // Use virtualization for files larger than ~50KB to prevent freezing
     const isLargeFile = (displayContent?.length || 0) > 50000;
+    const shouldShowLoading = hasProvidedContent ? false : isLoading;
 
     return (
         <div className="w-full h-full relative group">
-            {isLoading ? (
+            {shouldShowLoading ? (
                 <div className="flex items-center justify-center h-full text-white/50">
                     <Loader2 className="animate-spin mr-2" /> Loading content...
                 </div>

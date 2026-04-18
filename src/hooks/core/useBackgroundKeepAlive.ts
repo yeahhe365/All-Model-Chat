@@ -43,7 +43,7 @@ export const useBackgroundKeepAlive = (isActive: boolean) => {
             // 2. Silent Audio Keep-Alive (Force High Priority Network)
             try {
                 if (!audioCtxRef.current) {
-                    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
                     if (AudioContextClass) {
                         const ctx = new AudioContextClass();
                         const osc = ctx.createOscillator();

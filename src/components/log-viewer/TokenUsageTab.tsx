@@ -9,9 +9,9 @@ interface TokenUsageTabProps {
 export const TokenUsageTab: React.FC<TokenUsageTabProps> = ({ tokenUsage }) => {
     const tokenUsageArray = Array.from(tokenUsage.entries()).map(([modelId, stats]) => ({
         modelId,
-        prompt: stats.prompt,
-        completion: stats.completion,
-        total: stats.prompt + stats.completion
+        input: stats.input,
+        output: stats.output,
+        total: stats.input + stats.output
     })).sort((a, b) => b.total - a.total);
 
     return (
@@ -43,10 +43,10 @@ export const TokenUsageTab: React.FC<TokenUsageTabProps> = ({ tokenUsage }) => {
                                         {item.modelId}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-[var(--theme-text-secondary)] font-mono">
-                                        {item.prompt.toLocaleString()}
+                                        {item.input.toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-[var(--theme-text-secondary)] font-mono">
-                                        {item.completion.toLocaleString()}
+                                        {item.output.toLocaleString()}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-[var(--theme-text-link)] font-mono font-bold">
                                         {item.total.toLocaleString()}
@@ -56,10 +56,10 @@ export const TokenUsageTab: React.FC<TokenUsageTabProps> = ({ tokenUsage }) => {
                             <tr className="bg-[var(--theme-bg-tertiary)]/20 font-semibold">
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-[var(--theme-text-primary)]">Total</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-[var(--theme-text-primary)] font-mono">
-                                    {tokenUsageArray.reduce((sum, item) => sum + item.prompt, 0).toLocaleString()}
+                                    {tokenUsageArray.reduce((sum, item) => sum + item.input, 0).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-[var(--theme-text-primary)] font-mono">
-                                    {tokenUsageArray.reduce((sum, item) => sum + item.completion, 0).toLocaleString()}
+                                    {tokenUsageArray.reduce((sum, item) => sum + item.output, 0).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-[var(--theme-text-primary)] font-mono">
                                     {tokenUsageArray.reduce((sum, item) => sum + item.total, 0).toLocaleString()}

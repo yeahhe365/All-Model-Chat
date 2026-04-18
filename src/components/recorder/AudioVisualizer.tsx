@@ -16,7 +16,7 @@ export const AudioVisualizer: React.FC<AudioVisualizerProps> = ({ stream }) => {
         if (!stream || !canvasRef.current) return;
 
         const initAudio = () => {
-            const AudioContextConstructor = window.AudioContext || (window as any).webkitAudioContext;
+            const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
             const audioContext = new AudioContextConstructor();
             audioContextRef.current = audioContext;
 

@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { SavedChatSession, ChatGroup } from '../types';
 import { useWindowContext } from '../contexts/WindowContext';
-import { translations } from '../utils/appUtils';
+import { useI18n } from '../contexts/I18nContext';
 import { dbService } from '../utils/db';
 
 interface UseHistorySidebarLogicProps {
@@ -14,8 +14,6 @@ interface UseHistorySidebarLogicProps {
     onRenameGroup: (groupId: string, newTitle: string) => void;
     onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
     onSelectSession: (sessionId: string) => void;
-    t: (key: keyof typeof translations, fallback?: string) => string;
-    language: 'en' | 'zh';
 }
 
 export const useHistorySidebarLogic = ({
@@ -27,9 +25,8 @@ export const useHistorySidebarLogic = ({
     onRenameGroup,
     onMoveSessionToGroup,
     onSelectSession,
-    t,
-    language
 }: UseHistorySidebarLogicProps) => {
+    const { t, language } = useI18n();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
     const [editingItem, setEditingItem] = useState<{ type: 'session' | 'group', id: string, title: string } | null>(null);

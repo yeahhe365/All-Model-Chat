@@ -2,11 +2,11 @@
 
 
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { AudioRecorder } from '../../modals/AudioRecorder';
 import { CreateTextFileEditor } from '../../modals/CreateTextFileEditor';
 import { HelpModal } from '../../modals/HelpModal';
 import { TextEditorModal } from '../../modals/TextEditorModal';
-import { translations } from '../../../utils/appUtils';
 import { CommandInfo, UploadedFile } from '../../../types';
 
 interface ChatInputModalsProps {
@@ -21,7 +21,6 @@ interface ChatInputModalsProps {
   allCommandsForHelp: CommandInfo[];
   isProcessingFile: boolean;
   isLoading: boolean;
-  t: (key: keyof typeof translations) => string;
   initialContent?: string;
   initialFilename?: string;
   editingFile?: UploadedFile | null;
@@ -52,7 +51,6 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   allCommandsForHelp,
   isProcessingFile,
   isLoading,
-  t,
   initialContent,
   initialFilename,
   isSystemAudioRecordingEnabled,
@@ -63,6 +61,7 @@ export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   ttsContext,
   setTtsContext
 }) => {
+  const { t } = useI18n();
   if (!showRecorder && !showCreateTextFileEditor && !isHelpModalOpen && !showTtsContextEditor) {
     return null;
   }

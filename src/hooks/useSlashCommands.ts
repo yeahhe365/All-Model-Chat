@@ -2,7 +2,14 @@
 import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
 import { Command } from '../components/chat/input/SlashCommandMenu';
 import { translations } from '../utils/appUtils';
-import { ModelOption } from '../types';
+import { AttachmentAction, ModelOption } from '../types';
+
+export type SlashCommandState = {
+  isOpen: boolean;
+  query: string;
+  filteredCommands: Command[];
+  selectedIndex: number;
+};
 
 interface UseSlashCommandsProps {
   t: (key: keyof typeof translations) => string;
@@ -16,8 +23,7 @@ interface UseSlashCommandsProps {
   onToggleCanvasPrompt: () => void;
   onTogglePinCurrentSession: () => void;
   onRetryLastTurn: () => void;
-  onStopGenerating: () => void;
-  onAttachmentAction: (action: any) => void;
+  onAttachmentAction: (action: AttachmentAction) => void;
   availableModels: ModelOption[];
   onSelectModel: (modelId: string) => void;
   onMessageSent: () => void;
@@ -35,18 +41,13 @@ export const useSlashCommands = ({
   t,
   onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext,
   onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt,
-  onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction,
+  onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction,
   availableModels, onSelectModel, onMessageSent, setIsHelpModalOpen,
   textareaRef, onEditLastUserMessage, onTogglePip, setInputText,
   currentModelId, onSetThinkingLevel, thinkingLevel
 }: UseSlashCommandsProps) => {
   
-  const [slashCommandState, setSlashCommandState] = useState<{
-    isOpen: boolean;
-    query: string;
-    filteredCommands: Command[];
-    selectedIndex: number;
-  }>({
+  const [slashCommandState, setSlashCommandState] = useState<SlashCommandState>({
     isOpen: false,
     query: '',
     filteredCommands: [],
@@ -84,11 +85,26 @@ export const useSlashCommands = ({
         const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
         onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
     }},
-  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onStopGenerating, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
+  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
   
-  const allCommandsForHelp = useMemo(() => [
-    ...commands.map(c => ({ name: `/${c.name}`, description: c.description, icon: c.icon })),
-  ], [commands]);
+  const allCommandsForHelp = useMemo(() => ([
+    { name: '/model', description: t('help_cmd_model'), icon: 'bot' },
+    { name: '/help', description: t('help_cmd_help'), icon: 'help' },
+    { name: '/edit', description: t('help_cmd_edit'), icon: 'edit' },
+    { name: '/pin', description: t('help_cmd_pin'), icon: 'pin' },
+    { name: '/retry', description: t('help_cmd_retry'), icon: 'retry' },
+    { name: '/online', description: t('help_cmd_search'), icon: 'search' },
+    { name: '/deep', description: t('help_cmd_deep'), icon: 'deep' },
+    { name: '/code', description: t('help_cmd_code'), icon: 'code' },
+    { name: '/url', description: t('help_cmd_url'), icon: 'url' },
+    { name: '/file', description: t('help_cmd_file'), icon: 'file' },
+    { name: '/clear', description: t('help_cmd_clear'), icon: 'clear' },
+    { name: '/new', description: t('help_cmd_new'), icon: 'new' },
+    { name: '/settings', description: t('help_cmd_settings'), icon: 'settings' },
+    { name: '/canvas', description: t('help_cmd_canvas'), icon: 'canvas' },
+    { name: '/pip', description: t('help_cmd_pip'), icon: 'pip' },
+    { name: '/fast', description: t('help_cmd_fast'), icon: 'fast' },
+  ]), [t]);
 
   const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;

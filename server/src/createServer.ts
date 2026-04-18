@@ -30,12 +30,12 @@ const STRIPPED_PROXY_RESPONSE_HEADERS = new Set([
   'content-length',
 ]);
 
-export interface LiveTokenPayload {
+interface LiveTokenPayload {
   name?: string;
   token?: string;
 }
 
-export interface CreateServerDependencies {
+interface CreateServerDependencies {
   fetchImpl?: typeof fetch;
   createLiveToken?: (apiKey: string) => Promise<LiveTokenPayload>;
 }

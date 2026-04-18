@@ -10,7 +10,7 @@ interface ThinkingHeaderProps {
     thinkingTimeMs?: number;
     generationStartTime?: Date;
     firstTokenTimeMs?: number;
-    t: (key: any, fallback?: string) => string;
+    t: (key: string, fallback?: string) => string;
     isExpanded: boolean;
 }
 
@@ -39,7 +39,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
         <div className="flex items-center gap-2 min-w-0 overflow-hidden flex-grow">
             {/* Icon Area */}
             {isLoading && (
-                <div className={`flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg transition-colors duration-300 bg-[var(--theme-bg-accent)]/10`}>
+                <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 transition-colors duration-300">
                     <GoogleSpinner size={20} />
                 </div>
             )}
@@ -64,7 +64,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                                 </span>
                                 {firstTokenTimeMs !== undefined && (
                                     <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
-                                        {t('metrics_ttft' as any)}: {(firstTokenTimeMs / 1000).toFixed(2)}s
+                                        {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
                                     </span>
                                 )}
                             </div>
@@ -78,7 +78,7 @@ export const ThinkingHeader: React.FC<ThinkingHeaderProps> = ({
                             </span>
                             {firstTokenTimeMs !== undefined && (
                                 <span className="text-xs text-[var(--theme-text-tertiary)] font-mono opacity-70 whitespace-nowrap">
-                                    {t('metrics_ttft' as any)}: {(firstTokenTimeMs / 1000).toFixed(2)}s
+                                    {t('metrics_ttft')}: {(firstTokenTimeMs / 1000).toFixed(2)}s
                                 </span>
                             )}
                         </div>

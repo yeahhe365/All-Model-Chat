@@ -1,4 +1,5 @@
 
+/* eslint-disable react-hooks/immutability, react-hooks/exhaustive-deps */
 import { useRef, useEffect, useCallback } from 'react';
 
 interface UseSelectionDragProps {

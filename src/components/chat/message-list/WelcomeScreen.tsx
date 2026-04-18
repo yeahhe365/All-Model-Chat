@@ -43,10 +43,16 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
         // Only trigger reset if we are NOT currently showing the greeting (targetPhrase !== text)
         // This prevents the greeting from being re-typed if the user hovers for < 3s and leaves.
         if (!isHovering && targetPhrase !== text) {
-            setTargetPhrase(text);
-            // Trigger deletion to transition to new text if we were showing something else
-            setStatus('deleting');
+            const syncTimeout = setTimeout(() => {
+                setTargetPhrase(text);
+                // Trigger deletion to transition to new text if we were showing something else
+                setStatus('deleting');
+            }, 0);
+
+            return () => clearTimeout(syncTimeout);
         }
+
+        return undefined;
     }, [text, isHovering, prefersReducedMotion, targetPhrase]);
 
     useEffect(() => {
@@ -63,7 +69,9 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
 
         if (status === 'typing') {
             if (displayedText === targetPhrase) {
-                setStatus('paused');
+                timeout = setTimeout(() => {
+                    setStatus('paused');
+                }, 0);
             } else {
                 let currentDelay = baseTypeSpeed;
                 const lastChar = displayedText.slice(-1);
@@ -91,7 +99,9 @@ const TypewriterEffect: React.FC<{ text: string }> = ({ text }) => {
             }
         } else if (status === 'deleting') {
             if (displayedText === '') {
-                setStatus('blank');
+                timeout = setTimeout(() => {
+                    setStatus('blank');
+                }, 0);
             } else {
                 timeout = setTimeout(() => {
                     setDisplayedText(prev => prev.slice(0, -1));

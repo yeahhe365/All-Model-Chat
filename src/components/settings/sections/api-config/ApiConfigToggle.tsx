@@ -1,21 +1,21 @@
 
 import React from 'react';
 import { ShieldCheck } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Toggle } from '../../../shared/Toggle';
 
 interface ApiConfigToggleProps {
     useCustomApiConfig: boolean;
     setUseCustomApiConfig: (value: boolean) => void;
     hasEnvKey: boolean;
-    t: (key: string) => string;
 }
 
 export const ApiConfigToggle: React.FC<ApiConfigToggleProps> = ({
     useCustomApiConfig,
     setUseCustomApiConfig,
     hasEnvKey,
-    t
 }) => {
+    const { t } = useI18n();
     const handleRowClick = () => {
         setUseCustomApiConfig(!useCustomApiConfig);
     };

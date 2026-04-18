@@ -29,6 +29,8 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
         if (activeSessionId && !isEditing) {
             const draftKey = `chatDraft_${activeSessionId}`;
             const savedDraft = localStorage.getItem(draftKey);
+            // Intentional draft hydration when switching sessions.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setInputText(savedDraft || '');
             
             // Load quotes draft
@@ -43,7 +45,7 @@ export const useChatInputState = (activeSessionId: string | null, isEditing: boo
                 } else {
                     setQuotes([]);
                 }
-            } catch (e) {
+            } catch {
                 setQuotes([]);
             }
 

@@ -38,3 +38,6 @@ export const sanitizeFilename = (name: string): string => {
   }
   return saneName || "export";
 };
+
+export const formatExportDateTime = (date: Date): string =>
+  `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;

@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { UploadedFile } from '../../types';
-import { buildPendingChatInputSubmission, shouldFlushPendingSubmission } from './pendingSubmissionUtils';
+import {
+  buildPendingChatInputSubmission,
+  buildQueuedChatInputSubmission,
+  shouldFlushPendingSubmission,
+} from './pendingSubmissionUtils';
 
 const makeFile = (overrides: Partial<UploadedFile> = {}): UploadedFile => ({
   id: 'file-1',
@@ -45,6 +49,26 @@ describe('buildPendingChatInputSubmission', () => {
       kind: 'edit',
       messageId: 'message-1',
       content: 'Revised content',
+    });
+  });
+});
+
+describe('buildQueuedChatInputSubmission', () => {
+  it('captures a queued send snapshot with both display text and send text', () => {
+    expect(
+      buildQueuedChatInputSubmission({
+        inputText: 'Follow up after this.',
+        quotes: ['quoted line'],
+        modelId: 'gemini-3.1-pro-preview',
+        files: [makeFile()],
+        isFastMode: false,
+      }),
+    ).toMatchObject({
+      inputText: 'Follow up after this.',
+      textToSend: '> quoted line\n\nFollow up after this.',
+      files: [makeFile()],
+      quotes: ['quoted line'],
+      isFastMode: false,
     });
   });
 });

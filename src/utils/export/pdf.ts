@@ -1,11 +1,11 @@
-export interface Html2PdfChain {
+interface Html2PdfChain {
   set: (options: unknown) => Html2PdfChain;
   from: (element: HTMLElement) => Html2PdfChain;
   output: (type: 'blob') => Promise<Blob>;
   save: () => Promise<void>;
 }
 
-export type Html2PdfFactory = () => Html2PdfChain;
+type Html2PdfFactory = () => Html2PdfChain;
 
 const nextAnimationFrame = () =>
   new Promise<void>((resolve) => {
@@ -74,10 +74,7 @@ export const waitForElementToBecomeStable = async (
 
   await new Promise<void>((resolve, reject) => {
     let settledTimer: number | undefined;
-    const timeoutTimer = window.setTimeout(() => {
-      cleanup();
-      reject(new Error('Timed out waiting for the PDF preview to finish rendering.'));
-    }, timeoutMs);
+    let timeoutTimer: number | undefined = undefined;
 
     const cleanup = () => {
       if (settledTimer !== undefined) {
@@ -130,6 +127,11 @@ export const waitForElementToBecomeStable = async (
       characterData: true,
       attributes: true,
     });
+
+    timeoutTimer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error('Timed out waiting for the PDF preview to finish rendering.'));
+    }, timeoutMs);
 
     schedule();
   });

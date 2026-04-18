@@ -1,4 +1,32 @@
 
+interface GroundingSource {
+    uri?: string;
+    title?: string;
+}
+
+interface GroundingChunk {
+    web?: GroundingSource;
+    image?: {
+        sourceUri?: string;
+        imageUri?: string;
+        title?: string;
+        domain?: string;
+    };
+}
+
+interface GroundingSupport {
+    segment?: {
+        endIndex?: number;
+    };
+    groundingChunkIndices?: number[];
+}
+
+interface GroundingMetadataLike {
+    groundingSupports?: GroundingSupport[];
+    groundingChunks?: GroundingChunk[];
+    citations?: GroundingSource[];
+}
+
 export const getDomain = (url: string) => {
     try {
         return new URL(url).hostname.replace(/^www\./, '');
@@ -21,8 +49,26 @@ export const getFavicon = (url: string, title?: string) => {
     }
 };
 
-export const insertCitations = (text: string, metadata: any): string => {
-    if (!metadata || !metadata.groundingSupports) {
+const isGroundingMetadataLike = (value: unknown): value is GroundingMetadataLike =>
+    typeof value === 'object' && value !== null;
+
+const getChunkSource = (chunk: GroundingChunk): GroundingSource | undefined => {
+    if (chunk.web?.uri) {
+        return chunk.web;
+    }
+
+    if (chunk.image?.sourceUri) {
+        return {
+            uri: chunk.image.sourceUri,
+            title: chunk.image.title || chunk.image.domain,
+        };
+    }
+
+    return undefined;
+};
+
+export const insertCitations = (text: string, metadata: unknown): string => {
+    if (!isGroundingMetadataLike(metadata) || !metadata.groundingSupports) {
         return text;
     }
 
@@ -32,7 +78,7 @@ export const insertCitations = (text: string, metadata: any): string => {
 
     // Combine grounding chunks and citations into a single, indexed array
     const sources = [
-        ...(metadata.groundingChunks?.map((c: any) => c.web) || []),
+        ...(metadata.groundingChunks?.map((chunk) => getChunkSource(chunk)) || []),
         ...(metadata.citations || []),
     ].filter(Boolean);
 
@@ -45,7 +91,7 @@ export const insertCitations = (text: string, metadata: any): string => {
     };
 
     const sortedSupports = [...metadata.groundingSupports].sort(
-        (a: any, b: any) => (b.segment?.endIndex || 0) - (a.segment?.endIndex || 0)
+        (a, b) => (b.segment?.endIndex || 0) - (a.segment?.endIndex || 0)
     );
 
     let contentWithCitations = rawText;
@@ -78,8 +124,8 @@ export const insertCitations = (text: string, metadata: any): string => {
     return contentWithCitations;
 };
 
-export const extractSources = (metadata: any) => {
-    if (!metadata) return [];
+export const extractSources = (metadata: unknown) => {
+    if (!isGroundingMetadataLike(metadata)) return [];
 
     const uniqueSources = new Map<string, { uri: string; title: string }>();
 
@@ -90,15 +136,16 @@ export const extractSources = (metadata: any) => {
     };
 
     if (metadata.groundingChunks && Array.isArray(metadata.groundingChunks)) {
-        metadata.groundingChunks.forEach((chunk: any) => {
-            if (chunk?.web?.uri) {
-                addSource(chunk.web.uri, chunk.web.title);
+        metadata.groundingChunks.forEach((chunk) => {
+            const source = getChunkSource(chunk);
+            if (source?.uri) {
+                addSource(source.uri, source.title);
             }
         });
     }
 
     if (metadata.citations && Array.isArray(metadata.citations)) {
-        metadata.citations.forEach((citation: any) => {
+        metadata.citations.forEach((citation) => {
             if (citation?.uri) {
                 addSource(citation.uri, citation.title);
             }

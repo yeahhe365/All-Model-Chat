@@ -123,7 +123,7 @@ export const CreateFileBody: React.FC<CreateFileBodyProps> = ({
                                       isMermaidRenderingEnabled={true}
                                       isGraphvizRenderingEnabled={true}
                                       allowHtml={true}
-                                      t={t as any}
+                                      t={t}
                                       themeId={themeId}
                                       fallbackMode="raw"
                                   />

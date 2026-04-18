@@ -16,7 +16,6 @@ import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } fro
 import { StandardChatProps } from './types';
 import { buildGenerationConfig } from '../../services/api/baseApi';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { pyodideService } from '../../services/pyodideService';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { ContentPart } from '../../types/chat';
 
@@ -27,7 +26,7 @@ export const useStandardChat = ({
   setEditingMessageId,
   aspectRatio,
   imageSize,
-  userScrolledUp,
+  userScrolledUpRef,
   activeSessionId,
   setActiveSessionId,
   activeJobs,
@@ -216,26 +215,13 @@ export const useStandardChat = ({
         return;
       }
 
-      if (sessionToUpdate.isLocalPythonEnabled && enrichedFiles.length > 0) {
-        try {
-          const filesToMount = enrichedFiles.filter(
-            (file) => file.rawFile && !file.type.includes('youtube')
-          );
-          if (filesToMount.length > 0) {
-            logService.info(`Mounting ${filesToMount.length} files for Local Python execution.`);
-            await pyodideService.mountFiles(filesToMount);
-          }
-        } catch (error) {
-          logService.error('Failed to mount files to Pyodide:', error);
-        }
-      }
-
       const shouldStripThinking =
         sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;
       const historyForChat = await createChatHistoryForApi(
         baseMessagesForApi,
         shouldStripThinking,
-        activeModelId
+        activeModelId,
+        !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled
       );
 
       const config = await buildGenerationConfig(
@@ -406,12 +392,15 @@ export const useStandardChat = ({
       const successfullyProcessedFiles = filesToUse.filter(
         (file) => file.uploadState === 'active' && !file.error && !file.isProcessing
       );
+      const preferCodeExecutionFileInputs =
+        !!settingsForApi.isCodeExecutionEnabled && !settingsForApi.isLocalPythonEnabled;
 
       const { contentParts: promptParts, enrichedFiles } = await buildContentParts(
         textToUse.trim(),
         successfullyProcessedFiles,
         activeModelId,
-        settingsForApi.mediaResolution
+        settingsForApi.mediaResolution,
+        preferCodeExecutionFileInputs
       );
 
       const finalSessionId = activeSessionId || generateUniqueId();
@@ -435,7 +424,7 @@ export const useStandardChat = ({
         shouldLockKey,
       });
 
-      userScrolledUp.current = false;
+      userScrolledUpRef.current = false;
 
       await performApiCall({
         finalSessionId,
@@ -462,7 +451,7 @@ export const useStandardChat = ({
       setActiveSessionId,
       updateAndPersistSessions,
       updateSessionState,
-      userScrolledUp,
+      userScrolledUpRef,
     ]
   );
 

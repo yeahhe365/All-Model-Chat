@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { ChatMessage, UploadedFile, AppSettings, SideViewContent } from '../../types';
-import { translations } from '../../utils/appUtils';
 import { MessageFiles } from './content/MessageFiles';
 import { MessageThoughts } from './content/MessageThoughts';
 import { MessageText } from './content/MessageText';
@@ -17,7 +16,6 @@ interface MessageContentProps {
     isMermaidRenderingEnabled: boolean;
     isGraphvizRenderingEnabled: boolean;
     onSuggestionClick?: (suggestion: string) => void;
-    t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
     themeId: string;
     onOpenSidePanel: (content: SideViewContent) => void;

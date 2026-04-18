@@ -5,7 +5,11 @@ import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../constants/appConstants';
 import { DiagramWrapper } from './parts/DiagramWrapper';
 
 const graphvizCache = new Map<string, string>();
-let vizInstancePromise: Promise<any> | null = null;
+type VizInstance = {
+  renderSVGElement: (code: string) => SVGSVGElement | Promise<SVGSVGElement>;
+};
+
+let vizInstancePromise: Promise<VizInstance> | null = null;
 
 const loadVizInstance = async () => {
   if (!vizInstancePromise) {
@@ -20,9 +24,10 @@ interface GraphvizBlockProps {
   isLoading: boolean;
   themeId: string;
   onOpenSidePanel: (content: SideViewContent) => void;
+  renderDelayMs?: number;
 }
 
-export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel }) => {
+export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick, isLoading: isMessageLoading, themeId, onOpenSidePanel, renderDelayMs = 500 }) => {
   const [manualLayout, setManualLayout] = useState<'LR' | 'TB' | null>(null);
 
   const effectiveLayout = useMemo(() => {
@@ -47,7 +52,7 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
   const [showSource, setShowSource] = useState(false);
 
   const diagramContainerRef = useRef<HTMLDivElement>(null);
-  const vizInstanceRef = useRef<any>(null);
+  const vizInstanceRef = useRef<VizInstance | null>(null);
 
   useEffect(() => {
       let isActive = true;
@@ -122,7 +127,12 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
           processedCode = processedCode.slice(0, openBraceIndex + 1) + themeDefaults + processedCode.slice(openBraceIndex + 1);
       }
 
-      const svgElement = await vizInstanceRef.current.renderSVGElement(processedCode);
+      const vizInstance = vizInstanceRef.current;
+      if (!vizInstance) {
+        throw new Error('Graphviz renderer not initialized.');
+      }
+
+      const svgElement = await vizInstance.renderSVGElement(processedCode);
       
       // 【修复关键点 1】：不要移除原生的 width 和 height，以防止在 Flexbox 中被压缩为 0
       // svgElement.removeAttribute('width');
@@ -171,13 +181,13 @@ export const GraphvizBlock: React.FC<GraphvizBlockProps> = ({ code, onImageClick
         renderGraph().catch((e) => {
             console.error("Failed to render Graphviz diagram", e);
         });
-    }, 500);
+    }, renderDelayMs);
 
     return () => {
         isMounted = false;
         clearTimeout(timeoutId);
     };
-  }, [renderGraph]);
+  }, [renderGraph, renderDelayMs]);
 
   const handleToggleLayout = () => {
     setManualLayout(effectiveLayout === 'LR' ? 'TB' : 'LR');

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { translations } from '../../../../utils/appUtils';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { IconThemeSystem, IconThemeDark, IconThemeLight } from '../../../icons/CustomIcons';
 import { AppSettings } from '../../../../types';
 import { Select } from '../../../shared/Select';
@@ -8,25 +8,24 @@ import { Select } from '../../../shared/Select';
 interface ThemeLanguageSelectorProps {
   settings: AppSettings;
   onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  t: (key: keyof typeof translations) => string;
 }
 
 export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
   settings,
   onUpdate,
-  t
 }) => {
-  const themeOptions: { id: 'system' | 'onyx' | 'pearl'; labelKey: keyof typeof translations; icon: React.ReactNode }[] = [
+  const { t } = useI18n();
+  const themeOptions = [
     { id: 'system', labelKey: 'settingsThemeSystem', icon: <IconThemeSystem size={16} strokeWidth={1.5} /> },
     { id: 'onyx', labelKey: 'settingsThemeDark', icon: <IconThemeDark size={16} strokeWidth={1.5} /> },
     { id: 'pearl', labelKey: 'settingsThemeLight', icon: <IconThemeLight size={16} strokeWidth={1.5} /> },
-  ];
+  ] as const;
 
-  const languageOptions: { id: 'system' | 'en' | 'zh'; label: string; }[] = [
-    { id: 'system', label: 'System Default' },
-    { id: 'en', label: 'English' },
-    { id: 'zh', label: '简体中文' },
-  ];
+  const languageOptions = [
+    { id: 'system', label: t('settingsLanguageSystem') },
+    { id: 'en', label: t('settingsLanguageEn') },
+    { id: 'zh', label: t('settingsLanguageZh') },
+  ] as const;
 
   return (
     <div className="grid grid-cols-1 gap-2">
@@ -58,7 +57,7 @@ export const ThemeLanguageSelector: React.FC<ThemeLanguageSelectorProps> = ({
           label={t('settingsLanguage')}
           layout="horizontal"
           value={settings.language}
-          onChange={(e) => onUpdate('language', e.target.value as any)}
+          onChange={(e) => onUpdate('language', e.target.value as AppSettings['language'])}
           className="py-3"
           wrapperClassName="relative w-48"
       >

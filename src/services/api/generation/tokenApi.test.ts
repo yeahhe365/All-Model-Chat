@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { CountTokensConfig, Part } from '@google/genai';
 
 const { mockGetConfiguredApiClient, mockCountTokens } = vi.hoisted(() => ({
   mockGetConfiguredApiClient: vi.fn(),
@@ -39,7 +40,7 @@ describe('countTokensApi', () => {
         },
         mediaResolution: { level: 'MEDIA_RESOLUTION_HIGH' },
         thoughtSignature: 'sig-1',
-      } as any,
+      } as unknown as Part,
     ]);
 
     expect(mockGetConfiguredApiClient).toHaveBeenCalledWith('key', {
@@ -62,6 +63,37 @@ describe('countTokensApi', () => {
           ],
         },
       ],
+    });
+  });
+
+  it('passes system instructions, tools, and generation config into countTokens so preflight matches generation shape', async () => {
+    const config: CountTokensConfig = {
+      systemInstruction: 'You are concise.',
+      tools: [{ googleSearch: {} }],
+      generationConfig: {
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 256,
+        },
+      },
+    };
+
+    await countTokensApi(
+      'key',
+      'gemini-3.1-pro-preview',
+      [{ text: 'How many tokens?' } as Part],
+      config,
+    );
+
+    expect(mockCountTokens).toHaveBeenCalledWith({
+      model: 'gemini-3.1-pro-preview',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: 'How many tokens?' }],
+        },
+      ],
+      config,
     });
   });
 });

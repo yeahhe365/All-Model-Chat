@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { KeyRound } from 'lucide-react';
-import type { ModelOption } from '../../../types';
+import { useI18n } from '../../../contexts/I18nContext';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID, SETTINGS_INPUT_CLASS } from '../../../constants/appConstants';
 import { CONNECTION_TEST_MODELS } from '../../../constants/settingsModelOptions';
@@ -24,11 +24,9 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
-  serverManagedApi?: boolean;
-  availableModels?: ModelOption[];
-  liveApiEphemeralTokenEndpoint?: string | null;
-  setLiveApiEphemeralTokenEndpoint?: (value: string | null) => void;
-  t: (key: string) => string;
+  serverManagedApi: boolean;
+  liveApiEphemeralTokenEndpoint: string | null;
+  setLiveApiEphemeralTokenEndpoint: (value: string | null) => void;
 }
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
@@ -40,19 +38,20 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
-  serverManagedApi = false,
-  liveApiEphemeralTokenEndpoint = null,
+  serverManagedApi,
+  liveApiEphemeralTokenEndpoint,
   setLiveApiEphemeralTokenEndpoint,
-  t,
 }) => {
+  const { t } = useI18n();
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState<string | null>(null);
   const [testModelId, setTestModelId] = useState<string>(DEFAULT_AUTO_CANVAS_MODEL_ID);
   const [allowOverflow, setAllowOverflow] = useState(useCustomApiConfig);
   const overflowTimerRef = useRef<number | null>(null);
+  const viteEnv = (import.meta as ImportMeta & { env?: { VITE_GEMINI_API_KEY?: string } }).env;
 
   const iconSize = useResponsiveValue(18, 20);
-  const hasEnvKey = !!(import.meta as any).env?.VITE_GEMINI_API_KEY;
+  const hasEnvKey = !!viteEnv?.VITE_GEMINI_API_KEY;
   const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
   const canUseServerManagedTestKey = isServerManagedApiEnabledForProxyRequests({
     serverManagedApi,
@@ -93,7 +92,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
     const resolveKeyToTest = (): string | null => {
       if (apiKey) return apiKey;
       if (!useCustomApiConfig && hasEnvKey) {
-        return (import.meta as any).env?.VITE_GEMINI_API_KEY || null;
+        return viteEnv?.VITE_GEMINI_API_KEY || null;
       }
       if (canUseServerManagedTestKey) return SERVER_MANAGED_API_KEY;
       return null;
@@ -157,7 +156,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
           useCustomApiConfig={useCustomApiConfig}
           setUseCustomApiConfig={handleUseCustomApiConfigChange}
           hasEnvKey={hasEnvKey}
-          t={t}
         />
 
         <div className={`transition-all duration-300 ease-in-out ${useCustomApiConfig ? 'opacity-100 max-h-[800px] pt-4' : 'opacity-50 max-h-0'} ${allowOverflow ? 'overflow-visible' : 'overflow-hidden'}`}>
@@ -168,7 +166,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 setApiKey(val);
                 setTestStatus('idle');
               }}
-              t={t}
             />
 
             <ApiProxySettings
@@ -182,7 +179,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 setApiProxyUrl(val);
                 setTestStatus('idle');
               }}
-              t={t}
             />
 
             <div className="space-y-2 pt-2">
@@ -198,7 +194,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
                 value={liveApiEphemeralTokenEndpoint || ''}
                 onChange={(e) => {
                   const value = e.target.value.trim();
-                  setLiveApiEphemeralTokenEndpoint?.(value || null);
+                  setLiveApiEphemeralTokenEndpoint(value || null);
                 }}
                 className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS}`}
                 placeholder={t('settingsLiveTokenEndpointPlaceholder')}
@@ -214,7 +210,6 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
               availableModels={CONNECTION_TEST_MODELS}
               testModelId={testModelId}
               onModelChange={setTestModelId}
-              t={t}
             />
           </div>
         </div>

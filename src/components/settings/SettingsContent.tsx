@@ -8,6 +8,7 @@ import { ChatBehaviorSection } from './sections/ChatBehaviorSection';
 import { DataManagementSection } from './sections/DataManagementSection';
 import { ShortcutsSection } from './sections/ShortcutsSection';
 import { AboutSection } from './sections/AboutSection';
+import { UsageSection } from './sections/UsageSection';
 import { SettingsTransferProps } from './settingsTypes';
 
 interface SettingsContentProps extends SettingsTransferProps {
@@ -49,8 +50,8 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     const animClass = "animate-in fade-in zoom-in-95 duration-200 ease-out";
 
     const handleBatchUpdate = (updates: Partial<AppSettings>) => {
-        Object.entries(updates).forEach(([key, value]) => {
-            updateSetting(key as keyof AppSettings, value as any);
+        (Object.entries(updates) as Array<[keyof AppSettings, AppSettings[keyof AppSettings]]>).forEach(([key, value]) => {
+            updateSetting(key, value);
         });
     };
 
@@ -88,7 +89,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         autoCanvasModelId={currentSettings.autoCanvasModelId || DEFAULT_AUTO_CANVAS_MODEL_ID}
                         setAutoCanvasModelId={(v) => updateSetting('autoCanvasModelId', v)}
                         availableModels={availableModels}
-                        t={t as any}
+                        t={t}
                         setAvailableModels={setAvailableModels}
                     />
                 </div>
@@ -98,7 +99,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     <AppearanceSection
                         settings={currentSettings}
                         onUpdate={updateSetting}
-                        t={t}
                     />
                 </div>
             )}
@@ -113,12 +113,15 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
                         useApiProxy={currentSettings.useApiProxy ?? false}
                         setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
-                        serverManagedApi={currentSettings.serverManagedApi}
+                        serverManagedApi={currentSettings.serverManagedApi ?? false}
                         liveApiEphemeralTokenEndpoint={currentSettings.liveApiEphemeralTokenEndpoint ?? null}
                         setLiveApiEphemeralTokenEndpoint={(val) => updateSetting('liveApiEphemeralTokenEndpoint', val)}
-                        availableModels={availableModels}
-                        t={t as any}
                     />
+                </div>
+            )}
+            {activeTab === 'usage' && (
+                <div className={animClass}>
+                    <UsageSection />
                 </div>
             )}
             {activeTab === 'data' && (
@@ -137,7 +140,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         onImportScenarios={onImportScenarios}
                         onExportScenarios={onExportScenarios}
                         onReset={onReset}
-                        t={t}
                     />
                 </div>
             )}
@@ -146,11 +148,11 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                     <ShortcutsSection
                         currentSettings={currentSettings}
                         onUpdateSettings={handleBatchUpdate}
-                        t={t as any}
+                        t={t}
                     />
                 </div>
             )}
-            {activeTab === 'about' && <div className={animClass}><AboutSection t={t} /></div>}
+            {activeTab === 'about' && <div className={animClass}><AboutSection /></div>}
         </div>
     );
 };

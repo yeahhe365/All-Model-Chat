@@ -68,11 +68,6 @@ const LazyPdfPage = ({
         return () => observer.disconnect();
     }, [containerRef]);
 
-    // 当缩放或旋转改变时，清空缓存的尺寸，让 react-pdf 重新计算新尺寸
-    useEffect(() => {
-        setDimensions({ width: 0, height: 0 });
-    }, [scale, rotation]);
-
     return (
         <div 
             ref={(el) => {
@@ -143,7 +138,7 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
                             const pageNum = index + 1;
                             return (
                                 <LazyPdfPage 
-                                    key={pageNum}
+                                    key={`${pageNum}:${scale}:${rotation}`}
                                     pageNum={pageNum}
                                     scale={scale}
                                     rotation={rotation}

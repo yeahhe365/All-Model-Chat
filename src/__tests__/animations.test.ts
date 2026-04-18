@@ -44,6 +44,13 @@ describe('motion-sensitive UI behavior', () => {
     expect(source).toContain('prefers-reduced-motion: reduce');
     expect(source).toContain('if (prefersReducedMotion) {');
   });
+
+  it('does not synchronously transition the welcome typewriter state inside effect bodies', () => {
+    const source = fs.readFileSync(welcomeScreenPath, 'utf8');
+
+    expect(source).not.toMatch(/if \(!isHovering && targetPhrase !== text\) {\s*setTargetPhrase\(text\);\s*[\s\S]*setStatus\('deleting'\);/s);
+    expect(source).not.toMatch(/if \(displayedText === targetPhrase\) {\s*setStatus\('paused'\);/s);
+  });
 });
 
 describe('theme transition scope', () => {

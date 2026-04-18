@@ -9,7 +9,7 @@ const turndownService = new TurndownService({
 });
 
 // Use GitHub Flavored Markdown plugin (tables, task lists, etc.)
-turndownService.use(gfm as any);
+turndownService.use(gfm as (service: TurndownService) => void);
 
 // Remove scripts, styles, and other non-content elements
 turndownService.remove(['script', 'style', 'noscript', 'iframe', 'object', 'video', 'audio']);
@@ -38,8 +38,8 @@ turndownService.addRule('katex', {
 export const convertHtmlToMarkdown = (html: string): string => {
     try {
         return turndownService.turndown(html);
-    } catch (e) {
-        console.error("Failed to convert HTML to Markdown:", e);
+    } catch (error) {
+        console.error("Failed to convert HTML to Markdown:", error);
         return "";
     }
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { UploadedFile, MediaResolution } from '../../types';
+import { AppSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, fileToBlobUrl, logService } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
@@ -10,7 +10,7 @@ interface UploadFileItemParams {
     keyToUse: string | null;
     forceFileApi?: boolean;
     defaultResolution: MediaResolution | undefined;
-    appSettings: any; // Using any to avoid circular dep issues with types if strictly typed, but AppSettings is imported in types
+    appSettings: AppSettings;
     setSelectedFiles: React.Dispatch<React.SetStateAction<UploadedFile[]>>;
     uploadStatsRef: React.MutableRefObject<Map<string, { lastLoaded: number; lastTime: number }>>;
 }

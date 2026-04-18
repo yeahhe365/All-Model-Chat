@@ -4,25 +4,7 @@ import { AppSettings, UploadedFile } from '../../types';
 import { generateUniqueId, logService, isTextFile } from '../../utils/appUtils';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
-
-// Web Worker code for offloading mammoth.js DOCX extraction
-const DOCX_WORKER_CODE = `
-self.onmessage = async function(e) {
-    try {
-        const file = e.data;
-        const arrayBuffer = await file.arrayBuffer();
-        
-        // Dynamically import mammoth from esm.sh to avoid bundling in main thread
-        const mammothModule = await import('https://esm.sh/mammoth@1.6.0');
-        const mammoth = mammothModule.default || mammothModule;
-        
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        self.postMessage({ type: 'success', text: result.value, messages: result.messages });
-    } catch (err) {
-        self.postMessage({ type: 'error', error: err.message });
-    }
-};
-`;
+import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
 
 interface UseFilePreProcessingProps {
     appSettings: AppSettings;
@@ -65,7 +47,7 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
                 } finally {
                     setSelectedFiles(prev => prev.filter(f => f.id !== tempId));
                 }
-            } else if (fileNameLower.endsWith('.docx')) {
+            } else if (isDocxFile(file)) {
                 const tempId = generateUniqueId();
                 setSelectedFiles(prev => [...prev, {
                     id: tempId,
@@ -78,34 +60,11 @@ export const useFilePreProcessing = ({ appSettings, setSelectedFiles }: UseFileP
 
                 try {
                     logService.info(`Extracting text from Word file via Worker: ${file.name}`);
-                    
-                    const textContent = await new Promise<string>((resolve, reject) => {
-                        const blob = new Blob([DOCX_WORKER_CODE], { type: 'application/javascript' });
-                        const workerUrl = URL.createObjectURL(blob);
-                        // type: 'module' is required for dynamic import() inside the worker
-                        const worker = new Worker(workerUrl, { type: 'module' });
+                    const { text: textContent, messages } = await extractDocxText(file);
 
-                        worker.onmessage = (e) => {
-                            if (e.data.type === 'success') {
-                                if (e.data.messages && e.data.messages.length > 0) {
-                                    logService.warn("Mammoth extraction warnings:", { messages: e.data.messages });
-                                }
-                                resolve(e.data.text);
-                            } else {
-                                reject(new Error(e.data.error));
-                            }
-                            worker.terminate();
-                            URL.revokeObjectURL(workerUrl);
-                        };
-
-                        worker.onerror = (err) => {
-                            reject(err);
-                            worker.terminate();
-                            URL.revokeObjectURL(workerUrl);
-                        };
-
-                        worker.postMessage(file);
-                    });
+                    if (messages.length > 0) {
+                        logService.warn("Mammoth extraction warnings:", { messages });
+                    }
 
                     const newFileName = file.name.replace(/\.docx$/i, '.txt');
                     const textFile = new File([textContent], newFileName, { type: 'text/plain' });

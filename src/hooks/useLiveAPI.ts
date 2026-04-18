@@ -56,14 +56,13 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
 
     // 3. Configuration Hook
     const { liveConfig, tools } = useLiveConfig({ 
-        appSettings, 
         chatSettings, 
-        sessionHandle: sessionHandleRef.current,
+        sessionHandle,
         clientFunctions
     });
 
     // 4. Message Processing Hook
-    const { handleMessage } = useLiveMessageProcessing({
+    const { handleMessage, clearBufferedAudio } = useLiveMessageProcessing({
         playAudioChunk,
         stopAudioPlayback,
         onTranscript,
@@ -83,12 +82,12 @@ export const useLiveAPI = ({ appSettings, chatSettings, modelId, onClose, onTran
         sendText 
     } = useLiveConnection({
         appSettings,
-        chatSettings,
         modelId,
         liveConfig,
         tools,
         initializeAudio,
         cleanupAudio,
+        clearBufferedAudio,
         stopVideo,
         handleMessage,
         onClose,

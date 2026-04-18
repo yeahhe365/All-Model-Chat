@@ -21,13 +21,12 @@ interface ChatInputFileModalsProps {
     showTokenModal: boolean;
     setShowTokenModal: (show: boolean) => void;
     previewFile: UploadedFile | null;
-    setPreviewFile: (file: UploadedFile | null) => void;
+    onClosePreview: () => void;
     inputText: string;
     selectedFiles: UploadedFile[];
     appSettings: AppSettings;
     availableModels: ModelOption[];
     currentModelId: string;
-    t: (key: string) => string;
     isGemini3: boolean;
     isPreviewEditable?: boolean;
     onSaveTextFile?: (fileId: string, content: string, newName: string) => void;
@@ -46,13 +45,12 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
     showTokenModal,
     setShowTokenModal,
     previewFile,
-    setPreviewFile,
+    onClosePreview,
     inputText,
     selectedFiles,
     appSettings,
     availableModels,
     currentModelId,
-    t,
     isGemini3,
     isPreviewEditable,
     onSaveTextFile,
@@ -65,7 +63,6 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                 onClose={() => setConfiguringFile(null)} 
                 file={configuringFile}
                 onSave={handlers.handleSaveFileConfig}
-                t={t}
                 isGemini3={isGemini3}
             />
 
@@ -78,15 +75,13 @@ export const ChatInputFileModals: React.FC<ChatInputFileModalsProps> = ({
                     appSettings={appSettings}
                     availableModels={availableModels}
                     currentModelId={currentModelId}
-                    t={t}
                 />
             </Suspense>
 
             <Suspense fallback={null}>
                 <LazyFilePreviewModal
                     file={previewFile}
-                    onClose={() => setPreviewFile(null)}
-                    t={t as any}
+                    onClose={onClosePreview}
                     onPrev={handlers.handlePrevImage}
                     onNext={handlers.handleNextImage}
                     hasPrev={handlers.currentImageIndex > 0}

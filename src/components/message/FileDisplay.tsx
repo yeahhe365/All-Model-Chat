@@ -1,16 +1,18 @@
 
 import React, { useState } from 'react';
 import { UploadedFile } from '../../types';
-import { Check, Copy, Download, SlidersHorizontal, Scissors, Settings2 } from 'lucide-react'; 
+import { Check, Copy, Download, SlidersHorizontal, Scissors } from 'lucide-react'; 
 import { triggerDownload } from '../../utils/export/core';
-import { getFileTypeCategory, CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
+import { CATEGORY_STYLES, getResolutionColor } from '../../utils/uiUtils';
 import { formatFileSize } from '../../utils/fileHelpers';
+import { getFileCardMeta } from '../../utils/fileCardUtils';
 
 interface FileDisplayProps {
   file: UploadedFile;
   onFileClick?: (file: UploadedFile) => void;
   isFromMessageList?: boolean;
   isGridView?: boolean;
+  isStripView?: boolean;
   onConfigure?: () => void;
   isGemini3?: boolean;
 }
@@ -36,11 +38,20 @@ const getDisplayType = (mimeType: string, name: string) => {
     return subtype.length > 8 ? subtype.substring(0, 8) : subtype;
 };
 
-export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isFromMessageList, isGridView, onConfigure, isGemini3 }) => {
+export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isFromMessageList, isGridView, isStripView, onConfigure, isGemini3 }) => {
   const [idCopied, setIdCopied] = useState(false);
 
   const isClickable = file.uploadState === 'active' && !file.error && onFileClick && file.dataUrl;
-  const category = getFileTypeCategory(file.type, file.error);
+  const {
+    category,
+    canConfigure,
+    ConfigIcon,
+  } = getFileCardMeta(file, {
+    isGemini3,
+    includeTextEditing: false,
+    requireActiveForConfigure: false,
+    canConfigure: !!onConfigure,
+  });
 
   const handleCopyId = (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -68,25 +79,14 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
       }
   };
 
-  const isVideo = category === 'video' || category === 'youtube';
-  const isImage = category === 'image';
-  const isPdf = category === 'pdf';
-
-  // Configuration check logic matches SelectedFileDisplay
-  const canConfigure = onConfigure && !file.error && (
-      isVideo || (isGemini3 && (isImage || isPdf))
-  );
-
-  const ConfigIcon = (isGemini3) ? SlidersHorizontal : (isVideo ? Scissors : Settings2);
-
   // Render Image Content specifically
   if (category === 'image' && file.dataUrl && !file.error) {
       return (
-        <div className={`relative group rounded-xl overflow-hidden border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] shadow-sm transition-all hover:shadow-md ${isGridView ? '' : 'w-fit max-w-full sm:max-w-md'}`}>
+        <div className={`relative group rounded-xl overflow-hidden border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] shadow-sm transition-all hover:shadow-md ${isGridView || isStripView ? 'w-full h-full' : 'w-fit max-w-full sm:max-w-md'}`}>
             <img 
                 src={file.dataUrl} 
                 alt={file.name} 
-                className={`block ${isGridView ? 'w-full h-full object-cover aspect-square' : 'w-auto h-auto max-w-full max-h-80 object-contain'} ${isClickable ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''}`}
+                className={`block ${isGridView ? 'w-full h-full object-cover aspect-square' : isStripView ? 'w-full h-full object-cover' : 'w-auto h-auto max-w-full max-h-56 object-contain'} ${isClickable ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''}`}
                 aria-label={`Uploaded image: ${file.name}`}
                 onClick={handleClick}
             />

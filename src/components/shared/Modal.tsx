@@ -26,6 +26,8 @@ export const Modal: React.FC<ModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      // Intentional open-state sync for enter/exit animations.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsActuallyOpen(true);
     }
   }, [isOpen]);

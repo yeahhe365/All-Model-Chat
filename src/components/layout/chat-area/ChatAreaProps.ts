@@ -8,12 +8,11 @@ import type {
   VideoMetadata,
 } from '../../../types';
 import type { UploadedFile } from '../../../types/chat';
-import type { translations } from '../../../utils/appUtils';
 import type { MediaResolution } from '../../../types/settings';
 
 export interface ChatAreaSessionModel {
   activeSessionId: string | null;
-  sessionTitle?: string;
+  sessionTitle: string;
   currentChatSettings: ChatSettings;
   messages: ChatMessage[];
   isLoading: boolean;
@@ -28,7 +27,6 @@ export interface ChatAreaShellModel {
   handleAppDragOver: (e: DragEvent<HTMLDivElement>) => void;
   handleAppDragLeave: (e: DragEvent<HTMLDivElement>) => void;
   handleAppDrop: (e: DragEvent<HTMLDivElement>) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
 }
 
 export interface ChatAreaHeaderModel {
@@ -36,11 +34,9 @@ export interface ChatAreaHeaderModel {
   availableModels: ModelOption[];
   selectedModelId: string;
   isCanvasPromptActive: boolean;
-  isKeyLocked: boolean;
   isPipSupported: boolean;
   isPipActive: boolean;
   onNewChat: () => void;
-  onOpenSettingsModal: () => void;
   onOpenScenariosModal: () => void;
   onToggleHistorySidebar: () => void;
   onLoadCanvasPrompt: () => void;
@@ -51,7 +47,6 @@ export interface ChatAreaHeaderModel {
 
 export interface ChatAreaMessageActionsModel {
   setScrollContainerRef: (node: HTMLDivElement | null) => void;
-  onScrollContainerScroll: () => void;
   onEditMessage: (messageId: string, mode?: 'update' | 'resend') => void;
   onDeleteMessage: (messageId: string) => void;
   onRetryMessage: (messageId: string) => void;
@@ -63,7 +58,6 @@ export interface ChatAreaMessageActionsModel {
   onSuggestionClick: (suggestion: string) => void;
   onOrganizeInfoClick: (suggestion: string) => void;
   onFollowUpSuggestionClick: (suggestion: string) => void;
-  onTextToSpeech: (messageId: string, text: string) => void;
   onGenerateCanvas: (messageId: string, text: string) => void;
   onContinueGeneration: (messageId: string) => void;
   onQuickTTS: (text: string) => Promise<string | null>;
@@ -72,7 +66,7 @@ export interface ChatAreaMessageActionsModel {
 
 export interface ChatAreaInputActionsModel {
   onMessageSent: () => void;
-  onSendMessage: (text: string, options?: { isFastMode?: boolean }) => void;
+  onSendMessage: (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => void;
   onStopGenerating: () => void;
   onCancelEdit: () => void;
   onProcessFiles: (files: FileList | File[]) => Promise<void>;

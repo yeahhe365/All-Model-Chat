@@ -1,0 +1,129 @@
+import { act } from 'react';
+import { createRoot, Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../contexts/I18nContext';
+import { useSettingsStore } from '../../../stores/settingsStore';
+
+const {
+  mockGetApiUsageByTimeRange,
+  mockPruneLogs,
+  mockAddLogs,
+  mockClearLogs,
+  mockAddApiUsageRecord,
+  mockGetLogs,
+  mockClearApiUsage,
+} = vi.hoisted(() => ({
+  mockGetApiUsageByTimeRange: vi.fn(),
+  mockPruneLogs: vi.fn(),
+  mockAddLogs: vi.fn(),
+  mockClearLogs: vi.fn(),
+  mockAddApiUsageRecord: vi.fn(),
+  mockGetLogs: vi.fn(),
+  mockClearApiUsage: vi.fn(),
+}));
+
+vi.mock('../../../utils/db', () => ({
+  dbService: {
+    getApiUsageByTimeRange: mockGetApiUsageByTimeRange,
+    pruneLogs: mockPruneLogs,
+    addLogs: mockAddLogs,
+    clearLogs: mockClearLogs,
+    addApiUsageRecord: mockAddApiUsageRecord,
+    getLogs: mockGetLogs,
+    clearApiUsage: mockClearApiUsage,
+  },
+}));
+
+import { UsageSection } from './UsageSection';
+
+describe('UsageSection', () => {
+  let container: HTMLDivElement;
+  let root: Root;
+  const initialState = useSettingsStore.getState();
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    vi.clearAllMocks();
+    mockPruneLogs.mockResolvedValue(undefined);
+    mockAddLogs.mockResolvedValue(undefined);
+    mockClearLogs.mockResolvedValue(undefined);
+    mockAddApiUsageRecord.mockResolvedValue(undefined);
+    mockGetLogs.mockResolvedValue([]);
+    mockClearApiUsage.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+    useSettingsStore.setState(initialState);
+  });
+
+  it('aggregates request counts and per-model token totals for the selected range', async () => {
+    mockGetApiUsageByTimeRange.mockResolvedValue([
+      {
+        id: 1,
+        timestamp: Date.now(),
+        modelId: 'gemini-3.1-pro-preview',
+        promptTokens: 1_000_000,
+        cachedPromptTokens: 500_000,
+        completionTokens: 0,
+        thoughtTokens: 10_000,
+        toolUsePromptTokens: 25_000,
+        totalTokens: 1_035_000,
+      },
+      {
+        id: 2,
+        timestamp: Date.now() - 1000,
+        modelId: 'gemini-3-flash-preview',
+        promptTokens: 500_000,
+        cachedPromptTokens: 50_000,
+        completionTokens: 500_000,
+        thoughtTokens: 20_000,
+        toolUsePromptTokens: 30_000,
+        totalTokens: 1_050_000,
+      },
+      {
+        id: 3,
+        timestamp: Date.now() - 2000,
+        modelId: 'imagen-4.0-generate-001',
+        promptTokens: 10,
+        cachedPromptTokens: 0,
+        completionTokens: 20,
+        thoughtTokens: 0,
+        toolUsePromptTokens: 0,
+        totalTokens: 30,
+      },
+    ]);
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <UsageSection />
+        </I18nProvider>,
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain('Time Range');
+    expect(container.textContent).toContain('All Time');
+    expect(container.textContent).toContain('3');
+    expect(container.textContent).toContain('1,005,010');
+    expect(container.textContent).toContain('550,000');
+    expect(container.textContent).toContain('530,020');
+    expect(container.textContent).toContain('2,085,030');
+    expect(container.textContent).toContain('Cached Tokens');
+    expect(container.textContent).toContain('—');
+    expect(container.textContent).toContain('$2.48');
+    expect(container.textContent).toContain('gemini-3.1-pro-preview');
+    expect(container.textContent).toContain('gemini-3-flash-preview');
+    expect(container.textContent).toContain('imagen-4.0-generate-001');
+    expect(container.textContent).toContain('—');
+    expect(container.textContent).toContain('Strict official mode');
+  });
+});

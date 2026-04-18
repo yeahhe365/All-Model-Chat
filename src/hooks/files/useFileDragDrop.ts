@@ -45,21 +45,21 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
 
     // Helper to recursively read entries from a dropped directory
     // Now returns objects with explicit path strings to avoid read-only property issues
-    const scanEntry = async (entry: any, path: string = ''): Promise<{ file: File, path: string }[]> => {
+    const scanEntry = useCallback(async (entry: FileSystemEntry, path: string = ''): Promise<{ file: File, path: string }[]> => {
         if (entry.isFile) {
             return new Promise((resolve) => {
-                entry.file((file: File) => {
+                (entry as FileSystemFileEntry).file((file: File) => {
                     const relativePath = path + file.name;
                     resolve([{ file, path: relativePath }]);
                 });
             });
         } else if (entry.isDirectory) {
-            const dirReader = entry.createReader();
-            const allEntries: any[] = [];
+            const dirReader = (entry as FileSystemDirectoryEntry).createReader();
+            const allEntries: FileSystemEntry[] = [];
             
-            const readEntries = async (): Promise<any[]> => {
+            const readEntries = async (): Promise<FileSystemEntry[]> => {
                 return new Promise((resolve, reject) => {
-                    dirReader.readEntries((entries: any[]) => {
+                    dirReader.readEntries((entries: FileSystemEntry[]) => {
                         resolve(entries);
                     }, reject);
                 });
@@ -79,7 +79,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
             return filesArrays.flat();
         }
         return [];
-    };
+    }, []);
 
     const handleAppDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -94,7 +94,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
             // Check if any dropped item is a directory
             if (items) {
                 for (let i = 0; i < items.length; i++) {
-                    const item: any = items[i];
+                    const item = items[i];
                     if (item.kind === 'file' && typeof item.webkitGetAsEntry === 'function') {
                         const entry = item.webkitGetAsEntry();
                         if (entry && entry.isDirectory) {
@@ -119,8 +119,8 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
                 // Handle directory drop: recursive scan and convert to text context
                 const entries = Array.from(items)
                     .filter(item => item.kind === 'file')
-                    .map(item => (item as any).webkitGetAsEntry())
-                    .filter(Boolean);
+                    .map(item => item.webkitGetAsEntry?.())
+                    .filter((entry): entry is FileSystemEntry => Boolean(entry));
                 
                 const filesArrays = await Promise.all(entries.map(entry => scanEntry(entry)));
                 const flatFilesWithPath = filesArrays.flat();
@@ -144,7 +144,7 @@ export const useFileDragDrop = ({ onFilesDropped, onAddTempFile, onRemoveTempFil
         } finally {
             setIsProcessingDrop(false);
         }
-    }, [onFilesDropped, onAddTempFile, onRemoveTempFile]);
+    }, [onFilesDropped, onAddTempFile, onRemoveTempFile, scanEntry]);
 
     return {
         isAppDraggingOver,

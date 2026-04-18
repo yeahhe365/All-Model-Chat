@@ -25,7 +25,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     hasContentOrAudio 
 }) => {
     // Check if the message contains a tool execution result block
-    const hasToolResult = content?.includes('class="tool-result"');
+    const hasToolResult = /\btool-result\b/.test(content || '');
 
     // Separate images from other documents to handle layouts differently
     const { imageFiles, documentFiles } = useMemo(() => {
@@ -36,9 +36,9 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
         const imgs: UploadedFile[] = [];
         const docs: UploadedFile[] = [];
         files.forEach(f => {
-            // Prevent duplicate display of auto-generated execution files at the top
-            // if they will be rendered inside the ToolResultBlock at the bottom.
-            if (hasToolResult && (f.name.startsWith('generated-plot') || f.name.startsWith('generated-file'))) {
+            // Tool result blocks already render generated outputs inline.
+            // Hide any generated attachments from the top strip to avoid duplicate previews.
+            if (hasToolResult && f.name.startsWith('generated-')) {
                 return;
             }
 
@@ -52,6 +52,7 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
     if (!files || files.length === 0) return null;
 
     const isQuadImageView = imageFiles.length === 4 && imageFiles.every(f => f.name.startsWith('generated-image-') || f.name.startsWith('edited-image-'));
+    const isStripImageView = imageFiles.length > 1 && !isQuadImageView;
     const marginClass = hasContentOrAudio ? 'mb-2' : '';
     
     // Only enable scrolling if there are enough files to form multiple columns (more than 4)
@@ -79,11 +80,12 @@ export const MessageFiles: React.FC<MessageFilesProps> = ({
                 ) : (
                     <div className="flex flex-row gap-2 overflow-x-auto pb-2 -mx-1 px-1 custom-scrollbar">
                         {imageFiles.map((file) => (
-                            <div key={file.id} className="flex-shrink-0">
+                            <div key={file.id} className={isStripImageView ? 'flex-shrink-0 h-40 w-40 sm:w-48' : 'flex-shrink-0'}>
                                 <FileDisplay 
                                     file={file} 
                                     onFileClick={onImageClick} 
                                     isFromMessageList={true}
+                                    isStripView={isStripImageView}
                                     onConfigure={onConfigureFile ? () => onConfigureFile(file, messageId) : undefined}
                                     isGemini3={isGemini3}
                                 />

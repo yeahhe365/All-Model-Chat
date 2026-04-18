@@ -1,14 +1,10 @@
-import React, { Suspense, lazy } from 'react';
-import type { MarkdownRendererProps } from './BaseMarkdownRenderer';
+import React, { Suspense, lazy, useMemo } from 'react';
+import { BaseMarkdownRenderer, type MarkdownRendererProps } from './BaseMarkdownRenderer';
+import { baseRemarkPlugins, getBaseRehypePlugins } from '../../utils/markdownConfigBase';
 
 const LazyMarkdownRendererMath = lazy(async () => {
   const module = await import('./MarkdownRenderer');
   return { default: module.MarkdownRenderer };
-});
-
-const LazyMarkdownRendererLite = lazy(async () => {
-  const module = await import('./MarkdownRendererLite');
-  return { default: module.MarkdownRendererLite };
 });
 
 interface LazyMarkdownRendererProps extends MarkdownRendererProps {
@@ -25,7 +21,9 @@ export const LazyMarkdownRenderer: React.FC<LazyMarkdownRendererProps> = ({
   fallbackMode = 'raw',
   ...props
 }) => {
-  const Renderer = containsMathMarkdown(content) ? LazyMarkdownRendererMath : LazyMarkdownRendererLite;
+  const allowHtml = props.allowHtml ?? false;
+  const rehypePlugins = useMemo(() => getBaseRehypePlugins(allowHtml), [allowHtml]);
+  const shouldLoadMathRenderer = containsMathMarkdown(content);
   const fallback = fallbackMode === 'raw'
     ? (
         <div className="whitespace-pre-wrap break-words text-[var(--theme-text-secondary)]">
@@ -34,9 +32,20 @@ export const LazyMarkdownRenderer: React.FC<LazyMarkdownRendererProps> = ({
       )
     : null;
 
+  if (!shouldLoadMathRenderer) {
+    return (
+      <BaseMarkdownRenderer
+        {...props}
+        content={content}
+        remarkPlugins={baseRemarkPlugins}
+        rehypePlugins={rehypePlugins}
+      />
+    );
+  }
+
   return (
     <Suspense fallback={fallback}>
-      <Renderer content={content} {...props} />
+      <LazyMarkdownRendererMath content={content} {...props} />
     </Suspense>
   );
 };

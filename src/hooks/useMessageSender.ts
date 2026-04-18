@@ -23,7 +23,7 @@ interface MessageSenderProps {
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
     activeJobs: React.MutableRefObject<Map<string, AbortController>>;
@@ -45,7 +45,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setAppFileError,
         aspectRatio,
         imageSize,
-        userScrolledUp: userScrolledUpRef,
+        userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
         activeJobs,
@@ -110,6 +110,44 @@ export const useMessageSender = (props: MessageSenderProps) => {
             logService.warn("Send message blocked: files are still processing.");
             setAppFileError("Wait for files to finish processing."); 
             return; 
+        }
+
+        if (isImageEditModel || isGemini3Image) {
+            const allowsPdfReferences = activeModelId === 'gemini-3.1-flash-image-preview';
+            const hasUnsupportedAttachments = filesToUse.some((file) => {
+                if (file.type.startsWith('image/')) return false;
+                if (allowsPdfReferences && file.type === 'application/pdf') return false;
+                return true;
+            });
+
+            if (hasUnsupportedAttachments) {
+                logService.warn("Send message blocked: image model received unsupported attachment types.", {
+                    activeModelId,
+                    attachmentTypes: filesToUse.map((file) => file.type),
+                });
+                setAppFileError(
+                    allowsPdfReferences
+                        ? "Nano Banana 2 supports image and PDF attachments only."
+                        : "This image model supports image attachments only."
+                );
+                return;
+            }
+        }
+
+        const imageReferenceCount = filesToUse.filter((file) => file.type.startsWith('image/')).length;
+        if (isGemini3Image && imageReferenceCount > 14) {
+            logService.warn("Send message blocked: Gemini 3 image model reference image limit exceeded.", {
+                imageReferenceCount,
+                activeModelId,
+            });
+            setAppFileError("Gemini 3 image models support up to 14 reference images per request.");
+            return;
+        }
+
+        if (isImagenModel && filesToUse.length > 0) {
+            logService.warn("Send message blocked: Imagen models do not support file attachments.");
+            setAppFileError("Imagen models support text prompts only.");
+            return;
         }
         
         setAppFileError(null);

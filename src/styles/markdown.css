@@ -199,9 +199,12 @@
 /* Images in Markdown */
 .markdown-body img {
   max-width: 100%;
+  max-height: 320px;
   height: auto;
+  object-fit: contain;
   display: block;
   margin: 0.5rem 0;
+  background-color: var(--theme-bg-tertiary);
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }

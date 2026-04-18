@@ -1,5 +1,5 @@
 
-import type { Content, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
+import type { Content, CountTokensConfig, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
 import type { SafetySetting } from './settings';
 
 export type ChatHistoryItem = Content & {
@@ -9,16 +9,16 @@ export type ChatHistoryItem = Content & {
 
 export type StreamMessageCompleteHandler = (
   usageMetadata?: UsageMetadata,
-  groundingMetadata?: any,
-  urlContextMetadata?: any
+  groundingMetadata?: unknown,
+  urlContextMetadata?: unknown
 ) => void;
 
 export type NonStreamMessageCompleteHandler = (
   parts: Part[],
   thoughtsText?: string,
   usageMetadata?: UsageMetadata,
-  groundingMetadata?: any,
-  urlContextMetadata?: any
+  groundingMetadata?: unknown,
+  urlContextMetadata?: unknown
 ) => void;
 
 export type StreamMessageSender = (
@@ -26,7 +26,7 @@ export type StreamMessageSender = (
   modelId: string,
   history: ChatHistoryItem[],
   parts: Part[],
-  config: any,
+  config: unknown,
   abortSignal: AbortSignal,
   onPart: (part: Part) => void,
   onThoughtChunk: (chunk: string) => void,
@@ -40,7 +40,7 @@ export type NonStreamMessageSender = (
   modelId: string,
   history: ChatHistoryItem[],
   parts: Part[],
-  config: any,
+  config: unknown,
   abortSignal: AbortSignal,
   onError: (error: Error) => void,
   onComplete: NonStreamMessageCompleteHandler
@@ -48,7 +48,7 @@ export type NonStreamMessageSender = (
 
 export interface LiveClientFunction {
   declaration: FunctionDeclaration;
-  handler: (args: any) => Promise<unknown>;
+  handler: (args: unknown) => Promise<unknown>;
 }
 
 export type LiveClientFunctions = Record<string, LiveClientFunction>;
@@ -94,9 +94,9 @@ export interface GeminiService {
     imageSize?: string,
     requestConfig?: EditImageRequestConfig,
   ) => Promise<Part[]>;
-  countTokens: (apiKey: string, modelId: string, parts: Part[]) => Promise<number>;
+  countTokens: (apiKey: string, modelId: string, parts: Part[], config?: CountTokensConfig) => Promise<number>;
 }
 
 export interface ThoughtSupportingPart extends Part {
-    thought?: any;
+    thought?: boolean;
 }

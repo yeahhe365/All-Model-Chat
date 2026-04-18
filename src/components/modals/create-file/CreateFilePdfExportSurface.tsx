@@ -63,7 +63,7 @@ export const CreateFilePdfExportSurface: React.FC<CreateFilePdfExportSurfaceProp
             isMermaidRenderingEnabled={true}
             isGraphvizRenderingEnabled={true}
             allowHtml={true}
-            t={t as any}
+            t={t}
             themeId={themeId}
             diagramLoadMode="eager"
             diagramRenderDelayMs={0}

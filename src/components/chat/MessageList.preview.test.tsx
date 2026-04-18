@@ -1,25 +1,40 @@
+import type { ComponentType, ReactNode } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MessageList } from './MessageList';
-import { ChatMessage, UploadedFile } from '../../types';
+import { AppSettings, ChatMessage, ChatSettings, UploadedFile } from '../../types';
+import { I18nProvider } from '../../contexts/I18nContext';
 import { ChatAreaProvider, ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
 
+interface VirtuosoMockProps<T> {
+  data: T[];
+  itemContent: (index: number, item: T) => ReactNode;
+  components?: {
+    Footer?: ComponentType;
+  };
+}
+
+interface MessageMockProps {
+  message: ChatMessage;
+  onImageClick: (file: UploadedFile) => void;
+}
+
 vi.mock('react-virtuoso', () => ({
-  Virtuoso: ({ data, itemContent, components }: any) => (
+  Virtuoso: ({ data, itemContent, components }: VirtuosoMockProps<ChatMessage>) => (
     <div data-testid="virtuoso">
-      {data.map((item: any, index: number) => itemContent(index, item))}
+      {data.map((item, index) => itemContent(index, item))}
       {components?.Footer ? <components.Footer /> : null}
     </div>
   ),
 }));
 
 vi.mock('../message/Message', () => ({
-  Message: ({ message, onImageClick }: any) => (
+  Message: ({ message, onImageClick }: MessageMockProps) => (
     <button
       type="button"
       data-testid={`open-preview-${message.id}`}
-      onClick={() => onImageClick(message.files[0])}
+      onClick={() => onImageClick(message.files![0])}
     >
       Open preview
     </button>
@@ -35,6 +50,7 @@ vi.mock('./message-list/hooks/useMessageListScroll', () => ({
   useMessageListScroll: () => ({
     virtuosoRef: { current: null },
     handleScrollerRef: () => {},
+    handleScroll: () => {},
     setAtBottom: () => {},
     onRangeChanged: () => {},
     scrollToPrevTurn: () => {},
@@ -89,7 +105,6 @@ describe('MessageList image preview', () => {
       messages,
       sessionTitle: 'Test',
       setScrollContainerRef: () => {},
-      onScrollContainerScroll: () => {},
       onEditMessage: () => {},
       onDeleteMessage: () => {},
       onRetryMessage: () => {},
@@ -98,17 +113,13 @@ describe('MessageList image preview', () => {
       themeId: 'pearl',
       baseFontSize: 14,
       expandCodeBlocksByDefault: false,
-      isMermaidRenderingEnabled: false,
-      isGraphvizRenderingEnabled: false,
-      onTextToSpeech: () => {},
-      onGenerateCanvas: () => {},
-      onContinueGeneration: () => {},
-      ttsMessageId: null,
-      onQuickTTS: async () => null,
-      t: (key) => (key === 'imageZoom_title' ? 'Preview {filename}' : String(key)),
-      language: 'zh',
+    isMermaidRenderingEnabled: false,
+    isGraphvizRenderingEnabled: false,
+    onGenerateCanvas: () => {},
+    onContinueGeneration: () => {},
+    onQuickTTS: async () => null,
       chatInputHeight: 0,
-      appSettings: { showWelcomeSuggestions: true } as any,
+      appSettings: { showWelcomeSuggestions: true } as AppSettings,
       currentModelId: 'gemini-2.5-flash',
       onOpenSidePanel: () => {},
       onQuote: () => {},
@@ -118,12 +129,12 @@ describe('MessageList image preview', () => {
       appSettings: {
         isSystemAudioRecordingEnabled: false,
         isPasteRichTextAsMarkdownEnabled: true,
-      } as any,
+      } as AppSettings,
       currentChatSettings: {
         modelId: 'gemini-3.1-pro-preview',
         ttsVoice: 'Aoede',
         thinkingLevel: 'MEDIUM',
-      } as any,
+      } as ChatSettings,
       setAppFileError: () => {},
       activeSessionId: 'session-1',
       commandedInput: null,
@@ -141,7 +152,6 @@ describe('MessageList image preview', () => {
       onTranscribeAudio: async () => null,
       isProcessingFile: false,
       fileError: null,
-      t: (key) => key as any,
       isImagenModel: false,
       isImageEditModel: false,
       aspectRatio: '1:1',
@@ -169,10 +179,9 @@ describe('MessageList image preview', () => {
       onEditLastUserMessage: () => {},
       onTogglePip: () => {},
       isPipActive: false,
-      isHistorySidebarOpen: false,
       generateQuadImages: false,
       onToggleQuadImages: () => {},
-      setCurrentChatSettings: () => ({}) as any,
+      setCurrentChatSettings: vi.fn(),
       onSuggestionClick: () => {},
       onOrganizeInfoClick: () => {},
       showEmptyStateSuggestions: false,
@@ -208,9 +217,11 @@ describe('MessageList image preview', () => {
   it('shows the file preview after clicking an image', async () => {
     act(() => {
       root.render(
-        <ChatAreaProvider value={createProviderValue()}>
-          <MessageList />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={createProviderValue()}>
+            <MessageList />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 

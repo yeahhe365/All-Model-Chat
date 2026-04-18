@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { CloudUpload, Info } from 'lucide-react';
-import { translations } from '../../../../utils/appUtils';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { FilesApiConfig, AppSettings } from '../../../../types';
 import { Tooltip } from '../../../shared/Tooltip';
 import { ToggleItem } from '../../../shared/ToggleItem';
@@ -9,10 +9,10 @@ import { ToggleItem } from '../../../shared/ToggleItem';
 interface FileStrategyControlProps {
   settings: AppSettings;
   onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  t: (key: keyof typeof translations) => string;
 }
 
-export const FileStrategyControl: React.FC<FileStrategyControlProps> = ({ settings, onUpdate, t }) => {
+export const FileStrategyControl: React.FC<FileStrategyControlProps> = ({ settings, onUpdate }) => {
+  const { t } = useI18n();
   const updateFileConfig = (key: keyof FilesApiConfig, val: boolean) => {
       onUpdate('filesApiConfig', { ...settings.filesApiConfig, [key]: val });
   };

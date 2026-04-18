@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../../contexts/I18nContext';
 import { ApiProxySettings } from './ApiProxySettings';
 
 describe('ApiProxySettings', () => {
@@ -21,20 +22,22 @@ describe('ApiProxySettings', () => {
     document.body.innerHTML = '';
   });
 
-  it('does not render a Vertex Express shortcut button', () => {
+  it('renders the SDK request preview for a root proxy URL', () => {
     act(() => {
       root.render(
-        <ApiProxySettings
-          useApiProxy
-          setUseApiProxy={vi.fn()}
-          apiProxyUrl="https://api-proxy.de/gemini/v1beta"
-          setApiProxyUrl={vi.fn()}
-          t={(key) => key}
-        />
+        <I18nProvider>
+          <ApiProxySettings
+            useApiProxy
+            setUseApiProxy={vi.fn()}
+            apiProxyUrl="https://api-proxy.de/gemini"
+            setApiProxyUrl={vi.fn()}
+          />
+        </I18nProvider>
       );
     });
 
-    expect(document.body).not.toHaveTextContent('Vertex Express');
-    expect(document.body).not.toHaveTextContent('apiConfig_vertexExpress_btn');
+    expect(document.body).toHaveTextContent(
+      'https://api-proxy.de/gemini/v1beta/models/gemini-2.5-flash:generateContent'
+    );
   });
 });

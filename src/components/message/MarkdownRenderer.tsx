@@ -3,8 +3,6 @@ import { BaseMarkdownRenderer, MarkdownRendererProps } from './BaseMarkdownRende
 import { baseRemarkPlugins, getBaseRehypePlugins } from '../../utils/markdownConfigBase';
 import { mathRemarkPlugins, getMathRehypePlugins } from '../../utils/markdownMathConfig';
 
-export type { MarkdownRendererProps } from './BaseMarkdownRenderer';
-
 export const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo((props) => {
   const rehypePlugins = useMemo(() => [
     ...getBaseRehypePlugins(props.allowHtml ?? false),

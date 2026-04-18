@@ -13,9 +13,9 @@ interface UseSessionLoaderProps {
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
     setCommandedInput: Dispatch<SetStateAction<InputCommand | null>>;
-    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => Promise<void>;
+    updateAndPersistSessions: (updater: (prev: SavedChatSession[]) => SavedChatSession[], options?: { persist?: boolean }) => void | Promise<void>;
     activeChat: SavedChatSession | undefined;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     selectedFiles: UploadedFile[];
     fileDraftsRef: React.MutableRefObject<Record<string, UploadedFile[]>>;
     activeSessionId: string | null;
@@ -33,7 +33,7 @@ export const useSessionLoader = ({
     setCommandedInput,
     updateAndPersistSessions,
     activeChat,
-    userScrolledUp,
+    userScrolledUpRef,
     selectedFiles,
     fileDraftsRef,
     activeSessionId,
@@ -65,7 +65,7 @@ export const useSessionLoader = ({
         }
 
         logService.info('Starting new chat session.');
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
         
         // Save current files to draft before switching
         if (activeSessionId) {
@@ -115,11 +115,11 @@ export const useSessionLoader = ({
         setTimeout(() => {
             document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Chat message input"]')?.focus();
         }, 0);
-    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, sanitizeSessionModel]);
+    }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, sanitizeSessionModel]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
         logService.info(`Loading chat session: ${sessionId}`);
-        userScrolledUp.current = false;
+        userScrolledUpRef.current = false;
         
         // Save current files to draft before switching
         if (activeSessionId && activeSessionId !== sessionId) {
@@ -147,11 +147,11 @@ export const useSessionLoader = ({
                     const exists = prev.some(s => s.id === sessionId);
                     if (exists) {
                          // Update metadata if needed, but strip messages
-                         const { messages, ...metadata } = rehydrated;
+                         const metadata = { ...rehydrated, messages: [] };
                          return prev.map(s => s.id === sessionId ? { ...s, ...metadata, messages: [] } : s);
                     } else {
                          // Add if missing (rare case of direct load)
-                         const { messages, ...metadata } = rehydrated;
+                         const metadata = { ...rehydrated, messages: [] };
                          return [{ ...metadata, messages: [] } as SavedChatSession, ...prev];
                     }
                 });
@@ -172,7 +172,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat session:", error);
             startNewChat();
         }
-    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUp, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat, sanitizeSessionModel]);
+    }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat, sanitizeSessionModel]);
 
     const loadInitialData = useCallback(async () => {
         try {

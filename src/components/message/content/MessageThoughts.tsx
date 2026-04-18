@@ -1,7 +1,8 @@
 
 import React, { useMemo, useState } from 'react';
 import { ChatMessage, AppSettings, SideViewContent, UploadedFile } from '../../../types';
-import { translations, parseThoughtProcess, getKeyForRequest } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
+import { parseThoughtProcess, getKeyForRequest } from '../../../utils/appUtils';
 import { geminiServiceInstance } from '../../../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
@@ -13,7 +14,6 @@ import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 interface MessageThoughtsProps {
     message: ChatMessage;
     showThoughts: boolean;
-    t: (key: keyof typeof translations) => string;
     appSettings: AppSettings;
     themeId: string;
     onImageClick: (file: UploadedFile) => void;
@@ -27,7 +27,6 @@ interface MessageThoughtsProps {
 export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     message,
     showThoughts,
-    t,
     appSettings,
     themeId,
     onImageClick,
@@ -37,6 +36,7 @@ export const MessageThoughts: React.FC<MessageThoughtsProps> = ({
     isGraphvizRenderingEnabled,
     onOpenSidePanel
 }) => {
+    const { t } = useI18n();
     const { thoughts, isLoading, role, id: messageId } = message;
     
     // Subscribe to live thoughts if loading to check visibility

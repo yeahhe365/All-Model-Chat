@@ -75,6 +75,10 @@ export const Select: React.FC<SelectProps> = ({
     const labelClasses = layout === 'horizontal'
         ? "text-sm font-medium text-[var(--theme-text-primary)] mr-4 flex-shrink-0"
         : "block text-xs font-medium text-[var(--theme-text-secondary)] mb-1.5";
+    const buttonProps = rest as unknown as Omit<
+        React.ButtonHTMLAttributes<HTMLButtonElement>,
+        'onChange' | 'children' | 'value' | 'defaultValue'
+    >;
 
     // Default wrapper classes, overridable by prop
     const defaultWrapperClasses = layout === 'horizontal' 
@@ -104,7 +108,7 @@ export const Select: React.FC<SelectProps> = ({
                     onClick={handleToggle}
                     disabled={disabled}
                     className={`w-full p-2.5 text-left border rounded-lg flex items-center justify-between transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] ${disabled ? 'opacity-60 cursor-not-allowed bg-[var(--theme-bg-secondary)]' : 'cursor-pointer bg-[var(--theme-bg-input)] hover:border-[var(--theme-border-focus)]'} border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] text-sm`}
-                    {...rest as any}
+                    {...buttonProps}
                 >
                     <div className="truncate mr-2 flex-grow text-left">
                         {selectedOption ? selectedOption.label : <span className="text-[var(--theme-text-tertiary)]">Select...</span>}

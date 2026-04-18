@@ -1,6 +1,6 @@
 
 import React, { useRef } from 'react';
-import { translations } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
 import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database, RefreshCw } from 'lucide-react';
 
 interface DataManagementSectionProps {
@@ -17,7 +17,6 @@ interface DataManagementSectionProps {
   onImportScenarios: (file: File) => void;
   onExportScenarios: () => void;
   onReset: () => void;
-  t: (key: keyof typeof translations) => string;
 }
 
 const ActionRow: React.FC<{ 
@@ -66,8 +65,8 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onImportScenarios,
   onExportScenarios,
   onReset,
-  t,
 }) => {
+  const { t } = useI18n();
   const settingsImportRef = useRef<HTMLInputElement>(null);
   const historyImportRef = useRef<HTMLInputElement>(null);
   const scenariosImportRef = useRef<HTMLInputElement>(null);

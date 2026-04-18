@@ -1,5 +1,6 @@
 
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+/* eslint-disable react-hooks/refs */
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 
 type ContainerRefLike = React.RefObject<HTMLElement> | HTMLElement | null;
@@ -16,21 +17,39 @@ const resolveContainerElement = (containerRef: ContainerRefLike): HTMLElement | 
     return containerRef;
 };
 
+const isEditableElement = (element: Element | null): boolean => {
+    if (!(element instanceof HTMLElement)) return false;
+
+    return (
+        element.tagName === 'INPUT' ||
+        element.tagName === 'TEXTAREA' ||
+        element.isContentEditable
+    );
+};
+
 export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedText, setSelectedText] = useState('');
     const selectionBoundsRef = useRef<DOMRect | null>(null);
+    const selectedTextRef = useRef('');
 
     // Monitor selection changes
     useEffect(() => {
+        const clearSelectionState = () => {
+            setPosition(null);
+            selectionBoundsRef.current = null;
+            selectedTextRef.current = '';
+            setSelectedText('');
+        };
+
         const handleSelectionChange = () => {
-            if (isAudioActive) return;
+            if (isAudioActive) {
+                return;
+            }
 
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !selection.rangeCount) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
-                setSelectedText('');
+                clearSelectionState();
                 return;
             }
 
@@ -40,15 +59,13 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             // Context checks
             const containerEl = resolveContainerElement(containerRef);
             if (containerEl && !containerEl.contains(commonAncestor)) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
+                clearSelectionState();
                 return;
             }
 
             const targetElement = commonAncestor.nodeType === 1 ? commonAncestor as HTMLElement : commonAncestor.parentElement;
-            if (targetElement && (targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA')) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
+            if (isEditableElement(targetElement)) {
+                clearSelectionState();
                 return;
             }
 
@@ -59,14 +76,13 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             const text = convertHtmlToMarkdown(html).trim();
 
             if (!text) {
-                setPosition(null);
-                selectionBoundsRef.current = null;
-                setSelectedText('');
+                clearSelectionState();
                 return;
             }
 
             const rect = range.getBoundingClientRect();
             selectionBoundsRef.current = rect;
+            selectedTextRef.current = text;
             
             setPosition({
                 top: rect.top - 50, 
@@ -86,9 +102,32 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         };
     }, [containerRef, isAudioActive]);
 
-    // Screen boundary clamping
-    useLayoutEffect(() => {
-        if (!position || !toolbarRef.current) return;
+    useEffect(() => {
+        const handleCopy = (e: ClipboardEvent) => {
+            if (isAudioActive) {
+                return;
+            }
+
+            const activeElement = document.activeElement;
+            if (isEditableElement(activeElement)) {
+                return;
+            }
+
+            const text = selectedTextRef.current;
+            if (!text || !e.clipboardData) {
+                return;
+            }
+
+            e.preventDefault();
+            e.clipboardData.setData('text/plain', text);
+        };
+
+        document.addEventListener('copy', handleCopy);
+        return () => document.removeEventListener('copy', handleCopy);
+    }, [isAudioActive]);
+
+    const clampedPosition = useMemo(() => {
+        if (!position || !toolbarRef.current) return position;
 
         const toolbar = toolbarRef.current;
         const { width, height } = toolbar.getBoundingClientRect();
@@ -122,14 +161,19 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         }
 
         if (Math.abs(correctedLeft - position.left) > 1 || Math.abs(correctedTop - position.top) > 1) {
-            setPosition({ left: correctedLeft, top: correctedTop });
+            return { left: correctedLeft, top: correctedTop };
         }
-    }, [position, selectedText]); // Re-run when text changes (toolbar size might change)
+
+        return position;
+    }, [position, toolbarRef]); // Re-run when text changes (toolbar size might change)
 
     const clearSelection = () => {
         window.getSelection()?.removeAllRanges();
+        selectionBoundsRef.current = null;
+        selectedTextRef.current = '';
         setPosition(null);
+        setSelectedText('');
     };
 
-    return { position, setPosition, selectedText, clearSelection };
+    return { position: clampedPosition, setPosition, selectedText, clearSelection };
 };

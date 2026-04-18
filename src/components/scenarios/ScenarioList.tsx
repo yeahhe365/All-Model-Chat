@@ -16,7 +16,7 @@ interface ScenarioListProps {
   onDuplicate: (scenario: SavedScenario) => void;
   onExport: (scenario: SavedScenario) => void;
   onView?: (scenario: SavedScenario) => void;
-  t: (key: keyof typeof translations, fallback?: string) => string;
+  t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 type TabType = 'all' | 'mine' | 'system';
@@ -59,7 +59,7 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
     return list;
   }, [scenarios, searchQuery, activeTab, systemScenarioIds]);
 
-  const tabs: { id: TabType; labelKey: string; icon: any }[] = [
+  const tabs: { id: TabType; labelKey: string; icon: React.ElementType }[] = [
       { id: 'all', labelKey: 'scenarios_tab_all', icon: Layers },
       { id: 'mine', labelKey: 'scenarios_tab_mine', icon: User },
       { id: 'system', labelKey: 'scenarios_tab_system', icon: Shield },
@@ -102,7 +102,7 @@ export const ScenarioList: React.FC<ScenarioListProps> = ({
                         `}
                     >
                         <Icon size={16} strokeWidth={isActive ? 2 : 1.5} className={isActive ? "text-[var(--theme-text-link)]" : ""} />
-                        <span>{t(tab.labelKey as any)}</span>
+                        <span>{t(tab.labelKey)}</span>
                     </button>
                 );
             })}
