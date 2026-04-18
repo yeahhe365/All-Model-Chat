@@ -2,7 +2,8 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { logService } from '../../utils/appUtils';
+import { generateUniqueId, logService } from '../../utils/appUtils';
+import { mergeImportedScenarios } from '../../features/scenarios/scenarioLibrary';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 type GroupsUpdater = (updater: (prev: ChatGroup[]) => ChatGroup[]) => void;
@@ -11,6 +12,7 @@ interface UseDataImportProps {
     setAppSettings: Dispatch<SetStateAction<AppSettings>>;
     updateAndPersistSessions: SessionsUpdater;
     updateAndPersistGroups: GroupsUpdater;
+    savedScenarios: SavedScenario[];
     handleSaveAllScenarios: (scenarios: SavedScenario[]) => void;
     t: (key: string) => string;
 }
@@ -35,6 +37,7 @@ export const useDataImport = ({
     setAppSettings,
     updateAndPersistSessions,
     updateAndPersistGroups,
+    savedScenarios,
     handleSaveAllScenarios,
     t
 }: UseDataImportProps) => {
@@ -111,13 +114,19 @@ export const useDataImport = ({
     const handleImportAllScenarios = useCallback((file: File) => {
         handleImportFile<ImportedScenariosPayload>(file, 'AllModelChat-Scenarios', (data) => {
             if (data.scenarios && Array.isArray(data.scenarios)) {
-                handleSaveAllScenarios(data.scenarios);
+                handleSaveAllScenarios(
+                    mergeImportedScenarios({
+                        existingScenarios: savedScenarios,
+                        importedScenarios: data.scenarios,
+                        createId: generateUniqueId,
+                    }),
+                );
                 alert(t('scenarios_feedback_imported'));
             } else {
                 throw new Error('Scenarios data is missing or not an array.');
             }
         });
-    }, [handleImportFile, t, handleSaveAllScenarios]);
+    }, [handleImportFile, t, handleSaveAllScenarios, savedScenarios]);
 
     return {
         handleImportSettings,

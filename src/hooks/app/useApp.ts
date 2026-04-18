@@ -127,6 +127,7 @@ export const useApp = () => {
     setAppSettings,
     updateAndPersistSessions,
     updateAndPersistGroups,
+    savedScenarios,
     handleSaveAllScenarios,
     t,
   });

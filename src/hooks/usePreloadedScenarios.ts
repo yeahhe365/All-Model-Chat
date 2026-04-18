@@ -1,17 +1,13 @@
-import { useState, useEffect, Dispatch, SetStateAction, useMemo } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, SavedScenario, SavedChatSession, AppSettings } from '../types';
 import { generateUniqueId, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS, DEFAULT_SYSTEM_INSTRUCTION } from '../constants/appConstants';
 import { dbService } from '../utils/db';
 import {
-  voxelScenario,
-  reasonerScenario,
-  succinctScenario,
-  socraticScenario,
-  formalScenario,
-  SYSTEM_SCENARIO_IDS,
-} from '../constants/defaultScenarios';
-import { applyUserScenarioSeeds } from './preloadedScenarioSeeds';
+  buildSavedScenarios,
+  getExportableUserScenarios,
+  initializeScenarioState,
+} from '../features/scenarios/scenarioLibrary';
 
 type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -32,19 +28,20 @@ export const usePreloadedScenarios = ({
   setActiveSessionId,
 }: PreloadedScenariosProps) => {
   const [userSavedScenarios, setUserSavedScenarios] = useState<SavedScenario[]>([]);
+  const savedScenarios = buildSavedScenarios(userSavedScenarios);
 
   useEffect(() => {
     const loadScenarios = async () => {
       try {
         const storedScenarios = await dbService.getAllScenarios();
-        const { scenarios: scenariosToSet, didChange } = applyUserScenarioSeeds(storedScenarios, localStorage);
+        const { userScenarios, didChange } = initializeScenarioState(storedScenarios, localStorage);
 
         // Save if any changes were made
         if (didChange) {
-          await dbService.setAllScenarios(scenariosToSet);
+          await dbService.setAllScenarios(userScenarios);
         }
 
-        setUserSavedScenarios(scenariosToSet);
+        setUserSavedScenarios(userScenarios);
       } catch (error) {
         logService.error('Error loading preloaded scenarios:', { error });
       }
@@ -52,23 +49,8 @@ export const usePreloadedScenarios = ({
     loadScenarios();
   }, []);
 
-  const savedScenarios = useMemo(() => {
-    // Ensure user-saved scenarios don't conflict with the default IDs
-    const filteredUserScenarios = userSavedScenarios.filter((s) => !SYSTEM_SCENARIO_IDS.includes(s.id));
-    return [
-      // FOP, Unrestricted, Pyrite, Anna are now in filteredUserScenarios
-      voxelScenario,
-      reasonerScenario,
-      succinctScenario,
-      socraticScenario,
-      formalScenario,
-      ...filteredUserScenarios,
-    ];
-  }, [userSavedScenarios]);
-
   const handleSaveAllScenarios = (updatedScenarios: SavedScenario[]) => {
-    // Filter out the default scenarios so they are not saved to the user's database
-    const scenariosToSave = updatedScenarios.filter((s) => !SYSTEM_SCENARIO_IDS.includes(s.id));
+    const scenariosToSave = getExportableUserScenarios(updatedScenarios);
     setUserSavedScenarios(scenariosToSave);
     dbService.setAllScenarios(scenariosToSave).catch((error) => {
       logService.error('Failed to save scenarios to DB', { error });

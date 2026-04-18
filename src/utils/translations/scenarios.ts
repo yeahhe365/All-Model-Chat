@@ -1,7 +1,7 @@
 
 export const scenariosTranslations = {
     // PreloadedMessagesModal.tsx
-    scenarios_title: { en: 'Scenario Presets', zh: '场景预设' },
+    scenarios_title: { en: 'Preset Scenarios', zh: '预设场景' },
     scenarios_title_edit: { en: 'Editing Scenario', zh: '编辑场景' },
     scenarios_title_create: { en: 'Create New Scenario', zh: '创建新场景' },
     scenarios_close_aria: { en: 'Close scenarios manager', zh: '关闭场景管理器' },

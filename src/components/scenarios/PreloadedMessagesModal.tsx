@@ -34,6 +34,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     feedback,
     importInputRef,
     systemScenarioIds,
+    hasUnsavedChanges,
     showFeedback,
     actions
   } = useScenarioManager({
@@ -55,10 +56,10 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     return undefined;
   }, [isOpen]);
 
-  const handleClose = () => { 
-      if (isOpen) {
-          actions.handleSaveAllAndClose(); 
-      }
+  const handleClose = () => {
+    if (isOpen) {
+      onClose();
+    }
   };
 
   const handleLoadAndClose = (scenario: SavedScenario) => {
@@ -68,7 +69,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
     }
     onLoadScenario(scenario);
     showFeedback('success', t('scenarios_feedback_loaded'));
-    setTimeout(handleClose, 300);
+    setTimeout(onClose, 300);
   };
 
   const isSystemScenario = editingScenario && systemScenarioIds.includes(editingScenario.id);
@@ -117,6 +118,16 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
                         <span className="sm:hidden">{t('add')}</span>
                     </button>
                     
+                     <div className="hidden sm:block h-6 w-px bg-[var(--theme-border-secondary)] mx-1"></div>
+
+                    <button
+                        onClick={actions.handleSaveAllAndClose}
+                        disabled={!hasUnsavedChanges}
+                        className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] text-[var(--theme-text-primary)] rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--theme-bg-tertiary)]"
+                    >
+                        {t('scenarios_save_and_close')}
+                    </button>
+
                     <div className="hidden sm:block h-6 w-px bg-[var(--theme-border-secondary)] mx-1"></div>
                     
                     <button 

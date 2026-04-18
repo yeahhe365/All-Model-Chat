@@ -4,6 +4,7 @@ import { AppSettings, SavedScenario, ChatGroup } from '../../types';
 import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/export/core';
 import { dbService } from '../../utils/db';
+import { buildScenarioExportPayload } from '../../features/scenarios/scenarioLibrary';
 
 interface UseDataExportProps {
     appSettings: AppSettings;
@@ -57,7 +58,7 @@ export const useDataExport = ({
     const handleExportAllScenarios = useCallback(() => {
         logService.info(`Exporting all scenarios.`);
         try {
-            const dataToExport = { type: 'AllModelChat-Scenarios', version: 1, scenarios: savedScenarios };
+            const dataToExport = buildScenarioExportPayload(savedScenarios);
             const jsonString = JSON.stringify(dataToExport, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const date = new Date().toISOString().slice(0, 10);
