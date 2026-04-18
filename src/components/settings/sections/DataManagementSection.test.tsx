@@ -34,7 +34,7 @@ describe('DataManagementSection', () => {
             onClearCache={vi.fn()}
             onOpenLogViewer={vi.fn()}
             onClearLogs={vi.fn()}
-            isInstallable={false}
+            installState="installed"
             onInstallPwa={vi.fn()}
             onImportSettings={vi.fn()}
             onExportSettings={vi.fn()}
@@ -57,5 +57,35 @@ describe('DataManagementSection', () => {
 
     expect(container.textContent).toContain('查看日志和用量');
     expect(container.textContent).toContain('导出');
+  });
+
+  it('keeps the install action enabled when manual browser guidance is needed', async () => {
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <DataManagementSection
+            onClearHistory={vi.fn()}
+            onClearCache={vi.fn()}
+            onOpenLogViewer={vi.fn()}
+            onClearLogs={vi.fn()}
+            installState="manual"
+            onInstallPwa={vi.fn()}
+            onImportSettings={vi.fn()}
+            onExportSettings={vi.fn()}
+            onImportHistory={vi.fn()}
+            onExportHistory={vi.fn()}
+            onImportScenarios={vi.fn()}
+            onExportScenarios={vi.fn()}
+            onReset={vi.fn()}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const installButton = container.querySelector('button[aria-label="Install Progressive Web App"]');
+
+    expect(installButton?.hasAttribute('disabled')).toBe(false);
+    expect(container.textContent).toContain('Use your browser menu to install this app.');
   });
 });

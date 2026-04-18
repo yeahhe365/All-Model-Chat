@@ -3,13 +3,14 @@ import React, { useRef } from 'react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database, RefreshCw } from 'lucide-react';
 import type { LogViewerProps } from '../../log-viewer/LogViewer';
+import type { PwaInstallState } from '../../../pwa/install';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
   onClearCache: () => void;
   onOpenLogViewer: (state?: Pick<LogViewerProps, 'initialTab' | 'initialUsageTab'>) => void;
   onClearLogs: () => void;
-  isInstallable: boolean;
+  installState: PwaInstallState;
   onInstallPwa: () => void;
   onImportSettings: (file: File) => void;
   onExportSettings: () => void;
@@ -57,7 +58,7 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   onClearCache,
   onOpenLogViewer,
   onClearLogs,
-  isInstallable,
+  installState,
   onInstallPwa,
   onImportSettings,
   onExportSettings,
@@ -76,6 +77,13 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   const outlineBtnClass = `${btnClass} bg-transparent border-[var(--theme-border-secondary)] text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]`;
   // Updated white button class for Danger Zone
   const whiteDangerBtnClass = `${btnClass} border-white/30 bg-white/10 text-white hover:bg-white/20 focus:ring-white/50 focus:ring-offset-red-600`;
+  const isInstallDisabled = installState === 'installed';
+  const installDescription =
+    installState === 'installed'
+      ? t('settingsInstallApp_unavailable_title')
+      : installState === 'manual'
+        ? t('settingsInstallApp_manual_title')
+        : undefined;
 
   return (
     <div className="space-y-6">
@@ -104,8 +112,15 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
                     <Trash2 size={12} strokeWidth={1.5} /> {t('settingsClearLogs')}
                 </button>
               </ActionRow>
-              <ActionRow label={t('settingsInstallApp')} description={!isInstallable ? t('settingsInstallApp_unavailable_title') : undefined}>
-                <button onClick={onInstallPwa} disabled={!isInstallable} className={`${outlineBtnClass} disabled:opacity-50 disabled:cursor-not-allowed`}>{t('settingsInstallApp')}</button>
+              <ActionRow label={t('settingsInstallApp')} description={installDescription}>
+                <button
+                  onClick={onInstallPwa}
+                  disabled={isInstallDisabled}
+                  aria-label={t('settingsInstallApp_aria')}
+                  className={`${outlineBtnClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {t('settingsInstallApp')}
+                </button>
               </ActionRow>
           </DataCard>
 

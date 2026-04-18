@@ -7,6 +7,7 @@ import { I18nProvider } from './contexts/I18nContext';
 import { MainContent } from './components/layout/MainContent';
 import { PiPPlaceholder } from './components/layout/PiPPlaceholder';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
+import { PwaUpdateBanner } from './components/pwa/PwaUpdateBanner';
 
 const App: React.FC = () => {
   return (
@@ -22,6 +23,7 @@ const AppContent: React.FC = () => {
   const app = useApp();
   const {
     currentTheme,
+    eventsState,
     pipState,
     uiState,
   } = app;
@@ -49,10 +51,18 @@ const AppContent: React.FC = () => {
               <PiPPlaceholder onClosePip={pipState.togglePip} />
           </>
       ) : (
-          <WindowProvider>
+              <WindowProvider>
             <MainContent app={app} />
           </WindowProvider>
       )}
+      {eventsState.needRefresh && !eventsState.updateDismissed ? (
+        <PwaUpdateBanner
+          onRefresh={() => {
+            void eventsState.handleRefreshApp();
+          }}
+          onDismiss={eventsState.dismissUpdateBanner}
+        />
+      ) : null}
     </div>
   );
 };

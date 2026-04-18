@@ -1,8 +1,9 @@
 import { translations } from '../../utils/appUtils';
+import type { PwaInstallState } from '../../pwa/install';
 
 export interface SettingsTransferProps {
     onInstallPwa: () => void;
-    isInstallable: boolean;
+    installState: PwaInstallState;
     onImportSettings: (file: File) => void;
     onExportSettings: () => void;
     onImportHistory: (file: File) => void;

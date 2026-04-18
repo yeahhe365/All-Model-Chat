@@ -4,6 +4,10 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+interface Navigator {
+  standalone?: boolean;
+}
+
 interface Window {
   webkitAudioContext?: typeof AudioContext;
   documentPictureInPicture?: {

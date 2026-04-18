@@ -24,7 +24,7 @@ interface SettingsModalProps extends SettingsTransferProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels,
   onSave, onClearAllHistory, onClearCache, onOpenLogViewer,
-  onInstallPwa, isInstallable, t, 
+  onInstallPwa, installState, t, 
   onImportSettings, onExportSettings,
   onImportHistory, onExportHistory,
   onImportScenarios, onExportScenarios,
@@ -104,7 +104,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onClearLogs={handleClearLogs}
                         onReset={handleResetToDefaults}
                         onInstallPwa={onInstallPwa}
-                        isInstallable={isInstallable}
+                        installState={installState}
                         onImportSettings={onImportSettings}
                         onExportSettings={onExportSettings}
                         onImportHistory={handleRequestImportHistory}

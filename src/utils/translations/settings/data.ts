@@ -12,6 +12,7 @@ export const dataSettings = {
     settingsInstallApp_aria: { en: 'Install Progressive Web App', zh: '安装渐进式网络应用' },
     settingsInstallApp_available_title: { en: 'Install Progressive Web App', zh: '安装渐进式网络应用' },
     settingsInstallApp_unavailable_title: { en: 'App is already installed or not supported by your browser.', zh: '应用已安装或浏览器不支持安装。' },
+    settingsInstallApp_manual_title: { en: 'Use your browser menu to install this app.', zh: '请使用浏览器菜单将此应用安装到设备。' },
     settingsImportConfig: { en: 'Import Settings', zh: '导入设置' },
     settingsImportConfig_aria: { en: 'Import settings from a JSON file', zh: '从 JSON 文件导入设置' },
     settingsExportSettingsOnly: { en: 'Export Settings', zh: '导出设置' },

@@ -38,7 +38,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     onClearLogs,
     onReset,
     onInstallPwa,
-    isInstallable,
+    installState,
     onImportSettings,
     onExportSettings,
     onImportHistory,
@@ -116,7 +116,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         serverManagedApi={currentSettings.serverManagedApi ?? false}
                         liveApiEphemeralTokenEndpoint={currentSettings.liveApiEphemeralTokenEndpoint ?? null}
                         setLiveApiEphemeralTokenEndpoint={(val) => updateSetting('liveApiEphemeralTokenEndpoint', val)}
-                        availableModels={availableModels}
                     />
                 </div>
             )}
@@ -128,7 +127,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         onOpenLogViewer={onOpenLogViewer}
                         onClearLogs={onClearLogs}
                         onInstallPwa={onInstallPwa}
-                        isInstallable={isInstallable}
+                        installState={installState}
                         onImportSettings={onImportSettings}
                         onExportSettings={onExportSettings}
                         onImportHistory={onImportHistory}

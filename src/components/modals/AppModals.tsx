@@ -3,6 +3,7 @@ import React, { Suspense, lazy, useState } from 'react';
 import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import type { LogViewerProps } from '../log-viewer/LogViewer';
+import type { PwaInstallState } from '../../pwa/install';
 
 const LazySettingsModal = lazy(async () => {
     const module = await import('../settings/SettingsModal');
@@ -33,8 +34,7 @@ interface AppModalsProps {
   clearCacheAndReload: () => void;
   clearAllHistory: () => void;
   handleInstallPwa: () => void;
-  installPromptEvent: BeforeInstallPromptEvent | null;
-  isStandalone: boolean;
+  installState: PwaInstallState;
 
   handleImportSettings: (file: File) => void;
   handleExportSettings: () => void;
@@ -74,7 +74,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         availableModels,
         handleSaveSettings, clearCacheAndReload,
         clearAllHistory,
-        handleInstallPwa, installPromptEvent, isStandalone,
+        handleInstallPwa, installState,
         handleImportSettings, handleExportSettings,
         handleImportHistory, handleExportHistory,
         handleImportAllScenarios, handleExportAllScenarios,
@@ -127,7 +127,7 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
                   onClearCache={clearCacheAndReload}
                   onOpenLogViewer={openLogViewer}
                   onInstallPwa={handleInstallPwa}
-                  isInstallable={!!installPromptEvent && !isStandalone}
+                  installState={installState}
                   onImportSettings={handleImportSettings}
                   onExportSettings={handleExportSettings}
                   onImportHistory={handleImportHistory}

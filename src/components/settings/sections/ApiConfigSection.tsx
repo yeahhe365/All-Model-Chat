@@ -25,10 +25,10 @@ interface ApiConfigSectionProps {
   setApiProxyUrl: (value: string | null) => void;
   useApiProxy: boolean;
   setUseApiProxy: (value: boolean) => void;
-  serverManagedApi?: boolean;
+  serverManagedApi: boolean;
   availableModels?: ModelOption[];
-  liveApiEphemeralTokenEndpoint?: string | null;
-  setLiveApiEphemeralTokenEndpoint?: (value: string | null) => void;
+  liveApiEphemeralTokenEndpoint: string | null;
+  setLiveApiEphemeralTokenEndpoint: (value: string | null) => void;
 }
 
 export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
@@ -40,8 +40,8 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
   setApiProxyUrl,
   useApiProxy,
   setUseApiProxy,
-  serverManagedApi = false,
-  liveApiEphemeralTokenEndpoint = null,
+  serverManagedApi,
+  liveApiEphemeralTokenEndpoint,
   setLiveApiEphemeralTokenEndpoint,
 }) => {
   const { t } = useI18n();

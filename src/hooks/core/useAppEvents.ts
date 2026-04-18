@@ -4,6 +4,8 @@ import { TAB_CYCLE_MODELS } from '../../constants/appConstants';
 import { logService } from '../../utils/appUtils';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import { useFullscreen } from '../ui/useFullscreen';
+import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
+import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
 
 interface AppEventsProps {
     appSettings: AppSettings;
@@ -31,8 +33,25 @@ export const useAppEvents = ({
     onStopGenerating,
 }: AppEventsProps) => {
     const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
-    const [isStandalone, setIsStandalone] = useState(window.matchMedia('(display-mode: standalone)').matches);
+    const [installState, setInstallState] = useState(() =>
+      getPwaInstallState({
+        installPromptEvent: null,
+        win: window,
+      }),
+    );
+    const [needRefresh, setNeedRefresh] = useState(false);
+    const [updateDismissed, setUpdateDismissed] = useState(false);
+    const [updateServiceWorker, setUpdateServiceWorker] = useState<UpdateServiceWorker>(() => async () => undefined);
     const { toggleFullscreen } = useFullscreen();
+
+    useEffect(() => {
+        setInstallState(
+          getPwaInstallState({
+            installPromptEvent,
+            win: window,
+          }),
+        );
+    }, [installPromptEvent]);
 
     // PWA Installation Handlers
     useEffect(() => {
@@ -49,18 +68,85 @@ export const useAppEvents = ({
         const handleAppInstalled = () => {
             logService.info('PWA installed successfully.');
             setInstallPromptEvent(null);
-            setIsStandalone(true);
+            setInstallState(
+              getPwaInstallState({
+                installPromptEvent: null,
+                win: window,
+              }),
+            );
         };
         window.addEventListener('appinstalled', handleAppInstalled);
         return () => window.removeEventListener('appinstalled', handleAppInstalled);
     }, []);
 
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(display-mode: standalone)');
+        const syncInstallState = () => {
+            setInstallState(
+              getPwaInstallState({
+                installPromptEvent,
+                win: window,
+              }),
+            );
+        };
+
+        mediaQuery.addEventListener?.('change', syncInstallState);
+        return () => mediaQuery.removeEventListener?.('change', syncInstallState);
+    }, [installPromptEvent]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const registerRuntimePwa = async () => {
+            if (!import.meta.env.PROD) {
+                return;
+            }
+
+            const { registerSW } = await import('virtual:pwa-register');
+            const nextUpdater = registerPwa({
+                enabled: true,
+                registerSWImpl: registerSW,
+                onNeedRefresh: () => {
+                    if (cancelled) return;
+                    setNeedRefresh(true);
+                    setUpdateDismissed(false);
+                },
+                onOfflineReady: () => {
+                    if (cancelled) return;
+                    logService.info('PWA offline app shell is ready.');
+                },
+            });
+
+            if (!cancelled) {
+                setUpdateServiceWorker(() => nextUpdater);
+            }
+        };
+
+        void registerRuntimePwa();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     const handleInstallPwa = async () => {
-        if (!installPromptEvent) return;
-        installPromptEvent.prompt();
-        const { outcome } = await installPromptEvent.userChoice;
-        logService.info(`PWA install prompt outcome: ${outcome}`);
-        setInstallPromptEvent(null);
+        if (installState.state === 'available' && installPromptEvent) {
+            installPromptEvent.prompt();
+            const { outcome } = await installPromptEvent.userChoice;
+            logService.info(`PWA install prompt outcome: ${outcome}`);
+            setInstallPromptEvent(null);
+            return;
+        }
+
+        if (installState.state === 'manual') {
+            const manualMessage = getManualInstallMessage(appSettings.language);
+            window.alert(manualMessage);
+            logService.info('PWA install instructions shown for manual-install browser.');
+        }
+    };
+
+    const handleRefreshApp = async () => {
+        await updateServiceWorker(true);
     };
 
     // Keyboard shortcuts
@@ -143,7 +229,11 @@ export const useAppEvents = ({
 
     return {
         installPromptEvent,
-        isStandalone,
+        installState,
         handleInstallPwa,
+        needRefresh,
+        updateDismissed,
+        dismissUpdateBanner: () => setUpdateDismissed(true),
+        handleRefreshApp,
     };
 };
