@@ -2,7 +2,7 @@
 import React from 'react';
 import { User, Bot, AlertTriangle, Edit3, Trash2, RotateCw, Pencil, Wand2, CirclePlay } from 'lucide-react';
 import { ChatMessage } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { useI18n } from '../../contexts/I18nContext';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
 import { useResponsiveValue } from '../../hooks/useDevice';
@@ -35,18 +35,15 @@ const ErrorMsgIcon: React.FC = () => {
 
 interface MessageActionsProps {
     message: ChatMessage;
-    sessionTitle?: string;
-    messageIndex?: number;
+    sessionTitle: string;
+    messageIndex: number;
     isGrouped: boolean;
     onEditMessage: (messageId: string, mode: 'update' | 'resend') => void;
     onDeleteMessage: (messageId: string) => void;
     onRetryMessage: (messageId: string) => void;
-    onTextToSpeech: (messageId: string, text: string) => void;
     onGenerateCanvas: (messageId: string, text: string) => void;
     onContinueGeneration: (messageId: string) => void;
-    ttsMessageId: string | null;
     themeId: string;
-    t: (key: keyof typeof translations) => string;
 }
 
 export const MessageActions: React.FC<MessageActionsProps> = ({
@@ -57,13 +54,11 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     onEditMessage,
     onDeleteMessage,
     onRetryMessage,
-    onTextToSpeech: _onTextToSpeech,
     onGenerateCanvas,
     onContinueGeneration,
-    ttsMessageId: _ttsMessageId,
     themeId,
-    t
 }) => {
+    const { t } = useI18n();
     const actionIconSize = useResponsiveValue(15, 16); 
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     

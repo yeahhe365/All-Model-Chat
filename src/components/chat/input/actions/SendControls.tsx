@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, Edit2, Loader2, ArrowUp } from 'lucide-react';
+import { X, Save, Edit2, Loader2, ArrowUp, CornerDownLeft } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { IconStop } from '../../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
 
@@ -13,7 +14,8 @@ interface SendControlsProps {
     onStopGenerating: () => void;
     onCancelEdit: () => void;
     onFastSendMessage?: () => void;
-    t: (key: string, fallback?: string) => string;
+    canQueueMessage?: boolean;
+    onQueueMessage?: () => void;
 }
 
 interface Ripple {
@@ -32,8 +34,10 @@ export const SendControls: React.FC<SendControlsProps> = ({
     onStopGenerating,
     onCancelEdit,
     onFastSendMessage,
-    t
+    canQueueMessage,
+    onQueueMessage,
 }) => {
+    const { t } = useI18n();
     const iconSize = 20;
     const [ripples, setRipples] = useState<Ripple[]>([]);
 
@@ -126,7 +130,11 @@ export const SendControls: React.FC<SendControlsProps> = ({
         title = t('sendMessage_title') + t('sendMessage_fast_suffix', " (Right-click for Fast Mode ⚡)");
     }
 
-    const renderIcon = (active: boolean, Icon: React.ElementType, props: any = {}) => (
+    const renderIcon = (
+        active: boolean,
+        Icon: React.ElementType,
+        props: React.SVGProps<SVGSVGElement> & { size?: number } = {},
+    ) => (
         <div 
             className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${active ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}
             aria-hidden={!active}
@@ -137,6 +145,24 @@ export const SendControls: React.FC<SendControlsProps> = ({
 
     return (
         <div className="flex items-center">
+            <div className={`transition-all duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] overflow-hidden flex items-center ${canQueueMessage ? 'max-w-[64px] opacity-100 mr-2' : 'max-w-0 opacity-0 mr-0'}`}>
+                <button
+                    type="button"
+                    onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onQueueMessage?.();
+                    }}
+                    className={`${CHAT_INPUT_BUTTON_CLASS} bg-transparent hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-icon-settings)]`}
+                    aria-label="Queue next message"
+                    title="Queue next message"
+                    disabled={!canQueueMessage}
+                    tabIndex={canQueueMessage ? 0 : -1}
+                >
+                    <CornerDownLeft size={iconSize - 1} strokeWidth={2} />
+                </button>
+            </div>
+
              {/* Cancel Edit Button - Animates in/out */}
              <div className={`transition-all duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] overflow-hidden flex items-center ${isEditing ? 'max-w-[50px] opacity-100 mr-2' : 'max-w-0 opacity-0 mr-0'}`}>
                 <button

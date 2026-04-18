@@ -1,8 +1,22 @@
+import type { ComponentType, ReactNode } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChatMessage, UploadedFile } from '../../types';
+import type { AppSettings, ChatMessage, ChatSettings, UploadedFile } from '../../types';
 import type { ChatAreaProviderValue } from '../layout/chat-area/ChatAreaContext';
+
+interface VirtuosoMockProps<T> {
+  data: T[];
+  itemContent: (index: number, item: T) => ReactNode;
+  components?: {
+    Footer?: ComponentType;
+  };
+}
+
+interface MessageMockProps {
+  message: ChatMessage;
+  onImageClick: (file: UploadedFile) => void;
+}
 
 const file: UploadedFile = {
   id: 'file-1',
@@ -28,7 +42,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     messages,
     sessionTitle: 'Test',
     setScrollContainerRef: () => {},
-    onScrollContainerScroll: () => {},
     onEditMessage: () => {},
     onDeleteMessage: () => {},
     onRetryMessage: () => {},
@@ -39,15 +52,11 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     expandCodeBlocksByDefault: false,
     isMermaidRenderingEnabled: false,
     isGraphvizRenderingEnabled: false,
-    onTextToSpeech: () => {},
     onGenerateCanvas: () => {},
     onContinueGeneration: () => {},
-    ttsMessageId: null,
     onQuickTTS: async () => null,
-    t: (key) => (key === 'imageZoom_title' ? 'Preview {filename}' : String(key)),
-    language: 'zh',
     chatInputHeight: 0,
-    appSettings: { showWelcomeSuggestions: true } as any,
+    appSettings: { showWelcomeSuggestions: true } as AppSettings,
     currentModelId: 'gemini-2.5-flash',
     onOpenSidePanel: () => {},
     onQuote: () => {},
@@ -57,12 +66,12 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     appSettings: {
       isSystemAudioRecordingEnabled: false,
       isPasteRichTextAsMarkdownEnabled: true,
-    } as any,
+    } as AppSettings,
     currentChatSettings: {
       modelId: 'gemini-3.1-pro-preview',
       ttsVoice: 'Aoede',
       thinkingLevel: 'MEDIUM',
-    } as any,
+    } as ChatSettings,
     setAppFileError: () => {},
     activeSessionId: 'session-1',
     commandedInput: null,
@@ -80,7 +89,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onTranscribeAudio: async () => null,
     isProcessingFile: false,
     fileError: null,
-    t: (key) => key as any,
     isImagenModel: false,
     isImageEditModel: false,
     aspectRatio: '1:1',
@@ -108,10 +116,9 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onEditLastUserMessage: () => {},
     onTogglePip: () => {},
     isPipActive: false,
-    isHistorySidebarOpen: false,
     generateQuadImages: false,
     onToggleQuadImages: () => {},
-    setCurrentChatSettings: () => ({}) as any,
+    setCurrentChatSettings: vi.fn(),
     onSuggestionClick: () => {},
     onOrganizeInfoClick: () => {},
     showEmptyStateSuggestions: false,
@@ -145,20 +152,20 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
   vi.resetModules();
 
   vi.doMock('react-virtuoso', () => ({
-    Virtuoso: ({ data, itemContent, components }: any) => (
+    Virtuoso: ({ data, itemContent, components }: VirtuosoMockProps<ChatMessage>) => (
       <div data-testid="virtuoso">
-        {data.map((item: any, index: number) => itemContent(index, item))}
+        {data.map((item, index) => itemContent(index, item))}
         {components?.Footer ? <components.Footer /> : null}
       </div>
     ),
   }));
 
   vi.doMock('../message/Message', () => ({
-    Message: ({ message, onImageClick }: any) => (
+    Message: ({ message, onImageClick }: MessageMockProps) => (
       <button
         type="button"
         data-testid={`open-preview-${message.id}`}
-        onClick={() => onImageClick(message.files[0])}
+        onClick={() => onImageClick(message.files![0])}
       >
         Open preview
       </button>
@@ -182,6 +189,7 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
     useMessageListScroll: () => ({
       virtuosoRef: { current: null },
       handleScrollerRef: () => {},
+      handleScroll: () => {},
       setAtBottom: () => {},
       onRangeChanged: () => {},
       scrollToPrevTurn: () => {},
@@ -210,10 +218,12 @@ const loadMessageList = async (moduleLoadTracker: { count: number }) => {
 
   const module = await import('./MessageList');
   const contextModule = await import('../layout/chat-area/ChatAreaContext');
+  const i18nModule = await import('../../contexts/I18nContext');
 
   return {
     MessageList: module.MessageList,
     ChatAreaProvider: contextModule.ChatAreaProvider,
+    I18nProvider: i18nModule.I18nProvider,
   };
 };
 
@@ -243,15 +253,17 @@ describe('MessageList preview chunking', () => {
 
   it('does not load the file preview modal module until the user opens a preview', async () => {
     const moduleLoadTracker = { count: 0 };
-    const { MessageList, ChatAreaProvider } = await loadMessageList(moduleLoadTracker);
+    const { MessageList, ChatAreaProvider, I18nProvider } = await loadMessageList(moduleLoadTracker);
 
     expect(moduleLoadTracker.count).toBe(0);
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={createProviderValue()}>
-          <MessageList />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={createProviderValue()}>
+            <MessageList />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 

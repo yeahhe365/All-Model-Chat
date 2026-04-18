@@ -26,11 +26,13 @@ describe('IndexedDB Service Patterns', () => {
   it('should create stores with correct keyPaths', () => {
     const db = createIDBMock();
     db.createObjectStore('sessions', { keyPath: 'id' });
+    db.createObjectStore('files', { keyPath: 'id' });
     db.createObjectStore('groups', { keyPath: 'id' });
     db.createObjectStore('scenarios', { keyPath: 'id' });
     db.createObjectStore('keyValueStore');
     db.createObjectStore('logs', { keyPath: 'id', autoIncrement: true });
     expect(db.objectStoreNames.contains('sessions')).toBe(true);
+    expect(db.objectStoreNames.contains('files')).toBe(true);
     expect(db.objectStoreNames.contains('logs')).toBe(true);
   });
 

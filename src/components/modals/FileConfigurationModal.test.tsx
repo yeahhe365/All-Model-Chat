@@ -1,40 +1,22 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import { I18nProvider } from '../../contexts/I18nContext';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { FileConfigurationModal } from './FileConfigurationModal';
 import { UploadedFile } from '../../types';
+
+const projectRoot = path.resolve(__dirname, '../../..');
+const modalPath = path.join(projectRoot, 'src/components/modals/FileConfigurationModal.tsx');
 
 describe('FileConfigurationModal', () => {
   let container: HTMLDivElement;
   let root: Root;
 
-  const t = (key: string) => {
-    const dictionary: Record<string, string> = {
-      cancel: 'Cancel',
-      videoSettings_save: 'Save',
-      videoSettings_start: 'Start',
-      videoSettings_end: 'End',
-      videoSettings_placeholder: 'Timestamp',
-      videoSettings_fps: 'FPS',
-      videoSettings_fps_placeholder: 'Frames per second',
-      videoSettings_tip_fps: 'FPS tip',
-      videoSettings_tip_timestamp: 'Timestamp tip',
-      fileConfig_title: 'Configure File',
-      fileConfig_resolution: 'Resolution',
-      fileConfig_video: 'Video',
-      mediaResolution_title: 'Media Resolution',
-      mediaResolution_description: 'Resolution description',
-      mediaResolution_auto: 'Auto',
-      mediaResolution_low: 'Low',
-      mediaResolution_medium: 'Medium',
-      mediaResolution_high: 'High',
-      mediaResolution_ultra: 'Ultra',
-    };
-
-    return dictionary[key] ?? key;
-  };
-
   beforeEach(() => {
+    useSettingsStore.setState({ language: 'en' });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -52,14 +34,15 @@ describe('FileConfigurationModal', () => {
   const renderModal = (file: UploadedFile, onSave = vi.fn(), onClose = vi.fn()) => {
     act(() => {
       root.render(
-        <FileConfigurationModal
-          isOpen
-          onClose={onClose}
-          file={file}
-          onSave={onSave}
-          t={t}
-          isGemini3={false}
-        />
+        <I18nProvider>
+          <FileConfigurationModal
+            isOpen
+            onClose={onClose}
+            file={file}
+            onSave={onSave}
+            isGemini3={false}
+          />
+        </I18nProvider>
       );
     });
 
@@ -138,5 +121,15 @@ describe('FileConfigurationModal', () => {
     });
 
     expect(onSave).toHaveBeenCalledWith(file.id, { videoMetadata: undefined });
+  });
+
+  it('avoids per-field mirrored state plus a file-sync effect', () => {
+    const source = fs.readFileSync(modalPath, 'utf8');
+
+    expect(source).not.toContain("const [startOffset, setStartOffset] = useState('')");
+    expect(source).not.toContain("const [endOffset, setEndOffset] = useState('')");
+    expect(source).not.toContain("const [fps, setFps] = useState('')");
+    expect(source).not.toContain("const [mediaResolution, setMediaResolution] = useState<MediaResolution | ''>('')");
+    expect(source).not.toMatch(/useEffect\(\(\) => \{\s*if \(isOpen && file\) \{\s*setStartOffset/s);
   });
 });

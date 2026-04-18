@@ -31,10 +31,11 @@ export const usePyodide = (codeKey?: string) => {
     });
 
     const runCode = useCallback(async (code: string) => {
-        const key = codeKey || code; // Use provided key or the code itself
         const runningState: PyodideState = { isRunning: true, error: null, output: null, image: null, files: [], hasRun: false };
         setState(runningState);
-        pyodideResultCache.set(key, runningState);
+        if (codeKey) {
+            pyodideResultCache.set(codeKey, runningState);
+        }
         
         try {
             const result = await pyodideService.runPython(code);
@@ -48,7 +49,9 @@ export const usePyodide = (codeKey?: string) => {
                 hasRun: true
             };
             setState(finalState);
-            pyodideResultCache.set(key, finalState);
+            if (codeKey) {
+                pyodideResultCache.set(codeKey, finalState);
+            }
             return finalState;
         } catch (err) {
             const errorState: PyodideState = {
@@ -60,7 +63,9 @@ export const usePyodide = (codeKey?: string) => {
                 hasRun: true
             };
             setState(errorState);
-            pyodideResultCache.set(key, errorState);
+            if (codeKey) {
+                pyodideResultCache.set(codeKey, errorState);
+            }
             return errorState;
         }
     }, [codeKey]);

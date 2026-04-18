@@ -9,6 +9,8 @@ interface ModelListEditorProps {
     setIsEditingList: (value: boolean) => void;
 }
 
+type EditableModelField = 'id' | 'name' | 'isPinned';
+
 export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModels, onSave, setIsEditingList }) => {
     const [tempModels, setTempModels] = useState<ModelOption[]>(availableModels);
 
@@ -17,7 +19,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
         setTempModels(availableModels);
     }, [availableModels]);
 
-    const handleUpdateTempModel = (index: number, field: keyof ModelOption, value: any) => {
+    const handleUpdateTempModel = (index: number, field: EditableModelField, value: ModelOption[EditableModelField]) => {
         const updated = [...tempModels];
         updated[index] = { ...updated[index], [field]: value };
         setTempModels(updated);

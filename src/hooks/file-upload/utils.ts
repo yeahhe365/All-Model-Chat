@@ -13,6 +13,7 @@ import { isTextFile } from '../../utils/appUtils';
 
 const INLINE_MAX_REQUEST_BYTES = 100 * 1024 * 1024;
 const INLINE_MAX_PDF_BYTES = 50 * 1024 * 1024;
+const INLINE_MAX_CODE_EXECUTION_TEXT_BYTES = 2 * 1024 * 1024;
 
 export const formatSpeed = (bytesPerSecond: number): string => {
     if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
@@ -24,15 +25,32 @@ export const formatSpeed = (bytesPerSecond: number): string => {
 export const getEffectiveMimeType = (file: File): string => {
     const effectiveMimeType = file.type;
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
+    const mappedMimeType = EXTENSION_TO_MIME[fileExtension];
+    const shouldPreferMappedTextMime =
+        isTextFile(file) &&
+        !!mappedMimeType &&
+        (
+            !effectiveMimeType ||
+            effectiveMimeType === 'text/plain' ||
+            effectiveMimeType === 'application/octet-stream'
+        );
 
-    // 1. Force text/plain for code/text extensions
+    if (shouldPreferMappedTextMime) {
+        return mappedMimeType;
+    }
+
+    if (effectiveMimeType && ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) {
+        return effectiveMimeType;
+    }
+
+    // 1. Fall back to generic text/plain for text/code extensions when no more specific MIME is available
     if (isTextFile(file)) {
         return 'text/plain';
     }
 
     // 2. Fallback for missing MIME types based on extension
-    if (!effectiveMimeType && EXTENSION_TO_MIME[fileExtension]) {
-        return EXTENSION_TO_MIME[fileExtension];
+    if (!effectiveMimeType && mappedMimeType) {
+        return mappedMimeType;
     }
 
     return effectiveMimeType || 'application/octet-stream';
@@ -41,6 +59,8 @@ export const getEffectiveMimeType = (file: File): string => {
 export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean => {
     const effectiveMimeType = getEffectiveMimeType(file);
     if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
+    const isServerCodeExecutionEnabled = !!appSettings.isCodeExecutionEnabled && !appSettings.isLocalPythonEnabled;
+    const isTextLike = isTextFile(file);
 
     const userPrefersFileApi =
         SUPPORTED_IMAGE_MIME_TYPES.includes(effectiveMimeType) ? appSettings.filesApiConfig.images :
@@ -51,7 +71,9 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
 
     const inlineLimitBytes = SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)
         ? INLINE_MAX_PDF_BYTES
-        : INLINE_MAX_REQUEST_BYTES;
+        : isServerCodeExecutionEnabled && isTextLike
+            ? INLINE_MAX_CODE_EXECUTION_TEXT_BYTES
+            : INLINE_MAX_REQUEST_BYTES;
 
     return userPrefersFileApi || file.size > inlineLimitBytes;
 };

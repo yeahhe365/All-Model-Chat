@@ -19,7 +19,7 @@ interface MessageActionsProps {
     setEditMode: (mode: 'update' | 'resend') => void;
     setAppFileError: (error: string | null) => void;
     updateAndPersistSessions: SessionsUpdater;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
     handleSendMessage: SendMessageFunc;
     setSessionLoading: (sessionId: string, isLoading: boolean) => void;
 }
@@ -36,7 +36,7 @@ export const useMessageActions = ({
     setEditMode,
     setAppFileError,
     updateAndPersistSessions,
-    userScrolledUp,
+    userScrolledUpRef,
     handleSendMessage,
     setSessionLoading,
 }: MessageActionsProps) => {
@@ -131,8 +131,8 @@ export const useMessageActions = ({
         ));
 
         if (editingMessageId === messageId) handleCancelEdit();
-        userScrolledUp.current = false;
-    }, [activeSessionId, messages, editingMessageId, handleStopGenerating, updateAndPersistSessions, handleCancelEdit, userScrolledUp]);
+        userScrolledUpRef.current = false;
+    }, [activeSessionId, messages, editingMessageId, handleStopGenerating, updateAndPersistSessions, handleCancelEdit, userScrolledUpRef]);
     
     const handleRetryMessage = useCallback(async (modelMessageIdToRetry: string) => {
         if (!activeSessionId) return;

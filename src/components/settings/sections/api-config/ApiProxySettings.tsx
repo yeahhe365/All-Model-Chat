@@ -3,13 +3,17 @@ import React from 'react';
 import { AlertCircle, ArrowRight, RotateCcw } from 'lucide-react';
 import { Toggle } from '../../../shared/Toggle';
 import { SETTINGS_INPUT_CLASS } from '../../../../constants/appConstants';
+import {
+    buildGeminiRequestPreviewUrl,
+    DEFAULT_GEMINI_API_BASE_URL,
+    DEFAULT_GEMINI_PROXY_URL,
+} from '../../../../utils/apiProxyUrl';
 
 interface ApiProxySettingsProps {
     useApiProxy: boolean;
     setUseApiProxy: (value: boolean) => void;
     apiProxyUrl: string | null;
     setApiProxyUrl: (value: string | null) => void;
-    t: (key: string) => string;
 }
 
 export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
@@ -17,25 +21,24 @@ export const ApiProxySettings: React.FC<ApiProxySettingsProps> = ({
     setUseApiProxy,
     apiProxyUrl,
     setApiProxyUrl,
-    t: _t
 }) => {
     const inputBaseClasses = "w-full p-3 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-0 text-sm custom-scrollbar font-mono";
-    
-    const defaultBaseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    const defaultProxyUrl = 'https://api-proxy.de/gemini/v1beta';
 
     const handleResetProxy = () => {
-        setApiProxyUrl(defaultProxyUrl);
+        setApiProxyUrl(DEFAULT_GEMINI_PROXY_URL);
     };
 
     const getProxyPlaceholder = () => {
         if (!useApiProxy) return 'Enable proxy URL to set value';
-        return 'e.g., https://api-proxy.de/gemini/v1beta';
+        return `e.g., ${DEFAULT_GEMINI_PROXY_URL}`;
     };
 
-    const currentBaseUrl = apiProxyUrl?.trim() || defaultBaseUrl;
-    const cleanBaseUrl = currentBaseUrl.replace(/\/+$/, '');
-    const previewUrl = `${cleanBaseUrl}/models/gemini-2.5-flash:generateContent`;
+    const currentBaseUrl = apiProxyUrl?.trim() || DEFAULT_GEMINI_API_BASE_URL;
+    const previewUrl = buildGeminiRequestPreviewUrl(
+        currentBaseUrl,
+        'gemini-2.5-flash',
+        'generateContent',
+    );
 
     return (
         <div className="space-y-3 pt-2">

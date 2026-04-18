@@ -17,7 +17,7 @@ describe('runtimeConfig', () => {
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.runtime.example/v1beta',
       liveApiEphemeralTokenEndpoint: '/api/live-token',
-    } as any;
+    };
 
     expect(getRuntimeConfigAppSettingsOverrides()).toEqual({
       serverManagedApi: true,

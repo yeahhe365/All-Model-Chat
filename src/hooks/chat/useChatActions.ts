@@ -25,7 +25,7 @@ interface UseChatActionsProps {
     handleStopGenerating: (options?: { silent?: boolean }) => void;
     startNewChat: () => void;
     handleTogglePinSession: (sessionId: string) => void;
-    userScrolledUp: React.MutableRefObject<boolean>;
+    userScrolledUpRef: React.MutableRefObject<boolean>;
 }
 
 export const useChatActions = ({
@@ -43,7 +43,7 @@ export const useChatActions = ({
     handleStopGenerating,
     startNewChat,
     handleTogglePinSession,
-    userScrolledUp,
+    userScrolledUpRef,
 }: UseChatActionsProps) => {
 
     const { handleSelectModelInHeader } = useModelSelection({
@@ -56,7 +56,7 @@ export const useChatActions = ({
         setCurrentChatSettings,
         setIsSwitchingModel,
         handleStopGenerating,
-        userScrolledUp,
+        userScrolledUpRef,
     });
 
     const {
@@ -89,7 +89,7 @@ export const useChatActions = ({
         appSettings,
         currentChatSettings,
         updateAndPersistSessions,
-        userScrolledUp,
+        userScrolledUpRef,
     });
 
     const { handleTranscribeAudio } = useAudioActions({

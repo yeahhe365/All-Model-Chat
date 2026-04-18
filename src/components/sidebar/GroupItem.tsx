@@ -7,7 +7,7 @@ import { GroupItemMenu } from './GroupItemMenu';
 import { translations } from '../../utils/appUtils';
 
 // Define a type for the props that are passed down to SessionItem
-type SessionItemPassedProps = Omit<React.ComponentProps<typeof SessionItem>, 'session'>;
+export type SessionItemPassedProps = Omit<React.ComponentProps<typeof SessionItem>, 'session'>;
 
 interface GroupItemProps extends SessionItemPassedProps {
   group: ChatGroup;
@@ -28,10 +28,37 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
   const { 
     group, sessions, editingItem, dragOverId, onToggleGroupExpansion, 
     handleGroupStartEdit, handleDrop, handleDragOver, setDragOverId,
-    setEditingItem, onDeleteGroup, t, ...sessionItemProps
+    setEditingItem, onDeleteGroup, t,
+    editInputRef, handleRenameConfirm, handleRenameKeyDown,
+    toggleMenu, activeMenu, menuRef, setActiveMenu,
+    ...sessionItemProps
   } = props;
+
+  const childSessionItemProps: SessionItemPassedProps = {
+    activeSessionId: sessionItemProps.activeSessionId,
+    editingItem,
+    activeMenu,
+    loadingSessionIds: sessionItemProps.loadingSessionIds,
+    generatingTitleSessionIds: sessionItemProps.generatingTitleSessionIds,
+    newlyTitledSessionId: sessionItemProps.newlyTitledSessionId,
+    editInputRef,
+    menuRef,
+    onSelectSession: sessionItemProps.onSelectSession,
+    onTogglePinSession: sessionItemProps.onTogglePinSession,
+    onDeleteSession: sessionItemProps.onDeleteSession,
+    onDuplicateSession: sessionItemProps.onDuplicateSession,
+    onOpenExportModal: sessionItemProps.onOpenExportModal,
+    handleStartEdit: sessionItemProps.handleStartEdit,
+    handleRenameConfirm,
+    handleRenameKeyDown,
+    setEditingItem,
+    toggleMenu,
+    setActiveMenu,
+    handleDragStart: sessionItemProps.handleDragStart,
+    t,
+  };
   
-  const isMenuOpenInGroup = props.activeMenu === group.id || sessions?.some(s => s.id === props.activeMenu);
+  const isMenuOpenInGroup = activeMenu === group.id || sessions?.some(s => s.id === activeMenu);
 
   return (
     <div 
@@ -63,18 +90,18 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
           <div className="flex items-center gap-2 min-w-0">
              <ChevronDown size={16} className="text-[var(--theme-text-tertiary)] transition-transform group-open/details:rotate-180 flex-shrink-0" strokeWidth={2} />
              {editingItem?.type === 'group' && editingItem.id === group.id ? (
-                <input ref={props.editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({...editingItem, title: e.target.value})} onBlur={props.handleRenameConfirm} onKeyDown={props.handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
+                <input ref={editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({...editingItem, title: e.target.value})} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} onClick={e => e.stopPropagation()} className="bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full font-semibold" />
              ) : (
                 <span className="font-semibold text-sm truncate text-[var(--theme-text-secondary)]">{group.title}</span>
              )}
           </div>
-            <button onClick={(e) => props.toggleMenu(e, group.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} strokeWidth={2} /></button>
+            <button onClick={(e) => toggleMenu(e, group.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"><MoreHorizontal size={16} strokeWidth={2} /></button>
         </summary>
-        {props.activeMenu === group.id && (
+        {activeMenu === group.id && (
           <GroupItemMenu
-            menuRef={props.menuRef}
-            onStartEdit={() => { handleGroupStartEdit(group); props.setActiveMenu(null); }}
-            onDelete={() => { onDeleteGroup(group.id); props.setActiveMenu(null); }}
+            menuRef={menuRef}
+            onStartEdit={() => { handleGroupStartEdit(group); setActiveMenu(null); }}
+            onDelete={() => { onDeleteGroup(group.id); setActiveMenu(null); }}
             t={t}
           />
         )}
@@ -82,10 +109,7 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
             <SessionItem 
                 key={session.id} 
                 session={session} 
-                editingItem={editingItem} 
-                setEditingItem={setEditingItem} 
-                t={t} 
-                {...sessionItemProps} 
+                {...childSessionItemProps} 
             />
         ))}</ul>
       </details>

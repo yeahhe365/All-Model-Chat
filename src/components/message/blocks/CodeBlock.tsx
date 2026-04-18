@@ -12,6 +12,7 @@ import { FileDisplay } from '../FileDisplay';
 
 interface CodeBlockProps {
   children: React.ReactNode;
+  cacheKey?: string;
   className?: string;
   onOpenHtmlPreview: (html: string, options?: { initialTrueFullscreen?: boolean }) => void;
   expandCodeBlocksByDefault: boolean;
@@ -58,7 +59,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
         runCode,
         clearOutput,
         resetState
-    } = usePyodide(rawCode);
+    } = usePyodide(props.cacheKey);
 
     const handleRun = () => {
         if (rawCode) runCode(rawCode);
@@ -78,6 +79,8 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
             };
         });
     }, [files]);
+
+    const displayInlineImage = image && !generatedFiles.some((file) => file.type.startsWith('image/'));
 
     return (
         <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] shadow-sm">
@@ -114,7 +117,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                             className: `${codeElement.props.className || ''} !p-4 ${isOverflowing ? '!pb-14' : ''} !block font-mono text-[13px] sm:text-sm leading-relaxed !cursor-text`,
                             onClick: undefined,
                             title: undefined,
-                        } as any)
+                        })
                     ) : (
                         <span className={`block p-4 font-mono text-sm ${isOverflowing ? 'pb-14' : ''}`}>{props.children}</span>
                     )}
@@ -184,9 +187,9 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                             </div>
                         )}
                         
-                        {image && (
+                        {displayInlineImage && (
                             <div className="mt-2 mb-2 rounded-lg overflow-hidden border border-[var(--theme-border-secondary)] inline-block bg-white">
-                                <img src={`data:image/png;base64,${image}`} alt="Plot" className="max-w-full h-auto block" />
+                                <img src={`data:image/png;base64,${displayInlineImage}`} alt="Plot" className="max-w-full h-auto block" />
                             </div>
                         )}
 
@@ -208,7 +211,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                             </div>
                         )}
 
-                        {!error && !output && !image && generatedFiles.length === 0 && !isRunning && (
+                        {!error && !output && !displayInlineImage && generatedFiles.length === 0 && !isRunning && (
                              <div className="text-[var(--theme-text-tertiary)] text-xs italic">
                                  Executed successfully (no output).
                              </div>

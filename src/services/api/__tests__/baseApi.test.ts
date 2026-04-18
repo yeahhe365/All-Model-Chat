@@ -2,9 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { buildGenerationConfig } from '../baseApi';
 import { MediaResolution } from '../../../types/settings';
 
+type MockGoogleGenAIConfig = {
+  apiKey: string;
+  httpOptions?: {
+    apiVersion?: 'v1alpha';
+    baseUrl?: string;
+  };
+};
+
+type StoredAppSettings = NonNullable<Awaited<ReturnType<typeof import('../../../utils/db').dbService.getAppSettings>>>;
+
 // Mock @google/genai - must use function syntax for constructor mock
 vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(function(this: any, config: any) { this.config = config; }),
+  GoogleGenAI: vi.fn(function(this: { config: MockGoogleGenAIConfig }, config: MockGoogleGenAIConfig) {
+    this.config = config;
+  }),
 }));
 
 // Mock dbService
@@ -51,16 +63,37 @@ describe('getClient', () => {
     expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: "test's-key-value" });
   });
 
-  it('passes baseUrl when provided', async () => {
+  it('passes proxy baseUrl via httpOptions when provided', async () => {
     await getClient('key', 'https://proxy.example.com/');
-    expect(GoogleGenAI).toHaveBeenCalledWith({ apiKey: 'key', baseUrl: 'https://proxy.example.com' });
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'key',
+      httpOptions: { baseUrl: 'https://proxy.example.com' },
+    });
   });
 
-  it('strips trailing slash from baseUrl', async () => {
+  it('strips trailing slash from proxy baseUrl', async () => {
     await getClient('key', 'https://proxy.example.com/');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      baseUrl: 'https://proxy.example.com',
+      httpOptions: { baseUrl: 'https://proxy.example.com' },
     }));
+  });
+
+  it('normalizes version-suffixed proxy baseUrls before passing them to the SDK', async () => {
+    await getClient('key', 'https://proxy.example.com/gemini/v1beta/');
+    expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
+      httpOptions: { baseUrl: 'https://proxy.example.com/gemini' },
+    }));
+  });
+
+  it('merges proxy baseUrl into existing httpOptions', async () => {
+    await getClient('key', 'https://proxy.example.com/', { apiVersion: 'v1alpha' });
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'key',
+      httpOptions: {
+        apiVersion: 'v1alpha',
+        baseUrl: 'https://proxy.example.com',
+      },
+    });
   });
 
   it('throws on invalid initialization', async () => {
@@ -96,10 +129,10 @@ describe('getConfiguredApiClient', () => {
       useCustomApiConfig: true,
       useApiProxy: true,
       apiProxyUrl: 'https://proxy.example.com',
-    } as any);
+    } as StoredAppSettings);
     await getConfiguredApiClient('key');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
-      baseUrl: 'https://proxy.example.com',
+      httpOptions: { baseUrl: 'https://proxy.example.com' },
     }));
   });
 
@@ -108,21 +141,29 @@ describe('getConfiguredApiClient', () => {
       useCustomApiConfig: true,
       useApiProxy: false,
       apiProxyUrl: 'https://proxy.example.com',
-    } as any);
+    } as StoredAppSettings);
     await getConfiguredApiClient('key');
     expect(GoogleGenAI).toHaveBeenCalledWith(expect.objectContaining({
       apiKey: 'key',
     }));
     // baseUrl should not be in the config
-    const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as any;
-    expect(callArgs.baseUrl).toBeUndefined();
+    const callArgs = vi.mocked(GoogleGenAI).mock.calls[0][0] as MockGoogleGenAIConfig;
+    expect(callArgs.httpOptions?.baseUrl).toBeUndefined();
   });
 });
 
 describe('getLiveApiClient', () => {
   it('throws a configuration error when the ephemeral token endpoint is missing', async () => {
     await expect(
-      getLiveApiClient({} as any, { apiVersion: 'v1alpha' }),
+      getLiveApiClient(
+        {
+          liveApiEphemeralTokenEndpoint: null,
+          useCustomApiConfig: false,
+          useApiProxy: false,
+          apiProxyUrl: null,
+        },
+        { apiVersion: 'v1alpha' },
+      ),
     ).rejects.toBeInstanceOf(LiveApiAuthConfigurationError);
   });
 
@@ -139,7 +180,8 @@ describe('getLiveApiClient', () => {
         liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
         useCustomApiConfig: false,
         useApiProxy: false,
-      } as any,
+        apiProxyUrl: null,
+      },
       { apiVersion: 'v1alpha' },
     );
 
@@ -147,6 +189,35 @@ describe('getLiveApiClient', () => {
     expect(GoogleGenAI).toHaveBeenCalledWith({
       apiKey: 'ephemeral-token-name',
       httpOptions: { apiVersion: 'v1alpha' },
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('applies proxy baseUrl to the live client when proxying is enabled', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ token: 'ephemeral-token-name' }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await getLiveApiClient(
+      {
+        liveApiEphemeralTokenEndpoint: 'https://example.test/live-token',
+        useCustomApiConfig: true,
+        useApiProxy: true,
+        apiProxyUrl: 'https://proxy.example.com/v1beta/',
+      },
+      { apiVersion: 'v1alpha' },
+    );
+
+    expect(GoogleGenAI).toHaveBeenCalledWith({
+      apiKey: 'ephemeral-token-name',
+      httpOptions: {
+        apiVersion: 'v1alpha',
+        baseUrl: 'https://proxy.example.com',
+      },
     });
 
     vi.unstubAllGlobals();
@@ -176,14 +247,14 @@ describe('buildGenerationConfig', () => {
       false, false, false, undefined, '1:1', false, '2K'
     );
     expect(config.responseModalities).toEqual(['IMAGE', 'TEXT']);
-    expect(config.imageConfig.imageSize).toBe('2K');
+    expect(config.imageConfig!.imageSize).toBe('2K');
   });
 
   it('defaults imageSize to 1K for gemini-3-pro-image-preview', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-pro-image-preview', 'sys', baseConfig, false, 0,
     );
-    expect(config.imageConfig.imageSize).toBe('1K');
+    expect(config.imageConfig!.imageSize).toBe('1K');
   });
 
   it('includes thinkingConfig for gemini-3.1-flash-image-preview', async () => {
@@ -208,19 +279,46 @@ describe('buildGenerationConfig', () => {
     });
   });
 
+  it('uses image search grounding for gemini-3.1-flash-image-preview when search is enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
+      true, false, false, undefined, '1:1', false, '2K'
+    );
+
+    expect(config.tools).toEqual([
+      {
+        googleSearch: {
+          searchTypes: {
+            webSearch: {},
+            imageSearch: {},
+          },
+        },
+      },
+    ]);
+  });
+
+  it('does not enable search for Gemini image models when only deep search is enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3.1-flash-image-preview', 'sys', baseConfig, false, 0,
+      false, false, false, undefined, '1:1', true, '2K'
+    );
+
+    expect(config.tools).toBeUndefined();
+  });
+
   it('includes thinkingConfig for Gemini 3 models', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
     );
     expect(config.thinkingConfig).toBeDefined();
-    expect(config.thinkingConfig.includeThoughts).toBe(true);
+    expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
   it('uses thinkingBudget when > 0 for Gemini 3', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 8000,
     );
-    expect(config.thinkingConfig.thinkingBudget).toBe(8000);
+    expect(config.thinkingConfig!.thinkingBudget).toBe(8000);
   });
 
   it('uses thinkingLevel when budget is 0 for Gemini 3', async () => {
@@ -228,14 +326,14 @@ describe('buildGenerationConfig', () => {
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
       false, false, false, 'LOW'
     );
-    expect(config.thinkingConfig.thinkingLevel).toBe('LOW');
+    expect(config.thinkingConfig!.thinkingLevel).toBe('LOW');
   });
 
   it('defaults thinkingLevel to HIGH for Gemini 3', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
     );
-    expect(config.thinkingConfig.thinkingLevel).toBe('HIGH');
+    expect(config.thinkingConfig!.thinkingLevel).toBe('HIGH');
   });
 
   it('downgrades ULTRA_HIGH to HIGH for non-Gemini 3 global media resolution', async () => {
@@ -263,8 +361,8 @@ describe('buildGenerationConfig', () => {
     const config = await buildGenerationConfig(
       'gemini-2.5-flash', 'sys', baseConfig, false, 8000,
     );
-    expect(config.thinkingConfig.thinkingBudget).toBe(8000);
-    expect(config.thinkingConfig.includeThoughts).toBe(true);
+    expect(config.thinkingConfig!.thinkingBudget).toBe(8000);
+    expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
   it('adds googleSearch tool when enabled', async () => {
@@ -298,7 +396,7 @@ describe('buildGenerationConfig', () => {
       'gemini-2.5-flash', 'sys', baseConfig, false, 0,
       false, true, false, undefined, undefined, false, undefined, undefined, undefined, true
     );
-    const hasCodeExec = config.tools?.some((t: any) => t.codeExecution);
+    const hasCodeExec = config.tools?.some((tool) => 'codeExecution' in tool);
     expect(hasCodeExec).toBeFalsy();
   });
 
@@ -317,6 +415,16 @@ describe('buildGenerationConfig', () => {
     );
     expect(config.systemInstruction).toContain('Original');
     expect(config.systemInstruction).not.toBe('Original');
+  });
+
+  it('appends local python prompt to systemInstruction when enabled', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-3-flash-preview', 'Original', baseConfig, false, 0,
+      false, false, false, undefined, undefined, false, undefined, undefined, undefined, true
+    );
+    expect(config.systemInstruction).toContain('Original');
+    expect(config.systemInstruction).toContain('Return ONLY a single fenced Python code block');
+    expect(config.systemInstruction).toContain('plt.savefig("chart.png")');
   });
 
   it('injects <|think|> token for Gemma models with showThoughts', async () => {
@@ -362,7 +470,7 @@ describe('buildGenerationConfig', () => {
             winner: { type: 'STRING' },
           },
         },
-      } as any,
+      },
       false,
       0,
       true

@@ -1,16 +1,17 @@
 
 import React, { useState } from 'react';
 import { Check, Info } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { SETTINGS_INPUT_CLASS } from '../../../../constants/appConstants';
 
 interface ApiKeyInputProps {
     apiKey: string | null;
     setApiKey: (value: string | null) => void;
-    t: (key: string) => string;
     onFocus?: () => void;
 }
 
-export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ apiKey, setApiKey, t, onFocus }) => {
+export const ApiKeyInput: React.FC<ApiKeyInputProps> = ({ apiKey, setApiKey, onFocus }) => {
+    const { t } = useI18n();
     const [isFocused, setIsFocused] = useState(false);
 
     // Visual blur effect for API key when not focused

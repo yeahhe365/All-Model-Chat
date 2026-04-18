@@ -26,7 +26,7 @@ export const useAppTitle = ({
       if ((message.role === 'model' || message.role === 'error') && message.isLoading) {
         return message.generationStartTime
           ? new Date(message.generationStartTime).getTime()
-          : Date.now();
+          : null;
       }
     }
 
@@ -44,8 +44,6 @@ export const useAppTitle = ({
       };
       update();
       intervalId = window.setInterval(update, 1000);
-    } else {
-      setGenerationTime(0);
     }
 
     return () => clearInterval(intervalId);
@@ -55,7 +53,7 @@ export const useAppTitle = ({
     const updateTitle = () => {
       let statusPrefix = '';
       if (isLoading) {
-        const timeDisplay = ` (${generationTime}s)`;
+        const timeDisplay = ` (${currentGenerationStartTime ? generationTime : 0}s)`;
         statusPrefix =
           language === 'zh'
             ? `生成中${timeDisplay}... | `
@@ -77,5 +75,5 @@ export const useAppTitle = ({
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [sessionTitle, isLoading, language, generationTime]);
+  }, [sessionTitle, isLoading, language, generationTime, currentGenerationStartTime]);
 };

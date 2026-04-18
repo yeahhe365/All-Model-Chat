@@ -89,4 +89,90 @@ describe('useLiveMessageProcessing', () => {
 
     unmount();
   });
+
+  it('drops buffered audio chunks when the connection layer requests a reset', async () => {
+    const playAudioChunk = vi.fn();
+    const onTranscript = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useLiveMessageProcessing({
+        playAudioChunk,
+        stopAudioPlayback: vi.fn(),
+        onTranscript,
+        sessionRef: { current: null },
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleMessage({
+        serverContent: {
+          modelTurn: {
+            parts: [{ inlineData: { data: 'stale-audio' } }],
+          },
+        },
+      } as any);
+    });
+
+    act(() => {
+      result.current.clearBufferedAudio();
+    });
+
+    await act(async () => {
+      await result.current.handleMessage({
+        serverContent: {
+          turnComplete: true,
+        },
+      } as any);
+    });
+
+    expect(mockCreateWavBlobFromPCMChunks).not.toHaveBeenCalled();
+    expect(onTranscript).toHaveBeenCalledWith('', 'user', true, 'content');
+    expect(onTranscript).toHaveBeenCalledWith('', 'model', true, 'content');
+
+    unmount();
+  });
+
+  it('includes code execution output in live transcripts', async () => {
+    const playAudioChunk = vi.fn();
+    const onTranscript = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useLiveMessageProcessing({
+        playAudioChunk,
+        stopAudioPlayback: vi.fn(),
+        onTranscript,
+        sessionRef: { current: null },
+        setSessionHandle: vi.fn(),
+        sessionHandleRef: { current: null },
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleMessage({
+        serverContent: {
+          modelTurn: {
+            parts: [
+              {
+                codeExecutionResult: {
+                  outcome: 'OUTCOME_OK',
+                  output: '42\n',
+                },
+              },
+            ],
+          },
+        },
+      } as any);
+    });
+
+    expect(onTranscript).toHaveBeenCalledWith(
+      '\n> Execution Result: OUTCOME_OK\n\n```\n42\n\n```\n',
+      'model',
+      false,
+      'content',
+    );
+
+    unmount();
+  });
 });

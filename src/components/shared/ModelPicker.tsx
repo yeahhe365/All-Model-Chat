@@ -1,4 +1,5 @@
 
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState, useRef, useMemo } from 'react';
 import { ModelOption } from '../../types';
 import { Box, Volume2, Image as ImageIcon, Sparkles, MessageSquareText, Check, AudioWaveform } from 'lucide-react';
@@ -34,7 +35,7 @@ interface ModelPickerProps {
         isOpen: boolean; 
         setIsOpen: (v: boolean) => void; 
         selectedModel: ModelOption | undefined;
-        ref: React.RefObject<any>;
+        ref: React.RefObject<HTMLDivElement>;
     }) => React.ReactNode;
     
     dropdownClassName?: string;

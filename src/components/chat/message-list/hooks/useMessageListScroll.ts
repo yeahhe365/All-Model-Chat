@@ -9,7 +9,11 @@ interface UseMessageListScrollProps {
     activeSessionId: string | null;
 }
 
-export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSessionId }: UseMessageListScrollProps) => {
+export const useMessageListScroll = ({
+    messages,
+    setScrollContainerRef,
+    activeSessionId,
+}: UseMessageListScrollProps) => {
     const virtuosoRef = useRef<VirtuosoHandle>(null);
     const [atBottom, setAtBottom] = useState(true);
     const [visibleStartIndex, setVisibleStartIndex] = useState(0);
@@ -26,13 +30,6 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     const prevMsgCount = useRef(messages.length);
     const prevSessionIdForAnchor = useRef(activeSessionId);
 
-    // Sync internal scroller ref with parent's expectations
-    useEffect(() => {
-        if (scrollerRef) {
-            setScrollContainerRef(scrollerRef as HTMLDivElement);
-        }
-    }, [scrollerRef, setScrollContainerRef]);
-
     // Range tracking for navigation
     const onRangeChanged = useCallback(({ startIndex, endIndex }: { startIndex: number, endIndex: number }) => {
         visibleRangeRef.current = { startIndex, endIndex };
@@ -42,8 +39,9 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
     const handleScrollerRef = useCallback((ref: Window | HTMLElement | null) => {
         if (ref === null || ref instanceof HTMLElement) {
             setInternalScrollerRef(ref);
+            setScrollContainerRef(ref as HTMLDivElement | null);
         }
-    }, []);
+    }, [setScrollContainerRef]);
 
     // Handle New Turn Anchoring: When a message is sent, scroll the model's message to the top.
     useEffect(() => {
@@ -157,8 +155,17 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
                     localStorage.setItem(`chat_scroll_pos_${activeSessionId}`, scrollTop.toString());
                 }, 300);
             }
+
         }
     }, [scrollerRef, atBottom, activeSessionId, messages.length]);
+
+    useEffect(() => {
+        return () => {
+            if (scrollSaveTimeoutRef.current) {
+                clearTimeout(scrollSaveTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Restore scroll position on session change
     useEffect(() => {
@@ -185,17 +192,6 @@ export const useMessageListScroll = ({ messages, setScrollContainerRef, activeSe
              }
         }
     }, [activeSessionId, messages.length]);
-
-    // Attach listener manually to the scroller ref
-    useEffect(() => {
-        const container = scrollerRef;
-        if (!container) {
-            return undefined;
-        }
-
-        container.addEventListener('scroll', handleScroll, { passive: true });
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [scrollerRef, handleScroll]);
 
     const showScrollDown = !atBottom;
     const showScrollUp = messages.length > 2 && visibleStartIndex > 0;

@@ -5,7 +5,7 @@ export interface ApiServerConfig {
   allowedOrigins: string[];
 }
 
-export interface EnvLike {
+interface EnvLike {
   [key: string]: string | undefined;
 }
 

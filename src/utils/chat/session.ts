@@ -1,5 +1,5 @@
 
-import { ChatMessage, SavedChatSession, ChatSettings } from '../../types';
+import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord, UploadedFile } from '../../types';
 import { generateUniqueId } from './ids';
 import { logService } from '../../services/logService';
 import { base64ToBlob } from '../fileHelpers';
@@ -63,7 +63,7 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
                     const newUrl = URL.createObjectURL(newFile);
                     
                     return { ...file, rawFile: newFile, dataUrl: newUrl };
-                } catch (e) {
+                } catch {
                     logService.warn(`Failed to migrate legacy Base64 file: ${file.name}`);
                     // If migration fails, keep as is, but it might lag
                 }
@@ -85,8 +85,9 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
                 }
             } else if (file.rawFile && !isValidRawFile) {
                 // It has a rawFile property but it's not a Blob (e.g. {} from JSON or bad persistence). Strip it.
-                const { rawFile, ...rest } = file;
-                return rest;
+                const fileWithoutRaw = { ...file };
+                delete fileWithoutRaw.rawFile;
+                return fileWithoutRaw;
             }
             
             return file;
@@ -98,36 +99,104 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
     return { ...session, messages: newMessages };
 };
 
+const hasInlinePersistableDataUrl = (dataUrl?: string) =>
+    !!dataUrl && !dataUrl.startsWith('blob:') && !dataUrl.startsWith('http');
+
+const sanitizeStoredFileMetadata = (file: UploadedFile): UploadedFile => {
+    const fileCopy = { ...file };
+    delete fileCopy.rawFile;
+    delete fileCopy.abortController;
+
+    if (fileCopy.dataUrl && (fileCopy.dataUrl.startsWith('blob:') || hasInlinePersistableDataUrl(fileCopy.dataUrl))) {
+        delete fileCopy.dataUrl;
+    }
+
+    return fileCopy;
+};
+
+export const extractPersistedSessionFileRecords = (session: SavedChatSession): PersistedSessionFileRecord[] => {
+    const records: PersistedSessionFileRecord[] = [];
+
+    session.messages.forEach((message) => {
+        message.files?.forEach((file) => {
+            let rawFile: Blob | undefined;
+
+            if (file.rawFile instanceof Blob) {
+                rawFile = file.rawFile;
+            } else if (hasInlinePersistableDataUrl(file.dataUrl)) {
+                try {
+                    const base64Clean = file.dataUrl!.includes(',') ? file.dataUrl!.split(',')[1] : file.dataUrl!;
+                    rawFile = base64ToBlob(base64Clean, file.type);
+                } catch (error) {
+                    logService.warn(`Failed to extract inline file payload for persistence: ${file.name}`, { error });
+                }
+            }
+
+            if (!rawFile) {
+                return;
+            }
+
+            records.push({
+                id: file.id,
+                sessionId: session.id,
+                messageId: message.id,
+                name: file.name,
+                type: file.type,
+                rawFile,
+            });
+        });
+    });
+
+    return records;
+};
+
+export const stripSessionFilePayloads = (session: SavedChatSession): SavedChatSession => ({
+    ...session,
+    messages: session.messages.map((message) => {
+        if (!message.files) {
+            return message;
+        }
+
+        return {
+            ...message,
+            files: message.files.map(sanitizeStoredFileMetadata),
+        };
+    }),
+});
+
+export const attachPersistedSessionFiles = (
+    session: SavedChatSession,
+    fileRecords: Map<string, PersistedSessionFileRecord>,
+): SavedChatSession => ({
+    ...session,
+    messages: session.messages.map((message) => {
+        if (!message.files) {
+            return message;
+        }
+
+        return {
+            ...message,
+            files: message.files.map((file) => {
+                const record = fileRecords.get(file.id);
+                if (!record) {
+                    return file;
+                }
+
+                return {
+                    ...file,
+                    rawFile: record.rawFile,
+                };
+            }),
+        };
+    }),
+});
+
 /**
  * Prepares a session object for export by stripping out non-serializable properties
  * like Blobs, Files, and ephemeral URL references.
  */
-export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession => {
-    return {
-        ...session,
-        messages: session.messages.map(msg => {
-            if (!msg.files) return msg;
-            return {
-                ...msg,
-                files: msg.files.map(f => {
-                    // Create a shallow copy to avoid mutating the original
-                    const fileCopy = { ...f };
-                    
-                    // Remove non-serializable or local-only properties
-                    // rawFile cannot be serialized to JSON and causes {} artifacts if attempted
-                    delete fileCopy.rawFile;
-                    delete fileCopy.abortController;
-                    
-                    // Remove blob URLs as they are not persistent across sessions/devices
-                    if (fileCopy.dataUrl && fileCopy.dataUrl.startsWith('blob:')) {
-                        delete fileCopy.dataUrl;
-                    }
-                    return fileCopy;
-                })
-            };
-        })
-    };
-};
+export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>
+    stripSessionFilePayloads(session);
 
 /**
  * Core helper to update session list state.

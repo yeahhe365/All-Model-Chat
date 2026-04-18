@@ -16,7 +16,7 @@ import { applyUserScenarioSeeds } from './preloadedScenarioSeeds';
 type SessionsUpdater = (
   updater: (prev: SavedChatSession[]) => SavedChatSession[],
   options?: { persist?: boolean },
-) => Promise<void>;
+) => void | Promise<void>;
 
 interface PreloadedScenariosProps {
   appSettings: AppSettings;

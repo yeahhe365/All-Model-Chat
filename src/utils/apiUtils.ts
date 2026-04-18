@@ -4,7 +4,7 @@ import { logService } from '../services/logService';
 
 export const SERVER_MANAGED_API_KEY = '__SERVER_MANAGED_API_KEY__';
 
-export type ServerManagedProxyEligibility = Pick<
+type ServerManagedProxyEligibility = Pick<
     AppSettings,
     'serverManagedApi' | 'useCustomApiConfig' | 'useApiProxy' | 'apiProxyUrl'
 >;
@@ -19,14 +19,22 @@ export const isServerManagedApiEnabledForProxyRequests = (
         appSettings.apiProxyUrl?.trim()
     );
 
-export const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
+const getActiveApiConfig = (appSettings: AppSettings): { apiKeysString: string | null } => {
+    const envWithGeminiKey = (
+        import.meta as ImportMeta & {
+            env?: {
+                VITE_GEMINI_API_KEY?: string;
+            };
+        }
+    ).env;
+
     if (appSettings.useCustomApiConfig) {
         return {
             apiKeysString: appSettings.apiKey,
         };
     }
     return {
-        apiKeysString: (import.meta as any).env?.VITE_GEMINI_API_KEY || null,
+        apiKeysString: envWithGeminiKey?.VITE_GEMINI_API_KEY || null,
     };
 };
 

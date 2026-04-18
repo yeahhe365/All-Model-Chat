@@ -1,5 +1,6 @@
 import React from 'react';
 import { Maximize2, Minimize2, Languages, Loader2 } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../../constants/appConstants';
 
 interface UtilityControlsProps {
@@ -9,7 +10,6 @@ interface UtilityControlsProps {
     onTranslate: () => void;
     disabled: boolean;
     canTranslate: boolean;
-    t: (key: string) => string;
 }
 
 export const UtilityControls: React.FC<UtilityControlsProps> = ({
@@ -18,9 +18,9 @@ export const UtilityControls: React.FC<UtilityControlsProps> = ({
     isTranslating,
     onTranslate,
     disabled,
-    canTranslate,
-    t
+    canTranslate
 }) => {
+    const { t } = useI18n();
     const iconSize = 20;
 
     return (

@@ -66,7 +66,7 @@ export const ShortcutsSection: React.FC<ShortcutsSectionProps> = ({ currentSetti
                                 <div key={item.id} className="flex items-center justify-between py-2 group">
                                     <div className="flex flex-col">
                                         <span className="text-sm text-[var(--theme-text-secondary)] font-medium group-hover:text-[var(--theme-text-primary)] transition-colors">
-                                            {t(item.labelKey as any)}
+                                            {t(item.labelKey)}
                                         </span>
                                     </div>
                                     <ShortcutRecorder 

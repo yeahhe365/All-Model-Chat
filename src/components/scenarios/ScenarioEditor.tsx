@@ -16,8 +16,15 @@ interface ScenarioEditorProps {
     readOnly?: boolean;
 }
 
+const createEmptyScenario = (): SavedScenario => ({
+    id: `scenario-${crypto.randomUUID()}`,
+    title: '',
+    messages: [],
+    systemInstruction: '',
+});
+
 export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario, onSave, onCancel, t, readOnly = false }) => {
-    const [scenario, setScenario] = useState<SavedScenario>(initialScenario || { id: Date.now().toString(), title: '', messages: [], systemInstruction: '' });
+    const [scenario, setScenario] = useState<SavedScenario>(() => initialScenario || createEmptyScenario());
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [newMessageRole, setNewMessageRole] = useState<'user' | 'model'>('user');
     const [newMessageContent, setNewMessageContent] = useState('');
@@ -29,7 +36,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
         if (!newMessageContent.trim() || readOnly) return;
         setScenario(prev => ({
             ...prev,
-            messages: [...prev.messages, { id: Date.now().toString(), role: newMessageRole, content: newMessageContent }]
+            messages: [...prev.messages, { id: `scenario-message-${crypto.randomUUID()}`, role: newMessageRole, content: newMessageContent }]
         }));
         setNewMessageContent('');
         setNewMessageRole(newMessageRole === 'user' ? 'model' : 'user');

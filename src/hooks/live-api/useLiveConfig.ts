@@ -1,14 +1,38 @@
 
 import { useMemo } from 'react';
-import { AppSettings, ChatSettings } from '../../types';
+import { ChatSettings } from '../../types';
 import type { Tool } from '@google/genai';
 import type { LiveClientFunctions } from '../../types';
 
 interface UseLiveConfigProps {
-    appSettings: AppSettings;
     chatSettings: ChatSettings;
     sessionHandle: string | null;
     clientFunctions?: LiveClientFunctions;
+}
+
+interface LiveConfig {
+    responseModalities: ['AUDIO'];
+    speechConfig: {
+        voiceConfig: {
+            prebuiltVoiceConfig: {
+                voiceName: string;
+            };
+        };
+    };
+    systemInstruction?: { parts: Array<{ text: string }> };
+    tools?: Tool[];
+    inputAudioTranscription: Record<string, never>;
+    outputAudioTranscription: Record<string, never>;
+    contextWindowCompression: {
+        slidingWindow: Record<string, never>;
+    };
+    sessionResumption: { handle: string } | Record<string, never>;
+    mediaResolution?: ChatSettings['mediaResolution'];
+    thinkingConfig?: {
+        includeThoughts: boolean;
+        thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
+        thinkingBudget?: number;
+    };
 }
 
 export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: UseLiveConfigProps) => {
@@ -32,7 +56,7 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
         }
 
         // Build Config
-        const liveConfig: any = {
+        const liveConfig: LiveConfig = {
             // Use string literal 'AUDIO' for better compatibility in Live API JSON serialization
             responseModalities: ['AUDIO'], 
             speechConfig: {
@@ -66,7 +90,7 @@ export const useLiveConfig = ({ chatSettings, sessionHandle, clientFunctions }: 
                 thinkingLevel: chatSettings.thinkingLevel || 'MINIMAL',
              };
         } else if (chatSettings.thinkingBudget !== 0) {
-             const thinkingConfig: any = {
+             const thinkingConfig: NonNullable<LiveConfig['thinkingConfig']> = {
                 includeThoughts: true 
              };
              if (chatSettings.thinkingBudget > 0) {

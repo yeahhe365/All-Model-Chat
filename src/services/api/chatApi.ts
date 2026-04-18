@@ -18,6 +18,97 @@ type MetadataWithCitations = {
     citations?: Array<{ uri?: string }>;
 } & Record<string, unknown>;
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+
+const mergeUniqueStrings = (existing: unknown, incoming: unknown): string[] | undefined => {
+    const existingValues = Array.isArray(existing) ? existing.filter((value): value is string => typeof value === 'string') : [];
+    const incomingValues = Array.isArray(incoming) ? incoming.filter((value): value is string => typeof value === 'string') : [];
+    if (existingValues.length === 0 && incomingValues.length === 0) {
+        return undefined;
+    }
+
+    return Array.from(new Set([...existingValues, ...incomingValues]));
+};
+
+const mergeUniqueItems = <T,>(
+    existing: unknown,
+    incoming: unknown,
+    getKey: (item: T) => string,
+): T[] | undefined => {
+    const existingValues = Array.isArray(existing) ? existing.filter((value): value is T => value !== null && value !== undefined) : [];
+    const incomingValues = Array.isArray(incoming) ? incoming.filter((value): value is T => value !== null && value !== undefined) : [];
+    if (existingValues.length === 0 && incomingValues.length === 0) {
+        return undefined;
+    }
+
+    const merged = new Map<string, T>();
+    for (const item of [...existingValues, ...incomingValues]) {
+        merged.set(getKey(item), item);
+    }
+
+    return Array.from(merged.values());
+};
+
+const mergeGroundingMetadata = (
+    existing: MetadataWithCitations | null,
+    incoming: unknown,
+): MetadataWithCitations | null => {
+    if (!isRecord(incoming)) {
+        return existing;
+    }
+
+    const merged: MetadataWithCitations = existing ? { ...existing } : {};
+
+    for (const [key, value] of Object.entries(incoming)) {
+        switch (key) {
+            case 'webSearchQueries':
+            case 'imageSearchQueries': {
+                const mergedStrings = mergeUniqueStrings(merged[key], value);
+                if (mergedStrings) {
+                    merged[key] = mergedStrings;
+                }
+                break;
+            }
+            case 'groundingChunks':
+            case 'groundingSupports': {
+                const mergedItems = mergeUniqueItems<Record<string, unknown>>(
+                    merged[key],
+                    value,
+                    (item) => JSON.stringify(item),
+                );
+                if (mergedItems) {
+                    merged[key] = mergedItems;
+                }
+                break;
+            }
+            case 'citations': {
+                const mergedCitations = mergeUniqueItems<Record<string, unknown>>(
+                    merged.citations,
+                    value,
+                    (item) => {
+                        const uri = typeof item.uri === 'string' ? item.uri : '';
+                        return uri || JSON.stringify(item);
+                    },
+                ) as Array<{ uri?: string }> | undefined;
+                if (mergedCitations) {
+                    merged.citations = mergedCitations;
+                }
+                break;
+            }
+            default: {
+                if (isRecord(value) && isRecord(merged[key])) {
+                    merged[key] = { ...(merged[key] as Record<string, unknown>), ...value };
+                } else {
+                    merged[key] = value;
+                }
+            }
+        }
+    }
+
+    return merged;
+};
+
 const mergeFunctionCallUrlContextMetadata = (
     finalMetadata: { citations?: Array<{ uri?: string }> },
     functionCalls?: FunctionCall[]
@@ -119,7 +210,7 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
         const result = await ai.models.generateContentStream({
             model: modelId,
             contents,
-            config: config
+            config: config as Parameters<typeof ai.models.generateContentStream>[0]['config'],
         });
 
         for await (const chunkResponse of result) {
@@ -134,9 +225,7 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
             
             if (candidate) {
                 const metadataFromChunk = candidate.groundingMetadata;
-                if (metadataFromChunk) {
-                    finalGroundingMetadata = { ...(metadataFromChunk as object) } as MetadataWithCitations;
-                }
+                finalGroundingMetadata = mergeGroundingMetadata(finalGroundingMetadata, metadataFromChunk);
                 
                 const urlContextCandidate = candidate as CandidateWithUrlContext;
                 const urlMetadata = urlContextCandidate.urlContextMetadata || urlContextCandidate.url_context_metadata;
@@ -192,7 +281,7 @@ export const sendStatelessMessageNonStreamApi: NonStreamMessageSender = async (
         const response = await ai.models.generateContent({
             model: modelId,
             contents,
-            config: config
+            config: config as Parameters<typeof ai.models.generateContent>[0]['config'],
         });
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }

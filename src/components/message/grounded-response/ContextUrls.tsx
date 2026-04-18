@@ -11,7 +11,7 @@ interface UrlContextItem {
 }
 
 interface ContextUrlsProps {
-    metadata: any;
+    metadata: unknown;
 }
 
 const getStatusIcon = (status?: string) => {
@@ -25,8 +25,9 @@ const getStatusIcon = (status?: string) => {
 export const ContextUrls: React.FC<ContextUrlsProps> = ({ metadata }) => {
     const items = useMemo<UrlContextItem[]>(() => {
         if (!metadata) return [];
+        const resolvedMetadata = metadata as { urlMetadata?: UrlContextItem[]; url_metadata?: UrlContextItem[] };
         // Handle both snake_case and camelCase
-        return (metadata.urlMetadata || metadata.url_metadata || []) as UrlContextItem[];
+        return resolvedMetadata.urlMetadata || resolvedMetadata.url_metadata || [];
     }, [metadata]);
 
     if (items.length === 0) return null;

@@ -1,20 +1,20 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { Session as LiveSession, Tool } from '@google/genai';
-import { AppSettings, ChatSettings } from '../../types';
+import type { LiveServerMessage, Session as LiveSession, Tool } from '@google/genai';
+import { AppSettings } from '../../types';
 import { logService } from '../../utils/appUtils';
 import { getLiveApiClient } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 
 interface UseLiveConnectionProps {
     appSettings: AppSettings;
-    chatSettings: ChatSettings;
     modelId: string;
-    liveConfig: any;
+    liveConfig: unknown;
     tools: Tool[];
-    initializeAudio: (onAudioData: (data: Float32Array) => void) => Promise<any>;
+    initializeAudio: (onAudioData: (data: Float32Array) => void) => Promise<void | { audioCtx: AudioContext; inputCtx: AudioContext }>;
     cleanupAudio: () => void;
+    clearBufferedAudio?: () => void;
     stopVideo: () => void;
-    handleMessage: (msg: any) => void;
+    handleMessage: (msg: LiveServerMessage) => void;
     onClose?: () => void;
     onTranscript?: (text: string, role: 'user' | 'model', isFinal: boolean, type?: 'content' | 'thought', audioUrl?: string | null) => void;
     setSessionHandle: (handle: string | null) => void;
@@ -24,12 +24,12 @@ interface UseLiveConnectionProps {
 
 export const useLiveConnection = ({
     appSettings,
-    chatSettings,
     modelId,
     liveConfig,
     tools,
     initializeAudio,
     cleanupAudio,
+    clearBufferedAudio,
     stopVideo,
     handleMessage,
     onClose,
@@ -44,22 +44,39 @@ export const useLiveConnection = ({
 
     // Ref to track connection state synchronously for audio callbacks
     const isConnectedRef = useRef(false);
+    const isReconnectingRef = useRef(false);
+    const disconnectRef = useRef<() => void>(() => {});
 
     // Sync Ref with State (Keep as a fallback for external state changes)
     useEffect(() => {
         isConnectedRef.current = isConnected;
     }, [isConnected]);
 
+    useEffect(() => {
+        isReconnectingRef.current = isReconnecting;
+    }, [isReconnecting]);
+
     // Reconnection Refs
     const retryCountRef = useRef(0);
     const isUserDisconnectRef = useRef(false);
-    const reconnectTimeoutRef = useRef<any>(null);
+    const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const connectRef = useRef<() => Promise<void>>(async () => {});
     
     const maxRetries = 5;
     const baseDelay = 1000;
 
+    const resetAudioState = useCallback(() => {
+        clearBufferedAudio?.();
+        cleanupAudio();
+    }, [clearBufferedAudio, cleanupAudio]);
+
     const triggerReconnect = useCallback(() => {
+        if (reconnectTimeoutRef.current) {
+            return;
+        }
+
+        resetAudioState();
+
         if (retryCountRef.current >= maxRetries) {
             logService.error("Max reconnection attempts reached.");
             setError("Connection lost. Please try again.");
@@ -69,7 +86,6 @@ export const useLiveConnection = ({
             isConnectedRef.current = false;
             setIsConnected(false);
             
-            cleanupAudio();
             stopVideo();
             return;
         }
@@ -83,10 +99,11 @@ export const useLiveConnection = ({
         setError(`Connection lost. Reconnecting... (${attempt}/${maxRetries})`);
         
         reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
             retryCountRef.current++;
             connectRef.current(); // Call the latest connect function
         }, delay);
-    }, [cleanupAudio, stopVideo]);
+    }, [resetAudioState, stopVideo]);
 
     const connect = useCallback(async () => {
         // Clear any pending reconnection timeout if we are manually connecting
@@ -129,7 +146,7 @@ export const useLiveConnection = ({
             // Connect Session
             const sessionPromise = ai.live.connect({
                 model: modelId,
-                config: liveConfig,
+                config: liveConfig as Parameters<typeof ai.live.connect>[0]['config'],
                 callbacks: {
                     onopen: () => {
                         logService.info("Live API Connected", { tools: tools?.length ?? 0, resumed: !!sessionHandleRef.current });
@@ -192,17 +209,17 @@ export const useLiveConnection = ({
 
             sessionRef.current = sessionPromise;
 
-        } catch (err: any) {
+        } catch (err) {
             logService.error("Failed to connect to Live API", err);
             
             // 同步修改 Ref
             isConnectedRef.current = false;
             setIsConnected(false);
 
-            if (err?.name === 'LiveApiAuthConfigurationError') {
+            if (err instanceof Error && err.name === 'LiveApiAuthConfigurationError') {
                 setIsReconnecting(false);
                 setError(err.message || "Failed to start session");
-                cleanupAudio();
+                resetAudioState();
                 stopVideo();
                 return;
             }
@@ -210,11 +227,11 @@ export const useLiveConnection = ({
             if (!isUserDisconnectRef.current) {
                 triggerReconnect();
             } else {
-                setError(err.message || "Failed to start session");
-                cleanupAudio();
+                setError(err instanceof Error ? err.message : "Failed to start session");
+                resetAudioState();
             }
         }
-    }, [appSettings, chatSettings, modelId, onClose, onTranscript, initializeAudio, cleanupAudio, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
+    }, [appSettings, modelId, onClose, onTranscript, initializeAudio, resetAudioState, stopVideo, triggerReconnect, liveConfig, tools, handleMessage, sessionRef, sessionHandleRef]);
 
     const sendText = useCallback(async (text: string) => {
         if (!sessionRef.current) return;
@@ -237,11 +254,11 @@ export const useLiveConnection = ({
         }
 
         if (sessionRef.current) {
-            sessionRef.current.then((session: any) => session.close());
+            sessionRef.current.then((session) => session.close());
         }
         sessionRef.current = null;
         
-        cleanupAudio();
+        resetAudioState();
         stopVideo(); // Stop video stream if active
 
         // 同步修改 Ref
@@ -252,22 +269,26 @@ export const useLiveConnection = ({
         sessionHandleRef.current = null;
         
         if (onClose) onClose();
-    }, [onClose, cleanupAudio, stopVideo, sessionRef, setSessionHandle, sessionHandleRef]);
+    }, [onClose, resetAudioState, stopVideo, sessionRef, setSessionHandle, sessionHandleRef]);
 
     // Update the ref whenever connect changes so triggerReconnect calls the latest version
     useEffect(() => {
         connectRef.current = connect;
     }, [connect]);
 
+    useEffect(() => {
+        disconnectRef.current = disconnect;
+    }, [disconnect]);
+
     // Cleanup on unmount
     useEffect(() => {
         return () => {
             isUserDisconnectRef.current = true;
-            if (isConnected || isReconnecting) {
-                disconnect();
+            if (isConnectedRef.current || isReconnectingRef.current) {
+                disconnectRef.current();
             }
         };
-    }, [disconnect, isConnected, isReconnecting]);
+    }, []);
 
     return {
         isConnected,

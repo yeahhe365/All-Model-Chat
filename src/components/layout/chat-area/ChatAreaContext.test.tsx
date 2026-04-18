@@ -1,6 +1,8 @@
 import React, { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../contexts/I18nContext';
+import type { AppSettings, ChatSettings } from '../../../types';
 import {
   ChatAreaProvider,
   ChatAreaProviderValue,
@@ -26,7 +28,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     ],
     sessionTitle: 'Provider Test',
     setScrollContainerRef: vi.fn(),
-    onScrollContainerScroll: vi.fn(),
     onEditMessage: vi.fn(),
     onDeleteMessage: vi.fn(),
     onRetryMessage: vi.fn(),
@@ -40,15 +41,11 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onSuggestionClick: vi.fn(),
     onOrganizeInfoClick: vi.fn(),
     onFollowUpSuggestionClick: vi.fn(),
-    onTextToSpeech: vi.fn(),
     onGenerateCanvas: vi.fn(),
     onContinueGeneration: vi.fn(),
-    ttsMessageId: null,
     onQuickTTS: vi.fn(async () => null),
-    t: (key: string) => key,
-    language: 'zh',
     chatInputHeight: 0,
-    appSettings: { showWelcomeSuggestions: true } as any,
+    appSettings: { showWelcomeSuggestions: true } as AppSettings,
     currentModelId: 'gemini-3.1-pro-preview',
     onOpenSidePanel: vi.fn(),
     onQuote: vi.fn(),
@@ -59,12 +56,12 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     appSettings: {
       isSystemAudioRecordingEnabled: false,
       isPasteRichTextAsMarkdownEnabled: true,
-    } as any,
+    } as AppSettings,
     currentChatSettings: {
       modelId: 'gemini-3.1-pro-preview',
       ttsVoice: 'Aoede',
       thinkingLevel: 'MEDIUM',
-    } as any,
+    } as ChatSettings,
     setAppFileError: vi.fn(),
     activeSessionId: 'session-1',
     commandedInput: null,
@@ -82,7 +79,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onTranscribeAudio: vi.fn(async () => null),
     isProcessingFile: false,
     fileError: null,
-    t: (key: string) => key as any,
     isImagenModel: false,
     isImageEditModel: false,
     aspectRatio: '1:1',
@@ -110,7 +106,6 @@ const createProviderValue = (): ChatAreaProviderValue => ({
     onEditLastUserMessage: vi.fn(),
     onTogglePip: vi.fn(),
     isPipActive: false,
-    isHistorySidebarOpen: false,
     generateQuadImages: false,
     onToggleQuadImages: vi.fn(),
     setCurrentChatSettings: vi.fn(),
@@ -180,11 +175,28 @@ describe('ChatAreaContext', () => {
   });
 
   it('throws when a slice hook is used outside ChatAreaProvider', () => {
-    expect(() => {
-      act(() => {
-        root.render(<OutsideProviderProbe />);
-      });
-    }).toThrow(/ChatAreaProvider/);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const suppressExpectedProviderError = (event: ErrorEvent) => {
+      const message =
+        event.error instanceof Error ? event.error.message : typeof event.message === 'string' ? event.message : '';
+
+      if (message.includes('ChatAreaProvider')) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('error', suppressExpectedProviderError);
+
+    try {
+      expect(() => {
+        act(() => {
+          root.render(<OutsideProviderProbe />);
+        });
+      }).toThrow(/ChatAreaProvider/);
+    } finally {
+      window.removeEventListener('error', suppressExpectedProviderError);
+      consoleErrorSpy.mockRestore();
+    }
   });
 
   it('exposes the message-list and chat-input slices from one provider value', () => {
@@ -192,9 +204,11 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={value}>
-          <HookProbe />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={value}>
+            <HookProbe />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 
@@ -210,9 +224,11 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={initialValue}>
-          <MessageListRenderProbe onRender={onRender} />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={initialValue}>
+            <MessageListRenderProbe onRender={onRender} />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 
@@ -228,9 +244,11 @@ describe('ChatAreaContext', () => {
 
     act(() => {
       root.render(
-        <ChatAreaProvider value={updatedValue}>
-          <MessageListRenderProbe onRender={onRender} />
-        </ChatAreaProvider>
+        <I18nProvider>
+          <ChatAreaProvider value={updatedValue}>
+            <MessageListRenderProbe onRender={onRender} />
+          </ChatAreaProvider>
+        </I18nProvider>
       );
     });
 

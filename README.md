@@ -216,6 +216,46 @@ npm run build    # 构建生产版本
 npm run preview  # 本地预览构建结果
 ```
 
+### 质量检查
+
+```bash
+npm run typecheck
+npm run lint
+npm run test
+npm run knip
+npm run build
+
+# 或者一次性执行
+npm run verify
+```
+
+如果只想验证 Gemini Code Execution 相关链路，可以执行：
+
+```bash
+npm run test:code-execution
+```
+
+这个命令覆盖：
+- 文本 / CSV / 代码文件的 MIME 与上传策略
+- Code Execution 请求构造与多轮历史回放
+- 流式 `thoughtSignature` 保留
+- Live API 中 `codeExecutionResult.output` 展示
+
+如果你想用真实 `GEMINI_API_KEY` 做一次手动联调检查，也可以执行：
+
+```bash
+GEMINI_API_KEY=your_key_here npm run verify:code-execution:api
+```
+
+可选环境变量：
+- `CODE_EXECUTION_MODEL`：覆盖默认模型（默认 `gemini-2.5-flash`）
+
+这个脚本会：
+- 上传一个临时 CSV 文件，并显式使用 `text/csv`
+- 发起一次启用 `codeExecution` 的请求
+- 检查响应里是否同时出现 `executableCode` 和 `codeExecutionResult`
+- 复用第一轮完整模型内容发起第二轮追问，验证多轮历史可继续使用
+
 ---
 
 ## 技术架构
@@ -223,7 +263,7 @@ npm run preview  # 本地预览构建结果
 | 层级 | 技术栈 |
 | :--- | :--- |
 | **核心框架** | React 18 + TypeScript 5.5 + Vite 5 |
-| **样式方案** | Tailwind CSS 4.2 + CSS 变量主题系统 |
+| **样式方案** | Tailwind CSS 4 + CSS 变量主题系统 |
 | **持久化层** | 原生 IndexedDB（db.ts 封装），支持 Web Locks 跨标签写锁 |
 | **Gemini SDK** | @google/genai 1.2+，含流式 / 非流式消息、文件上传、图片生成、TTS、转录 |
 | **音频引擎** | AudioWorklet API（实时流处理）+ 浏览器端 Worker 音频预处理 / 压缩流程 |

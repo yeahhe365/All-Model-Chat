@@ -5,7 +5,7 @@ interface LevelButtonProps {
     active: boolean;
     onClick: () => void;
     label: string;
-    icon: React.ReactNode;
+    icon: React.ReactElement<{ size?: number; strokeWidth?: number }>;
 }
 
 export const LevelButton: React.FC<LevelButtonProps> = ({ active, onClick, label, icon }) => (
@@ -18,7 +18,7 @@ export const LevelButton: React.FC<LevelButtonProps> = ({ active, onClick, label
         }`}
     >
         <div className={active ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}>
-            {React.cloneElement(icon as React.ReactElement, { size: 14, strokeWidth: 2 } as any)}
+            {React.cloneElement(icon, { size: 14, strokeWidth: 2 })}
         </div>
         <span className={`text-[10px] font-bold ${active ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)]'}`}>{label}</span>
     </button>

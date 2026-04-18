@@ -1,7 +1,6 @@
 
 
-
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
 import { useModels } from '../core/useModels';
 import { useChatHistory } from './useChatHistory';
@@ -20,6 +19,8 @@ import { useLocalPythonAgent } from '../features/useLocalPythonAgent';
 import { useChatStore } from '../../stores/chatStore';
 import { useMessageActions } from './messages/useMessageActions';
 import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
+import { createLiveClientFunctions } from '../live-api/liveClientFunctions';
+import { pyodideService } from '../../services/pyodideService';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
 
@@ -38,7 +39,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const isAppProcessingFile = useChatStore(s => s.isAppProcessingFile);
     const aspectRatio = useChatStore(s => s.aspectRatio);
     const imageSize = useChatStore(s => s.imageSize);
-    const ttsMessageId = useChatStore(s => s.ttsMessageId);
     const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
 
     const setActiveSessionId = useChatStore((s) => s.setActiveSessionId);
@@ -52,7 +52,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const setEditMode = useChatStore((s) => s.setEditMode);
     const setIsAppProcessingFile = useChatStore((s) => s.setIsAppProcessingFile);
     const setAspectRatio = useChatStore((s) => s.setAspectRatio);
-    const setTtsMessageId = useChatStore((s) => s.setTtsMessageId);
     const setIsSwitchingModel = useChatStore((s) => s.setIsSwitchingModel);
     const setGeneratingTitleSessionIds = useChatStore((s) => s.setGeneratingTitleSessionIds);
     const updateAndPersistSessions = useChatStore((s) => s.updateAndPersistSessions);
@@ -62,7 +61,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
 
     // Non-state values from store
     const activeJobs = useChatStore.getState()._activeJobs;
-    const userScrolledUp = useChatStore.getState()._userScrolledUp;
+    const userScrolledUpRef = useChatStore.getState()._userScrolledUp;
     const fileDraftsRef = useChatStore.getState()._fileDrafts;
 
     // Aliases
@@ -80,8 +79,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const historyHandler = useChatHistory({
         appSettings, setSavedSessions, setSavedGroups, setActiveSessionId, setActiveMessages,
         setEditingMessageId, setCommandedInput, setSelectedFiles, activeJobs,
-        updateAndPersistSessions: updateAndPersistSessions as any, activeChat, language, updateAndPersistGroups: updateAndPersistGroups as any,
-        userScrolledUp, selectedFiles, fileDraftsRef, activeSessionId,
+        updateAndPersistSessions, activeChat, language, updateAndPersistGroups,
+        userScrolledUpRef, selectedFiles, fileDraftsRef, activeSessionId,
         savedSessions
     });
 
@@ -108,11 +107,11 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const scenarioHandler = usePreloadedScenarios({
         appSettings,
         setAppSettings,
-        updateAndPersistSessions: updateAndPersistSessions as any,
+        updateAndPersistSessions,
         setActiveSessionId,
     });
 
-    const scrollHandler = useChatScroll({ userScrolledUp });
+    const scrollHandler = useChatScroll();
 
     const messageSender = useMessageSender({
         appSettings,
@@ -125,7 +124,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setAppFileError,
         aspectRatio,
         imageSize,
-        userScrolledUp,
+        userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
         activeJobs,
@@ -147,17 +146,25 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setEditMode,
         setAppFileError,
         updateAndPersistSessions,
-        userScrolledUp,
+        userScrolledUpRef,
         handleSendMessage: messageSender.handleSendMessage,
         setSessionLoading,
     });
 
-    const { handleTextToSpeech, handleQuickTTS } = useTextToSpeechHandler({
+    const liveClientFunctions = useMemo(
+        () =>
+            createLiveClientFunctions({
+                isLocalPythonEnabled:
+                    !!currentChatSettings.isLocalPythonEnabled || !!appSettings.isLocalPythonEnabled,
+                selectedFiles,
+                runPython: (code, options) => pyodideService.runPython(code, options),
+            }),
+        [appSettings.isLocalPythonEnabled, currentChatSettings.isLocalPythonEnabled, selectedFiles],
+    );
+
+    const { handleQuickTTS } = useTextToSpeechHandler({
         appSettings,
         currentChatSettings,
-        ttsMessageId,
-        setTtsMessageId,
-        updateAndPersistSessions,
     });
 
     useAutoTitling({ appSettings, activeChat, updateAndPersistSessions, language, generatingTitleSessionIds, setGeneratingTitleSessionIds, sessionKeyMapRef });
@@ -180,7 +187,7 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleStopGenerating: messageActions.handleStopGenerating,
         startNewChat,
         handleTogglePinSession: historyHandler.handleTogglePinSession,
-        userScrolledUp
+        userScrolledUpRef
     });
 
     // Auto-Agent for Local Python
@@ -190,7 +197,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         currentChatSettings,
         isLoading,
         activeSessionId,
-        updateMessageContent: chatActions.handleUpdateMessageContent,
         onContinueGeneration: messageActions.handleContinueGeneration,
         updateAndPersistSessions
     });
@@ -241,7 +247,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         isSwitchingModel,
         aspectRatio,
         imageSize,
-        ttsMessageId,
 
         // Persistence
         updateAndPersistSessions,
@@ -250,7 +255,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         // Scroll
         scrollContainerRef: scrollHandler.scrollContainerRef,
         setScrollContainerRef: scrollHandler.setScrollContainerRef,
-        onScrollContainerScroll: scrollHandler.handleScroll,
 
         // History handlers
         loadChatSession,
@@ -288,7 +292,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleDeleteMessage: messageActions.handleDeleteMessage,
         handleRetryMessage: messageActions.handleRetryMessage,
         handleRetryLastTurn: messageActions.handleRetryLastTurn,
-        handleTextToSpeech,
         handleQuickTTS,
         handleEditLastUserMessage: messageActions.handleEditLastUserMessage,
         handleContinueGeneration: messageActions.handleContinueGeneration,
@@ -314,5 +317,6 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         handleUpdateMessageFile: chatActions.handleUpdateMessageFile,
         handleAddUserMessage: chatActions.handleAddUserMessage,
         handleLiveTranscript: chatActions.handleLiveTranscript,
+        liveClientFunctions,
     };
 };

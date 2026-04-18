@@ -1,16 +1,16 @@
 
 import React from 'react';
 import { Type } from 'lucide-react';
-import { translations } from '../../../../utils/appUtils';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { AppSettings } from '../../../../types';
 
 interface FontSizeControlProps {
   settings: AppSettings;
   onUpdate: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  t: (key: keyof typeof translations) => string;
 }
 
-export const FontSizeControl: React.FC<FontSizeControlProps> = ({ settings, onUpdate, t }) => {
+export const FontSizeControl: React.FC<FontSizeControlProps> = ({ settings, onUpdate }) => {
+  const { t } = useI18n();
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">

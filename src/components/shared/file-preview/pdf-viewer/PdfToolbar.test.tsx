@@ -1,19 +1,67 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PdfToolbar } from './PdfToolbar';
+import { usePdfViewer } from '../../../../hooks/ui/usePdfViewer';
+import { UploadedFile } from '../../../../types';
 
-const PdfToolbarHarness: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [showSidebar, setShowSidebar] = useState(true);
-  const numPages = 5;
+const file: UploadedFile = {
+  id: 'pdf-file',
+  name: 'test.pdf',
+  type: 'application/pdf',
+  size: 1,
+  dataUrl: 'blob:test-pdf',
+  uploadState: 'active',
+};
+
+const secondFile: UploadedFile = {
+  ...file,
+  id: 'pdf-file-2',
+  name: 'test-2.pdf',
+  dataUrl: 'blob:test-pdf-2',
+};
+
+const PdfToolbarHarnessInner: React.FC<{ file: UploadedFile }> = ({ file }) => {
+  const {
+    numPages,
+    currentPage,
+    scale,
+    showSidebar,
+    containerRef,
+    setPageRef,
+    onDocumentLoadSuccess,
+    scrollToPage,
+    previousPage,
+    nextPage,
+    handlePageInputCommit,
+    handleZoomIn,
+    handleZoomOut,
+    handleRotate,
+    toggleSidebar,
+  } = usePdfViewer(file);
+
+  useEffect(() => {
+    onDocumentLoadSuccess({ numPages: 5 });
+  }, [onDocumentLoadSuccess]);
 
   return (
     <div>
-      <button type="button" onClick={() => setCurrentPage(4)}>
+      <div ref={containerRef}>
+        {Array.from({ length: 5 }, (_, index) => {
+          const pageNumber = index + 1;
+          return (
+            <div
+              key={pageNumber}
+              data-testid={`page-${pageNumber}`}
+              ref={(element) => setPageRef(pageNumber, element)}
+            >
+              Page {pageNumber}
+            </div>
+          );
+        })}
+      </div>
+      <button type="button" onClick={() => scrollToPage(4)}>
         Jump to page 4
       </button>
       <PdfToolbar
@@ -21,23 +69,21 @@ const PdfToolbarHarness: React.FC = () => {
         numPages={numPages}
         scale={scale}
         showSidebar={showSidebar}
-        onPageInputCommit={(value) => {
-          const parsed = Number.parseInt(value, 10);
-          if (!Number.isNaN(parsed) && parsed >= 1 && parsed <= numPages) {
-            setCurrentPage(parsed);
-          }
-        }}
-        onPrevPage={() => setCurrentPage((value) => Math.max(1, value - 1))}
-        onNextPage={() => setCurrentPage((value) => Math.min(numPages, value + 1))}
-        onZoomIn={() => setScale((value) => Math.min(3, value + 0.2))}
-        onZoomOut={() => setScale((value) => Math.max(0.4, value - 0.2))}
-        onRotate={() => setRotation((value) => (value + 90) % 360)}
-        onToggleSidebar={() => setShowSidebar((value) => !value)}
+        onPageInputCommit={handlePageInputCommit}
+        onPrevPage={previousPage}
+        onNextPage={nextPage}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onRotate={handleRotate}
+        onToggleSidebar={toggleSidebar}
       />
-      <div data-testid="rotation">{rotation}</div>
     </div>
   );
 };
+
+const PdfToolbarHarness: React.FC<{ file: UploadedFile }> = ({ file }) => (
+  <PdfToolbarHarnessInner key={file.id} file={file} />
+);
 
 describe('PdfToolbar', () => {
   let container: HTMLDivElement;
@@ -48,6 +94,18 @@ describe('PdfToolbar', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
+    Object.defineProperty(globalThis, 'IntersectionObserver', {
+      configurable: true,
+      value: class {
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    });
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
   });
 
   afterEach(() => {
@@ -60,7 +118,7 @@ describe('PdfToolbar', () => {
 
   it('keeps the typed page draft while the current page changes before commit', async () => {
     await act(async () => {
-      root.render(<PdfToolbarHarness />);
+      root.render(<PdfToolbarHarness file={file} />);
     });
 
     const input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
@@ -89,5 +147,31 @@ describe('PdfToolbar', () => {
     });
 
     expect(input!.value).toBe('12');
+  });
+
+  it('resets to the first page when a new keyed file is mounted', async () => {
+    await act(async () => {
+      root.render(<PdfToolbarHarness file={file} />);
+    });
+
+    const jumpButton = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent?.includes('Jump to page 4'),
+    );
+
+    expect(jumpButton).toBeTruthy();
+
+    await act(async () => {
+      jumpButton!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    let input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    expect(input?.value).toBe('4');
+
+    await act(async () => {
+      root.render(<PdfToolbarHarness file={secondFile} />);
+    });
+
+    input = container.querySelector('input[aria-label="Page number"]') as HTMLInputElement | null;
+    expect(input?.value).toBe('1');
   });
 });

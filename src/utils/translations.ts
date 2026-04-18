@@ -37,7 +37,6 @@ export const translations = {
 };
 
 export const getTranslator = (lang: 'en' | 'zh') => (key: keyof typeof translations | string, fallback?: string): string => {
-    // The type assertion is safe because we've merged all the objects.
-    const translationSet = translations as any;
+    const translationSet = translations as Record<string, Partial<Record<'en' | 'zh', string>>>;
     return translationSet[key]?.[lang] ?? fallback ?? translationSet[key]?.['en'] ?? key;
 };

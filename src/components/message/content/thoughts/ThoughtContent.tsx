@@ -15,7 +15,7 @@ interface ThoughtContentProps {
     expandCodeBlocksByDefault: boolean;
     isMermaidRenderingEnabled: boolean;
     isGraphvizRenderingEnabled: boolean;
-    t: (key: any, fallback?: string) => string;
+    t: (key: string, fallback?: string) => string;
     themeId: string;
     onOpenSidePanel: (content: SideViewContent) => void;
 }
@@ -53,6 +53,7 @@ export const ThoughtContent: React.FC<ThoughtContentProps> = ({
 
             <div className="prose prose-sm max-w-none dark:prose-invert text-[var(--theme-text-secondary)] leading-relaxed markdown-body thought-process-content opacity-90">
                 <LazyMarkdownRenderer
+                    messageId={messageId}
                     content={effectiveContent}
                     isLoading={isLoading}
                     onImageClick={onImageClick}

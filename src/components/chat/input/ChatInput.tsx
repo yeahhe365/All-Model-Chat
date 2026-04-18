@@ -1,13 +1,16 @@
 import React from 'react';
+import { useI18n } from '../../../contexts/I18nContext';
 import { createPortal } from 'react-dom';
 import { ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
 import { useChatInput } from '../../../hooks/chat-input/useChatInput';
 import { ChatInputModals } from './ChatInputModals';
 import { ChatInputFileModals } from './ChatInputFileModals';
-import { ChatInputArea, ChatInputAreaProps } from './ChatInputArea';
+import { ChatInputArea } from './ChatInputArea';
+import { ChatInputViewModel, ChatInputViewProvider } from './ChatInputViewContext';
 import { INITIAL_TEXTAREA_HEIGHT_PX } from '../../../hooks/chat-input/useChatInputState';
 
 const ChatInputComponent: React.FC = () => {
+  const { t } = useI18n();
   // 1. 获取所有核心逻辑和状态
   const {
     chatInput,
@@ -21,6 +24,8 @@ const ChatInputComponent: React.FC = () => {
     handlers,
     targetDocument,
     canSend,
+    canQueueMessage,
+    queuedSubmission,
     isAnyModalOpen,
   } = useChatInput();
 
@@ -57,7 +62,7 @@ const ChatInputComponent: React.FC = () => {
     },
     isAddingByUrl: inputState.isAddingByUrl,
     isLoading: chatInput.isLoading,
-    t: chatInput.t as any,
+    t,
     generateQuadImages: chatInput.generateQuadImages,
     onToggleQuadImages: chatInput.onToggleQuadImages,
     supportedAspectRatios: capabilities.supportedAspectRatios,
@@ -73,6 +78,9 @@ const ChatInputComponent: React.FC = () => {
   const actionsProps: ChatInputActionsProps = {
     onAttachmentAction: modalsState.handleAttachmentAction,
     disabled: inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
+    isImageModel: capabilities.isImagenModel || false,
+    isGemini3ImageModel: capabilities.isGemini3ImageModel || false,
+    isRealImagenModel: capabilities.isRealImagenModel || false,
     isGoogleSearchEnabled: chatInput.isGoogleSearchEnabled,
     onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(chatInput.onToggleGoogleSearch),
     isCodeExecutionEnabled: chatInput.isCodeExecutionEnabled,
@@ -101,7 +109,6 @@ const ChatInputComponent: React.FC = () => {
     onCancelEdit: chatInput.onCancelEdit,
     canSend: canSend,
     isWaitingForUpload: inputState.isWaitingForUpload,
-    t: chatInput.t as any,
     onTranslate: handlers.handleTranslate,
     isTranslating: inputState.isTranslating,
     inputText: inputState.inputText,
@@ -114,10 +121,12 @@ const ChatInputComponent: React.FC = () => {
     isLiveMuted: liveAPI.isMuted,
     onToggleLiveMute: liveAPI.toggleMute,
     onFastSendMessage: handlers.handleFastSubmit,
+    canQueueMessage,
+    onQueueMessage: handlers.queueCurrentSubmission,
   };
 
   // 4. 组装输入区域核心参数
-  const areaProps: ChatInputAreaProps = {
+  const areaProps: ChatInputViewModel = {
     toolbarProps,
     actionsProps,
     slashCommandProps: {
@@ -140,7 +149,7 @@ const ChatInputComponent: React.FC = () => {
       onKeyDown: handlers.handleKeyDown,
       onPaste: handlers.handlePaste,
       textareaRef: inputState.textareaRef,
-      placeholder: chatInput.t('chatInputPlaceholder'),
+      placeholder: t('chatInputPlaceholder'),
       disabled:
         isAnyModalOpen ||
         voiceState.isTranscribing ||
@@ -154,6 +163,18 @@ const ChatInputComponent: React.FC = () => {
       quotes: inputState.quotes,
       onRemoveQuote: (index: number) => inputState.setQuotes((prev) => prev.filter((_, i) => i !== index)),
     },
+    queuedSubmissionProps: queuedSubmission
+      ? {
+          title: 'Next Up',
+          previewText:
+            queuedSubmission.inputText.trim() ||
+            queuedSubmission.textToSend.trim() ||
+            `${queuedSubmission.files.length} attachment${queuedSubmission.files.length > 1 ? 's' : ''}`,
+          fileCount: queuedSubmission.files.length,
+          onEdit: handlers.restoreQueuedSubmission,
+          onRemove: handlers.removeQueuedSubmission,
+        }
+      : undefined,
     layoutProps: {
       isFullscreen: inputState.isFullscreen,
       isPipActive: chatInput.isPipActive,
@@ -199,12 +220,15 @@ const ChatInputComponent: React.FC = () => {
       error: liveAPI.error,
       onDisconnect: liveAPI.disconnect,
     },
-    t: chatInput.t as any,
     themeId: chatInput.themeId,
   };
 
   // 5. 渲染 UI
-  const chatInputContent = <ChatInputArea {...areaProps} />;
+  const chatInputContent = (
+    <ChatInputViewProvider value={areaProps}>
+      <ChatInputArea />
+    </ChatInputViewProvider>
+  );
 
   return (
     <>
@@ -227,7 +251,6 @@ const ChatInputComponent: React.FC = () => {
         allCommandsForHelp={slashCommandState.allCommandsForHelp}
         isProcessingFile={chatInput.isProcessingFile}
         isLoading={chatInput.isLoading}
-        t={chatInput.t as any}
         initialContent={modalsState.editingFile?.textContent || ''}
         initialFilename={modalsState.editingFile?.name || ''}
         isSystemAudioRecordingEnabled={chatInput.appSettings.isSystemAudioRecordingEnabled}
@@ -245,13 +268,16 @@ const ChatInputComponent: React.FC = () => {
         showTokenModal={localFileState.showTokenModal}
         setShowTokenModal={localFileState.setShowTokenModal}
         previewFile={localFileState.previewFile}
-        setPreviewFile={localFileState.setPreviewFile}
+        onClosePreview={localFileState.closePreviewFile}
         inputText={inputState.inputText}
         selectedFiles={chatInput.selectedFiles}
-        appSettings={chatInput.appSettings}
+        appSettings={{
+          ...chatInput.appSettings,
+          ...chatInput.currentChatSettings,
+          modelId: chatInput.currentChatSettings.modelId,
+        }}
         availableModels={chatInput.availableModels}
         currentModelId={chatInput.currentChatSettings.modelId}
-        t={chatInput.t as any}
         isGemini3={capabilities.isGemini3}
         isPreviewEditable={localFileState.isPreviewEditable}
         onSaveTextFile={localFileState.handleSavePreviewTextFile}

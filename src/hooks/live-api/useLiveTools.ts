@@ -32,12 +32,12 @@ export const useLiveTools = ({ clientFunctions, sessionRef }: UseLiveToolsProps)
                             name: callName,
                             response: { result: result }
                         });
-                    } catch (e: any) {
+                    } catch (e) {
                         console.error(`Error executing function ${callName}`, e);
                         functionResponses.push({
                             id: call.id,
                             name: callName,
-                            response: { error: e.message }
+                            response: { error: e instanceof Error ? e.message : String(e) }
                         });
                     }
                 } else {

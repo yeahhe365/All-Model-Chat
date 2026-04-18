@@ -57,6 +57,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
+  const activeTabLabelKey = tabs.find((tab) => tab.id === activeTab)?.labelKey ?? 'settingsTitle';
+
   return (
     <>
         <Modal 
@@ -78,7 +80,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* Desktop Header */}
                 <header className="hidden md:flex items-center px-8 py-6 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-[var(--theme-text-primary)] tracking-tight">
-                        {t(tabs.find(t => t.id === activeTab)?.labelKey as any)}
+                        {t(activeTabLabelKey)}
                     </h2>
                 </header>
 

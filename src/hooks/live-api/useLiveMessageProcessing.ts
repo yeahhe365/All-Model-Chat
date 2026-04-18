@@ -41,6 +41,10 @@ export const useLiveMessageProcessing = ({
         }
     }, [onTranscript]);
 
+    const clearBufferedAudio = useCallback(() => {
+        audioChunksRef.current = [];
+    }, []);
+
     const handleMessage = useCallback(async (msg: LiveServerMessage) => {
         // 1. Handle Text/Code/Audio Content (Gemini 3.1 may return multiple parts per event)
         if (msg.serverContent?.modelTurn?.parts) {
@@ -68,7 +72,10 @@ export const useLiveMessageProcessing = ({
                     if (onTranscript) onTranscript(codeBlock, 'model', false, 'content');
                 }
                 if (part.codeExecutionResult) {
-                    const resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                    let resultBlock = `\n> Execution Result: ${part.codeExecutionResult.outcome}\n`;
+                    if (part.codeExecutionResult.output) {
+                        resultBlock += `\n\`\`\`\n${part.codeExecutionResult.output}\n\`\`\`\n`;
+                    }
                     if (onTranscript) onTranscript(resultBlock, 'model', false, 'content');
                 }
             }
@@ -122,5 +129,5 @@ export const useLiveMessageProcessing = ({
         }
     }, [playAudioChunk, stopAudioPlayback, onTranscript, handleToolCall, setSessionHandle, sessionHandleRef, finalizeAudio]);
 
-    return { handleMessage };
+    return { handleMessage, clearBufferedAudio };
 };

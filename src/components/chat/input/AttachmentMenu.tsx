@@ -2,7 +2,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, FolderUp } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { useI18n } from '../../../contexts/I18nContext';
+import type { AttachmentAction } from '../../../types';
 import { 
   IconUpload, 
   IconGallery, 
@@ -16,18 +17,17 @@ import {
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 
-export type AttachmentAction = 'upload' | 'gallery' | 'camera' | 'recorder' | 'id' | 'url' | 'text' | 'screenshot' | 'folder' | 'zip';
-
 interface AttachmentMenuProps {
     onAction: (action: AttachmentAction) => void;
     disabled: boolean;
-    t: (key: keyof typeof translations) => string;
+    isImageModel?: boolean;
 }
 
 const attachIconSize = 20;
-const menuIconSize = 18; // Consistent icon size for menu items
+const menuIconSize = 18;
 
-export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, t }) => {
+export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabled, isImageModel }) => {
+    const { t } = useI18n();
     const {
         isOpen,
         menuPosition,
@@ -44,7 +44,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         onAction(action);
     };
     
-    const menuItems: { labelKey: keyof typeof translations, icon: React.ReactNode, action: AttachmentAction }[] = [
+    const menuItems = [
         { labelKey: 'attachMenu_upload', icon: <IconUpload size={menuIconSize} />, action: 'upload' },
         { labelKey: 'attachMenu_importFolder', icon: <FolderUp size={menuIconSize} />, action: 'folder' },
         { labelKey: 'attachMenu_importZip', icon: <IconZip size={menuIconSize} />, action: 'zip' },
@@ -54,7 +54,17 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
         { labelKey: 'attachMenu_recordAudio', icon: <IconMicrophone size={menuIconSize} />, action: 'recorder' },
         { labelKey: 'attachMenu_addById', icon: <IconLink size={menuIconSize} />, action: 'id' },
         { labelKey: 'attachMenu_createText', icon: <IconFileEdit size={menuIconSize} />, action: 'text' }
-    ];
+    ] as const;
+
+    const filteredMenuItems = isImageModel
+        ? menuItems.filter((item) =>
+            item.action === 'upload'
+            || item.action === 'gallery'
+            || item.action === 'camera'
+            || item.action === 'screenshot'
+            || item.action === 'id'
+        )
+        : menuItems;
 
     return (
         <div className="relative" ref={containerRef}>
@@ -79,7 +89,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                     style={menuPosition}
                     role="menu"
                 >
-                    {menuItems.map(item => (
+                    {filteredMenuItems.map(item => (
                         <button key={item.action} onClick={() => handleAction(item.action)} className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3.5 transition-colors" role="menuitem">
                             <span className="text-[var(--theme-text-secondary)]">{item.icon}</span>
                             <span className="font-medium">{t(item.labelKey)}</span>

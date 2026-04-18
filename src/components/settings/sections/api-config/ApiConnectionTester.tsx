@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Activity, Loader2, XCircle } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { Select } from '../../../shared/Select';
 import { ModelOption } from '../../../../types';
 
@@ -12,7 +13,6 @@ interface ApiConnectionTesterProps {
     availableModels?: ModelOption[];
     testModelId?: string;
     onModelChange?: (id: string) => void;
-    t: (key: string) => string;
 }
 
 export const ApiConnectionTester: React.FC<ApiConnectionTesterProps> = ({
@@ -23,8 +23,8 @@ export const ApiConnectionTester: React.FC<ApiConnectionTesterProps> = ({
     availableModels,
     testModelId,
     onModelChange,
-    t
 }) => {
+    const { t } = useI18n();
     return (
         <div className="pt-2 flex flex-col gap-2">
             <div className="flex items-center gap-2">

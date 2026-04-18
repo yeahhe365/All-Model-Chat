@@ -1,17 +1,17 @@
 
 import React from 'react';
 import { Quote, Trash2 } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { LazyMarkdownRenderer } from '../../../message/LazyMarkdownRenderer';
-import { translations } from '../../../../utils/appUtils';
 
 interface ChatQuoteDisplayProps {
     quotes: string[];
     onRemoveQuote: (index: number) => void;
     themeId: string;
-    t: (key: keyof typeof translations) => string;
 }
 
-export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRemoveQuote, themeId, t }) => {
+export const ChatQuoteDisplay: React.FC<ChatQuoteDisplayProps> = ({ quotes, onRemoveQuote, themeId }) => {
+    const { t } = useI18n();
     if (!quotes || quotes.length === 0) return null;
 
     return (

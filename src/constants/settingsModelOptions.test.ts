@@ -6,6 +6,7 @@ describe('settingsModelOptions', () => {
     expect(CONNECTION_TEST_MODELS.map((model) => model.id)).toEqual([
       'gemini-3-flash-preview',
       'gemini-3.1-flash-lite-preview',
+      'gemini-3.1-pro-preview',
       'gemma-4-31b-it',
       'gemma-4-26b-a4b-it',
     ]);

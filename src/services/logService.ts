@@ -10,17 +10,26 @@ export interface LogEntry {
   level: LogLevel;
   category: LogCategory;
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface TokenUsageStats {
-    prompt: number;
-    completion: number;
+    input: number;
+    output: number;
 }
 
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;
 type TokenUsageListener = (usage: Map<string, TokenUsageStats>) => void;
+
+interface LogOptions {
+  category?: LogCategory;
+  data?: unknown;
+}
+
+interface ErrorLogOptions extends LogOptions {
+  error?: unknown;
+}
 
 const API_USAGE_STORAGE_KEY = 'chatApiUsageData';
 const TOKEN_USAGE_STORAGE_KEY = 'chatTokenUsageData';
@@ -38,7 +47,9 @@ class LogServiceImpl {
   
   // Batching Buffer
   private logBuffer: LogEntry[] = [];
-  private flushTimer: any = null;
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
+  private activeFlushPromise: Promise<void> | null = null;
+  private isClearing = false;
 
   constructor() {
     this.loadApiKeyUsage();
@@ -49,7 +60,7 @@ class LogServiceImpl {
 
   // --- Core Logging Logic ---
 
-  private createLogEntry(level: LogLevel, category: LogCategory, message: string, data?: any): LogEntry {
+  private createLogEntry(level: LogLevel, category: LogCategory, message: string, data?: unknown): LogEntry {
     return {
       timestamp: new Date(),
       level,
@@ -59,12 +70,15 @@ class LogServiceImpl {
     };
   }
 
-  private safeSerialize(data: any): any {
+  private safeSerialize(data: unknown): unknown {
     if (data === undefined || data === null) return undefined;
     try {
       // Simple circular reference handler
-      const seen = new WeakSet();
-      return JSON.parse(JSON.stringify(data, (_key, value) => {
+      const seen = new WeakSet<object>();
+      return JSON.parse(JSON.stringify(data, (_key: string, value: unknown) => {
+        if (value instanceof Error) {
+          return this.serializeError(value);
+        }
         if (typeof value === 'object' && value !== null) {
           if (seen.has(value)) return '[Circular]';
           seen.add(value);
@@ -75,26 +89,91 @@ class LogServiceImpl {
         }
         return value;
       }));
-    } catch (e) {
+    } catch {
       return '[Serialization Failed]';
     }
   }
 
+  private isLogOptions(value: unknown): value is LogOptions {
+    return typeof value === 'object' && value !== null && ('category' in value || 'data' in value);
+  }
+
+  private isErrorLogOptions(value: unknown): value is ErrorLogOptions {
+    return typeof value === 'object' && value !== null && ('error' in value || 'category' in value || 'data' in value);
+  }
+
+  private inferCategory(message: string, data?: unknown): LogCategory {
+    const dataText =
+      typeof data === 'string'
+        ? data
+        : data instanceof Error
+          ? `${data.name} ${data.message}`
+          : '';
+    const haystack = `${message} ${dataText}`.toLowerCase();
+
+    if (/\buser\b|\bclearing\b|\bdeleting\b|\brenaming\b|\bmoving\b|\bretrying\b|\brequested\b|\bcancelled\b|\bstopped\b|\bstarting new chat\b|\bmessage edit\b|\btoggling pin\b|\badding new group\b/.test(haystack)) {
+      return 'USER';
+    }
+    if (/\bapi key\b|\bauth\b|\bcredential\b|\bproxy\b|\btoken endpoint\b|\bephemeral token\b|\blocked key\b/.test(haystack)) {
+      return 'AUTH';
+    }
+    if (/\bfile\b|\bupload\b|\bdownload\b|\bexport\b|\bimport\b|\bpdf\b|\bdocx\b|\bzip\b|\baudio\b|\bimage\b|\bpreview\b/.test(haystack)) {
+      return 'FILE';
+    }
+    if (/\bindexeddb\b|\bdb\b|\bdatabase\b|\bpersist\b|\bstorage\b|\bsession\b|\bhistory\b|\bgroup\b|\bscenario\b|\bsettings\b|\bsync\b/.test(haystack)) {
+      return 'DB';
+    }
+    if (/\bstream(?:ing)?\b|\bconnect(?:ed|ion)?\b|\breconnect(?:ing|ion)?\b|\bdisconnect(?:ed|ion)?\b|\bfetch\b|\bnetwork\b|\bpoll(?:ing)?\b|\blive api\b|\bwebsocket\b|\bhttp\b/.test(haystack)) {
+      return 'NETWORK';
+    }
+    if (/\bmodel\b|\btoken(?:s)?\b|\btranslate|translation\b|\bsuggestions?\b|\btitle generation\b|\btts\b|\bspeech\b|\btranscrib(?:e|ing|ed)\b|\bgeneratecontent\b|\bgemini\b|\bimagen\b|\bpyodide\b|\blocalpython\b|\bcanvas visualization\b/.test(haystack)) {
+      return 'MODEL';
+    }
+
+    return 'SYSTEM';
+  }
+
+  private resolveCategory(message: string, options: unknown): LogCategory {
+    if (this.isLogOptions(options) && options.category) {
+      return options.category;
+    }
+
+    return this.inferCategory(message, this.resolveData(options));
+  }
+
+  private resolveData(options: unknown): unknown {
+    return this.isLogOptions(options) ? options.data : options;
+  }
+
+  private scheduleFlush() {
+    if (this.isClearing || this.flushTimer) return;
+    this.flushTimer = setTimeout(() => {
+      void this.flush();
+    }, FLUSH_INTERVAL_MS);
+  }
+
   private queueLog(entry: LogEntry) {
+    if (this.isClearing) return;
+
     this.logBuffer.push(entry);
     
     // Notify listeners immediately for "live" feeling, even if not persisted yet
     this.notifyListeners([entry]);
 
     if (this.logBuffer.length >= FLUSH_THRESHOLD) {
-      this.flush();
-    } else if (!this.flushTimer) {
-      this.flushTimer = setTimeout(() => this.flush(), FLUSH_INTERVAL_MS);
+      void this.flush();
+    } else {
+      this.scheduleFlush();
     }
   }
 
   private async flush() {
     if (this.logBuffer.length === 0) return;
+
+    if (this.activeFlushPromise) {
+      await this.activeFlushPromise;
+      if (this.logBuffer.length === 0) return;
+    }
     
     if (this.flushTimer) {
       clearTimeout(this.flushTimer);
@@ -103,12 +182,31 @@ class LogServiceImpl {
 
     const logsToSave = [...this.logBuffer];
     this.logBuffer = []; // Clear buffer immediately
+    let flushSucceeded = false;
 
-    try {
-      await dbService.addLogs(logsToSave);
-    } catch (e) {
-      console.error("Failed to flush logs to DB:", e);
-      // In a critical system we might retry, but for logs we prefer not to block/explode
+    let flushPromise: Promise<void> | null = null;
+    flushPromise = (async () => {
+      try {
+        await dbService.addLogs(logsToSave);
+        flushSucceeded = true;
+      } catch (e) {
+        console.error("Failed to flush logs to DB:", e);
+        if (!this.isClearing) {
+          this.logBuffer = [...logsToSave, ...this.logBuffer];
+          this.scheduleFlush();
+        }
+      }
+    })().finally(() => {
+      if (this.activeFlushPromise === flushPromise) {
+        this.activeFlushPromise = null;
+      }
+    });
+
+    this.activeFlushPromise = flushPromise;
+    await flushPromise;
+
+    if (flushSucceeded && this.logBuffer.length > 0 && !this.isClearing) {
+      await this.flush();
     }
   }
 
@@ -160,13 +258,33 @@ class LogServiceImpl {
 
   // --- Token Usage Tracking ---
 
+  private normalizeTokenUsageStats(stats: unknown): TokenUsageStats {
+      if (!stats || typeof stats !== 'object') {
+          return { input: 0, output: 0 };
+      }
+
+      const usage = stats as {
+          input?: number;
+          output?: number;
+          prompt?: number;
+          completion?: number;
+      };
+
+      return {
+          input: usage.input ?? usage.prompt ?? 0,
+          output: usage.output ?? usage.completion ?? 0,
+      };
+  }
+
   private loadTokenUsage() {
       try {
           const storedUsage = localStorage.getItem(TOKEN_USAGE_STORAGE_KEY);
           if (storedUsage) {
               const parsed = JSON.parse(storedUsage);
               if (Array.isArray(parsed)) {
-                  this.tokenUsage = new Map(parsed);
+                  this.tokenUsage = new Map(
+                    parsed.map(([modelId, stats]) => [modelId, this.normalizeTokenUsageStats(stats)]),
+                  );
               }
           }
       } catch (e) {
@@ -188,15 +306,39 @@ class LogServiceImpl {
     }
   }
 
-  public recordTokenUsage(modelId: string, prompt: number, completion: number) {
+  public recordTokenUsage(
+    modelId: string,
+    usage: {
+      promptTokens: number;
+      cachedPromptTokens?: number;
+      completionTokens: number;
+      thoughtTokens?: number;
+      toolUsePromptTokens?: number;
+      totalTokens?: number;
+    },
+  ) {
     if (!modelId) return;
-    const current = this.tokenUsage.get(modelId) || { prompt: 0, completion: 0 };
+    const current = this.tokenUsage.get(modelId) || { input: 0, output: 0 };
+    const inputTokens = Math.max(usage.promptTokens - (usage.cachedPromptTokens ?? 0), 0) + (usage.toolUsePromptTokens ?? 0);
+    const outputTokens = usage.completionTokens + (usage.thoughtTokens ?? 0);
     this.tokenUsage.set(modelId, {
-        prompt: current.prompt + prompt,
-        completion: current.completion + completion
+        input: current.input + inputTokens,
+        output: current.output + outputTokens,
     });
     this.saveTokenUsage();
     this.notifyTokenUsageListeners();
+    void dbService.addApiUsageRecord({
+      timestamp: Date.now(),
+      modelId,
+      promptTokens: usage.promptTokens,
+      cachedPromptTokens: usage.cachedPromptTokens ?? 0,
+      completionTokens: usage.completionTokens,
+      thoughtTokens: usage.thoughtTokens ?? 0,
+      toolUsePromptTokens: usage.toolUsePromptTokens ?? 0,
+      totalTokens: usage.totalTokens ?? (inputTokens + outputTokens),
+    }).catch((error) => {
+      console.error('Failed to persist API usage record:', error);
+    });
   }
 
   // --- Public Interface ---
@@ -206,43 +348,49 @@ class LogServiceImpl {
    * Data argument is optional. 
    * Category defaults to SYSTEM if not specified in options or inferred.
    */
-  public info(message: string, options?: { category?: LogCategory, data?: any } | any) {
-    // Backwards compatibility: if options is just data object
-    const category = options?.category || 'SYSTEM';
-    const data = options?.category ? options.data : options;
+  public info(message: string, options?: LogOptions | unknown) {
+    const category = this.resolveCategory(message, options);
+    const data = this.resolveData(options);
     this.queueLog(this.createLogEntry('INFO', category, message, data));
   }
 
-  public warn(message: string, options?: { category?: LogCategory, data?: any } | any) {
-    const category = options?.category || 'SYSTEM';
-    const data = options?.category ? options.data : options;
+  public warn(message: string, options?: LogOptions | unknown) {
+    const category = this.resolveCategory(message, options);
+    const data = this.resolveData(options);
     this.queueLog(this.createLogEntry('WARN', category, message, data));
   }
 
-  public error(message: string, options?: { category?: LogCategory, data?: any, error?: any } | any) {
-    const category = options?.category || 'SYSTEM';
+  public error(message: string, options?: ErrorLogOptions | unknown) {
+    const category = this.resolveCategory(message, options);
     // Extract 'error' object if passed explicitly for better stack tracing
-    let data = options?.category ? options.data : options;
-    if (options?.error) {
-        data = { ...data, error: this.serializeError(options.error) };
+    const dataCandidate = this.resolveData(options);
+    let data = dataCandidate instanceof Error ? this.serializeError(dataCandidate) : dataCandidate;
+
+    if (this.isErrorLogOptions(options) && options.error !== undefined) {
+        const serializedError = this.serializeError(options.error);
+        data =
+          typeof data === 'object' && data !== null && !Array.isArray(data)
+            ? { ...(data as Record<string, unknown>), error: serializedError }
+            : { error: serializedError, data };
     }
     this.queueLog(this.createLogEntry('ERROR', category, message, data));
   }
 
-  public debug(message: string, options?: { category?: LogCategory, data?: any } | any) {
-    const category = options?.category || 'SYSTEM';
-    const data = options?.category ? options.data : options;
+  public debug(message: string, options?: LogOptions | unknown) {
+    const category = this.resolveCategory(message, options);
+    const data = this.resolveData(options);
     this.queueLog(this.createLogEntry('DEBUG', category, message, data));
   }
 
   // Helper to extract stack traces
-  private serializeError(error: any) {
+  private serializeError(error: unknown): unknown {
       if (error instanceof Error) {
+          const normalizedError = error as Error & { cause?: unknown };
           return {
               message: error.message,
               name: error.name,
               stack: error.stack,
-              cause: (error as any).cause
+              cause: normalizedError.cause
           };
       }
       return error;
@@ -288,16 +436,27 @@ class LogServiceImpl {
   }
 
   public async clearLogs() {
+    this.isClearing = true;
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
     this.logBuffer = [];
-    await dbService.clearLogs();
-    this.apiKeyUsage.clear();
-    this.tokenUsage.clear(); // Clear token usage
-    this.saveApiKeyUsage();
-    this.saveTokenUsage();
-    // Notify listeners of clear by sending empty or a system event (optional)
-    this.info('Logs and stats cleared by user.', { category: 'USER' });
-    this.notifyApiKeyListeners();
-    this.notifyTokenUsageListeners();
+    try {
+      if (this.activeFlushPromise) {
+        await this.activeFlushPromise;
+      }
+      await dbService.clearLogs();
+      await dbService.clearApiUsage();
+      this.apiKeyUsage.clear();
+      this.tokenUsage.clear();
+      this.saveApiKeyUsage();
+      this.saveTokenUsage();
+      this.notifyApiKeyListeners();
+      this.notifyTokenUsageListeners();
+    } finally {
+      this.isClearing = false;
+    }
   }
 }
 

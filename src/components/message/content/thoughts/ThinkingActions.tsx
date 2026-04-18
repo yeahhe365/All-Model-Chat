@@ -9,7 +9,7 @@ interface ThinkingActionsProps {
     isCopied: boolean;
     onTranslate: (e: React.MouseEvent) => void;
     onCopy: (e: React.MouseEvent) => void;
-    t: (key: any, fallback?: string) => string;
+    t: (key: string, fallback?: string) => string;
 }
 
 export const ThinkingActions: React.FC<ThinkingActionsProps> = ({

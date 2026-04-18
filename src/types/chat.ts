@@ -41,6 +41,15 @@ export interface UploadedFile {
   mediaResolution?: MediaResolution; // Added for Gemini 3 per-part resolution
 }
 
+export interface PersistedSessionFileRecord {
+  id: string;
+  sessionId: string;
+  messageId: string;
+  name: string;
+  type: string;
+  rawFile: Blob;
+}
+
 export interface InputCommand {
   text: string;
   id: number;
@@ -60,20 +69,22 @@ export interface ChatMessage {
   thinkingTimeMs?: number;
   firstTokenTimeMs?: number; // Time to First Token (TTFT) in ms
   promptTokens?: number;
+  cachedPromptTokens?: number;
   completionTokens?: number;
+  toolUsePromptTokens?: number;
   totalTokens?: number;
   thoughtTokens?: number; // Added for tracking thinking tokens
   cumulativeTotalTokens?: number; // Added for cumulative token count
   audioSrc?: string; // For TTS responses
   audioAutoplay?: boolean; // Controls whether the audioSrc should play automatically on render
-  groundingMetadata?: any;
-  urlContextMetadata?: any;
+  groundingMetadata?: unknown;
+  urlContextMetadata?: unknown;
   suggestions?: string[];
   isGeneratingSuggestions?: boolean;
   stoppedByUser?: boolean;
   thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
   excludeFromContext?: boolean; // Added to exclude message from API history context
-  apiParts?: any[]; // Natively preserves API parts like executableCode and codeExecutionResult
+  apiParts?: Part[]; // Natively preserves API parts like executableCode and codeExecutionResult
 }
 
 export type ContentPart = Part;
@@ -114,6 +125,18 @@ export interface CommandInfo {
   description: string;
   icon?: string;
 }
+
+export type AttachmentAction =
+  | 'upload'
+  | 'gallery'
+  | 'camera'
+  | 'recorder'
+  | 'id'
+  | 'url'
+  | 'text'
+  | 'screenshot'
+  | 'folder'
+  | 'zip';
 
 export interface SideViewContent {
   type: 'html' | 'mermaid' | 'graphviz' | 'svg';
@@ -160,8 +183,11 @@ export interface ChatInputToolbarProps {
 }
 
 export interface ChatInputActionsProps {
-  onAttachmentAction: (action: any) => void;
+  onAttachmentAction: (action: AttachmentAction) => void;
   disabled: boolean;
+  isImageModel?: boolean;
+  isGemini3ImageModel?: boolean;
+  isRealImagenModel?: boolean;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;
@@ -183,7 +209,6 @@ export interface ChatInputActionsProps {
   onCancelEdit: () => void;
   canSend: boolean;
   isWaitingForUpload: boolean;
-  t: (key: string) => string;
   onCancelRecording: () => void;
   onTranslate: () => void;
   isTranslating: boolean;
@@ -198,4 +223,6 @@ export interface ChatInputActionsProps {
   isLiveMuted?: boolean;
   onToggleLiveMute?: () => void;
   onFastSendMessage?: () => void;
+  canQueueMessage?: boolean;
+  onQueueMessage?: () => void;
 }

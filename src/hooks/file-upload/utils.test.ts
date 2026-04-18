@@ -1,11 +1,32 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import type { AppSettings } from '../../types';
 import {
   checkBatchNeedsApiKey,
+  getEffectiveMimeType,
   getFilesRequiringFileApi,
   shouldUseFileApi,
 } from './utils';
+
+vi.mock('../../utils/appUtils', () => ({
+  isTextFile: (file: { name: string; type: string }) => {
+    const lowerName = file.name.toLowerCase();
+    return (
+      file.type.startsWith('text/') ||
+      file.type === 'application/json' ||
+      file.type === 'application/xml' ||
+      file.type === 'application/yaml' ||
+      file.type === 'text/x-python' ||
+      lowerName.endsWith('.txt') ||
+      lowerName.endsWith('.csv') ||
+      lowerName.endsWith('.py') ||
+      lowerName.endsWith('.json') ||
+      lowerName.endsWith('.xml') ||
+      lowerName.endsWith('.yaml') ||
+      lowerName.endsWith('.yml')
+    );
+  },
+}));
 
 const createFile = (name: string, type: string, size: number) => {
   const file = new File(['x'], name, { type });
@@ -26,6 +47,28 @@ const makeSettings = (overrides?: Partial<AppSettings>): AppSettings => ({
 });
 
 describe('file upload strategy limits', () => {
+  it('preserves specific text MIME types for structured text files', () => {
+    const file = createFile('dataset.csv', 'text/csv', 1024);
+
+    expect(getEffectiveMimeType(file)).toBe('text/csv');
+  });
+
+  it('infers a specific MIME type from text-based file extensions when the browser omits it', () => {
+    const file = createFile('script.py', '', 1024);
+
+    expect(getEffectiveMimeType(file)).toBe('text/x-python');
+  });
+
+  it('forces text/code files onto the Files API earlier when server-side code execution is enabled', () => {
+    const settings = makeSettings({
+      isCodeExecutionEnabled: true,
+      isLocalPythonEnabled: false,
+    });
+    const file = createFile('dataset.csv', 'text/csv', 3 * 1024 * 1024);
+
+    expect(shouldUseFileApi(file, settings)).toBe(true);
+  });
+
   it('forces oversized PDFs onto the Files API even when inline is preferred', () => {
     const settings = makeSettings();
     const file = createFile('report.pdf', 'application/pdf', 51 * 1024 * 1024);

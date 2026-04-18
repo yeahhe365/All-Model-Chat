@@ -12,7 +12,7 @@ const MIN_SCALE = 0.2;
 const MAX_SCALE = 10;
 const ZOOM_SPEED_FACTOR = 1.1;
 
-export const ImageViewer: React.FC<ImageViewerProps> = ({ file }) => {
+const ImageViewerContent: React.FC<ImageViewerProps> = ({ file }) => {
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
@@ -21,12 +21,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file }) => {
     const imageRef = useRef<HTMLImageElement>(null);
     const viewportRef = useRef<HTMLDivElement>(null);
     const lastDistRef = useRef<number | null>(null);
-
-    // Reset view when file changes
-    useEffect(() => {
-        setScale(1);
-        setPosition({ x: 0, y: 0 });
-    }, [file.id]);
 
     const handleZoom = useCallback((direction: 'in' | 'out') => {
         if (!viewportRef.current || !imageRef.current) return;
@@ -242,3 +236,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({ file }) => {
         </div>
     );
 };
+
+export const ImageViewer: React.FC<ImageViewerProps> = ({ file }) => (
+    <ImageViewerContent key={file.id} file={file} />
+);

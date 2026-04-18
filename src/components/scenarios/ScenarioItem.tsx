@@ -106,7 +106,17 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
   );
 };
 
-const ActionButton = ({ onClick, icon: Icon, label, scenario }: { onClick: (s: SavedScenario) => void, icon: any, label: string, scenario: SavedScenario }) => (
+const ActionButton = ({
+    onClick,
+    icon: Icon,
+    label,
+    scenario
+}: {
+    onClick: (s: SavedScenario) => void;
+    icon: React.ElementType;
+    label: string;
+    scenario: SavedScenario;
+}) => (
     <button
         onClick={(e) => { e.stopPropagation(); onClick(scenario); }}
         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"

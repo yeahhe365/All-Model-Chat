@@ -84,9 +84,7 @@ describe('chatStore', () => {
       isAppProcessingFile: false,
       aspectRatio: '1:1',
       imageSize: '1K',
-      ttsMessageId: null,
       isSwitchingModel: false,
-      scrollContainerRef: null,
     });
   });
 
