@@ -40,7 +40,7 @@ export const ChatInputArea: React.FC = () => {
 
     const innerContainerClass = isFullscreen
         ? "w-full max-w-6xl mx-auto flex flex-col h-full"
-        : `mx-auto w-full ${!isPipActive ? 'max-w-4xl' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
+        : `mx-auto w-full ${!isPipActive ? 'max-w-[44.8rem]' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
 
     const formClass = isFullscreen
         ? "flex-grow flex flex-col relative min-h-0"
@@ -62,7 +62,7 @@ export const ChatInputArea: React.FC = () => {
 
     return (
         <div className={wrapperClass} aria-hidden={isUIBlocked}>
-            <div className="mx-auto w-full max-w-4xl px-2 sm:px-3">
+            <div className="mx-auto w-full max-w-[44.8rem] px-2 sm:px-3">
                  {suggestionsProps && !isFullscreen && (
                     <ChatSuggestions 
                         show={suggestionsProps.show}
