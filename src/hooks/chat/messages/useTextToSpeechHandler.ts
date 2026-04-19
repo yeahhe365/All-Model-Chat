@@ -24,7 +24,9 @@ export const useTextToSpeechHandler = ({
         const { key } = keyResult;
 
         logService.info("Requesting Quick TTS for selected text");
-        const modelId = DEFAULT_TTS_MODEL_ID;
+        const modelId = currentChatSettings.modelId.includes('-tts')
+            ? currentChatSettings.modelId
+            : DEFAULT_TTS_MODEL_ID;
         const voice = appSettings.ttsVoice;
         const abortController = new AbortController();
 

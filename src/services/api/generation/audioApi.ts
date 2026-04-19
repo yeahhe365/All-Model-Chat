@@ -1,5 +1,4 @@
 
-
 import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
@@ -7,6 +6,78 @@ import type { Part } from "@google/genai";
 import { blobToBase64 } from "../../../utils/appUtils";
 import { calculateTokenStats } from '../../../utils/modelHelpers';
 import { buildExactPricingFromUsageMetadata } from '../../../utils/usagePricingTelemetry';
+import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';
+
+const SUPPORTED_TTS_VOICE_NAMES = new Set(AVAILABLE_TTS_VOICES.map((voice) => voice.id));
+const SPEAKER_VOICES_HEADER_REGEX = /^#{1,6}\s*SPEAKER VOICES(?:\s*\(.*\))?\s*$/i;
+const MARKDOWN_HEADER_REGEX = /^#{1,6}\s+\S/;
+const SPEAKER_VOICE_LINE_REGEX = /^(?:[-*]\s*)?([^:]+?)\s*:\s*([A-Za-z][\w-]*)\s*$/;
+
+const buildSingleSpeakerSpeechConfig = (voice: string) => ({
+    voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+});
+
+const extractMultiSpeakerVoiceConfig = (text: string) => {
+    const lines = text.split('\n');
+    const speakerVoiceConfigs: Array<{
+        speaker: string;
+        voiceConfig: { prebuiltVoiceConfig: { voiceName: string } };
+    }> = [];
+    const seenSpeakers = new Set<string>();
+
+    for (let index = 0; index < lines.length; index++) {
+        if (!SPEAKER_VOICES_HEADER_REGEX.test(lines[index].trim())) {
+            continue;
+        }
+
+        for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex++) {
+            const line = lines[nextIndex].trim();
+
+            if (!line) {
+                continue;
+            }
+
+            if (MARKDOWN_HEADER_REGEX.test(line)) {
+                break;
+            }
+
+            const match = line.match(SPEAKER_VOICE_LINE_REGEX);
+            if (!match) {
+                continue;
+            }
+
+            const speaker = match[1].trim();
+            const voiceName = match[2].trim();
+
+            if (
+                !speaker
+                || seenSpeakers.has(speaker)
+                || !SUPPORTED_TTS_VOICE_NAMES.has(voiceName)
+            ) {
+                continue;
+            }
+
+            speakerVoiceConfigs.push({
+                speaker,
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName },
+                },
+            });
+            seenSpeakers.add(speaker);
+
+            if (speakerVoiceConfigs.length > 2) {
+                logService.warn('Ignoring multi-speaker TTS config because more than two speakers were declared.');
+                return null;
+            }
+        }
+
+        return speakerVoiceConfigs.length === 2
+            ? { speakerVoiceConfigs }
+            : null;
+    }
+
+    return null;
+};
 
 export const generateSpeechApi = async (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> => {
     logService.info(`Generating speech with model ${modelId}`, { textLength: text.length, voice });
@@ -17,15 +88,16 @@ export const generateSpeechApi = async (apiKey: string, modelId: string, text: s
 
     try {
         const ai = await getConfiguredApiClient(apiKey);
+        const multiSpeakerVoiceConfig = extractMultiSpeakerVoiceConfig(text);
         const response = await ai.models.generateContent({
             model: modelId,
             // TTS models do not support chat history roles, just plain content parts
             contents: [{ parts: [{ text: text }] }],
             config: {
                 responseModalities: ['AUDIO'],
-                speechConfig: {
-                    voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
-                },
+                speechConfig: multiSpeakerVoiceConfig
+                    ? { multiSpeakerVoiceConfig }
+                    : buildSingleSpeakerSpeechConfig(voice),
             },
         });
 

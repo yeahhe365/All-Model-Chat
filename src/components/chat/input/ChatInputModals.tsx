@@ -37,7 +37,11 @@ const DEFAULT_TTS_CONTEXT_TEMPLATE = `# AUDIO PROFILE: [Name]
 ## THE SCENE: [Description]
 ### DIRECTOR'S NOTES
 Style: [e.g. Happy]
-Pace: [e.g. Fast]`;
+Pace: [e.g. Fast]
+
+### SPEAKER VOICES (optional)
+Speaker 1: Kore
+Speaker 2: Puck`;
 
 export const ChatInputModals: React.FC<ChatInputModalsProps> = ({
   showRecorder,

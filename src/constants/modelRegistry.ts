@@ -75,6 +75,11 @@ const MODEL_REGISTRY: RegisteredModel[] = [
     groups: ['tts'],
   },
   {
+    id: 'gemini-3.1-flash-tts-preview',
+    name: 'Gemini 3.1 Flash TTS Preview',
+    groups: ['tts'],
+  },
+  {
     id: 'gemini-2.5-flash-image',
     name: 'Nano Banana',
     groups: ['image'],
