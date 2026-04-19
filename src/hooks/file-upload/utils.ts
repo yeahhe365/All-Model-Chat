@@ -8,12 +8,13 @@ import {
     SUPPORTED_AUDIO_MIME_TYPES,
     SUPPORTED_VIDEO_MIME_TYPES
 } from '../../constants/fileConstants';
-import { AppSettings } from '../../types';
+import { AppSettings, UploadedFile } from '../../types';
 import { isTextFile } from '../../utils/appUtils';
 
-const INLINE_MAX_REQUEST_BYTES = 100 * 1024 * 1024;
-const INLINE_MAX_PDF_BYTES = 50 * 1024 * 1024;
-const INLINE_MAX_CODE_EXECUTION_TEXT_BYTES = 2 * 1024 * 1024;
+const INLINE_MAX_REQUEST_PAYLOAD_BYTES = 100 * 1024 * 1024;
+const INLINE_MAX_PDF_PAYLOAD_BYTES = 50 * 1024 * 1024;
+const INLINE_MAX_CODE_EXECUTION_TEXT_PAYLOAD_BYTES = 2 * 1024 * 1024;
+const INLINE_PART_JSON_OVERHEAD_BYTES = 512;
 
 export const formatSpeed = (bytesPerSecond: number): string => {
     if (!isFinite(bytesPerSecond) || bytesPerSecond < 0) return '';
@@ -56,6 +57,40 @@ export const getEffectiveMimeType = (file: File): string => {
     return effectiveMimeType || 'application/octet-stream';
 };
 
+const estimateBase64PayloadBytes = (rawBytes: number): number => {
+    return Math.ceil(rawBytes / 3) * 4 + INLINE_PART_JSON_OVERHEAD_BYTES;
+};
+
+const estimateTextPayloadBytes = (rawBytes: number): number => {
+    return rawBytes + INLINE_PART_JSON_OVERHEAD_BYTES;
+};
+
+const getEstimatedInlinePayloadBytes = (file: File, appSettings: AppSettings): number => {
+    const isServerCodeExecutionEnabled = !!appSettings.isCodeExecutionEnabled && !appSettings.isLocalPythonEnabled;
+    const textLike = isTextFile(file);
+
+    if (textLike && !isServerCodeExecutionEnabled) {
+        return estimateTextPayloadBytes(file.size);
+    }
+
+    return estimateBase64PayloadBytes(file.size);
+};
+
+export const getUploadLifecycleForGeminiState = (
+    state: string | null | undefined,
+): Pick<UploadedFile, 'uploadState' | 'isProcessing'> => {
+    if (state === 'ACTIVE') {
+        return { uploadState: 'active', isProcessing: false };
+    }
+
+    if (state === 'FAILED') {
+        return { uploadState: 'failed', isProcessing: false };
+    }
+
+    // Gemini can omit state immediately after upload/get; keep polling until it settles.
+    return { uploadState: 'processing_api', isProcessing: true };
+};
+
 export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean => {
     const effectiveMimeType = getEffectiveMimeType(file);
     if (!ALL_SUPPORTED_MIME_TYPES.includes(effectiveMimeType)) return false;
@@ -70,12 +105,12 @@ export const shouldUseFileApi = (file: File, appSettings: AppSettings): boolean 
         appSettings.filesApiConfig.text;
 
     const inlineLimitBytes = SUPPORTED_PDF_MIME_TYPES.includes(effectiveMimeType)
-        ? INLINE_MAX_PDF_BYTES
+        ? INLINE_MAX_PDF_PAYLOAD_BYTES
         : isServerCodeExecutionEnabled && isTextLike
-            ? INLINE_MAX_CODE_EXECUTION_TEXT_BYTES
-            : INLINE_MAX_REQUEST_BYTES;
+            ? INLINE_MAX_CODE_EXECUTION_TEXT_PAYLOAD_BYTES
+            : INLINE_MAX_REQUEST_PAYLOAD_BYTES;
 
-    return userPrefersFileApi || file.size > inlineLimitBytes;
+    return userPrefersFileApi || getEstimatedInlinePayloadBytes(file, appSettings) > inlineLimitBytes;
 };
 
 export const getFilesRequiringFileApi = (files: File[], appSettings: AppSettings): Set<File> => {
@@ -93,10 +128,10 @@ export const getFilesRequiringFileApi = (files: File[], appSettings: AppSettings
         }
 
         inlineCandidates.push(file);
-        inlinePayloadBytes += file.size;
+        inlinePayloadBytes += getEstimatedInlinePayloadBytes(file, appSettings);
     }
 
-    if (inlinePayloadBytes > INLINE_MAX_REQUEST_BYTES) {
+    if (inlinePayloadBytes > INLINE_MAX_REQUEST_PAYLOAD_BYTES) {
         inlineCandidates.forEach((file) => filesRequiringApi.add(file));
     }
 

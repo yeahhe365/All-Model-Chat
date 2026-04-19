@@ -83,10 +83,29 @@ describe('file upload strategy limits', () => {
     expect(shouldUseFileApi(file, settings)).toBe(true);
   });
 
+  it('forces binary files onto the Files API when base64 expansion pushes the inline payload past 100MB', () => {
+    const settings = makeSettings();
+    const file = createFile('clip.mp4', 'video/mp4', 76 * 1024 * 1024);
+
+    expect(shouldUseFileApi(file, settings)).toBe(true);
+  });
+
   it('promotes an inline batch to the Files API when the combined payload exceeds 100MB', () => {
     const settings = makeSettings();
     const first = createFile('frame-1.png', 'image/png', 60 * 1024 * 1024);
     const second = createFile('frame-2.png', 'image/png', 45 * 1024 * 1024);
+
+    const filesRequiringApi = getFilesRequiringFileApi([first, second], settings);
+
+    expect(filesRequiringApi.has(first)).toBe(true);
+    expect(filesRequiringApi.has(second)).toBe(true);
+    expect(checkBatchNeedsApiKey([first, second], settings)).toBe(true);
+  });
+
+  it('promotes an inline batch when encoded payload size exceeds 100MB even if raw bytes do not', () => {
+    const settings = makeSettings();
+    const first = createFile('frame-1.png', 'image/png', 38 * 1024 * 1024);
+    const second = createFile('frame-2.png', 'image/png', 38 * 1024 * 1024);
 
     const filesRequiringApi = getFilesRequiringFileApi([first, second], settings);
 

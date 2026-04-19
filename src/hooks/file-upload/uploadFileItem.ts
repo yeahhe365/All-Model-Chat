@@ -3,7 +3,7 @@ import { AppSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, fileToBlobUrl, logService } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { formatSpeed, getEffectiveMimeType, shouldUseFileApi } from './utils';
+import { formatSpeed, getEffectiveMimeType, getUploadLifecycleForGeminiState, shouldUseFileApi } from './utils';
 
 interface UploadFileItemParams {
     file: File;
@@ -114,19 +114,17 @@ export const uploadFileItem = async ({
             
             logService.info(`File uploaded, initial state: ${uploadedFileInfo.state}`, { fileInfo: uploadedFileInfo });
 
-            const uploadState = uploadedFileInfo.state === 'ACTIVE'
-                ? 'active'
-                : (uploadedFileInfo.state === 'PROCESSING' ? 'processing_api' : 'failed');
+            const { uploadState, isProcessing } = getUploadLifecycleForGeminiState(uploadedFileInfo.state);
 
             setSelectedFiles(prev => prev.map(f => f.id === fileId ? {
                 ...f,
-                isProcessing: uploadState === 'processing_api', // Only false if active or failed
+                isProcessing,
                 progress: 100,
                 fileUri: uploadedFileInfo.uri,
                 fileApiName: uploadedFileInfo.name,
                 rawFile: file, // Preserve local file reference for preview
                 uploadState: uploadState,
-                error: uploadedFileInfo.state === 'FAILED' ? 'File API processing failed' : (f.error || undefined),
+                error: uploadState === 'failed' ? 'File API processing failed' : (f.error || undefined),
                 abortController: undefined,
                 uploadSpeed: undefined, // Clear speed on complete
             } : f));

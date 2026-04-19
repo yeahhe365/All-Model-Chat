@@ -33,6 +33,7 @@ export const uploadFileApi = async (
             config: {
                 displayName: displayName,
                 mimeType: mimeType,
+                abortSignal: signal,
             },
         });
 

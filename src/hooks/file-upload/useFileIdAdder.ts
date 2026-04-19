@@ -3,6 +3,7 @@ import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, Medi
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, logService } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
+import { getUploadLifecycleForGeminiState } from './utils';
 
 interface UseFileIdAdderProps {
     appSettings: AppSettings;
@@ -73,6 +74,7 @@ export const useFileIdAdder = ({
                     setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
                     return;
                 }
+                const { uploadState, isProcessing } = getUploadLifecycleForGeminiState(fileMetadata.state);
                 const newFile: UploadedFile = { 
                     id: tempId, 
                     name: fileMetadata.displayName || fileApiId, 
@@ -80,10 +82,10 @@ export const useFileIdAdder = ({
                     size: Number(fileMetadata.sizeBytes) || 0, 
                     fileUri: fileMetadata.uri, 
                     fileApiName: fileMetadata.name || fileApiId, 
-                    isProcessing: fileMetadata.state === 'PROCESSING', 
+                    isProcessing,
                     progress: 100, 
-                    uploadState: fileMetadata.state === 'ACTIVE' ? 'active' : (fileMetadata.state === 'PROCESSING' ? 'processing_api' : 'failed'), 
-                    error: fileMetadata.state === 'FAILED' ? 'File API processing failed' : undefined,
+                    uploadState,
+                    error: uploadState === 'failed' ? 'File API processing failed' : undefined,
                     mediaResolution: defaultResolution
                 };
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? newFile : f));
