@@ -11,6 +11,7 @@ import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 interface ToolsMenuProps {
     isImageModel?: boolean;
     isGemini3ImageModel?: boolean;
+    isGemmaModel?: boolean;
     isGoogleSearchEnabled: boolean;
     onToggleGoogleSearch: () => void;
     isCodeExecutionEnabled: boolean;
@@ -58,6 +59,7 @@ const ActiveToolBadge: React.FC<{
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isImageModel,
     isGemini3ImageModel,
+    isGemmaModel,
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
     isLocalPythonEnabled, onToggleLocalPython,
@@ -117,6 +119,12 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
             return isGemini3ImageModel && item.labelKey === 'web_search_label';
         }
 
+        if (isGemmaModel) {
+            if (item.labelKey === 'code_execution_label' || item.labelKey === 'url_context_label') {
+                return false;
+            }
+        }
+
         // Only show Local Python if handler is provided (it's new feature)
         if (item.labelKey === 'local_python_label' && !onToggleLocalPython) {
             return false;
@@ -173,11 +181,11 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         {/* In Live Mode, Web Search is a toggle button, so badge is redundant/confusing if inside tools menu logic, but let's hide it from here if the button shows status */}
         {!isNativeAudioModel && isGoogleSearchEnabled && (!isImageModel || isGemini3ImageModel) && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
         
-        {!isNativeAudioModel && !isImageModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
+        {!isNativeAudioModel && !isImageModel && !isGemmaModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
 
         {!isImageModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<IconPython size={14} strokeWidth={2} />} />}
         
-        {!isNativeAudioModel && !isImageModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
+        {!isNativeAudioModel && !isImageModel && !isGemmaModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
       </div>
     );
 };

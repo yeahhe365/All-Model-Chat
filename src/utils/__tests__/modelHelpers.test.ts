@@ -4,6 +4,7 @@ import {
   isGemini3Model,
   getModelCapabilities,
   getDefaultThinkingLevelForModel,
+  shouldStripThinkingFromContext,
   sanitizeModelOptions,
   resolveSupportedModelId,
   calculateTokenStats,
@@ -125,6 +126,20 @@ describe('getDefaultThinkingLevelForModel', () => {
 
   it('keeps fallback thinking level for non-special models', () => {
     expect(getDefaultThinkingLevelForModel('gemini-2.5-flash', 'HIGH')).toBe('HIGH');
+  });
+});
+
+describe('shouldStripThinkingFromContext', () => {
+  it('defaults Gemma conversations to stripping thoughts from follow-up context', () => {
+    expect(shouldStripThinkingFromContext('gemma-4-31b-it', false)).toBe(true);
+  });
+
+  it('keeps non-Gemma models unchanged when the user has not enabled stripping', () => {
+    expect(shouldStripThinkingFromContext('gemini-3-flash-preview', false)).toBe(false);
+  });
+
+  it('honors the explicit strip toggle for non-Gemma models', () => {
+    expect(shouldStripThinkingFromContext('gemini-3-flash-preview', true)).toBe(true);
   });
 });
 

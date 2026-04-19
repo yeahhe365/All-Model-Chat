@@ -31,6 +31,9 @@ const isGemini31FlashLiveModel = (modelId: string): boolean =>
 const isGemini31FlashImageModel = (modelId: string): boolean =>
     modelId.toLowerCase().includes('gemini-3.1-flash-image');
 
+export const isGemmaModel = (modelId: string): boolean =>
+    !!modelId && modelId.toLowerCase().includes('gemma');
+
 const isTtsModel = (modelId: string): boolean => modelId.toLowerCase().includes('tts');
 
 const isGemini3ImageModel = (modelId: string): boolean => (
@@ -112,6 +115,7 @@ export const getModelCapabilities = (modelId: string) => {
 
     return {
         isGemini3,
+        isGemmaModel: isGemmaModel(modelId),
         isGemini3ImageModel: gemini3ImageModel,
         isFlashImageModel: flashImageModel,
         isRealImagenModel: realImagenModel,
@@ -132,6 +136,17 @@ export const getDefaultThinkingLevelForModel = (
     }
 
     return fallback;
+};
+
+export const shouldStripThinkingFromContext = (
+    modelId: string,
+    hideThinkingInContext?: boolean,
+): boolean => {
+    if (hideThinkingInContext) {
+        return true;
+    }
+
+    return isGemmaModel(modelId);
 };
 
 // --- Model Settings Cache ---

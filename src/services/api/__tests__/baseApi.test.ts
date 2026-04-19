@@ -31,9 +31,10 @@ vi.mock('../../logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn(), recordTokenUsage: vi.fn() },
 }));
 
-// Mock appUtils for isGemini3Model
+// Mock appUtils for model helpers
 vi.mock('../../../utils/appUtils', () => ({
   isGemini3Model: vi.fn((id: string) => id?.includes('gemini-3')),
+  isGemmaModel: vi.fn((id: string) => id?.toLowerCase().includes('gemma')),
 }));
 
 import { GoogleGenAI } from '@google/genai';
@@ -474,6 +475,59 @@ describe('buildGenerationConfig', () => {
     );
     expect(config.systemInstruction).toBe('sys');
     expect(config.thinkingConfig).toBeUndefined();
+  });
+
+  it('applies global mediaResolution for Gemma multimodal requests', async () => {
+    const config = await buildGenerationConfig(
+      'gemma-4-31b-it',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      MediaResolution.MEDIA_RESOLUTION_HIGH,
+    );
+
+    expect(config.mediaResolution).toBe(MediaResolution.MEDIA_RESOLUTION_HIGH);
+  });
+
+  it('does not add codeExecution for Gemma models', async () => {
+    const config = await buildGenerationConfig(
+      'gemma-4-31b-it',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      true,
+      false,
+    );
+
+    const hasCodeExec = config.tools?.some((tool) => 'codeExecution' in tool);
+    expect(hasCodeExec).toBeFalsy();
+  });
+
+  it('does not add urlContext for Gemma models', async () => {
+    const config = await buildGenerationConfig(
+      'gemma-4-31b-it',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      true,
+    );
+
+    const hasUrlContext = config.tools?.some((tool) => 'urlContext' in tool);
+    expect(hasUrlContext).toBeFalsy();
   });
 
   it('sets systemInstruction to undefined when empty', async () => {

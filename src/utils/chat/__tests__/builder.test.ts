@@ -264,7 +264,19 @@ describe('createChatHistoryForApi', () => {
     expect(textPart?.text).toContain('world');
   });
 
-  it('strips Gemma thought channels when stripThinking is true', async () => {
+  it('strips official Gemma thought channels when stripThinking is true', async () => {
+    const msgs = [
+      makeMessage('model', 'Hello <|channel>thought\nsecret thoughts\n<channel|> world'),
+    ];
+    const history = await createChatHistoryForApi(msgs, true);
+    const textPart = history[0].parts.find(p => p.text);
+    expect(textPart?.text).not.toContain('<|channel>thought');
+    expect(textPart?.text).not.toContain('secret thoughts');
+    expect(textPart?.text).toContain('Hello');
+    expect(textPart?.text).toContain('world');
+  });
+
+  it('strips legacy Gemma thought channels when stripThinking is true', async () => {
     const msgs = [
       makeMessage('model', 'Hello <|channel|thought>secret thoughts<channel|> world'),
     ];

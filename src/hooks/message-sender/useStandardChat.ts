@@ -8,6 +8,7 @@ import {
   logService,
   createChatHistoryForApi,
   isGemini3Model,
+  shouldStripThinkingFromContext,
   generateSessionTitle,
   createMessage,
 } from '../../utils/appUtils';
@@ -220,8 +221,10 @@ export const useStandardChat = ({
         return;
       }
 
-      const shouldStripThinking =
-        sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext;
+      const shouldStripThinking = shouldStripThinkingFromContext(
+        activeModelId,
+        sessionToUpdate.hideThinkingInContext ?? appSettings.hideThinkingInContext,
+      );
       const historyForChat = await createChatHistoryForApi(
         baseMessagesForApi,
         shouldStripThinking,

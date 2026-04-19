@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { buildHtmlPreviewSrcDoc } from '../../../utils/htmlPreview';
 
 interface HtmlPreviewContentProps {
     iframeRef: React.RefObject<HTMLIFrameElement>;
@@ -28,7 +29,7 @@ export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({
             
             <iframe
                 ref={iframeRef}
-                srcDoc={htmlContent}
+                srcDoc={buildHtmlPreviewSrcDoc(htmlContent)}
                 title="HTML Content Preview"
                 className="border-none bg-white shadow-sm origin-top-left" 
                 style={{
@@ -36,9 +37,7 @@ export const HtmlPreviewContent: React.FC<HtmlPreviewContentProps> = ({
                     height: `${100 / scale}%`,
                     transform: `scale(${scale})`,
                 }}
-                // We strictly need allow-same-origin for html2canvas to access the contentDocument for screenshots.
-                // NOTE: This does reduce isolation slightly, but is necessary for the feature set.
-                sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads allow-same-origin"
+                sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
                 onError={handleIframeError}
             />
         </div>

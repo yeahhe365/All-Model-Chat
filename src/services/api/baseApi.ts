@@ -4,7 +4,7 @@ import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
 import { SafetySetting, MediaResolution } from "../../types/settings";
-import { isGemini3Model } from "../../utils/appUtils";
+import { isGemini3Model, isGemmaModel } from "../../utils/appUtils";
 import { normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 
@@ -353,7 +353,7 @@ export const buildGenerationConfig = async (
             : localPythonPrompt;
     }
 
-    const isGemma = modelId.toLowerCase().includes('gemma');
+    const isGemma = isGemmaModel(modelId);
 
     const generationConfig: GenerationConfig = {
         ...config,
@@ -369,8 +369,8 @@ export const buildGenerationConfig = async (
         !isGemini3 && mediaResolution === MediaResolution.MEDIA_RESOLUTION_ULTRA_HIGH
             ? MediaResolution.MEDIA_RESOLUTION_HIGH
             : mediaResolution;
-    if (!isGemini3 && !isGemma && normalizedMediaResolution) {
-        // For non-Gemini 3 models (and not Gemma), apply global resolution if specified
+    if (!isGemini3 && normalizedMediaResolution) {
+        // For non-Gemini 3 models, apply global media resolution when specified.
         generationConfig.mediaResolution = normalizedMediaResolution;
     } 
     // Note: For Gemini 3, we don't set global mediaResolution here because we inject it into parts in `buildContentParts`.
@@ -421,10 +421,10 @@ export const buildGenerationConfig = async (
         tools.push(googleSearchTool);
     }
     // Only allow server code execution if local python is DISABLED
-    if (isCodeExecutionEnabled && !isLocalPythonEnabled) {
+    if (!isGemma && isCodeExecutionEnabled && !isLocalPythonEnabled) {
         tools.push({ codeExecution: {} });
     }
-    if (isUrlContextEnabled) {
+    if (!isGemma && isUrlContextEnabled) {
         tools.push({ urlContext: {} });
     }
 

@@ -3,6 +3,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const attachmentMenuMock = vi.fn();
+const toolsMenuMock = vi.fn();
 
 vi.mock('./AttachmentMenu', () => ({
   AttachmentMenu: (props: { disabled: boolean }) => {
@@ -12,7 +13,10 @@ vi.mock('./AttachmentMenu', () => ({
 }));
 
 vi.mock('./ToolsMenu', () => ({
-  ToolsMenu: () => null,
+  ToolsMenu: (props: unknown) => {
+    toolsMenuMock(props);
+    return null;
+  },
 }));
 
 vi.mock('./actions/WebSearchToggle', () => ({
@@ -88,6 +92,7 @@ describe('ChatInputActions', () => {
     document.body.appendChild(container);
     root = createRoot(container);
     attachmentMenuMock.mockClear();
+    toolsMenuMock.mockClear();
   });
 
   afterEach(() => {
@@ -120,6 +125,16 @@ describe('ChatInputActions', () => {
 
     expect(attachmentMenuMock).toHaveBeenCalledWith(
       expect.objectContaining({ disabled: false }),
+    );
+  });
+
+  it('forwards Gemma capability into the tools menu', () => {
+    act(() => {
+      root.render(<ChatInputActions {...baseProps} isGemmaModel />);
+    });
+
+    expect(toolsMenuMock).toHaveBeenCalledWith(
+      expect.objectContaining({ isGemmaModel: true }),
     );
   });
 });

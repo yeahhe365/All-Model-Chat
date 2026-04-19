@@ -105,4 +105,43 @@ describe('ToolsMenu', () => {
     expect(document.body.textContent).not.toContain('URL Context');
     expect(document.body.textContent).not.toContain('Add YouTube Video');
   });
+
+  it('hides unsupported built-in tools for Gemma models', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ToolsMenu
+            isGemmaModel
+            isGoogleSearchEnabled={false}
+            onToggleGoogleSearch={() => {}}
+            isCodeExecutionEnabled={false}
+            onToggleCodeExecution={() => {}}
+            isLocalPythonEnabled
+            onToggleLocalPython={() => {}}
+            isUrlContextEnabled={false}
+            onToggleUrlContext={() => {}}
+            isDeepSearchEnabled={false}
+            onToggleDeepSearch={() => {}}
+            onAddYouTubeVideo={() => {}}
+            onCountTokens={() => {}}
+            disabled={false}
+            isNativeAudioModel={false}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const toolsButton = document.querySelector('button[aria-label="Tools"]') as HTMLButtonElement | null;
+    expect(toolsButton).not.toBeNull();
+
+    act(() => {
+      toolsButton?.click();
+    });
+
+    expect(document.body.textContent).toContain('Web Search');
+    expect(document.body.textContent).toContain('Deep Search');
+    expect(document.body.textContent).toContain('Pyodide');
+    expect(document.body.textContent).not.toContain('Code Execution');
+    expect(document.body.textContent).not.toContain('URL Context');
+  });
 });

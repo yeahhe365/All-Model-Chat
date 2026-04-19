@@ -23,6 +23,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
   disabled,
   isImageModel,
   isGemini3ImageModel,
+  isGemmaModel,
   isRealImagenModel,
   isGoogleSearchEnabled,
   onToggleGoogleSearch,
@@ -78,6 +79,7 @@ export const ChatInputActions: React.FC<ExtendedChatInputActionsProps> = ({
             <ToolsMenu
                 isImageModel={isImageModel}
                 isGemini3ImageModel={isGemini3ImageModel}
+                isGemmaModel={isGemmaModel}
                 isGoogleSearchEnabled={isGoogleSearchEnabled}
                 onToggleGoogleSearch={onToggleGoogleSearch}
                 isCodeExecutionEnabled={isCodeExecutionEnabled}

@@ -5,7 +5,7 @@ import React, { useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
+import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound, shouldStripThinkingFromContext } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import type { Part } from '@google/genai';
 
@@ -79,7 +79,10 @@ export const useImageEditSender = ({
 
         try {
             const { contentParts: promptParts } = await buildContentParts(text, imageFiles, currentChatSettings.modelId);
-            const shouldStripThinking = currentChatSettings.hideThinkingInContext ?? appSettings.hideThinkingInContext;
+            const shouldStripThinking = shouldStripThinkingFromContext(
+                currentChatSettings.modelId,
+                currentChatSettings.hideThinkingInContext ?? appSettings.hideThinkingInContext,
+            );
             
             // Note: messages here is current messages *before* update.
             // If editing, we need to slice it for context.

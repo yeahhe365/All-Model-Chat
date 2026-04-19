@@ -1,4 +1,4 @@
-const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel\|thought>\s*([\s\S]*?)\s*<channel\|>/gi;
+const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/gi;
 const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/gi;
 
 const normalizeReasoningWhitespace = (text: string): string =>

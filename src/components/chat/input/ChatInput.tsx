@@ -80,6 +80,7 @@ const ChatInputComponent: React.FC = () => {
     disabled: inputState.isAddingById || isAnyModalOpen || inputState.isWaitingForUpload || localFileState.isConverting,
     isImageModel: capabilities.isImagenModel || false,
     isGemini3ImageModel: capabilities.isGemini3ImageModel || false,
+    isGemmaModel: capabilities.isGemmaModel || false,
     isRealImagenModel: capabilities.isRealImagenModel || false,
     isGoogleSearchEnabled: chatInput.isGoogleSearchEnabled,
     onToggleGoogleSearch: () => handlers.handleToggleToolAndFocus(chatInput.onToggleGoogleSearch),

@@ -7,6 +7,7 @@ interface HtmlPreviewHeaderProps {
     title: string;
     scale: number;
     isTrueFullscreen: boolean;
+    isPreviewReady: boolean;
     isScreenshotting: boolean;
     minZoom: number;
     maxZoom: number;
@@ -23,6 +24,7 @@ export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
     title,
     scale,
     isTrueFullscreen,
+    isPreviewReady,
     isScreenshotting,
     minZoom,
     maxZoom,
@@ -79,7 +81,7 @@ export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
                 <button onClick={onDownload} className={iconBtnClass} title="Download HTML">
                     <Download size={18} strokeWidth={1.5} />
                 </button>
-                <button onClick={onScreenshot} className={iconBtnClass} disabled={isScreenshotting} title="Screenshot">
+                <button onClick={onScreenshot} className={iconBtnClass} disabled={!isPreviewReady || isScreenshotting} title="Screenshot">
                     {isScreenshotting ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5} /> : <ImageIcon size={18} strokeWidth={1.5} />}
                 </button>
 

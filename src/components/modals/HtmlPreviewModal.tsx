@@ -27,6 +27,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
       isTrueFullscreen,
       isDirectFullscreenLaunch,
       scale,
+      isPreviewReady,
       isScreenshotting,
       handleZoomIn,
       handleZoomOut,
@@ -77,6 +78,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             title={getPreviewTitle()}
             scale={scale}
             isTrueFullscreen={isTrueFullscreen}
+            isPreviewReady={isPreviewReady}
             isScreenshotting={isScreenshotting}
             minZoom={MIN_ZOOM}
             maxZoom={MAX_ZOOM}

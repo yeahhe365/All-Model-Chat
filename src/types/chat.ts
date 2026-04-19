@@ -189,6 +189,7 @@ export interface ChatInputActionsProps {
   disabled: boolean;
   isImageModel?: boolean;
   isGemini3ImageModel?: boolean;
+  isGemmaModel?: boolean;
   isRealImagenModel?: boolean;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
