@@ -14,7 +14,7 @@ import { useSettingsStore } from '../../stores/settingsStore';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 
 const LazyPdfViewer = lazy(async () => {
-    const module = await import('../shared/file-preview/PdfViewer');
+    const module = await import('../shared/file-preview/PdfViewerEntry');
     return { default: module.PdfViewer };
 });
 

@@ -23,7 +23,7 @@ import { ContentPart } from '../../types/chat';
 import { createStandardClientFunctions } from '../../features/standard-chat/standardClientFunctions';
 import { runStandardToolLoop } from '../../features/standard-chat/standardToolLoop';
 import { collectLocalPythonInputFiles } from '../../features/local-python/helpers';
-import { pyodideService } from '../../services/pyodideService';
+import { getPyodideService } from '../../services/loadPyodideService';
 
 export const useStandardChat = ({
   appSettings,
@@ -260,7 +260,10 @@ export const useStandardChat = ({
           ],
           'temp-standard-tool-target'
         ),
-        runPython: (code, options) => pyodideService.runPython(code, options),
+        runPython: async (code, options) => {
+          const pyodideService = await getPyodideService();
+          return pyodideService.runPython(code, options);
+        },
       });
       const standardFunctionDeclarations = Object.values(standardClientFunctions).map(
         ({ declaration }) => declaration

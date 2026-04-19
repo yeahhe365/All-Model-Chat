@@ -19,7 +19,7 @@ import { useChatStore } from '../../stores/chatStore';
 import { useMessageActions } from './messages/useMessageActions';
 import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
 import { createLiveClientFunctions } from '../live-api/liveClientFunctions';
-import { pyodideService } from '../../services/pyodideService';
+import { getPyodideService } from '../../services/loadPyodideService';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
 
@@ -156,7 +156,10 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
                 isLocalPythonEnabled:
                     !!currentChatSettings.isLocalPythonEnabled || !!appSettings.isLocalPythonEnabled,
                 selectedFiles,
-                runPython: (code, options) => pyodideService.runPython(code, options),
+                runPython: async (code, options) => {
+                    const pyodideService = await getPyodideService();
+                    return pyodideService.runPython(code, options);
+                },
             }),
         [appSettings.isLocalPythonEnabled, currentChatSettings.isLocalPythonEnabled, selectedFiles],
     );

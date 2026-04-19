@@ -1,5 +1,4 @@
-import { Type } from '@google/genai';
-import type { StandardClientFunctions, UploadedFile } from '../../types';
+import type { StandardClientFunction, StandardClientFunctions, UploadedFile } from '../../types';
 import type { ExecutionResult } from '../../services/pyodideService';
 import { createUploadedFileFromBase64 } from '../../utils/appUtils';
 import { hasGeneratedImageFile } from '../local-python/helpers';
@@ -13,15 +12,24 @@ interface CreateStandardClientFunctionsOptions {
   ) => Promise<Omit<ExecutionResult, 'status'>>;
 }
 
-export const createRunLocalPythonDeclaration = () => ({
+type FunctionParameterType = NonNullable<
+  NonNullable<StandardClientFunction['declaration']['parameters']>['type']
+>;
+
+const FUNCTION_PARAMETER_TYPE = {
+  OBJECT: 'OBJECT' as FunctionParameterType,
+  STRING: 'STRING' as FunctionParameterType,
+} as const;
+
+export const createRunLocalPythonDeclaration = (): StandardClientFunction['declaration'] => ({
   name: 'run_local_python',
   description:
     'Execute Python code locally in the browser with Pyodide. Use this for calculations, data analysis, CSV inspection, and lightweight plots.',
   parameters: {
-    type: Type.OBJECT,
+    type: FUNCTION_PARAMETER_TYPE.OBJECT,
     properties: {
       code: {
-        type: Type.STRING,
+        type: FUNCTION_PARAMETER_TYPE.STRING,
         description: 'The Python code to execute locally.',
       },
     },

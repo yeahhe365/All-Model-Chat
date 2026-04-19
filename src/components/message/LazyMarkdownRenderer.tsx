@@ -1,6 +1,10 @@
-import React, { Suspense, lazy, useMemo } from 'react';
-import { BaseMarkdownRenderer, type MarkdownRendererProps } from './BaseMarkdownRenderer';
-import { baseRemarkPlugins, getBaseRehypePlugins } from '../../utils/markdownConfigBase';
+import React, { Suspense, lazy } from 'react';
+import type { MarkdownRendererProps } from './BaseMarkdownRenderer';
+
+const LazyBaseMarkdownRenderer = lazy(async () => {
+  const module = await import('./BaseMarkdownRendererEntry');
+  return { default: module.BaseMarkdownRendererEntry };
+});
 
 const LazyMarkdownRendererMath = lazy(async () => {
   const module = await import('./MarkdownRenderer');
@@ -21,8 +25,6 @@ export const LazyMarkdownRenderer: React.FC<LazyMarkdownRendererProps> = ({
   fallbackMode = 'raw',
   ...props
 }) => {
-  const allowHtml = props.allowHtml ?? false;
-  const rehypePlugins = useMemo(() => getBaseRehypePlugins(allowHtml), [allowHtml]);
   const shouldLoadMathRenderer = containsMathMarkdown(content);
   const fallback = fallbackMode === 'raw'
     ? (
@@ -34,12 +36,9 @@ export const LazyMarkdownRenderer: React.FC<LazyMarkdownRendererProps> = ({
 
   if (!shouldLoadMathRenderer) {
     return (
-      <BaseMarkdownRenderer
-        {...props}
-        content={content}
-        remarkPlugins={baseRemarkPlugins}
-        rehypePlugins={rehypePlugins}
-      />
+      <Suspense fallback={fallback}>
+        <LazyBaseMarkdownRenderer {...props} content={content} />
+      </Suspense>
     );
   }
 

@@ -62,16 +62,27 @@ const GRAPHVIZ_PACKAGES = ['@viz-js/viz'];
 
 const DATA_PACKAGES = ['xlsx'];
 
+const HEAVY_PRELOAD_PATTERNS = [
+  /^assets\/pyodide-runtime-.*\.js$/,
+  /^assets\/pyodideService-.*\.js$/,
+  /^assets\/pdfjs-vendor-.*\.js$/,
+  /^assets\/pdf-viewer-vendor-.*\.(?:js|css)$/,
+  /^assets\/markdown-vendor-.*\.js$/,
+  /^assets\/math-vendor-.*\.(?:js|css)$/,
+  /^assets\/highlight-vendor-.*\.js$/,
+  /^assets\/genai-vendor-.*\.js$/,
+  /^assets\/graphviz-vendor-.*\.js$/,
+  /^assets\/html2pdf-.*\.js$/,
+  /^assets\/html2canvas\.esm-.*\.js$/,
+  /^assets\/data-vendor-.*\.js$/,
+];
+
 const isSourcePath = (id: string, sourcePath: string) =>
   id.endsWith(sourcePath) || id.includes(sourcePath.replace(/\//g, '\\'));
 
 export const getManualChunk = (id: string) => {
   if (isSourcePath(id, '/src/constants/settingsModelOptions.ts')) {
     return 'settings-options';
-  }
-
-  if (isSourcePath(id, '/src/services/pyodideService.ts') || isSourcePath(id, '/src/hooks/usePyodide.ts')) {
-    return 'pyodide-runtime';
   }
 
   if (!id.includes('node_modules')) return undefined;
@@ -192,7 +203,16 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['pwa-192.png', 'pwa-512.png', 'pwa-512-maskable.png'],
         injectManifest: {
           globPatterns: ['**/*.{js,css,html,png,svg,mjs,json,woff,woff2,ttf}'],
-          globIgnores: ['**/runtime-config.js'],
+          globIgnores: [
+            '**/runtime-config.js',
+            '**/pyodide/**',
+            '**/assets/pyodide-runtime-*.js',
+            '**/assets/pdfjs-vendor-*.js',
+            '**/assets/graphviz-vendor-*.js',
+            '**/assets/html2pdf-*.js',
+            '**/assets/html2canvas.esm-*.js',
+            '**/assets/data-vendor-*.js',
+          ],
         },
         devOptions: {
           enabled: false,
@@ -223,6 +243,11 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       chunkSizeWarningLimit: 1500,
+      modulePreload: {
+        resolveDependencies: (_filename, deps) => {
+          return deps.filter((dep) => !HEAVY_PRELOAD_PATTERNS.some((pattern) => pattern.test(dep)));
+        },
+      },
       rollupOptions: {
         output: {
           manualChunks: getManualChunk,

@@ -1,5 +1,4 @@
-import { Type } from '@google/genai';
-import type { LiveClientFunctions, UploadedFile } from '../../types';
+import type { LiveClientFunction, LiveClientFunctions, UploadedFile } from '../../types';
 import type { ExecutionResult } from '../../services/pyodideService';
 
 interface CreateLiveClientFunctionsOptions {
@@ -10,6 +9,15 @@ interface CreateLiveClientFunctionsOptions {
     options?: { files?: UploadedFile[] },
   ) => Promise<Omit<ExecutionResult, 'status'>>;
 }
+
+type FunctionParameterType = NonNullable<
+  NonNullable<LiveClientFunction['declaration']['parameters']>['type']
+>;
+
+const FUNCTION_PARAMETER_TYPE = {
+  OBJECT: 'OBJECT' as FunctionParameterType,
+  STRING: 'STRING' as FunctionParameterType,
+} as const;
 
 export const createLiveClientFunctions = ({
   isLocalPythonEnabled,
@@ -27,10 +35,10 @@ export const createLiveClientFunctions = ({
         description:
           'Execute Python code locally in the browser with Pyodide. Use this for calculations, data analysis, CSV inspection, and lightweight plots.',
         parameters: {
-          type: Type.OBJECT,
+          type: FUNCTION_PARAMETER_TYPE.OBJECT,
           properties: {
             code: {
-              type: Type.STRING,
+              type: FUNCTION_PARAMETER_TYPE.STRING,
               description: 'The Python code to execute locally.',
             },
           },
