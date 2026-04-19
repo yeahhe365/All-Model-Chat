@@ -1,12 +1,14 @@
 
 import type { FunctionCall, GenerateContentResponse, Part, UsageMetadata } from "@google/genai";
 import {
+    ChatHistoryItem,
     ThoughtSupportingPart,
     StreamMessageSender,
     NonStreamMessageSender,
 } from '../../types';
 import { logService } from "../logService";
 import { getConfiguredApiClient, getHttpOptionsForContents } from "./baseApi";
+import { extractGemmaThoughtChannel } from "../../utils/chat/reasoning";
 
 type CandidateWithUrlContext = {
     groundingMetadata?: unknown;
@@ -150,6 +152,14 @@ const processResponse = (response: GenerateContentResponse) => {
             const pAsThoughtSupporting = part as ThoughtSupportingPart;
             if (pAsThoughtSupporting.thought) {
                 thoughtsText += part.text;
+            } else if (typeof part.text === 'string') {
+                const { content, thoughts } = extractGemmaThoughtChannel(part.text);
+                if (thoughts) {
+                    thoughtsText += thoughts;
+                }
+                if (content) {
+                    responseParts.push({ ...part, text: content });
+                }
             } else {
                 responseParts.push(part);
             }
@@ -157,7 +167,13 @@ const processResponse = (response: GenerateContentResponse) => {
     }
 
     if (responseParts.length === 0 && response.text) {
-        responseParts.push({ text: response.text });
+        const { content, thoughts } = extractGemmaThoughtChannel(response.text);
+        if (thoughts) {
+            thoughtsText += thoughts;
+        }
+        if (content) {
+            responseParts.push({ text: content });
+        }
     }
     
     const candidate = response.candidates?.[0];
@@ -177,6 +193,48 @@ const processResponse = (response: GenerateContentResponse) => {
         usage: response.usageMetadata,
         grounding: Object.keys(finalMetadata).length > 0 ? finalMetadata : undefined,
         urlContext: urlContextMetadata
+    };
+};
+
+export const generateContentTurnApi = async (
+    apiKey: string,
+    modelId: string,
+    contents: ChatHistoryItem[],
+    config: unknown,
+    abortSignal: AbortSignal,
+) => {
+    const abortError = new Error('aborted');
+    abortError.name = 'AbortError';
+
+    if (abortSignal.aborted) {
+        throw abortError;
+    }
+
+    const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
+    const response = await ai.models.generateContent({
+        model: modelId,
+        contents,
+        config: config as Parameters<typeof ai.models.generateContent>[0]['config'],
+    });
+
+    if (abortSignal.aborted) {
+        throw abortError;
+    }
+
+    const { parts, thoughts, usage, grounding, urlContext } = processResponse(response);
+    const candidateContent = response.candidates?.[0]?.content;
+
+    return {
+        modelContent: {
+            role: 'model' as const,
+            parts: candidateContent?.parts ?? parts,
+        },
+        parts,
+        thoughts,
+        usage,
+        grounding,
+        urlContext,
+        functionCalls: response.functionCalls ?? [],
     };
 };
 
@@ -244,6 +302,14 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
 
                         if (pAsThoughtSupporting.thought) {
                             onThoughtChunk(part.text || '');
+                        } else if (typeof part.text === 'string') {
+                            const { content, thoughts } = extractGemmaThoughtChannel(part.text);
+                            if (thoughts) {
+                                onThoughtChunk(thoughts);
+                            }
+                            if (content) {
+                                onPart({ ...part, text: content });
+                            }
                         } else {
                             onPart(part);
                         }

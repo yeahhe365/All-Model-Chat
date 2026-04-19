@@ -10,7 +10,10 @@ import { useCanvasGenerator } from './message-sender/useCanvasGenerator';
 import { useStandardChat } from './message-sender/useStandardChat';
 import { getModelCapabilities } from '../utils/modelHelpers';
 
-type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+type SessionsUpdater = (
+    updater: (prev: SavedChatSession[]) => SavedChatSession[],
+    options?: { persist?: boolean }
+) => void;
 
 interface MessageSenderProps {
     appSettings: AppSettings;

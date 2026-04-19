@@ -73,4 +73,52 @@ describe('ThinkingControl image model behavior', () => {
 
     expect(container.textContent?.trim()).toBe('');
   });
+
+  it('shows Gemma as an API thinking toggle instead of token injection text', async () => {
+    await act(async () => {
+      root.render(
+        <ThinkingControl
+          modelId="gemma-4-31b-it"
+          thinkingBudget={0}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts
+          setShowThoughts={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('settingsGemmaThinkingToggle_label');
+    expect(container.textContent).toContain('settingsGemmaThinkingToggle_enabledDesc');
+    expect(container.textContent).not.toContain('settingsGemmaThinkingToggle_disabled');
+    expect(container.textContent).not.toContain('thinkingLevel');
+    expect(container.textContent).not.toContain('<|think|>');
+
+    const toggleButton = container.querySelector('button[aria-pressed="true"]');
+    expect(toggleButton).not.toBeNull();
+  });
+
+  it('shows disabled Gemma helper text when thinking is off', async () => {
+    await act(async () => {
+      root.render(
+        <ThinkingControl
+          modelId="gemma-4-31b-it"
+          thinkingBudget={0}
+          setThinkingBudget={vi.fn()}
+          thinkingLevel="HIGH"
+          setThinkingLevel={vi.fn()}
+          showThoughts={false}
+          setShowThoughts={vi.fn()}
+          t={(key) => key}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('settingsGemmaThinkingToggle_label');
+    expect(container.textContent).toContain('settingsGemmaThinkingToggle_disabledDesc');
+    const toggleButton = container.querySelector('button[aria-pressed="false"]');
+    expect(toggleButton).not.toBeNull();
+  });
 });

@@ -109,6 +109,17 @@ describe('generateSessionTitle', () => {
     const msgs = [makeMessage('user', '', { files: [{ name: 'report.pdf' } as any] })];
     expect(generateSessionTitle(msgs)).toBe('Chat with report.pdf');
   });
+
+  it('ignores internal tool messages when generating a title', () => {
+    const msgs = [
+      makeMessage('user', 'Plot sales by month for this CSV'),
+      makeMessage('model', '', { isInternalToolMessage: true }),
+      makeMessage('user', '', { isInternalToolMessage: true }),
+      makeMessage('model', 'Here is the chart and analysis.'),
+    ];
+
+    expect(generateSessionTitle(msgs)).toBe('Plot sales by month for this CSV');
+  });
 });
 
 // ── performOptimisticSessionUpdate ──

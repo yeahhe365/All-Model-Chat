@@ -3,6 +3,7 @@ import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord
 import { generateUniqueId } from './ids';
 import { logService } from '../../services/logService';
 import { base64ToBlob } from '../fileHelpers';
+import { getVisibleChatMessages } from './visibility';
 
 export const createMessage = (
     role: 'user' | 'model' | 'error',
@@ -31,15 +32,16 @@ export const createNewSession = (
 });
 
 export const generateSessionTitle = (messages: ChatMessage[]): string => {
-    const firstUserMessage = messages.find(msg => msg.role === 'user' && msg.content.trim() !== '');
+    const visibleMessages = getVisibleChatMessages(messages);
+    const firstUserMessage = visibleMessages.find(msg => msg.role === 'user' && msg.content.trim() !== '');
     if (firstUserMessage) {
       return firstUserMessage.content.split(/\s+/).slice(0, 7).join(' ') + (firstUserMessage.content.split(/\s+/).length > 7 ? '...' : '');
     }
-    const firstModelMessage = messages.find(msg => msg.role === 'model' && msg.content.trim() !== '');
+    const firstModelMessage = visibleMessages.find(msg => msg.role === 'model' && msg.content.trim() !== '');
      if (firstModelMessage) {
       return "Model: " + firstModelMessage.content.split(/\s+/).slice(0, 5).join(' ') + (firstModelMessage.content.split(/\s+/).length > 5 ? '...' : '');
     }
-    const firstFile = messages.find(msg => msg.files && msg.files.length > 0)?.files?.[0];
+    const firstFile = visibleMessages.find(msg => msg.files && msg.files.length > 0)?.files?.[0];
     if (firstFile) {
         return `Chat with ${firstFile.name}`;
     }

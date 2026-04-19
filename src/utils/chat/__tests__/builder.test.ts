@@ -264,6 +264,18 @@ describe('createChatHistoryForApi', () => {
     expect(textPart?.text).toContain('world');
   });
 
+  it('strips Gemma thought channels when stripThinking is true', async () => {
+    const msgs = [
+      makeMessage('model', 'Hello <|channel|thought>secret thoughts<channel|> world'),
+    ];
+    const history = await createChatHistoryForApi(msgs, true);
+    const textPart = history[0].parts.find(p => p.text);
+    expect(textPart?.text).not.toContain('<|channel|thought>');
+    expect(textPart?.text).not.toContain('secret thoughts');
+    expect(textPart?.text).toContain('Hello');
+    expect(textPart?.text).toContain('world');
+  });
+
   it('handles apiParts for model messages with inlineData', async () => {
     const msgs = [
       makeMessage('model', '', {
@@ -279,6 +291,34 @@ describe('createChatHistoryForApi', () => {
     expect(inlinePart).toBeTruthy();
     const codePart = history[0].parts.find(p => p.text === 'Some code');
     expect(codePart).toBeTruthy();
+  });
+
+  it('preserves apiParts on user messages for function response turns', async () => {
+    const msgs = [
+      makeMessage('user', '', {
+        apiParts: [
+          {
+            functionResponse: {
+              id: 'call-1',
+              name: 'run_local_python',
+              response: { result: { output: '42' } },
+            },
+          } as any,
+        ],
+      }),
+    ];
+
+    const history = await createChatHistoryForApi(msgs);
+    expect(history[0].role).toBe('user');
+    expect(history[0].parts).toEqual([
+      {
+        functionResponse: {
+          id: 'call-1',
+          name: 'run_local_python',
+          response: { result: { output: '42' } },
+        },
+      },
+    ]);
   });
 
   it('filters out thought parts from apiParts when stripThinking is true', async () => {

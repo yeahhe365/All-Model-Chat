@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
+import { Toggle } from '../../../shared/Toggle';
 import { getModelCapabilities, isGemini3Model } from '../../../../utils/modelHelpers';
 import { ThinkingModeSelector } from './ThinkingModeSelector';
 import { ThinkingLevelSelector } from './ThinkingLevelSelector';
@@ -135,27 +136,32 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             <label className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
               <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
               {t('settingsThinkingMode')}
-              <Tooltip text="Gemma 4 uses the <|think|> token to enable thinking mode. When enabled, the model will output reasoning in <|channel|thought> tags.">
+              <Tooltip text="Gemma 4 on the Gemini API only supports thinking mode on or off. When enabled, requests are sent with thinkingConfig.thinkingLevel set to HIGH.">
                 <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
               </Tooltip>
             </label>
-            {showThoughts && (
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                Thinking Enabled
-              </span>
-            )}
           </div>
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowThoughts(!showThoughts)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${showThoughts ? 'bg-[var(--theme-bg-accent)]' : 'bg-[var(--theme-border-secondary)]'}`}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${showThoughts ? 'translate-x-4.5' : 'translate-x-1'}`} />
-            </button>
-            <span className="text-xs text-[var(--theme-text-secondary)]">
-              {showThoughts ? 'Inject <|think|> token into system prompt' : 'Thinking mode disabled'}
-            </span>
+          <div className="mt-3 rounded-xl border border-[var(--theme-border-secondary)]/50 bg-[var(--theme-bg-tertiary)]/20 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-4">
+              <button
+                type="button"
+                aria-pressed={showThoughts}
+                onClick={() => setShowThoughts(!showThoughts)}
+                className="flex min-w-0 flex-1 items-center text-left"
+              >
+                <span className="text-sm font-medium text-[var(--theme-text-primary)]">
+                  {t('settingsGemmaThinkingToggle_label')}
+                </span>
+              </button>
+              <div className="flex-shrink-0">
+                <Toggle checked={showThoughts} onChange={setShowThoughts} />
+              </div>
+            </div>
+            <p className="mt-1 pr-16 text-xs leading-relaxed text-[var(--theme-text-secondary)]">
+              {showThoughts
+                ? t('settingsGemmaThinkingToggle_enabledDesc')
+                : t('settingsGemmaThinkingToggle_disabledDesc')}
+            </p>
           </div>
         </div>
       </div>

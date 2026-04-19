@@ -3,7 +3,10 @@ import React from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
 import type { Part, UsageMetadata } from '@google/genai';
 
-export type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
+export type SessionsUpdater = (
+    updater: (prev: SavedChatSession[]) => SavedChatSession[],
+    options?: { persist?: boolean }
+) => void;
 
 export interface StreamHandlerFunctions {
     streamOnError: (error: Error) => void;

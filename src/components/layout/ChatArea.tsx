@@ -8,6 +8,7 @@ import { ChatAreaProps } from './chat-area/ChatAreaProps';
 import { ChatAreaProvider } from './chat-area/ChatAreaContext';
 import { useChatArea } from './chat-area/useChatArea';
 import { getShortcutDisplay } from '../../utils/shortcutUtils';
+import { getVisibleChatMessages } from '../../utils/chat/visibility';
 import { useChatStore } from '../../stores/chatStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useUIStore } from '../../stores/uiStore';
@@ -49,7 +50,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
 
   const newChatShortcut = useMemo(() => getShortcutDisplay('general.newChat', appSettings), [appSettings]);
   const pipShortcut = useMemo(() => getShortcutDisplay('general.togglePip', appSettings), [appSettings]);
-  const showEmptyStateSuggestions = session.messages.length === 0;
+  const showEmptyStateSuggestions = getVisibleChatMessages(session.messages).length === 0;
   const messageListValue = useMemo(
     () => ({
       messages: session.messages,

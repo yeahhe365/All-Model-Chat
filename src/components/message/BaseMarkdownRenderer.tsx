@@ -8,6 +8,7 @@ import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
 import { UploadedFile, SideViewContent } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { extractTextFromNode } from '../../utils/uiUtils';
+import { extractGemmaThoughtChannel } from '../../utils/chat/reasoning';
 import { InlineCode } from './code-block/InlineCode';
 
 const loadMermaidBlock = async () => {
@@ -261,6 +262,13 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
       if (isLoading) {
         text = text.replace(/<thinking>([\s\S]*?)$/i, (_, innerContent) => createDetailsBlock(innerContent));
       }
+
+      text = text.replace(/<\|channel\|thought>\s*([\s\S]*?)\s*<channel\|>/gi, (_match, innerContent) =>
+        createDetailsBlock(innerContent.trim()),
+      );
+    } else {
+      const { content: contentWithoutGemmaThoughtChannels } = extractGemmaThoughtChannel(text);
+      text = contentWithoutGemmaThoughtChannels || text;
     }
 
     const parts = text.split(/(```[\s\S]*?```|```[\s\S]*$)/g);

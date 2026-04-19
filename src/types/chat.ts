@@ -84,7 +84,9 @@ export interface ChatMessage {
   stoppedByUser?: boolean;
   thoughtSignatures?: string[]; // Added for Gemini 3 Pro reasoning continuity
   excludeFromContext?: boolean; // Added to exclude message from API history context
-  apiParts?: Part[]; // Natively preserves API parts like executableCode and codeExecutionResult
+  apiParts?: Part[]; // Preserves raw API parts for either user or model turns.
+  isInternalToolMessage?: boolean; // Hidden client-side tool plumbing turn used to rebuild API context.
+  toolParentMessageId?: string; // Visible model message ID associated with an internal tool turn.
 }
 
 export type ContentPart = Part;

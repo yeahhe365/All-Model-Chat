@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../../types';
 import { getKeyForRequest, logService, generateSessionTitle } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
+import { getVisibleChatMessages } from '../../utils/chat/visibility';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -26,7 +27,8 @@ export const useAutoTitling = ({
 }: AutoTitlingProps) => {
 
     const generateTitleForSession = useCallback(async (session: SavedChatSession) => {
-        const { id: sessionId, messages } = session;
+        const sessionId = session.id;
+        const messages = getVisibleChatMessages(session.messages);
         if (messages.length < 2) return;
         
         setGeneratingTitleSessionIds(prev => new Set(prev).add(sessionId));
@@ -96,6 +98,7 @@ export const useAutoTitling = ({
         if (!appSettings.isAutoTitleEnabled || !activeChat) return;
 
         const session = activeChat;
+        const visibleMessages = getVisibleChatMessages(session.messages);
 
         // Check if title is generic or a placeholder
         // 1. Is it 'New Chat'?
@@ -110,10 +113,10 @@ export const useAutoTitling = ({
         if (generatingTitleSessionIds.has(session.id)) return;
         
         // Need at least user prompt and model response
-        if (session.messages.length < 2) return;
+        if (visibleMessages.length < 2) return;
         
-        const firstMsg = session.messages[0];
-        const secondMsg = session.messages[1];
+        const firstMsg = visibleMessages[0];
+        const secondMsg = visibleMessages[1];
 
         // Basic structure check
         if (firstMsg.role !== 'user' || secondMsg.role !== 'model') return;

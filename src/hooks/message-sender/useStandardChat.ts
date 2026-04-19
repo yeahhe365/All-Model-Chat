@@ -16,8 +16,13 @@ import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } fro
 import { StandardChatProps } from './types';
 import { buildGenerationConfig } from '../../services/api/baseApi';
 import { geminiServiceInstance } from '../../services/geminiService';
+import { generateContentTurnApi } from '../../services/api/chatApi';
 import { isLikelyHtml } from '../../utils/codeUtils';
 import { ContentPart } from '../../types/chat';
+import { createStandardClientFunctions } from '../../features/standard-chat/standardClientFunctions';
+import { runStandardToolLoop } from '../../features/standard-chat/standardToolLoop';
+import { collectLocalPythonInputFiles } from '../../features/local-python/helpers';
+import { pyodideService } from '../../services/pyodideService';
 
 export const useStandardChat = ({
   appSettings,
@@ -224,6 +229,40 @@ export const useStandardChat = ({
         !!sessionToUpdate.isCodeExecutionEnabled && !sessionToUpdate.isLocalPythonEnabled
       );
 
+      const localPythonContextMessages =
+        finalRole === 'user'
+          ? [
+              ...baseMessagesForApi,
+              {
+                id: 'temp-standard-user',
+                role: 'user' as const,
+                content: textToUse.trim(),
+                files: enrichedFiles,
+                timestamp: new Date(),
+              },
+            ]
+          : baseMessagesForApi;
+      const standardClientFunctions = createStandardClientFunctions({
+        isLocalPythonEnabled:
+          !!sessionToUpdate.isLocalPythonEnabled && finalRole === 'user' && !isRawMode,
+        inputFiles: collectLocalPythonInputFiles(
+          [
+            ...localPythonContextMessages,
+            {
+              id: 'temp-standard-tool-target',
+              role: 'model',
+              content: '',
+              timestamp: new Date(),
+            },
+          ],
+          'temp-standard-tool-target'
+        ),
+        runPython: (code, options) => pyodideService.runPython(code, options),
+      });
+      const standardFunctionDeclarations = Object.values(standardClientFunctions).map(
+        ({ declaration }) => declaration
+      );
+
       const config = await buildGenerationConfig(
         activeModelId,
         sessionToUpdate.systemInstruction,
@@ -243,8 +282,15 @@ export const useStandardChat = ({
         imageSize,
         sessionToUpdate.safetySettings,
         sessionToUpdate.mediaResolution,
-        !!sessionToUpdate.isLocalPythonEnabled
+        false
       );
+
+      if (standardFunctionDeclarations.length > 0) {
+        config.tools = [
+          ...(config.tools ?? []),
+          { functionDeclarations: standardFunctionDeclarations },
+        ];
+      }
 
       const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } =
         getStreamHandlers(
@@ -276,6 +322,88 @@ export const useStandardChat = ({
 
       setSessionLoading(finalSessionId, true);
       activeJobs.current.set(generationId, newAbortController);
+
+      if (standardFunctionDeclarations.length > 0) {
+        try {
+          const toolLoopResult = await runStandardToolLoop({
+            initialContents: [...historyForChat, { role: finalRole, parts: finalParts }],
+            clientFunctions: standardClientFunctions,
+            runTurn: (contents) =>
+              generateContentTurnApi(
+                keyToUse,
+                activeModelId,
+                contents,
+                config,
+                newAbortController.signal
+              ),
+          });
+
+          if (
+            toolLoopResult.toolMessages.length > 0 ||
+            toolLoopResult.generatedFiles.length > 0
+          ) {
+            const internalMessages = toolLoopResult.toolMessages.flatMap(
+              ({ modelContent, functionResponseParts }) => [
+                createMessage('model', '', {
+                  apiParts: modelContent.parts,
+                  isInternalToolMessage: true,
+                  toolParentMessageId: generationId,
+                }),
+                createMessage('user', '', {
+                  apiParts: functionResponseParts,
+                  isInternalToolMessage: true,
+                  toolParentMessageId: generationId,
+                }),
+              ]
+            );
+
+            updateAndPersistSessions(
+              (prev) =>
+                prev.map((session) => {
+                  if (session.id !== finalSessionId) {
+                    return session;
+                  }
+
+                  return {
+                    ...session,
+                    messages: session.messages.flatMap((message) => {
+                      if (message.id !== generationId) {
+                        return [message];
+                      }
+
+                      return [
+                        ...internalMessages,
+                        {
+                          ...message,
+                          files: [
+                            ...(message.files || []),
+                            ...toolLoopResult.generatedFiles,
+                          ],
+                        },
+                      ];
+                    }),
+                  };
+                }),
+              { persist: false }
+            );
+          }
+
+          for (const part of toolLoopResult.finalTurn.parts) {
+            streamOnPart(part);
+          }
+          if (toolLoopResult.finalTurn.thoughts) {
+            onThoughtChunk(toolLoopResult.finalTurn.thoughts);
+          }
+          streamOnComplete(
+            toolLoopResult.finalTurn.usage,
+            toolLoopResult.finalTurn.grounding,
+            toolLoopResult.finalTurn.urlContext
+          );
+        } catch (error) {
+          streamOnError(error instanceof Error ? error : new Error(String(error)));
+        }
+        return;
+      }
 
       if (appSettings.isStreamingEnabled) {
         await geminiServiceInstance.sendMessageStream(
@@ -322,6 +450,7 @@ export const useStandardChat = ({
       imageSize,
       messages,
       setSessionLoading,
+      updateAndPersistSessions,
     ]
   );
 

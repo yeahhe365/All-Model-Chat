@@ -4,6 +4,7 @@ import { UploadedFile, AppSettings } from '../../types';
 import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { buildGenerationConfig, toCountTokensConfig } from '../../services/api/baseApi';
+import { createRunLocalPythonDeclaration } from '../../features/standard-chat/standardClientFunctions';
 
 interface UseTokenCountLogicProps {
     isOpen: boolean;
@@ -79,8 +80,15 @@ export const useTokenCountLogic = ({
                 undefined,
                 appSettings.safetySettings,
                 appSettings.mediaResolution,
-                !!appSettings.isLocalPythonEnabled,
+                false,
             );
+
+            if (appSettings.isLocalPythonEnabled) {
+                generationConfig.tools = [
+                    ...(generationConfig.tools ?? []),
+                    { functionDeclarations: [createRunLocalPythonDeclaration()] },
+                ];
+            }
 
             const count = await geminiServiceInstance.countTokens(
                 keyResult.key,

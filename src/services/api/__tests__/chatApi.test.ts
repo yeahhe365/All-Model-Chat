@@ -212,4 +212,41 @@ describe('chatApi media resolution routing', () => {
       null,
     );
   });
+
+  it('extracts Gemma thought channels from non-stream text responses', async () => {
+    mockGenerateContent.mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: '<|channel|thought>Plan carefully.<channel|>Final answer.',
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const onComplete = vi.fn();
+
+    await sendStatelessMessageNonStreamApi(
+      'key',
+      'gemma-4-31b-it',
+      [],
+      [{ text: 'Solve this' }],
+      {},
+      new AbortController().signal,
+      vi.fn(),
+      onComplete,
+    );
+
+    expect(onComplete).toHaveBeenCalledWith(
+      [{ text: 'Final answer.' }],
+      'Plan carefully.',
+      undefined,
+      undefined,
+      undefined,
+    );
+  });
 });

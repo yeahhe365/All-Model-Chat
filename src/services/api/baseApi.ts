@@ -1,5 +1,5 @@
 
-import type { CountTokensConfig, GoogleGenAI, Part } from "@google/genai";
+import type { CountTokensConfig, FunctionDeclaration, GoogleGenAI, Part } from "@google/genai";
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
@@ -47,6 +47,7 @@ export type GenerationConfig = {
           };
         };
       }
+    | { functionDeclarations: FunctionDeclaration[] }
     | { codeExecution: Record<string, never> }
     | { urlContext: Record<string, never> }
   >;
@@ -352,13 +353,7 @@ export const buildGenerationConfig = async (
             : localPythonPrompt;
     }
 
-    // Gemma 4 thinking mode: inject <|think|> token into system prompt when enabled
     const isGemma = modelId.toLowerCase().includes('gemma');
-    if (isGemma && showThoughts) {
-        finalSystemInstruction = finalSystemInstruction
-            ? `<|think|>\n${finalSystemInstruction}`
-            : '<|think|>';
-    }
 
     const generationConfig: GenerationConfig = {
         ...config,
@@ -398,6 +393,13 @@ export const buildGenerationConfig = async (
             generationConfig.thinkingConfig.thinkingBudget = thinkingBudget;
         } else {
             generationConfig.thinkingConfig.thinkingLevel = thinkingLevel || 'HIGH';
+        }
+    } else if (isGemma) {
+        if (showThoughts) {
+            generationConfig.thinkingConfig = {
+                includeThoughts: true,
+                thinkingLevel: 'HIGH',
+            };
         }
     } else {
         const modelSupportsThinking = modelId.includes('gemini-2.5');

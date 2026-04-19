@@ -12,6 +12,7 @@ import { useMessageListScroll } from './message-list/hooks/useMessageListScroll'
 import { MessageListFooter } from './message-list/MessageListFooter';
 import { isGemini3Model } from '../../utils/modelHelpers';
 import { useChatAreaMessageList } from '../layout/chat-area/ChatAreaContext';
+import { getVisibleChatMessages } from '../../utils/chat/visibility';
 
 const LazyHtmlPreviewModal = lazy(async () => {
   const module = await import('../modals/HtmlPreviewModal');
@@ -53,6 +54,7 @@ const MessageListComponent: React.FC = () => {
     onInsert,
     activeSessionId,
   } = useChatAreaMessageList();
+  const visibleMessages = useMemo(() => getVisibleChatMessages(messages), [messages]);
   // UI Logic (Modals, Previews, Configuration)
   const {
       previewFile,
@@ -71,7 +73,7 @@ const MessageListComponent: React.FC = () => {
       handleCloseHtmlPreview,
       handleConfigureFile,
       handleSaveFileConfig,
-  } = useMessageListUI({ messages, onUpdateMessageFile });
+  } = useMessageListUI({ messages: visibleMessages, onUpdateMessageFile });
 
   // Scroll Logic
   const {
@@ -85,7 +87,7 @@ const MessageListComponent: React.FC = () => {
       showScrollUp,
       scrollerRef,
       handleScroll,
-  } = useMessageListScroll({ messages, setScrollContainerRef, activeSessionId });
+  } = useMessageListScroll({ messages: visibleMessages, setScrollContainerRef, activeSessionId });
 
   // Determine if current model is Gemini 3 to enable per-part resolution
   const isGemini3 = useMemo(() => isGemini3Model(currentModelId), [currentModelId]);
@@ -93,7 +95,7 @@ const MessageListComponent: React.FC = () => {
   return (
     <>
       <div className={`relative flex-grow h-full ${themeId === 'pearl' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'}`}>
-        {messages.length === 0 ? (
+        {visibleMessages.length === 0 ? (
           <WelcomeScreen 
               t={t}
               onSuggestionClick={onSuggestionClick}
@@ -104,7 +106,7 @@ const MessageListComponent: React.FC = () => {
         ) : (
           <Virtuoso
             ref={virtuosoRef}
-            data={messages}
+            data={visibleMessages}
             scrollerRef={handleScrollerRef}
             atBottomStateChange={setAtBottom}
             followOutput={false} // Disable auto-scroll to bottom during streaming (we handle it via auto-anchor or user interaction)
@@ -113,7 +115,7 @@ const MessageListComponent: React.FC = () => {
             className="custom-scrollbar"
             onScroll={handleScroll}
             components={{
-                Footer: () => <MessageListFooter messages={messages} chatInputHeight={chatInputHeight} />
+                Footer: () => <MessageListFooter messages={visibleMessages} chatInputHeight={chatInputHeight} />
             }}
             itemContent={(index, msg) => (
                 <div className="px-1.5 sm:px-2 md:px-3 max-w-7xl mx-auto w-full">
@@ -121,7 +123,7 @@ const MessageListComponent: React.FC = () => {
                         key={msg.id}
                         message={msg}
                         sessionTitle={sessionTitle}
-                        prevMessage={index > 0 ? messages[index - 1] : undefined}
+                        prevMessage={index > 0 ? visibleMessages[index - 1] : undefined}
                         messageIndex={index}
                         onEditMessage={onEditMessage}
                         onDeleteMessage={onDeleteMessage}

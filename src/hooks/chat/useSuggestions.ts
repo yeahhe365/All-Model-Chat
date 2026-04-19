@@ -5,6 +5,7 @@ import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings }
 import { getKeyForRequest, logService } from '../../utils/appUtils';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import { geminiServiceInstance } from '../../services/geminiService';
+import { getVisibleChatMessages } from '../../utils/chat/visibility';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -77,7 +78,8 @@ export const useSuggestions = ({
     useEffect(() => {
         // Trigger condition: loading just finished for the active chat
         if (prevIsLoadingRef.current && !isLoading && appSettings.isSuggestionsEnabled && activeChat) {
-            const { messages, id: sessionId, settings } = activeChat;
+            const { id: sessionId, settings } = activeChat;
+            const messages = getVisibleChatMessages(activeChat.messages);
             
             // Filter out non-text models (Imagen, TTS, Audio, etc.)
             const capabilities = getModelCapabilities(settings.modelId);

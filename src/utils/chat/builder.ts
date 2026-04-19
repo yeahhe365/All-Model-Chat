@@ -4,6 +4,7 @@ import { logService } from '../../services/logService';
 import { blobToBase64, fileToString, isTextFile } from '../fileHelpers';
 import { isGemini3Model } from '../modelHelpers';
 import { MediaResolution } from '../../types/settings';
+import { stripReasoningMarkup } from './reasoning';
 
 const PART_MEDIA_RESOLUTION_LEVEL = {
   MEDIA_RESOLUTION_UNSPECIFIED: 'MEDIA_RESOLUTION_UNSPECIFIED',
@@ -225,7 +226,7 @@ export const createChatHistoryForApi = async (
         if (msg.excludeFromContext) continue;
         if (msg.role !== 'user' && msg.role !== 'model') continue;
 
-        const apiParts = msg.role === 'model' ? msg.apiParts : undefined;
+        const apiParts = msg.apiParts;
         const hasApiParts = !!apiParts && apiParts.length > 0;
         const parts: ContentPart[] = hasApiParts
             ? await (async () => {
@@ -281,8 +282,7 @@ export const createChatHistoryForApi = async (
             : await (async () => {
                 let contentToUse = msg.content;
                 if (stripThinking) {
-                    // Remove <thinking> blocks including tags from the content
-                    contentToUse = contentToUse.replace(/<thinking>[\s\S]*?<\/[^>]+>/gi, '').trim();
+                    contentToUse = stripReasoningMarkup(contentToUse);
                 }
                 const { contentParts } = await buildContentParts(
                     contentToUse,

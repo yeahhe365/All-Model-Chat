@@ -2,6 +2,7 @@
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../../../types';
 import { logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
+import { getVisibleChatMessages } from '../../../utils/chat/visibility';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
@@ -126,8 +127,15 @@ export const useMessageActions = ({
             cleanupFilePreviewUrls(messageToDelete.files);
         }
 
+        const relatedToolMessageIds = new Set(
+            messages
+                .filter((msg) => msg.toolParentMessageId === messageId)
+                .map((msg) => msg.id),
+        );
+        relatedToolMessageIds.add(messageId);
+
         updateAndPersistSessions(prev => prev.map(s => 
-            s.id === activeSessionId ? { ...s, messages: s.messages.filter(msg => msg.id !== messageId) } : s
+            s.id === activeSessionId ? { ...s, messages: s.messages.filter(msg => !relatedToolMessageIds.has(msg.id)) } : s
         ));
 
         if (editingMessageId === messageId) handleCancelEdit();
@@ -137,15 +145,16 @@ export const useMessageActions = ({
     const handleRetryMessage = useCallback(async (modelMessageIdToRetry: string) => {
         if (!activeSessionId) return;
         logService.info("User retrying message", { modelMessageId: modelMessageIdToRetry, sessionId: activeSessionId });
-        
-        const modelMessageIndex = messages.findIndex(m => m.id === modelMessageIdToRetry);
+
+        const visibleMessages = getVisibleChatMessages(messages);
+        const modelMessageIndex = visibleMessages.findIndex(m => m.id === modelMessageIdToRetry);
         if (modelMessageIndex < 1) return;
 
         // Cleanup artifacts (images/audio) from the model message being discarded to prevent memory leaks
-        const modelMessage = messages[modelMessageIndex];
+        const modelMessage = visibleMessages[modelMessageIndex];
         if (modelMessage.files) cleanupFilePreviewUrls(modelMessage.files);
 
-        const userMessageToResend = messages[modelMessageIndex - 1];
+        const userMessageToResend = visibleMessages[modelMessageIndex - 1];
         if (userMessageToResend.role !== 'user') return;
 
         if (isLoading) {
@@ -163,8 +172,8 @@ export const useMessageActions = ({
 
     const handleRetryLastTurn = useCallback(async () => {
         if (!activeSessionId) return;
-        
-        const lastModelMessage = [...messages].reverse().find(m => m.role === 'model' || m.role === 'error');
+
+        const lastModelMessage = [...getVisibleChatMessages(messages)].reverse().find(m => m.role === 'model' || m.role === 'error');
         
         if (lastModelMessage) {
             logService.info("User retrying last turn via command", { modelMessageId: lastModelMessage.id, sessionId: activeSessionId });
@@ -179,7 +188,7 @@ export const useMessageActions = ({
             handleStopGenerating();
         }
         // Find the last message that was sent by the user
-        const lastUserMessage = [...messages].reverse().find(m => m.role === 'user');
+        const lastUserMessage = [...getVisibleChatMessages(messages)].reverse().find(m => m.role === 'user');
         if (lastUserMessage) {
             logService.info("User editing last message via command", { messageId: lastUserMessage.id });
             handleEditMessage(lastUserMessage.id, 'resend');

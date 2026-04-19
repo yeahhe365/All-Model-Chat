@@ -457,11 +457,23 @@ describe('buildGenerationConfig', () => {
     expect(config.systemInstruction).toContain('plt.savefig("chart.png")');
   });
 
-  it('injects <|think|> token for Gemma models with showThoughts', async () => {
+  it('uses HIGH thinkingConfig instead of prompt token injection for Gemma models', async () => {
     const config = await buildGenerationConfig(
       'gemma-4-31b-it', 'sys', baseConfig, true, 0,
     );
-    expect(config.systemInstruction).toContain('<|think|>');
+    expect(config.systemInstruction).toBe('sys');
+    expect(config.thinkingConfig).toEqual({
+      includeThoughts: true,
+      thinkingLevel: 'HIGH',
+    });
+  });
+
+  it('leaves Gemma thinking disabled when showThoughts is off', async () => {
+    const config = await buildGenerationConfig(
+      'gemma-4-31b-it', 'sys', baseConfig, false, 0,
+    );
+    expect(config.systemInstruction).toBe('sys');
+    expect(config.thinkingConfig).toBeUndefined();
   });
 
   it('sets systemInstruction to undefined when empty', async () => {

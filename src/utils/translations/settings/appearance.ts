@@ -46,5 +46,5 @@ export const appearanceSettings = {
     settings_rawMode_label: { en: 'Raw Chain of Thought', zh: '原始思维链模式' },
     settings_rawMode_tooltip: { en: 'Automatically pre-fill the model response with <thinking> to force a chain-of-thought, continuing generation from there.', zh: '自动在模型回复开头预填 <thinking> 标签，以强制触发思维链并继续生成。' },
     settings_hideThinkingInContext_label: { en: 'Hide & Exclude Raw Thinking', zh: '折叠并排除原始思考' },
-    settings_hideThinkingInContext_tooltip: { en: 'Collapses <thinking> blocks in UI and removes them from API context history to save tokens.', zh: '在界面中折叠 <thinking> 内容，并在发送给 API 的上下文历史中将其移除以节省 Token。' },
+    settings_hideThinkingInContext_tooltip: { en: 'Collapses raw reasoning blocks in the UI and removes them from API context history to save tokens.', zh: '在界面中折叠原始推理内容，并在发送给 API 的上下文历史中将其移除以节省 Token。' },
 };

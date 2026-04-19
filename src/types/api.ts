@@ -1,6 +1,7 @@
 
 import type { Content, CountTokensConfig, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
 import type { SafetySetting } from './settings';
+import type { UploadedFile } from './chat';
 
 export type ChatHistoryItem = Content & {
   parts: Part[];
@@ -52,6 +53,18 @@ export interface LiveClientFunction {
 }
 
 export type LiveClientFunctions = Record<string, LiveClientFunction>;
+
+export interface StandardClientFunctionExecutionResult {
+  response: unknown;
+  generatedFiles?: UploadedFile[];
+}
+
+export interface StandardClientFunction {
+  declaration: FunctionDeclaration;
+  handler: (args: unknown) => Promise<StandardClientFunctionExecutionResult>;
+}
+
+export type StandardClientFunctions = Record<string, StandardClientFunction>;
 
 export interface EditImageRequestConfig {
   systemInstruction?: string;
