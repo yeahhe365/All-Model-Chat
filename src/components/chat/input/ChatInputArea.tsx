@@ -40,7 +40,7 @@ export const ChatInputArea: React.FC = () => {
 
     const innerContainerClass = isFullscreen
         ? "w-full max-w-6xl mx-auto flex flex-col h-full"
-        : `mx-auto w-full ${!isPipActive ? 'max-w-[44.8rem]' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)]`;
+        : `mx-auto w-full ${!isPipActive ? 'max-w-[44.8rem]' : ''} px-2 sm:px-3 pt-0 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]`;
 
     const formClass = isFullscreen
         ? "flex-grow flex flex-col relative min-h-0"
@@ -48,7 +48,7 @@ export const ChatInputArea: React.FC = () => {
 
     const inputContainerClass = isFullscreen
         ? "flex flex-col gap-2 rounded-none sm:rounded-[26px] border-0 sm:border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-4 py-4 shadow-none h-full transition-all duration-200 relative"
-        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] p-3 sm:p-4 shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
+        : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-[0.54rem] sm:px-4 sm:py-[0.72rem] shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
 
     const hiddenFileInputs = (
         <>
