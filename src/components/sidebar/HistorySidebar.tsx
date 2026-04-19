@@ -6,6 +6,7 @@ import { SidebarHeader } from './SidebarHeader';
 import { SidebarActions } from './SidebarActions';
 import { SessionItem } from './SessionItem';
 import { GroupItem, type SessionItemPassedProps } from './GroupItem';
+import { CollapsedRecentChatsButton } from './CollapsedRecentChatsButton';
 import { Search, Settings } from 'lucide-react';
 import { IconNewChat, IconSidebarToggle } from '../icons/CustomIcons';
 import { useHistorySidebarLogic } from '../../hooks/useHistorySidebarLogic';
@@ -255,6 +256,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
           
           <MiniSidebarButton href="/" onClick={onNewChat} icon={IconNewChat} title={t('newChat') + (newChatShortcut ? ` (${newChatShortcut})` : '')} />
           <MiniSidebarButton onClick={handleMiniSearchClick} icon={Search} title={t('history_search_button')} />
+          <CollapsedRecentChatsButton
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelectSession={handleSessionSelect}
+          />
           
           <div className="mt-auto">
               <MiniSidebarButton onClick={onOpenSettingsModal} icon={Settings} title={t('settingsTitle')} />

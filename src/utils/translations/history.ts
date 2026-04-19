@@ -2,7 +2,7 @@
 export const historyTranslations = {
     // HistorySidebar.tsx
     history_title: { en: 'History', zh: '历史记录' },
-    history_recent_chats: { en: 'Recent Chats', zh: '近期对话' },
+    history_recent_chats: { en: 'Recent Chats', zh: '最近聊天' },
     history_empty: { en: 'No chat history yet.', zh: '暂无聊天记录。' },
     history_search_placeholder: { en: 'Search history...', zh: '搜索历史...' },
     history_search_button: { en: 'Search', zh: '搜索聊天' },
