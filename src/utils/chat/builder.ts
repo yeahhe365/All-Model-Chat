@@ -251,6 +251,16 @@ export const createChatHistoryForApi = async (
                         .map(async (p) => {
                             const partCopy = JSON.parse(JSON.stringify(p));
 
+                            if (stripThinking && msg.role === 'model' && typeof partCopy.text === 'string') {
+                                const strippedText = stripReasoningMarkup(partCopy.text);
+                                if (strippedText) {
+                                    partCopy.text = strippedText;
+                                } else {
+                                    delete partCopy.text;
+                                    delete partCopy.thoughtSignature;
+                                }
+                            }
+
                             if (partCopy.inlineData) {
                                 const mimeType = partCopy.inlineData.mimeType || 'unknown';
                                 const canRehydrateGeneratedMedia =
@@ -277,7 +287,7 @@ export const createChatHistoryForApi = async (
                             }
                             return partCopy;
                         })
-                );
+                ).then((parts) => parts.filter((part) => Object.keys(part).length > 0));
             })()
             : await (async () => {
                 let contentToUse = msg.content;

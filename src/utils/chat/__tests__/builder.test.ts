@@ -347,6 +347,28 @@ describe('createChatHistoryForApi', () => {
     expect(history[0].parts[0].text).toBe('visible');
   });
 
+  it('strips embedded Gemma thought channels from persisted model apiParts when stripThinking is true', async () => {
+    const msgs = [
+      makeMessage('model', '', {
+        apiParts: [
+          {
+            text: '<|channel>thought\nPlan carefully.\n<channel|>Call the weather tool.',
+          },
+          { functionCall: { id: 'call-1', name: 'get_weather', args: { location: 'Kyoto' } } as any },
+        ],
+      }),
+    ];
+
+    const history = await createChatHistoryForApi(msgs, true);
+
+    expect(history[0].parts[0]).toEqual({
+      text: 'Call the weather tool.',
+    });
+    expect(history[0].parts[1]).toEqual({
+      functionCall: { id: 'call-1', name: 'get_weather', args: { location: 'Kyoto' } },
+    });
+  });
+
   it('preserves per-part media resolution for Gemini 3 history rebuilds', async () => {
     const msgs = [
       makeMessage('user', 'Inspect this', {
