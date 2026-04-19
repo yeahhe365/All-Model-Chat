@@ -1,7 +1,43 @@
 
 import { getConfiguredApiClient, getHttpOptionsForContents } from '../baseApi';
 import { logService } from "../../logService";
-import type { CountTokensConfig, Part } from "@google/genai";
+import type { ContentListUnion, CountTokensConfig, CountTokensResponse, Part } from "@google/genai";
+
+const sanitizeCountTokensConfig = (
+    config?: CountTokensConfig,
+): CountTokensConfig | undefined => {
+    if (!config) {
+        return undefined;
+    }
+
+    const { generationConfig: _unsupportedGenerationConfig, ...rest } = config;
+    return Object.keys(rest).length > 0 ? rest : undefined;
+};
+
+const isUnsupportedCountTokensConfigError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) {
+        return false;
+    }
+
+    return /not supported in gemini api|unknown name|invalid json payload/i.test(error.message);
+};
+
+const isRetryableCountTokensArgumentError = (error: unknown): boolean => {
+    if (!(error instanceof Error)) {
+        return false;
+    }
+
+    return /invalid_argument|request contains an invalid argument|unknown name|invalid json payload/i.test(error.message);
+};
+
+const extractSingleTextPrompt = (parts: Part[]): string | null => {
+    if (parts.length !== 1) {
+        return null;
+    }
+
+    const candidate = parts[0] as Part & { text?: unknown };
+    return typeof candidate.text === 'string' ? candidate.text : null;
+};
 
 export const countTokensApi = async (
     apiKey: string,
@@ -21,12 +57,67 @@ export const countTokensApi = async (
         });
         const contents = [{ role: 'user', parts: sanitizedParts }];
         const ai = await getConfiguredApiClient(apiKey, getHttpOptionsForContents(contents));
+        const sanitizedConfig = sanitizeCountTokensConfig(config);
+        const plainTextPrompt = extractSingleTextPrompt(sanitizedParts);
+        const requestTokenCount = async (
+            requestContents: ContentListUnion,
+            requestConfig?: CountTokensConfig,
+        ): Promise<CountTokensResponse> => {
+            return ai.models.countTokens({
+                model: modelId,
+                contents: requestContents,
+                ...(requestConfig ? { config: requestConfig } : {}),
+            });
+        };
 
-        const response = await ai.models.countTokens({
-            model: modelId,
-            contents,
-            ...(config ? { config } : {}),
-        });
+        let response: CountTokensResponse;
+        try {
+            response = await requestTokenCount(contents, sanitizedConfig);
+        } catch (error) {
+            if (sanitizedConfig && isUnsupportedCountTokensConfigError(error)) {
+                const originalErrorMessage = error instanceof Error ? error.message : String(error);
+
+                logService.warn('Retrying token count without unsupported Gemini Developer API config.', {
+                    category: 'MODEL',
+                    data: {
+                        modelId,
+                        originalError: originalErrorMessage,
+                        droppedConfigKeys: Object.keys(sanitizedConfig),
+                    },
+                });
+
+                try {
+                    response = await requestTokenCount(contents);
+                } catch (retryError) {
+                    if (!plainTextPrompt || !isRetryableCountTokensArgumentError(retryError)) {
+                        throw retryError;
+                    }
+
+                    logService.warn('Retrying token count with plain-text contents after INVALID_ARGUMENT.', {
+                        category: 'MODEL',
+                        data: {
+                            modelId,
+                            originalError: retryError instanceof Error ? retryError.message : String(retryError),
+                        },
+                    });
+
+                    response = await requestTokenCount(plainTextPrompt);
+                }
+            } else if (plainTextPrompt && isRetryableCountTokensArgumentError(error)) {
+                logService.warn('Retrying token count with plain-text contents after INVALID_ARGUMENT.', {
+                    category: 'MODEL',
+                    data: {
+                        modelId,
+                        originalError: error instanceof Error ? error.message : String(error),
+                    },
+                });
+
+                response = await requestTokenCount(plainTextPrompt);
+            } else {
+                throw error;
+            }
+        }
+
         return response.totalTokens || 0;
     } catch (error) {
         logService.error("Error counting tokens:", error);

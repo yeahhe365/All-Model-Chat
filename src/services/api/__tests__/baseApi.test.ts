@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildGenerationConfig } from '../baseApi';
+import { buildGenerationConfig, toCountTokensConfig } from '../baseApi';
 import { MediaResolution } from '../../../types/settings';
 
 type MockGoogleGenAIConfig = {
@@ -577,6 +577,25 @@ describe('buildGenerationConfig', () => {
       properties: {
         winner: { type: 'STRING' },
       },
+    });
+  });
+});
+
+describe('toCountTokensConfig', () => {
+  it('keeps system instructions and tools but drops generationConfig for Gemini Developer API token counting', () => {
+    expect(
+      toCountTokensConfig({
+        systemInstruction: 'You are concise.',
+        tools: [{ googleSearch: {} }],
+        thinkingConfig: {
+          includeThoughts: true,
+          thinkingBudget: 256,
+        },
+        temperature: 0.2,
+      }),
+    ).toEqual({
+      systemInstruction: 'You are concise.',
+      tools: [{ googleSearch: {} }],
     });
   });
 });

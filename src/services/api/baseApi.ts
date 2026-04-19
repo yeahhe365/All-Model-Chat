@@ -442,7 +442,7 @@ export const toCountTokensConfig = (
         return undefined;
     }
 
-    const { systemInstruction, tools, ...requestGenerationConfig } = generationConfig;
+    const { systemInstruction, tools } = generationConfig;
     const countTokensConfig: CountTokensConfig = {};
 
     if (systemInstruction) {
@@ -451,10 +451,6 @@ export const toCountTokensConfig = (
 
     if (tools && tools.length > 0) {
         countTokensConfig.tools = tools as CountTokensConfig['tools'];
-    }
-
-    if (Object.keys(requestGenerationConfig).length > 0) {
-        countTokensConfig.generationConfig = requestGenerationConfig as CountTokensConfig['generationConfig'];
     }
 
     return Object.keys(countTokensConfig).length > 0 ? countTokensConfig : undefined;

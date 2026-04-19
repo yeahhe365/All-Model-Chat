@@ -5,6 +5,12 @@ import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../uti
 import { geminiServiceInstance } from '../../services/geminiService';
 import { buildGenerationConfig, toCountTokensConfig } from '../../services/api/baseApi';
 import { createRunLocalPythonDeclaration } from '../../features/standard-chat/standardClientFunctions';
+import { useSettingsStore } from '../../stores/settingsStore';
+import {
+    isServerManagedApiEnabledForProxyRequests,
+    parseApiKeys,
+    SERVER_MANAGED_API_KEY,
+} from '../../utils/apiUtils';
 
 interface UseTokenCountLogicProps {
     isOpen: boolean;
@@ -13,6 +19,45 @@ interface UseTokenCountLogicProps {
     appSettings: AppSettings;
     currentModelId: string;
 }
+
+export const mergeTokenCountAppSettings = (
+    modalAppSettings: AppSettings,
+    latestStoredSettings: AppSettings,
+): AppSettings => ({
+    ...latestStoredSettings,
+    ...modalAppSettings,
+    useCustomApiConfig: modalAppSettings.useCustomApiConfig ?? latestStoredSettings.useCustomApiConfig,
+    serverManagedApi: modalAppSettings.serverManagedApi ?? latestStoredSettings.serverManagedApi,
+    apiKey: modalAppSettings.apiKey ?? latestStoredSettings.apiKey,
+    apiProxyUrl: modalAppSettings.apiProxyUrl ?? latestStoredSettings.apiProxyUrl,
+    useApiProxy: modalAppSettings.useApiProxy ?? latestStoredSettings.useApiProxy,
+    liveApiEphemeralTokenEndpoint:
+        modalAppSettings.liveApiEphemeralTokenEndpoint ?? latestStoredSettings.liveApiEphemeralTokenEndpoint,
+});
+
+export const resolveTokenCountRequestKey = (
+    effectiveAppSettings: AppSettings,
+    modelId: string,
+): { key: string } | { error: string } => {
+    const parsedKeys = parseApiKeys(effectiveAppSettings.apiKey);
+
+    if (effectiveAppSettings.useCustomApiConfig && parsedKeys.length > 0) {
+        return { key: parsedKeys[0] };
+    }
+
+    if (isServerManagedApiEnabledForProxyRequests(effectiveAppSettings)) {
+        return { key: SERVER_MANAGED_API_KEY };
+    }
+
+    const tempSettings = { ...effectiveAppSettings, modelId };
+    const keyResult = getKeyForRequest(effectiveAppSettings, tempSettings, { skipIncrement: true });
+
+    if ('error' in keyResult) {
+        return { error: keyResult.error };
+    }
+
+    return { key: keyResult.key };
+};
 
 export const useTokenCountLogic = ({
     isOpen,
@@ -28,6 +73,7 @@ export const useTokenCountLogic = ({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const latestStoredSettings = useSettingsStore((state) => state.appSettings);
 
     const performCalculation = useCallback(async (txt: string, fls: UploadedFile[], modelId: string) => {
         if (!txt.trim() && fls.length === 0) return;
@@ -36,8 +82,8 @@ export const useTokenCountLogic = ({
         setError(null);
         setTokenCount(null);
 
-        const tempSettings = { ...appSettings, modelId: modelId };
-        const keyResult = getKeyForRequest(appSettings, tempSettings, { skipIncrement: true });
+        const effectiveAppSettings = mergeTokenCountAppSettings(appSettings, latestStoredSettings);
+        const keyResult = resolveTokenCountRequestKey(effectiveAppSettings, modelId);
 
         if ('error' in keyResult) {
             setError(keyResult.error);
@@ -47,12 +93,12 @@ export const useTokenCountLogic = ({
 
         try {
             const preferCodeExecutionFileInputs =
-                !!appSettings.isCodeExecutionEnabled && !appSettings.isLocalPythonEnabled;
+                !!effectiveAppSettings.isCodeExecutionEnabled && !effectiveAppSettings.isLocalPythonEnabled;
             const { contentParts } = await buildContentParts(
                 txt,
                 fls,
                 modelId,
-                appSettings.mediaResolution,
+                effectiveAppSettings.mediaResolution,
                 preferCodeExecutionFileInputs,
             );
             
@@ -63,27 +109,27 @@ export const useTokenCountLogic = ({
 
             const generationConfig = await buildGenerationConfig(
                 modelId,
-                appSettings.systemInstruction,
+                effectiveAppSettings.systemInstruction,
                 {
-                    temperature: appSettings.temperature,
-                    topP: appSettings.topP,
-                    topK: appSettings.topK,
+                    temperature: effectiveAppSettings.temperature,
+                    topP: effectiveAppSettings.topP,
+                    topK: effectiveAppSettings.topK,
                 },
-                appSettings.showThoughts,
-                appSettings.thinkingBudget,
-                !!appSettings.isGoogleSearchEnabled,
-                !!appSettings.isCodeExecutionEnabled,
-                !!appSettings.isUrlContextEnabled,
-                appSettings.thinkingLevel,
+                effectiveAppSettings.showThoughts,
+                effectiveAppSettings.thinkingBudget,
+                !!effectiveAppSettings.isGoogleSearchEnabled,
+                !!effectiveAppSettings.isCodeExecutionEnabled,
+                !!effectiveAppSettings.isUrlContextEnabled,
+                effectiveAppSettings.thinkingLevel,
                 undefined,
-                !!appSettings.isDeepSearchEnabled,
+                !!effectiveAppSettings.isDeepSearchEnabled,
                 undefined,
-                appSettings.safetySettings,
-                appSettings.mediaResolution,
+                effectiveAppSettings.safetySettings,
+                effectiveAppSettings.mediaResolution,
                 false,
             );
 
-            if (appSettings.isLocalPythonEnabled) {
+            if (effectiveAppSettings.isLocalPythonEnabled) {
                 generationConfig.tools = [
                     ...(generationConfig.tools ?? []),
                     { functionDeclarations: [createRunLocalPythonDeclaration()] },
@@ -103,7 +149,7 @@ export const useTokenCountLogic = ({
         } finally {
             setIsLoading(false);
         }
-    }, [appSettings]);
+    }, [appSettings, latestStoredSettings]);
 
     useEffect(() => {
         if (isOpen) {
