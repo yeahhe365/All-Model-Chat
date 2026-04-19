@@ -120,4 +120,23 @@ describe('useChatEffects', () => {
     expect(setAspectRatio).toHaveBeenCalledWith('1:1');
     hook.unmount();
   });
+
+  it('starts a fresh chat when the active session is missing after initial history load', async () => {
+    const startNewChat = vi.fn();
+    const props = createProps({
+      activeSessionId: 'deleted-session',
+      savedSessions: [],
+      loadInitialData: vi.fn(async () => undefined),
+      startNewChat,
+    });
+
+    const hook = renderHook(() => useChatEffects(props));
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(startNewChat).toHaveBeenCalledTimes(1);
+    hook.unmount();
+  });
 });

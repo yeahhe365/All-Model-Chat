@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { SavedChatSession } from '../../../types';
-import { createNewSession, logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
+import { createNewSession, logService, cleanupFilePreviewUrls, generateUniqueId } from '../../../utils/appUtils';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
 
 interface UseSessionActionsProps {
@@ -63,15 +63,21 @@ export const useSessionActions = ({
             const sessionToDuplicate = prev.find(s => s.id === sessionId);
             if (!sessionToDuplicate) return prev;
 
+            const duplicatedMessages = sessionToDuplicate.messages.map((message) => ({
+                ...message,
+                id: generateUniqueId(),
+                files: message.files?.map((file) => ({
+                    ...file,
+                    id: generateUniqueId(),
+                })),
+                isLoading: false,
+                generationStartTime: undefined,
+                generationEndTime: undefined
+            }));
+
             const newSession = createNewSession(
                 sessionToDuplicate.settings,
-                sessionToDuplicate.messages.map(m => ({
-                    ...m,
-                    id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-                    isLoading: false,
-                    generationStartTime: undefined,
-                    generationEndTime: undefined
-                })),
+                duplicatedMessages,
                 `${sessionToDuplicate.title} (Copy)`
             );
             return [newSession, ...prev];

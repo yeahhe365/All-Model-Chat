@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { UploadedFile, SavedChatSession, ChatSettings, ModelOption } from '../../types';
 import { logService, cleanupFilePreviewUrls } from '../../utils/appUtils';
 
@@ -42,19 +42,25 @@ export const useChatEffects = ({
     loadChatSession,
     startNewChat
 }: UseChatEffectsProps) => {
+    const [hasLoadedInitialData, setHasLoadedInitialData] = useState(false);
 
     // 1. Initial Data Load
     useEffect(() => {
-        const loadData = async () => await loadInitialData();
-        loadData();
+        const loadData = async () => {
+            try {
+                await loadInitialData();
+            } finally {
+                setHasLoadedInitialData(true);
+            }
+        };
+        void loadData();
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
     
     // 2. Session Validation
     // This effect ensures that if the activeSessionId points to a session that doesn't exist in savedSessions
     // (e.g. deleted), we switch to another valid session or new chat.
     useEffect(() => {
-        // Only run this check if we have initialized (savedSessions length > 0) or if we strictly expect a session.
-        if (activeSessionId && savedSessions.length > 0 && !savedSessions.find(s => s.id === activeSessionId)) {
+        if (hasLoadedInitialData && activeSessionId && !savedSessions.find(s => s.id === activeSessionId)) {
             logService.warn(`Active session ${activeSessionId} is no longer available. Switching sessions.`);
             const sortedSessions = [...savedSessions].sort((a,b) => b.timestamp - a.timestamp);
             const nextSession = sortedSessions[0];
@@ -64,7 +70,7 @@ export const useChatEffects = ({
                 startNewChat();
             }
         }
-    }, [savedSessions, activeSessionId, loadChatSession, startNewChat]);
+    }, [savedSessions, activeSessionId, hasLoadedInitialData, loadChatSession, startNewChat]);
 
     // 3. Online Status Listener
     useEffect(() => {

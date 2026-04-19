@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SidebarActions } from './SidebarActions';
 
 const render = (node: React.ReactNode) => {
@@ -22,6 +22,15 @@ const render = (node: React.ReactNode) => {
   };
 };
 
+const setInputValue = (input: HTMLInputElement, value: string) => {
+  const descriptor = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    'value',
+  );
+  descriptor?.set?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+};
+
 const t = (key: string) =>
   (
     {
@@ -36,7 +45,35 @@ const t = (key: string) =>
     } satisfies Record<string, string>
   )[key] ?? key;
 
+const SidebarActionsHarness = ({
+  onNewChat = vi.fn(),
+  onCloseSidebar = vi.fn(),
+}: {
+  onNewChat?: () => void;
+  onCloseSidebar?: () => void;
+}) => {
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  return (
+    <SidebarActions
+      onNewChat={onNewChat}
+      onCloseSidebar={onCloseSidebar}
+      onAddNewGroup={vi.fn()}
+      isSearching={isSearching}
+      searchQuery={searchQuery}
+      setIsSearching={setIsSearching}
+      setSearchQuery={setSearchQuery}
+      t={t}
+    />
+  );
+};
+
 describe('SidebarActions', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('renders New Group as its own full-row action below Search', () => {
     const { container, unmount } = render(
       <SidebarActions
@@ -61,6 +98,74 @@ describe('SidebarActions', () => {
     expect(folderIcon?.querySelectorAll('path')).toHaveLength(3);
     expect(folderIcon?.querySelector('path')?.getAttribute('d')).toContain('M20 20');
     expect(container.querySelector('[data-testid="new-group-icon"]')).toBeNull();
+
+    unmount();
+  });
+
+  it('clears the search query when Escape closes the search input', () => {
+    const { container, unmount } = render(<SidebarActionsHarness />);
+
+    const openSearchButton = Array.from(container.querySelectorAll('button')).find(
+      (element) => element.textContent?.trim() === '搜索聊天',
+    );
+    expect(openSearchButton).not.toBeUndefined();
+
+    act(() => {
+      openSearchButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const searchInput = container.querySelector('input');
+    expect(searchInput).not.toBeNull();
+
+    act(() => {
+      setInputValue(searchInput as HTMLInputElement, 'invoice');
+    });
+    expect((searchInput as HTMLInputElement).value).toBe('invoice');
+
+    act(() => {
+      searchInput?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    const reopenedSearchButton = Array.from(container.querySelectorAll('button')).find(
+      (element) => element.textContent?.trim() === '搜索聊天',
+    );
+    expect(reopenedSearchButton).not.toBeUndefined();
+
+    act(() => {
+      reopenedSearchButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const reopenedInput = container.querySelector('input');
+    expect((reopenedInput as HTMLInputElement).value).toBe('');
+
+    unmount();
+  });
+
+  it('closes the sidebar after starting a new chat on mobile', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 375,
+      writable: true,
+    });
+
+    const onNewChat = vi.fn();
+    const onCloseSidebar = vi.fn();
+    const { container, unmount } = render(
+      <SidebarActionsHarness
+        onNewChat={onNewChat}
+        onCloseSidebar={onCloseSidebar}
+      />,
+    );
+
+    const newChatLink = container.querySelector('a');
+    expect(newChatLink).not.toBeNull();
+
+    act(() => {
+      newChatLink?.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    });
+
+    expect(onNewChat).toHaveBeenCalledTimes(1);
+    expect(onCloseSidebar).toHaveBeenCalledTimes(1);
 
     unmount();
   });

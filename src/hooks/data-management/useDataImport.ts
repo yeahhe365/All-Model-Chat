@@ -33,6 +33,25 @@ type ImportedScenariosPayload = {
     scenarios: SavedScenario[];
 };
 
+const normalizeImportedTimestamp = (value: unknown): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+
+    const parsed = new Date(String(value)).getTime();
+    return Number.isFinite(parsed) ? parsed : Date.now();
+};
+
+const normalizeImportedSession = (session: SavedChatSession): SavedChatSession => ({
+    ...session,
+    timestamp: normalizeImportedTimestamp(session.timestamp),
+});
+
+const normalizeImportedGroup = (group: ChatGroup): ChatGroup => ({
+    ...group,
+    timestamp: normalizeImportedTimestamp(group.timestamp),
+});
+
 export const useDataImport = ({
     setAppSettings,
     updateAndPersistSessions,
@@ -91,12 +110,14 @@ export const useDataImport = ({
             if (data.history && Array.isArray(data.history)) {
                 updateAndPersistSessions((prev) => {
                     const existingIds = new Set(prev.map(s => s.id));
-                    const newSessions = data.history.filter((s: SavedChatSession) => !existingIds.has(s.id));
+                    const newSessions = data.history
+                        .map(normalizeImportedSession)
+                        .filter((s: SavedChatSession) => !existingIds.has(s.id));
                     return [...prev, ...newSessions];
                 });
 
                 if (data.groups && Array.isArray(data.groups)) {
-                    const importedGroups = data.groups;
+                    const importedGroups = data.groups.map(normalizeImportedGroup);
                     updateAndPersistGroups((prev) => {
                         const existingIds = new Set(prev.map(g => g.id));
                         const newGroups = importedGroups.filter((g: ChatGroup) => !existingIds.has(g.id));

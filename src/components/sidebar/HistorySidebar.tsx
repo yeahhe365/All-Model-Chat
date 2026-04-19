@@ -152,6 +152,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
 
   return (
     <aside
+      data-history-sidebar-root="true"
       className={`h-full flex flex-col ${themeId === 'onyx' ? 'bg-[var(--theme-bg-primary)]' : 'bg-[var(--theme-bg-secondary)]'} flex-shrink-0
                  transition-transform duration-300 ease-[cubic-bezier(0.19,1,0.22,1)] md:transition-[width] transform-gpu
                  absolute md:static top-0 left-0 z-50
@@ -170,6 +171,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
         <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
         <SidebarActions 
             onNewChat={onNewChat}
+            onCloseSidebar={onToggle}
             onAddNewGroup={onAddNewGroup}
             isSearching={isSearching}
             setIsSearching={setIsSearching}

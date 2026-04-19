@@ -20,6 +20,7 @@ export const historyTranslations = {
     history_allConversations: { en: 'All Conversations', zh: '所有对话' },
     history_pinned: { en: 'Pinned', zh: '已置顶' },
     history_today: { en: 'Today', zh: '今天' },
+    history_yesterday: { en: 'Yesterday', zh: '昨天' },
     history_7_days: { en: 'Previous 7 Days', zh: '最近 7 天' },
     history_30_days: { en: 'Previous 30 Days', zh: '最近 30 天' },
 };

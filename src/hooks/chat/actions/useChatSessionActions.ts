@@ -38,6 +38,7 @@ export const useChatSessionActions = ({
                             ...s,
                             messages: [],
                             title: "New Chat",
+                            timestamp: Date.now(),
                             // Resetting lockedApiKey is crucial to allow using new global settings
                             settings: { ...s.settings, lockedApiKey: null }
                         };

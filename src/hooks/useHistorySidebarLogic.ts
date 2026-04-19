@@ -5,6 +5,8 @@ import { useWindowContext } from '../contexts/WindowContext';
 import { useI18n } from '../contexts/I18nContext';
 import { dbService } from '../utils/db';
 
+type HistoryTranslator = (key: string, fallback?: string) => string;
+
 interface UseHistorySidebarLogicProps {
     onToggle: () => void;
     sessions: SavedChatSession[];
@@ -15,6 +17,67 @@ interface UseHistorySidebarLogicProps {
     onMoveSessionToGroup: (sessionId: string, groupId: string | null) => void;
     onSelectSession: (sessionId: string) => void;
 }
+
+export const categorizeSessionsByDate = (
+    sessions: SavedChatSession[],
+    language: 'en' | 'zh',
+    t: HistoryTranslator,
+    now: Date = new Date(),
+) => {
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(todayStart.getDate() - 1);
+    const sevenDaysAgoStart = new Date(todayStart);
+    sevenDaysAgoStart.setDate(todayStart.getDate() - 8);
+    const thirtyDaysAgoStart = new Date(todayStart);
+    thirtyDaysAgoStart.setDate(todayStart.getDate() - 30);
+
+    const categories: { [key: string]: SavedChatSession[] } = {};
+
+    const categoryKeys = {
+        today: t('history_today', 'Today'),
+        yesterday: t('history_yesterday', 'Yesterday'),
+        sevenDays: t('history_7_days', 'Previous 7 Days'),
+        thirtyDays: t('history_30_days', 'Previous 30 Days'),
+    };
+
+    sessions.forEach(session => {
+        const sessionDate = new Date(session.timestamp);
+        let categoryName: string;
+
+        if (sessionDate >= todayStart) {
+            categoryName = categoryKeys.today;
+        } else if (sessionDate >= yesterdayStart) {
+            categoryName = categoryKeys.yesterday;
+        } else if (sessionDate >= sevenDaysAgoStart) {
+            categoryName = categoryKeys.sevenDays;
+        } else if (sessionDate >= thirtyDaysAgoStart) {
+            categoryName = categoryKeys.thirtyDays;
+        } else {
+            categoryName = new Intl.DateTimeFormat(language === 'zh' ? 'zh-CN-u-nu-hanidec' : 'en-US', {
+                year: 'numeric',
+                month: 'long',
+            }).format(sessionDate);
+        }
+
+        if (!categories[categoryName]) {
+            categories[categoryName] = [];
+        }
+        categories[categoryName].push(session);
+    });
+
+    const staticOrder = [categoryKeys.today, categoryKeys.yesterday, categoryKeys.sevenDays, categoryKeys.thirtyDays];
+    const monthCategories = Object.keys(categories).filter(name => !staticOrder.includes(name))
+        .sort((a, b) => {
+            const dateA = new Date(categories[a][0].timestamp);
+            const dateB = new Date(categories[b][0].timestamp);
+            return dateB.getTime() - dateA.getTime();
+        });
+
+    const categoryOrder = [...staticOrder, ...monthCategories].filter(name => categories[name] && categories[name].length > 0);
+
+    return { categories, categoryOrder };
+};
 
 export const useHistorySidebarLogic = ({
     onToggle,
@@ -128,55 +191,7 @@ export const useHistorySidebarLogic = ({
     const categorizedUngroupedSessions = useMemo(() => {
         const ungroupedSessions = sessionsByGroupId.get(null) || [];
         const unpinned = ungroupedSessions.filter(s => !s.isPinned);
-
-        const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const sevenDaysAgoStart = new Date(todayStart);
-        sevenDaysAgoStart.setDate(todayStart.getDate() - 7);
-        const thirtyDaysAgoStart = new Date(todayStart);
-        thirtyDaysAgoStart.setDate(todayStart.getDate() - 30);
-
-        const categories: { [key: string]: SavedChatSession[] } = {};
-
-        const categoryKeys = {
-            today: t('history_today', 'Today'),
-            sevenDays: t('history_7_days', 'Previous 7 Days'),
-            thirtyDays: t('history_30_days', 'Previous 30 Days'),
-        };
-
-        unpinned.forEach(session => {
-            const sessionDate = new Date(session.timestamp);
-            let categoryName: string;
-
-            if (sessionDate >= todayStart) {
-                categoryName = categoryKeys.today;
-            } else if (sessionDate >= sevenDaysAgoStart) {
-                categoryName = categoryKeys.sevenDays;
-            } else if (sessionDate >= thirtyDaysAgoStart) {
-                categoryName = categoryKeys.thirtyDays;
-            } else {
-                categoryName = new Intl.DateTimeFormat(language === 'zh' ? 'zh-CN-u-nu-hanidec' : 'en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                }).format(sessionDate);
-            }
-            if (!categories[categoryName]) {
-                categories[categoryName] = [];
-            }
-            categories[categoryName].push(session);
-        });
-
-        const staticOrder = [categoryKeys.today, categoryKeys.sevenDays, categoryKeys.thirtyDays];
-        const monthCategories = Object.keys(categories).filter(name => !staticOrder.includes(name))
-            .sort((a, b) => {
-                const dateA = new Date(categories[a][0].timestamp);
-                const dateB = new Date(categories[b][0].timestamp);
-                return dateB.getTime() - dateA.getTime();
-            });
-
-        const categoryOrder = [...staticOrder, ...monthCategories].filter(name => categories[name] && categories[name].length > 0);
-        
-        return { categories, categoryOrder };
+        return categorizeSessionsByDate(unpinned, language, t);
     }, [sessionsByGroupId, t, language]);
 
     // --- Handlers ---
