@@ -8,6 +8,8 @@ export const historyTranslations = {
     history_search_button: { en: 'Search', zh: '搜索聊天' },
     history_search_aria: { en: 'Search chat history', zh: '搜索聊天记录' },
     history_search_clear_aria: { en: 'Clear search', zh: '清除搜索' },
+    newGroup_button: { en: 'New Group', zh: '新建分组' },
+    newGroup_aria: { en: 'Create new group', zh: '创建分组' },
     history_pin: { en: 'Pin', zh: '置顶' },
     history_unpin: { en: 'Unpin', zh: '取消置顶' },
     history_duplicate: { en: 'Duplicate', zh: '创建副本' },

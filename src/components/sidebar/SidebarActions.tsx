@@ -1,7 +1,7 @@
 import React from 'react';
-import { FolderPlus, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { translations } from '../../utils/appUtils';
-import { IconNewChat } from '../icons/CustomIcons';
+import { IconNewChat, IconNewGroup } from '../icons/CustomIcons';
 
 interface SidebarActionsProps {
   onNewChat: () => void;
@@ -16,7 +16,7 @@ interface SidebarActionsProps {
 
 export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAddNewGroup, isSearching, searchQuery, setIsSearching, setSearchQuery, t, newChatShortcut }) => (
   <>
-    <div className="px-2 pt-3 flex items-center gap-2">
+    <div className="px-2 pt-3">
       <a 
         href="/"
         onClick={(e) => {
@@ -32,13 +32,6 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
         <IconNewChat size={18} className="text-[var(--theme-icon-history)]" strokeWidth={2} />
         <span className="text-[var(--theme-text-primary)]">{t('newChat')}</span>
       </a>
-      <button 
-        onClick={onAddNewGroup} 
-        className="flex-shrink-0 h-9 w-9 flex items-center justify-center text-[var(--theme-icon-history)] bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors" 
-        title="New Group"
-      >
-        <FolderPlus size={18} strokeWidth={2} />
-      </button>
     </div>
     <div className="px-2 pt-2">
       {isSearching ? (
@@ -71,6 +64,17 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({ onNewChat, onAdd
           <span className="text-[var(--theme-text-primary)]">{t('history_search_button')}</span>
         </button>
       )}
+    </div>
+    <div className="px-2 pt-2">
+      <button
+        onClick={onAddNewGroup}
+        className="flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors"
+        aria-label={t('newGroup_aria', 'Create new group')}
+        title={t('newGroup_button', 'New Group')}
+      >
+        <IconNewGroup size={18} className="text-[var(--theme-icon-history)]" strokeWidth={2} />
+        <span className="text-[var(--theme-text-primary)]">{t('newGroup_button', 'New Group')}</span>
+      </button>
     </div>
   </>
 );
