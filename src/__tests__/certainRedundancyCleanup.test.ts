@@ -36,6 +36,13 @@ describe('certain redundancy cleanup guards', () => {
     expect(customIconsSource).not.toContain("export * from './iconUtils';");
   });
 
+  it('keeps PiP availability independent from custom API config toggles', () => {
+    const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
+
+    expect(mainContentSource).toContain('isPipSupported: pipState.isPipSupported,');
+    expect(mainContentSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
+  });
+
   it('removes the dedicated mainContentModels test file', () => {
     const filePath = path.join(projectRoot, 'src/components/layout/mainContentModels.test.ts');
 

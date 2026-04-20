@@ -381,7 +381,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         availableModels: chatState.apiModels,
         selectedModelId: chatState.currentChatSettings.modelId || appSettings.modelId,
         isCanvasPromptActive: isCanvasSystemInstruction(chatState.currentChatSettings.systemInstruction),
-        isPipSupported: pipState.isPipSupported && appSettings.useCustomApiConfig,
+        isPipSupported: pipState.isPipSupported,
         isPipActive: pipState.isPipActive,
         onNewChat: chatState.startNewChat,
         onOpenScenariosModal: openScenariosModal,
