@@ -1,7 +1,7 @@
 export const generalSettings = {
     settingsTitle: { en: 'Settings', zh: '设置' },
     settingsTabInterface: { en: 'Workspace', zh: '工作区' },
-    settingsTabModel: { en: 'AI', zh: 'AI' },
+    settingsTabModel: { en: 'Model Settings', zh: '模型配置' },
     settingsTabSafety: { en: 'Safety', zh: '安全' },
     settingsTabAccount: { en: 'API', zh: 'API' },
     settingsTabData: { en: 'Storage', zh: '存储' },
