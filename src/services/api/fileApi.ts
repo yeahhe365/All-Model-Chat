@@ -1,9 +1,9 @@
 import type { File as GeminiFile } from "@google/genai";
-import { DEFAULT_GEMINI_API_VERSION } from '../../utils/apiProxyUrl';
-import { getConfiguredApiBaseUrl, getConfiguredApiClient } from './baseApi';
+import { getConfiguredApiBaseUrl, getConfiguredApiClient, getConfiguredProxyBaseUrl } from './baseApi';
 import { logService } from "../logService";
 
 const ABORT_ERROR_MESSAGE = "Upload cancelled by user.";
+const MAX_UPLOAD_CHUNK_SIZE = 8 * 1024 * 1024;
 
 const createAbortError = () => {
     const abortError = new Error(ABORT_ERROR_MESSAGE);
@@ -20,36 +20,77 @@ const normalizeUploadResult = (payload: unknown): GeminiFile => {
     return typedPayload.file ?? (payload as GeminiFile);
 };
 
+const buildProxiedUploadUrl = (uploadUrl: string, proxyBaseUrl: string): string => {
+    const originalUploadUrl = new URL(uploadUrl);
+    const fallbackOrigin = typeof window !== 'undefined'
+        ? window.location.origin
+        : ((globalThis as { location?: { origin?: string } }).location?.origin ?? originalUploadUrl.origin);
+    const proxyUrl = new URL(proxyBaseUrl, fallbackOrigin);
+    const proxyPathPrefix = proxyUrl.pathname.replace(/\/+$/, '');
+
+    originalUploadUrl.protocol = proxyUrl.protocol;
+    originalUploadUrl.host = proxyUrl.host;
+    originalUploadUrl.port = proxyUrl.port;
+
+    if (proxyPathPrefix && proxyPathPrefix !== '/') {
+        originalUploadUrl.pathname = `${proxyPathPrefix}/${originalUploadUrl.pathname.replace(/^\/+/, '')}`;
+    }
+
+    return originalUploadUrl.toString();
+};
+
+type HttpResponseLike = {
+    headers: Record<string, string>;
+    json: () => Promise<unknown>;
+};
+
+type InternalApiClientLike = {
+    request: (request: {
+        path: string;
+        body?: string | Blob;
+        httpMethod: 'POST';
+        httpOptions?: {
+            apiVersion?: string;
+            baseUrl?: string;
+            headers?: Record<string, string>;
+        };
+        abortSignal?: AbortSignal;
+    }) => Promise<HttpResponseLike>;
+};
+
 const startResumableUploadSession = async (
-    apiKey: string,
+    apiClient: InternalApiClientLike,
     file: File,
     mimeType: string,
     displayName: string,
     signal: AbortSignal,
 ): Promise<string> => {
     const baseUrl = await getConfiguredApiBaseUrl();
-    const response = await fetch(`${baseUrl}/upload/${DEFAULT_GEMINI_API_VERSION}/files?key=${encodeURIComponent(apiKey)}`, {
-        method: 'POST',
-        signal,
-        headers: {
-            'X-Goog-Upload-Protocol': 'resumable',
-            'X-Goog-Upload-Command': 'start',
-            'X-Goog-Upload-Header-Content-Length': `${file.size}`,
-            'X-Goog-Upload-Header-Content-Type': mimeType,
-            'Content-Type': 'application/json',
-        },
+    const response = await apiClient.request({
+        path: 'upload/v1beta/files',
         body: JSON.stringify({
             file: {
-                display_name: displayName,
+                displayName,
+                mimeType,
+                sizeBytes: String(file.size),
             },
         }),
+        httpMethod: 'POST',
+        httpOptions: {
+            apiVersion: '',
+            baseUrl,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Goog-Upload-Protocol': 'resumable',
+                'X-Goog-Upload-Command': 'start',
+                'X-Goog-Upload-Header-Content-Length': `${file.size}`,
+                'X-Goog-Upload-Header-Content-Type': mimeType,
+            },
+        },
+        abortSignal: signal,
     });
 
-    if (!response.ok) {
-        throw new Error(`Failed to start upload session (${response.status}).`);
-    }
-
-    const uploadUrl = response.headers.get('X-Goog-Upload-URL');
+    const uploadUrl = response.headers['x-goog-upload-url'];
     if (!uploadUrl) {
         throw new Error('Upload session did not return a resumable upload URL.');
     }
@@ -57,101 +98,95 @@ const startResumableUploadSession = async (
     return uploadUrl;
 };
 
-const uploadFileBytes = (
+const uploadFileBytes = async (
+    apiClient: InternalApiClientLike,
     uploadUrl: string,
     file: File,
     signal: AbortSignal,
+    proxyBaseUrl: string | null,
     onProgress?: (loaded: number, total: number) => void,
 ): Promise<GeminiFile> => {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
+    const finalUploadUrl = proxyBaseUrl
+        ? buildProxiedUploadUrl(uploadUrl, proxyBaseUrl)
+        : uploadUrl;
 
-        const cleanup = () => {
-            signal.removeEventListener('abort', handleAbortSignal);
-        };
+    let offset = 0;
 
-        const rejectAbort = () => {
-            cleanup();
-            reject(createAbortError());
-        };
+    while (offset < file.size) {
+        const chunkSize = Math.min(MAX_UPLOAD_CHUNK_SIZE, file.size - offset);
+        const chunk = file.slice(offset, offset + chunkSize);
+        const uploadCommand = offset + chunkSize >= file.size ? 'upload, finalize' : 'upload';
 
-        const handleAbortSignal = () => {
-            xhr.abort();
-        };
-
-        xhr.open('POST', uploadUrl);
-        xhr.setRequestHeader('X-Goog-Upload-Offset', '0');
-        xhr.setRequestHeader('X-Goog-Upload-Command', 'upload, finalize');
-
-        xhr.upload.onprogress = (event) => {
-            if (!event.lengthComputable || !onProgress) {
-                return;
-            }
-            onProgress(event.loaded, event.total);
-        };
-
-        xhr.onload = () => {
-            cleanup();
-
-            if (xhr.status < 200 || xhr.status >= 300) {
-                reject(new Error(`File upload failed (${xhr.status}).`));
-                return;
+        while (true) {
+            if (signal.aborted) {
+                throw createAbortError();
             }
 
-            try {
-                const payload = xhr.responseText ? JSON.parse(xhr.responseText) : null;
-                resolve(normalizeUploadResult(payload));
-            } catch (error) {
-                reject(error instanceof Error ? error : new Error(String(error)));
+            const response = await apiClient.request({
+                path: '',
+                body: chunk,
+                httpMethod: 'POST',
+                httpOptions: {
+                    apiVersion: '',
+                    baseUrl: finalUploadUrl,
+                    headers: {
+                        'X-Goog-Upload-Offset': String(offset),
+                        'X-Goog-Upload-Command': uploadCommand,
+                        'Content-Length': String(chunk.size),
+                    },
+                },
+                abortSignal: signal,
+            });
+
+            const uploadStatus = response.headers['x-goog-upload-status'] ?? null;
+            const payload = await response.json().catch(() => null);
+            offset += chunkSize;
+
+            if (onProgress) {
+                onProgress(offset, file.size);
             }
-        };
 
-        xhr.onerror = () => {
-            cleanup();
-            reject(new Error('File upload failed due to a network error.'));
-        };
+            if (uploadStatus !== 'active') {
+                return normalizeUploadResult(payload);
+            }
 
-        xhr.onabort = rejectAbort;
-
-        if (signal.aborted) {
-            rejectAbort();
-            return;
+            break;
         }
+    }
 
-        signal.addEventListener('abort', handleAbortSignal, { once: true });
-        xhr.send(file);
-    });
+    throw new Error('All content has been uploaded, but the upload status is not finalized.');
 };
 
 /**
- * Uploads a file using the Gemini resumable Files API so the browser can emit
- * real byte-level upload progress updates.
+ * Uploads a file using the Gemini resumable Files API and reports aggregate
+ * progress after each completed chunk.
  */
 export const uploadFileApi = async (
-    apiKey: string, 
-    file: File, 
-    mimeType: string, 
-    displayName: string, 
+    apiKey: string,
+    file: File,
+    mimeType: string,
+    displayName: string,
     signal: AbortSignal,
     onProgress?: (loaded: number, total: number) => void
 ): Promise<GeminiFile> => {
     logService.info(`Uploading file (resumable): ${displayName}`, { mimeType, size: file.size });
-    
+
     if (signal.aborted) {
         throw createAbortError();
     }
 
     try {
-        const uploadUrl = await startResumableUploadSession(apiKey, file, mimeType, displayName, signal);
-        return await uploadFileBytes(uploadUrl, file, signal, onProgress);
+        const internalApiClient = (await getConfiguredApiClient(apiKey) as unknown as { apiClient: InternalApiClientLike }).apiClient;
+        const uploadUrl = await startResumableUploadSession(internalApiClient, file, mimeType, displayName, signal);
+        const proxyBaseUrl = await getConfiguredProxyBaseUrl();
+        return await uploadFileBytes(internalApiClient, uploadUrl, file, signal, proxyBaseUrl, onProgress);
     } catch (error) {
         logService.error(`Failed to upload file "${displayName}" to Gemini API:`, error);
-        
-        // If it's an abort, ensure we throw a specific error for UI handling
+
         if (signal.aborted) {
             throw createAbortError();
         }
-        
+
         throw error;
     }
 };
@@ -169,8 +204,8 @@ export const getFileMetadataApi = async (apiKey: string, fileApiName: string): P
     } catch (error) {
         logService.error(`Failed to get metadata for file "${fileApiName}" from Gemini API:`, error);
         if (error instanceof Error && (error.message.includes('NOT_FOUND') || error.message.includes('404'))) {
-            return null; // File not found is a valid outcome we want to handle
+            return null;
         }
-        throw error; // Re-throw other errors
+        throw error;
     }
 };

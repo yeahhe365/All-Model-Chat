@@ -191,6 +191,15 @@ export const getConfiguredApiBaseUrl = async (): Promise<string> => {
     return normalizeGeminiApiBaseUrl(configuredBaseUrl ?? DEFAULT_GEMINI_API_BASE_URL);
 };
 
+export const getConfiguredProxyBaseUrl = async (): Promise<string | null> => {
+    const settings = await dbService.getAppSettings();
+    const configuredBaseUrl = settings
+        ? resolveConfiguredBaseUrl(settings)
+        : null;
+
+    return configuredBaseUrl ? normalizeGeminiApiBaseUrl(configuredBaseUrl) : null;
+};
+
 const extractLiveApiToken = (payload: unknown): string | null => {
     if (typeof payload === 'string') {
         return payload.trim() || null;
