@@ -6,7 +6,7 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { LazyMarkdownRenderer } from '../LazyMarkdownRenderer';
 import { GroundedResponse } from '../GroundedResponse';
 import { GoogleSpinner } from '../../icons/GoogleSpinner';
-import { isLikelyHtml } from '../../../utils/codeUtils';
+import { extractPreviewableCodeBlock } from '../../../utils/codeUtils';
 import { useSmoothStreaming } from '../../../hooks/ui/useSmoothStreaming';
 import { useMessageStream } from '../../../hooks/ui/useMessageStream';
 
@@ -57,16 +57,11 @@ export const MessageText: React.FC<MessageTextProps> = ({
     useEffect(() => {
         if (prevIsLoadingRef.current && !isLoading) {
             if (appSettings.autoFullscreenHtml && message.role === 'model' && effectiveContent) {
-                const regex = /```html\s*([\s\S]*?)\s*```/m;
-                const match = effectiveContent.match(regex);
-                if (match && match[1]) {
-                    const htmlContent = match[1].trim();
-                    // Validate that it looks like a full page before auto-opening
-                    if (isLikelyHtml(htmlContent)) {
-                        setTimeout(() => {
-                            onOpenHtmlPreview(htmlContent, { initialTrueFullscreen: false });
-                        }, 100);
-                    }
+                const previewableBlock = extractPreviewableCodeBlock(effectiveContent);
+                if (previewableBlock) {
+                    setTimeout(() => {
+                        onOpenHtmlPreview(previewableBlock.content, { initialTrueFullscreen: false });
+                    }, 100);
                 }
             }
         }

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { useCopyToClipboard } from '../useCopyToClipboard';
 import { extractTextFromNode } from '../../utils/uiUtils';
-import { isLikelyHtml } from '../../utils/codeUtils';
+import { getCodeBlockPreviewType } from '../../utils/codeUtils';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { SideViewContent } from '../../types';
 
@@ -156,22 +156,26 @@ export const useCodeBlock = ({
     const langMatch = className?.match(/language-(\S+)/);
     const language = langMatch ? langMatch[1].toLowerCase() : 'txt';
 
+    const previewMarkupType = getCodeBlockPreviewType(resolvedCodeText, language);
+
     let mimeType = 'text/plain';
-    if (['html', 'xml', 'svg'].includes(language)) mimeType = 'text/html';
+    if (language === 'svg' || previewMarkupType === 'svg') mimeType = 'image/svg+xml';
+    else if (['html', 'xml'].includes(language) || previewMarkupType === 'html') mimeType = 'text/html';
     else if (['javascript', 'js', 'typescript', 'ts'].includes(language)) mimeType = 'application/javascript';
     else if (language === 'css') mimeType = 'text/css';
     else if (language === 'json') mimeType = 'application/json';
     else if (['markdown', 'md'].includes(language)) mimeType = 'text/markdown';
 
-    const contentLooksLikeHtml = isLikelyHtml(resolvedCodeText);
-    const isExplicitHtmlLanguage = ['html', 'xml', 'svg'].includes(language);
-    
-    const showPreview = contentLooksLikeHtml || isExplicitHtmlLanguage;
-    const downloadMimeType = mimeType !== 'text/plain' ? mimeType : (showPreview ? 'text/html' : 'text/plain');
+    const showPreview = previewMarkupType !== null;
+    const downloadMimeType = mimeType !== 'text/plain'
+        ? mimeType
+        : previewMarkupType === 'svg'
+          ? 'image/svg+xml'
+          : (showPreview ? 'text/html' : 'text/plain');
     
     let finalLanguage = language;
-    if (language === 'txt' && contentLooksLikeHtml) finalLanguage = 'html';
-    else if (language === 'xml' && contentLooksLikeHtml) finalLanguage = 'html';
+    if (previewMarkupType === 'html') finalLanguage = 'html';
+    else if (previewMarkupType === 'svg') finalLanguage = 'svg';
 
     const handleOpenSide = () => {
         let displayTitle = 'HTML Preview';

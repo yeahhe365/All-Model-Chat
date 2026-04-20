@@ -10,10 +10,18 @@ interface Measurements {
   clientHeight: number;
 }
 
-const TestCodeBlock = ({ text, measurements }: { text: string; measurements: Measurements }) => {
-  const { preRef } = useCodeBlock({
+const TestCodeBlock = ({
+  text,
+  measurements,
+  className = 'language-ts',
+}: {
+  text: string;
+  measurements: Measurements;
+  className?: string;
+}) => {
+  const { preRef, showPreview, finalLanguage } = useCodeBlock({
     children: <code>{text}</code>,
-    className: 'language-ts',
+    className,
     expandCodeBlocksByDefault: false,
     onOpenHtmlPreview: () => {},
     onOpenSidePanel: () => {},
@@ -21,6 +29,8 @@ const TestCodeBlock = ({ text, measurements }: { text: string; measurements: Mea
 
   return (
     <pre
+      data-show-preview={String(showPreview)}
+      data-language={finalLanguage}
       ref={(node) => {
         (
           preRef as MutableRefObject<HTMLPreElement | null>
@@ -116,5 +126,37 @@ describe('useCodeBlock', () => {
     });
 
     expect(measurements.scrollTop).toBe(700);
+  });
+
+  it('does not expose html preview controls for embedded html inside javascript code', () => {
+    act(() => {
+      root.render(
+        <TestCodeBlock
+          text={'const template = `<html><body>Hello</body></html>`;'}
+          measurements={measurements}
+          className="language-js"
+        />,
+      );
+    });
+
+    const pre = container.querySelector('pre');
+    expect(pre?.dataset.showPreview).toBe('false');
+    expect(pre?.dataset.language).toBe('js');
+  });
+
+  it('does not treat generic xml blocks as previewable html', () => {
+    act(() => {
+      root.render(
+        <TestCodeBlock
+          text={'<note><to>Jane</to></note>'}
+          measurements={measurements}
+          className="language-xml"
+        />,
+      );
+    });
+
+    const pre = container.querySelector('pre');
+    expect(pre?.dataset.showPreview).toBe('false');
+    expect(pre?.dataset.language).toBe('xml');
   });
 });
