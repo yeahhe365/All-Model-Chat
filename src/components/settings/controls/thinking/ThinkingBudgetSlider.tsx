@@ -2,6 +2,7 @@
 import React from 'react';
 import { Calculator } from 'lucide-react';
 import { SETTINGS_INPUT_CLASS } from '../../../../constants/appConstants';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface ThinkingBudgetSliderProps {
     minBudget: number;
@@ -16,11 +17,13 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
     value,
     onChange
 }) => {
+    const { t } = useI18n();
+
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                    <Calculator size={12} /> Token Budget
+                    <Calculator size={12} /> {t('settingsThinkingBudget')}
                 </label>
                 <span className="text-xs font-mono text-[var(--theme-text-link)] bg-[var(--theme-bg-tertiary)] px-2 py-0.5 rounded border border-[var(--theme-border-secondary)]">
                     {parseInt(value || '0').toLocaleString()} tokens
@@ -49,7 +52,7 @@ export const ThinkingBudgetSlider: React.FC<ThinkingBudgetSliderProps> = ({
                 </div>
             </div>
             <p className="text-[10px] text-[var(--theme-text-tertiary)] text-center">
-                Controls the maximum number of tokens the model can use for its internal thought process ({minBudget}-{maxBudget}).
+                {t('settingsReasoningBudgetHelp')} ({minBudget}-{maxBudget}).
             </p>
         </div>
     );

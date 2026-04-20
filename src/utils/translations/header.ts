@@ -15,7 +15,7 @@ export const headerTranslations = {
     settingsOpen_aria: { en: 'Open Chat Settings', zh: '打开聊天设置' },
     settingsOpen_title: { en: 'Chat Settings', zh: '聊天设置' },
     headerNewChat_aria: { en: 'Start a new chat session', zh: '开始新聊天会话' },
-    headerStream: { en: 'Stream', zh: '流式' },
+    headerStream: { en: 'Streaming Responses', zh: '流式输出' },
     headerModelSelectorTooltip_current: { en: 'Current Model', zh: '当前模型' },
     headerModelSelectorTooltip_action: { en: `Click to change, or press 'Tab' to cycle`, zh: `点击更改，或按 'Tab' 键循环切换` },
     headerModelAriaLabel_current: { en: 'Current AI Model', zh: '当前 AI 模型' },

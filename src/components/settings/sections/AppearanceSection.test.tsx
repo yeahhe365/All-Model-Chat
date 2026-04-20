@@ -42,13 +42,17 @@ describe('AppearanceSection', () => {
     });
 
     expect(container.textContent).toContain('Theme');
-    expect(container.textContent).toContain('Base Font Size');
+    expect(container.textContent).toContain('Reading Size');
+    expect(container.textContent).toContain('File Transfer Method');
+    expect(container.textContent).toContain('Streaming Responses');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
     expect(container.textContent).toContain('主题');
-    expect(container.textContent).toContain('基础字号');
+    expect(container.textContent).toContain('阅读字号');
+    expect(container.textContent).toContain('文件传输方式');
+    expect(container.textContent).toContain('流式输出');
   });
 });

@@ -24,7 +24,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({
   return (
     <div className="space-y-4">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
-            <Mic size={14} strokeWidth={1.5} /> Audio & Speech
+            <Mic size={14} strokeWidth={1.5} /> {t('settingsVoiceSectionTitle')}
         </h4>
         
         <div className="space-y-3">

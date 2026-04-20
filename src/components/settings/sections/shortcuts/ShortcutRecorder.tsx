@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, RotateCcw } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 import { formatShortcut, recordKeyCombination } from '../../../../utils/shortcutUtils';
 
 interface ShortcutRecorderProps {
@@ -10,6 +11,7 @@ interface ShortcutRecorderProps {
 }
 
 export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defaultValue, onChange }) => {
+    const { t } = useI18n();
     const [isRecording, setIsRecording] = useState(false);
     const [tempKey, setTempKey] = useState<string | null>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -84,8 +86,8 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                     <button 
                         onClick={handleReset} 
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
-                        title="Reset to default"
-                        aria-label="Reset shortcut"
+                        title={t('shortcuts_reset_default')}
+                        aria-label={t('shortcuts_reset_aria')}
                     >
                         <RotateCcw size={12} />
                     </button>
@@ -94,8 +96,8 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                     <button 
                         onClick={handleClear}
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)]"
-                        title="Clear shortcut"
-                        aria-label="Clear shortcut"
+                        title={t('shortcuts_clear')}
+                        aria-label={t('shortcuts_clear_aria')}
                     >
                         <X size={12} />
                     </button>
@@ -113,12 +115,12 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                         : 'hover:bg-[var(--theme-bg-tertiary)]/50'
                     }
                 `}
-                title={isRecording ? "Press keys to record" : "Click to record shortcut"}
-                aria-label={isRecording ? "Recording shortcut" : `Current shortcut: ${formattedKeys.join(' plus ')}`}
+                title={isRecording ? t('shortcuts_press_keys') : t('shortcuts_click_record')}
+                aria-label={isRecording ? t('shortcuts_recording') : `${t('shortcuts_current_aria')}: ${formattedKeys.join(' plus ')}`}
             >
                 {isRecording ? (
                     <span className="text-xs font-medium animate-pulse whitespace-nowrap font-mono">
-                        {tempKey ? formatShortcut(tempKey).join(' + ') : 'Recording...'}
+                        {tempKey ? formatShortcut(tempKey).join(' + ') : t('shortcuts_recording')}
                     </span>
                 ) : (
                     isBound ? (
@@ -143,7 +145,7 @@ export const ShortcutRecorder: React.FC<ShortcutRecorderProps> = ({ value, defau
                             ))}
                         </div>
                     ) : (
-                        <span className="text-xs text-[var(--theme-text-tertiary)] italic px-2">None</span>
+                        <span className="text-xs text-[var(--theme-text-tertiary)] italic px-2">{t('shortcuts_none')}</span>
                     )
                 )}
             </button>

@@ -185,7 +185,7 @@ export const SafetySection: React.FC<SafetySectionProps> = ({ safetySettings, se
 
       <div className="flex items-center justify-center gap-2 text-xs text-[var(--theme-text-tertiary)] pt-4">
         <Info size={14} />
-        <span>Changes apply to new messages.</span>
+        <span>{t('safety_changes_apply')}</span>
       </div>
     </div>
   );

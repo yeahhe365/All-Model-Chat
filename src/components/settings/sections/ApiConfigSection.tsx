@@ -104,13 +104,13 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
     if (!keyToTest && useCustomApiConfig && !canUseServerManagedTestKey) {
       setTestStatus('error');
-      setTestMessage('No API Key provided to test.');
+      setTestMessage(t('apiConfig_noKeyProvided'));
       return;
     }
 
     if (!keyToTest) {
       setTestStatus('error');
-      setTestMessage('No API Key available.');
+      setTestMessage(t('apiConfig_noKeyAvailable'));
       return;
     }
 
@@ -119,7 +119,7 @@ export const ApiConfigSection: React.FC<ApiConfigSectionProps> = ({
 
     if (!firstKey) {
       setTestStatus('error');
-      setTestMessage('Invalid API Key format.');
+      setTestMessage(t('apiConfig_invalidKeyFormat'));
       return;
     }
 

@@ -1,6 +1,8 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../../contexts/I18nContext';
+import { useSettingsStore } from '../../../../stores/settingsStore';
 import { ThinkingControl } from './ThinkingControl';
 
 vi.mock('../../../shared/Tooltip', () => ({
@@ -10,8 +12,10 @@ vi.mock('../../../shared/Tooltip', () => ({
 describe('ThinkingControl image model behavior', () => {
   let container: HTMLDivElement;
   let root: Root;
+  const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
+    useSettingsStore.setState({ language: 'en' });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -24,6 +28,7 @@ describe('ThinkingControl image model behavior', () => {
     container.remove();
     document.body.innerHTML = '';
     vi.clearAllMocks();
+    useSettingsStore.setState(initialState);
   });
 
   it('limits Gemini 3.1 Flash Image to MINIMAL/HIGH and normalizes unsupported settings', async () => {
@@ -32,16 +37,18 @@ describe('ThinkingControl image model behavior', () => {
 
     await act(async () => {
       root.render(
-        <ThinkingControl
-          modelId="gemini-3.1-flash-image-preview"
-          thinkingBudget={0}
-          setThinkingBudget={setThinkingBudget}
-          thinkingLevel="LOW"
-          setThinkingLevel={setThinkingLevel}
-          showThoughts
-          setShowThoughts={vi.fn()}
-          t={(key) => key}
-        />,
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemini-3.1-flash-image-preview"
+            thinkingBudget={0}
+            setThinkingBudget={setThinkingBudget}
+            thinkingLevel="LOW"
+            setThinkingLevel={setThinkingLevel}
+            showThoughts
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
       );
     });
 
@@ -58,16 +65,18 @@ describe('ThinkingControl image model behavior', () => {
   it('hides ThinkingControl for Gemini 3 Pro Image because the request config does not use it', async () => {
     await act(async () => {
       root.render(
-        <ThinkingControl
-          modelId="gemini-3-pro-image-preview"
-          thinkingBudget={-1}
-          setThinkingBudget={vi.fn()}
-          thinkingLevel="HIGH"
-          setThinkingLevel={vi.fn()}
-          showThoughts
-          setShowThoughts={vi.fn()}
-          t={(key) => key}
-        />,
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemini-3-pro-image-preview"
+            thinkingBudget={-1}
+            setThinkingBudget={vi.fn()}
+            thinkingLevel="HIGH"
+            setThinkingLevel={vi.fn()}
+            showThoughts
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
       );
     });
 
@@ -77,16 +86,18 @@ describe('ThinkingControl image model behavior', () => {
   it('shows Gemma as an API thinking toggle instead of token injection text', async () => {
     await act(async () => {
       root.render(
-        <ThinkingControl
-          modelId="gemma-4-31b-it"
-          thinkingBudget={0}
-          setThinkingBudget={vi.fn()}
-          thinkingLevel="HIGH"
-          setThinkingLevel={vi.fn()}
-          showThoughts
-          setShowThoughts={vi.fn()}
-          t={(key) => key}
-        />,
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemma-4-31b-it"
+            thinkingBudget={0}
+            setThinkingBudget={vi.fn()}
+            thinkingLevel="HIGH"
+            setThinkingLevel={vi.fn()}
+            showThoughts
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
       );
     });
 
@@ -103,16 +114,18 @@ describe('ThinkingControl image model behavior', () => {
   it('shows disabled Gemma helper text when thinking is off', async () => {
     await act(async () => {
       root.render(
-        <ThinkingControl
-          modelId="gemma-4-31b-it"
-          thinkingBudget={0}
-          setThinkingBudget={vi.fn()}
-          thinkingLevel="HIGH"
-          setThinkingLevel={vi.fn()}
-          showThoughts={false}
-          setShowThoughts={vi.fn()}
-          t={(key) => key}
-        />,
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemma-4-31b-it"
+            thinkingBudget={0}
+            setThinkingBudget={vi.fn()}
+            thinkingLevel="HIGH"
+            setThinkingLevel={vi.fn()}
+            showThoughts={false}
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
       );
     });
 

@@ -80,7 +80,7 @@ export const ChatBehaviorSection: React.FC<ChatBehaviorSectionProps> = (props) =
         <div className="pt-6 border-t border-[var(--theme-border-secondary)] space-y-4">
              <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-2">
                 <Wand2 size={14} strokeWidth={1.5} />
-                Canvas Visualization
+                {t('settingsCanvasSectionTitle')}
             </h4>
             <div className="space-y-1">
                  <ToggleItem 

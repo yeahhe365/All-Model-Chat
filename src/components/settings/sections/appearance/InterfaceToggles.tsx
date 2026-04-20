@@ -38,10 +38,10 @@ export const InterfaceToggles: React.FC<InterfaceTogglesProps> = ({
     onUpdate('isCompletionNotificationEnabled', enabled);
   };
 
-  return (
+    return (
     <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] mb-2">
-            Interface Options
+            {t('settingsBehaviorDisplay')}
         </label>
         <div className="grid grid-cols-1 gap-1">
             <ToggleItem label={t('headerStream')} checked={settings.isStreamingEnabled} onChange={(v) => onUpdate('isStreamingEnabled', v)} />

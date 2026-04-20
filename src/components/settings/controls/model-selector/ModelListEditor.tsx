@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, RotateCcw, Check } from 'lucide-react';
 import { ModelOption } from '../../../../types';
 import { ModelListEditorRow } from './ModelListEditorRow';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface ModelListEditorProps {
     availableModels: ModelOption[];
@@ -12,6 +13,7 @@ interface ModelListEditorProps {
 type EditableModelField = 'id' | 'name' | 'isPinned';
 
 export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModels, onSave, setIsEditingList }) => {
+    const { t } = useI18n();
     const [tempModels, setTempModels] = useState<ModelOption[]>(availableModels);
 
     // Sync when entering edit mode (mounting) or parent updates
@@ -34,7 +36,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
     };
 
     const handleResetDefaults = async () => {
-        if (window.confirm("Reset model list to default? This will clear all custom additions.")) {
+        if (window.confirm(t('settingsResetModelListConfirm'))) {
             const { getDefaultModelOptions } = await import('../../../../utils/defaultModelOptions');
             setTempModels(getDefaultModelOptions());
         }
@@ -65,7 +67,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
                 
                 {tempModels.length === 0 && (
                     <div className="p-4 text-center text-xs text-[var(--theme-text-tertiary)] italic">
-                        No models in list. Add one or reset to defaults.
+                        {t('settingsNoModelsInList')}
                     </div>
                 )}
             </div>
@@ -76,13 +78,13 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
                         onClick={handleAddModel}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)] bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded hover:bg-[var(--theme-bg-tertiary)] transition-colors"
                     >
-                        <Plus size={14} /> Add Model
+                        <Plus size={14} /> {t('settingsAddModel')}
                     </button>
                     <button 
                         onClick={handleResetDefaults}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
                     >
-                        <RotateCcw size={14} /> Reset
+                        <RotateCcw size={14} /> {t('settingsResetModelList')}
                     </button>
                 </div>
                 
@@ -90,7 +92,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
                     onClick={handleSaveList}
                     className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium text-[var(--theme-text-accent)] bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] rounded transition-colors shadow-sm"
                 >
-                    <Check size={14} /> Save List
+                    <Check size={14} /> {t('settingsSaveModelList')}
                 </button>
             </div>
         </div>

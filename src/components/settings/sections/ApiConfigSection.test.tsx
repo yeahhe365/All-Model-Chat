@@ -80,7 +80,7 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('API Configuration');
+    expect(container.textContent).toContain('API & Connections');
 
     const testButton = Array.from(container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('Test Connection')
@@ -132,14 +132,14 @@ describe('ApiConfigSection', () => {
       );
     });
 
-    expect(container.textContent).toContain('API Configuration');
+    expect(container.textContent).toContain('API & Connections');
     expect(container.textContent).toContain('Test Connection');
 
     act(() => {
       useSettingsStore.setState({ language: 'zh' });
     });
 
-    expect(container.textContent).toContain('API 配置');
+    expect(container.textContent).toContain('API 与连接');
     expect(container.textContent).toContain('测试连通性');
   });
 });

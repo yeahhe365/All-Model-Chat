@@ -11,6 +11,7 @@ import { SETTINGS_INPUT_CLASS } from '../../constants/appConstants';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { MediaResolution } from '../../types/settings';
 import { getModelCapabilities } from '../../utils/modelHelpers';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -57,6 +58,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
     mediaResolution,
     setMediaResolution
   } = props;
+  const { t: i18n } = useI18n();
 
   const [isSystemPromptExpanded, setIsSystemPromptExpanded] = useState(false);
 
@@ -122,13 +124,13 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                 <div className="flex justify-between items-center mb-2">
                     <label htmlFor="system-prompt-input" className="text-sm font-medium text-[var(--theme-text-primary)] flex items-center">
                         <span>{t('settingsSystemPrompt')}</span>
-                        {isSystemPromptSet && <span className="w-2 h-2 ml-2 bg-[var(--theme-text-success)] rounded-full animate-pulse" title="Active" />}
+                        {isSystemPromptSet && <span className="w-2 h-2 ml-2 bg-[var(--theme-text-success)] rounded-full animate-pulse" title={i18n('settingsSystemPromptActive')} />}
                     </label>
                     <button
                         type="button"
                         onClick={handleOpenExpand}
                         className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
-                        title="Expand Editor"
+                        title={i18n('settingsExpandEditor')}
                     >
                         <Maximize2 size={14} />
                     </button>
@@ -141,7 +143,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                   rows={3} 
                   className={`${inputBaseClasses} ${SETTINGS_INPUT_CLASS} resize-y min-h-[80px] custom-scrollbar`}
                   placeholder={t('chatBehavior_systemPrompt_placeholder')}
-                  aria-label="System prompt text area"
+                  aria-label={i18n('settingsSystemPromptAria')}
                 />
             </div>
 

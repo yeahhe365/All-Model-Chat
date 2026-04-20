@@ -2,6 +2,7 @@
 import React from 'react';
 import { Gauge, Feather, Zap, Sparkles, Cpu } from 'lucide-react';
 import { LevelButton } from './LevelButton';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 type ThinkingLevelOption = 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
 
@@ -16,6 +17,7 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
     setThinkingLevel,
     supportedLevels,
 }) => {
+    const { t } = useI18n();
     const levelButtons = [
         {
             level: 'MINIMAL' as const,
@@ -47,7 +49,7 @@ export const ThinkingLevelSelector: React.FC<ThinkingLevelSelectorProps> = ({
         <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[var(--theme-text-tertiary)] flex items-center gap-1.5">
-                    <Gauge size={12} /> Intensity Level
+                    <Gauge size={12} /> {t('settingsReasoningLevelTitle')}
                 </span>
             </div>
             <div className={`grid ${gridClass} gap-2`}>

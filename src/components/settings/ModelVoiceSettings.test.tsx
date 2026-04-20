@@ -1,6 +1,8 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../contexts/I18nContext';
+import { useSettingsStore } from '../../stores/settingsStore';
 import { ModelVoiceSettings } from './ModelVoiceSettings';
 import { MediaResolution } from '../../types/settings';
 
@@ -45,6 +47,7 @@ vi.mock('../shared/Select', () => ({
 describe('ModelVoiceSettings media resolution options', () => {
   let container: HTMLDivElement;
   let root: Root;
+  const initialState = useSettingsStore.getState();
 
   const baseProps = {
     setModelId: vi.fn(),
@@ -74,6 +77,7 @@ describe('ModelVoiceSettings media resolution options', () => {
   };
 
   beforeEach(() => {
+    useSettingsStore.setState({ language: 'en' });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -86,11 +90,16 @@ describe('ModelVoiceSettings media resolution options', () => {
     container.remove();
     document.body.innerHTML = '';
     vi.clearAllMocks();
+    useSettingsStore.setState(initialState);
   });
 
   const renderSettings = (modelId: string) => {
     act(() => {
-      root.render(<ModelVoiceSettings {...baseProps} modelId={modelId} />);
+      root.render(
+        <I18nProvider>
+          <ModelVoiceSettings {...baseProps} modelId={modelId} />
+        </I18nProvider>,
+      );
     });
   };
 

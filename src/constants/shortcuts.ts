@@ -24,8 +24,8 @@ export const SHORTCUT_REGISTRY: ShortcutDefinition[] = [
     // Global / Dialogs
     { id: 'global.stopCancel', labelKey: 'shortcuts_stop_cancel', defaultKey: 'escape', category: 'global' },
     { id: 'global.saveConfirm', labelKey: 'shortcuts_save_confirm', defaultKey: 'mod+enter', category: 'global' },
-    { id: 'global.prevFile', labelKey: 'shortcuts_file_nav', defaultKey: 'arrowleft', category: 'global' },
-    { id: 'global.nextFile', labelKey: 'shortcuts_file_nav', defaultKey: 'arrowright', category: 'global' },
+    { id: 'global.prevFile', labelKey: 'shortcuts_prev_file', defaultKey: 'arrowleft', category: 'global' },
+    { id: 'global.nextFile', labelKey: 'shortcuts_next_file', defaultKey: 'arrowright', category: 'global' },
 ];
 
 export const DEFAULT_SHORTCUTS: Record<string, string> = SHORTCUT_REGISTRY.reduce((acc, item) => {

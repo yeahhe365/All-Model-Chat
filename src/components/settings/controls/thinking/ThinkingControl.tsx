@@ -136,7 +136,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             <label className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
               <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
               {t('settingsThinkingMode')}
-              <Tooltip text="Gemma 4 on the Gemini API only supports thinking mode on or off. When enabled, requests are sent with thinkingConfig.thinkingLevel set to HIGH.">
+              <Tooltip text={t('settingsGemmaReasoningTooltip')}>
                 <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
               </Tooltip>
             </label>
@@ -190,7 +190,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                 </label>
                 {(mode !== 'off' || isImageThinkingLevelOnly) && (
                     <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                        {isGemini3 ? 'Gemini 3.0 Capabilities' : 'Reasoning Enabled'}
+                        {isGemini3 ? t('settingsReasoningBadgeGemini3') : t('settingsReasoningBadgeEnabled')}
                     </span>
                 )}
             </div>
@@ -233,7 +233,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                     {!isImageThinkingLevelOnly && mode === 'off' && (
                         <div className="flex items-center justify-center py-1">
                             <p className="text-xs text-[var(--theme-text-tertiary)] italic flex items-center gap-2">
-                                Thinking process is disabled.
+                                {t('settingsReasoningDisabledNote')}
                             </p>
                         </div>
                     )}

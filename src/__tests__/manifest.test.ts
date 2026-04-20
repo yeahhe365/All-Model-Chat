@@ -18,16 +18,21 @@ describe('web manifest', () => {
     expect(manifest.scope).toBe('/');
   });
 
-  it('uses the shared legacy svg asset for browser and install icons', () => {
+  it('uses svg for browser tabs and png assets for installed surfaces', () => {
     expect(manifest.icons.length).toBeGreaterThanOrEqual(3);
-    expect(indexHtml).toContain('rel="icon" id="favicon" href="/favicon.svg"');
-    expect(indexHtml).toContain('rel="apple-touch-icon" id="apple-touch-icon" href="/favicon.svg"');
+    expect(indexHtml).toContain('rel="icon" id="favicon" href="/favicon.svg" type="image/svg+xml"');
     expect(fs.existsSync(path.join(projectRoot, 'public', 'favicon.svg'))).toBe(true);
+    expect(indexHtml).toContain('rel="apple-touch-icon" id="apple-touch-icon" href="/apple-touch-icon.png"');
+    expect(fs.existsSync(path.join(projectRoot, 'public', 'apple-touch-icon.png'))).toBe(true);
+
+    expect(manifest.icons).toEqual([
+      { src: '/pwa-192.png', type: 'image/png', sizes: '192x192' },
+      { src: '/pwa-512.png', type: 'image/png', sizes: '512x512' },
+      { src: '/pwa-512-maskable.png', type: 'image/png', sizes: '512x512', purpose: 'any maskable' },
+    ]);
 
     for (const icon of manifest.icons) {
       expect(icon.src.startsWith('data:')).toBe(false);
-      expect(icon.src).toBe('/favicon.svg');
-      expect(icon.type).toBe('image/svg+xml');
       expect(fs.existsSync(path.join(projectRoot, 'public', icon.src.replace(/^\//, '')))).toBe(true);
     }
 
