@@ -135,7 +135,7 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
       onLoadCanvasPrompt: vi.fn(),
       onSelectModel: vi.fn(),
       onSetThinkingLevel: vi.fn(),
-      onToggleGemmaThinking: vi.fn(),
+      onToggleGemmaReasoning: vi.fn(),
       onTogglePip: vi.fn(),
     },
     messageActions: {

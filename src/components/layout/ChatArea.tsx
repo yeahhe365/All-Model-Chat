@@ -242,7 +242,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
         thinkingLevel={session.currentChatSettings.thinkingLevel}
         onSetThinkingLevel={header.onSetThinkingLevel}
         showThoughts={session.showThoughts}
-        onToggleGemmaThinking={header.onToggleGemmaThinking}
+        onToggleGemmaReasoning={header.onToggleGemmaReasoning}
         newChatShortcut={newChatShortcut}
         pipShortcut={pipShortcut}
       />

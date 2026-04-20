@@ -60,6 +60,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   // Determine current mode
   const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
   const showThinkingControls = !!budgetConfig || isGemini3 || isGemma;
+  const isGemmaReasoningEnabled = showThoughts;
 
   useEffect(() => {
     if (thinkingBudget > 0) {
@@ -146,21 +147,21 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
               <button
                 type="button"
                 aria-pressed={showThoughts}
-                onClick={() => setShowThoughts(!showThoughts)}
+                onClick={() => setShowThoughts(!isGemmaReasoningEnabled)}
                 className="flex min-w-0 flex-1 items-center text-left"
               >
                 <span className="text-sm font-medium text-[var(--theme-text-primary)]">
-                  {t('settingsGemmaThinkingToggle_label')}
+                  {t('settingsGemmaReasoningToggle_label')}
                 </span>
               </button>
               <div className="flex-shrink-0">
-                <Toggle checked={showThoughts} onChange={setShowThoughts} />
+                <Toggle checked={isGemmaReasoningEnabled} onChange={setShowThoughts} />
               </div>
             </div>
             <p className="mt-1 pr-16 text-xs leading-relaxed text-[var(--theme-text-secondary)]">
-              {showThoughts
-                ? t('settingsGemmaThinkingToggle_enabledDesc')
-                : t('settingsGemmaThinkingToggle_disabledDesc')}
+              {isGemmaReasoningEnabled
+                ? t('settingsGemmaReasoningToggle_enabledDesc')
+                : t('settingsGemmaReasoningToggle_disabledDesc')}
             </p>
           </div>
         </div>

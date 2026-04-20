@@ -28,8 +28,8 @@ describe('HeaderModelSelector', () => {
     vi.clearAllMocks();
   });
 
-  it('shows the fast toggle for Gemma and uses it to toggle showThoughts', async () => {
-    const onToggleGemmaThinking = vi.fn();
+  it('shows the fast toggle for Gemma and uses it to toggle reasoning', async () => {
+    const onToggleGemmaReasoning = vi.fn();
 
     await act(async () => {
       root.render(
@@ -43,18 +43,18 @@ describe('HeaderModelSelector', () => {
           thinkingLevel="HIGH"
           onSetThinkingLevel={vi.fn()}
           showThoughts={true}
-          onToggleGemmaThinking={onToggleGemmaThinking}
+          onToggleGemmaReasoning={onToggleGemmaReasoning}
         />,
       );
     });
 
-    const toggleButton = container.querySelector('button[aria-label="Toggle thinking level"]');
+    const toggleButton = container.querySelector('button[aria-label="Toggle reasoning mode"]');
     expect(toggleButton).not.toBeNull();
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
-    expect(onToggleGemmaThinking).toHaveBeenCalledTimes(1);
+    expect(onToggleGemmaReasoning).toHaveBeenCalledTimes(1);
   });
 });

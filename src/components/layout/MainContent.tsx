@@ -133,17 +133,17 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     }));
   }, [setAppSettings]);
 
-  const onToggleGemmaThinking = useCallback(() => {
-    const nextShowThoughts = !chatState.currentChatSettings.showThoughts;
+  const onToggleGemmaReasoning = useCallback(() => {
+    const nextGemmaReasoningEnabled = !chatState.currentChatSettings.showThoughts;
 
     setAppSettings((prev) => ({
       ...prev,
-      showThoughts: nextShowThoughts,
+      showThoughts: nextGemmaReasoningEnabled,
     }));
 
     chatState.setCurrentChatSettings((prev) => ({
       ...prev,
-      showThoughts: nextShowThoughts,
+      showThoughts: nextGemmaReasoningEnabled,
     }));
   }, [chatState.currentChatSettings.showThoughts, chatState.setCurrentChatSettings, setAppSettings]);
 
@@ -403,7 +403,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
         onSelectModel: chatState.handleSelectModelInHeader,
         onSetThinkingLevel: handleSetThinkingLevel,
-        onToggleGemmaThinking,
+        onToggleGemmaReasoning,
         onTogglePip: pipState.togglePip,
       },
       messageActions,
@@ -446,7 +446,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       toggleHistorySidebar,
       handleLoadCanvasPromptAndSave,
       handleSetThinkingLevel,
-      onToggleGemmaThinking,
+      onToggleGemmaReasoning,
     ],
   );
 

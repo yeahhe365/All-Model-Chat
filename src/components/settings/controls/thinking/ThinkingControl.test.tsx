@@ -83,7 +83,7 @@ describe('ThinkingControl image model behavior', () => {
     expect(container.textContent?.trim()).toBe('');
   });
 
-  it('shows Gemma as an API thinking toggle instead of token injection text', async () => {
+  it('shows Gemma as an API reasoning toggle instead of a thought-visibility toggle', async () => {
     await act(async () => {
       root.render(
         <I18nProvider>
@@ -101,9 +101,9 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('settingsGemmaThinkingToggle_label');
-    expect(container.textContent).toContain('settingsGemmaThinkingToggle_enabledDesc');
-    expect(container.textContent).not.toContain('settingsGemmaThinkingToggle_disabled');
+    expect(container.textContent).toContain('settingsGemmaReasoningToggle_label');
+    expect(container.textContent).toContain('settingsGemmaReasoningToggle_enabledDesc');
+    expect(container.textContent).not.toContain('settingsGemmaReasoningToggle_disabled');
     expect(container.textContent).not.toContain('thinkingLevel');
     expect(container.textContent).not.toContain('<|think|>');
     expect(container.innerHTML).not.toContain('bg-[var(--theme-bg-tertiary)]/20');
@@ -113,7 +113,7 @@ describe('ThinkingControl image model behavior', () => {
     expect(toggleButton).not.toBeNull();
   });
 
-  it('shows disabled Gemma helper text when thinking is off', async () => {
+  it('shows disabled Gemma helper text when reasoning is off', async () => {
     await act(async () => {
       root.render(
         <I18nProvider>
@@ -131,8 +131,8 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('settingsGemmaThinkingToggle_label');
-    expect(container.textContent).toContain('settingsGemmaThinkingToggle_disabledDesc');
+    expect(container.textContent).toContain('settingsGemmaReasoningToggle_label');
+    expect(container.textContent).toContain('settingsGemmaReasoningToggle_disabledDesc');
     const toggleButton = container.querySelector('button[aria-pressed="false"]');
     expect(toggleButton).not.toBeNull();
   });

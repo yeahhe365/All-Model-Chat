@@ -17,7 +17,7 @@ interface HeaderModelSelectorProps {
   thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
   onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
   showThoughts?: boolean;
-  onToggleGemmaThinking: () => void;
+  onToggleGemmaReasoning: () => void;
 }
 
 export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
@@ -30,7 +30,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   thinkingLevel,
   onSetThinkingLevel,
   showThoughts,
-  onToggleGemmaThinking,
+  onToggleGemmaReasoning,
 }) => {
   const { t } = useI18n();
   const displayModelName = currentModelName;
@@ -58,9 +58,10 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   // Other Gemini 3 models (like Pro) typically bottom out at LOW
   const isFlash = selectedModelId.toLowerCase().includes('flash');
   const targetFastLevel = isFlash ? 'MINIMAL' : 'LOW';
+  const isGemmaReasoningEnabled = !!showThoughts;
   
   // Consider it "Fast Mode" active if the current level matches the target fast level
-  const isFastState = isGemmaModel ? !showThoughts : thinkingLevel === targetFastLevel;
+  const isFastState = isGemmaModel ? !isGemmaReasoningEnabled : thinkingLevel === targetFastLevel;
 
   return (
     <ModelPicker
@@ -91,7 +92,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                     onClick={(e) => { 
                         e.stopPropagation(); 
                         if (isGemmaModel) {
-                            onToggleGemmaThinking();
+                            onToggleGemmaReasoning();
                             return;
                         }
                         onSetThinkingLevel(isFastState ? 'HIGH' : targetFastLevel); 
@@ -106,7 +107,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                             ? (isFastState ? 'Reasoning Off (Fast Mode)' : 'Reasoning On')
                             : (isFastState ? `Thinking: ${targetFastLevel === 'MINIMAL' ? 'Minimal' : 'Low'} (Fast Mode)` : 'Thinking: High (Pro Mode)')
                     }
-                    aria-label="Toggle thinking level"
+                    aria-label={isGemmaModel ? 'Toggle reasoning mode' : 'Toggle thinking level'}
                 >
                     <Zap size={18} fill={isFastState ? "currentColor" : "none"} strokeWidth={2} />
                 </button>

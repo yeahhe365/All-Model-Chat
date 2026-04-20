@@ -354,6 +354,7 @@ export const buildGenerationConfig = async (
     }
 
     const isGemma = isGemmaModel(modelId);
+    const isGemmaReasoningEnabled = isGemma && showThoughts;
 
     const generationConfig: GenerationConfig = {
         ...config,
@@ -395,7 +396,7 @@ export const buildGenerationConfig = async (
             generationConfig.thinkingConfig.thinkingLevel = thinkingLevel || 'HIGH';
         }
     } else if (isGemma) {
-        if (showThoughts) {
+        if (isGemmaReasoningEnabled) {
             generationConfig.thinkingConfig = {
                 includeThoughts: true,
                 thinkingLevel: 'HIGH',
