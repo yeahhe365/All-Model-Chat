@@ -276,6 +276,52 @@ describe('chatStore', () => {
       expect(savedArg.title).toBe('Updated');
     });
 
+    it('preserves non-active session messages when updating metadata-only entries', async () => {
+      const activeSession = makeSession({
+        id: 's1',
+        messages: [{ id: 'm-active', role: 'user', content: 'Active', timestamp: new Date() }],
+      });
+      const inactiveFullSession = makeSession({
+        id: 's2',
+        title: 'Archive',
+        messages: [{ id: 'm-archive', role: 'user', content: 'Keep me', timestamp: new Date() }],
+      });
+
+      useChatStore.getState().setActiveSessionId('s1');
+      useChatStore.getState().setActiveMessages(activeSession.messages);
+      useChatStore.getState().setSavedSessions([
+        { ...activeSession, messages: [] },
+        { ...inactiveFullSession, messages: [] },
+      ]);
+
+      vi.mocked(dbService.getSession).mockImplementation(async (id: string) => {
+        if (id === 's1') return activeSession;
+        if (id === 's2') return inactiveFullSession;
+        return undefined;
+      });
+
+      useChatStore.getState().updateAndPersistSessions((prev) =>
+        prev.map((session) =>
+          session.id === 's2' ? { ...session, title: 'Archive Updated' } : session,
+        ),
+      );
+
+      await vi.waitFor(() => {
+        const archivedSave = vi
+          .mocked(dbService.saveSession)
+          .mock.calls.find(([session]) => session.id === 's2');
+        expect(archivedSave).toBeDefined();
+      });
+
+      const archivedSave = vi
+        .mocked(dbService.saveSession)
+        .mock.calls.find(([session]) => session.id === 's2');
+      const savedArg = archivedSave?.[0];
+
+      expect(savedArg?.title).toBe('Archive Updated');
+      expect(savedArg?.messages).toEqual(inactiveFullSession.messages);
+    });
+
     it('deletes removed sessions from DB', async () => {
       useChatStore.getState().setSavedSessions([makeSession({ id: 's1' })]);
 

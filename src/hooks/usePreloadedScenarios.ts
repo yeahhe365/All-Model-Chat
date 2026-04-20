@@ -77,7 +77,7 @@ export const usePreloadedScenarios = ({
 
     const newSession = createNewSession(sessionSettings, messages, title);
 
-    updateAndPersistSessions((prev) => [newSession, ...prev.filter((s) => s.messages.length > 0)]);
+    updateAndPersistSessions((prev) => [newSession, ...prev.filter((s) => s.id !== newSession.id)]);
     setActiveSessionId(newSession.id);
     dbService.setActiveSessionId(newSession.id);
 

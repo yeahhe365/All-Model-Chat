@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { SavedChatSession } from '../../../types';
 import { createNewSession, logService, cleanupFilePreviewUrls, generateUniqueId } from '../../../utils/appUtils';
+import { dbService } from '../../../utils/db';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
 
 interface UseSessionActionsProps {
@@ -57,13 +58,19 @@ export const useSessionActions = ({
         );
     }, [updateAndPersistSessions]);
 
-    const handleDuplicateSession = useCallback((sessionId: string) => {
+    const handleDuplicateSession = useCallback(async (sessionId: string) => {
         logService.info(`Duplicating session: ${sessionId}`);
+        const persistedSession = await dbService.getSession(sessionId);
+
         updateAndPersistSessions(prev => {
             const sessionToDuplicate = prev.find(s => s.id === sessionId);
             if (!sessionToDuplicate) return prev;
+            const fullSessionToDuplicate =
+                sessionToDuplicate.messages.length > 0
+                    ? sessionToDuplicate
+                    : (persistedSession ?? sessionToDuplicate);
 
-            const duplicatedMessages = sessionToDuplicate.messages.map((message) => ({
+            const duplicatedMessages = fullSessionToDuplicate.messages.map((message) => ({
                 ...message,
                 id: generateUniqueId(),
                 files: message.files?.map((file) => ({
@@ -76,9 +83,9 @@ export const useSessionActions = ({
             }));
 
             const newSession = createNewSession(
-                sessionToDuplicate.settings,
+                fullSessionToDuplicate.settings,
                 duplicatedMessages,
-                `${sessionToDuplicate.title} (Copy)`
+                `${fullSessionToDuplicate.title} (Copy)`
             );
             return [newSession, ...prev];
         });

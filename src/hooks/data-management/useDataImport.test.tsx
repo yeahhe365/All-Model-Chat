@@ -115,6 +115,58 @@ describe('useDataImport', () => {
     unmount();
   });
 
+  it('normalizes imported message date fields before persisting history', () => {
+    let sessions: SavedChatSession[] = [];
+    const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+      sessions = updater(sessions);
+    });
+
+    fileReaderResult = JSON.stringify({
+      type: 'AllModelChat-History',
+      history: [
+        {
+          id: 'session-1',
+          title: 'Imported',
+          timestamp: '2026-04-18T08:30:00.000Z',
+          messages: [
+            {
+              id: 'message-1',
+              role: 'model',
+              content: 'Imported reply',
+              timestamp: '2026-04-18T08:31:00.000Z',
+              generationStartTime: '2026-04-18T08:30:30.000Z',
+              generationEndTime: '2026-04-18T08:31:30.000Z',
+            },
+          ],
+          settings: {},
+        },
+      ],
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useDataImport({
+        setAppSettings: vi.fn(),
+        updateAndPersistSessions,
+        updateAndPersistGroups: vi.fn(),
+        savedScenarios: [],
+        handleSaveAllScenarios: vi.fn(),
+        t: (key) => key,
+      }),
+    );
+
+    act(() => {
+      result.current.handleImportHistory(
+        new File(['history'], 'history.json', { type: 'application/json' }),
+      );
+    });
+
+    expect(sessions[0].messages[0].timestamp).toBeInstanceOf(Date);
+    expect(sessions[0].messages[0].generationStartTime).toBeInstanceOf(Date);
+    expect(sessions[0].messages[0].generationEndTime).toBeInstanceOf(Date);
+
+    unmount();
+  });
+
   it('falls back to defaults for invalid nested and enum settings during import', () => {
     let importedSettings: AppSettings = DEFAULT_APP_SETTINGS;
     let didImportSettings = false;

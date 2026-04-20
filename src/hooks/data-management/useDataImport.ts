@@ -1,6 +1,6 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
-import { AppSettings, SavedChatSession, SavedScenario, ChatGroup } from '../../types';
+import { AppSettings, SavedChatSession, SavedScenario, ChatGroup, ChatMessage } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
 import { generateUniqueId, logService } from '../../utils/appUtils';
 import { mergeImportedScenarios } from '../../features/scenarios/scenarioLibrary';
@@ -43,14 +43,37 @@ const normalizeImportedTimestamp = (value: unknown): number => {
     return Number.isFinite(parsed) ? parsed : Date.now();
 };
 
-const normalizeImportedSession = (session: SavedChatSession): SavedChatSession => ({
-    ...session,
-    timestamp: normalizeImportedTimestamp(session.timestamp),
-});
-
 const normalizeImportedGroup = (group: ChatGroup): ChatGroup => ({
     ...group,
     timestamp: normalizeImportedTimestamp(group.timestamp),
+});
+
+const normalizeImportedDate = (value: unknown): Date | undefined => {
+    if (value === undefined || value === null || value === '') {
+        return undefined;
+    }
+
+    if (value instanceof Date) {
+        return Number.isNaN(value.getTime()) ? undefined : value;
+    }
+
+    const parsed = new Date(String(value));
+    return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+};
+
+const normalizeImportedMessage = (message: ChatMessage): ChatMessage => ({
+    ...message,
+    timestamp: normalizeImportedDate(message.timestamp) ?? new Date(),
+    generationStartTime: normalizeImportedDate(message.generationStartTime),
+    generationEndTime: normalizeImportedDate(message.generationEndTime),
+});
+
+const normalizeImportedSession = (session: SavedChatSession): SavedChatSession => ({
+    ...session,
+    timestamp: normalizeImportedTimestamp(session.timestamp),
+    messages: Array.isArray(session.messages)
+        ? session.messages.map((message) => normalizeImportedMessage(message))
+        : [],
 });
 
 const THEME_IDS = ['system', 'onyx', 'pearl'] as const;

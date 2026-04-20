@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { SYSTEM_SCENARIO_IDS } from '../features/scenarios/scenarioLibrary';
+import type { SavedChatSession } from '../types';
+import { createNewSession } from '../utils/appUtils';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 
 const { localStorageMock } = vi.hoisted(() => {
@@ -39,7 +41,13 @@ vi.mock('../utils/db', () => ({
 vi.mock('../utils/appUtils', () => ({
   generateUniqueId: () => 'generated-id',
   generateSessionTitle: () => 'Generated title',
-  createNewSession: vi.fn(),
+  createNewSession: vi.fn((settings, messages, title) => ({
+    id: 'new-session',
+    title,
+    messages,
+    settings,
+    timestamp: Date.now(),
+  })),
   logService: {
     error: vi.fn(),
     warn: vi.fn(),
@@ -98,6 +106,62 @@ describe('usePreloadedScenarios', () => {
 
     expect(scenarioIds).toContain('voxel-designer-scenario-default');
     expect(SYSTEM_SCENARIO_IDS).not.toContain('voxel-designer-scenario-default');
+    unmount();
+  });
+
+  it('keeps existing metadata-only sessions when loading a preloaded scenario', async () => {
+    const existingSession: SavedChatSession = {
+      id: 'existing-session',
+      title: 'Existing',
+      timestamp: 1,
+      messages: [],
+      settings: DEFAULT_APP_SETTINGS,
+    } as SavedChatSession;
+    const newSession: SavedChatSession = {
+      id: 'scenario-session',
+      title: 'Scenario',
+      timestamp: 2,
+      messages: [
+        {
+          id: 'message-1',
+          role: 'user',
+          content: 'Scenario prompt',
+          timestamp: new Date('2026-04-20T10:00:00.000Z'),
+        },
+      ],
+      settings: DEFAULT_APP_SETTINGS,
+    };
+    vi.mocked(createNewSession).mockReturnValue(newSession);
+
+    let sessions = [existingSession];
+    const updateAndPersistSessions = vi.fn((updater: (prev: SavedChatSession[]) => SavedChatSession[]) => {
+      sessions = updater(sessions);
+    });
+
+    const { result, unmount } = renderHook(() =>
+      usePreloadedScenarios({
+        appSettings: DEFAULT_APP_SETTINGS,
+        setAppSettings: vi.fn(),
+        updateAndPersistSessions,
+        setActiveSessionId: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    act(() => {
+      result.current.handleLoadPreloadedScenario({
+        id: 'scenario-1',
+        title: 'Scenario',
+        messages: [{ id: 'seed-1', role: 'user', content: 'Scenario prompt' }],
+      });
+    });
+
+    expect(sessions.map((session) => session.id)).toEqual(['scenario-session', 'existing-session']);
+
     unmount();
   });
 });

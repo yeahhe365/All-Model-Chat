@@ -313,32 +313,52 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
 
     // 5. Persist
     if (persist) {
-      const updates: Promise<void>[] = [];
       const newSessionsMap = new Map(newFullSessions.map(s => [s.id, s]));
-      const modifiedSessionIds: string[] = [];
-
-      newFullSessions.forEach(session => {
+      const modifiedSessions = newFullSessions.filter((session) => {
         const prevSession = virtualFullSessions.find(ps => ps.id === session.id);
-        if (prevSession !== session) {
-          updates.push(dbService.saveSession(session));
-          modifiedSessionIds.push(session.id);
-        }
+        return prevSession !== session;
       });
+      const deletedSessionIds = savedSessions
+        .filter(session => !newSessionsMap.has(session.id))
+        .map(session => session.id);
 
-      savedSessions.forEach(session => {
-        if (!newSessionsMap.has(session.id)) {
-          updates.push(dbService.deleteSession(session.id));
-        }
-      });
+      if (modifiedSessions.length > 0 || deletedSessionIds.length > 0) {
+        void (async () => {
+          const sessionsToPersist = await Promise.all(
+            modifiedSessions.map(async (session) => {
+              if (session.id === activeSessionId || session.messages.length > 0) {
+                return session;
+              }
 
-      if (updates.length > 0) {
-        Promise.all(updates).then(() => {
-          if (modifiedSessionIds.length === 1) {
-            broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessionIds[0] });
+              const persistedSession = await dbService.getSession(session.id);
+              if (!persistedSession) {
+                return session;
+              }
+
+              return {
+                ...persistedSession,
+                ...session,
+                settings: { ...persistedSession.settings, ...session.settings },
+                messages: persistedSession.messages,
+              };
+            }),
+          );
+
+          await Promise.all([
+            ...sessionsToPersist.map((session) => dbService.saveSession(session)),
+            ...deletedSessionIds.map((id) => dbService.deleteSession(id)),
+          ]);
+
+          if (
+            deletedSessionIds.length === 0
+            && modifiedSessions.length === 1
+            && modifiedSessions[0].id === activeSessionId
+          ) {
+            broadcast({ type: 'SESSION_CONTENT_UPDATED', sessionId: modifiedSessions[0].id });
           } else {
             broadcast({ type: 'SESSIONS_UPDATED' });
           }
-        }).catch(e => logService.error('Failed to persist session updates', { error: e }));
+        })().catch(e => logService.error('Failed to persist session updates', { error: e }));
       }
     }
 
