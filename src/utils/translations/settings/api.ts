@@ -23,6 +23,8 @@ export const apiSettings = {
     apiConfig_noKeyProvided: { en: 'No API key was provided for testing.', zh: '没有可用于测试的 API 密钥。' },
     apiConfig_noKeyAvailable: { en: 'No API key is currently available.', zh: '当前没有可用的 API 密钥。' },
     apiConfig_invalidKeyFormat: { en: 'The API key format looks invalid.', zh: 'API 密钥格式无效。' },
+    apiRuntime_keyNotConfigured: { en: 'API Key not configured.', zh: 'API 密钥未配置。' },
+    apiRuntime_noValidKeysFound: { en: 'No valid API keys found.', zh: '未找到有效的 API 密钥。' },
     settingsLiveTokenEndpoint: { en: 'Live Session Token Endpoint', zh: 'Live 会话令牌端点' },
     settingsLiveTokenEndpointHelp: {
         en: 'Required for Live API in the browser. Point this to a backend endpoint that returns JSON containing an ephemeral token `name` or `token`.',

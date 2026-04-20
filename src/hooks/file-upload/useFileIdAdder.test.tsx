@@ -27,6 +27,21 @@ vi.mock('../../services/geminiService', () => ({
   },
 }));
 
+vi.mock('../../contexts/I18nContext', () => ({
+  useI18n: () => ({
+    t: (key: string) =>
+      ({
+        fileIdAdder_invalidFileId: '无效的文件 ID 格式。',
+        fileIdAdder_duplicateFile: '文件 files/test-file 已经添加过了。',
+        fileIdAdder_loadingFile: '正在加载 files/test-file...',
+        fileIdAdder_notFound: '找不到文件 files/test-file，或您无权访问。',
+        fileIdAdder_notFoundShort: '文件不存在。',
+        fileIdAdder_notFoundLabel: '未找到：files/test-file',
+        apiRuntime_keyNotConfigured: 'API 密钥未配置。',
+      })[key] ?? key,
+  }),
+}));
+
 import { useFileIdAdder } from './useFileIdAdder';
 
 const renderHook = <T,>(callback: () => T) => {
@@ -114,6 +129,32 @@ describe('useFileIdAdder', () => {
       }),
     ]);
 
+    unmount();
+  });
+
+  it('shows a localized validation error for malformed file ids', async () => {
+    let appFileError: string | null = null;
+
+    const setAppFileError: Dispatch<SetStateAction<string | null>> = (updater) => {
+      appFileError = typeof updater === 'function' ? updater(appFileError) : updater;
+    };
+
+    const { result, unmount } = renderHook(() =>
+      useFileIdAdder({
+        appSettings: DEFAULT_APP_SETTINGS,
+        setSelectedFiles: vi.fn(),
+        setAppFileError,
+        currentChatSettings: DEFAULT_APP_SETTINGS,
+        setCurrentChatSettings: vi.fn(),
+        selectedFiles: [],
+      }),
+    );
+
+    await act(async () => {
+      await result.current.addFileById('bad-id');
+    });
+
+    expect(appFileError).toBe('无效的文件 ID 格式。');
     unmount();
   });
 });

@@ -20,5 +20,12 @@ export const headerTranslations = {
     headerModelSelectorTooltip_action: { en: `Click to change, or press 'Tab' to cycle`, zh: `点击更改，或按 'Tab' 键循环切换` },
     headerModelAriaLabel_current: { en: 'Current AI Model', zh: '当前 AI 模型' },
     headerModelAriaLabel_action: { en: `Click to change model`, zh: `点击更改模型` },
+    headerReasoningToggleAria: { en: 'Toggle reasoning mode', zh: '切换推理模式' },
+    headerThinkingToggleAria: { en: 'Toggle thinking level', zh: '切换思考等级' },
+    headerReasoningHighTitle: { en: 'Reasoning: High', zh: '推理：高' },
+    headerReasoningMinimalFastTitle: { en: 'Reasoning: Minimal (Fast Mode)', zh: '推理：最低（快速模式）' },
+    headerThinkingMinimalFastTitle: { en: 'Thinking: Minimal (Fast Mode)', zh: '思考：最低（快速模式）' },
+    headerThinkingLowFastTitle: { en: 'Thinking: Low (Fast Mode)', zh: '思考：低（快速模式）' },
+    headerThinkingHighTitle: { en: 'Thinking: High (Pro Mode)', zh: '思考：高（专业模式）' },
     header_model_search_placeholder: { en: 'Search models...', zh: '搜索模型...' },
 };

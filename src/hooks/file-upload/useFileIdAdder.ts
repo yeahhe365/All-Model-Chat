@@ -4,6 +4,8 @@ import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
 import { generateUniqueId, getKeyForRequest, logService } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { getUploadLifecycleForGeminiState } from './utils';
+import { useI18n } from '../../contexts/I18nContext';
+import { getApiKeyErrorTranslationKey } from '../../utils/apiUtils';
 
 interface UseFileIdAdderProps {
     appSettings: AppSettings;
@@ -22,18 +24,24 @@ export const useFileIdAdder = ({
     setCurrentChatSettings,
     selectedFiles
 }: UseFileIdAdderProps) => {
+    const { t } = useI18n();
+
+    const translateApiKeyError = useCallback((error: string) => {
+        const translationKey = getApiKeyErrorTranslationKey(error);
+        return translationKey ? t(translationKey) : error;
+    }, [t]);
     
     const addFileById = useCallback(async (fileApiId: string) => {
         logService.info(`Attempting to add file by ID: ${fileApiId}`);
         setAppFileError(null);
         if (!fileApiId || !fileApiId.startsWith('files/')) {
             logService.error('Invalid File ID format.', { fileApiId });
-            setAppFileError('Invalid File ID format.');
+            setAppFileError(t('fileIdAdder_invalidFileId'));
             return;
         }
         if (selectedFiles.some(f => f.fileApiName === fileApiId)) {
             logService.warn(`File with ID ${fileApiId} is already added.`);
-            setAppFileError(`File with ID ${fileApiId} is already added.`);
+            setAppFileError(t('fileIdAdder_duplicateFile').replace('{id}', fileApiId));
             return;
         }
 
@@ -41,7 +49,7 @@ export const useFileIdAdder = ({
         const keyResult = getKeyForRequest(appSettings, currentChatSettings);
         if ('error' in keyResult) {
             logService.error('Cannot add file by ID: API key not configured.');
-            setAppFileError(keyResult.error);
+            setAppFileError(translateApiKeyError(keyResult.error));
             return;
         }
         const { key: keyToUse, isNewKey } = keyResult;
@@ -56,7 +64,7 @@ export const useFileIdAdder = ({
             ? currentChatSettings.mediaResolution
             : undefined;
 
-        setSelectedFiles(prev => [...prev, { id: tempId, name: `Loading ${fileApiId}...`, type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, mediaResolution: defaultResolution }]);
+        setSelectedFiles(prev => [...prev, { id: tempId, name: t('fileIdAdder_loadingFile').replace('{id}', fileApiId), type: 'application/octet-stream', size: 0, isProcessing: true, progress: 50, uploadState: 'processing_api', fileApiName: fileApiId, mediaResolution: defaultResolution }]);
 
         try {
             const fileMetadata = await geminiServiceInstance.getFileMetadata(keyToUse, fileApiId);
@@ -71,7 +79,7 @@ export const useFileIdAdder = ({
 
                 if (!isValidType) {
                     logService.warn(`Unsupported file type for file ID ${fileApiId}`, { type: mimeType });
-                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: `Unsupported file type: ${mimeType}`, uploadState: 'failed' } : f));
+                    setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: fileMetadata.displayName || fileApiId, type: mimeType, size: Number(fileMetadata.sizeBytes) || 0, isProcessing: false, error: t('fileIdAdder_unsupportedType').replace('{type}', mimeType), uploadState: 'failed' } : f));
                     return;
                 }
                 const { uploadState, isProcessing } = getUploadLifecycleForGeminiState(fileMetadata.state);
@@ -85,27 +93,28 @@ export const useFileIdAdder = ({
                     isProcessing,
                     progress: 100, 
                     uploadState,
-                    error: uploadState === 'failed' ? 'File API processing failed' : undefined,
+                    error: uploadState === 'failed' ? t('fileIdAdder_processingFailed') : undefined,
                     mediaResolution: defaultResolution
                 };
                 setSelectedFiles(prev => prev.map(f => f.id === tempId ? newFile : f));
             } else {
                 logService.error(`File with ID ${fileApiId} not found or inaccessible.`);
-                setAppFileError(`File with ID ${fileApiId} not found or inaccessible.`);
-                setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Not Found: ${fileApiId}`, isProcessing: false, error: 'File not found.', uploadState: 'failed' } : f));
+                setAppFileError(t('fileIdAdder_notFound').replace('{id}', fileApiId));
+                setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: t('fileIdAdder_notFoundLabel').replace('{id}', fileApiId), isProcessing: false, error: t('fileIdAdder_notFoundShort'), uploadState: 'failed' } : f));
             }
         } catch (error) {
             if (error instanceof Error && error.name === 'SilentError') {
                 logService.error('Cannot add file by ID: API key not configured.');
-                setAppFileError('API key not configured.');
-                setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Config Error: ${fileApiId}`, isProcessing: false, error: 'API key not configured', uploadState: 'failed' } : f));
+                const translatedApiError = t('apiRuntime_keyNotConfigured');
+                setAppFileError(translatedApiError);
+                setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: t('fileIdAdder_configErrorLabel').replace('{id}', fileApiId), isProcessing: false, error: translatedApiError, uploadState: 'failed' } : f));
                 return;
             }
             logService.error(`Error fetching file metadata for ID ${fileApiId}`, { error });
-            setAppFileError(`Error fetching file: ${error instanceof Error ? error.message : String(error)}`);
-            setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: `Error: ${fileApiId}`, isProcessing: false, error: `Fetch error`, uploadState: 'failed' } : f));
+            setAppFileError(t('fileIdAdder_fetchError').replace('{message}', error instanceof Error ? error.message : String(error)));
+            setSelectedFiles(prev => prev.map(f => f.id === tempId ? { ...f, name: t('fileIdAdder_fetchErrorLabel').replace('{id}', fileApiId), isProcessing: false, error: t('fileIdAdder_fetchErrorShort'), uploadState: 'failed' } : f));
         }
-    }, [appSettings, currentChatSettings, selectedFiles, setAppFileError, setCurrentChatSettings, setSelectedFiles]);
+    }, [appSettings, currentChatSettings, selectedFiles, setAppFileError, setCurrentChatSettings, setSelectedFiles, t, translateApiKeyError]);
 
     return { addFileById };
 };

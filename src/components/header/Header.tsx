@@ -134,8 +134,8 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onTogglePip}
               className={`${headerButtonBase} ${headerButtonInactive}`}
-              aria-label={isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture'}
-              title={(isPipActive ? 'Exit Picture-in-Picture' : 'Enter Picture-in-Picture') + (pipShortcut ? ` (${pipShortcut})` : '')}
+              aria-label={isPipActive ? t('pipExit') : t('pipEnter')}
+              title={(isPipActive ? t('pipExit') : t('pipEnter')) + (pipShortcut ? ` (${pipShortcut})` : '')}
             >
               {isPipActive ? <PictureInPicture2 size={iconSize} strokeWidth={strokeWidth} /> : <PictureInPicture size={iconSize} strokeWidth={strokeWidth} />}
             </button>

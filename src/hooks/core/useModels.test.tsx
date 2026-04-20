@@ -80,4 +80,26 @@ describe('useModels', () => {
     ]);
     unmount();
   });
+
+  it('updates models when another tab writes to storage', () => {
+    const { result, unmount } = renderHook(() => useModels());
+
+    act(() => {
+      localStorage.setItem(
+        'custom_model_list_v1',
+        JSON.stringify([{ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }]),
+      );
+      window.dispatchEvent(
+        new StorageEvent('storage', {
+          key: 'custom_model_list_v1',
+          newValue: localStorage.getItem('custom_model_list_v1'),
+        }),
+      );
+    });
+
+    expect(result.current.apiModels).toEqual([
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' },
+    ]);
+    unmount();
+  });
 });

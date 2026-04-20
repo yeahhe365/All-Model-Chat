@@ -9,6 +9,8 @@ import { useImageEditSender } from './message-sender/useImageEditSender';
 import { useCanvasGenerator } from './message-sender/useCanvasGenerator';
 import { useStandardChat } from './message-sender/useStandardChat';
 import { getModelCapabilities } from '../utils/modelHelpers';
+import { useI18n } from '../contexts/I18nContext';
+import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
 
 type SessionsUpdater = (
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -37,6 +39,7 @@ interface MessageSenderProps {
 }
 
 export const useMessageSender = (props: MessageSenderProps) => {
+    const { t } = useI18n();
     const {
         appSettings,
         currentChatSettings,
@@ -55,6 +58,11 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setSessionLoading,
         updateAndPersistSessions,
     } = props;
+
+    const translateApiKeyError = useCallback((error: string) => {
+        const translationKey = getApiKeyErrorTranslationKey(error);
+        return translationKey ? t(translationKey) : error;
+    }, [t]);
 
     // Initialize Stream Handler Factory
     const { getStreamHandlers } = useChatStreamHandler({
@@ -111,7 +119,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         if ((isTtsModel || isImagenModel || isImageEditModel || isGemini3Image) && !textToUse.trim()) return;
         if (filesToUse.some(f => f.isProcessing || (f.uploadState !== 'active' && !f.error) )) { 
             logService.warn("Send message blocked: files are still processing.");
-            setAppFileError("Wait for files to finish processing."); 
+            setAppFileError(t('messageSender_waitForFiles')); 
             return; 
         }
 
@@ -130,8 +138,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 });
                 setAppFileError(
                     allowsPdfReferences
-                        ? "Nano Banana 2 supports image and PDF attachments only."
-                        : "This image model supports image attachments only."
+                        ? t('messageSender_imageModelSupportsImageAndPdfOnly')
+                        : t('messageSender_imageModelSupportsImageOnly')
                 );
                 return;
             }
@@ -143,13 +151,13 @@ export const useMessageSender = (props: MessageSenderProps) => {
                 imageReferenceCount,
                 activeModelId,
             });
-            setAppFileError("Gemini 3 image models support up to 14 reference images per request.");
+            setAppFileError(t('messageSender_imageReferenceLimit'));
             return;
         }
 
         if (isImagenModel && filesToUse.length > 0) {
             logService.warn("Send message blocked: Imagen models do not support file attachments.");
-            setAppFileError("Imagen models support text prompts only.");
+            setAppFileError(t('messageSender_imagenTextOnly'));
             return;
         }
         
@@ -157,8 +165,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
         if (!activeModelId) { 
             logService.error("Send message failed: No model selected.");
-            const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: 'No model selected.', timestamp: new Date() };
-            const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], "Error");
+            const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: t('messageSender_noModelSelected'), timestamp: new Date() };
+            const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], t('messageSender_errorSessionTitle'));
             updateAndPersistSessions(p => [newSession, ...p]);
             setActiveSessionId(newSession.id);
             return; 
@@ -167,8 +175,9 @@ export const useMessageSender = (props: MessageSenderProps) => {
         const keyResult = getKeyForRequest(appSettings, sessionToUpdate);
         if ('error' in keyResult) {
             logService.error("Send message failed: API Key not configured.");
-             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: keyResult.error, timestamp: new Date() };
-             const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], "API Key Error");
+             const translatedApiError = translateApiKeyError(keyResult.error);
+             const errorMsg: ChatMessage = { id: generateUniqueId(), role: 'error', content: translatedApiError, timestamp: new Date() };
+             const newSession = createNewSession({ ...DEFAULT_CHAT_SETTINGS, ...appSettings }, [errorMsg], t('messageSender_apiKeyErrorSessionTitle'));
              updateAndPersistSessions(p => [newSession, ...p]);
              setActiveSessionId(newSession.id);
             return;
@@ -204,7 +213,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         appSettings, currentChatSettings, messages, selectedFiles, setSelectedFiles,
         editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, imageSize,
         userScrolledUpRef, activeSessionId, setActiveSessionId, updateAndPersistSessions,
-        handleTtsImagenMessage, handleImageEditMessage, sendStandardMessage
+        handleTtsImagenMessage, handleImageEditMessage, sendStandardMessage, t, translateApiKeyError
     ]);
 
     return { handleSendMessage, handleGenerateCanvas };

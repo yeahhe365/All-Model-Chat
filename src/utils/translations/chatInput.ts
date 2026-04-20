@@ -125,4 +125,38 @@ export const chatInputTranslations = {
     // Help Modal
     helpModal_title: { en: 'Command Help', zh: '命令帮助' },
     helpModal_close_aria: { en: 'Close help modal', zh: '关闭帮助模态框' },
+    helpModal_search_placeholder: { en: 'Search commands...', zh: '搜索命令...' },
+    helpModal_copy_title: { en: 'Click to copy', zh: '点击复制' },
+    helpModal_no_results: { en: 'No commands found.', zh: '未找到匹配的命令。' },
+    helpModal_tip: { en: 'Tip: Type / in the chat input to open the command menu instantly.', zh: '提示：在聊天输入框中输入 / 可立即打开命令菜单。' },
+
+    // Message sending errors
+    messageSender_waitForFiles: { en: 'Wait for files to finish processing.', zh: '请等待文件处理完成。' },
+    messageSender_imageModelSupportsImageAndPdfOnly: { en: 'Nano Banana 2 supports image and PDF attachments only.', zh: 'Nano Banana 2 仅支持图片和 PDF 附件。' },
+    messageSender_imageModelSupportsImageOnly: { en: 'This image model supports image attachments only.', zh: '这个图片模型仅支持图片附件。' },
+    messageSender_imageReferenceLimit: { en: 'Gemini 3 image models support up to 14 reference images per request.', zh: 'Gemini 3 图片模型每次请求最多支持 14 张参考图。' },
+    messageSender_imagenTextOnly: { en: 'Imagen models support text prompts only.', zh: 'Imagen 模型仅支持文本提示词。' },
+    messageSender_noModelSelected: { en: 'No model selected.', zh: '未选择模型。' },
+    messageSender_errorSessionTitle: { en: 'Error', zh: '错误' },
+    messageSender_apiKeyErrorSessionTitle: { en: 'API Key Error', zh: 'API 密钥错误' },
+
+    // Add by File ID
+    fileIdAdder_invalidFileId: { en: 'Invalid File ID format.', zh: '无效的文件 ID 格式。' },
+    fileIdAdder_duplicateFile: { en: 'File {id} is already added.', zh: '文件 {id} 已经添加过了。' },
+    fileIdAdder_loadingFile: { en: 'Loading {id}...', zh: '正在加载 {id}...' },
+    fileIdAdder_unsupportedType: { en: 'Unsupported file type: {type}', zh: '不支持的文件类型：{type}' },
+    fileIdAdder_processingFailed: { en: 'File API processing failed', zh: '文件 API 处理失败' },
+    fileIdAdder_notFound: { en: 'File with ID {id} not found or inaccessible.', zh: '找不到文件 {id}，或您无权访问。' },
+    fileIdAdder_notFoundShort: { en: 'File not found.', zh: '文件不存在。' },
+    fileIdAdder_notFoundLabel: { en: 'Not Found: {id}', zh: '未找到：{id}' },
+    fileIdAdder_configErrorLabel: { en: 'Config Error: {id}', zh: '配置错误：{id}' },
+    fileIdAdder_fetchError: { en: 'Error fetching file: {message}', zh: '获取文件时出错：{message}' },
+    fileIdAdder_fetchErrorShort: { en: 'Fetch error', zh: '获取失败' },
+    fileIdAdder_fetchErrorLabel: { en: 'Error: {id}', zh: '错误：{id}' },
+
+    // Queued submissions
+    queuedSubmission_attachment: { en: 'attachment', zh: '个附件' },
+    queuedSubmission_attachments: { en: 'attachments', zh: '个附件' },
+    queuedSubmission_edit: { en: 'Edit queued message', zh: '编辑排队消息' },
+    queuedSubmission_remove: { en: 'Remove queued message', zh: '移除排队消息' },
 };

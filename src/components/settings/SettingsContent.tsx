@@ -67,7 +67,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
 
         const fallbackModelId = models.find((model) => model.isPinned)?.id || models[0]?.id;
         if (fallbackModelId) {
-            updateSetting('modelId', fallbackModelId);
+            handleModelChange(fallbackModelId);
         }
     };
 

@@ -62,6 +62,14 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
   
   // Consider it "Fast Mode" active if the current level matches the target fast level
   const isFastState = isGemmaModel ? !isGemmaReasoningEnabled : thinkingLevel === targetFastLevel;
+  const thinkingToggleTitle = isGemmaModel
+    ? (isFastState ? t('headerReasoningMinimalFastTitle') : t('headerReasoningHighTitle'))
+    : (
+        isFastState
+          ? t(targetFastLevel === 'MINIMAL' ? 'headerThinkingMinimalFastTitle' : 'headerThinkingLowFastTitle')
+          : t('headerThinkingHighTitle')
+      );
+  const thinkingToggleAriaLabel = isGemmaModel ? t('headerReasoningToggleAria') : t('headerThinkingToggleAria');
 
   return (
     <ModelPicker
@@ -102,12 +110,8 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                             ? 'text-yellow-500 hover:bg-[var(--theme-bg-tertiary)]' 
                             : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)]'
                     }`}
-                    title={
-                        isGemmaModel
-                            ? (isFastState ? 'Reasoning: Minimal (Fast Mode)' : 'Reasoning: High')
-                            : (isFastState ? `Thinking: ${targetFastLevel === 'MINIMAL' ? 'Minimal' : 'Low'} (Fast Mode)` : 'Thinking: High (Pro Mode)')
-                    }
-                    aria-label={isGemmaModel ? 'Toggle reasoning mode' : 'Toggle thinking level'}
+                    title={thinkingToggleTitle}
+                    aria-label={thinkingToggleAriaLabel}
                 >
                     <Zap size={18} fill={isFastState ? "currentColor" : "none"} strokeWidth={2} />
                 </button>

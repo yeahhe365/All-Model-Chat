@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Download } from 'lucide-react';
 import { triggerDownload } from '../../utils/export/core';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface AudioPlayerProps {
   src: string;
@@ -10,6 +11,7 @@ interface AudioPlayerProps {
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, autoPlay = false, className = '' }) => {
+  const { t } = useI18n();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -104,7 +106,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, autoPlay = false,
         <button
           onClick={togglePlay}
           className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] transition-transform active:scale-95 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] flex-shrink-0"
-          aria-label={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? t('audioPlayer_pause') : t('audioPlayer_play')}
         >
           {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
         </button>
@@ -145,7 +147,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, autoPlay = false,
             <button
                 onClick={toggleSpeed}
                 className="px-1.5 py-1 rounded text-[10px] font-bold text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors min-w-[2rem]"
-                title="Playback Speed"
+                title={t('audioPlayer_playback_speed')}
             >
                 {playbackRate}x
             </button>
@@ -154,7 +156,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, autoPlay = false,
             <button
                 onClick={handleDownload}
                 className="p-1.5 rounded text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-                title="Download Audio"
+                title={t('audioPlayer_download')}
             >
                 <Download size={14} />
             </button>

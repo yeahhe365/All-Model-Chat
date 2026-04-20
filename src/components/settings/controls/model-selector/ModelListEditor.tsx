@@ -15,24 +15,29 @@ type EditableModelField = 'id' | 'name' | 'isPinned';
 export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModels, onSave, setIsEditingList }) => {
     const { t } = useI18n();
     const [tempModels, setTempModels] = useState<ModelOption[]>(availableModels);
+    const [validationMessage, setValidationMessage] = useState('');
 
     // Sync when entering edit mode (mounting) or parent updates
     useEffect(() => {
         setTempModels(availableModels);
+        setValidationMessage('');
     }, [availableModels]);
 
     const handleUpdateTempModel = (index: number, field: EditableModelField, value: ModelOption[EditableModelField]) => {
         const updated = [...tempModels];
         updated[index] = { ...updated[index], [field]: value };
         setTempModels(updated);
+        setValidationMessage('');
     };
 
     const handleDeleteModel = (index: number) => {
         setTempModels(prev => prev.filter((_, i) => i !== index));
+        setValidationMessage('');
     };
 
     const handleAddModel = () => {
-        setTempModels(prev => [...prev, { id: '', name: '', isPinned: true }]);
+        setTempModels(prev => [...prev, { id: '', name: '', isPinned: false }]);
+        setValidationMessage('');
     };
 
     const handleResetDefaults = async () => {
@@ -44,10 +49,16 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
 
     const handleSaveList = () => {
         const validModels = tempModels.filter(m => m.id.trim() !== '');
+        if (validModels.length === 0) {
+            setValidationMessage(t('settingsModelListRequiresModel'));
+            return;
+        }
+
         const refinedModels = validModels.map(m => ({
             ...m,
             name: m.name.trim() || m.id.trim()
         }));
+        setValidationMessage('');
         onSave(refinedModels);
         setIsEditingList(false);
     };
@@ -73,19 +84,26 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
             </div>
             
             <div className="border-t border-[var(--theme-border-secondary)] p-3 bg-[var(--theme-bg-secondary)]/30 flex items-center justify-between gap-2">
-                <div className="flex gap-2">
-                    <button 
-                        onClick={handleAddModel}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)] bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded hover:bg-[var(--theme-bg-tertiary)] transition-colors"
-                    >
-                        <Plus size={14} /> {t('settingsAddModel')}
-                    </button>
-                    <button 
-                        onClick={handleResetDefaults}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
-                    >
-                        <RotateCcw size={14} /> {t('settingsResetModelList')}
-                    </button>
+                <div className="space-y-2 flex-1 min-w-0">
+                    <div className="flex gap-2">
+                        <button 
+                            onClick={handleAddModel}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-primary)] bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+                        >
+                            <Plus size={14} /> {t('settingsAddModel')}
+                        </button>
+                        <button 
+                            onClick={handleResetDefaults}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
+                        >
+                            <RotateCcw size={14} /> {t('settingsResetModelList')}
+                        </button>
+                    </div>
+                    {validationMessage && (
+                        <p className="text-xs text-[var(--theme-text-danger)]">
+                            {validationMessage}
+                        </p>
+                    )}
                 </div>
                 
                 <button 

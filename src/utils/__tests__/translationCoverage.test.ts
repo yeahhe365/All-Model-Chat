@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { getTranslator } from '../translations';
+import { getTranslator, translations } from '../translations';
 
 const projectRoot = '/Users/jones/Documents/Code/All-Model-Chat';
 
@@ -207,6 +207,67 @@ describe('translation coverage for protected UI surfaces', () => {
           '"HTML Content Preview"',
         ],
       },
+      {
+        file: 'src/components/header/Header.tsx',
+        snippets: [
+          "'Exit Picture-in-Picture'",
+          "'Enter Picture-in-Picture'",
+        ],
+      },
+      {
+        file: 'src/components/header/HeaderModelSelector.tsx',
+        snippets: [
+          "'Toggle reasoning mode'",
+          "'Toggle thinking level'",
+          "'Reasoning: Minimal (Fast Mode)'",
+          "'Reasoning: High'",
+          "'Thinking: High (Pro Mode)'",
+        ],
+      },
+      {
+        file: 'src/components/modals/HelpModal.tsx',
+        snippets: [
+          '"Search commands..."',
+          '"Click to copy"',
+          'No commands found matching',
+          'Tip: Type',
+        ],
+      },
+      {
+        file: 'src/components/chat/input/QueuedSubmissionCard.tsx',
+        snippets: [
+          'Edit queued message',
+          'Remove queued message',
+        ],
+      },
+      {
+        file: 'src/components/shared/AudioPlayer.tsx',
+        snippets: [
+          '"Pause"',
+          '"Play"',
+          '"Playback Speed"',
+          '"Download Audio"',
+        ],
+      },
+      {
+        file: 'src/hooks/useMessageSender.ts',
+        snippets: [
+          '"Wait for files to finish processing."',
+          '"This image model supports image attachments only."',
+          '"Imagen models support text prompts only."',
+          "'No model selected.'",
+          '"API Key Error"',
+        ],
+      },
+      {
+        file: 'src/hooks/file-upload/useFileIdAdder.ts',
+        snippets: [
+          "'File API processing failed'",
+          "'File not found.'",
+          "'API key not configured.'",
+          "'Fetch error'",
+        ],
+      },
     ];
 
     protectedStrings.forEach(({ file, snippets }) => {
@@ -215,6 +276,45 @@ describe('translation coverage for protected UI surfaces', () => {
       snippets.forEach((snippet) => {
         expect(source).not.toContain(snippet);
       });
+    });
+  });
+
+  it('defines translations for every t() key used in source files', () => {
+    const sourceFiles = [
+      'src/components',
+      'src/hooks',
+      'src/utils',
+    ];
+
+    const collectFiles = (dir: string): string[] =>
+      fs.readdirSync(path.join(projectRoot, dir), { withFileTypes: true }).flatMap((entry) => {
+        const relativePath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          return collectFiles(relativePath);
+        }
+        if (!relativePath.endsWith('.ts') && !relativePath.endsWith('.tsx')) {
+          return [];
+        }
+        if (relativePath.includes('.test.') || relativePath.includes('__tests__')) {
+          return [];
+        }
+        return [relativePath];
+      });
+
+    const usedKeys = new Set<string>();
+    const keyPattern = /\bt\('([^']+)'/g;
+
+    sourceFiles.flatMap(collectFiles).forEach((file) => {
+      const source = readProjectFile(file);
+      let match: RegExpExecArray | null;
+
+      while ((match = keyPattern.exec(source)) !== null) {
+        usedKeys.add(match[1]);
+      }
+    });
+
+    usedKeys.forEach((key) => {
+      expect(translations).toHaveProperty(key);
     });
   });
 });

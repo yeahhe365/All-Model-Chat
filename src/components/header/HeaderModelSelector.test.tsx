@@ -48,9 +48,9 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = container.querySelector('button[aria-label="Toggle reasoning mode"]');
+    const toggleButton = container.querySelector('button[aria-label="headerReasoningToggleAria"]');
     expect(toggleButton).not.toBeNull();
-    expect(toggleButton?.getAttribute('title')).toBe('Reasoning: High');
+    expect(toggleButton?.getAttribute('title')).toBe('headerReasoningHighTitle');
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -77,7 +77,7 @@ describe('HeaderModelSelector', () => {
       );
     });
 
-    const toggleButton = container.querySelector('button[aria-label="Toggle reasoning mode"]');
-    expect(toggleButton?.getAttribute('title')).toBe('Reasoning: Minimal (Fast Mode)');
+    const toggleButton = container.querySelector('button[aria-label="headerReasoningToggleAria"]');
+    expect(toggleButton?.getAttribute('title')).toBe('headerReasoningMinimalFastTitle');
   });
 });

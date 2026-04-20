@@ -5,8 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mockSendStandardMessage = vi.fn();
 const mockHandleTtsImagenMessage = vi.fn();
 const mockHandleImageEditMessage = vi.fn();
-const { mockGetModelCapabilities } = vi.hoisted(() => ({
+const { mockGetModelCapabilities, mockCreateNewSession } = vi.hoisted(() => ({
   mockGetModelCapabilities: vi.fn(),
+  mockCreateNewSession: vi.fn(),
 }));
 
 vi.mock('./message-sender/useChatStreamHandler', () => ({
@@ -47,7 +48,25 @@ vi.mock('../utils/appUtils', () => ({
   generateUniqueId: vi.fn(() => 'generation-id'),
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
   logService: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-  createNewSession: vi.fn(),
+  createNewSession: mockCreateNewSession,
+}));
+
+vi.mock('../contexts/I18nContext', () => ({
+  useI18n: () => ({
+    t: (key: string) =>
+      ({
+        messageSender_waitForFiles: '请等待文件处理完成。',
+        messageSender_imageModelSupportsImageOnly: '这个图片模型仅支持图片附件。',
+        messageSender_imageModelSupportsImageAndPdfOnly: 'Nano Banana 2 仅支持图片和 PDF 附件。',
+        messageSender_imageReferenceLimit: 'Gemini 3 图片模型每次请求最多支持 14 张参考图。',
+        messageSender_imagenTextOnly: 'Imagen 模型仅支持文本提示词。',
+        messageSender_noModelSelected: '未选择模型。',
+        messageSender_errorSessionTitle: '错误',
+        messageSender_apiKeyErrorSessionTitle: 'API 密钥错误',
+        apiRuntime_keyNotConfigured: 'API 密钥未配置。',
+        apiRuntime_noValidKeysFound: '未找到有效的 API 密钥。',
+      })[key] ?? key,
+  }),
 }));
 
 import { useMessageSender } from './useMessageSender';
@@ -80,6 +99,7 @@ const renderHook = <T,>(callback: () => T) => {
 describe('useMessageSender', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateNewSession.mockReturnValue({ id: 'new-session' });
     mockGetModelCapabilities.mockReturnValue({
       isTtsModel: false,
       isRealImagenModel: true,
@@ -137,7 +157,7 @@ describe('useMessageSender', () => {
       });
     });
 
-    expect(setAppFileError).toHaveBeenCalledWith('Imagen models support text prompts only.');
+    expect(setAppFileError).toHaveBeenCalledWith('Imagen 模型仅支持文本提示词。');
     expect(mockHandleTtsImagenMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
     expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
@@ -196,7 +216,7 @@ describe('useMessageSender', () => {
     });
 
     expect(setAppFileError).toHaveBeenCalledWith(
-      'Gemini 3 image models support up to 14 reference images per request.',
+      'Gemini 3 图片模型每次请求最多支持 14 张参考图。',
     );
     expect(mockHandleTtsImagenMessage).not.toHaveBeenCalled();
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
@@ -256,7 +276,7 @@ describe('useMessageSender', () => {
       });
     });
 
-    expect(setAppFileError).toHaveBeenCalledWith('This image model supports image attachments only.');
+    expect(setAppFileError).toHaveBeenCalledWith('这个图片模型仅支持图片附件。');
     expect(mockSendStandardMessage).not.toHaveBeenCalled();
     expect(mockHandleImageEditMessage).not.toHaveBeenCalled();
     unmount();
@@ -316,6 +336,63 @@ describe('useMessageSender', () => {
 
     expect(setAppFileError).toHaveBeenCalledWith(null);
     expect(mockSendStandardMessage).toHaveBeenCalled();
+    unmount();
+  });
+
+  it('creates a localized error session when no model is selected', async () => {
+    const setActiveSessionId = vi.fn();
+    const updateAndPersistSessions = vi.fn((updater) => updater([]));
+
+    mockGetModelCapabilities.mockReturnValue({
+      isTtsModel: false,
+      isRealImagenModel: false,
+      isFlashImageModel: false,
+      isGemini3ImageModel: false,
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useMessageSender({
+        appSettings: {
+          isAutoScrollOnSendEnabled: true,
+          generateQuadImages: false,
+        } as any,
+        currentChatSettings: {
+          modelId: '',
+        } as any,
+        messages: [],
+        selectedFiles: [],
+        setSelectedFiles: vi.fn(),
+        editingMessageId: null,
+        setEditingMessageId: vi.fn(),
+        setAppFileError: vi.fn(),
+        aspectRatio: '1:1',
+        imageSize: '1K',
+        userScrolledUpRef: { current: false },
+        activeSessionId: null,
+        setActiveSessionId,
+        activeJobs: { current: new Map() },
+        updateAndPersistSessions,
+        sessionKeyMapRef: { current: new Map() },
+        language: 'zh',
+        setSessionLoading: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handleSendMessage({ text: 'hello' });
+    });
+
+    expect(mockCreateNewSession).toHaveBeenCalledWith(
+      expect.anything(),
+      [
+        expect.objectContaining({
+          role: 'error',
+          content: '未选择模型。',
+        }),
+      ],
+      '错误',
+    );
+    expect(setActiveSessionId).toHaveBeenCalledWith('new-session');
     unmount();
   });
 });

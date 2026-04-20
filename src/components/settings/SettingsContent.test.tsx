@@ -83,6 +83,7 @@ describe('SettingsContent', () => {
   it('switches to a fallback model when the current model is removed from the edited list', () => {
     const updateSetting = vi.fn();
     const setAvailableModels = vi.fn();
+    const handleModelChange = vi.fn();
 
     act(() => {
       root.render(
@@ -96,7 +97,7 @@ describe('SettingsContent', () => {
             { id: 'removed-model', name: 'Removed Model', isPinned: true },
           ]}
           updateSetting={updateSetting}
-          handleModelChange={vi.fn()}
+          handleModelChange={handleModelChange}
           setAvailableModels={setAvailableModels}
           onClearHistory={vi.fn()}
           onClearCache={vi.fn()}
@@ -126,6 +127,7 @@ describe('SettingsContent', () => {
       { id: 'fallback-model', name: 'Fallback Model', isPinned: true },
       { id: 'secondary-model', name: 'Secondary Model' },
     ]);
-    expect(updateSetting).toHaveBeenCalledWith('modelId', 'fallback-model');
+    expect(handleModelChange).toHaveBeenCalledWith('fallback-model');
+    expect(updateSetting).not.toHaveBeenCalledWith('modelId', 'fallback-model');
   });
 });

@@ -5,13 +5,21 @@ import { sanitizeModelOptions } from '../../utils/modelHelpers';
 
 const CUSTOM_MODELS_KEY = 'custom_model_list_v1';
 
+const parseStoredModels = (storedValue: string | null): ModelOption[] | null => {
+    if (storedValue === null) {
+        return null;
+    }
+
+    return sanitizeModelOptions(JSON.parse(storedValue));
+};
+
 export const useModels = () => {
     // Initialize with persisted models or defaults
     const [apiModels, setApiModelsState] = useState<ModelOption[]>(() => {
         try {
-            const stored = localStorage.getItem(CUSTOM_MODELS_KEY);
-            if (stored) {
-                return sanitizeModelOptions(JSON.parse(stored));
+            const storedModels = parseStoredModels(localStorage.getItem(CUSTOM_MODELS_KEY));
+            if (storedModels) {
+                return storedModels;
             }
         } catch (e) {
             console.error('Failed to load custom models', e);
@@ -46,6 +54,35 @@ export const useModels = () => {
             isActive = false;
         };
     }, [apiModels.length]);
+
+    useEffect(() => {
+        const handleStorage = (event: StorageEvent) => {
+            if (event.key !== CUSTOM_MODELS_KEY) {
+                return;
+            }
+
+            try {
+                const storedModels = parseStoredModels(event.newValue);
+                if (storedModels) {
+                    setApiModelsState(storedModels);
+                    setIsModelsLoading(false);
+                    setModelsLoadingError(null);
+                    return;
+                }
+
+                setApiModelsState([]);
+                setIsModelsLoading(true);
+                setModelsLoadingError(null);
+            } catch (error) {
+                console.error('Failed to sync custom models from storage', error);
+                setModelsLoadingError('Failed to load default models');
+                setIsModelsLoading(false);
+            }
+        };
+
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
     
     const setApiModels = useCallback((models: ModelOption[]) => {
         const sanitizedModels = sanitizeModelOptions(models);

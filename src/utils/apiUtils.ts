@@ -123,3 +123,14 @@ export const getKeyForRequest = (
     logUsage(nextKey);
     return { key: nextKey, isNewKey: true };
 };
+
+export const getApiKeyErrorTranslationKey = (error: string): string | null => {
+    switch (error) {
+        case 'API Key not configured.':
+            return 'apiRuntime_keyNotConfigured';
+        case 'No valid API keys found.':
+            return 'apiRuntime_noValidKeysFound';
+        default:
+            return null;
+    }
+};

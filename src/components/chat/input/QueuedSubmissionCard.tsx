@@ -1,5 +1,6 @@
 import React from 'react';
 import { Clock3, PencilLine, Trash2 } from 'lucide-react';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface QueuedSubmissionCardProps {
   title: string;
@@ -16,8 +17,9 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
   onEdit,
   onRemove,
 }) => {
+  const { t } = useI18n();
   const attachmentLabel =
-    fileCount > 0 ? `${fileCount} attachment${fileCount > 1 ? 's' : ''}` : null;
+    fileCount > 0 ? `${fileCount} ${t(fileCount > 1 ? 'queuedSubmission_attachments' : 'queuedSubmission_attachment')}` : null;
 
   return (
     <div className="flex items-start justify-between gap-3 rounded-[20px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/70 px-3 py-2.5 shadow-sm">
@@ -39,8 +41,8 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
           type="button"
           onClick={onEdit}
           className="rounded-full p-1.5 text-[var(--theme-text-tertiary)] transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]"
-          aria-label="Edit queued message"
-          title="Edit queued message"
+          aria-label={t('queuedSubmission_edit')}
+          title={t('queuedSubmission_edit')}
         >
           <PencilLine size={14} strokeWidth={2} />
         </button>
@@ -48,8 +50,8 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
           type="button"
           onClick={onRemove}
           className="rounded-full p-1.5 text-[var(--theme-text-tertiary)] transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-danger)]"
-          aria-label="Remove queued message"
-          title="Remove queued message"
+          aria-label={t('queuedSubmission_remove')}
+          title={t('queuedSubmission_remove')}
         >
           <Trash2 size={14} strokeWidth={2} />
         </button>
