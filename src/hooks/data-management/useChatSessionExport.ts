@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
-import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
+import { logService, serializeSessionForPortableExport } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/export/core';
 import {
     buildChatExportFilename,
@@ -101,7 +101,7 @@ export const useChatSessionExport = ({
             logService.info(`Exporting chat ${activeChat.id} as JSON.`);
             try {
                 // Sanitize the session before export to remove non-serializable blobs
-                const sanitizedChat = sanitizeSessionForExport(activeChat);
+                const sanitizedChat = await serializeSessionForPortableExport(activeChat);
                 
                 // We create a structure compatible with the history import feature
                 const dataToExport = {

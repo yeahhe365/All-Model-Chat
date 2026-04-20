@@ -1,7 +1,7 @@
 
 import { useCallback } from 'react';
 import { AppSettings, SavedScenario, ChatGroup } from '../../types';
-import { logService, sanitizeSessionForExport } from '../../utils/appUtils';
+import { logService, serializeSessionForPortableExport } from '../../utils/appUtils';
 import { triggerDownload } from '../../utils/export/core';
 import { dbService } from '../../utils/db';
 import { buildScenarioExportPayload } from '../../features/scenarios/scenarioLibrary';
@@ -42,7 +42,7 @@ export const useDataExport = ({
             const fullSessions = await dbService.getAllSessions();
             
             // Sanitize all sessions before export to remove rawFile/Blobs/AbortControllers
-            const sanitizedSessions = fullSessions.map(sanitizeSessionForExport);
+            const sanitizedSessions = await Promise.all(fullSessions.map(serializeSessionForPortableExport));
             
             const dataToExport = { type: 'AllModelChat-History', version: 1, history: sanitizedSessions, groups: savedGroups };
             const jsonString = JSON.stringify(dataToExport, null, 2);

@@ -2,7 +2,7 @@
 import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord, UploadedFile } from '../../types';
 import { generateUniqueId } from './ids';
 import { logService } from '../../services/logService';
-import { base64ToBlob } from '../fileHelpers';
+import { base64ToBlob, blobToBase64 } from '../fileHelpers';
 import { getVisibleChatMessages } from './visibility';
 
 export const createMessage = (
@@ -199,6 +199,43 @@ export const attachPersistedSessionFiles = (
  */
 export const sanitizeSessionForExport = (session: SavedChatSession): SavedChatSession =>
     stripSessionFilePayloads(session);
+
+const buildPortableDataUrl = async (file: UploadedFile): Promise<string | undefined> => {
+    if (file.rawFile instanceof Blob) {
+        const mimeType = file.type || file.rawFile.type || 'application/octet-stream';
+        const base64 = await blobToBase64(file.rawFile);
+        return `data:${mimeType};base64,${base64}`;
+    }
+
+    if (hasInlinePersistableDataUrl(file.dataUrl)) {
+        return file.dataUrl;
+    }
+
+    return undefined;
+};
+
+const serializeFileForPortableExport = async (file: UploadedFile): Promise<UploadedFile> => {
+    const dataUrl = await buildPortableDataUrl(file);
+    const fileCopy = sanitizeStoredFileMetadata(file);
+
+    if (dataUrl) {
+        fileCopy.dataUrl = dataUrl;
+    }
+
+    return fileCopy;
+};
+
+export const serializeSessionForPortableExport = async (session: SavedChatSession): Promise<SavedChatSession> => ({
+    ...session,
+    messages: await Promise.all(
+        session.messages.map(async (message) => ({
+            ...message,
+            files: message.files
+                ? await Promise.all(message.files.map(serializeFileForPortableExport))
+                : undefined,
+        })),
+    ),
+});
 
 /**
  * Core helper to update session list state.

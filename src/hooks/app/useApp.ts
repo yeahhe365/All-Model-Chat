@@ -42,6 +42,7 @@ export const useApp = () => {
 
   const chatState = useChat(appSettings, setAppSettings, language);
   const {
+    activeChat,
     activeSessionId,
     apiModels,
     currentChatSettings,
@@ -54,7 +55,6 @@ export const useApp = () => {
     messages,
     savedGroups,
     savedScenarios,
-    savedSessions,
     scrollContainerRef,
     setCommandedInput,
     setCurrentChatSettings,
@@ -106,7 +106,6 @@ export const useApp = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportStatus, setExportStatus] = useState<'idle' | 'exporting'>('idle');
 
-  const activeChat = savedSessions.find((session) => session.id === activeSessionId);
   const sessionTitle = activeChat?.title || t('newChat');
 
   useAppTitle({
