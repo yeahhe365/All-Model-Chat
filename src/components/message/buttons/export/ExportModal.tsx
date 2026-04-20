@@ -33,7 +33,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExp
                         onClick={onClose} 
                         disabled={!!exportingType}
                         className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors p-1 rounded-full disabled:opacity-50"
-                        aria-label="Close export dialog"
+                        aria-label={t('export_close_dialog_aria')}
                     >
                         <X size={22} />
                     </button>
@@ -44,7 +44,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, onExp
                         <div className="flex flex-col items-center justify-center h-40 text-[var(--theme-text-secondary)]">
                             <Loader2 size={36} className="animate-spin text-[var(--theme-text-link)] mb-4" />
                             <p className="text-base font-medium">{t('exporting_title', 'Exporting {type}...').replace('{type}', exportingType.toUpperCase())}</p>
-                            <p className="text-sm mt-1">Processing message content...</p>
+                            <p className="text-sm mt-1">{t('export_processing_message_content')}</p>
                         </div>
                     ) : (
                         <ExportOptions onExport={onExport} />

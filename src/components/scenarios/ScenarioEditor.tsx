@@ -114,6 +114,7 @@ export const ScenarioEditor: React.FC<ScenarioEditorProps> = ({ initialScenario,
                         onDeleteMessage={handleDeleteMessage}
                         onMoveMessage={handleMoveMessage}
                         readOnly={readOnly}
+                        t={t}
                     />
 
                     <ScenarioMessageInput 

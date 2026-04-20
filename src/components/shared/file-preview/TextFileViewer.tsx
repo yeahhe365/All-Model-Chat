@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface TextFileViewerProps {
     file: UploadedFile;
@@ -81,6 +82,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     onChange,
     onLoad
 }) => {
+    const { t } = useI18n();
     const [localContent, setLocalContent] = useState<string | null>(null);
     const hasProvidedContent = content !== undefined && content !== null;
     const [isLoading, setIsLoading] = useState(() => !hasProvidedContent && !!file.dataUrl);
@@ -102,11 +104,11 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
                 })
                 .catch(err => {
                     console.error("Failed to load text content", err);
-                    setLocalContent("Failed to load file content.");
+                    setLocalContent(t('filePreview_failed_text_content'));
                     setIsLoading(false);
                 });
         }
-    }, [file, hasProvidedContent, onLoad]);
+    }, [file, hasProvidedContent, onLoad, t]);
 
     useEffect(() => {
         if (isEditable && textareaRef.current) {
@@ -123,7 +125,7 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
         <div className="w-full h-full relative group">
             {shouldShowLoading ? (
                 <div className="flex items-center justify-center h-full text-white/50">
-                    <Loader2 className="animate-spin mr-2" /> Loading content...
+                    <Loader2 className="animate-spin mr-2" /> {t('filePreview_loading_text_content')}
                 </div>
             ) : isEditable ? (
                 <textarea

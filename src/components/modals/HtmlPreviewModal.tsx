@@ -2,6 +2,7 @@
 import React, { useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useWindowContext } from '../../contexts/WindowContext';
+import { useI18n } from '../../contexts/I18nContext';
 import { useHtmlPreviewModal } from '../../hooks/ui/useHtmlPreviewModal';
 import { HtmlPreviewHeader } from './html-preview/HtmlPreviewHeader';
 import { HtmlPreviewContent } from './html-preview/HtmlPreviewContent';
@@ -19,6 +20,7 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
   htmlContent,
   initialTrueFullscreenRequest,
 }) => {
+  const { t } = useI18n();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { document: targetDocument } = useWindowContext();
 
@@ -89,12 +91,14 @@ export const HtmlPreviewModal: React.FC<HtmlPreviewModalProps> = ({
             onScreenshot={handleScreenshot}
             onToggleFullscreen={isTrueFullscreen ? exitTrueFullscreen : enterTrueFullscreen}
             onClose={onClose}
+            t={t}
         />
 
         <HtmlPreviewContent 
             iframeRef={iframeRef}
             htmlContent={htmlContent}
             scale={scale}
+            t={t}
         />
       </div>
     </div>,

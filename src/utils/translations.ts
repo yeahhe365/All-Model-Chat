@@ -5,6 +5,7 @@ import { messagesTranslations } from './translations/messages';
 import { scenariosTranslations } from './translations/scenarios';
 import { historyTranslations } from './translations/history';
 import { commonTranslations } from './translations/common';
+import { logViewerTranslations } from './translations/logViewer';
 
 // 直接导入 settings 下的细分翻译，消除原先的中间层 (settings.ts)
 import { generalSettings } from './translations/settings/general';
@@ -24,6 +25,7 @@ export const translations = {
     ...scenariosTranslations,
     ...historyTranslations,
     ...commonTranslations,
+    ...logViewerTranslations,
     
     // 直接在此处展开 Settings 的翻译
     ...generalSettings,

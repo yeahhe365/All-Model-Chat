@@ -1,6 +1,7 @@
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getTranslator } from '../../../utils/translations';
 import { HtmlPreviewHeader } from './HtmlPreviewHeader';
 
 describe('HtmlPreviewHeader', () => {
@@ -38,6 +39,7 @@ describe('HtmlPreviewHeader', () => {
           onScreenshot={vi.fn()}
           onToggleFullscreen={vi.fn()}
           onClose={vi.fn()}
+          t={getTranslator('en')}
         />,
       );
     });

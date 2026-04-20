@@ -18,4 +18,6 @@ export const aboutSettings = {
     about_checking_updates: { en: 'Checking for updates', zh: '检查更新中' },
     about_update_ready: { en: 'Update ready to refresh', zh: '发现可用更新' },
     about_check_updates_failed: { en: 'Unable to check for updates', zh: '暂时无法检查更新' },
+    pwaUpdate_refresh_prompt: { en: 'Refresh to update the installed shell and latest assets.', zh: '刷新以更新已安装的应用外壳和最新资源。' },
+    pwaUpdate_later: { en: 'Later', zh: '稍后' },
 };

@@ -2,6 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { PreloadedMessage } from '../../../types';
 import { User, Bot, ArrowUp, ArrowDown, Edit3, Trash2, MessageSquare } from 'lucide-react';
+import { translations } from '../../../utils/appUtils';
 
 interface ScenarioMessageListProps {
     messages: PreloadedMessage[];
@@ -11,6 +12,7 @@ interface ScenarioMessageListProps {
     onDeleteMessage: (id: string) => void;
     onMoveMessage: (index: number, direction: -1 | 1) => void;
     readOnly: boolean;
+    t: (key: keyof typeof translations | string, fallback?: string) => string;
 }
 
 export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
@@ -20,7 +22,8 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
     onUpdateMessage,
     onDeleteMessage,
     onMoveMessage,
-    readOnly
+    readOnly,
+    t
 }) => {
     const listRef = useRef<HTMLDivElement>(null);
 
@@ -45,8 +48,8 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                     <div className="p-4 rounded-full bg-[var(--theme-bg-secondary)] mb-4">
                         <MessageSquare size={32} className="opacity-50" />
                     </div>
-                    <p className="text-sm font-medium">No messages yet.</p>
-                    <p className="text-xs mt-1">Add messages below to script the conversation flow.</p>
+                    <p className="text-sm font-medium">{t('scenarios_editor_no_messages')}</p>
+                    <p className="text-xs mt-1">{t('scenarios_editor_no_messages_hint')}</p>
                 </div>
             ) : (
                 messages.map((msg, index) => {
@@ -91,7 +94,7 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                                                     }
                                                 }}
                                             />
-                                            <div className="text-[10px] opacity-60 text-right font-medium uppercase tracking-wide">Press Enter to save</div>
+                                            <div className="text-[10px] opacity-60 text-right font-medium uppercase tracking-wide">{t('scenarios_editor_press_enter_save')}</div>
                                         </div>
                                     ) : (
                                         <div className="leading-relaxed">{msg.content}</div>

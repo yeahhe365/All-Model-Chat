@@ -41,19 +41,19 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
     return (
         <div className="flex-shrink-0 p-3 sm:p-4 bg-[var(--theme-bg-secondary)]/30 border-t border-[var(--theme-border-secondary)] backdrop-blur-sm">
             <div className="flex items-center gap-3 mb-3">
-                <span className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider">Add Message As</span>
+                <span className="text-[10px] font-bold text-[var(--theme-text-tertiary)] uppercase tracking-wider">{t('scenarios_editor_add_message_as')}</span>
                 <div className="flex bg-[var(--theme-bg-input)] p-0.5 rounded-lg border border-[var(--theme-border-secondary)]">
                     <button
                         onClick={() => setRole('user')}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${role === 'user' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
                     >
-                        <User size={12} /> User
+                        <User size={12} /> {t('scenarios_editor_role_user')}
                     </button>
                     <button
                         onClick={() => setRole('model')}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${role === 'model' ? 'bg-[var(--theme-bg-primary)] text-[var(--theme-text-primary)] shadow-sm' : 'text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)]'}`}
                     >
-                        <Bot size={12} /> Model
+                        <Bot size={12} /> {t('scenarios_editor_role_model')}
                     </button>
                 </div>
             </div>
@@ -77,7 +77,7 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
                 </button>
             </div>
             <div className="text-[10px] text-[var(--theme-text-tertiary)] mt-2 text-center font-medium opacity-60">
-                {saveConfirmShortcut} to Add
+                {saveConfirmShortcut} {t('add')}
             </div>
         </div>
     );

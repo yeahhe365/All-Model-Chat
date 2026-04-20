@@ -48,7 +48,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
             setTimeout(() => setIsCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy content:', err);
-            alert('Failed to copy to clipboard. Your browser might not support this feature or require permissions.');
+            alert(t('filePreview_copy_failed'));
         }
     }, [file, isCopied]);
 
@@ -96,7 +96,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                             value={editedName}
                             onChange={(e) => onNameChange(e.target.value)}
                             className="bg-transparent border-b border-white/20 text-xs sm:text-sm font-medium text-white/90 focus:border-white/50 outline-none w-full"
-                            placeholder="Filename"
+                            placeholder={t('filePreview_filename_placeholder')}
                             autoFocus
                         />
                     ) : (
@@ -116,20 +116,20 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
             {/* Top Actions */}
             <FloatingToolbar className="pointer-events-auto p-1">
                 {isEditable ? (
-                    <ToolbarButton onClick={onSave} className="!text-green-400 hover:!bg-green-500/20" title="Save Changes">
+                    <ToolbarButton onClick={onSave} className="!text-green-400 hover:!bg-green-500/20" title={t('filePreview_save_changes')}>
                         <Save size={18} strokeWidth={2} />
                     </ToolbarButton>
                 ) : (
                     <>
                         {isText && onToggleEdit && (
-                            <ToolbarButton onClick={onToggleEdit} title="Edit File">
+                            <ToolbarButton onClick={onToggleEdit} title={t('filePreview_edit_file')}>
                                 <Edit3 size={18} strokeWidth={1.5} />
                             </ToolbarButton>
                         )}
-                        <ToolbarButton onClick={handleCopy} disabled={isCopied} title={isCopied ? "Copied!" : "Copy Content"}>
+                        <ToolbarButton onClick={handleCopy} disabled={isCopied} title={isCopied ? t('copied_button_title') : t('filePreview_copy_content')}>
                             {isCopied ? <Check size={18} className="text-green-400" strokeWidth={2} /> : <ClipboardCopy size={18} strokeWidth={1.5} />}
                         </ToolbarButton>
-                        <ToolbarButton onClick={handleDownload} disabled={isDownloading} title={isMermaidDiagram ? "Download SVG" : "Download File"}>
+                        <ToolbarButton onClick={handleDownload} disabled={isDownloading} title={isMermaidDiagram ? t('filePreview_download_svg') : t('filePreview_download_file')}>
                             {isDownloading ? <Loader2 size={18} className="animate-spin" strokeWidth={1.5}/> : <Download size={18} strokeWidth={1.5} />}
                         </ToolbarButton>
                     </>
@@ -140,8 +140,8 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
                 <ToolbarButton
                     onClick={isEditable && onToggleEdit ? onToggleEdit : onClose}
                     danger
-                    aria-label={isEditable ? "Cancel Edit" : t('imageZoom_close_aria')}
-                    title={isEditable ? "Cancel Edit" : t('imageZoom_close_title')}
+                    aria-label={isEditable ? t('filePreview_cancel_edit') : t('imageZoom_close_aria')}
+                    title={isEditable ? t('filePreview_cancel_edit') : t('imageZoom_close_title')}
                 >
                     <X size={18} strokeWidth={1.5} />
                 </ToolbarButton>

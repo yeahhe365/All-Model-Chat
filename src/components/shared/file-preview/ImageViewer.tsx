@@ -3,6 +3,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { UploadedFile } from '../../../types';
 import { FloatingToolbar, ToolbarButton, ToolbarDivider, ToolbarLabel } from './FloatingToolbar';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface ImageViewerProps {
     file: UploadedFile;
@@ -13,6 +14,7 @@ const MAX_SCALE = 10;
 const ZOOM_SPEED_FACTOR = 1.1;
 
 const ImageViewerContent: React.FC<ImageViewerProps> = ({ file }) => {
+    const { t } = useI18n();
     const [scale, setScale] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
@@ -214,7 +216,7 @@ const ImageViewerContent: React.FC<ImageViewerProps> = ({ file }) => {
             {/* Bottom Controls */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
                 <FloatingToolbar className="p-1.5">
-                    <ToolbarButton onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} title="Zoom Out">
+                    <ToolbarButton onClick={() => handleZoom('out')} disabled={scale <= MIN_SCALE} title={t('filePreview_zoom_out')}>
                         <ZoomOut size={16} strokeWidth={1.5} />
                     </ToolbarButton>
                     
@@ -222,13 +224,13 @@ const ImageViewerContent: React.FC<ImageViewerProps> = ({ file }) => {
                         {(scale * 100).toFixed(0)}%
                     </ToolbarLabel>
 
-                    <ToolbarButton onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} title="Zoom In">
+                    <ToolbarButton onClick={() => handleZoom('in')} disabled={scale >= MAX_SCALE} title={t('filePreview_zoom_in')}>
                         <ZoomIn size={16} strokeWidth={1.5} />
                     </ToolbarButton>
 
                     <ToolbarDivider />
 
-                    <ToolbarButton onClick={handleReset} title="Reset View">
+                    <ToolbarButton onClick={handleReset} title={t('filePreview_reset_view')}>
                         <RotateCw size={16} strokeWidth={1.5} />
                     </ToolbarButton>
                 </FloatingToolbar>

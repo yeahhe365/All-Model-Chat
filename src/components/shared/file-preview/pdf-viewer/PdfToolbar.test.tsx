@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider } from '../../../../contexts/I18nContext';
 import { PdfToolbar } from './PdfToolbar';
 import { usePdfViewer } from '../../../../hooks/ui/usePdfViewer';
 import { UploadedFile } from '../../../../types';
@@ -82,7 +83,9 @@ const PdfToolbarHarnessInner: React.FC<{ file: UploadedFile }> = ({ file }) => {
 };
 
 const PdfToolbarHarness: React.FC<{ file: UploadedFile }> = ({ file }) => (
-  <PdfToolbarHarnessInner key={file.id} file={file} />
+  <I18nProvider>
+    <PdfToolbarHarnessInner key={file.id} file={file} />
+  </I18nProvider>
 );
 
 describe('PdfToolbar', () => {

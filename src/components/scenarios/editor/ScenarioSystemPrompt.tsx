@@ -26,12 +26,12 @@ export const ScenarioSystemPrompt: React.FC<ScenarioSystemPromptProps> = ({
                     <button
                         onClick={onExpand}
                         className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
-                        title="Expand"
+                        title={t('expand')}
                     >
                         <Maximize2 size={12} />
                     </button>
                 </label>
-                <p className="text-[10px] text-[var(--theme-text-tertiary)] mb-3">Define the persona, style, and rules for the AI.</p>
+                <p className="text-[10px] text-[var(--theme-text-tertiary)] mb-3">{t('scenarios_system_prompt_help')}</p>
             </div>
             <textarea
                 value={value}

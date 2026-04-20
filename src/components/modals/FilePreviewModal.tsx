@@ -53,7 +53,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
   const [docxPreviewContent, setDocxPreviewContent] = useState<string | null>(file.textContent ?? null);
   const [docxPreviewError, setDocxPreviewError] = useState<string | null>(
       isDocxCandidate && file.textContent === undefined && !file.rawFile
-          ? 'Unable to preview this Word document.'
+          ? t('filePreview_word_unavailable')
           : null,
   );
   const [isDocxPreviewLoading, setIsDocxPreviewLoading] = useState(false);
@@ -149,10 +149,10 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
               if (cancelled) return;
               setDocxPreviewContent(text);
           })
-          .catch(() => {
-              if (cancelled) return;
-              setDocxPreviewError('Unable to preview this Word document.');
-          })
+           .catch(() => {
+               if (cancelled) return;
+               setDocxPreviewError(t('filePreview_word_unavailable'));
+           })
           .finally(() => {
               if (!cancelled) {
                   setIsDocxPreviewLoading(false);
@@ -162,7 +162,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
       return () => {
           cancelled = true;
       };
-  }, [file, isDocx]);
+   }, [file, isDocx, t]);
 
   const navButtonClass =
       'absolute top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/60 text-white/70 hover:text-white rounded-full backdrop-blur-md transition-all active:scale-95 z-50 focus:outline-none';
@@ -204,7 +204,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
               onPrev();
             }}
             className={`${navButtonClass} left-2`}
-            aria-label="Previous"
+            aria-label={t('filePreview_previous')}
           >
             <ChevronLeft size={24} />
           </button>
@@ -216,7 +216,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
               onNext();
             }}
             className={`${navButtonClass} right-2`}
-            aria-label="Next"
+            aria-label={t('filePreview_next')}
           >
             <ChevronRight size={24} />
           </button>
@@ -227,7 +227,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
               <ImageViewer file={file} />
           ) : isDocxPreviewLoading ? (
               <div className="w-full h-full flex items-center justify-center text-white/70">
-                  Loading Word preview...
+                  {t('filePreview_loading_word')}
               </div>
           ) : isDocx && docxPreviewError ? (
               <div className="w-full h-full flex items-center justify-center text-white/60 px-6 text-center">
@@ -251,7 +251,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
                   }
               />
           ) : isPdf ? (
-             <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-white/70">Loading PDF viewer...</div>}>
+             <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-white/70">{t('filePreview_loading_pdf_viewer')}</div>}>
                 <LazyPdfViewer file={file} />
              </Suspense>
           ) : isVideo ? (
@@ -270,7 +270,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
                   {file.fileUri && getYoutubeEmbedUrl(file.fileUri) ? (
                       <iframe
                           src={getYoutubeEmbedUrl(file.fileUri)!}
-                          title="YouTube video player"
+                          title={t('filePreview_youtube_player')}
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
@@ -279,7 +279,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
                   ) : (
                       <div className="text-center text-white/50">
                           <IconYoutube size={64} className="mx-auto mb-4 opacity-50" />
-                          <p>Invalid YouTube URL</p>
+                          <p>{t('filePreview_invalid_youtube_url')}</p>
                       </div>
                   )}
               </div>
@@ -299,7 +299,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
           ) : (
               <div className="w-full h-full flex items-center justify-center text-white/50 flex-col gap-2">
                   <FileCode2 size={48} />
-                  <p>Preview not available for this file type.</p>
+                  <p>{t('filePreview_not_supported')}</p>
               </div>
           )}
         </div>

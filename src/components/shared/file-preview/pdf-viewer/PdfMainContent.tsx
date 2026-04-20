@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page } from 'react-pdf';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { useI18n } from '../../../../contexts/I18nContext';
 
 interface PdfMainContentProps {
     fileUrl: string | undefined;
@@ -118,6 +119,7 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
     setPageRef,
     containerRef
 }) => {
+    const { t } = useI18n();
     return (
         <div className="flex-grow h-full relative flex flex-col min-w-0">
             <div 
@@ -155,7 +157,7 @@ export const PdfMainContent: React.FC<PdfMainContentProps> = ({
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="bg-black/50 backdrop-blur-md p-4 rounded-xl flex flex-col items-center gap-2 text-white">
                             <Loader2 size={32} className="animate-spin" />
-                            <span className="text-sm font-medium">Loading PDF...</span>
+                            <span className="text-sm font-medium">{t('pdf_loading')}</span>
                         </div>
                     </div>
                 )}
