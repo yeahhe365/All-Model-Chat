@@ -5,6 +5,13 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { AppLogo } from '../../icons/AppLogo';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import packageJson from '../../../../package.json';
+import type { ManualUpdateCheckState } from '../../../pwa/register';
+
+interface AboutSectionProps {
+  onCheckForUpdates?: () => Promise<void> | void;
+  canCheckForUpdates?: boolean;
+  manualUpdateCheckState?: ManualUpdateCheckState;
+}
 
 const compareVersions = (v1: string, v2: string) => {
   const parts1 = v1.replace(/^v/, '').split('.').map(Number);
@@ -19,7 +26,11 @@ const compareVersions = (v1: string, v2: string) => {
   return 0; // Equal
 };
 
-export const AboutSection: React.FC = () => {
+export const AboutSection: React.FC<AboutSectionProps> = ({
+  onCheckForUpdates,
+  canCheckForUpdates = false,
+  manualUpdateCheckState = 'idle',
+}) => {
   const { language, t } = useI18n();
   const iconSize = useResponsiveValue(18, 20);
   const isCompactViewport = useResponsiveValue(true, false, 900);
@@ -110,6 +121,21 @@ export const AboutSection: React.FC = () => {
     return t('about_latest_version');
   };
 
+  const getManualUpdateStatusText = () => {
+    switch (manualUpdateCheckState) {
+      case 'checking':
+        return t('about_checking_updates');
+      case 'up-to-date':
+        return t('about_latest_version');
+      case 'update-available':
+        return t('about_update_ready');
+      case 'error':
+        return t('about_check_updates_failed');
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className={`flex min-h-full flex-col items-center px-4 text-center animate-in fade-in slide-in-from-bottom-4 duration-500 ${isCompactViewport ? 'py-2.5' : 'py-3 sm:py-4 md:py-5'}`}>
       
@@ -179,6 +205,21 @@ export const AboutSection: React.FC = () => {
 
       {/* Actions */}
       <div className={`flex w-full flex-col items-stretch justify-center gap-2.5 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center ${isCompactViewport ? 'mt-3.5' : 'mt-4 sm:mt-5'}`}>
+        <button
+          type="button"
+          onClick={() => {
+            void onCheckForUpdates?.();
+          }}
+          disabled={!canCheckForUpdates || manualUpdateCheckState === 'checking'}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border text-sm font-medium shadow-sm transition-all sm:min-w-[10.5rem] sm:w-auto ${
+            canCheckForUpdates
+              ? 'border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] hover:-translate-y-0.5 hover:border-[var(--theme-border-focus)] hover:bg-[var(--theme-bg-tertiary)] hover:shadow-md active:translate-y-0'
+              : 'border-[var(--theme-border-secondary)]/60 bg-[var(--theme-bg-input)]/60 text-[var(--theme-text-tertiary)] cursor-not-allowed opacity-70'
+          } ${isCompactViewport ? 'px-4 py-2' : 'px-5 py-2.5'}`}
+        >
+          <span>{t('about_check_updates')}</span>
+        </button>
+
         <a 
           href="https://github.com/yeahhe365/All-Model-Chat" 
           target="_blank" 
@@ -203,6 +244,12 @@ export const AboutSection: React.FC = () => {
            )}
          </a>
       </div>
+
+      {getManualUpdateStatusText() && (
+        <p className={`mt-3 text-xs font-medium ${manualUpdateCheckState === 'error' ? 'text-amber-600' : 'text-[var(--theme-text-secondary)]'}`}>
+          {getManualUpdateStatusText()}
+        </p>
+      )}
     </div>
   );
 };

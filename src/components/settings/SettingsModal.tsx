@@ -25,6 +25,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen, onClose, currentSettings, availableModels,
   onSave, onClearAllHistory, onClearCache, onOpenLogViewer,
   onInstallPwa, installState, t, 
+  onCheckForUpdates, canCheckForUpdates, manualUpdateCheckState,
   onImportSettings, onExportSettings,
   onImportHistory, onExportHistory,
   onImportScenarios, onExportScenarios,
@@ -105,6 +106,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onReset={handleResetToDefaults}
                         onInstallPwa={onInstallPwa}
                         installState={installState}
+                        onCheckForUpdates={onCheckForUpdates}
+                        canCheckForUpdates={canCheckForUpdates}
+                        manualUpdateCheckState={manualUpdateCheckState}
                         onImportSettings={onImportSettings}
                         onExportSettings={onExportSettings}
                         onImportHistory={handleRequestImportHistory}

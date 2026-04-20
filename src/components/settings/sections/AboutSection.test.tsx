@@ -121,4 +121,34 @@ describe('AboutSection', () => {
 
     expect(releaseLink?.getAttribute('title')).toBe('有新版本：1.8.9');
   });
+
+  it('renders a manual update check button and status copy', async () => {
+    const onCheckForUpdates = vi.fn();
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'zh' });
+      root.render(
+        <I18nProvider>
+          <AboutSection
+            canCheckForUpdates
+            onCheckForUpdates={onCheckForUpdates}
+            manualUpdateCheckState="up-to-date"
+          />
+        </I18nProvider>,
+      );
+    });
+
+    const checkButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('检查更新'),
+    );
+
+    expect(checkButton).toBeDefined();
+    expect(container.textContent).toContain('已是最新');
+
+    await act(async () => {
+      checkButton?.click();
+    });
+
+    expect(onCheckForUpdates).toHaveBeenCalledTimes(1);
+  });
 });

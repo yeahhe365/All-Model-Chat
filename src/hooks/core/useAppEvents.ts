@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppSettings, ChatSettings } from '../../types';
 import { TAB_CYCLE_MODELS } from '../../constants/appConstants';
 import { logService } from '../../utils/appUtils';
@@ -6,6 +6,7 @@ import { isShortcutPressed } from '../../utils/shortcutUtils';
 import { useFullscreen } from '../ui/useFullscreen';
 import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
 import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
+import { loadRegisterSW } from '../../pwa/loadRegisterSw';
 
 interface AppEventsProps {
     appSettings: AppSettings;
@@ -42,7 +43,19 @@ export const useAppEvents = ({
     const [needRefresh, setNeedRefresh] = useState(false);
     const [updateDismissed, setUpdateDismissed] = useState(false);
     const [updateServiceWorker, setUpdateServiceWorker] = useState<UpdateServiceWorker>(() => async () => undefined);
+    const [canCheckForUpdates, setCanCheckForUpdates] = useState(false);
+    const [manualUpdateCheckState, setManualUpdateCheckState] = useState<'idle' | 'checking' | 'up-to-date' | 'update-available' | 'error'>('idle');
+    const registrationRef = useRef<ServiceWorkerRegistration | null>(null);
+    const manualUpdateTimerRef = useRef<number | null>(null);
+    const manualUpdateCheckIdRef = useRef(0);
     const { toggleFullscreen } = useFullscreen();
+
+    const clearManualUpdateTimer = useCallback(() => {
+        if (manualUpdateTimerRef.current !== null) {
+            window.clearTimeout(manualUpdateTimerRef.current);
+            manualUpdateTimerRef.current = null;
+        }
+    }, []);
 
     useEffect(() => {
         setInstallState(
@@ -102,18 +115,31 @@ export const useAppEvents = ({
                 return;
             }
 
-            const { registerSW } = await import('virtual:pwa-register');
+            const registerSW = await loadRegisterSW();
             const nextUpdater = registerPwa({
                 enabled: true,
                 registerSWImpl: registerSW,
                 onNeedRefresh: () => {
                     if (cancelled) return;
+                    clearManualUpdateTimer();
                     setNeedRefresh(true);
                     setUpdateDismissed(false);
+                    setManualUpdateCheckState('update-available');
                 },
                 onOfflineReady: () => {
                     if (cancelled) return;
                     logService.info('PWA offline app shell is ready.');
+                },
+                onRegisteredSW: (_swScriptUrl, registration) => {
+                    if (cancelled) return;
+                    registrationRef.current = registration ?? null;
+                    setCanCheckForUpdates(!!registration);
+                },
+                onRegisterError: (error) => {
+                    if (cancelled) return;
+                    logService.error('PWA registration failed.', { error });
+                    registrationRef.current = null;
+                    setCanCheckForUpdates(false);
                 },
             });
 
@@ -126,8 +152,9 @@ export const useAppEvents = ({
 
         return () => {
             cancelled = true;
+            clearManualUpdateTimer();
         };
-    }, []);
+    }, [clearManualUpdateTimer]);
 
     const handleInstallPwa = async () => {
         if (installState.state === 'available' && installPromptEvent) {
@@ -148,6 +175,36 @@ export const useAppEvents = ({
     const handleRefreshApp = async () => {
         await updateServiceWorker(true);
     };
+
+    const handleCheckForUpdates = useCallback(async () => {
+        const registration = registrationRef.current;
+        if (!registration) {
+            setManualUpdateCheckState('error');
+            return;
+        }
+
+        clearManualUpdateTimer();
+        const checkId = manualUpdateCheckIdRef.current + 1;
+        manualUpdateCheckIdRef.current = checkId;
+        setManualUpdateCheckState('checking');
+
+        try {
+            await registration.update();
+            manualUpdateTimerRef.current = window.setTimeout(() => {
+                if (manualUpdateCheckIdRef.current !== checkId) {
+                    return;
+                }
+
+                setManualUpdateCheckState((prev) => prev === 'update-available' ? prev : 'up-to-date');
+                manualUpdateTimerRef.current = null;
+            }, 1200);
+        } catch (error) {
+            logService.error('Manual PWA update check failed.', { error });
+            if (manualUpdateCheckIdRef.current === checkId) {
+                setManualUpdateCheckState('error');
+            }
+        }
+    }, [clearManualUpdateTimer]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -235,5 +292,8 @@ export const useAppEvents = ({
         updateDismissed,
         dismissUpdateBanner: () => setUpdateDismissed(true),
         handleRefreshApp,
+        canCheckForUpdates,
+        manualUpdateCheckState,
+        handleCheckForUpdates,
     };
 };

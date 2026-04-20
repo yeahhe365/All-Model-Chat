@@ -4,6 +4,7 @@ import { AppSettings, ModelOption, ChatSettings, SavedScenario } from '../../typ
 import { useI18n } from '../../contexts/I18nContext';
 import type { LogViewerProps } from '../log-viewer/LogViewer';
 import type { PwaInstallState } from '../../pwa/install';
+import type { ManualUpdateCheckState } from '../../pwa/register';
 
 const LazySettingsModal = lazy(async () => {
     const module = await import('../settings/SettingsModal');
@@ -35,6 +36,9 @@ interface AppModalsProps {
   clearAllHistory: () => void;
   handleInstallPwa: () => void;
   installState: PwaInstallState;
+  handleCheckForUpdates?: () => Promise<void> | void;
+  canCheckForUpdates?: boolean;
+  manualUpdateCheckState?: ManualUpdateCheckState;
 
   handleImportSettings: (file: File) => void;
   handleExportSettings: () => void;
@@ -75,6 +79,9 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
         handleSaveSettings, clearCacheAndReload,
         clearAllHistory,
         handleInstallPwa, installState,
+        handleCheckForUpdates,
+        canCheckForUpdates,
+        manualUpdateCheckState = 'idle',
         handleImportSettings, handleExportSettings,
         handleImportHistory, handleExportHistory,
         handleImportAllScenarios, handleExportAllScenarios,
@@ -128,6 +135,9 @@ export const AppModals: React.FC<AppModalsProps> = (props) => {
                   onOpenLogViewer={openLogViewer}
                   onInstallPwa={handleInstallPwa}
                   installState={installState}
+                  onCheckForUpdates={handleCheckForUpdates}
+                  canCheckForUpdates={canCheckForUpdates}
+                  manualUpdateCheckState={manualUpdateCheckState}
                   onImportSettings={handleImportSettings}
                   onExportSettings={handleExportSettings}
                   onImportHistory={handleImportHistory}

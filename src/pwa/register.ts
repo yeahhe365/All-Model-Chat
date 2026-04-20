@@ -1,4 +1,5 @@
 export type UpdateServiceWorker = (reloadPage?: boolean) => Promise<void>;
+export type ManualUpdateCheckState = 'idle' | 'checking' | 'up-to-date' | 'update-available' | 'error';
 
 export interface RegisterPwaOptions {
   enabled: boolean;
@@ -6,9 +7,13 @@ export interface RegisterPwaOptions {
     immediate: boolean;
     onNeedRefresh?: () => void;
     onOfflineReady?: () => void;
+    onRegisteredSW?: (swScriptUrl: string, registration: ServiceWorkerRegistration | undefined) => void;
+    onRegisterError?: (error: unknown) => void;
   }) => UpdateServiceWorker;
   onNeedRefresh?: () => void;
   onOfflineReady?: () => void;
+  onRegisteredSW?: (swScriptUrl: string, registration: ServiceWorkerRegistration | undefined) => void;
+  onRegisterError?: (error: unknown) => void;
 }
 
 const noopUpdateServiceWorker: UpdateServiceWorker = async () => undefined;
@@ -18,6 +23,8 @@ export const registerPwa = ({
   registerSWImpl,
   onNeedRefresh,
   onOfflineReady,
+  onRegisteredSW,
+  onRegisterError,
 }: RegisterPwaOptions): UpdateServiceWorker => {
   if (!enabled || !registerSWImpl) {
     return noopUpdateServiceWorker;
@@ -27,5 +34,7 @@ export const registerPwa = ({
     immediate: true,
     onNeedRefresh,
     onOfflineReady,
+    onRegisteredSW,
+    onRegisterError,
   });
 };
