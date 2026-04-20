@@ -8,6 +8,11 @@ const registerPwaMock = vi.fn();
 const updateRegistrationMock = vi.fn();
 const toggleFullscreenMock = vi.fn();
 
+const createRegistrationMock = (): ServiceWorkerRegistration =>
+  ({
+    update: updateRegistrationMock,
+  } as unknown as ServiceWorkerRegistration);
+
 vi.mock('../../pwa/register', () => ({
   registerPwa: (...args: unknown[]) => registerPwaMock(...args),
 }));
@@ -76,10 +81,10 @@ describe('useAppEvents manual update checks', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('PROD', 'true');
+    vi.stubEnv('PROD', true);
     updateRegistrationMock.mockResolvedValue(undefined);
     registerPwaMock.mockImplementation(({ onRegisteredSW }: { onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
-      onRegisteredSW?.('/sw.js', { update: updateRegistrationMock } as ServiceWorkerRegistration);
+      onRegisteredSW?.('/sw.js', createRegistrationMock());
       return vi.fn(async () => undefined);
     });
 
@@ -131,7 +136,7 @@ describe('useAppEvents manual update checks', () => {
     let onNeedRefresh: (() => void) | undefined;
     registerPwaMock.mockImplementation((options: { onNeedRefresh?: () => void; onRegisteredSW?: (swUrl: string, registration?: ServiceWorkerRegistration) => void }) => {
       onNeedRefresh = options.onNeedRefresh;
-      options.onRegisteredSW?.('/sw.js', { update: updateRegistrationMock } as ServiceWorkerRegistration);
+      options.onRegisteredSW?.('/sw.js', createRegistrationMock());
       return vi.fn(async () => undefined);
     });
 
