@@ -154,49 +154,66 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
       <div className={`flex max-w-lg flex-col items-center ${isCompactViewport ? 'mt-3 space-y-3.5' : 'mt-4 space-y-4 sm:mt-5 sm:space-y-5'}`}>
          <h3 className={`font-bold tracking-tight text-[var(--theme-text-primary)] ${isCompactViewport ? 'text-[1.75rem]' : 'text-2xl'}`}>{t('about_title')}</h3>
          
-         {/* Redesigned Version Pill */}
-         <a 
-            href="https://github.com/yeahhe365/All-Model-Chat/releases" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-[1px] transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)]"
-            title={versionTooltip}
-         >
-            {/* Gradient Border Background */}
-            <span className={`absolute inset-0 transition-all duration-300 ${
-                isUpdateAvailable ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-red-500' : 
-                isBeta ? 'bg-gradient-to-r from-purple-400 via-indigo-500 to-blue-500' :
-                isReleaseStatusUnavailable ? 'bg-gradient-to-r from-slate-300 via-slate-400 to-slate-500' :
-                isLoading ? 'bg-gradient-to-r from-sky-400 via-cyan-500 to-blue-500' :
-                'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500'
-            } opacity-70 group-hover:opacity-100`}></span>
-            
-            {/* Inner Content */}
-            <span className={`relative flex items-center gap-3 rounded-full bg-[var(--theme-bg-primary)] px-4 transition-all duration-75 ease-in group-hover:bg-opacity-[0.96] sm:px-5 ${isCompactViewport ? 'py-1' : 'py-1.5'}`}>
-                <span className="font-mono text-sm font-bold text-[var(--theme-text-primary)]">
-                    v{currentVersion}
-                </span>
-                
-                <span className="w-px h-3.5 bg-[var(--theme-border-secondary)] opacity-50"></span>
-                
-                <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 w-2">
-                      <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                        isUpdateAvailable ? `motion-safe:animate-ping ${getStatusColor()}` : getStatusColor()
-                      }`}></span>
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${getStatusColor()}`}></span>
-                    </span>
-                    <span className={`text-xs font-medium ${isUpdateAvailable ? 'text-amber-500' : 'text-[var(--theme-text-secondary)]'}`}>
-                        {getStatusText()}
-                        {isUpdateAvailable && latestVersion && (
-                            <span className="ml-1 opacity-80">({latestVersion})</span>
-                        )}
-                    </span>
-                </div>
-                
-                <ExternalLink size={12} className="ml-0.5 text-[var(--theme-text-tertiary)] opacity-70 transition-colors group-hover:text-[var(--theme-text-primary)] group-hover:opacity-100" />
-            </span>
-         </a>
+         <div className="flex flex-wrap items-center justify-center gap-2">
+           {/* Redesigned Version Pill */}
+           <a 
+              href="https://github.com/yeahhe365/All-Model-Chat/releases" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full p-[1px] transition-transform duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-primary)]"
+              title={versionTooltip}
+           >
+              {/* Gradient Border Background */}
+              <span className={`absolute inset-0 transition-all duration-300 ${
+                  isUpdateAvailable ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-red-500' : 
+                  isBeta ? 'bg-gradient-to-r from-purple-400 via-indigo-500 to-blue-500' :
+                  isReleaseStatusUnavailable ? 'bg-gradient-to-r from-slate-300 via-slate-400 to-slate-500' :
+                  isLoading ? 'bg-gradient-to-r from-sky-400 via-cyan-500 to-blue-500' :
+                  'bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500'
+              } opacity-70 group-hover:opacity-100`}></span>
+              
+              {/* Inner Content */}
+              <span className={`relative flex items-center gap-3 rounded-full bg-[var(--theme-bg-primary)] px-4 transition-all duration-75 ease-in group-hover:bg-opacity-[0.96] sm:px-5 ${isCompactViewport ? 'py-1' : 'py-1.5'}`}>
+                  <span className="font-mono text-sm font-bold text-[var(--theme-text-primary)]">
+                      v{currentVersion}
+                  </span>
+                  
+                  <span className="w-px h-3.5 bg-[var(--theme-border-secondary)] opacity-50"></span>
+                  
+                  <div className="flex items-center gap-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                          isUpdateAvailable ? `motion-safe:animate-ping ${getStatusColor()}` : getStatusColor()
+                        }`}></span>
+                        <span className={`relative inline-flex rounded-full h-2 w-2 ${getStatusColor()}`}></span>
+                      </span>
+                      <span className={`text-xs font-medium ${isUpdateAvailable ? 'text-amber-500' : 'text-[var(--theme-text-secondary)]'}`}>
+                          {getStatusText()}
+                          {isUpdateAvailable && latestVersion && (
+                              <span className="ml-1 opacity-80">({latestVersion})</span>
+                          )}
+                      </span>
+                  </div>
+                  
+                  <ExternalLink size={12} className="ml-0.5 text-[var(--theme-text-tertiary)] opacity-70 transition-colors group-hover:text-[var(--theme-text-primary)] group-hover:opacity-100" />
+              </span>
+           </a>
+
+           <button
+             type="button"
+             onClick={() => {
+               void onCheckForUpdates?.();
+             }}
+             disabled={!canCheckForUpdates || manualUpdateCheckState === 'checking'}
+             className={`inline-flex items-center justify-center gap-2 rounded-full border text-xs font-semibold shadow-sm transition-all ${
+               canCheckForUpdates
+                 ? 'border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] hover:-translate-y-0.5 hover:border-[var(--theme-border-focus)] hover:bg-[var(--theme-bg-tertiary)] hover:shadow-md active:translate-y-0'
+                 : 'border-[var(--theme-border-secondary)]/60 bg-[var(--theme-bg-input)]/60 text-[var(--theme-text-tertiary)] cursor-not-allowed opacity-70'
+             } ${isCompactViewport ? 'px-3 py-1.5' : 'px-4 py-2'}`}
+           >
+             <span>{t('about_check_updates')}</span>
+           </button>
+         </div>
         
         <p className={`max-w-md text-sm text-[var(--theme-text-secondary)] ${isCompactViewport ? 'leading-5' : 'leading-6'}`}>
           {t('about_description')}
@@ -205,21 +222,6 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
 
       {/* Actions */}
       <div className={`flex w-full flex-col items-stretch justify-center gap-2.5 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center ${isCompactViewport ? 'mt-3.5' : 'mt-4 sm:mt-5'}`}>
-        <button
-          type="button"
-          onClick={() => {
-            void onCheckForUpdates?.();
-          }}
-          disabled={!canCheckForUpdates || manualUpdateCheckState === 'checking'}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border text-sm font-medium shadow-sm transition-all sm:min-w-[10.5rem] sm:w-auto ${
-            canCheckForUpdates
-              ? 'border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] hover:-translate-y-0.5 hover:border-[var(--theme-border-focus)] hover:bg-[var(--theme-bg-tertiary)] hover:shadow-md active:translate-y-0'
-              : 'border-[var(--theme-border-secondary)]/60 bg-[var(--theme-bg-input)]/60 text-[var(--theme-text-tertiary)] cursor-not-allowed opacity-70'
-          } ${isCompactViewport ? 'px-4 py-2' : 'px-5 py-2.5'}`}
-        >
-          <span>{t('about_check_updates')}</span>
-        </button>
-
         <a 
           href="https://github.com/yeahhe365/All-Model-Chat" 
           target="_blank" 

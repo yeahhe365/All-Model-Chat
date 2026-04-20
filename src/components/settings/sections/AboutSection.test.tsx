@@ -141,8 +141,10 @@ describe('AboutSection', () => {
     const checkButton = Array.from(container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('检查更新'),
     );
+    const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/All-Model-Chat/releases"]');
 
     expect(checkButton).toBeDefined();
+    expect(releaseLink?.parentElement?.contains(checkButton ?? null)).toBe(true);
     expect(container.textContent).toContain('已是最新');
 
     await act(async () => {
