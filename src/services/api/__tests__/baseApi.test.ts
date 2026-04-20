@@ -458,7 +458,7 @@ describe('buildGenerationConfig', () => {
     expect(config.systemInstruction).toContain('plt.savefig("chart.png")');
   });
 
-  it('uses HIGH thinkingConfig instead of prompt token injection for Gemma models', async () => {
+  it('uses HIGH thinking level for Gemma reasoning mode', async () => {
     const config = await buildGenerationConfig(
       'gemma-4-31b-it', 'sys', baseConfig, true, 0,
     );
@@ -469,12 +469,15 @@ describe('buildGenerationConfig', () => {
     });
   });
 
-  it('leaves Gemma thinking disabled when showThoughts is off', async () => {
+  it('uses MINIMAL thinking level for Gemma fast mode', async () => {
     const config = await buildGenerationConfig(
       'gemma-4-31b-it', 'sys', baseConfig, false, 0,
     );
     expect(config.systemInstruction).toBe('sys');
-    expect(config.thinkingConfig).toBeUndefined();
+    expect(config.thinkingConfig).toEqual({
+      includeThoughts: true,
+      thinkingLevel: 'MINIMAL',
+    });
   });
 
   it('applies global mediaResolution for Gemma multimodal requests', async () => {

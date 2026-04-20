@@ -104,7 +104,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                     }`}
                     title={
                         isGemmaModel
-                            ? (isFastState ? 'Reasoning Off (Fast Mode)' : 'Reasoning On')
+                            ? (isFastState ? 'Reasoning: Minimal (Fast Mode)' : 'Reasoning: High')
                             : (isFastState ? `Thinking: ${targetFastLevel === 'MINIMAL' ? 'Minimal' : 'Low'} (Fast Mode)` : 'Thinking: High (Pro Mode)')
                     }
                     aria-label={isGemmaModel ? 'Toggle reasoning mode' : 'Toggle thinking level'}

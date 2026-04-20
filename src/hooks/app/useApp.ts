@@ -63,7 +63,7 @@ export const useApp = () => {
     updateAndPersistSessions,
   } = chatState;
   const uiState = useAppUI();
-  const setIsHistorySidebarOpen = useUIStore((state) => state.setIsHistorySidebarOpen);
+  const setIsHistorySidebarOpenTransient = useUIStore((state) => state.setIsHistorySidebarOpenTransient);
   const setIsLogViewerOpen = useUIStore((state) => state.setIsLogViewerOpen);
 
   const [sidePanelContent, setSidePanelContent] = useState<SideViewContent | null>(null);
@@ -76,17 +76,20 @@ export const useApp = () => {
     (content: SideViewContent) => {
       setSidePanelContent(content);
       if (window.innerWidth < 1280) {
-        setIsHistorySidebarOpen(false);
+        setIsHistorySidebarOpenTransient(false);
       }
     },
-    [setIsHistorySidebarOpen]
+    [setIsHistorySidebarOpenTransient]
   );
 
   const handleCloseSidePanel = useCallback(() => {
     setSidePanelContent(null);
   }, []);
 
-  const pipState = usePictureInPicture(setIsHistorySidebarOpen);
+  const pipState = usePictureInPicture(
+    uiState.isHistorySidebarOpen,
+    setIsHistorySidebarOpenTransient,
+  );
 
   useEffect(() => {
     if (pipState.pipWindow?.document) {

@@ -354,7 +354,9 @@ export const buildGenerationConfig = async (
     }
 
     const isGemma = isGemmaModel(modelId);
-    const isGemmaReasoningEnabled = isGemma && showThoughts;
+    const gemmaThinkingLevel = isGemma
+        ? (showThoughts ? 'HIGH' : 'MINIMAL')
+        : undefined;
 
     const generationConfig: GenerationConfig = {
         ...config,
@@ -396,12 +398,10 @@ export const buildGenerationConfig = async (
             generationConfig.thinkingConfig.thinkingLevel = thinkingLevel || 'HIGH';
         }
     } else if (isGemma) {
-        if (isGemmaReasoningEnabled) {
-            generationConfig.thinkingConfig = {
-                includeThoughts: true,
-                thinkingLevel: 'HIGH',
-            };
-        }
+        generationConfig.thinkingConfig = {
+            includeThoughts: true,
+            thinkingLevel: gemmaThinkingLevel,
+        };
     } else {
         const modelSupportsThinking = modelId.includes('gemini-2.5');
 

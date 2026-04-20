@@ -50,11 +50,34 @@ describe('HeaderModelSelector', () => {
 
     const toggleButton = container.querySelector('button[aria-label="Toggle reasoning mode"]');
     expect(toggleButton).not.toBeNull();
+    expect(toggleButton?.getAttribute('title')).toBe('Reasoning: High');
 
     await act(async () => {
       toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
 
     expect(onToggleGemmaReasoning).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows Gemma fast mode as minimal reasoning instead of reasoning off', async () => {
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Gemma 4 31B IT"
+          availableModels={[{ id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' }]}
+          selectedModelId="gemma-4-31b-it"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={false}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    const toggleButton = container.querySelector('button[aria-label="Toggle reasoning mode"]');
+    expect(toggleButton?.getAttribute('title')).toBe('Reasoning: Minimal (Fast Mode)');
   });
 });

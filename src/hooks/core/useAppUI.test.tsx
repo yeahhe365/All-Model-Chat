@@ -41,6 +41,7 @@ const createTouchEvent = (
 
 describe('useAppUI', () => {
   beforeEach(() => {
+    localStorage.clear();
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
       value: 375,
@@ -50,6 +51,8 @@ describe('useAppUI', () => {
       isSettingsModalOpen: false,
       isPreloadedMessagesModalOpen: false,
       isHistorySidebarOpen: false,
+      desktopHistorySidebarOpen: true,
+      mobileHistorySidebarOpen: false,
       isLogViewerOpen: false,
     });
   });
@@ -115,20 +118,25 @@ describe('useAppUI', () => {
     unmount();
   });
 
-  it('syncs sidebar visibility when the window crosses the desktop breakpoint', () => {
+  it('restores the remembered sidebar visibility for each breakpoint', () => {
+    useUIStore.setState({
+      isHistorySidebarOpen: false,
+      desktopHistorySidebarOpen: false,
+      mobileHistorySidebarOpen: true,
+    });
     const { unmount } = renderHook(() => useAppUI());
 
     act(() => {
       window.innerWidth = 1024;
       window.dispatchEvent(new Event('resize'));
     });
-    expect(useUIStore.getState().isHistorySidebarOpen).toBe(true);
+    expect(useUIStore.getState().isHistorySidebarOpen).toBe(false);
 
     act(() => {
       window.innerWidth = 375;
       window.dispatchEvent(new Event('resize'));
     });
-    expect(useUIStore.getState().isHistorySidebarOpen).toBe(false);
+    expect(useUIStore.getState().isHistorySidebarOpen).toBe(true);
 
     unmount();
   });

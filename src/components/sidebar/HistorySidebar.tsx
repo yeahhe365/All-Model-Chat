@@ -14,6 +14,7 @@ import { useHistorySidebarLogic } from '../../hooks/useHistorySidebarLogic';
 interface HistorySidebarProps {
   isOpen: boolean;
   onToggle: () => void;
+  onAutoClose: () => void;
   sessions: SavedChatSession[];
   groups: ChatGroup[];
   activeSessionId: string | null;
@@ -97,7 +98,7 @@ const SessionListGroup = ({
 export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
   const { t } = useI18n();
   const {
-    isOpen, onToggle, sessions, groups, activeSessionId, loadingSessionIds,
+    isOpen, onToggle, onAutoClose, sessions, groups, activeSessionId, loadingSessionIds,
     generatingTitleSessionIds, onOpenExportModal, onAddNewGroup,
     onDeleteGroup, onToggleGroupExpansion, themeId,
     onNewChat, onDeleteSession, onTogglePinSession, onDuplicateSession,
@@ -128,6 +129,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleSessionSelect,
   } = useHistorySidebarLogic({
     onToggle,
+    onAutoClose,
     sessions,
     groups,
     generatingTitleSessionIds,
@@ -172,7 +174,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
         <SidebarHeader isOpen={isOpen} onToggle={onToggle} t={t} />
         <SidebarActions 
             onNewChat={onNewChat}
-            onCloseSidebar={onToggle}
+            onCloseSidebar={onAutoClose}
             onAddNewGroup={onAddNewGroup}
             isSearching={isSearching}
             setIsSearching={setIsSearching}

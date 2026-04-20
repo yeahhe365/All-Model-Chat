@@ -9,6 +9,7 @@ type HistoryTranslator = (key: string, fallback?: string) => string;
 
 interface UseHistorySidebarLogicProps {
     onToggle: () => void;
+    onAutoClose: () => void;
     sessions: SavedChatSession[];
     groups: ChatGroup[];
     generatingTitleSessionIds: Set<string>;
@@ -81,6 +82,7 @@ export const categorizeSessionsByDate = (
 
 export const useHistorySidebarLogic = ({
     onToggle,
+    onAutoClose,
     sessions,
     groups,
     generatingTitleSessionIds,
@@ -267,7 +269,7 @@ export const useHistorySidebarLogic = ({
         onSelectSession(sessionId);
         // Auto-close sidebar on mobile
         if (window.innerWidth < 768) {
-            onToggle();
+            onAutoClose();
         }
     };
 

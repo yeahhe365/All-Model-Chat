@@ -1,11 +1,15 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { logService } from '../../utils/appUtils';
 
-export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | ((prev: boolean) => boolean)) => void) => {
+export const usePictureInPicture = (
+    isHistorySidebarOpen: boolean,
+    setIsHistorySidebarOpenTransient: (value: boolean | ((prev: boolean) => boolean)) => void,
+) => {
     const [isPipSupported] = useState(() => 'documentPictureInPicture' in window);
     const [pipWindow, setPipWindow] = useState<Window | null>(null);
     const [pipContainer, setPipContainer] = useState<HTMLElement | null>(null);
+    const sidebarStateBeforePipRef = useRef<boolean>(isHistorySidebarOpen);
 
     const closePip = useCallback(() => {
         if (pipWindow) {
@@ -18,7 +22,8 @@ export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | (
         if (!isPipSupported || pipWindow) return;
 
         // Collapse sidebar when entering PiP mode
-        setIsHistorySidebarOpen(false);
+        sidebarStateBeforePipRef.current = isHistorySidebarOpen;
+        setIsHistorySidebarOpenTransient(false);
 
         try {
             const pipWin = await window.documentPictureInPicture!.requestWindow({
@@ -58,8 +63,7 @@ export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | (
             pipWin.addEventListener('pagehide', () => {
                 setPipWindow(null);
                 setPipContainer(null);
-                // Expand sidebar when exiting PiP mode
-                setIsHistorySidebarOpen(true);
+                setIsHistorySidebarOpenTransient(sidebarStateBeforePipRef.current);
                 logService.info('PiP window closed.');
             }, { once: true });
 
@@ -71,10 +75,9 @@ export const usePictureInPicture = (setIsHistorySidebarOpen: (value: boolean | (
             logService.error('Error opening Picture-in-Picture window:', error);
             setPipWindow(null);
             setPipContainer(null);
-            // If opening fails, revert the sidebar state
-            setIsHistorySidebarOpen(true);
+            setIsHistorySidebarOpenTransient(sidebarStateBeforePipRef.current);
         }
-    }, [isPipSupported, pipWindow, setIsHistorySidebarOpen]);
+    }, [isHistorySidebarOpen, isPipSupported, pipWindow, setIsHistorySidebarOpenTransient]);
 
     const togglePip = useCallback(() => {
         if (pipWindow) {

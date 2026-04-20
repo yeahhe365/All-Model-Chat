@@ -57,7 +57,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     handleImportAllScenarios,
   } = app;
   const { setAppSettings } = app;
-  const { setIsHistorySidebarOpen } = uiState;
+  const { setIsHistorySidebarOpen, setIsHistorySidebarOpenTransient } = uiState;
   const { loadChatSession, handleSendMessage } = chatState;
 
   const isSettingsModalOpen = useUIStore((state) => state.isSettingsModalOpen);
@@ -255,6 +255,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     () => ({
       isOpen: uiState.isHistorySidebarOpen,
       onToggle: toggleHistorySidebar,
+      onAutoClose: () => setIsHistorySidebarOpenTransient(false),
       sessions: chatState.savedSessions,
       groups: chatState.savedGroups,
       activeSessionId: chatState.activeSessionId,
@@ -298,6 +299,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       openSettingsModal,
       selectSession,
       toggleHistorySidebar,
+      setIsHistorySidebarOpenTransient,
       uiState.isHistorySidebarOpen,
     ],
   );

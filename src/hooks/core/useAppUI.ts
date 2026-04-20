@@ -14,6 +14,8 @@ export const useAppUI = () => {
   const setIsSettingsModalOpen = useUIStore((s) => s.setIsSettingsModalOpen);
   const setIsPreloadedMessagesModalOpen = useUIStore((s) => s.setIsPreloadedMessagesModalOpen);
   const setIsHistorySidebarOpen = useUIStore((s) => s.setIsHistorySidebarOpen);
+  const setIsHistorySidebarOpenTransient = useUIStore((s) => s.setIsHistorySidebarOpenTransient);
+  const syncHistorySidebarForViewport = useUIStore((s) => s.syncHistorySidebarForViewport);
   const setIsLogViewerOpen = useUIStore((s) => s.setIsLogViewerOpen);
 
   const touchStartRef = useRef({ x: 0, y: 0, startedInSidebar: false });
@@ -24,13 +26,13 @@ export const useAppUI = () => {
       const isDesktop = window.innerWidth >= DESKTOP_BREAKPOINT;
       if (isDesktop !== wasDesktopRef.current) {
         wasDesktopRef.current = isDesktop;
-        setIsHistorySidebarOpen(isDesktop);
+        syncHistorySidebarForViewport();
       }
     };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [setIsHistorySidebarOpen]);
+  }, [syncHistorySidebarForViewport]);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (window.innerWidth >= DESKTOP_BREAKPOINT) {
@@ -82,6 +84,7 @@ export const useAppUI = () => {
     setIsPreloadedMessagesModalOpen,
     isHistorySidebarOpen,
     setIsHistorySidebarOpen,
+    setIsHistorySidebarOpenTransient,
     isLogViewerOpen,
     setIsLogViewerOpen,
     handleTouchStart,
