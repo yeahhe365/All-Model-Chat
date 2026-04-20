@@ -245,7 +245,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
 
       <div 
         aria-hidden={isOpen}
-        className={`hidden md:flex absolute inset-0 flex-col items-center py-4 h-full gap-[0.8rem] w-full min-w-[58px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors transition-opacity duration-200 ${
+        className={`hidden md:flex absolute inset-0 flex-col items-center py-4 h-full gap-[0.56rem] w-full min-w-[58px] cursor-pointer hover:bg-[var(--theme-bg-tertiary)]/30 transition-colors transition-opacity duration-200 ${
           isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'
         }`}
         onClick={onToggle}

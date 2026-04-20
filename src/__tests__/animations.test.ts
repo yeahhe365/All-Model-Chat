@@ -86,6 +86,12 @@ describe('layout animation guardrails', () => {
     expect(source).not.toContain('{isOpen ? (');
   });
 
+  it('tightens collapsed desktop sidebar button spacing so mini actions do not feel too sparse', () => {
+    const source = fs.readFileSync(historySidebarPath, 'utf8');
+
+    expect(source).toContain('gap-[0.56rem]');
+  });
+
   it('does not keep chat area on width-based will-change hints', () => {
     const source = fs.readFileSync(chatAreaPath, 'utf8');
 
