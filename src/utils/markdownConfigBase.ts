@@ -5,6 +5,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import type { PluggableList } from 'unified';
 import { HIGHLIGHT_ALIASES, HIGHLIGHT_LANGUAGES, HIGHLIGHT_PLAINTEXT } from './highlightConfig';
+import { remarkWrappedStrong } from './remarkWrappedStrong';
 
 export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
   const sanitizeSchema = {
@@ -58,4 +59,4 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
   return plugins;
 };
 
-export const baseRemarkPlugins: PluggableList = [remarkGfm, remarkBreaks];
+export const baseRemarkPlugins: PluggableList = [remarkGfm, remarkBreaks, remarkWrappedStrong];
