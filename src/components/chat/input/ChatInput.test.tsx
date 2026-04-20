@@ -416,6 +416,145 @@ describe('ChatInput', () => {
     expect(onSendMessage).toHaveBeenCalledWith('Queue this next', { isFastMode: false, files: undefined });
   });
 
+  it('preserves a newer draft when a queued message auto-sends', async () => {
+    const onSendMessage = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = true;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onSendMessage = onSendMessage;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const queueButton = container.querySelector<HTMLButtonElement>('[data-testid="queue-button"]');
+    expect(textarea).not.toBeNull();
+    expect(queueButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Queue this next');
+      queueButton?.click();
+    });
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Draft after queueing');
+    });
+
+    const completedProviderValue = {
+      ...providerValue,
+      input: {
+        ...providerValue.input,
+        isLoading: false,
+      },
+    } satisfies ChatAreaProviderValue;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={completedProviderValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(onSendMessage).toHaveBeenCalledWith('Queue this next', { isFastMode: false, files: undefined });
+    expect(textarea?.value).toBe('Draft after queueing');
+  });
+
+  it('keeps a queued message bound to its original session before auto-sending', async () => {
+    const sessionOneSend = vi.fn();
+    const sessionTwoSend = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = true;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onSendMessage = sessionOneSend;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    const queueButton = container.querySelector<HTMLButtonElement>('[data-testid="queue-button"]');
+    expect(textarea).not.toBeNull();
+    expect(queueButton).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, 'Queue for session one');
+      queueButton?.click();
+    });
+
+    const sessionTwoProviderValue = {
+      ...providerValue,
+      messageList: {
+        ...providerValue.messageList,
+        activeSessionId: 'session-2',
+      },
+      input: {
+        ...providerValue.input,
+        activeSessionId: 'session-2',
+        isLoading: false,
+        onSendMessage: sessionTwoSend,
+      },
+    } satisfies ChatAreaProviderValue;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={sessionTwoProviderValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(sessionTwoSend).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-testid="queued-card"]')).toBeNull();
+
+    const completedOriginalSession = {
+      ...providerValue,
+      input: {
+        ...providerValue.input,
+        isLoading: false,
+        onSendMessage: sessionOneSend,
+      },
+    } satisfies ChatAreaProviderValue;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={completedOriginalSession}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    expect(sessionOneSend).toHaveBeenCalledWith('Queue for session one', {
+      isFastMode: false,
+      files: undefined,
+    });
+  });
+
   it('restores queued draft text back into the composer when editing the queued card', async () => {
     const providerValue = createProviderValue(null);
     providerValue.input.isLoading = true;

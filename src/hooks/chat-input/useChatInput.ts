@@ -87,7 +87,6 @@ export const useChatInput = () => {
   } = inputState;
   const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
   const [queuedSubmission, setQueuedSubmission] = useState<QueuedChatInputSubmission | null>(null);
-  const previousIsLoadingRef = useRef(isLoading);
   const isDesktop = useIsDesktop();
   const { document: targetDocument } = useWindowContext();
   const insertText = useTextAreaInsert(textareaRef, setInputText);
@@ -407,6 +406,7 @@ export const useChatInput = () => {
 
   const canQueueMessage =
     (inputState.inputText.trim() !== '' || selectedFiles.length > 0 || inputState.quotes.length > 0) &&
+    !!activeSessionId &&
     isLoading &&
     !isEditing &&
     !inputState.isAddingById &&
@@ -414,6 +414,9 @@ export const useChatInput = () => {
     !localFileState.isConverting &&
     !areFilesStillProcessing(selectedFiles) &&
     !queuedSubmission;
+
+  const activeQueuedSubmission =
+    queuedSubmission && queuedSubmission.sessionId === activeSessionId ? queuedSubmission : null;
 
   const handleSmartSendMessage = useCallback(
     async (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
@@ -453,15 +456,33 @@ export const useChatInput = () => {
   );
 
   const completeSendSubmission = useCallback(
-    (textToSend: string, isFastMode: boolean, files?: UploadedFile[]) => {
-      inputState.clearCurrentDraft();
+    (
+      textToSend: string,
+      isFastMode: boolean,
+      options?: {
+        files?: UploadedFile[];
+        preserveComposer?: boolean;
+      },
+    ) => {
+      const preserveComposer = options?.preserveComposer ?? false;
+      const files = options?.files;
+
+      if (!preserveComposer) {
+        inputState.clearCurrentDraft();
+      }
+
       handleSmartSendMessage(textToSend, { isFastMode, files });
-      inputState.setInputText('');
-      inputState.setQuotes([]);
+
+      if (!preserveComposer) {
+        inputState.setInputText('');
+        inputState.setQuotes([]);
+      }
+
       onMessageSent();
       inputState.setIsAnimatingSend(true);
       setTimeout(() => inputState.setIsAnimatingSend(false), 400);
-      if (inputState.isFullscreen) {
+
+      if (!preserveComposer && inputState.isFullscreen) {
         inputState.setIsFullscreen(false);
       }
     },
@@ -510,17 +531,21 @@ export const useChatInput = () => {
       }
 
       setQueuedSubmission(null);
-      completeSendSubmission(submission.textToSend, submission.isFastMode, submission.files.length > 0 ? submission.files : undefined);
+      completeSendSubmission(submission.textToSend, submission.isFastMode, {
+        files: submission.files.length > 0 ? submission.files : undefined,
+        preserveComposer: true,
+      });
     },
     [completeSendSubmission, queuedSubmission],
   );
 
   const queueCurrentSubmission = useCallback(() => {
-    if (!canQueueMessage) {
+    if (!canQueueMessage || !activeSessionId) {
       return;
     }
 
     const submission = buildQueuedChatInputSubmission({
+      sessionId: activeSessionId,
       inputText: inputState.inputText,
       quotes: inputState.quotes,
       modelId: currentChatSettings.modelId,
@@ -534,7 +559,7 @@ export const useChatInput = () => {
     inputState.setInputText('');
     inputState.setQuotes([]);
     setSelectedFiles([]);
-  }, [canQueueMessage, currentChatSettings.modelId, inputState, selectedFiles, setSelectedFiles]);
+  }, [activeSessionId, canQueueMessage, currentChatSettings.modelId, inputState, selectedFiles, setSelectedFiles]);
 
   const queuePendingSubmission = useCallback(
     (submission: PendingChatInputSubmission) => {
@@ -565,13 +590,10 @@ export const useChatInput = () => {
   }, [flushPendingSubmission]);
 
   useEffect(() => {
-    const wasLoading = previousIsLoadingRef.current;
-    previousIsLoadingRef.current = isLoading;
-
-    if (wasLoading && !isLoading && queuedSubmission) {
-      flushQueuedSubmission(queuedSubmission);
+    if (activeQueuedSubmission && !isLoading) {
+      flushQueuedSubmission(activeQueuedSubmission);
     }
-  }, [flushQueuedSubmission, isLoading, queuedSubmission]);
+  }, [activeQueuedSubmission, flushQueuedSubmission, isLoading]);
 
   const handleFileChange = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1242,7 +1264,7 @@ export const useChatInput = () => {
     targetDocument,
     canSend,
     canQueueMessage,
-    queuedSubmission,
+    queuedSubmission: activeQueuedSubmission,
     isAnyModalOpen,
     handleSmartSendMessage,
   };

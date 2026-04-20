@@ -6,6 +6,8 @@ import { useApp } from './useApp';
 
 const mockSetIsHistorySidebarOpen = vi.fn();
 const mockSetIsLogViewerOpen = vi.fn();
+const mockSetAppSettings = vi.fn();
+const CANVAS_PROMPT = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
 
 const fullMessages: ChatMessage[] = [
   {
@@ -31,16 +33,54 @@ const hydratedSession: SavedChatSession = {
   messages: fullMessages,
 };
 
-const appSettings = {
+let currentAppSettings = {
   modelId: 'gemini-test',
   language: 'en',
   themeId: 'pearl',
+  systemInstruction: '',
 } as AppSettings;
+
+type MockChatState = ReturnType<typeof buildChatState>;
+
+const buildChatState = () => ({
+  activeChat: hydratedSession as SavedChatSession | undefined,
+  activeSessionId: 'session-1',
+  apiModels: [],
+  currentChatSettings: hydratedSession.settings,
+  handleSaveAllScenarios: vi.fn(),
+  handleSelectModelInHeader: vi.fn(),
+  handleSendMessage: vi.fn(),
+  handleStopGenerating: vi.fn(),
+  isLoading: false,
+  isSwitchingModel: false,
+  messages: fullMessages,
+  savedGroups: [],
+  savedScenarios: [],
+  savedSessions: [metadataOnlySession],
+  scrollContainerRef: { current: null },
+  setCommandedInput: vi.fn(),
+  startNewChat: vi.fn(),
+  updateAndPersistGroups: vi.fn(),
+  updateAndPersistSessions: vi.fn(),
+});
+
+let currentChatState: MockChatState;
+const mockSetCurrentChatSettings = vi.fn((updater: (prev: SavedChatSession['settings']) => SavedChatSession['settings']) => {
+  if (!currentChatState.activeChat) {
+    return;
+  }
+
+  const nextSettings = updater(currentChatState.activeChat.settings);
+  currentChatState.activeChat = {
+    ...currentChatState.activeChat,
+    settings: nextSettings,
+  };
+});
 
 vi.mock('../core/useAppSettings', () => ({
   useAppSettings: () => ({
-    appSettings,
-    setAppSettings: vi.fn(),
+    appSettings: currentAppSettings,
+    setAppSettings: mockSetAppSettings,
     currentTheme: { id: 'pearl' },
     language: 'en',
   }),
@@ -48,27 +88,20 @@ vi.mock('../core/useAppSettings', () => ({
 
 vi.mock('../chat/useChat', () => ({
   useChat: () => ({
-    activeChat: hydratedSession,
-    activeSessionId: 'session-1',
-    apiModels: [],
-    currentChatSettings: hydratedSession.settings,
-    handleSaveAllScenarios: vi.fn(),
-    handleSelectModelInHeader: vi.fn(),
-    handleSendMessage: vi.fn(),
-    handleStopGenerating: vi.fn(),
-    isLoading: false,
-    isSwitchingModel: false,
-    messages: fullMessages,
-    savedGroups: [],
-    savedScenarios: [],
-    savedSessions: [metadataOnlySession],
-    scrollContainerRef: { current: null },
-    setCommandedInput: vi.fn(),
-    setCurrentChatSettings: vi.fn(),
-    startNewChat: vi.fn(),
-    updateAndPersistGroups: vi.fn(),
-    updateAndPersistSessions: vi.fn(),
+    ...currentChatState,
+    currentChatSettings: currentChatState.activeChat?.settings ?? currentAppSettings,
+    setCurrentChatSettings: mockSetCurrentChatSettings,
   }),
+}));
+
+vi.mock('../../constants/promptHelpers', () => ({
+  isCanvasSystemInstruction: (instruction?: string | null) =>
+    !!instruction && instruction.includes('<title>Canvas 助手：响应式视觉指南</title>'),
+  isBboxSystemInstruction: () => false,
+  isHdGuideSystemInstruction: () => false,
+  loadCanvasSystemPrompt: vi.fn(async () => CANVAS_PROMPT),
+  loadBboxSystemPrompt: vi.fn(async () => 'bbox prompt'),
+  loadHdGuideSystemPrompt: vi.fn(async () => 'guide prompt'),
 }));
 
 vi.mock('../core/useAppUI', () => ({
@@ -155,6 +188,11 @@ const renderHook = <T,>(callback: () => T) => {
 
   return {
     result: result as { current: T },
+    rerender: () => {
+      act(() => {
+        root.render(<TestComponent />);
+      });
+    },
     unmount: () => {
       act(() => {
         root.unmount();
@@ -166,6 +204,18 @@ const renderHook = <T,>(callback: () => T) => {
 describe('useApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    currentAppSettings = {
+      modelId: 'gemini-test',
+      language: 'en',
+      themeId: 'pearl',
+      systemInstruction: '',
+    } as AppSettings;
+    mockSetAppSettings.mockImplementation((updater: AppSettings | ((prev: AppSettings) => AppSettings)) => {
+      currentAppSettings =
+        typeof updater === 'function' ? updater(currentAppSettings) : updater;
+    });
+    currentChatState = buildChatState();
+    mockSetCurrentChatSettings.mockClear();
   });
 
   afterEach(() => {
@@ -177,6 +227,40 @@ describe('useApp', () => {
 
     expect(result.current.activeChat?.messages).toEqual(fullMessages);
     expect(result.current.sessionTitle).toBe('Portable Export');
+
+    unmount();
+  });
+
+  it('re-applies the canvas prompt after the active session stabilizes', async () => {
+    currentChatState.activeChat = undefined;
+    currentChatState.activeSessionId = 'session-race';
+    currentChatState.savedSessions = [];
+
+    const { result, rerender, unmount } = renderHook(() => useApp());
+
+    await act(async () => {
+      await result.current.handleSuggestionClick('organize', 'Create an interactive HTML board');
+    });
+
+    expect(currentAppSettings.systemInstruction).toBe(CANVAS_PROMPT);
+    expect(currentChatState.activeChat).toBeUndefined();
+
+    currentChatState.activeChat = {
+      id: 'session-race',
+      title: 'New Chat',
+      timestamp: Date.now(),
+      messages: [],
+      settings: {
+        modelId: 'gemini-test',
+        systemInstruction: '',
+      } as SavedChatSession['settings'],
+    };
+    currentChatState.savedSessions = [{ ...currentChatState.activeChat, messages: [] }];
+
+    rerender();
+    rerender();
+
+    expect(currentChatState.activeChat.settings.systemInstruction).toBe(CANVAS_PROMPT);
 
     unmount();
   });

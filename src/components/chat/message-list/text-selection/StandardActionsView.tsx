@@ -23,15 +23,21 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
     isCopied,
     t
 }) => {
+    const quoteLabel = t ? t('quote') : 'Quote';
+    const insertLabel = t ? t('fill_input') : 'Insert';
+    const copyLabel = isCopied ? (t ? t('copied') : 'Copied') : (t ? t('copy') : 'Copy');
+    const searchLabel = t ? t('search') : 'Search';
+
     return (
         <>
             <button
                 onMouseDown={onQuote}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                title="Quote Selection"
+                title={quoteLabel}
+                aria-label={quoteLabel}
             >
                 <Quote size={14} className="text-[var(--theme-text-link)]" />
-                <span>Quote</span>
+                <span>{quoteLabel}</span>
             </button>
             
             {onInsert && (
@@ -40,10 +46,11 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
                     <button
                         onMouseDown={onInsert}
                         className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                        title={t ? t('fill_input') : "Fill Input"}
+                        title={insertLabel}
+                        aria-label={insertLabel}
                     >
                         <CornerRightDown size={14} className="text-[var(--theme-text-secondary)]" />
-                        <span>{t ? t('fill_input') : "Fill Input"}</span>
+                        <span>{insertLabel}</span>
                     </button>
                 </>
             )}
@@ -53,14 +60,15 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             <button
                 onMouseDown={onCopy}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                title="Copy Raw Text"
+                title={copyLabel}
+                aria-label={copyLabel}
             >
                 {isCopied ? (
                     <Check size={14} className="text-[var(--theme-text-success)]" />
                 ) : (
                     <Copy size={14} className="text-[var(--theme-text-tertiary)]" />
                 )}
-                <span>{isCopied ? 'Copied' : 'Copy'}</span>
+                <span>{copyLabel}</span>
             </button>
 
             <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-0.5" />
@@ -68,10 +76,11 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             <button
                 onMouseDown={onSearch}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
-                title="Search"
+                title={searchLabel}
+                aria-label={searchLabel}
             >
                 <IconGoogle size={14} />
-                <span>Search</span>
+                <span>{searchLabel}</span>
             </button>
 
             {onTTS && (

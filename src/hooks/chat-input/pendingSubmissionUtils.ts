@@ -25,6 +25,7 @@ interface BuildPendingChatInputSubmissionParams {
 }
 
 interface BuildQueuedChatInputSubmissionParams {
+  sessionId: string;
   inputText: string;
   quotes: string[];
   modelId: string;
@@ -70,6 +71,7 @@ export const buildPendingChatInputSubmission = ({
 };
 
 export interface QueuedChatInputSubmission {
+  sessionId: string;
   inputText: string;
   textToSend: string;
   files: UploadedFile[];
@@ -79,6 +81,7 @@ export interface QueuedChatInputSubmission {
 }
 
 export const buildQueuedChatInputSubmission = ({
+  sessionId,
   inputText,
   quotes,
   modelId,
@@ -86,6 +89,7 @@ export const buildQueuedChatInputSubmission = ({
   files,
   isFastMode,
 }: BuildQueuedChatInputSubmissionParams): QueuedChatInputSubmission => ({
+  sessionId,
   inputText,
   textToSend: buildChatInputSubmitText({
     inputText,

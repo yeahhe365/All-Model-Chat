@@ -57,6 +57,7 @@ describe('buildQueuedChatInputSubmission', () => {
   it('captures a queued send snapshot with both display text and send text', () => {
     expect(
       buildQueuedChatInputSubmission({
+        sessionId: 'session-1',
         inputText: 'Follow up after this.',
         quotes: ['quoted line'],
         modelId: 'gemini-3.1-pro-preview',
@@ -64,6 +65,7 @@ describe('buildQueuedChatInputSubmission', () => {
         isFastMode: false,
       }),
     ).toMatchObject({
+      sessionId: 'session-1',
       inputText: 'Follow up after this.',
       textToSend: '> quoted line\n\nFollow up after this.',
       files: [makeFile()],

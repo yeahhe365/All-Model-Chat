@@ -12,7 +12,7 @@ describe('translation coverage for protected UI surfaces', () => {
   it('uses real Chinese copy for protected translation keys', () => {
     const t = getTranslator('zh');
 
-    expect(t('fill_input')).toBe('输入');
+    expect(t('fill_input')).toBe('插入');
   });
 
   it('does not leave protected surfaces with banned hardcoded English copy', () => {

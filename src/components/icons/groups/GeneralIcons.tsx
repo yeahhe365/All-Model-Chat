@@ -12,7 +12,12 @@ export const IconNewChat: React.FC<IconProps> = ({ size = defaultSize, strokeWid
 );
 
 // New Group Icon
-export const IconNewGroup: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
+export const IconNewGroup: React.FC<IconProps> = ({
+  size = defaultSize,
+  strokeWidth = defaultStroke,
+  className,
+  color = defaultColor,
+}) => (
   <svg
     width={size}
     height={size}

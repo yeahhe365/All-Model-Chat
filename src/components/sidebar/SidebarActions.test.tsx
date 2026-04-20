@@ -96,7 +96,11 @@ describe('SidebarActions', () => {
     expect(folderIcon).not.toBeNull();
     expect(folderIcon?.getAttribute('viewBox')).toBe('0 0 24 24');
     expect(folderIcon?.querySelectorAll('path')).toHaveLength(3);
-    expect(folderIcon?.querySelector('path')?.getAttribute('d')).toContain('M20 20');
+    expect(folderIcon?.querySelector('path')?.getAttribute('d')).toBe(
+      'M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z',
+    );
+    expect(folderIcon?.querySelectorAll('path')[1]?.getAttribute('d')).toBe('M12 10v6');
+    expect(folderIcon?.querySelectorAll('path')[2]?.getAttribute('d')).toBe('M9 13h6');
     expect(container.querySelector('[data-testid="new-group-icon"]')).toBeNull();
 
     unmount();
