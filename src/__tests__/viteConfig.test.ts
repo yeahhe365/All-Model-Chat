@@ -41,6 +41,14 @@ describe('vite.config runtime ownership', () => {
     expect(config).toMatch(/chunkSizeWarningLimit:\s*1500/);
   });
 
+  it('copies the PDF worker from react-pdf\'s pinned pdfjs-dist version', () => {
+    const config = fs.readFileSync(viteConfigPath, 'utf8');
+
+    expect(config).toContain("const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
+    expect(config).toContain('src: PDF_WORKER_COPY_SOURCE');
+    expect(config).not.toContain("src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs'");
+  });
+
   it('keeps the service worker precache focused on the app shell instead of eager heavy feature payloads', () => {
     const config = fs.readFileSync(viteConfigPath, 'utf8');
 

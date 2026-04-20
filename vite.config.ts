@@ -62,6 +62,9 @@ const GRAPHVIZ_PACKAGES = ['@viz-js/viz'];
 
 const DATA_PACKAGES = ['xlsx'];
 
+// Keep the served worker pinned to the same pdfjs-dist version bundled under react-pdf.
+const PDF_WORKER_COPY_SOURCE = 'node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+
 const HEAVY_PRELOAD_PATTERNS = [
   /^assets\/pyodide-runtime-.*\.js$/,
   /^assets\/pyodideService-.*\.js$/,
@@ -225,7 +228,7 @@ export default defineConfig(({ mode }) => {
             dest: 'pyodide',
           },
           {
-            src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+            src: PDF_WORKER_COPY_SOURCE,
             dest: '.',
           },
         ],
