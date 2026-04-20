@@ -11,6 +11,12 @@ describe('SettingsModal', () => {
   let container: HTMLDivElement;
   let root: Root;
   const initialState = useSettingsStore.getState();
+  const t = (key: string) => {
+    if (key === 'settingsTabAccount') {
+      return 'API';
+    }
+    return key;
+  };
 
   beforeEach(() => {
     localStorage.setItem('chatSettingsLastTab', 'account');
@@ -29,7 +35,7 @@ describe('SettingsModal', () => {
     useSettingsStore.setState(initialState);
   });
 
-  it('does not render the obsolete desktop section title above the active settings page', async () => {
+  it('renders the active desktop section title inside the scrollable content area', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'en' });
       root.render(
@@ -53,14 +59,18 @@ describe('SettingsModal', () => {
               onExportHistory={vi.fn()}
               onImportScenarios={vi.fn()}
               onExportScenarios={vi.fn()}
-              t={(key) => String(key)}
+              t={t}
             />
           </I18nProvider>
         </WindowProvider>,
       );
     });
 
-    expect(document.querySelector('main > header h2')).toBeNull();
+    const fixedDesktopTitle = document.querySelector('main > header h2');
+    const scrollingDesktopTitle = document.querySelector('main > div h2');
+
+    expect(fixedDesktopTitle).toBeNull();
+    expect(scrollingDesktopTitle?.textContent).toBe('API');
     expect(document.body.textContent).toContain('API & Connection');
   });
 });

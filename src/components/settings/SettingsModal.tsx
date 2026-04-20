@@ -57,6 +57,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       t
   });
 
+  const activeTabLabelKey = tabs.find((tab) => tab.id === activeTab)?.labelKey;
+
   if (!isOpen) return null;
 
   return (
@@ -81,8 +83,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div 
                     ref={scrollContainerRef}
                     onScroll={handleContentScroll}
-                    className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8"
+                    className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8"
                 >
+                    <div className="hidden md:block max-w-3xl mx-auto w-full pb-4 md:pb-6">
+                        <h2 className="text-xl font-semibold text-[var(--theme-text-primary)]">
+                            {activeTabLabelKey ? t(activeTabLabelKey) : ''}
+                        </h2>
+                    </div>
                     <SettingsContent
                         activeTab={activeTab}
                         currentSettings={currentSettings}
