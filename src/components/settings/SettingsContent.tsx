@@ -58,6 +58,19 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
         });
     };
 
+    const handleAvailableModelsChange = (models: ModelOption[]) => {
+        setAvailableModels(models);
+
+        if (models.length === 0 || models.some((model) => model.id === currentSettings.modelId)) {
+            return;
+        }
+
+        const fallbackModelId = models.find((model) => model.isPinned)?.id || models[0]?.id;
+        if (fallbackModelId) {
+            updateSetting('modelId', fallbackModelId);
+        }
+    };
+
     return (
         <div className="max-w-3xl mx-auto w-full">
             {activeTab === 'model' && (
@@ -93,7 +106,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
                         setAutoCanvasModelId={(v) => updateSetting('autoCanvasModelId', v)}
                         availableModels={availableModels}
                         t={t}
-                        setAvailableModels={setAvailableModels}
+                        setAvailableModels={handleAvailableModelsChange}
                     />
                 </div>
             )}

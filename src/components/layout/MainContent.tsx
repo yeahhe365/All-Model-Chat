@@ -133,6 +133,20 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
     }));
   }, [setAppSettings]);
 
+  const onToggleGemmaThinking = useCallback(() => {
+    const nextShowThoughts = !chatState.currentChatSettings.showThoughts;
+
+    setAppSettings((prev) => ({
+      ...prev,
+      showThoughts: nextShowThoughts,
+    }));
+
+    chatState.setCurrentChatSettings((prev) => ({
+      ...prev,
+      showThoughts: nextShowThoughts,
+    }));
+  }, [chatState.currentChatSettings.showThoughts, chatState.setCurrentChatSettings, setAppSettings]);
+
   const messageActions: ChatAreaProps['chatArea']['messageActions'] = useMemo(
     () => ({
       setScrollContainerRef: chatState.setScrollContainerRef,
@@ -389,6 +403,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
         onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
         onSelectModel: chatState.handleSelectModelInHeader,
         onSetThinkingLevel: handleSetThinkingLevel,
+        onToggleGemmaThinking,
         onTogglePip: pipState.togglePip,
       },
       messageActions,
@@ -431,6 +446,7 @@ export const MainContent: React.FC<MainContentProps> = ({ app }) => {
       toggleHistorySidebar,
       handleLoadCanvasPromptAndSave,
       handleSetThinkingLevel,
+      onToggleGemmaThinking,
     ],
   );
 

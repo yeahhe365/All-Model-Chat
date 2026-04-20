@@ -25,6 +25,8 @@ interface HeaderProps {
   themeId: string;
   thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH';
   onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
+  showThoughts: boolean;
+  onToggleGemmaThinking: () => void;
   newChatShortcut: string;
   pipShortcut: string;
 }
@@ -48,6 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
   themeId,
   thinkingLevel,
   onSetThinkingLevel,
+  showThoughts,
+  onToggleGemmaThinking,
   newChatShortcut,
   pipShortcut,
 }) => {
@@ -94,6 +98,8 @@ export const Header: React.FC<HeaderProps> = ({
             isLoading={isLoading}
             thinkingLevel={thinkingLevel}
             onSetThinkingLevel={onSetThinkingLevel}
+            showThoughts={showThoughts}
+            onToggleGemmaThinking={onToggleGemmaThinking}
         />
       </div>
 

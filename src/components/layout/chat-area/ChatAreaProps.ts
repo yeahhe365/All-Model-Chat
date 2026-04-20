@@ -42,6 +42,7 @@ export interface ChatAreaHeaderModel {
   onLoadCanvasPrompt: () => void;
   onSelectModel: (modelId: string) => void;
   onSetThinkingLevel: (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => void;
+  onToggleGemmaThinking: () => void;
   onTogglePip: () => void;
 }
 

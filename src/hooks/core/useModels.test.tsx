@@ -58,4 +58,26 @@ describe('useModels', () => {
     expect(result.current.apiModels.map((model) => model.id)).toEqual(['gemini-3-flash-preview']);
     unmount();
   });
+
+  it('deduplicates duplicate model ids when saving custom lists', () => {
+    const { result, unmount } = renderHook(() => useModels());
+
+    act(() => {
+      result.current.setApiModels([
+        { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
+        { id: 'gemini-3-flash-preview', name: 'Duplicate Gemini 3 Flash' },
+        { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
+      ]);
+    });
+
+    expect(result.current.apiModels.map((model) => model.id)).toEqual([
+      'gemini-3-flash-preview',
+      'gemma-4-31b-it',
+    ]);
+    expect(JSON.parse(localStorage.getItem('custom_model_list_v1') || '[]')).toEqual([
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
+      { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
+    ]);
+    unmount();
+  });
 });

@@ -14,8 +14,26 @@ const REMOVED_MODEL_IDS = [
 const isRemovedModelId = (modelId: string | null | undefined): boolean =>
     !!modelId && REMOVED_MODEL_IDS.includes(modelId as (typeof REMOVED_MODEL_IDS)[number]);
 
-export const sanitizeModelOptions = (models: ModelOption[]): ModelOption[] =>
-    models.filter((model) => !isRemovedModelId(model.id));
+export const sanitizeModelOptions = (models: ModelOption[]): ModelOption[] => {
+    const seenIds = new Set<string>();
+
+    return models.reduce<ModelOption[]>((sanitized, model) => {
+        const normalizedId = model.id.trim();
+
+        if (!normalizedId || isRemovedModelId(normalizedId) || seenIds.has(normalizedId)) {
+            return sanitized;
+        }
+
+        seenIds.add(normalizedId);
+        sanitized.push({
+            ...model,
+            id: normalizedId,
+            name: model.name.trim() || normalizedId,
+        });
+
+        return sanitized;
+    }, []);
+};
 
 export const resolveSupportedModelId = (modelId: string | null | undefined, fallback: string): string =>
     isRemovedModelId(modelId) ? fallback : (modelId || fallback);
