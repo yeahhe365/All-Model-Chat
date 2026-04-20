@@ -3,7 +3,7 @@ import path from 'path';
 import { describe, expect, it } from 'vitest';
 import { getTranslator, translations } from '../translations';
 
-const projectRoot = '/Users/jones/Documents/Code/All-Model-Chat';
+const projectRoot = path.resolve(__dirname, '../../..');
 
 const readProjectFile = (relativePath: string) =>
   fs.readFileSync(path.join(projectRoot, relativePath), 'utf8');

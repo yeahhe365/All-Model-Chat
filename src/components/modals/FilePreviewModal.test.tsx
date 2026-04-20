@@ -3,18 +3,28 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
-const { mockExtractDocxText, mockSettingsState } = vi.hoisted(() => ({
+const { mockExtractDocxText, mockSettingsState, mockT } = vi.hoisted(() => ({
   mockExtractDocxText: vi.fn(),
   mockSettingsState: {
     appSettings: {
       customShortcuts: {},
     },
   },
+  mockT: vi.fn((key: string) => {
+    const messages: Record<string, string> = {
+      imageZoom_title: 'Preview {filename}',
+      filePreview_loading_word: 'Loading Word preview...',
+      filePreview_word_unavailable: 'Unable to preview this Word document.',
+      filePreview_previous: 'Previous',
+      filePreview_next: 'Next',
+    };
+    return messages[key] ?? key;
+  }),
 }));
 
 vi.mock('../../contexts/I18nContext', () => ({
   useI18n: () => ({
-    t: (key: string) => key,
+    t: mockT,
   }),
 }));
 
@@ -89,14 +99,14 @@ describe('FilePreviewModal', () => {
           onClose={() => {}}
         />,
       );
-      await Promise.resolve();
-      await Promise.resolve();
     });
 
-    expect(mockExtractDocxText).toHaveBeenCalledTimes(1);
-    expect(document.querySelector('[data-testid="text-file-viewer"]')?.textContent).toContain(
-      'Quarterly document preview',
-    );
+    await vi.waitFor(() => {
+      expect(mockExtractDocxText).toHaveBeenCalledTimes(1);
+      expect(document.querySelector('[data-testid="text-file-viewer"]')?.textContent).toContain(
+        'Quarterly document preview',
+      );
+    });
   });
 
   it('shows a readable error when docx preview extraction fails', async () => {
@@ -109,11 +119,11 @@ describe('FilePreviewModal', () => {
           onClose={() => {}}
         />,
       );
-      await Promise.resolve();
-      await Promise.resolve();
     });
 
-    expect(document.body.textContent).toContain('Unable to preview this Word document.');
+    await vi.waitFor(() => {
+      expect(document.body.textContent).toContain('Unable to preview this Word document.');
+    });
   });
 
   it('uses configured file navigation shortcuts instead of hard-coded arrows', async () => {
@@ -136,8 +146,6 @@ describe('FilePreviewModal', () => {
           hasNext
         />,
       );
-      await Promise.resolve();
-      await Promise.resolve();
     });
 
     await act(async () => {
