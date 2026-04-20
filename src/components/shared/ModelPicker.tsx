@@ -9,6 +9,7 @@ import { getModelCapabilities, sortModels } from '../../utils/modelHelpers';
 export const getModelIcon = (model: ModelOption | undefined) => {
     if (!model) return <Box size={15} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />;
     const { id, isPinned } = model;
+    const normalizedId = id.toLowerCase();
     const { isNativeAudioModel, isTtsModel, isImagenModel } = getModelCapabilities(id);
     
     // Native Audio (Live)
@@ -17,8 +18,10 @@ export const getModelIcon = (model: ModelOption | undefined) => {
     if (isTtsModel) return <Volume2 size={15} className="text-purple-500 dark:text-purple-400 flex-shrink-0" strokeWidth={1.5} />;
     if (isImagenModel) return <ImageIcon size={15} className="text-rose-500 dark:text-rose-400 flex-shrink-0" strokeWidth={1.5} />;
     
-    // Gemini Text Models
-    if (id.toLowerCase().includes('gemini')) return <MessageSquareText size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
+    // Google text models share the same chat icon in the picker.
+    if (normalizedId.includes('gemini') || normalizedId.includes('gemma')) {
+        return <MessageSquareText size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
+    }
 
     if (isPinned) return <Sparkles size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
     return <Box size={15} className="text-[var(--theme-text-tertiary)] opacity-70 flex-shrink-0" strokeWidth={1.5} />;

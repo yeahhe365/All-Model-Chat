@@ -141,7 +141,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
               </Tooltip>
             </label>
           </div>
-          <div className="mt-3 rounded-xl border border-[var(--theme-border-secondary)]/50 bg-[var(--theme-bg-tertiary)]/20 px-3 py-2.5">
+          <div className="mt-3 px-3 py-2.5">
             <div className="flex items-center justify-between gap-4">
               <button
                 type="button"

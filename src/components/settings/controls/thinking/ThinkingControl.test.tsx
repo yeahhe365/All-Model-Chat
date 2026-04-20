@@ -106,6 +106,8 @@ describe('ThinkingControl image model behavior', () => {
     expect(container.textContent).not.toContain('settingsGemmaThinkingToggle_disabled');
     expect(container.textContent).not.toContain('thinkingLevel');
     expect(container.textContent).not.toContain('<|think|>');
+    expect(container.innerHTML).not.toContain('bg-[var(--theme-bg-tertiary)]/20');
+    expect(container.innerHTML).not.toContain('border-[var(--theme-border-secondary)]/50');
 
     const toggleButton = container.querySelector('button[aria-pressed="true"]');
     expect(toggleButton).not.toBeNull();
