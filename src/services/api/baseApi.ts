@@ -5,7 +5,7 @@ import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
 import { SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model, isGemmaModel } from "../../utils/appUtils";
-import { normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
+import { DEFAULT_GEMINI_API_BASE_URL, normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 
 
@@ -180,6 +180,15 @@ const resolveConfiguredBaseUrl = (
 ): string | null => {
     const shouldUseProxy = !!(appSettings.useCustomApiConfig && appSettings.useApiProxy);
     return shouldUseProxy ? (appSettings.apiProxyUrl ?? null) : null;
+};
+
+export const getConfiguredApiBaseUrl = async (): Promise<string> => {
+    const settings = await dbService.getAppSettings();
+    const configuredBaseUrl = settings
+        ? resolveConfiguredBaseUrl(settings)
+        : null;
+
+    return normalizeGeminiApiBaseUrl(configuredBaseUrl ?? DEFAULT_GEMINI_API_BASE_URL);
 };
 
 const extractLiveApiToken = (payload: unknown): string | null => {

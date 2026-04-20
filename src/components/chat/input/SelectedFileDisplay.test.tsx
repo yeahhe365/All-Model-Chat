@@ -53,4 +53,42 @@ describe('SelectedFileDisplay', () => {
 
     expect(container.querySelector('.file-preview-box')).not.toBeNull();
   });
+
+  it('shows upload percentage and speed while a file is uploading', () => {
+    act(() => {
+      root.render(
+        <SelectedFileDisplay
+          file={createFile({
+            uploadState: 'uploading',
+            isProcessing: true,
+            progress: 42,
+            uploadSpeed: '1.8 MB/s',
+          })}
+          onRemove={() => {}}
+          onCancelUpload={() => {}}
+        />
+      );
+    });
+
+    expect(container.textContent).toContain('42%');
+    expect(container.textContent).toContain('1.8 MB/s');
+  });
+
+  it('shows a dedicated Gemini processing stage after upload completes', () => {
+    act(() => {
+      root.render(
+        <SelectedFileDisplay
+          file={createFile({
+            uploadState: 'processing_api',
+            isProcessing: true,
+            progress: 100,
+          })}
+          onRemove={() => {}}
+          onCancelUpload={() => {}}
+        />
+      );
+    });
+
+    expect(container.textContent).toContain('Processing on Gemini');
+  });
 });

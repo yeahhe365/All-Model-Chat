@@ -50,6 +50,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
   const isProcessing = file.uploadState === 'processing_api' || file.isProcessing;
   const isFailed = file.uploadState === 'failed' || !!file.error;
   const isCancelled = file.uploadState === 'cancelled';
+  const uploadPercent = Math.max(0, Math.min(100, Math.round(file.progress ?? 0)));
 
   const isCancellable = isUploading || (isProcessing && file.uploadState !== 'processing_api');
   const {
@@ -119,6 +120,17 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             </div>
         )}
 
+        {isUploading && (
+            <div className="absolute inset-x-2 bottom-2 z-20">
+              <div className="h-1.5 overflow-hidden rounded-full bg-black/20 backdrop-blur-sm">
+                <div
+                  className="h-full rounded-full bg-[var(--theme-text-link)] transition-[width] duration-300"
+                  style={{ width: `${uploadPercent}%` }}
+                />
+              </div>
+            </div>
+        )}
+
         {isFailed && !isCancelled && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--theme-bg-danger)]/10 backdrop-blur-[1px] z-20">
                 <ErrorIcon size={20} className="text-[var(--theme-text-danger)] mb-1" />
@@ -170,11 +182,16 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             {file.videoMetadata ? <Scissors size={8} className="text-[var(--theme-text-link)]" /> : null}
             {file.mediaResolution && <SlidersHorizontal size={8} className="text-[var(--theme-text-link)]" />}
             {isFailed ? (file.error || 'Error') : 
-             isUploading ? 'Uploading...' :
-             isProcessing ? 'Processing...' :
+             isUploading ? `Uploading ${uploadPercent}%` :
+             isProcessing ? 'Processing on Gemini' :
              isCancelled ? 'Cancelled' : 
              formatFileSize(file.size)}
         </p>
+        {isUploading && file.uploadSpeed && (
+          <p className="text-[9px] truncate leading-tight mt-0.5 text-[var(--theme-text-link)]">
+            {file.uploadSpeed}
+          </p>
+        )}
       </div>
     </div>
   );
