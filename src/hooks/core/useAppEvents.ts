@@ -6,7 +6,7 @@ import { useFullscreen } from '../ui/useFullscreen';
 import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
 import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
 import { loadRegisterSW } from '../../pwa/loadRegisterSw';
-import { getQuickSwitchModelIds } from '../../utils/modelCatalog';
+import { getTabCycleModelIds } from '../../utils/modelCatalog';
 
 interface AppEventsProps {
     appSettings: AppSettings;
@@ -262,7 +262,7 @@ export const useAppEvents = ({
                  if (isChatTextareaFocused || !isGenerallyInputFocused) {
                     event.preventDefault();
                     const currentModelId = currentChatSettings.modelId;
-                    const cycleModels = getQuickSwitchModelIds(availableModels);
+                    const cycleModels = getTabCycleModelIds(availableModels, appSettings.tabModelCycleIds);
                     if (cycleModels.length === 0) {
                         return;
                     }

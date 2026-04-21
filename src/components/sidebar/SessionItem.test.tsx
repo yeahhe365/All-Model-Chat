@@ -11,4 +11,12 @@ describe('SessionItem spacing', () => {
     expect(source).toContain('text-left pl-2.5 pr-1 py-2');
     expect(source).not.toContain('text-left px-1 py-2');
   });
+
+  it('does not reserve leading space for a drag handle button in history rows', () => {
+    const source = fs.readFileSync(sessionItemPath, 'utf8');
+
+    expect(source).not.toContain('GripVertical');
+    expect(source).not.toContain('draggable="true"');
+    expect(source).not.toContain("history_drag_session");
+  });
 });

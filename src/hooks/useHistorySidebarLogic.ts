@@ -229,11 +229,6 @@ export const useHistorySidebarLogic = ({
         setActiveMenu(activeMenu === id ? null : id); 
     };
 
-    const handleDragStart = (e: React.DragEvent, sessionId: string) => { 
-        e.dataTransfer.setData('sessionId', sessionId);
-        e.dataTransfer.effectAllowed = 'move';
-    };
-    
     const handleDragOver = (e: React.DragEvent) => { 
         e.preventDefault(); 
         e.dataTransfer.dropEffect = 'move';
@@ -291,7 +286,6 @@ export const useHistorySidebarLogic = ({
         handleRenameCancel,
         handleRenameKeyDown,
         toggleMenu,
-        handleDragStart,
         handleDragOver,
         handleDrop,
         handleMainDragLeave,

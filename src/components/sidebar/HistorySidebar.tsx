@@ -120,7 +120,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     handleRenameConfirm,
     handleRenameKeyDown,
     toggleMenu,
-    handleDragStart,
     handleDragOver,
     handleDrop,
     handleMainDragLeave,
@@ -148,7 +147,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (props) => {
     generatingTitleSessionIds, newlyTitledSessionId, editInputRef, menuRef,
     onSelectSession: handleSessionSelect, onTogglePinSession, onDeleteSession, onDuplicateSession, onOpenExportModal,
     handleStartEdit: (item: SavedChatSession) => handleStartEdit('session', item),
-    handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, handleDragStart, t
+    handleRenameConfirm, handleRenameKeyDown, setEditingItem, toggleMenu, setActiveMenu, t
   };
 
   const [listParentRef] = useAutoAnimate<HTMLDivElement>({ duration: 200 });

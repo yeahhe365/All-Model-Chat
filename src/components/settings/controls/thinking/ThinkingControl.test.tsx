@@ -83,6 +83,27 @@ describe('ThinkingControl image model behavior', () => {
     expect(container.textContent?.trim()).toBe('');
   });
 
+  it('hides ThinkingControl for Gemini 3.1 Flash TTS Preview because the model does not support thinking', async () => {
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemini-3.1-flash-tts-preview"
+            thinkingBudget={-1}
+            setThinkingBudget={vi.fn()}
+            thinkingLevel="HIGH"
+            setThinkingLevel={vi.fn()}
+            showThoughts={false}
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.textContent?.trim()).toBe('');
+  });
+
   it('shows Gemma reasoning as MINIMAL/HIGH level choices', async () => {
     await act(async () => {
       root.render(

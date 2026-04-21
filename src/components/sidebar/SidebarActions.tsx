@@ -57,8 +57,12 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
       </div>
       <div>
         {isSearching ? (
-          <div className="flex items-center gap-2 w-full text-left px-3 h-9 text-sm bg-[var(--theme-bg-primary)] border border-[var(--theme-border-focus)] rounded-lg shadow-sm transition-all duration-200">
-            <Search size={18} className="text-[var(--theme-icon-history)] flex-shrink-0" strokeWidth={2} />
+          <div className="group flex items-center gap-2 w-full text-left px-3 h-9 text-sm bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-sm transition-all duration-200 focus-within:border-[var(--theme-border-focus)] focus-within:ring-1 focus-within:ring-[var(--theme-border-focus)]">
+            <Search
+              size={18}
+              className="text-[var(--theme-icon-history)] flex-shrink-0 transition-colors group-focus-within:text-[var(--theme-text-primary)]"
+              strokeWidth={2}
+            />
             <input
               type="text"
               placeholder={t('history_search_placeholder')}

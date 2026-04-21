@@ -169,6 +169,29 @@ describe('SidebarActions', () => {
     unmount();
   });
 
+  it('only applies the focused search border while the input is actually focused', () => {
+    const { container, unmount } = render(<SidebarActionsHarness />);
+
+    const openSearchButton = Array.from(container.querySelectorAll('button')).find(
+      (element) => element.textContent?.trim() === '搜索聊天',
+    );
+    expect(openSearchButton).not.toBeUndefined();
+
+    act(() => {
+      openSearchButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    const searchInput = container.querySelector('input');
+    const searchShell = searchInput?.parentElement;
+
+    expect(searchShell).not.toBeNull();
+    expect(searchShell?.className).toContain('border-[var(--theme-border-secondary)]');
+    expect(searchShell?.className).toContain('focus-within:border-[var(--theme-border-focus)]');
+    expect(searchShell?.className).not.toContain('border-[var(--theme-border-focus)] rounded-lg');
+
+    unmount();
+  });
+
   it('closes the sidebar after starting a new chat on mobile', () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,

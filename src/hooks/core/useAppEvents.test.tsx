@@ -176,7 +176,7 @@ describe('useAppEvents manual update checks', () => {
     unmount();
   });
 
-  it('cycles models using the shared available-model order', async () => {
+  it('cycles models using the default tab-cycle model subset when no manual selection is stored', async () => {
     const handleSelectModelInHeader = vi.fn();
     const textarea = document.createElement('textarea');
     textarea.setAttribute('aria-label', 'Chat message input');
@@ -203,7 +203,43 @@ describe('useAppEvents manual update checks', () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     });
 
-    expect(handleSelectModelInHeader).toHaveBeenCalledWith('gemma-4-31b-it');
+    expect(handleSelectModelInHeader).toHaveBeenCalledWith('gemini-3-flash-preview');
+
+    textarea.remove();
+    unmount();
+  });
+
+  it('cycles models using the manually configured tab cycle selection when present', async () => {
+    const handleSelectModelInHeader = vi.fn();
+    const textarea = document.createElement('textarea');
+    textarea.setAttribute('aria-label', 'Chat message input');
+    document.body.appendChild(textarea);
+    textarea.focus();
+
+    const { unmount } = renderHook(() =>
+      useAppEvents({
+        appSettings: {
+          ...appSettings,
+          tabModelCycleIds: ['imagen-4.0-generate-001', 'gemini-3-flash-preview'],
+        } as AppSettings,
+        startNewChat: vi.fn(),
+        currentChatSettings,
+        availableModels,
+        handleSelectModelInHeader,
+        setIsLogViewerOpen: vi.fn(),
+        onTogglePip: vi.fn(),
+        isPipSupported: false,
+        pipWindow: null,
+        isLoading: false,
+        onStopGenerating: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+
+    expect(handleSelectModelInHeader).toHaveBeenCalledWith('imagen-4.0-generate-001');
 
     textarea.remove();
     unmount();

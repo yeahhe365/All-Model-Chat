@@ -157,4 +157,26 @@ describe('HeaderModelSelector', () => {
 
     expect(onSetThinkingLevel).toHaveBeenCalledWith('MINIMAL');
   });
+
+  it('does not show the thinking fast toggle for Gemini 3.1 Flash TTS Preview', async () => {
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Gemini 3.1 Flash TTS Preview"
+          availableModels={[{ id: 'gemini-3.1-flash-tts-preview', name: 'Gemini 3.1 Flash TTS Preview' }]}
+          selectedModelId="gemini-3.1-flash-tts-preview"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={false}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    expect(container.querySelector('button[aria-label="headerThinkingToggleAria"]')).toBeNull();
+    expect(container.querySelector('button[aria-label="headerReasoningToggleAria"]')).toBeNull();
+  });
 });

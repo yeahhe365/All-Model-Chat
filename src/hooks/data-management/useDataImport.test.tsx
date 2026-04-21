@@ -269,6 +269,12 @@ describe('useDataImport', () => {
           openSettings: 'Cmd+,',
           newChat: 'Cmd+Shift+O',
         },
+        tabModelCycleIds: [
+          ' gemini-3.1-pro-preview ',
+          'gemini-3-flash-preview',
+          'gemini-3-flash-preview',
+          42,
+        ],
       },
     });
 
@@ -315,6 +321,10 @@ describe('useDataImport', () => {
       openSettings: 'Cmd+,',
       newChat: 'Cmd+Shift+O',
     });
+    expect(importedSettings.tabModelCycleIds).toEqual([
+      'gemini-3.1-pro-preview',
+      'gemini-3-flash-preview',
+    ]);
 
     unmount();
   });

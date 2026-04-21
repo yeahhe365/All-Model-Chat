@@ -4,6 +4,7 @@ import {
   buildModelCatalog,
   filterModelCatalog,
   getQuickSwitchModelIds,
+  getTabCycleModelIds,
   type ModelCatalogEntry,
 } from './modelCatalog';
 
@@ -87,6 +88,39 @@ describe('getQuickSwitchModelIds', () => {
       'gemma-4-31b-it',
       'gemini-3.1-flash-lite-preview',
       'gemini-3.1-pro-preview',
+    ]);
+  });
+});
+
+describe('getTabCycleModelIds', () => {
+  const models: ModelOption[] = [
+    { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
+    { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
+    { id: 'gemini-3.1-flash-tts-preview', name: 'Gemini 3.1 Flash TTS Preview', isPinned: true },
+  ];
+
+  it('falls back to the default quick-switch order when no manual selection is set', () => {
+    expect(getTabCycleModelIds(models)).toEqual([
+      'gemini-3.1-pro-preview',
+      'gemini-3-flash-preview',
+    ]);
+  });
+
+  it('filters the cycle order down to the manually selected models while preserving picker order', () => {
+    expect(getTabCycleModelIds(models, [
+      'gemini-3.1-flash-lite-preview',
+      'gemini-3.1-pro-preview',
+    ])).toEqual([
+      'gemini-3.1-pro-preview',
+      'gemini-3.1-flash-lite-preview',
+    ]);
+  });
+
+  it('falls back to the default order when the stored selection is fully stale', () => {
+    expect(getTabCycleModelIds(models, ['missing-model'])).toEqual([
+      'gemini-3.1-pro-preview',
+      'gemini-3-flash-preview',
     ]);
   });
 });

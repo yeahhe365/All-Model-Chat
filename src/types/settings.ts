@@ -99,4 +99,5 @@ export interface AppSettings extends ChatSettings {
  isPasteAsTextFileEnabled?: boolean;
  isSystemAudioRecordingEnabled?: boolean;
  customShortcuts: Record<string, string>; // ID -> Key Combination String
+ tabModelCycleIds?: string[];
 }

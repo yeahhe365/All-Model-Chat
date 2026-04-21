@@ -91,7 +91,7 @@ export const ToolbarContainer = forwardRef<HTMLDivElement, ToolbarContainerProps
     return createPortal(
         <div 
             ref={handleRef}
-            className="fixed z-[9999] flex max-w-[calc(100vw-20px)] items-center gap-0 overflow-x-auto rounded-full border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] p-0.5 shadow-lg pointer-events-auto no-scrollbar animate-in fade-in zoom-in"
+            className="fixed z-[9999] flex max-w-[calc(100vw-20px)] items-center gap-0 overflow-x-auto rounded-full border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)] p-px shadow-lg pointer-events-auto no-scrollbar animate-in fade-in zoom-in"
             style={{ 
                 top: renderPosition.top, 
                 left: renderPosition.left, 

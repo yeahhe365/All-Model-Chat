@@ -105,6 +105,7 @@ const BASE_DEFAULT_APP_SETTINGS: AppSettings = {
     isPasteAsTextFileEnabled: true,
     isSystemAudioRecordingEnabled: false,
     customShortcuts: {},
+    tabModelCycleIds: undefined,
 };
 
 export function getDefaultAppSettings(): AppSettings {

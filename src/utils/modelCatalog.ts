@@ -117,3 +117,25 @@ export const filterModelCatalog = (entries: ModelCatalogEntry[], query: string):
 
 export const getQuickSwitchModelIds = (models: ModelOption[]): string[] =>
   buildModelCatalog(models).map((entry) => entry.id);
+
+const DEFAULT_TAB_CYCLE_MODEL_IDS = [
+  'gemini-3.1-pro-preview',
+  'gemini-3-flash-preview',
+] as const;
+
+export const getTabCycleModelIds = (
+  models: ModelOption[],
+  configuredIds?: string[],
+): string[] => {
+  const orderedIds = getQuickSwitchModelIds(models);
+  const defaultIds = orderedIds.filter((id) => DEFAULT_TAB_CYCLE_MODEL_IDS.includes(id as typeof DEFAULT_TAB_CYCLE_MODEL_IDS[number]));
+
+  if (!configuredIds || configuredIds.length === 0) {
+    return defaultIds.length > 0 ? defaultIds : orderedIds;
+  }
+
+  const configuredSet = new Set(configuredIds);
+  const filteredIds = orderedIds.filter((id) => configuredSet.has(id));
+
+  return filteredIds.length > 0 ? filteredIds : (defaultIds.length > 0 ? defaultIds : orderedIds);
+};

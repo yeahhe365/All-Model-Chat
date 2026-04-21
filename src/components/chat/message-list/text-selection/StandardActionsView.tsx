@@ -27,7 +27,7 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
     const insertLabel = t ? t('fill_input') : 'Insert';
     const copyLabel = isCopied ? (t ? t('copied') : 'Copied') : (t ? t('copy') : 'Copy');
     const searchLabel = t ? t('search') : 'Search';
-    const actionButtonClass = 'flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium text-[var(--theme-text-primary)] transition-all active:scale-95 hover:bg-[var(--theme-bg-tertiary)] sm:px-3';
+    const actionButtonClass = 'flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium text-[var(--theme-text-primary)] transition-all active:scale-95 hover:bg-[var(--theme-bg-tertiary)] sm:px-3';
 
     return (
         <>
@@ -43,7 +43,7 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             
             {onInsert && (
                 <>
-                    <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
+                    <div className="mx-0.5 h-3.5 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
                     <button
                         onMouseDown={onInsert}
                         className={actionButtonClass}
@@ -56,7 +56,7 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
                 </>
             )}
 
-            <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
+            <div className="mx-0.5 h-3.5 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
             
             <button
                 onMouseDown={onCopy}
@@ -72,7 +72,7 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
                 <span>{copyLabel}</span>
             </button>
 
-            <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
+            <div className="mx-0.5 h-3.5 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
 
             <button
                 onMouseDown={onSearch}
@@ -86,7 +86,7 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
 
             {onTTS && (
                 <>
-                    <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
+                    <div className="mx-0.5 h-3.5 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
                     <button
                         onMouseDown={onTTS}
                         className={actionButtonClass}

@@ -54,7 +54,6 @@ export const GroupItem: React.FC<GroupItemProps> = (props) => {
     setEditingItem,
     toggleMenu,
     setActiveMenu,
-    handleDragStart: sessionItemProps.handleDragStart,
     t,
   };
   

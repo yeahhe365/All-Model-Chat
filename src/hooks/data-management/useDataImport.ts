@@ -193,6 +193,30 @@ const sanitizeCustomShortcuts = (value: unknown): Record<string, string> | undef
     return nextShortcuts;
 };
 
+const sanitizeTabModelCycleIds = (value: unknown): string[] | undefined => {
+    if (!Array.isArray(value)) {
+        return undefined;
+    }
+
+    const seenIds = new Set<string>();
+    const nextIds = value.reduce<string[]>((ids, item) => {
+        if (typeof item !== 'string') {
+            return ids;
+        }
+
+        const normalizedId = item.trim();
+        if (!normalizedId || seenIds.has(normalizedId)) {
+            return ids;
+        }
+
+        seenIds.add(normalizedId);
+        ids.push(normalizedId);
+        return ids;
+    }, []);
+
+    return nextIds.length > 0 ? nextIds : undefined;
+};
+
 const sanitizeImportedSettings = (importedSettings: Partial<AppSettings>): AppSettings => {
     const newSettings: AppSettings = { ...DEFAULT_APP_SETTINGS };
 
@@ -251,6 +275,11 @@ const sanitizeImportedSettings = (importedSettings: Partial<AppSettings>): AppSe
     const customShortcuts = sanitizeCustomShortcuts(importedSettings.customShortcuts);
     if (customShortcuts) {
         newSettings.customShortcuts = customShortcuts;
+    }
+
+    const tabModelCycleIds = sanitizeTabModelCycleIds(importedSettings.tabModelCycleIds);
+    if (tabModelCycleIds) {
+        newSettings.tabModelCycleIds = tabModelCycleIds;
     }
 
     return newSettings;

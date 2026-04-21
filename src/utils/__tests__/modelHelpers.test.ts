@@ -58,6 +58,22 @@ describe('sortModels', () => {
     expect(result[0].id).toBe('gemini-3-flash');
   });
 
+  it('keeps the preferred pinned Gemini text model order for the model picker', () => {
+    const models: ModelOption[] = [
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
+      { id: 'gemini-3.1-flash-lite-preview', name: 'Gemini 3.1 Flash Lite Preview', isPinned: true },
+      { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview', isPinned: true },
+    ];
+
+    const result = sortModels(models);
+
+    expect(result.map((model) => model.id)).toEqual([
+      'gemini-3.1-pro-preview',
+      'gemini-3-flash-preview',
+      'gemini-3.1-flash-lite-preview',
+    ]);
+  });
+
   it('does not mutate original array', () => {
     const models: ModelOption[] = [
       { id: 'b', name: 'B' },
@@ -101,6 +117,13 @@ describe('isGemini3Model', () => {
 describe('getModelCapabilities', () => {
   it('treats flash live preview models as live audio models', () => {
     expect(getModelCapabilities('gemini-3.1-flash-live-preview').isNativeAudioModel).toBe(true);
+  });
+
+  it('does not mark Gemini 3.1 Flash TTS Preview as supporting thinking', () => {
+    const capabilities = getModelCapabilities('gemini-3.1-flash-tts-preview');
+
+    expect(capabilities.isTtsModel).toBe(true);
+    expect(capabilities.supportsThinkingLevel).toBe(false);
   });
 
   it('marks Gemini Robotics-ER 1.6 as supporting thinking levels', () => {

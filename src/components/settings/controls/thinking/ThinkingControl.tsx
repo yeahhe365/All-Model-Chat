@@ -40,6 +40,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   const isGemini3ProImage = modelId === 'gemini-3-pro-image-preview';
   const isImageThinkingLevelOnly = isGemini31FlashImage;
   const isGemma = modelId.toLowerCase().includes('gemma');
+  const isTtsModel = capabilities.isTtsModel;
   const budgetConfig = THINKING_BUDGET_RANGES[modelId];
   const supportedThinkingLevels: ThinkingLevelOption[] =
     isImageThinkingLevelOnly
@@ -61,7 +62,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   
   // Determine current mode
   const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
-  const showThinkingControls = !!budgetConfig || isGemini3 || isGemma;
+  const showThinkingControls = !isTtsModel && (!!budgetConfig || isGemini3 || isGemma);
   const isGemmaReasoningEnabled = showThoughts;
   const gemmaThinkingLevel: ThinkingLevelOption = isGemmaReasoningEnabled ? 'HIGH' : 'MINIMAL';
 

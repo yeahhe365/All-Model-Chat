@@ -47,10 +47,10 @@ export const isGemmaModel = (modelId: string): boolean =>
 export const isGeminiRoboticsModel = (modelId: string): boolean =>
     !!modelId && modelId.toLowerCase().includes('gemini-robotics-er');
 
-const supportsThinkingLevel = (modelId: string): boolean =>
-    isGemini3Model(modelId) || isGeminiRoboticsModel(modelId);
-
 const isTtsModel = (modelId: string): boolean => modelId.toLowerCase().includes('tts');
+
+const supportsThinkingLevel = (modelId: string): boolean =>
+    !isTtsModel(modelId) && (isGemini3Model(modelId) || isGeminiRoboticsModel(modelId));
 
 const isGemini3ImageModel = (modelId: string): boolean => (
     modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview'
@@ -68,6 +68,12 @@ export const isImageModel = (modelId: string): boolean => (
 );
 
 export const sortModels = (models: ModelOption[]): ModelOption[] => {
+    const pinnedPriorityOrder: Record<string, number> = {
+        'gemini-3.1-pro-preview': 0,
+        'gemini-3-flash-preview': 1,
+        'gemini-3.1-flash-lite-preview': 2,
+    };
+
     const getCategoryWeight = (id: string) => {
         if (isTtsModel(id)) return 3;
         if (isRealImagenModel(id)) return 5;
@@ -84,6 +90,14 @@ export const sortModels = (models: ModelOption[]): ModelOption[] => {
             const weightA = getCategoryWeight(a.id);
             const weightB = getCategoryWeight(b.id);
             if (weightA !== weightB) return weightA - weightB;
+
+            const pinnedPriorityA = pinnedPriorityOrder[a.id];
+            const pinnedPriorityB = pinnedPriorityOrder[b.id];
+            if (pinnedPriorityA !== undefined || pinnedPriorityB !== undefined) {
+                if (pinnedPriorityA === undefined) return 1;
+                if (pinnedPriorityB === undefined) return -1;
+                if (pinnedPriorityA !== pinnedPriorityB) return pinnedPriorityA - pinnedPriorityB;
+            }
 
             const isA3 = a.id.includes('gemini-3');
             const isB3 = b.id.includes('gemini-3');
