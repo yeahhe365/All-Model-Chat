@@ -88,4 +88,33 @@ describe('ModelListEditor', () => {
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', isPinned: false },
     ]);
   });
+
+  it('blocks saving duplicate model ids after trimming whitespace', () => {
+    const onSave = vi.fn();
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ModelListEditor
+            availableModels={[
+              { id: ' gemini-3-flash-preview ', name: 'Gemini 3 Flash', isPinned: true },
+              { id: 'gemini-3-flash-preview', name: 'Duplicate Gemini 3 Flash', isPinned: false },
+            ]}
+            onSave={onSave}
+            setIsEditingList={vi.fn()}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    act(() => {
+      const saveButton = Array.from(container.querySelectorAll('button')).find(
+        (button) => button.textContent?.includes('Save List'),
+      );
+      saveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(container.textContent).toContain('Model IDs must be unique.');
+  });
 });

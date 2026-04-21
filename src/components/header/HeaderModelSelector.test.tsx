@@ -80,4 +80,26 @@ describe('HeaderModelSelector', () => {
     const toggleButton = container.querySelector('button[aria-label="headerReasoningToggleAria"]');
     expect(toggleButton?.getAttribute('title')).toBe('headerReasoningMinimalFastTitle');
   });
+
+  it('does not render a model icon inside the collapsed selector trigger', async () => {
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Custom Model"
+          availableModels={[{ id: 'custom-model', name: 'Custom Model' }]}
+          selectedModelId="custom-model"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={false}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
+    expect(triggerButton?.querySelectorAll('svg')).toHaveLength(1);
+  });
 });

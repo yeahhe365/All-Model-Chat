@@ -1,0 +1,119 @@
+import type { ModelOption } from '../types';
+import { getModelCapabilities, isGeminiRoboticsModel, sortModels } from './modelHelpers';
+
+export type ModelCatalogGroup = 'pinned' | 'standard';
+export type ModelCatalogCategory = 'text' | 'live' | 'tts' | 'image' | 'robotics' | 'other';
+export type ModelBadgeKey =
+  | 'pinned'
+  | 'live'
+  | 'tts'
+  | 'image'
+  | 'robotics'
+  | 'gemma'
+  | 'flash'
+  | 'pro';
+
+export interface ModelCatalogEntry {
+  badgeKeys: ModelBadgeKey[];
+  category: ModelCatalogCategory;
+  group: ModelCatalogGroup;
+  id: string;
+  model: ModelOption;
+  name: string;
+  searchText: string;
+}
+
+const getCategory = (model: ModelOption): ModelCatalogCategory => {
+  const { id } = model;
+  const capabilities = getModelCapabilities(id);
+
+  if (isGeminiRoboticsModel(id)) {
+    return 'robotics';
+  }
+
+  if (capabilities.isNativeAudioModel) {
+    return 'live';
+  }
+
+  if (capabilities.isTtsModel) {
+    return 'tts';
+  }
+
+  if (capabilities.isImagenModel) {
+    return 'image';
+  }
+
+  if (capabilities.isGemmaModel || id.toLowerCase().includes('gemini')) {
+    return 'text';
+  }
+
+  return 'other';
+};
+
+const getBadgeKeys = (model: ModelOption): ModelBadgeKey[] => {
+  const { id, isPinned } = model;
+  const lowerId = id.toLowerCase();
+  const capabilities = getModelCapabilities(id);
+  const badges: ModelBadgeKey[] = [];
+
+  if (isPinned) {
+    badges.push('pinned');
+  }
+  if (capabilities.isNativeAudioModel) {
+    badges.push('live');
+  }
+  if (capabilities.isTtsModel) {
+    badges.push('tts');
+  }
+  if (isGeminiRoboticsModel(id)) {
+    badges.push('robotics');
+  }
+  if (capabilities.isImagenModel) {
+    badges.push('image');
+  }
+  if (capabilities.isGemmaModel) {
+    badges.push('gemma');
+  }
+  if (lowerId.includes('flash')) {
+    badges.push('flash');
+  }
+  if (lowerId.includes('pro')) {
+    badges.push('pro');
+  }
+
+  return badges;
+};
+
+const buildSearchText = (model: ModelOption, category: ModelCatalogCategory, badgeKeys: ModelBadgeKey[]) => {
+  return [model.name, model.id, category, ...badgeKeys]
+    .join(' ')
+    .toLowerCase();
+};
+
+export const buildModelCatalog = (models: ModelOption[]): ModelCatalogEntry[] => {
+  return sortModels(models).map((model) => {
+    const category = getCategory(model);
+    const badgeKeys = getBadgeKeys(model);
+
+    return {
+      badgeKeys,
+      category,
+      group: model.isPinned ? 'pinned' : 'standard',
+      id: model.id,
+      model,
+      name: model.name,
+      searchText: buildSearchText(model, category, badgeKeys),
+    };
+  });
+};
+
+export const filterModelCatalog = (entries: ModelCatalogEntry[], query: string): ModelCatalogEntry[] => {
+  if (!query.trim()) {
+    return entries;
+  }
+
+  return entries.filter((entry) => entry.searchText.includes(query.trim().toLowerCase()));
+};
+
+export const getQuickSwitchModelIds = (models: ModelOption[]): string[] =>
+  buildModelCatalog(models).map((entry) => entry.id);

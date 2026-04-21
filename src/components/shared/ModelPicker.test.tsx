@@ -3,6 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { getModelIcon } from './ModelPicker';
 
 describe('getModelIcon', () => {
+  it('renders picker icons at the larger shared size', () => {
+    const geminiMarkup = renderToStaticMarkup(
+      getModelIcon({ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }),
+    );
+
+    expect(geminiMarkup).toContain('width="18"');
+    expect(geminiMarkup).toContain('height="18"');
+  });
+
   it('uses a sparkles icon for Gemini general models', () => {
     const geminiMarkup = renderToStaticMarkup(
       getModelIcon({ id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro Preview' }),

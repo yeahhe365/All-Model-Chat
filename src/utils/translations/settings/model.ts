@@ -62,6 +62,7 @@ export const modelSettings = {
     settingsResetModelList: { en: 'Reset', zh: '重置' },
     settingsSaveModelList: { en: 'Save List', zh: '保存列表' },
     settingsModelListRequiresModel: { en: 'Add at least one model before saving.', zh: '请至少保留一个模型后再保存。' },
+    settingsModelListDuplicateIds: { en: 'Model IDs must be unique.', zh: '模型 ID 必须唯一。' },
     settingsResetModelListConfirm: { en: 'Reset the model list to its defaults? This removes your custom additions.', zh: '要将模型列表重置为默认值吗？这会移除您的自定义添加项。' },
     settingsModelIdPlaceholder: { en: 'Model ID (for example, gemini-pro)', zh: '模型 ID（例如 gemini-pro）' },
     settingsModelNamePlaceholder: { en: 'Display Name', zh: '显示名称' },

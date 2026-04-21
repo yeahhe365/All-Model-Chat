@@ -3,8 +3,8 @@ import React from 'react';
 import { useI18n } from '../../contexts/I18nContext';
 import { Modal } from '../shared/Modal';
 import { UploadedFile, AppSettings, ModelOption } from '../../types';
-import { X, Calculator } from 'lucide-react';
-import { ModelPicker } from '../shared/ModelPicker';
+import { ChevronDown, X, Calculator } from 'lucide-react';
+import { getModelIcon, ModelPicker } from '../shared/ModelPicker';
 import { useTokenCountLogic } from '../../hooks/features/useTokenCountLogic';
 import { TokenCountInput } from './token-count/TokenCountInput';
 import { TokenCountFiles } from './token-count/TokenCountFiles';
@@ -73,13 +73,23 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
                         onSelect={handleModelSelect}
                         t={t}
                         dropdownClassName="w-full max-h-60"
-                        renderTrigger={({ isOpen, setIsOpen }) => (
+                        renderTrigger={({ isOpen, setIsOpen, selectedModel }) => (
                             <button
                                 onClick={() => setIsOpen(!isOpen)}
-                                className="w-full flex items-center justify-between px-3 py-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg text-sm text-[var(--theme-text-primary)] hover:border-[var(--theme-border-focus)] transition-colors focus:ring-2 focus:ring-[var(--theme-border-focus)] outline-none"
+                                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-[var(--theme-bg-input)] border border-[var(--theme-border-secondary)] rounded-lg text-sm text-[var(--theme-text-primary)] hover:border-[var(--theme-border-focus)] transition-colors focus:ring-2 focus:ring-[var(--theme-border-focus)] outline-none"
                             >
-                                <span>{displayModelName}</span>
-                                <span className="text-xs text-[var(--theme-text-tertiary)] font-mono">{selectedModelId}</span>
+                                <div className="flex items-start gap-2.5 min-w-0 text-left">
+                                    <div className="mt-0.5 flex-shrink-0">{getModelIcon(selectedModel)}</div>
+                                    <div className="min-w-0">
+                                        <div className="truncate">{displayModelName}</div>
+                                        <div className="text-xs text-[var(--theme-text-tertiary)] font-mono truncate">{selectedModelId}</div>
+                                    </div>
+                                </div>
+                                <ChevronDown
+                                    size={16}
+                                    className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                                    strokeWidth={1.75}
+                                />
                             </button>
                         )}
                     />

@@ -139,12 +139,7 @@ export const useMessageListScroll = ({
 
         const container = scrollerRef;
         if (container) {
-            const { scrollTop, scrollHeight, clientHeight } = container;
-            const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
-            
-            if (isAtBottom !== atBottom) {
-                setAtBottom(isAtBottom);
-            }
+            const { scrollTop } = container;
 
             // Save scroll position for active session
             if (activeSessionId && lastRestoredSessionIdRef.current === activeSessionId && messages.length > 0) {
@@ -157,7 +152,7 @@ export const useMessageListScroll = ({
             }
 
         }
-    }, [scrollerRef, atBottom, activeSessionId, messages.length]);
+    }, [scrollerRef, activeSessionId, messages.length]);
 
     useEffect(() => {
         return () => {
@@ -194,7 +189,7 @@ export const useMessageListScroll = ({
     }, [activeSessionId, messages.length]);
 
     const showScrollDown = !atBottom;
-    const showScrollUp = messages.length > 2 && visibleStartIndex > 0;
+    const showScrollUp = visibleStartIndex > 0;
 
     return {
         virtuosoRef,

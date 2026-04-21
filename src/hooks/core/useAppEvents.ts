@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { AppSettings, ChatSettings } from '../../types';
-import { TAB_CYCLE_MODELS } from '../../constants/appConstants';
+import { AppSettings, ChatSettings, ModelOption } from '../../types';
 import { logService } from '../../utils/appUtils';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import { useFullscreen } from '../ui/useFullscreen';
 import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';
 import { registerPwa, type UpdateServiceWorker } from '../../pwa/register';
 import { loadRegisterSW } from '../../pwa/loadRegisterSw';
+import { getQuickSwitchModelIds } from '../../utils/modelCatalog';
 
 interface AppEventsProps {
     appSettings: AppSettings;
     startNewChat: () => void;
     currentChatSettings: ChatSettings;
+    availableModels: ModelOption[];
     handleSelectModelInHeader: (modelId: string) => void;
     setIsLogViewerOpen: (isOpen: boolean | ((prev: boolean) => boolean)) => void;
     onTogglePip: () => void;
@@ -25,6 +26,7 @@ export const useAppEvents = ({
     appSettings,
     startNewChat,
     currentChatSettings,
+    availableModels,
     handleSelectModelInHeader,
     setIsLogViewerOpen,
     onTogglePip,
@@ -260,11 +262,15 @@ export const useAppEvents = ({
                  if (isChatTextareaFocused || !isGenerallyInputFocused) {
                     event.preventDefault();
                     const currentModelId = currentChatSettings.modelId;
-                    const currentIndex = TAB_CYCLE_MODELS.indexOf(currentModelId);
+                    const cycleModels = getQuickSwitchModelIds(availableModels);
+                    if (cycleModels.length === 0) {
+                        return;
+                    }
+                    const currentIndex = cycleModels.indexOf(currentModelId);
                     let nextIndex: number;
                     if (currentIndex === -1) nextIndex = 0;
-                    else nextIndex = (currentIndex + 1) % TAB_CYCLE_MODELS.length;
-                    const newModelId = TAB_CYCLE_MODELS[nextIndex];
+                    else nextIndex = (currentIndex + 1) % cycleModels.length;
+                    const newModelId = cycleModels[nextIndex];
                     if (newModelId) handleSelectModelInHeader(newModelId);
                 }
             }
@@ -282,7 +288,7 @@ export const useAppEvents = ({
                 pipWindow.document.removeEventListener('keydown', handleKeyDown);
             }
         };
-    }, [appSettings, startNewChat, currentChatSettings.modelId, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating, toggleFullscreen]);
+    }, [appSettings, startNewChat, currentChatSettings.modelId, availableModels, handleSelectModelInHeader, setIsLogViewerOpen, isPipSupported, onTogglePip, pipWindow, isLoading, onStopGenerating, toggleFullscreen]);
 
     return {
         installPromptEvent,

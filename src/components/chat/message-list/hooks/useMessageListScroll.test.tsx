@@ -56,6 +56,21 @@ const createMessages = (): ChatMessage[] => [
   },
 ];
 
+const createSingleTurnMessages = (): ChatMessage[] => [
+  {
+    id: 'message-single-1',
+    role: 'user',
+    content: 'Only turn',
+    timestamp: new Date('2026-04-15T00:00:00.000Z'),
+  },
+  {
+    id: 'message-single-2',
+    role: 'model',
+    content: 'A very long answer',
+    timestamp: new Date('2026-04-15T00:00:01.000Z'),
+  },
+];
+
 describe('useMessageListScroll', () => {
   let storage: Map<string, string>;
 
@@ -84,7 +99,7 @@ describe('useMessageListScroll', () => {
     document.body.innerHTML = '';
   });
 
-  it('syncs the scroller element, persists scroll position, and updates bottom-state UI', () => {
+  it('syncs the scroller element, persists scroll position, and respects bottom-state updates', () => {
     const setScrollContainerRef = vi.fn();
     const { result, unmount } = renderHook(() =>
       useMessageListScroll({
@@ -109,11 +124,30 @@ describe('useMessageListScroll', () => {
     act(() => {
       result.current.handleScroll();
       vi.advanceTimersByTime(300);
+      result.current.setAtBottom(false);
     });
 
     expect(setScrollContainerRef).toHaveBeenCalledWith(scroller);
     expect(localStorage.getItem('chat_scroll_pos_session-1')).toBe('220');
     expect(result.current.showScrollDown).toBe(true);
+
+    unmount();
+  });
+
+  it('shows the previous-turn control while reading a long single-turn response', () => {
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: createSingleTurnMessages(),
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-single-turn',
+      }),
+    );
+
+    act(() => {
+      result.current.onRangeChanged({ startIndex: 1, endIndex: 1 });
+    });
+
+    expect(result.current.showScrollUp).toBe(true);
 
     unmount();
   });
@@ -141,6 +175,38 @@ describe('useMessageListScroll', () => {
     });
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 144 });
+
+    unmount();
+  });
+
+  it('does not recalculate bottom-state during scroll handling', () => {
+    const { result, unmount } = renderHook(() =>
+      useMessageListScroll({
+        messages: createMessages(),
+        setScrollContainerRef: vi.fn(),
+        activeSessionId: 'session-bottom-state',
+      }),
+    );
+
+    const scroller = document.createElement('div');
+    Object.defineProperties(scroller, {
+      scrollTop: { value: 700, writable: true },
+      scrollHeight: { value: 1000, writable: true },
+      clientHeight: { value: 200, writable: true },
+    });
+
+    act(() => {
+      result.current.handleScrollerRef(scroller);
+      vi.advanceTimersByTime(50);
+      result.current.setAtBottom(false);
+    });
+
+    act(() => {
+      result.current.handleScroll();
+      vi.advanceTimersByTime(300);
+    });
+
+    expect(result.current.showScrollDown).toBe(true);
 
     unmount();
   });

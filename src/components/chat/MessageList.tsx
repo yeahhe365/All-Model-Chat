@@ -109,9 +109,10 @@ const MessageListComponent: React.FC = () => {
             data={visibleMessages}
             scrollerRef={handleScrollerRef}
             atBottomStateChange={setAtBottom}
+            atBottomThreshold={150}
             followOutput={false} // Disable auto-scroll to bottom during streaming (we handle it via auto-anchor or user interaction)
             rangeChanged={onRangeChanged}
-            increaseViewportBy={800} 
+            increaseViewportBy={{ top: 0, bottom: 800 }}
             className="custom-scrollbar"
             onScroll={handleScroll}
             components={{

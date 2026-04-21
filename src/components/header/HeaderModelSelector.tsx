@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Zap } from 'lucide-react';
+import { ChevronDown, Zap } from 'lucide-react';
 import { ModelOption } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { GoogleSpinner } from '../icons/GoogleSpinner';
@@ -77,7 +77,7 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
       selectedId={selectedModelId}
       onSelect={onSelectModel}
       t={t}
-      dropdownClassName="w-[calc(100vw-2rem)] max-w-[240px] sm:w-[240px] sm:max-w-none max-h-96"
+      dropdownClassName="w-[calc(100vw-2rem)] max-w-[320px] sm:w-[320px] sm:max-w-none max-h-96"
       renderTrigger={({ isOpen, setIsOpen }) => (
         <div className="relative flex items-center gap-1">
             <button
@@ -90,8 +90,13 @@ export const HeaderModelSelector: React.FC<HeaderModelSelectorProps> = ({
                 aria-expanded={isOpen}
             >
                 {!currentModelName && <div className="flex items-center justify-center"><GoogleSpinner size={16} /></div>}
-                
-                <span className="truncate max-w-[200px] sm:max-w-[240px]">{abbreviatedModelName}</span>
+
+                <span className="truncate max-w-[180px] sm:max-w-[220px]">{abbreviatedModelName}</span>
+                <ChevronDown
+                    size={15}
+                    className={`flex-shrink-0 text-[var(--theme-text-tertiary)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    strokeWidth={1.75}
+                />
             </button>
 
             {/* Thinking Level Toggle */}

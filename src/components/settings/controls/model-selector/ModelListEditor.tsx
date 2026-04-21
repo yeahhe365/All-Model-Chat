@@ -11,15 +11,23 @@ interface ModelListEditorProps {
 }
 
 type EditableModelField = 'id' | 'name' | 'isPinned';
+type EditableModelRow = ModelOption & { _rowId: string };
+
+const createRowId = () => `model-row-${Math.random().toString(36).slice(2, 10)}`;
+const toEditableRows = (models: ModelOption[]): EditableModelRow[] =>
+    models.map((model) => ({
+        ...model,
+        _rowId: createRowId(),
+    }));
 
 export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModels, onSave, setIsEditingList }) => {
     const { t } = useI18n();
-    const [tempModels, setTempModels] = useState<ModelOption[]>(availableModels);
+    const [tempModels, setTempModels] = useState<EditableModelRow[]>(() => toEditableRows(availableModels));
     const [validationMessage, setValidationMessage] = useState('');
 
     // Sync when entering edit mode (mounting) or parent updates
     useEffect(() => {
-        setTempModels(availableModels);
+        setTempModels(toEditableRows(availableModels));
         setValidationMessage('');
     }, [availableModels]);
 
@@ -36,27 +44,40 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
     };
 
     const handleAddModel = () => {
-        setTempModels(prev => [...prev, { id: '', name: '', isPinned: false }]);
+        setTempModels(prev => [...prev, { id: '', name: '', isPinned: false, _rowId: createRowId() }]);
         setValidationMessage('');
     };
 
     const handleResetDefaults = async () => {
         if (window.confirm(t('settingsResetModelListConfirm'))) {
             const { getDefaultModelOptions } = await import('../../../../utils/defaultModelOptions');
-            setTempModels(getDefaultModelOptions());
+            setTempModels(toEditableRows(getDefaultModelOptions()));
         }
     };
 
     const handleSaveList = () => {
-        const validModels = tempModels.filter(m => m.id.trim() !== '');
+        const validModels = tempModels
+            .map((model) => ({
+                id: model.id.trim(),
+                name: model.name.trim(),
+                isPinned: !!model.isPinned,
+            }))
+            .filter((model) => model.id !== '');
+
         if (validModels.length === 0) {
             setValidationMessage(t('settingsModelListRequiresModel'));
             return;
         }
 
+        const ids = validModels.map((model) => model.id);
+        if (new Set(ids).size !== ids.length) {
+            setValidationMessage(t('settingsModelListDuplicateIds'));
+            return;
+        }
+
         const refinedModels = validModels.map(m => ({
             ...m,
-            name: m.name.trim() || m.id.trim()
+            name: m.name || m.id
         }));
         setValidationMessage('');
         onSave(refinedModels);
@@ -68,7 +89,7 @@ export const ModelListEditor: React.FC<ModelListEditorProps> = ({ availableModel
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar p-2 space-y-2">
                 {tempModels.map((model, idx) => (
                     <ModelListEditorRow 
-                        key={idx} 
+                        key={model._rowId} 
                         model={model} 
                         index={idx} 
                         onUpdate={handleUpdateTempModel} 

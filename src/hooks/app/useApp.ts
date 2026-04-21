@@ -101,6 +101,7 @@ export const useApp = () => {
     appSettings,
     startNewChat,
     currentChatSettings,
+    availableModels: apiModels,
     handleSelectModelInHeader,
     setIsLogViewerOpen,
     onTogglePip: pipState.togglePip,

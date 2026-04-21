@@ -1,7 +1,7 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppSettings, ChatSettings } from '../../types';
+import type { AppSettings, ChatSettings, ModelOption } from '../../types';
 import { useAppEvents } from './useAppEvents';
 
 const registerPwaMock = vi.fn();
@@ -78,6 +78,11 @@ describe('useAppEvents manual update checks', () => {
   const currentChatSettings = {
     modelId: 'gemini-3-flash-preview',
   } as ChatSettings;
+  const availableModels: ModelOption[] = [
+    { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview', isPinned: true },
+    { id: 'gemma-4-31b-it', name: 'Gemma 4 31B IT' },
+    { id: 'imagen-4.0-generate-001', name: 'Imagen 4.0' },
+  ];
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -110,6 +115,7 @@ describe('useAppEvents manual update checks', () => {
         appSettings,
         startNewChat: vi.fn(),
         currentChatSettings,
+        availableModels,
         handleSelectModelInHeader: vi.fn(),
         setIsLogViewerOpen: vi.fn(),
         onTogglePip: vi.fn(),
@@ -145,6 +151,7 @@ describe('useAppEvents manual update checks', () => {
         appSettings,
         startNewChat: vi.fn(),
         currentChatSettings,
+        availableModels,
         handleSelectModelInHeader: vi.fn(),
         setIsLogViewerOpen: vi.fn(),
         onTogglePip: vi.fn(),
@@ -166,6 +173,39 @@ describe('useAppEvents manual update checks', () => {
     expect(result.current.needRefresh).toBe(true);
     expect(result.current.manualUpdateCheckState).toBe('update-available');
 
+    unmount();
+  });
+
+  it('cycles models using the shared available-model order', async () => {
+    const handleSelectModelInHeader = vi.fn();
+    const textarea = document.createElement('textarea');
+    textarea.setAttribute('aria-label', 'Chat message input');
+    document.body.appendChild(textarea);
+    textarea.focus();
+
+    const { unmount } = renderHook(() =>
+      useAppEvents({
+        appSettings,
+        startNewChat: vi.fn(),
+        currentChatSettings,
+        availableModels,
+        handleSelectModelInHeader,
+        setIsLogViewerOpen: vi.fn(),
+        onTogglePip: vi.fn(),
+        isPipSupported: false,
+        pipWindow: null,
+        isLoading: false,
+        onStopGenerating: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    });
+
+    expect(handleSelectModelInHeader).toHaveBeenCalledWith('gemma-4-31b-it');
+
+    textarea.remove();
     unmount();
   });
 });
