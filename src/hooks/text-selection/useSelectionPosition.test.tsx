@@ -291,4 +291,61 @@ describe('useSelectionPosition', () => {
 
     unmount();
   });
+
+  it('re-clamps the toolbar position after the toolbar ref becomes available', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 390,
+    });
+
+    const host = document.createElement('div');
+    const textNode = document.createTextNode('hello world');
+    host.appendChild(textNode);
+    document.body.appendChild(host);
+
+    const toolbarRef = { current: null } as { current: HTMLDivElement | null };
+
+    const { result, rerender, unmount } = renderHook(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive: false,
+        toolbarRef: toolbarRef as React.RefObject<HTMLDivElement>,
+      }),
+    );
+
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    range.getBoundingClientRect = () =>
+      createRect({
+        width: 80,
+        left: 300,
+        right: 380,
+      });
+
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    act(() => {
+      document.dispatchEvent(new Event('selectionchange'));
+    });
+
+    expect(result.current.position).toEqual({ top: 50, left: 340 });
+
+    const toolbar = document.createElement('div');
+    toolbar.getBoundingClientRect = () => createRect({ width: 280, height: 44 });
+    toolbarRef.current = toolbar;
+
+    rerender(() =>
+      useSelectionPosition({
+        containerRef: host as any,
+        isAudioActive: false,
+        toolbarRef: toolbarRef as React.RefObject<HTMLDivElement>,
+      }),
+    );
+
+    expect(result.current.position).toEqual({ top: 50, left: 240 });
+
+    unmount();
+  });
 });

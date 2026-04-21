@@ -72,4 +72,34 @@ describe('MessageActions', () => {
 
     expect(container.querySelector('[aria-label="Read message aloud"]')).not.toBeInTheDocument();
   });
+
+  it('shows the action column by default on mobile without relying on hover', () => {
+    window.innerWidth = 390;
+
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <WindowProvider window={window} document={document}>
+            <MessageActions
+              message={message}
+              sessionTitle="Session"
+              messageIndex={0}
+              isGrouped={false}
+              onEditMessage={() => {}}
+              onDeleteMessage={() => {}}
+              onRetryMessage={() => {}}
+              onGenerateCanvas={() => {}}
+              onContinueGeneration={() => {}}
+              themeId="pearl"
+            />
+          </WindowProvider>
+        </I18nProvider>
+      );
+    });
+
+    const actions = container.querySelector('.message-actions');
+    expect(actions?.className).toContain('opacity-100');
+    expect(actions?.className).not.toContain('opacity-0');
+    expect(actions?.className).toContain('pointer-events-auto');
+  });
 });

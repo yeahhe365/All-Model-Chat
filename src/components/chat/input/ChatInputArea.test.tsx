@@ -25,4 +25,11 @@ describe('ChatInputArea default spacing', () => {
     expect(source).toContain('const actionsContainerClass = "absolute bottom-[0.54rem] left-3 right-3 sm:bottom-[0.72rem] sm:left-4 sm:right-4 flex items-center justify-between z-10";');
     expect(source).not.toContain('mt-auto pt-1 relative z-10');
   });
+
+  it('focuses the textarea when users tap the non-interactive input shell', () => {
+    const source = fs.readFileSync(chatInputAreaPath, 'utf8');
+
+    expect(source).toContain('const focusBlockingSelector =');
+    expect(source).toContain('onClick={handleInputShellClick}');
+  });
 });

@@ -5,7 +5,7 @@ import { ChatMessage } from '../../types';
 import { useI18n } from '../../contexts/I18nContext';
 import { ExportMessageButton } from './buttons/ExportMessageButton';
 import { MessageCopyButton } from './buttons/MessageCopyButton';
-import { useResponsiveValue } from '../../hooks/useDevice';
+import { useIsMobile, useResponsiveValue } from '../../hooks/useDevice';
 
 const AvatarWrapper: React.FC<{ children: React.ReactNode; onClick: () => void; showEditOverlay: boolean }> = ({ children, onClick, showEditOverlay }) => (
     <div className="relative group/avatar cursor-pointer" onClick={onClick}>
@@ -59,11 +59,15 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     themeId,
 }) => {
     const { t } = useI18n();
+    const isMobile = useIsMobile();
     const actionIconSize = useResponsiveValue(15, 16); 
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     
     // Enhanced button styling: lighter default, distinct hover, rounded corners
     const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100 hover:scale-105 active:scale-95";
+    const actionsVisibilityClasses = isMobile
+        ? 'opacity-100 translate-y-0 pointer-events-auto'
+        : 'opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto';
 
     return (
         <div className="flex-shrink-0 w-8 sm:w-10 flex flex-col items-center sticky top-2 sm:top-4 self-start z-10 h-full">
@@ -87,7 +91,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             
             {/* Container for actions - Fades in on group hover with a subtle slide effect */}
             <div
-                className="message-actions flex flex-col items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all duration-300 ease-in-out translate-y-1 group-hover:translate-y-0"
+                className={`message-actions flex flex-col items-center gap-1 mt-1 transition-all duration-300 ease-in-out ${actionsVisibilityClasses}`}
             >
                 {message.role === 'user' && !message.isLoading && (
                     <button 

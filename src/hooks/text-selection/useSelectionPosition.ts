@@ -1,6 +1,6 @@
 
 /* eslint-disable react-hooks/refs */
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { convertHtmlToMarkdown } from '../../utils/htmlToMarkdown';
 
 type ContainerRefLike = React.RefObject<HTMLElement> | HTMLElement | null;
@@ -30,6 +30,8 @@ const isEditableElement = (element: Element | null): boolean => {
 export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }: UseSelectionPositionProps) => {
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [selectedText, setSelectedText] = useState('');
+    const [toolbarElement, setToolbarElement] = useState<HTMLDivElement | null>(null);
+    const [toolbarSize, setToolbarSize] = useState<{ width: number; height: number } | null>(null);
     const selectionBoundsRef = useRef<DOMRect | null>(null);
     const selectedTextRef = useRef('');
 
@@ -126,11 +128,67 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         return () => document.removeEventListener('copy', handleCopy);
     }, [isAudioActive]);
 
-    const clampedPosition = useMemo(() => {
-        if (!position || !toolbarRef.current) return position;
+    useLayoutEffect(() => {
+        if (!position) {
+            if (toolbarElement !== null) {
+                setToolbarElement(null);
+            }
+            if (toolbarSize !== null) {
+                setToolbarSize(null);
+            }
+            return;
+        }
 
-        const toolbar = toolbarRef.current;
-        const { width, height } = toolbar.getBoundingClientRect();
+        if (toolbarRef.current !== toolbarElement) {
+            setToolbarElement(toolbarRef.current);
+        }
+    }, [position, toolbarElement, toolbarRef, toolbarRef.current, toolbarSize]);
+
+    useLayoutEffect(() => {
+        if (!position || !toolbarElement) {
+            return;
+        }
+
+        const updateToolbarSize = () => {
+            const rect = toolbarElement.getBoundingClientRect();
+            const nextSize = {
+                width: rect.width,
+                height: rect.height,
+            };
+
+            setToolbarSize((prev) => {
+                if (prev && prev.width === nextSize.width && prev.height === nextSize.height) {
+                    return prev;
+                }
+
+                return nextSize;
+            });
+        };
+
+        updateToolbarSize();
+
+        const resizeObserver =
+            typeof ResizeObserver !== 'undefined'
+                ? new ResizeObserver(() => updateToolbarSize())
+                : null;
+
+        resizeObserver?.observe(toolbarElement);
+        window.addEventListener('resize', updateToolbarSize);
+        window.visualViewport?.addEventListener('resize', updateToolbarSize);
+        window.visualViewport?.addEventListener('scroll', updateToolbarSize);
+
+        return () => {
+            resizeObserver?.disconnect();
+            window.removeEventListener('resize', updateToolbarSize);
+            window.visualViewport?.removeEventListener('resize', updateToolbarSize);
+            window.visualViewport?.removeEventListener('scroll', updateToolbarSize);
+        };
+    }, [position, toolbarElement]);
+
+    const clampedPosition = useMemo(() => {
+        if (!position || !toolbarSize) return position;
+
+        const { width, height } = toolbarSize;
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
         const padding = 10;
@@ -165,7 +223,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         }
 
         return position;
-    }, [position, toolbarRef]); // Re-run when text changes (toolbar size might change)
+    }, [position, toolbarSize]);
 
     const clearSelection = () => {
         window.getSelection()?.removeAllRanges();

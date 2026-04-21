@@ -37,6 +37,14 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
 }) => {
     const shadowRef = useRef<HTMLTextAreaElement>(null);
 
+    const handleShellClick = () => {
+        if (disabled || isConverting) {
+            return;
+        }
+
+        textareaRef.current?.focus();
+    };
+
     useLayoutEffect(() => {
         const target = textareaRef.current;
         const shadow = shadowRef.current;
@@ -66,7 +74,7 @@ export const ChatTextArea: React.FC<ChatTextAreaProps> = ({
     }, [value, isFullscreen, isMobile, initialTextareaHeight, textareaRef]);
 
     return (
-        <div className="relative w-full flex-grow flex flex-col min-h-0">
+        <div className="relative w-full flex-grow flex flex-col min-h-0 cursor-text" onClick={handleShellClick}>
             {/* Shadow Textarea for Height Calculation */}
             <textarea
                 ref={shadowRef}

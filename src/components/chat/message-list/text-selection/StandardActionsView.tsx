@@ -27,12 +27,13 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
     const insertLabel = t ? t('fill_input') : 'Insert';
     const copyLabel = isCopied ? (t ? t('copied') : 'Copied') : (t ? t('copy') : 'Copy');
     const searchLabel = t ? t('search') : 'Search';
+    const actionButtonClass = 'flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium text-[var(--theme-text-primary)] transition-all active:scale-95 hover:bg-[var(--theme-bg-tertiary)] sm:px-3';
 
     return (
         <>
             <button
                 onMouseDown={onQuote}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
+                className={actionButtonClass}
                 title={quoteLabel}
                 aria-label={quoteLabel}
             >
@@ -42,10 +43,10 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
             
             {onInsert && (
                 <>
-                    <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-0.5" />
+                    <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
                     <button
                         onMouseDown={onInsert}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
+                        className={actionButtonClass}
                         title={insertLabel}
                         aria-label={insertLabel}
                     >
@@ -55,11 +56,11 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
                 </>
             )}
 
-            <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-0.5" />
+            <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
             
             <button
                 onMouseDown={onCopy}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
+                className={actionButtonClass}
                 title={copyLabel}
                 aria-label={copyLabel}
             >
@@ -71,11 +72,11 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
                 <span>{copyLabel}</span>
             </button>
 
-            <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-0.5" />
+            <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
 
             <button
                 onMouseDown={onSearch}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
+                className={actionButtonClass}
                 title={searchLabel}
                 aria-label={searchLabel}
             >
@@ -85,10 +86,10 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
 
             {onTTS && (
                 <>
-                    <div className="w-px h-4 bg-[var(--theme-border-secondary)] mx-0.5" />
+                    <div className="mx-0.5 h-4 w-px shrink-0 bg-[var(--theme-border-secondary)]" />
                     <button
                         onMouseDown={onTTS}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-all active:scale-95 text-xs font-medium text-[var(--theme-text-primary)]"
+                        className={actionButtonClass}
                         title="Read Aloud (TTS)"
                     >
                         <Volume2 size={14} className="text-purple-500" />

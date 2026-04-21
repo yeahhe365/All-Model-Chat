@@ -51,6 +51,16 @@ export const ChatInputArea: React.FC = () => {
         : "flex flex-col gap-2 rounded-[26px] border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)] px-3 py-[0.54rem] pb-[calc(3.5rem+0.54rem)] sm:px-4 sm:py-[0.72rem] sm:pb-[calc(3.5rem+0.72rem)] shadow-lg transition-all duration-300 focus-within:border-[var(--theme-border-focus)] relative";
 
     const actionsContainerClass = "absolute bottom-[0.54rem] left-3 right-3 sm:bottom-[0.72rem] sm:left-4 sm:right-4 flex items-center justify-between z-10";
+    const focusBlockingSelector = 'button, a, input, textarea, select, label, summary, audio, video, [role="button"], [role="menuitem"], [contenteditable="true"]';
+
+    const handleInputShellClick = (event: React.MouseEvent<HTMLDivElement>) => {
+        const target = event.target;
+        if (target instanceof Element && target.closest(focusBlockingSelector)) {
+            return;
+        }
+
+        inputProps.textareaRef.current?.focus();
+    };
 
     const hiddenFileInputs = (
         <>
@@ -97,7 +107,7 @@ export const ChatInputArea: React.FC = () => {
                         selectedIndex={slashCommandProps.selectedIndex}
                         className={isFullscreen ? "absolute bottom-[60px] left-0 right-0 mb-2 w-full max-w-6xl mx-auto z-20" : undefined}
                     />
-                    <div className={inputContainerClass}>
+                    <div className={inputContainerClass} onClick={handleInputShellClick}>
                         <ChatFilePreviewList 
                             selectedFiles={fileDisplayProps.selectedFiles}
                             onRemove={fileDisplayProps.onRemove}
