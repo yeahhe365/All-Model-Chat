@@ -50,7 +50,7 @@ export const FilePreviewHeader: React.FC<FilePreviewHeaderProps> = ({
             console.error('Failed to copy content:', err);
             alert(t('filePreview_copy_failed'));
         }
-    }, [file, isCopied]);
+    }, [file, isCopied, t]);
 
     const handleDownload = useCallback(async () => {
         if (!file.dataUrl || isDownloading) return;

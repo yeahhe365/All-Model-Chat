@@ -142,7 +142,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
         if (toolbarRef.current !== toolbarElement) {
             setToolbarElement(toolbarRef.current);
         }
-    }, [position, toolbarElement, toolbarRef, toolbarRef.current, toolbarSize]);
+    }, [position, toolbarElement, toolbarRef, toolbarSize]);
 
     useLayoutEffect(() => {
         if (!position || !toolbarElement) {

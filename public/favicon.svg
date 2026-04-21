@@ -1,14 +1,34 @@
-<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">All Model Chat icon</title>
+  <desc id="desc">An Android-style app icon with a blue to teal rounded-square background and two overlapping chat bubbles.</desc>
   <defs>
-    <style>
-      .blue-part{fill:#1a8de9}
-      .teal-part{fill:#1abc9c}
-    </style>
+    <linearGradient id="bg" x1="76" y1="68" x2="438" y2="444" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1a8de9" />
+      <stop offset="1" stop-color="#1abc9c" />
+    </linearGradient>
+    <clipPath id="clip">
+      <rect x="24" y="24" width="464" height="464" rx="132" ry="132" />
+    </clipPath>
   </defs>
-  <path class="blue-part" d="M 32,142 L 80,112 L 80,80 A 24 24 0 0 1 104,56 L 152,56 A 24 24 0 0 1 176,80 L 224,80 A 72 72 0 0 0 152,8 L 104,8 A 72 72 0 0 0 32,80 Z"/>
-  <path class="teal-part" d="M 32,142 L 32,176 A 72 72 0 0 0 104,248 L 152,248 A 72 72 0 0 0 224,176 L 176,176 A 24 24 0 0 1 152,200 L 104,200 A 24 24 0 0 1 80,176 L 80,112 Z"/>
-  <circle cx="108" cy="84" r="10" class="blue-part"/>
-  <circle cx="148" cy="84" r="10" class="blue-part"/>
-  <circle cx="108" cy="172" r="10" class="teal-part"/>
-  <circle cx="148" cy="172" r="10" class="teal-part"/>
+  <g clip-path="url(#clip)">
+    <rect x="24" y="24" width="464" height="464" rx="132" ry="132" fill="url(#bg)" />
+    <circle cx="408" cy="112" r="132" fill="#ffffff" opacity="0.11" />
+    <circle cx="96" cy="432" r="176" fill="#0f172a" opacity="0.08" />
+    <g fill="#ffffff" opacity="0.20">
+      <rect x="106" y="96" width="248" height="180" rx="84" ry="84" />
+      <path d="M172 244H242L132 318C120 326 104 317 104 302V286C104 262.804 122.804 244 146 244H172Z" />
+    </g>
+    <g fill="#0f172a" opacity="0.10">
+      <rect x="174" y="198" width="236" height="174" rx="80" ry="80" />
+      <path d="M314 338H370C393.196 338 412 356.804 412 380V394C412 410.546 393.268 419.97 380.08 410.12L314 360V338Z" />
+    </g>
+    <g fill="#ffffff">
+      <rect x="166" y="188" width="236" height="174" rx="80" ry="80" />
+      <path d="M306 328H366C390.301 328 410 347.699 410 372V390C410 407.328 390.383 417.202 376.575 406.221L306 350V328Z" />
+    </g>
+    <circle cx="228" cy="252" r="14" fill="#1a8de9" />
+    <circle cx="274" cy="252" r="14" fill="#1abc9c" />
+    <rect x="214" y="292" width="124" height="18" rx="9" ry="9" fill="#1a8de9" />
+    <rect x="214" y="324" width="88" height="18" rx="9" ry="9" fill="#1abc9c" />
+  </g>
 </svg>

@@ -56,16 +56,21 @@ export const useAppPromptModes = ({
       return;
     }
 
+    const pendingActivation = pendingCanvasPromptActivation;
     const targetMatches =
-      pendingCanvasPromptActivation.targetSessionId === null ||
-      pendingCanvasPromptActivation.targetSessionId === activeSessionId;
+      pendingActivation.targetSessionId === null ||
+      pendingActivation.targetSessionId === activeSessionId;
 
     if (!targetMatches) {
       return;
     }
 
     if (activeChat && isCanvasSystemInstruction(activeChat.settings.systemInstruction)) {
-      setPendingCanvasPromptActivation(null);
+      queueMicrotask(() => {
+        setPendingCanvasPromptActivation((current) =>
+          current === pendingActivation ? null : current,
+        );
+      });
       return;
     }
 
@@ -78,9 +83,15 @@ export const useAppPromptModes = ({
         ? prev
         : {
             ...prev,
-            systemInstruction: pendingCanvasPromptActivation.systemInstruction,
+            systemInstruction: pendingActivation.systemInstruction,
           },
     );
+
+    queueMicrotask(() => {
+      setPendingCanvasPromptActivation((current) =>
+        current === pendingActivation ? null : current,
+      );
+    });
   }, [activeChat, activeSessionId, pendingCanvasPromptActivation, setCurrentChatSettings]);
 
   const activateCanvasPrompt = useCallback(

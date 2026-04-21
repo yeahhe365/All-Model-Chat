@@ -59,21 +59,19 @@ export const useAppEvents = ({
         }
     }, []);
 
-    useEffect(() => {
-        setInstallState(
-          getPwaInstallState({
-            installPromptEvent,
-            win: window,
-          }),
-        );
-    }, [installPromptEvent]);
-
     // PWA Installation Handlers
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
             e.preventDefault();
             logService.info('PWA install prompt available.');
-            setInstallPromptEvent(e as BeforeInstallPromptEvent);
+            const nextPromptEvent = e as BeforeInstallPromptEvent;
+            setInstallPromptEvent(nextPromptEvent);
+            setInstallState(
+              getPwaInstallState({
+                installPromptEvent: nextPromptEvent,
+                win: window,
+              }),
+            );
         };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
         return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -164,6 +162,12 @@ export const useAppEvents = ({
             const { outcome } = await installPromptEvent.userChoice;
             logService.info(`PWA install prompt outcome: ${outcome}`);
             setInstallPromptEvent(null);
+            setInstallState(
+              getPwaInstallState({
+                installPromptEvent: null,
+                win: window,
+              }),
+            );
             return;
         }
 

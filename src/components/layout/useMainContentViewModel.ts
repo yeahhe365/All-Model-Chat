@@ -124,19 +124,22 @@ export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions)
     }));
   }, [setAppSettings]);
 
+  const gemmaReasoningEnabled = chatState.currentChatSettings.showThoughts;
+  const setCurrentChatSettings = chatState.setCurrentChatSettings;
+
   const onToggleGemmaReasoning = useCallback(() => {
-    const nextGemmaReasoningEnabled = !chatState.currentChatSettings.showThoughts;
+    const nextGemmaReasoningEnabled = !gemmaReasoningEnabled;
 
     setAppSettings((prev) => ({
       ...prev,
       showThoughts: nextGemmaReasoningEnabled,
     }));
 
-    chatState.setCurrentChatSettings((prev) => ({
+    setCurrentChatSettings((prev) => ({
       ...prev,
       showThoughts: nextGemmaReasoningEnabled,
     }));
-  }, [chatState.currentChatSettings.showThoughts, chatState.setCurrentChatSettings, setAppSettings]);
+  }, [gemmaReasoningEnabled, setAppSettings, setCurrentChatSettings]);
 
   const messageActions: ChatAreaProps['chatArea']['messageActions'] = useMemo(
     () => ({

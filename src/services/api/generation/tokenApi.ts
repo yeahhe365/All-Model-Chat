@@ -10,7 +10,8 @@ const sanitizeCountTokensConfig = (
         return undefined;
     }
 
-    const { generationConfig: _unsupportedGenerationConfig, ...rest } = config;
+    const rest = { ...config };
+    delete (rest as { generationConfig?: CountTokensConfig['generationConfig'] }).generationConfig;
     return Object.keys(rest).length > 0 ? rest : undefined;
 };
 
