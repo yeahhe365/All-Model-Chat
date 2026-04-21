@@ -232,7 +232,8 @@ test('collapsed recent chats popover opened by click stays open until explicit d
 });
 
 test.describe('mobile sidebar tap targets', () => {
-  const { defaultBrowserType: _defaultBrowserType, ...mobileDevice } = devices['iPhone 13'];
+  const mobileDevice = { ...devices['iPhone 13'] };
+  delete (mobileDevice as { defaultBrowserType?: string }).defaultBrowserType;
 
   test.use(mobileDevice);
 

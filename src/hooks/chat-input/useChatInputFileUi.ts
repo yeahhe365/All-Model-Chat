@@ -99,7 +99,7 @@ export const useChatInputFileUi = ({
     async (content: string | Blob, filename: string) => {
       justInitiatedFileOpRef.current = true;
 
-      const sanitizeFilename = (name: string) => name.trim().replace(/[<>:\"/\\\\|?*]+/g, '_');
+      const sanitizeFilename = (name: string) => name.trim().replace(/[<>:"/\\|?*]+/g, '_');
 
       let finalFilename = filename.trim() ? sanitizeFilename(filename) : `file-${Date.now()}.txt`;
 

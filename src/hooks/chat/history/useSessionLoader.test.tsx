@@ -2,7 +2,8 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChatGroup, ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
+import type { ChatMessage, SavedChatSession, UploadedFile } from '../../../types';
+import { MediaResolution } from '../../../types';
 
 const {
   mockCreateNewSession,
@@ -104,7 +105,7 @@ const createSession = (id: string, title: string): SavedChatSession => ({
       id: `${id}-message`,
       role: 'user',
       content: `${title} content`,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(),
     },
   ],
   settings: {
@@ -125,7 +126,7 @@ const createSession = (id: string, title: string): SavedChatSession => ({
     isRawModeEnabled: false,
     hideThinkingInContext: false,
     safetySettings: [],
-    mediaResolution: 'MEDIA_RESOLUTION_UNSPECIFIED',
+    mediaResolution: MediaResolution.MEDIA_RESOLUTION_UNSPECIFIED,
   },
 });
 
