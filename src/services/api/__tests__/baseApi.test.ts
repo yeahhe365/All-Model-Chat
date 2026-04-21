@@ -337,6 +337,101 @@ describe('buildGenerationConfig', () => {
     expect(config.tools).toBeUndefined();
   });
 
+  it('supports image-only output mode for Gemini image models', async () => {
+    const config = await (buildGenerationConfig as unknown as (
+      modelId: string,
+      systemInstruction: string,
+      config: typeof baseConfig,
+      showThoughts: boolean,
+      thinkingBudget: number,
+      isGoogleSearchEnabled?: boolean,
+      isCodeExecutionEnabled?: boolean,
+      isUrlContextEnabled?: boolean,
+      thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
+      aspectRatio?: string,
+      isDeepSearchEnabled?: boolean,
+      imageSize?: string,
+      safetySettings?: unknown,
+      mediaResolution?: unknown,
+      isLocalPythonEnabled?: boolean,
+      imageOutputMode?: string,
+      personGeneration?: string,
+    ) => Promise<any>)(
+      'gemini-3.1-flash-image-preview',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '1:1',
+      false,
+      '2K',
+      undefined,
+      undefined,
+      false,
+      'IMAGE_ONLY',
+      'ALLOW_ADULT',
+    );
+
+    expect(config.responseModalities).toEqual(['IMAGE']);
+    expect(config.imageConfig).toEqual(
+      expect.objectContaining({
+        aspectRatio: '1:1',
+        imageSize: '2K',
+        personGeneration: 'ALLOW_ADULT',
+      }),
+    );
+  });
+
+  it('adds personGeneration to Gemini 2.5 image config when requested', async () => {
+    const config = await (buildGenerationConfig as unknown as (
+      modelId: string,
+      systemInstruction: string,
+      config: typeof baseConfig,
+      showThoughts: boolean,
+      thinkingBudget: number,
+      isGoogleSearchEnabled?: boolean,
+      isCodeExecutionEnabled?: boolean,
+      isUrlContextEnabled?: boolean,
+      thinkingLevel?: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH',
+      aspectRatio?: string,
+      isDeepSearchEnabled?: boolean,
+      imageSize?: string,
+      safetySettings?: unknown,
+      mediaResolution?: unknown,
+      isLocalPythonEnabled?: boolean,
+      imageOutputMode?: string,
+      personGeneration?: string,
+    ) => Promise<any>)(
+      'gemini-2.5-flash-image',
+      'sys',
+      baseConfig,
+      false,
+      0,
+      false,
+      false,
+      false,
+      undefined,
+      '16:9',
+      false,
+      undefined,
+      undefined,
+      undefined,
+      false,
+      'IMAGE_TEXT',
+      'DONT_ALLOW',
+    );
+
+    expect(config.responseModalities).toEqual(['IMAGE', 'TEXT']);
+    expect(config.imageConfig).toEqual({
+      aspectRatio: '16:9',
+      personGeneration: 'ALLOW_NONE',
+    });
+  });
+
   it('includes thinkingConfig for Gemini 3 models', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,

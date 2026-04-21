@@ -2,6 +2,7 @@
 import React from 'react';
 import { AppSettings, ChatMessage, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../types';
 import type { Part, UsageMetadata } from '@google/genai';
+import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
 
 export type SessionsUpdater = (
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -47,6 +48,8 @@ export interface StandardChatProps extends BaseSenderProps {
     setEditingMessageId: (id: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
+    imageOutputMode: ImageOutputMode;
+    personGeneration: ImagePersonGeneration;
     userScrolledUpRef: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;

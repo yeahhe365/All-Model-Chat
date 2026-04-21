@@ -84,6 +84,8 @@ describe('chatStore', () => {
       isAppProcessingFile: false,
       aspectRatio: '1:1',
       imageSize: '1K',
+      imageOutputMode: 'IMAGE_TEXT',
+      personGeneration: 'ALLOW_ADULT',
       isSwitchingModel: false,
     });
   });
@@ -169,6 +171,16 @@ describe('chatStore', () => {
     it('setImageSize', () => {
       useChatStore.getState().setImageSize('2K');
       expect(useChatStore.getState().imageSize).toBe('2K');
+    });
+
+    it('setImageOutputMode', () => {
+      useChatStore.getState().setImageOutputMode('IMAGE_ONLY');
+      expect(useChatStore.getState().imageOutputMode).toBe('IMAGE_ONLY');
+    });
+
+    it('setPersonGeneration', () => {
+      useChatStore.getState().setPersonGeneration('DONT_ALLOW');
+      expect(useChatStore.getState().personGeneration).toBe('DONT_ALLOW');
     });
 
     it('setIsSwitchingModel', () => {

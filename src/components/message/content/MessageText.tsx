@@ -87,10 +87,10 @@ export const MessageText: React.FC<MessageTextProps> = ({
                 </div>
             )}
 
-            {(effectiveContent && (groundingMetadata || urlContextMetadata)) ? (
+            {(groundingMetadata || urlContextMetadata) ? (
               <GroundedResponse 
                 messageId={message.id}
-                text={displayedContent} // Use smoothed text
+                text={displayedContent || ''} // Use smoothed text when available
                 metadata={groundingMetadata} 
                 urlContextMetadata={urlContextMetadata}
                 isLoading={isLoading} 

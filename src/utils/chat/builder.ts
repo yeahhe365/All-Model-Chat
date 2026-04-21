@@ -14,6 +14,17 @@ const PART_MEDIA_RESOLUTION_LEVEL = {
   MEDIA_RESOLUTION_ULTRA_HIGH: 'MEDIA_RESOLUTION_ULTRA_HIGH',
 } as const;
 
+const isGeminiImageHistoryTarget = (modelId?: string): boolean => {
+  if (!modelId) return false;
+
+  const lowerId = modelId.toLowerCase();
+  return (
+    lowerId.includes('gemini-2.5-flash-image') ||
+    lowerId === 'gemini-3-pro-image-preview' ||
+    lowerId === 'gemini-3.1-flash-image-preview'
+  );
+};
+
 const toPartMediaResolutionLevel = (resolution: MediaResolution): PartMediaResolutionLevel => {
   switch (resolution) {
     case MediaResolution.MEDIA_RESOLUTION_LOW:
@@ -264,7 +275,8 @@ export const createChatHistoryForApi = async (
                             if (partCopy.inlineData) {
                                 const mimeType = partCopy.inlineData.mimeType || 'unknown';
                                 const canRehydrateGeneratedMedia =
-                                    hasCodeExecutionArtifacts && mimeType.startsWith('image/');
+                                    mimeType.startsWith('image/') &&
+                                    (hasCodeExecutionArtifacts || isGeminiImageHistoryTarget(modelId));
                                 const generatedFile = canRehydrateGeneratedMedia ? takeGeneratedFile(mimeType) : undefined;
 
                                 if (generatedFile?.rawFile instanceof Blob) {

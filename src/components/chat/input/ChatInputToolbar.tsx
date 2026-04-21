@@ -5,6 +5,8 @@ import { AddFileByIdInput } from './toolbar/AddFileByIdInput';
 import { AddUrlInput } from './toolbar/AddUrlInput';
 import { ImagenAspectRatioSelector } from './toolbar/ImagenAspectRatioSelector';
 import { ImageSizeSelector } from './toolbar/ImageSizeSelector';
+import { ImageOutputModeSelector } from './toolbar/ImageOutputModeSelector';
+import { PersonGenerationSelector } from './toolbar/PersonGenerationSelector';
 import { QuadImageToggle } from './toolbar/QuadImageToggle';
 import { TtsVoiceSelector } from './toolbar/TtsVoiceSelector';
 import { MediaResolutionSelector } from './toolbar/MediaResolutionSelector';
@@ -14,6 +16,7 @@ import { Clapperboard } from 'lucide-react';
 export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   isImagenModel,
   isGemini3ImageModel,
+  isRealImagenModel,
   isTtsModel,
   ttsVoice,
   setTtsVoice,
@@ -21,6 +24,10 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   setAspectRatio,
   imageSize,
   setImageSize,
+  imageOutputMode,
+  setImageOutputMode,
+  personGeneration,
+  setPersonGeneration,
   fileError,
   showAddByIdInput,
   fileIdInput,
@@ -48,6 +55,8 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
 }) => {
   const showAspectRatio = (isImagenModel || isGemini3ImageModel) && setAspectRatio && aspectRatio;
   const showImageSize = supportedImageSizes && supportedImageSizes.length > 0 && setImageSize && imageSize;
+  const showImageOutputMode = isImagenModel && !isRealImagenModel && setImageOutputMode && imageOutputMode;
+  const showPersonGeneration = isImagenModel && setPersonGeneration && personGeneration;
   const showQuadToggle = (isImagenModel || isGemini3ImageModel) && onToggleQuadImages && generateQuadImages !== undefined;
   
   // Allow voice selection for both explicit TTS models and Native Audio (Live) models
@@ -56,11 +65,11 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
   // Show Media Resolution selector for Native Audio (Live API) to control stream quality
   const showMediaResolution = isNativeAudioModel && mediaResolution && setMediaResolution;
   
-  const hasVisibleContent = showAspectRatio || showImageSize || showQuadToggle || showTtsVoice || showMediaResolution || fileError || showAddByIdInput || showAddByUrlInput;
+  const hasVisibleContent = showAspectRatio || showImageSize || showImageOutputMode || showPersonGeneration || showQuadToggle || showTtsVoice || showMediaResolution || fileError || showAddByIdInput || showAddByUrlInput;
 
   return (
     <div className={`flex flex-col gap-1.5 ${hasVisibleContent ? 'mb-1' : ''}`}>
-      {(showAspectRatio || showImageSize || showQuadToggle || showTtsVoice || showMediaResolution) && (
+      {(showAspectRatio || showImageSize || showImageOutputMode || showPersonGeneration || showQuadToggle || showTtsVoice || showMediaResolution) && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {showTtsVoice && <TtsVoiceSelector ttsVoice={ttsVoice!} setTtsVoice={setTtsVoice!} t={t as (key: string) => string} />}
             {isTtsModel && onEditTtsContext && (
@@ -83,6 +92,8 @@ export const ChatInputToolbar: React.FC<ChatInputToolbarProps> = ({
             {showMediaResolution && <MediaResolutionSelector mediaResolution={mediaResolution!} setMediaResolution={setMediaResolution!} t={t as (key: string) => string} isNativeAudioModel={isNativeAudioModel} />}
             {showAspectRatio && <ImagenAspectRatioSelector aspectRatio={aspectRatio!} setAspectRatio={setAspectRatio!} t={t as (key: string) => string} supportedRatios={supportedAspectRatios} />}
             {showImageSize && <ImageSizeSelector imageSize={imageSize!} setImageSize={setImageSize!} t={t as (key: string) => string} supportedSizes={supportedImageSizes} />}
+            {showImageOutputMode && <ImageOutputModeSelector imageOutputMode={imageOutputMode!} setImageOutputMode={setImageOutputMode!} t={t as (key: string) => string} />}
+            {showPersonGeneration && <PersonGenerationSelector personGeneration={personGeneration!} setPersonGeneration={setPersonGeneration!} t={t as (key: string) => string} />}
             {showQuadToggle && <QuadImageToggle enabled={generateQuadImages!} onToggle={onToggleQuadImages!} t={t as (key: string) => string} />}
         </div>
       )}

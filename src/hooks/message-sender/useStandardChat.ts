@@ -32,6 +32,8 @@ export const useStandardChat = ({
   setEditingMessageId,
   aspectRatio,
   imageSize,
+  imageOutputMode,
+  personGeneration,
   userScrolledUpRef,
   activeSessionId,
   setActiveSessionId,
@@ -288,7 +290,9 @@ export const useStandardChat = ({
         imageSize,
         sessionToUpdate.safetySettings,
         sessionToUpdate.mediaResolution,
-        false
+        false,
+        imageOutputMode,
+        personGeneration,
       );
 
       if (standardFunctionDeclarations.length > 0) {

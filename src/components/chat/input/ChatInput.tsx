@@ -33,6 +33,7 @@ const ChatInputComponent: React.FC = () => {
   const toolbarProps: ChatInputToolbarProps = {
     isImagenModel: capabilities.isImagenModel || false,
     isGemini3ImageModel: capabilities.isGemini3ImageModel,
+    isRealImagenModel: capabilities.isRealImagenModel,
     isTtsModel: capabilities.isTtsModel,
     ttsVoice: chatInput.currentChatSettings.ttsVoice,
     setTtsVoice: (voice) => chatInput.setCurrentChatSettings((prev) => ({ ...prev, ttsVoice: voice })),
@@ -40,6 +41,10 @@ const ChatInputComponent: React.FC = () => {
     setAspectRatio: chatInput.setAspectRatio,
     imageSize: chatInput.imageSize,
     setImageSize: chatInput.setImageSize,
+    imageOutputMode: chatInput.imageOutputMode,
+    setImageOutputMode: chatInput.setImageOutputMode,
+    personGeneration: chatInput.personGeneration,
+    setPersonGeneration: chatInput.setPersonGeneration,
     fileError: chatInput.fileError,
     showAddByIdInput: modalsState.showAddByIdInput,
     fileIdInput: inputState.fileIdInput,

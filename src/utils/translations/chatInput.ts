@@ -2,6 +2,13 @@ export const chatInputTranslations = {
     // ChatInput.tsx and subcomponents
     chatInputPlaceholder: { en: 'Ask anything...', zh: '询问任何问题' },
     aspectRatio_title: { en: 'Aspect Ratio', zh: '宽高比' },
+    imageOutputMode_title: { en: 'Output Mode', zh: '输出模式' },
+    imageOutputMode_textAndImage: { en: 'Text + Image', zh: '文本 + 图片' },
+    imageOutputMode_imageOnly: { en: 'Image Only', zh: '仅图片' },
+    personGeneration_title: { en: 'People', zh: '人物生成' },
+    personGeneration_allowAdult: { en: 'Adults Only', zh: '仅成人' },
+    personGeneration_allowAll: { en: 'Adults + Children', zh: '成人 + 儿童' },
+    personGeneration_dontAllow: { en: 'No People', zh: '禁用人物' },
     addById_placeholder: { en: 'Paste File ID (e.g., files/xyz123)', zh: '粘贴文件 ID (例如 files/xyz123)' },
     addById_aria: { en: 'File ID input', zh: '文件 ID 输入框' },
     addById_button_aria: { en: 'Add file by ID', zh: '通过 ID 添加文件' },

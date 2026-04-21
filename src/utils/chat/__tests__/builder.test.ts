@@ -452,6 +452,38 @@ describe('createChatHistoryForApi', () => {
     });
   });
 
+  it('rehydrates generated image-model media when rebuilding history for Gemini image turns', async () => {
+    const generatedImage = makeFile({
+      name: 'generated-image.png',
+      type: 'image/png',
+      rawFile: new Blob(['png'], { type: 'image/png' }),
+    });
+
+    const msgs = [
+      makeMessage('model', '', {
+        files: [generatedImage],
+        apiParts: [
+          { text: 'Here is an updated result.', thoughtSignature: 'sig-text' } as any,
+          {
+            inlineData: { mimeType: 'image/png', data: '' },
+            thoughtSignature: 'sig-image',
+          } as any,
+        ],
+      }),
+    ];
+
+    const history = await createChatHistoryForApi(msgs, false, 'gemini-3.1-flash-image-preview');
+
+    expect(history[0].parts[0]).toEqual({
+      text: 'Here is an updated result.',
+      thoughtSignature: 'sig-text',
+    });
+    expect(history[0].parts[1]).toEqual({
+      inlineData: { mimeType: 'image/png', data: 'base64data' },
+      thoughtSignature: 'sig-image',
+    });
+  });
+
   it('rebuilds prior user text files as file inputs when code execution file I/O is preferred', async () => {
     const msgs = [
       makeMessage('user', 'Please analyze the attached CSV', {

@@ -11,7 +11,7 @@ import type {
   UploadedFile,
   VideoMetadata,
 } from '../../../types';
-import type { MediaResolution } from '../../../types/settings';
+import type { ImageOutputMode, ImagePersonGeneration, MediaResolution } from '../../../types/settings';
 
 export interface ChatAreaMessageListContextValue {
   messages: ChatMessage[];
@@ -72,6 +72,10 @@ export interface ChatAreaInputContextValue {
   setAspectRatio?: (ratio: string) => void;
   imageSize?: string;
   setImageSize?: (size: string) => void;
+  imageOutputMode?: ImageOutputMode;
+  setImageOutputMode?: (mode: ImageOutputMode) => void;
+  personGeneration?: ImagePersonGeneration;
+  setPersonGeneration?: (mode: ImagePersonGeneration) => void;
   isGoogleSearchEnabled: boolean;
   onToggleGoogleSearch: () => void;
   isCodeExecutionEnabled: boolean;

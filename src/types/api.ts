@@ -1,6 +1,6 @@
 
 import type { Content, CountTokensConfig, Part, UsageMetadata, File as GeminiFile, FunctionDeclaration } from "@google/genai";
-import type { SafetySetting } from './settings';
+import type { ImageOutputMode, ImagePersonGeneration, SafetySetting } from './settings';
 import type { UploadedFile } from './chat';
 
 export type ChatHistoryItem = Content & {
@@ -74,6 +74,13 @@ export interface EditImageRequestConfig {
   isGoogleSearchEnabled?: boolean;
   isDeepSearchEnabled?: boolean;
   safetySettings?: SafetySetting[];
+  imageOutputMode?: ImageOutputMode;
+  personGeneration?: ImagePersonGeneration;
+}
+
+export interface GenerateImagesRequestOptions {
+  numberOfImages?: number;
+  personGeneration?: ImagePersonGeneration;
 }
 
 export interface GeminiService {
@@ -91,7 +98,15 @@ export interface GeminiService {
   sendMessageStream: StreamMessageSender;
   sendMessageNonStream: NonStreamMessageSender;
 
-  generateImages: (apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal) => Promise<string[]>;
+  generateImages: (
+    apiKey: string,
+    modelId: string,
+    prompt: string,
+    aspectRatio: string,
+    imageSize: string | undefined,
+    abortSignal: AbortSignal,
+    options?: GenerateImagesRequestOptions,
+  ) => Promise<string[]>;
   generateSpeech: (apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal) => Promise<string>;
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string) => Promise<string>;
   translateText(apiKey: string, text: string, targetLanguage?: string): Promise<string>;

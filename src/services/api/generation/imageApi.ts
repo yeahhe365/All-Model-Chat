@@ -1,4 +1,5 @@
 import type { GenerateImagesConfig } from '@google/genai';
+import type { GenerateImagesRequestOptions } from '../../../types';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTelemetry';
@@ -6,7 +7,15 @@ import { buildExactImageGenerationPricing } from '../../../utils/usagePricingTel
 const supportsImagenImageSize = (modelId: string): boolean =>
     modelId === 'imagen-4.0-generate-001' || modelId === 'imagen-4.0-ultra-generate-001';
 
-export const generateImagesApi = async (apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal): Promise<string[]> => {
+export const generateImagesApi = async (
+    apiKey: string,
+    modelId: string,
+    prompt: string,
+    aspectRatio: string,
+    imageSize: string | undefined,
+    abortSignal: AbortSignal,
+    options: GenerateImagesRequestOptions = {},
+): Promise<string[]> => {
     logService.info(`Generating image with model ${modelId}`, { prompt, aspectRatio, imageSize });
     
     if (!prompt.trim()) {
@@ -22,13 +31,18 @@ export const generateImagesApi = async (apiKey: string, modelId: string, prompt:
     try {
         const ai = await getConfiguredApiClient(apiKey);
         const config: GenerateImagesConfig = { 
-            numberOfImages: 1, 
+            abortSignal,
+            numberOfImages: options.numberOfImages ?? 1, 
             outputMimeType: 'image/png', 
             aspectRatio: aspectRatio 
         };
 
         if (imageSize && supportsImagenImageSize(modelId)) {
             config.imageSize = imageSize;
+        }
+
+        if (options.personGeneration) {
+            config.personGeneration = options.personGeneration as GenerateImagesConfig['personGeneration'];
         }
 
         const response = await ai.models.generateImages({

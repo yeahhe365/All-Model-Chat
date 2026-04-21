@@ -1,6 +1,7 @@
 
 import React, { useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
+import type { ImagePersonGeneration } from '../../types/settings';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
@@ -33,6 +34,7 @@ export const useTtsImagenSender = ({
         text: string,
         aspectRatio: string,
         imageSize: string | undefined,
+        personGeneration: ImagePersonGeneration,
         options: { shouldLockKey?: boolean } = {}
     ) => {
         const isTtsModel = currentChatSettings.modelId.includes('-tts');
@@ -91,14 +93,18 @@ export const useTtsImagenSender = ({
                 }
 
             } else { // Imagen
-                const imageBase64Array = appSettings.generateQuadImages
-                    ? (await Promise.all([
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
-                        geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal),
-                    ])).flat()
-                    : await geminiServiceInstance.generateImages(keyToUse, currentChatSettings.modelId, text, aspectRatio, imageSize, newAbortController.signal);
+                const imageBase64Array = await geminiServiceInstance.generateImages(
+                    keyToUse,
+                    currentChatSettings.modelId,
+                    text,
+                    aspectRatio,
+                    imageSize,
+                    newAbortController.signal,
+                    {
+                        numberOfImages: appSettings.generateQuadImages ? 4 : 1,
+                        personGeneration,
+                    },
+                );
 
                 if (newAbortController.signal.aborted) throw new Error("aborted");
                 

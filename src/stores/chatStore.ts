@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, InputCommand, ChatSettings } from '../types';
 import type { SyncMessage } from '../types/sync';
+import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { dbService } from '../utils/db';
 import { logService, rehydrateSessionFiles, resolveSupportedModelId } from '../utils/appUtils';
 import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
@@ -107,6 +108,8 @@ interface ChatState {
   isAppProcessingFile: boolean;
   aspectRatio: string;
   imageSize: string;
+  imageOutputMode: ImageOutputMode;
+  personGeneration: ImagePersonGeneration;
   isSwitchingModel: boolean;
 
   // Read-only refs (accessed via helpers, not reactive)
@@ -133,6 +136,8 @@ interface ChatActions {
   setIsAppProcessingFile: (v: UpdaterOrValue<boolean>) => void;
   setAspectRatio: (v: UpdaterOrValue<string>) => void;
   setImageSize: (v: UpdaterOrValue<string>) => void;
+  setImageOutputMode: (v: UpdaterOrValue<ImageOutputMode>) => void;
+  setPersonGeneration: (v: UpdaterOrValue<ImagePersonGeneration>) => void;
   setIsSwitchingModel: (v: UpdaterOrValue<boolean>) => void;
 
   // Persistence
@@ -163,6 +168,8 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   isAppProcessingFile: false,
   aspectRatio: '1:1',
   imageSize: '1K',
+  imageOutputMode: 'IMAGE_TEXT',
+  personGeneration: 'ALLOW_ADULT',
   isSwitchingModel: false,
 
   _activeJobs,
@@ -230,6 +237,16 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
   setImageSize: (value) =>
     set((state) => ({
       imageSize: typeof value === 'function' ? value(state.imageSize) : value,
+    })),
+  setImageOutputMode: (value) =>
+    set((state) => ({
+      imageOutputMode:
+        typeof value === 'function' ? value(state.imageOutputMode) : value,
+    })),
+  setPersonGeneration: (value) =>
+    set((state) => ({
+      personGeneration:
+        typeof value === 'function' ? value(state.personGeneration) : value,
     })),
   setIsSwitchingModel: (value) =>
     set((state) => ({

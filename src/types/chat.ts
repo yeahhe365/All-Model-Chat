@@ -1,4 +1,4 @@
-import { ChatSettings, MediaResolution } from './settings';
+import { ChatSettings, ImageOutputMode, ImagePersonGeneration, MediaResolution } from './settings';
 import type { Part } from '@google/genai';
 
 export interface VideoMetadata {
@@ -151,6 +151,7 @@ export interface SideViewContent {
 export interface ChatInputToolbarProps {
   isImagenModel: boolean;
   isGemini3ImageModel?: boolean;
+  isRealImagenModel?: boolean;
   isTtsModel?: boolean;
   ttsVoice?: string;
   setTtsVoice?: (voice: string) => void;
@@ -158,6 +159,10 @@ export interface ChatInputToolbarProps {
   setAspectRatio?: (ratio: string) => void;
   imageSize?: string;
   setImageSize?: (size: string) => void;
+  imageOutputMode?: ImageOutputMode;
+  setImageOutputMode?: (mode: ImageOutputMode) => void;
+  personGeneration?: ImagePersonGeneration;
+  setPersonGeneration?: (mode: ImagePersonGeneration) => void;
   fileError: string | null;
   showAddByIdInput: boolean;
   fileIdInput: string;

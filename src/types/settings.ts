@@ -29,6 +29,9 @@ export enum MediaResolution {
   MEDIA_RESOLUTION_ULTRA_HIGH = 'MEDIA_RESOLUTION_ULTRA_HIGH',
 }
 
+export type ImageOutputMode = 'IMAGE_TEXT' | 'IMAGE_ONLY';
+export type ImagePersonGeneration = 'ALLOW_ADULT' | 'ALLOW_ALL' | 'DONT_ALLOW';
+
 export interface SafetySetting {
     category: HarmCategory;
     threshold: HarmBlockThreshold;

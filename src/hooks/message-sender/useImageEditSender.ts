@@ -3,11 +3,13 @@
 
 import React, { useCallback } from 'react';
 import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings as IndividualChatSettings } from '../../types';
+import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound, shouldStripThinkingFromContext } from '../../utils/appUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import type { Part } from '@google/genai';
+import { appendApiPart } from '../chat-stream/processors';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;
 
@@ -39,6 +41,8 @@ export const useImageEditSender = ({
         effectiveEditingId: string | null,
         aspectRatio: string,
         imageSize: string | undefined,
+        imageOutputMode: ImageOutputMode,
+        personGeneration: ImagePersonGeneration,
         options: { shouldLockKey?: boolean } = {}
     ) => {
         const modelMessageId = generationId;
@@ -114,6 +118,8 @@ export const useImageEditSender = ({
                     isGoogleSearchEnabled: !!currentChatSettings.isGoogleSearchEnabled,
                     isDeepSearchEnabled: !!currentChatSettings.isDeepSearchEnabled,
                     safetySettings: currentChatSettings.safetySettings,
+                    imageOutputMode,
+                    personGeneration,
                 },
             );
 
@@ -124,6 +130,7 @@ export const useImageEditSender = ({
 
             let combinedText = '';
             const combinedFiles: UploadedFile[] = [];
+            let combinedApiParts: Part[] = [];
             let successfulImageCount = 0;
 
             results.forEach((result, index) => {
@@ -131,6 +138,10 @@ export const useImageEditSender = ({
 
                 if (result.status === 'fulfilled') {
                     const parts: Part[] = result.value;
+                    combinedApiParts = parts.reduce<Part[]>(
+                        (acc, part) => appendApiPart(acc, part),
+                        combinedApiParts,
+                    );
                     let hasImagePart = false;
                     let textPartContent = '';
                     
@@ -167,7 +178,7 @@ export const useImageEditSender = ({
                  combinedText = "[Error: Image generation failed with no specific message.]";
             }
 
-            updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: combinedText.trim(), files: combinedFiles, generationEndTime: new Date() } : m) } : s));
+            updateAndPersistSessions(p => p.map(s => s.id === finalSessionId ? { ...s, messages: s.messages.map(m => m.id === modelMessageId ? { ...m, isLoading: false, content: combinedText.trim(), files: combinedFiles, apiParts: combinedApiParts, generationEndTime: new Date() } : m) } : s));
             
             if (appSettings.isCompletionSoundEnabled) {
                 playCompletionSound();

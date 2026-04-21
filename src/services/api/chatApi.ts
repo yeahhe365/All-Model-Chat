@@ -196,6 +196,14 @@ const processResponse = (response: GenerateContentResponse) => {
     };
 };
 
+const withAbortSignal = <T extends object>(
+    config: T | undefined,
+    abortSignal: AbortSignal,
+): T & { abortSignal: AbortSignal } => ({
+    ...(config || {} as T),
+    abortSignal,
+});
+
 export const generateContentTurnApi = async (
     apiKey: string,
     modelId: string,
@@ -214,7 +222,10 @@ export const generateContentTurnApi = async (
     const response = await ai.models.generateContent({
         model: modelId,
         contents,
-        config: config as Parameters<typeof ai.models.generateContent>[0]['config'],
+        config: withAbortSignal(
+            config as Parameters<typeof ai.models.generateContent>[0]['config'],
+            abortSignal,
+        ),
     });
 
     if (abortSignal.aborted) {
@@ -268,7 +279,10 @@ export const sendStatelessMessageStreamApi: StreamMessageSender = async (
         const result = await ai.models.generateContentStream({
             model: modelId,
             contents,
-            config: config as Parameters<typeof ai.models.generateContentStream>[0]['config'],
+            config: withAbortSignal(
+                config as Parameters<typeof ai.models.generateContentStream>[0]['config'],
+                abortSignal,
+            ),
         });
 
         for await (const chunkResponse of result) {
@@ -347,7 +361,10 @@ export const sendStatelessMessageNonStreamApi: NonStreamMessageSender = async (
         const response = await ai.models.generateContent({
             model: modelId,
             contents,
-            config: config as Parameters<typeof ai.models.generateContent>[0]['config'],
+            config: withAbortSignal(
+                config as Parameters<typeof ai.models.generateContent>[0]['config'],
+                abortSignal,
+            ),
         });
 
         if (abortSignal.aborted) { onComplete([], "", undefined, undefined, undefined); return; }

@@ -11,6 +11,7 @@ import { useStandardChat } from './message-sender/useStandardChat';
 import { getModelCapabilities } from '../utils/modelHelpers';
 import { useI18n } from '../contexts/I18nContext';
 import { getApiKeyErrorTranslationKey } from '../utils/apiUtils';
+import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 
 type SessionsUpdater = (
     updater: (prev: SavedChatSession[]) => SavedChatSession[],
@@ -28,6 +29,8 @@ interface MessageSenderProps {
     setAppFileError: (error: string | null) => void;
     aspectRatio: string;
     imageSize?: string;
+    imageOutputMode: ImageOutputMode;
+    personGeneration: ImagePersonGeneration;
     userScrolledUpRef: React.MutableRefObject<boolean>;
     activeSessionId: string | null;
     setActiveSessionId: (id: string | null) => void;
@@ -51,6 +54,8 @@ export const useMessageSender = (props: MessageSenderProps) => {
         setAppFileError,
         aspectRatio,
         imageSize,
+        imageOutputMode,
+        personGeneration,
         userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,
@@ -194,7 +199,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         if (overrideOptions?.files === undefined) setSelectedFiles([]);
 
         if (isTtsModel || isImagenModel) {
-            await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, imageSize, { shouldLockKey });
+            await handleTtsImagenMessage(keyToUse, activeSessionId, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), aspectRatio, imageSize, personGeneration, { shouldLockKey });
             if (editingMessageId) setEditingMessageId(null);
             return;
         }
@@ -202,7 +207,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
         if (isImageEditModel || (isGemini3Image && appSettings.generateQuadImages)) {
             const editIndex = effectiveEditingId ? messages.findIndex(m => m.id === effectiveEditingId) : -1;
             const historyMessages = editIndex !== -1 ? messages.slice(0, editIndex) : messages;
-            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, aspectRatio, imageSize, { shouldLockKey });
+            await handleImageEditMessage(keyToUse, activeSessionId, historyMessages, generationId, newAbortController, appSettings, sessionToUpdate, textToUse.trim(), filesToUse, effectiveEditingId, aspectRatio, imageSize, imageOutputMode, personGeneration, { shouldLockKey });
             if (editingMessageId) setEditingMessageId(null);
             return;
         }
@@ -211,7 +216,7 @@ export const useMessageSender = (props: MessageSenderProps) => {
 
     }, [
         appSettings, currentChatSettings, messages, selectedFiles, setSelectedFiles,
-        editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, imageSize,
+        editingMessageId, setEditingMessageId, setAppFileError, aspectRatio, imageSize, imageOutputMode, personGeneration,
         userScrolledUpRef, activeSessionId, setActiveSessionId, updateAndPersistSessions,
         handleTtsImagenMessage, handleImageEditMessage, sendStandardMessage, t, translateApiKeyError
     ]);

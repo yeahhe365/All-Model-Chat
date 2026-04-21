@@ -1,6 +1,6 @@
 
 import { GeminiService, ChatHistoryItem } from '../types';
-import type { EditImageRequestConfig } from '../types';
+import type { EditImageRequestConfig, GenerateImagesRequestOptions } from '../types';
 import type { CountTokensConfig, Part, File as GeminiFile } from "@google/genai";
 import { uploadFileApi, getFileMetadataApi } from './api/fileApi';
 import { generateImagesApi } from './api/generation/imageApi';
@@ -31,8 +31,16 @@ class GeminiServiceImpl implements GeminiService {
         return getFileMetadataApi(apiKey, fileApiName);
     }
 
-    async generateImages(apiKey: string, modelId: string, prompt: string, aspectRatio: string, imageSize: string | undefined, abortSignal: AbortSignal): Promise<string[]> {
-        return generateImagesApi(apiKey, modelId, prompt, aspectRatio, imageSize, abortSignal);
+    async generateImages(
+        apiKey: string,
+        modelId: string,
+        prompt: string,
+        aspectRatio: string,
+        imageSize: string | undefined,
+        abortSignal: AbortSignal,
+        options?: GenerateImagesRequestOptions,
+    ): Promise<string[]> {
+        return generateImagesApi(apiKey, modelId, prompt, aspectRatio, imageSize, abortSignal, options);
     }
 
     async generateSpeech(apiKey: string, modelId: string, text: string, voice: string, abortSignal: AbortSignal): Promise<string> {
@@ -96,6 +104,10 @@ class GeminiServiceImpl implements GeminiService {
                 !!requestConfig?.isDeepSearchEnabled,
                 imageSize,
                 requestConfig?.safetySettings,
+                undefined,
+                undefined,
+                requestConfig?.imageOutputMode,
+                requestConfig?.personGeneration,
             )
                 .then((config) =>
                     sendStatelessMessageNonStreamApi(

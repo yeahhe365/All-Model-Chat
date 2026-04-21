@@ -3,7 +3,7 @@ import type { CountTokensConfig, FunctionDeclaration, GoogleGenAI, Part } from "
 import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
-import { SafetySetting, MediaResolution } from "../../types/settings";
+import { ImageOutputMode, ImagePersonGeneration, SafetySetting, MediaResolution } from "../../types/settings";
 import { isGemini3Model, isGemmaModel } from "../../utils/appUtils";
 import { DEFAULT_GEMINI_API_BASE_URL, normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
@@ -12,6 +12,9 @@ import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../c
 const POLLING_INTERVAL_MS = 2000; // 2 seconds
 const MAX_POLLING_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 const IMAGE_TEXT_MODALITIES = ['IMAGE', 'TEXT'] as const;
+const IMAGE_ONLY_MODALITIES = ['IMAGE'] as const;
+const toGeminiPersonGeneration = (personGeneration: ImagePersonGeneration): 'ALLOW_ADULT' | 'ALLOW_ALL' | 'ALLOW_NONE' =>
+  personGeneration === 'DONT_ALLOW' ? 'ALLOW_NONE' : personGeneration;
 
 export { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS };
 
@@ -26,12 +29,13 @@ type ClientConfig = {
 };
 
 export type GenerationConfig = {
-  responseModalities?: readonly ['IMAGE', 'TEXT'];
+  responseModalities?: ReadonlyArray<'IMAGE' | 'TEXT'>;
   responseMimeType?: string;
   responseSchema?: Record<string, unknown>;
   imageConfig?: {
     aspectRatio?: string;
     imageSize?: string;
+    personGeneration?: 'ALLOW_ADULT' | 'ALLOW_ALL' | 'ALLOW_NONE';
   };
   thinkingConfig?: {
     includeThoughts: boolean;
@@ -57,6 +61,7 @@ export type GenerationConfig = {
   systemInstruction?: string;
   safetySettings?: SafetySetting[];
   mediaResolution?: MediaResolution;
+  abortSignal?: AbortSignal;
 };
 
 type BuildGenerationConfigInput = Pick<
@@ -300,7 +305,9 @@ export const buildGenerationConfig = async (
     imageSize?: string,
     safetySettings?: SafetySetting[],
     mediaResolution?: MediaResolution,
-    isLocalPythonEnabled?: boolean
+    isLocalPythonEnabled?: boolean,
+    imageOutputMode: ImageOutputMode = 'IMAGE_TEXT',
+    personGeneration: ImagePersonGeneration = 'ALLOW_ADULT',
 ): Promise<GenerationConfig> => {
     const googleSearchTool = modelId === 'gemini-3.1-flash-image-preview'
         ? {
@@ -316,9 +323,10 @@ export const buildGenerationConfig = async (
     if (modelId === 'gemini-2.5-flash-image-preview' || modelId === 'gemini-2.5-flash-image') {
         const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {};
         if (aspectRatio && aspectRatio !== 'Auto') imageConfig.aspectRatio = aspectRatio;
+        imageConfig.personGeneration = toGeminiPersonGeneration(personGeneration);
         
         const config: GenerationConfig = {
-            responseModalities: IMAGE_TEXT_MODALITIES,
+            responseModalities: imageOutputMode === 'IMAGE_ONLY' ? IMAGE_ONLY_MODALITIES : IMAGE_TEXT_MODALITIES,
         };
         if (Object.keys(imageConfig).length > 0) {
             config.imageConfig = imageConfig;
@@ -329,13 +337,14 @@ export const buildGenerationConfig = async (
     if (modelId === 'gemini-3-pro-image-preview' || modelId === 'gemini-3.1-flash-image-preview') {
          const imageConfig: NonNullable<GenerationConfig['imageConfig']> = {
             imageSize: imageSize || '1K',
+            personGeneration: toGeminiPersonGeneration(personGeneration),
          };
          if (aspectRatio && aspectRatio !== 'Auto') {
             imageConfig.aspectRatio = aspectRatio;
          }
          
          const config: GenerationConfig = {
-            responseModalities: ['IMAGE', 'TEXT'],
+            responseModalities: imageOutputMode === 'IMAGE_ONLY' ? IMAGE_ONLY_MODALITIES : IMAGE_TEXT_MODALITIES,
             imageConfig,
          };
 

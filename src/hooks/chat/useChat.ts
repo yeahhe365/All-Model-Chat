@@ -38,6 +38,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
     const isAppProcessingFile = useChatStore(s => s.isAppProcessingFile);
     const aspectRatio = useChatStore(s => s.aspectRatio);
     const imageSize = useChatStore(s => s.imageSize);
+    const imageOutputMode = useChatStore(s => s.imageOutputMode);
+    const personGeneration = useChatStore(s => s.personGeneration);
     const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
 
     const setActiveSessionId = useChatStore((s) => s.setActiveSessionId);
@@ -123,6 +125,8 @@ export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch
         setAppFileError,
         aspectRatio,
         imageSize,
+        imageOutputMode,
+        personGeneration,
         userScrolledUpRef,
         activeSessionId,
         setActiveSessionId,

@@ -43,6 +43,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
   const setAspectRatio = useChatStore(s => s.setAspectRatio);
   const imageSize = useChatStore(s => s.imageSize);
   const setImageSize = useChatStore(s => s.setImageSize);
+  const imageOutputMode = useChatStore(s => s.imageOutputMode);
+  const setImageOutputMode = useChatStore(s => s.setImageOutputMode);
+  const personGeneration = useChatStore(s => s.personGeneration);
+  const setPersonGeneration = useChatStore(s => s.setPersonGeneration);
 
   const { chatInputHeight, chatInputContainerRef, isImagenModel, handleQuote, handleInsert } = useChatArea({
     currentChatSettings: session.currentChatSettings,
@@ -125,6 +129,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       setAspectRatio,
       imageSize,
       setImageSize,
+      imageOutputMode,
+      setImageOutputMode,
+      personGeneration,
+      setPersonGeneration,
       isGoogleSearchEnabled: features.isGoogleSearchEnabled,
       onToggleGoogleSearch: inputActions.onToggleGoogleSearch,
       isCodeExecutionEnabled: features.isCodeExecutionEnabled,
@@ -184,11 +192,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       header.onSelectModel,
       header.onTogglePip,
       imageSize,
+      imageOutputMode,
       inputActions,
       isImagenModel,
       isProcessingFile,
       messageActions.onOrganizeInfoClick,
       messageActions.onSuggestionClick,
+      personGeneration,
       selectedFiles,
       session.activeSessionId,
       session.currentChatSettings,
@@ -199,6 +209,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ chatArea }) => {
       setAspectRatio,
       setEditingMessageId,
       setImageSize,
+      setImageOutputMode,
+      setPersonGeneration,
       setSelectedFiles,
       themeId,
     ],

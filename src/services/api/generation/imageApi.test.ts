@@ -48,6 +48,7 @@ describe('generateImagesApi', () => {
       model: 'imagen-4.0-fast-generate-001',
       prompt: 'draw a robot',
       config: {
+        abortSignal: expect.any(AbortSignal),
         numberOfImages: 1,
         outputMimeType: 'image/png',
         aspectRatio: '1:1',
@@ -69,10 +70,47 @@ describe('generateImagesApi', () => {
       model: 'imagen-4.0-generate-001',
       prompt: 'draw a robot',
       config: {
+        abortSignal: expect.any(AbortSignal),
         numberOfImages: 1,
         outputMimeType: 'image/png',
         aspectRatio: '1:1',
         imageSize: '1K',
+      },
+    });
+  });
+
+  it('passes through Imagen-specific generation options', async () => {
+    await (generateImagesApi as unknown as (
+      apiKey: string,
+      modelId: string,
+      prompt: string,
+      aspectRatio: string,
+      imageSize: string | undefined,
+      abortSignal: AbortSignal,
+      options: { numberOfImages: number; personGeneration: string },
+    ) => Promise<string[]>)(
+      'api-key',
+      'imagen-4.0-generate-001',
+      'draw a family portrait',
+      '16:9',
+      '2K',
+      new AbortController().signal,
+      {
+        numberOfImages: 4,
+        personGeneration: 'ALLOW_ALL',
+      },
+    );
+
+    expect(generateImagesMock).toHaveBeenCalledWith({
+      model: 'imagen-4.0-generate-001',
+      prompt: 'draw a family portrait',
+      config: {
+        abortSignal: expect.any(AbortSignal),
+        numberOfImages: 4,
+        outputMimeType: 'image/png',
+        aspectRatio: '16:9',
+        imageSize: '2K',
+        personGeneration: 'ALLOW_ALL',
       },
     });
   });

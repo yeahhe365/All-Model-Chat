@@ -250,6 +250,39 @@ describe('chatApi media resolution routing', () => {
     );
   });
 
+  it('forwards abortSignal through generateContent config for non-stream requests', async () => {
+    mockGenerateContent.mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'done' }],
+          },
+        },
+      ],
+    });
+
+    const abortController = new AbortController();
+
+    await sendStatelessMessageNonStreamApi(
+      'key',
+      'gemini-3.1-flash-image-preview',
+      [],
+      [{ text: 'Generate an icon.' }],
+      { responseModalities: ['IMAGE', 'TEXT'] },
+      abortController.signal,
+      vi.fn(),
+      vi.fn(),
+    );
+
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          abortSignal: abortController.signal,
+        }),
+      }),
+    );
+  });
+
   it('keeps backward compatibility for legacy Gemma thought channel formatting', async () => {
     mockGenerateContent.mockResolvedValue({
       candidates: [
