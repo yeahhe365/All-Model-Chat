@@ -47,6 +47,9 @@ export const isGemmaModel = (modelId: string): boolean =>
 export const isGeminiRoboticsModel = (modelId: string): boolean =>
     !!modelId && modelId.toLowerCase().includes('gemini-robotics-er');
 
+export const supportsThinkingLevel = (modelId: string): boolean =>
+    isGemini3Model(modelId) || isGeminiRoboticsModel(modelId);
+
 const isTtsModel = (modelId: string): boolean => modelId.toLowerCase().includes('tts');
 
 const isGemini3ImageModel = (modelId: string): boolean => (
@@ -101,6 +104,7 @@ export const isGemini3Model = (modelId: string): boolean => {
 
 export const getModelCapabilities = (modelId: string) => {
     const isGemini3 = isGemini3Model(modelId);
+    const supportsThinkingLevelSelection = supportsThinkingLevel(modelId);
     const gemini3ImageModel = isGemini3ImageModel(modelId);
     const flashImageModel = isFlashImageModel(modelId);
     const realImagenModel = isRealImagenModel(modelId);
@@ -128,6 +132,7 @@ export const getModelCapabilities = (modelId: string) => {
 
     return {
         isGemini3,
+        supportsThinkingLevel: supportsThinkingLevelSelection,
         isGemmaModel: isGemmaModel(modelId),
         isGemini3ImageModel: gemini3ImageModel,
         isFlashImageModel: flashImageModel,

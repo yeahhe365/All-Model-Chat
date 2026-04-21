@@ -412,9 +412,11 @@ export const buildGenerationConfig = async (
     }
 
     // Robust check for Gemini 3
-    if (isGemini3) {
-        // Gemini 3.0 supports both thinkingLevel and thinkingBudget.
-        // We prioritize budget if it's explicitly set (>0).
+    const supportsThinkingLevel = isGemini3 || isGeminiRoboticsModel(modelId);
+
+    if (supportsThinkingLevel) {
+        // Gemini 3 and Gemini Robotics-ER 1.6 support both thinkingLevel and
+        // thinkingBudget. We prioritize budget if it's explicitly set (>0).
         generationConfig.thinkingConfig = {
             includeThoughts: true, // Always capture thoughts in data; UI toggles visibility
         };

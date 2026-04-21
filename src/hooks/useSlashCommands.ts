@@ -82,7 +82,8 @@ export const useSlashCommands = ({
     { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
     { name: 'fast', description: t('help_cmd_fast'), icon: 'fast', action: () => {
         const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
-        const targetLevel = isGemini3Flash ? 'MINIMAL' : 'LOW';
+        const isGeminiRobotics = currentModelId.includes('gemini-robotics-er');
+        const targetLevel = (isGemini3Flash || isGeminiRobotics) ? 'MINIMAL' : 'LOW';
         onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
     }},
   ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);

@@ -511,8 +511,19 @@ describe('buildGenerationConfig', () => {
       'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, -1,
     );
     expect(config.thinkingConfig).toEqual({
-      thinkingBudget: -1,
       includeThoughts: true,
+      thinkingLevel: 'HIGH',
+    });
+  });
+
+  it('uses thinkingLevel when budget is 0 for Gemini Robotics-ER 1.6', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, 0,
+      false, false, false, 'LOW',
+    );
+    expect(config.thinkingConfig).toEqual({
+      includeThoughts: true,
+      thinkingLevel: 'LOW',
     });
   });
 

@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Info, Lightbulb } from 'lucide-react';
 import { THINKING_BUDGET_RANGES, MODELS_MANDATORY_THINKING } from '../../../../constants/appConstants';
 import { Tooltip } from '../../../shared/Tooltip';
-import { Toggle } from '../../../shared/Toggle';
 import { getModelCapabilities, isGemini3Model } from '../../../../utils/modelHelpers';
 import { ThinkingModeSelector } from './ThinkingModeSelector';
 import { ThinkingLevelSelector } from './ThinkingLevelSelector';
@@ -34,7 +33,9 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
 }) => {
   const isGemini3 = isGemini3Model(modelId);
   const capabilities = getModelCapabilities(modelId);
+  const supportsThinkingLevel = capabilities.supportsThinkingLevel;
   const isFlash3 = isGemini3 && modelId.toLowerCase().includes('flash');
+  const isRobotics = modelId.toLowerCase().includes('gemini-robotics-er');
   const isGemini31FlashImage = modelId.toLowerCase().includes('gemini-3.1-flash-image');
   const isGemini3ProImage = modelId === 'gemini-3-pro-image-preview';
   const isImageThinkingLevelOnly = isGemini31FlashImage;
@@ -43,11 +44,12 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   const supportedThinkingLevels: ThinkingLevelOption[] =
     isImageThinkingLevelOnly
       ? ['MINIMAL', 'HIGH']
-      : (isGemini3
-          ? (isFlash3 ? ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] : ['LOW', 'MEDIUM', 'HIGH'])
+      : (supportsThinkingLevel
+          ? ((isFlash3 || isRobotics) ? ['MINIMAL', 'LOW', 'MEDIUM', 'HIGH'] : ['LOW', 'MEDIUM', 'HIGH'])
           : []);
   
   const isMandatoryThinking = MODELS_MANDATORY_THINKING.includes(modelId);
+  const canDisableThinking = !isMandatoryThinking && !isRobotics;
 
   // Default ranges if config is missing (fallback for unknown models)
   const minBudget = budgetConfig?.min ?? 1024;
@@ -61,6 +63,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
   const mode = thinkingBudget < 0 ? 'auto' : thinkingBudget === 0 ? 'off' : 'custom';
   const showThinkingControls = !!budgetConfig || isGemini3 || isGemma;
   const isGemmaReasoningEnabled = showThoughts;
+  const gemmaThinkingLevel: ThinkingLevelOption = isGemmaReasoningEnabled ? 'HIGH' : 'MINIMAL';
 
   useEffect(() => {
     if (thinkingBudget > 0) {
@@ -91,6 +94,14 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
     if (!isImageThinkingLevelOnly || thinkingBudget === -1) return;
     setThinkingBudget(-1);
   }, [isImageThinkingLevelOnly, thinkingBudget, setThinkingBudget]);
+
+  useEffect(() => {
+    if (!isRobotics || thinkingBudget !== 0) return;
+    setThinkingBudget(-1);
+    if (setThinkingLevel && thinkingLevel !== 'MINIMAL') {
+      setThinkingLevel('MINIMAL');
+    }
+  }, [isRobotics, thinkingBudget, setThinkingBudget, setThinkingLevel, thinkingLevel]);
 
   useEffect(() => {
     if (!isImageThinkingLevelOnly || !setThinkingLevel) return;
@@ -143,22 +154,17 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
             </label>
           </div>
           <div className="mt-3 px-3 py-2.5">
-            <div className="flex items-center justify-between gap-4">
-              <button
-                type="button"
-                aria-pressed={showThoughts}
-                onClick={() => setShowThoughts(!isGemmaReasoningEnabled)}
-                className="flex min-w-0 flex-1 items-center text-left"
-              >
-                <span className="text-sm font-medium text-[var(--theme-text-primary)]">
-                  {t('settingsGemmaReasoningToggle_label')}
-                </span>
-              </button>
-              <div className="flex-shrink-0">
-                <Toggle checked={isGemmaReasoningEnabled} onChange={setShowThoughts} />
-              </div>
+            <div className="flex flex-col gap-3">
+              <span className="text-sm font-medium text-[var(--theme-text-primary)]">
+                {t('settingsGemmaReasoningToggle_label')}
+              </span>
+              <ThinkingLevelSelector
+                thinkingLevel={gemmaThinkingLevel}
+                setThinkingLevel={(level) => setShowThoughts(level === 'HIGH')}
+                supportedLevels={['MINIMAL', 'HIGH']}
+              />
             </div>
-            <p className="mt-1 pr-16 text-xs leading-relaxed text-[var(--theme-text-secondary)]">
+            <p className="mt-3 text-xs leading-relaxed text-[var(--theme-text-secondary)]">
               {isGemmaReasoningEnabled
                 ? t('settingsGemmaReasoningToggle_enabledDesc')
                 : t('settingsGemmaReasoningToggle_disabledDesc')}
@@ -173,7 +179,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
 
   if (!showThinkingControls) return null;
 
-  const showContent = (isGemini3 && mode === 'auto') || mode === 'custom' || mode === 'off';
+  const showContent = (supportsThinkingLevel && mode === 'auto') || mode === 'custom' || mode === 'off';
 
   return (
     <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -181,7 +187,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
         <div className="rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-input)]/30 p-4">
             
             {/* Header */}
-            <div className="flex justify-between items-center">
+            <div className="flex items-center">
                 <label className="text-sm font-semibold text-[var(--theme-text-primary)] flex items-center gap-2">
                     <Lightbulb size={16} className="text-[var(--theme-text-link)]" strokeWidth={1.5} />
                     {t('settingsThinkingMode')}
@@ -189,11 +195,6 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                         <Info size={14} className="text-[var(--theme-text-tertiary)] cursor-help" strokeWidth={1.5} />
                     </Tooltip>
                 </label>
-                {(mode !== 'off' || isImageThinkingLevelOnly) && (
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--theme-bg-accent)]/10 text-[var(--theme-text-link)] border border-[var(--theme-bg-accent)]/20">
-                        {isGemini3 ? t('settingsReasoningBadgeGemini3') : t('settingsReasoningBadgeEnabled')}
-                    </span>
-                )}
             </div>
             
             {/* Segmented Control (Tabs) */}
@@ -202,7 +203,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                   mode={mode}
                   onModeChange={handleModeChange}
                   isGemini3={isGemini3}
-                  isMandatoryThinking={isMandatoryThinking}
+                  canDisableThinking={canDisableThinking}
                   t={t}
               />
             )}
@@ -212,7 +213,7 @@ export const ThinkingControl: React.FC<ThinkingControlProps> = ({
                 <div className="mt-3 animate-in fade-in slide-in-from-top-1 duration-200">
                     
                     {/* 1. Gemini 3.0 Preset Level Selector */}
-                    {((isGemini3 && mode === 'auto') || isImageThinkingLevelOnly) && setThinkingLevel && (
+                    {((supportsThinkingLevel && mode === 'auto') || isImageThinkingLevelOnly) && setThinkingLevel && (
                         <ThinkingLevelSelector
                             thinkingLevel={thinkingLevel}
                             setThinkingLevel={setThinkingLevel}

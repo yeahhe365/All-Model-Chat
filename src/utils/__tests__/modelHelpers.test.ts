@@ -103,6 +103,13 @@ describe('getModelCapabilities', () => {
     expect(getModelCapabilities('gemini-3.1-flash-live-preview').isNativeAudioModel).toBe(true);
   });
 
+  it('marks Gemini Robotics-ER 1.6 as supporting thinking levels', () => {
+    const capabilities = getModelCapabilities('gemini-robotics-er-1.6-preview');
+
+    expect(capabilities.supportsThinkingLevel).toBe(true);
+    expect(capabilities.isGemini3).toBe(false);
+  });
+
   it('exposes the latest Gemini 3.1 Flash Image ratios and sizes', () => {
     const capabilities = getModelCapabilities('gemini-3.1-flash-image-preview');
 

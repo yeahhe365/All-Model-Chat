@@ -83,7 +83,7 @@ describe('ThinkingControl image model behavior', () => {
     expect(container.textContent?.trim()).toBe('');
   });
 
-  it('shows Gemma as an API reasoning toggle instead of a thought-visibility toggle', async () => {
+  it('shows Gemma reasoning as MINIMAL/HIGH level choices', async () => {
     await act(async () => {
       root.render(
         <I18nProvider>
@@ -102,18 +102,18 @@ describe('ThinkingControl image model behavior', () => {
     });
 
     expect(container.textContent).toContain('settingsGemmaReasoningToggle_label');
+    expect(container.textContent).toContain('Minimal');
+    expect(container.textContent).toContain('High');
+    expect(container.textContent).not.toContain('Low');
+    expect(container.textContent).not.toContain('Medium');
     expect(container.textContent).toContain('settingsGemmaReasoningToggle_enabledDesc');
-    expect(container.textContent).not.toContain('settingsGemmaReasoningToggle_disabled');
-    expect(container.textContent).not.toContain('thinkingLevel');
-    expect(container.textContent).not.toContain('<|think|>');
-    expect(container.innerHTML).not.toContain('bg-[var(--theme-bg-tertiary)]/20');
-    expect(container.innerHTML).not.toContain('border-[var(--theme-border-secondary)]/50');
-
-    const toggleButton = container.querySelector('button[aria-pressed="true"]');
-    expect(toggleButton).not.toBeNull();
+    const toggleButton = container.querySelector('button[aria-pressed]');
+    expect(toggleButton).toBeNull();
   });
 
-  it('shows disabled Gemma helper text when reasoning is off', async () => {
+  it('switches Gemma reasoning to HIGH when the High level is selected', async () => {
+    const setShowThoughts = vi.fn();
+
     await act(async () => {
       root.render(
         <I18nProvider>
@@ -124,6 +124,38 @@ describe('ThinkingControl image model behavior', () => {
             thinkingLevel="HIGH"
             setThinkingLevel={vi.fn()}
             showThoughts={false}
+            setShowThoughts={setShowThoughts}
+            t={(key) => key}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.textContent).toContain('settingsGemmaReasoningToggle_disabledDesc');
+
+    const highButton = Array.from(container.querySelectorAll('button')).find(
+      (node) => node.textContent?.includes('High'),
+    );
+    expect(highButton).not.toBeNull();
+
+    await act(async () => {
+      highButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(setShowThoughts).toHaveBeenCalledWith(true);
+  });
+
+  it('shows full thinking level options for Gemini Robotics-ER 1.6 in auto mode', async () => {
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemini-robotics-er-1.6-preview"
+            thinkingBudget={-1}
+            setThinkingBudget={vi.fn()}
+            thinkingLevel="LOW"
+            setThinkingLevel={vi.fn()}
+            showThoughts
             setShowThoughts={vi.fn()}
             t={(key) => key}
           />
@@ -131,9 +163,59 @@ describe('ThinkingControl image model behavior', () => {
       );
     });
 
-    expect(container.textContent).toContain('settingsGemmaReasoningToggle_label');
-    expect(container.textContent).toContain('settingsGemmaReasoningToggle_disabledDesc');
-    const toggleButton = container.querySelector('button[aria-pressed="false"]');
-    expect(toggleButton).not.toBeNull();
+    expect(container.textContent).toContain('Minimal');
+    expect(container.textContent).toContain('Low');
+    expect(container.textContent).toContain('Medium');
+    expect(container.textContent).toContain('High');
+  });
+
+  it('does not show the reasoning badge in the standard thinking header', async () => {
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemini-robotics-er-1.6-preview"
+            thinkingBudget={-1}
+            setThinkingBudget={vi.fn()}
+            thinkingLevel="HIGH"
+            setThinkingLevel={vi.fn()}
+            showThoughts
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.textContent).not.toContain('settingsReasoningBadgeGemini3');
+    expect(container.textContent).not.toContain('settingsReasoningBadgeEnabled');
+  });
+
+  it('hides the off mode for Gemini Robotics-ER 1.6 and normalizes legacy off state to minimal', async () => {
+    const setThinkingBudget = vi.fn();
+    const setThinkingLevel = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <I18nProvider>
+          <ThinkingControl
+            modelId="gemini-robotics-er-1.6-preview"
+            thinkingBudget={0}
+            setThinkingBudget={setThinkingBudget}
+            thinkingLevel="HIGH"
+            setThinkingLevel={setThinkingLevel}
+            showThoughts
+            setShowThoughts={vi.fn()}
+            t={(key) => key}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(container.textContent).toContain('settingsThinkingMode_auto');
+    expect(container.textContent).toContain('settingsThinkingMode_custom');
+    expect(container.textContent).not.toContain('settingsThinkingMode_off');
+    expect(setThinkingBudget).toHaveBeenCalledWith(-1);
+    expect(setThinkingLevel).toHaveBeenCalledWith('MINIMAL');
   });
 });

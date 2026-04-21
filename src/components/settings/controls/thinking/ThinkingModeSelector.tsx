@@ -7,7 +7,7 @@ interface ThinkingModeSelectorProps {
     mode: 'auto' | 'off' | 'custom';
     onModeChange: (mode: 'auto' | 'off' | 'custom') => void;
     isGemini3: boolean;
-    isMandatoryThinking: boolean;
+    canDisableThinking: boolean;
     t: (key: string) => string;
 }
 
@@ -15,11 +15,11 @@ export const ThinkingModeSelector: React.FC<ThinkingModeSelectorProps> = ({
     mode,
     onModeChange,
     isGemini3,
-    isMandatoryThinking,
+    canDisableThinking,
     t
 }) => {
     return (
-        <div className={`grid ${isMandatoryThinking ? 'grid-cols-2' : 'grid-cols-3'} gap-1 bg-[var(--theme-bg-tertiary)] p-1 rounded-lg mt-3 select-none`}>
+        <div className={`grid ${canDisableThinking ? 'grid-cols-3' : 'grid-cols-2'} gap-1 bg-[var(--theme-bg-tertiary)] p-1 rounded-lg mt-3 select-none`}>
             <button
                 onClick={() => onModeChange('auto')}
                 className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
@@ -44,7 +44,7 @@ export const ThinkingModeSelector: React.FC<ThinkingModeSelectorProps> = ({
                 {t('settingsThinkingMode_custom')}
             </button>
 
-            {!isMandatoryThinking && (
+            {canDisableThinking && (
                 <button
                     onClick={() => onModeChange('off')}
                     className={`flex items-center justify-center gap-2 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${

@@ -102,4 +102,59 @@ describe('HeaderModelSelector', () => {
     const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
     expect(triggerButton?.querySelectorAll('svg')).toHaveLength(1);
   });
+
+  it('renders the collapsed model name with stronger emphasis', async () => {
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Gemini Robotics-ER 1.6 Preview"
+          availableModels={[{ id: 'gemini-robotics-er-1.6-preview', name: 'Gemini Robotics-ER 1.6 Preview' }]}
+          selectedModelId="gemini-robotics-er-1.6-preview"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={true}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    const label = Array.from(container.querySelectorAll('span')).find(
+      (node) => node.textContent === 'Robotics-ER 1.6',
+    );
+    expect(label?.className).toContain('font-semibold');
+  });
+
+  it('shows the fast toggle for Gemini Robotics-ER 1.6 and uses minimal thinking as fast mode', async () => {
+    const onSetThinkingLevel = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Gemini Robotics-ER 1.6 Preview"
+          availableModels={[{ id: 'gemini-robotics-er-1.6-preview', name: 'Gemini Robotics-ER 1.6 Preview' }]}
+          selectedModelId="gemini-robotics-er-1.6-preview"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={onSetThinkingLevel}
+          showThoughts={true}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    const toggleButton = container.querySelector('button[aria-label="headerThinkingToggleAria"]');
+    expect(toggleButton).not.toBeNull();
+    expect(toggleButton?.getAttribute('title')).toBe('headerThinkingHighTitle');
+
+    await act(async () => {
+      toggleButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onSetThinkingLevel).toHaveBeenCalledWith('MINIMAL');
+  });
 });
