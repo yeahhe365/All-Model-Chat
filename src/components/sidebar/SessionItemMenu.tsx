@@ -2,7 +2,7 @@
 import React from 'react';
 import { SquarePen, Trash2, Pin, PinOff, Download, Copy } from 'lucide-react';
 import { SavedChatSession } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 
 interface SessionItemMenuProps {
   session: SavedChatSession;

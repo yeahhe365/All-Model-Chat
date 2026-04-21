@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { AppLogo } from '../icons/AppLogo';
 import { IconSidebarToggle } from '../icons/CustomIcons';
 

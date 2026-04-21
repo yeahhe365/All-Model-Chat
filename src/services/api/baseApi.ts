@@ -4,7 +4,7 @@ import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
 import { ImageOutputMode, ImagePersonGeneration, SafetySetting, MediaResolution } from "../../types/settings";
-import { isGemini3Model, isGeminiRoboticsModel, isGemmaModel } from "../../utils/appUtils";
+import { isGemini3Model, isGeminiRoboticsModel, isGemmaModel } from '../../utils/modelHelpers';
 import { DEFAULT_GEMINI_API_BASE_URL, normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 

@@ -2,7 +2,7 @@
 import React, { useState, useCallback } from 'react';
 import { generateFolderContext } from '../../utils/folderImportUtils';
 import { UploadedFile } from '../../types';
-import { generateUniqueId } from '../../utils/appUtils';
+import { generateUniqueId } from '../../utils/chat/ids';
 
 interface UseFileDragDropProps {
     onFilesDropped: (files: FileList | File[]) => Promise<void>;

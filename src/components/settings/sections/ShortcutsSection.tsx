@@ -1,6 +1,6 @@
 
 import React, { useCallback, useMemo } from 'react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { SHORTCUT_REGISTRY, DEFAULT_SHORTCUTS } from '../../../constants/shortcuts';
 import { AppSettings } from '../../../types';
 import { ShortcutRecorder } from './shortcuts/ShortcutRecorder';

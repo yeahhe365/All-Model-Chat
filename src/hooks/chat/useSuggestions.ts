@@ -2,7 +2,8 @@
 // hooks/chat/useSuggestions.ts
 import React, { useEffect, useRef, useCallback } from 'react';
 import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings } from '../../types';
-import { getKeyForRequest, logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { getKeyForRequest } from '../../utils/apiUtils';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';

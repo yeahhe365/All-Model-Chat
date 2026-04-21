@@ -4,7 +4,7 @@ import { Download, X, Loader2 } from 'lucide-react';
 import { Modal } from '../../../shared/Modal';
 import { ExportOptions } from './ExportOptions';
 import { ExportType } from '../../../../hooks/useMessageExport';
-import { translations } from '../../../../utils/appUtils';
+import { translations } from '../../../../utils/translations';
 import { useResponsiveValue } from '../../../../hooks/useDevice';
 
 interface ExportModalProps {

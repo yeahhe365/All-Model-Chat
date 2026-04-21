@@ -1,6 +1,6 @@
 
 import { useEffect, useRef } from 'react';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 
 const WORKER_CODE = `
 let intervalId = null;

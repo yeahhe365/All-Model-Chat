@@ -2,7 +2,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { audioWorkletCode } from '../../utils/audio/audioWorklet';
 import { decodeBase64ToArrayBuffer, decodeAudioData } from '../../utils/audio/audioProcessing';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 
 export const useLiveAudio = () => {
     const [volume, setVolume] = useState(0);

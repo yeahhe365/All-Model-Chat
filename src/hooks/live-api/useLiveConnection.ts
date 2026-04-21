@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { LiveServerMessage, Session as LiveSession, Tool } from '@google/genai';
 import { AppSettings } from '../../types';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 import { getLiveApiClient, LiveApiAuthConfigurationError } from '../../services/api/baseApi';
 import { float32ToPCM16Base64 } from '../../utils/audio/audioProcessing';
 import type { LiveErrorState } from './liveErrorState';

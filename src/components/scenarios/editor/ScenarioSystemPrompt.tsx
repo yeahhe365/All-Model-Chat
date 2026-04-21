@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Bot, Maximize2 } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface ScenarioSystemPromptProps {
     value: string;

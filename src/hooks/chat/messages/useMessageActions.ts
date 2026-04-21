@@ -1,7 +1,8 @@
 
 import React, { useCallback, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, UploadedFile, SavedChatSession, InputCommand } from '../../../types';
-import { logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
+import { logService } from '../../../services/logService';
+import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { getVisibleChatMessages } from '../../../utils/chat/visibility';
 
 type CommandedInputSetter = Dispatch<SetStateAction<InputCommand | null>>;

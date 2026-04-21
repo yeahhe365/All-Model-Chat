@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Modal } from '../shared/Modal';
 import { X, HelpCircle, Search, Check, Copy } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { CommandIcon } from '../icons/CommandIcon';
 import { CommandInfo } from '../../types';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';

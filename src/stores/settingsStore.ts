@@ -4,7 +4,8 @@ import type { SyncMessage } from '../types/sync';
 import { Theme } from '../types/theme';
 import { DEFAULT_FILES_API_CONFIG, getDefaultAppSettings } from '../constants/appConstants';
 import { AVAILABLE_THEMES, DEFAULT_THEME_ID } from '../constants/themeConstants';
-import { logService, resolveSupportedModelId } from '../utils/appUtils';
+import { logService } from '../services/logService';
+import { resolveSupportedModelId } from '../utils/modelHelpers';
 import { dbService } from '../utils/db';
 
 interface SettingsState {

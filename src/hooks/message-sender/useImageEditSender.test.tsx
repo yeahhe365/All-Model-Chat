@@ -35,15 +35,21 @@ vi.mock('../../services/geminiService', () => ({
   },
 }));
 
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../utils/chat/builder', () => ({
   buildContentParts: buildContentPartsMock,
   createChatHistoryForApi: createChatHistoryForApiMock,
+}));
+
+vi.mock('../../services/logService', () => ({
   logService: {
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
     debug: vi.fn(),
   },
+}));
+
+vi.mock('../../utils/chat/session', () => ({
   performOptimisticSessionUpdate: performOptimisticSessionUpdateMock,
   createMessage: (role: 'user' | 'model', content: string, options: Record<string, unknown> = {}) => ({
     id: options.id ?? `${role}-message`,
@@ -52,10 +58,22 @@ vi.mock('../../utils/appUtils', () => ({
     timestamp: new Date('2026-04-21T00:00:00.000Z'),
     ...options,
   }),
-  createUploadedFileFromBase64: createUploadedFileFromBase64Mock,
   generateSessionTitle: vi.fn(() => 'Generated Title'),
-  playCompletionSound: vi.fn(),
+}));
+
+vi.mock('../../utils/chat/parsing', () => ({
+  createUploadedFileFromBase64: createUploadedFileFromBase64Mock,
+}));
+
+vi.mock('../../utils/modelHelpers', () => ({
   shouldStripThinkingFromContext: vi.fn(() => false),
+}));
+
+vi.mock('../../utils/uiUtils', () => ({
+  playCompletionSound: vi.fn(),
+}));
+
+vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generated-session'),
 }));
 

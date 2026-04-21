@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { SavedScenario } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { TextEditorModal } from '../modals/TextEditorModal';
 import { ScenarioEditorHeader } from './editor/ScenarioEditorHeader';
 import { ScenarioSystemPrompt } from './editor/ScenarioSystemPrompt';

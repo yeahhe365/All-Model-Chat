@@ -10,7 +10,7 @@ const {
   mockFloat32ToPCM16Base64: vi.fn(() => 'pcm-base64'),
 }));
 
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../services/logService', () => ({
   logService: {
     info: vi.fn(),
     error: vi.fn(),

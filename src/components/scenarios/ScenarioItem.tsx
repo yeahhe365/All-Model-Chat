@@ -2,7 +2,7 @@
 import React from 'react';
 import { SavedScenario } from '../../types';
 import { Download, Edit3, Trash2, Shield, MessageSquare, Eye, Copy, Sparkles } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 
 interface ScenarioItemProps {
   scenario: SavedScenario;

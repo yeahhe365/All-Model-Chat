@@ -2,7 +2,8 @@
 
 import React, { useCallback } from 'react';
 import { SavedChatSession, Theme } from '../../types';
-import { logService, serializeSessionForPortableExport } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { serializeSessionForPortableExport } from '../../utils/chat/session';
 import { triggerDownload } from '../../utils/export/core';
 import {
     buildChatExportFilename,

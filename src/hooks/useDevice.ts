@@ -26,26 +26,6 @@ export const useIsMobile = () => {
   return isMobile;
 };
 
-export const useIsDesktop = () => {
-  const { window: targetWindow } = useWindowContext();
-  const [isDesktop, setIsDesktop] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof targetWindow === 'undefined') return;
-    
-    // (pointer: fine) typically indicates a mouse or trackpad is the primary input
-    // This helps distinguish desktop/laptops (even with small windows) from mobile devices.
-    const mediaQuery = targetWindow.matchMedia('(pointer: fine)');
-    
-    const handleChange = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
-    
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [targetWindow]);
-
-  return isDesktop;
-};
-
 export const useResponsiveValue = <T>(mobileValue: T, desktopValue: T, breakpoint: number = 640): T => {
     const { window: targetWindow } = useWindowContext();
     const [value, setValue] = useState<T>(() => {

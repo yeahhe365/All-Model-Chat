@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../types';
-import { getKeyForRequest } from '../../utils/appUtils';
+import { getKeyForRequest } from '../../utils/apiUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { logService } from '../../services/logService';
 import { POLLING_INTERVAL_MS, MAX_POLLING_DURATION_MS } from '../../services/api/baseApi';

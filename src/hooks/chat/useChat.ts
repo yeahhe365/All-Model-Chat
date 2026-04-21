@@ -15,55 +15,53 @@ import { useChatState } from './useChatState';
 import { useChatActions } from './useChatActions';
 import { useChatEffects } from './useChatEffects';
 import { useBackgroundKeepAlive } from '../core/useBackgroundKeepAlive';
-import { useChatStore } from '../../stores/chatStore';
 import { useMessageActions } from './messages/useMessageActions';
 import { useTextToSpeechHandler } from './messages/useTextToSpeechHandler';
 import { createLiveClientFunctions } from '../live-api/liveClientFunctions';
 import { getPyodideService } from '../../services/loadPyodideService';
+import { useChatStoreBindings } from './useChatStoreBindings';
 
 export const useChat = (appSettings: AppSettings, setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>, language: 'en' | 'zh') => {
 
     // Computed state — reactive values that require derivation
     const { activeChat, currentChatSettings, isLoading, activeSessionId, savedSessions, activeMessages } = useChatState(appSettings);
 
-    // Reactive store values via selectors
-    const savedGroups = useChatStore(s => s.savedGroups);
-    const editingMessageId = useChatStore(s => s.editingMessageId);
-    const editMode = useChatStore(s => s.editMode);
-    const commandedInput = useChatStore(s => s.commandedInput);
-    const loadingSessionIds = useChatStore(s => s.loadingSessionIds);
-    const generatingTitleSessionIds = useChatStore(s => s.generatingTitleSessionIds);
-    const selectedFiles = useChatStore(s => s.selectedFiles);
-    const appFileError = useChatStore(s => s.appFileError);
-    const isAppProcessingFile = useChatStore(s => s.isAppProcessingFile);
-    const aspectRatio = useChatStore(s => s.aspectRatio);
-    const imageSize = useChatStore(s => s.imageSize);
-    const imageOutputMode = useChatStore(s => s.imageOutputMode);
-    const personGeneration = useChatStore(s => s.personGeneration);
-    const isSwitchingModel = useChatStore(s => s.isSwitchingModel);
-
-    const setActiveSessionId = useChatStore((s) => s.setActiveSessionId);
-    const setActiveMessages = useChatStore((s) => s.setActiveMessages);
-    const setCommandedInput = useChatStore((s) => s.setCommandedInput);
-    const setSavedSessions = useChatStore((s) => s.setSavedSessions);
-    const setSavedGroups = useChatStore((s) => s.setSavedGroups);
-    const setEditingMessageId = useChatStore((s) => s.setEditingMessageId);
-    const setSelectedFiles = useChatStore((s) => s.setSelectedFiles);
-    const setAppFileError = useChatStore((s) => s.setAppFileError);
-    const setEditMode = useChatStore((s) => s.setEditMode);
-    const setIsAppProcessingFile = useChatStore((s) => s.setIsAppProcessingFile);
-    const setAspectRatio = useChatStore((s) => s.setAspectRatio);
-    const setIsSwitchingModel = useChatStore((s) => s.setIsSwitchingModel);
-    const setGeneratingTitleSessionIds = useChatStore((s) => s.setGeneratingTitleSessionIds);
-    const updateAndPersistSessions = useChatStore((s) => s.updateAndPersistSessions);
-    const updateAndPersistGroups = useChatStore((s) => s.updateAndPersistGroups);
-    const setSessionLoading = useChatStore((s) => s.setSessionLoading);
-    const setCurrentChatSettings = useChatStore((s) => s.setCurrentChatSettings);
-
-    // Non-state values from store
-    const activeJobs = useChatStore.getState()._activeJobs;
-    const userScrolledUpRef = useChatStore.getState()._userScrolledUp;
-    const fileDraftsRef = useChatStore.getState()._fileDrafts;
+    const {
+        savedGroups,
+        editingMessageId,
+        editMode,
+        commandedInput,
+        loadingSessionIds,
+        generatingTitleSessionIds,
+        selectedFiles,
+        appFileError,
+        isAppProcessingFile,
+        aspectRatio,
+        imageSize,
+        imageOutputMode,
+        personGeneration,
+        isSwitchingModel,
+        setActiveSessionId,
+        setActiveMessages,
+        setCommandedInput,
+        setSavedSessions,
+        setSavedGroups,
+        setEditingMessageId,
+        setSelectedFiles,
+        setAppFileError,
+        setEditMode,
+        setIsAppProcessingFile,
+        setAspectRatio,
+        setIsSwitchingModel,
+        setGeneratingTitleSessionIds,
+        updateAndPersistSessions,
+        updateAndPersistGroups,
+        setSessionLoading,
+        setCurrentChatSettings,
+        activeJobs,
+        userScrolledUpRef,
+        fileDraftsRef,
+    } = useChatStoreBindings();
 
     // Aliases
     const messages = activeMessages;

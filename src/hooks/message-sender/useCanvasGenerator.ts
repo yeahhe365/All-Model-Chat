@@ -2,7 +2,10 @@
 
 
 import { useCallback } from 'react';
-import { generateUniqueId, getKeyForRequest, getTranslator, createMessage } from '../../utils/appUtils';
+import { getKeyForRequest } from '../../utils/apiUtils';
+import { generateUniqueId } from '../../utils/chat/ids';
+import { createMessage } from '../../utils/chat/session';
+import { getTranslator } from '../../utils/translations';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { DEFAULT_AUTO_CANVAS_MODEL_ID } from '../../constants/appConstants';
 import { buildGenerationConfig } from '../../services/api/baseApi';

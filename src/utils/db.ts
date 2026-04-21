@@ -1,5 +1,5 @@
 import { AppSettings, ChatGroup, PersistedSessionFileRecord, SavedChatSession, SavedScenario } from '../types';
-import type { LogEntry } from '../services/logService';
+import type { LogEntry } from '../types/logging';
 import {
   attachPersistedSessionFiles,
   extractPersistedSessionFileRecords,

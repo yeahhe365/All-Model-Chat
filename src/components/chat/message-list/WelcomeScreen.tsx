@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface WelcomeScreenProps {
     t: (key: keyof typeof translations, fallback?: string) => string;

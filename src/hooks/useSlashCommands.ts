@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo, useCallback, Dispatch, SetStateAction } from 'react';
-import { Command } from '../components/chat/input/SlashCommandMenu';
-import { translations } from '../utils/appUtils';
+import { translations } from '../utils/translations';
 import { AttachmentAction, ModelOption } from '../types';
+import type { SlashCommand as Command } from '../types/slashCommands';
 
 export type SlashCommandState = {
   isOpen: boolean;

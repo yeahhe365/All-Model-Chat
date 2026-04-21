@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppSettings, ChatSettings, ModelOption } from '../../types';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
 import { useFullscreen } from '../ui/useFullscreen';
 import { getManualInstallMessage, getPwaInstallState } from '../../pwa/install';

@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import type { LiveServerMessage, Session as LiveSession } from '@google/genai';
 import type { LiveClientFunctions } from '../../types';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 
 interface UseLiveToolsProps {
     clientFunctions?: LiveClientFunctions;

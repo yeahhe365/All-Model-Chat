@@ -44,11 +44,25 @@ vi.mock('../utils/modelHelpers', () => ({
   getModelCapabilities: mockGetModelCapabilities,
 }));
 
-vi.mock('../utils/appUtils', () => ({
+vi.mock('../utils/chat/ids', () => ({
   generateUniqueId: vi.fn(() => 'generation-id'),
+}));
+
+vi.mock('../utils/apiUtils', () => ({
   getKeyForRequest: vi.fn(() => ({ key: 'api-key', isNewKey: false })),
-  logService: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  getApiKeyErrorTranslationKey: vi.fn((error: string) => {
+    if (error === 'API Key not configured.') return 'apiRuntime_keyNotConfigured';
+    if (error === 'No valid API keys found.') return 'apiRuntime_noValidKeysFound';
+    return null;
+  }),
+}));
+
+vi.mock('../utils/chat/session', () => ({
   createNewSession: mockCreateNewSession,
+}));
+
+vi.mock('../services/logService', () => ({
+  logService: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock('../contexts/I18nContext', () => ({

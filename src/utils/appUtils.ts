@@ -14,5 +14,3 @@ export * from './translations';
 export * from './uiUtils';
 export * from './db';
 export * from './audio/audioProcessing';
-
-export { logService } from '../services/logService';

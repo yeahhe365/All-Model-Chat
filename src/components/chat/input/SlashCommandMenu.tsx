@@ -2,13 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { CornerDownLeft } from 'lucide-react';
 import { CommandIcon } from '../../icons/CommandIcon';
-
-export interface Command {
-    name: string;
-    description: string;
-    icon: string;
-    action: () => void;
-}
+import type { SlashCommand as Command } from '../../../types/slashCommands';
 
 interface SlashCommandMenuProps {
     isOpen: boolean;

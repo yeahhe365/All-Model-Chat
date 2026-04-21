@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { GoogleSpinner } from '../../../icons/GoogleSpinner';
 import { ThinkingTimer } from '../../ThinkingTimer';
-import { formatDuration } from '../../../../utils/appUtils';
+import { formatDuration } from '../../../../utils/dateHelpers';
 
 interface ThinkingHeaderProps {
     isLoading: boolean;

@@ -1,7 +1,10 @@
 import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage, InputCommand } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
-import { createNewSession, rehydrateSessionFiles, logService, cleanupFilePreviewUrls, resolveSupportedModelId } from '../../../utils/appUtils';
+import { logService } from '../../../services/logService';
+import { createNewSession, rehydrateSessionFiles } from '../../../utils/chat/session';
+import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
+import { resolveSupportedModelId } from '../../../utils/modelHelpers';
 import { dbService } from '../../../utils/db';
 
 interface UseSessionLoaderProps {

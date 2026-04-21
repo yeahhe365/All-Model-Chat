@@ -1,4 +1,4 @@
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import type { PwaInstallState } from '../../pwa/install';
 import type { ManualUpdateCheckState } from '../../pwa/register';
 

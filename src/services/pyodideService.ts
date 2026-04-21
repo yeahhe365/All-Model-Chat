@@ -1,6 +1,6 @@
 
 
-import { logService } from "../utils/appUtils";
+import { logService } from './logService';
 import { UploadedFile } from "../types";
 
 // Worker code template. __PYODIDE_BASE_URL__ will be replaced at runtime.

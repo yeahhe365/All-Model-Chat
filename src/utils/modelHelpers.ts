@@ -47,7 +47,7 @@ export const isGemmaModel = (modelId: string): boolean =>
 export const isGeminiRoboticsModel = (modelId: string): boolean =>
     !!modelId && modelId.toLowerCase().includes('gemini-robotics-er');
 
-export const supportsThinkingLevel = (modelId: string): boolean =>
+const supportsThinkingLevel = (modelId: string): boolean =>
     isGemini3Model(modelId) || isGeminiRoboticsModel(modelId);
 
 const isTtsModel = (modelId: string): boolean => modelId.toLowerCase().includes('tts');

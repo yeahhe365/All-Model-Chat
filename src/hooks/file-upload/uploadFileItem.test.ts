@@ -18,10 +18,20 @@ vi.mock('../../services/geminiService', () => ({
   },
 }));
 
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: generateUniqueIdMock,
-  fileToBlobUrl: fileToBlobUrlMock,
-  isTextFile: vi.fn(() => false),
+}));
+
+vi.mock('../../utils/fileHelpers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../utils/fileHelpers')>();
+  return {
+    ...actual,
+    fileToBlobUrl: fileToBlobUrlMock,
+    isTextFile: vi.fn(() => false),
+  };
+});
+
+vi.mock('../../services/logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 

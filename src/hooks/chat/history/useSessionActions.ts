@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { SavedChatSession } from '../../../types';
-import { createNewSession, logService, cleanupFilePreviewUrls, generateUniqueId } from '../../../utils/appUtils';
+import { logService } from '../../../services/logService';
+import { generateUniqueId } from '../../../utils/chat/ids';
+import { createNewSession } from '../../../utils/chat/session';
+import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { dbService } from '../../../utils/db';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
 

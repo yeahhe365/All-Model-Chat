@@ -6,7 +6,7 @@ import { TableBlock } from './blocks/TableBlock';
 import { ToolResultBlock } from './blocks/ToolResultBlock';
 import { DeferredDiagramBlock } from './blocks/DeferredDiagramBlock';
 import { UploadedFile, SideViewContent } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { extractTextFromNode } from '../../utils/uiUtils';
 import { extractGemmaThoughtChannel } from '../../utils/chat/reasoning';
 import { InlineCode } from './code-block/InlineCode';

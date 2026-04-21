@@ -1,11 +1,22 @@
 
 import React, { useRef } from 'react';
+import { LayoutPanelLeft, SlidersHorizontal } from 'lucide-react';
 import { X } from 'lucide-react';
-import { SettingsTab } from '../../hooks/features/useSettingsLogic';
-import { translations } from '../../utils/appUtils';
+import { SettingsTab, type SettingsTabDescriptor } from '../../hooks/features/useSettingsLogic';
+import { translations } from '../../utils/translations';
+import { IconAbout, IconApiKey, IconData, IconKeyboard } from '../icons/CustomIcons';
+
+const SETTINGS_TAB_ICONS: Record<SettingsTab, React.ElementType> = {
+    model: SlidersHorizontal,
+    interface: LayoutPanelLeft,
+    account: IconApiKey,
+    data: IconData,
+    shortcuts: IconKeyboard,
+    about: IconAbout,
+};
 
 interface SettingsSidebarProps {
-    tabs: Array<{ id: SettingsTab; labelKey: string; icon: React.ElementType }>;
+    tabs: SettingsTabDescriptor[];
     activeTab: SettingsTab;
     setActiveTab: (tab: SettingsTab) => void;
     onClose: () => void;
@@ -41,7 +52,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             {/* Navigation List */}
             <nav className="flex-1 overflow-x-auto md:overflow-y-auto md:overflow-x-hidden custom-scrollbar px-2 pb-2 md:px-3 md:pb-3 flex md:flex-col gap-1 md:gap-1.5" role="tablist">
                 {tabs.map(tab => {
-                    const Icon = tab.icon;
+                    const Icon = SETTINGS_TAB_ICONS[tab.id];
                     const isActive = activeTab === tab.id;
                     return (
                         <button

@@ -1,6 +1,8 @@
 import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { ChatMessage, SavedScenario, SavedChatSession, AppSettings } from '../types';
-import { generateUniqueId, generateSessionTitle, logService, createNewSession } from '../utils/appUtils';
+import { logService } from '../services/logService';
+import { generateUniqueId } from '../utils/chat/ids';
+import { generateSessionTitle, createNewSession } from '../utils/chat/session';
 import { DEFAULT_CHAT_SETTINGS, DEFAULT_SYSTEM_INSTRUCTION } from '../constants/appConstants';
 import { dbService } from '../utils/db';
 import {

@@ -1,7 +1,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { SafetySetting, HarmCategory, HarmBlockThreshold } from '../../../types/settings';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { Shield, Info } from 'lucide-react';
 import { DEFAULT_SAFETY_SETTINGS } from '../../../constants/appConstants';
 

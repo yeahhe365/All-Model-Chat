@@ -1,22 +1,6 @@
 
 import { dbService, type ApiUsageExactPricing } from "../utils/db";
-
-export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'DEBUG';
-export type LogCategory = 'SYSTEM' | 'NETWORK' | 'USER' | 'MODEL' | 'DB' | 'AUTH' | 'FILE';
-
-export interface LogEntry {
-  id?: number; // Auto-incremented by IndexedDB
-  timestamp: Date;
-  level: LogLevel;
-  category: LogCategory;
-  message: string;
-  data?: unknown;
-}
-
-export interface TokenUsageStats {
-    input: number;
-    output: number;
-}
+import type { LogCategory, LogEntry, LogLevel, TokenUsageStats } from "../types/logging";
 
 type LogListener = (newLogs: LogEntry[]) => void;
 type ApiKeyListener = (usage: Map<string, number>) => void;

@@ -1,7 +1,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { UploadedFile, AppSettings } from '../../types';
-import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../utils/appUtils';
+import { getKeyForRequest } from '../../utils/apiUtils';
+import { buildContentParts } from '../../utils/chat/builder';
+import { generateUniqueId } from '../../utils/chat/ids';
 import { geminiServiceInstance } from '../../services/geminiService';
 import {
     appendFunctionDeclarationsToTools,

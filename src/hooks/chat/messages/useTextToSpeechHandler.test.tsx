@@ -16,9 +16,15 @@ const {
   generateSpeechMock: vi.fn(),
 }));
 
-vi.mock('../../../utils/appUtils', () => ({
+vi.mock('../../../utils/apiUtils', () => ({
   getKeyForRequest: getKeyForRequestMock,
+}));
+
+vi.mock('../../../utils/audio/audioProcessing', () => ({
   pcmBase64ToWavUrl: pcmBase64ToWavUrlMock,
+}));
+
+vi.mock('../../../services/logService', () => ({
   logService: {
     info: logInfoMock,
     error: logErrorMock,

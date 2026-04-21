@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, X } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { IconNewChat, IconNewGroup } from '../icons/CustomIcons';
 
 interface SidebarActionsProps {

@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { UploadedFile, SideViewContent } from '../../types';
 import { LazyMarkdownRenderer } from './LazyMarkdownRenderer';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { insertCitations, extractSources } from './grounded-response/utils';
 import { ContextUrls } from './grounded-response/ContextUrls';
 import { SearchSources } from './grounded-response/SearchSources';

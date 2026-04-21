@@ -1,7 +1,7 @@
 
 import React, { Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, UploadedFile, ChatGroup, InputCommand, ChatMessage } from '../../types';
-import { getTranslator } from '../../utils/appUtils';
+import { getTranslator } from '../../utils/translations';
 import { useSessionLoader } from './history/useSessionLoader';
 import { useSessionActions } from './history/useSessionActions';
 import { useGroupActions } from './history/useGroupActions';

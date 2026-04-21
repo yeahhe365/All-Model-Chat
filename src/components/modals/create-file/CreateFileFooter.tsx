@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ChevronDown, Save, FilePlus, Loader2 } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { SUPPORTED_EXTENSIONS } from '../../../hooks/useCreateFileEditor';
 
 interface CreateFileFooterProps {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Coins } from 'lucide-react';
-import { TokenUsageStats } from '../../services/logService';
+import type { TokenUsageStats } from '../../types/logging';
 import { useI18n } from '../../contexts/I18nContext';
 
 interface TokenUsageTabProps {

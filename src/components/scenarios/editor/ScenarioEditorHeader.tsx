@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ChevronLeft, Settings2, Save } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface ScenarioEditorHeaderProps {
     title: string;

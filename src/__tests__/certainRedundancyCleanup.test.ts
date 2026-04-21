@@ -17,6 +17,7 @@ describe('certain redundancy cleanup guards', () => {
 
   it('inlines main content prop assembly and trims related interface surface', () => {
     const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
+    const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
     const mainContentModelsSource = readProjectFile('src/components/layout/mainContentModels.ts');
     const chatAreaContextSource = readProjectFile('src/components/layout/chat-area/ChatAreaContext.tsx');
     const headerSource = readProjectFile('src/components/header/Header.tsx');
@@ -26,6 +27,9 @@ describe('certain redundancy cleanup guards', () => {
 
     expect(mainContentSource).not.toContain('buildHistorySidebarProps(');
     expect(mainContentSource).not.toContain('buildChatAreaModel(');
+    expect(mainContentSource).toContain('useMainContentViewModel');
+    expect(mainContentViewModelSource).toContain('buildSettingsForModal');
+    expect(mainContentViewModelSource).toContain('buildSidePanelKey');
     expect(mainContentModelsSource).not.toContain('export const buildHistorySidebarProps =');
     expect(mainContentModelsSource).not.toContain('export const buildChatAreaModel =');
     expect(chatAreaContextSource).not.toContain('isHistorySidebarOpen?: boolean;');
@@ -38,9 +42,11 @@ describe('certain redundancy cleanup guards', () => {
 
   it('keeps PiP availability independent from custom API config toggles', () => {
     const mainContentSource = readProjectFile('src/components/layout/MainContent.tsx');
+    const mainContentViewModelSource = readProjectFile('src/components/layout/useMainContentViewModel.ts');
 
-    expect(mainContentSource).toContain('isPipSupported: pipState.isPipSupported,');
+    expect(mainContentViewModelSource).toContain('isPipSupported: pipState.isPipSupported,');
     expect(mainContentSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
+    expect(mainContentViewModelSource).not.toContain('pipState.isPipSupported && appSettings.useCustomApiConfig');
   });
 
   it('removes the dedicated mainContentModels test file', () => {
@@ -64,11 +70,15 @@ describe('certain redundancy cleanup guards', () => {
   it('routes preview and export plumbing through shared helpers', () => {
     const messageListUiSource = readProjectFile('src/hooks/useMessageListUI.ts');
     const chatInputSource = readProjectFile('src/hooks/chat-input/useChatInput.ts');
+    const useAppSource = readProjectFile('src/hooks/app/useApp.ts');
+    const useAppPromptModesSource = readProjectFile('src/hooks/app/useAppPromptModes.ts');
     const messageExportSource = readProjectFile('src/hooks/useMessageExport.ts');
     const chatSessionExportSource = readProjectFile('src/hooks/data-management/useChatSessionExport.ts');
 
     expect(messageListUiSource).toContain('useFileModalState');
-    expect(chatInputSource).toContain('useFileModalState');
+    expect(chatInputSource).toContain('useChatInputFileUi');
+    expect(useAppSource).toContain('useAppPromptModes');
+    expect(useAppPromptModesSource).toContain('loadCanvasSystemPrompt');
     expect(messageExportSource).toContain("from '../utils/export/runtime'");
     expect(chatSessionExportSource).toContain("from '../../utils/export/runtime'");
   });

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Check, ClipboardCopy } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
 
 interface MessageCopyButtonProps {

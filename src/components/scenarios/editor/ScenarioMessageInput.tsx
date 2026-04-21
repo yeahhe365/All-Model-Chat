@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, Bot, Send } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { getShortcutDisplay, isShortcutPressed } from '../../../utils/shortcutUtils';
 

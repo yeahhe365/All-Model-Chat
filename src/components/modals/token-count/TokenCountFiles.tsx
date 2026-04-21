@@ -2,7 +2,7 @@
 import React from 'react';
 import { UploadedFile } from '../../../types';
 import { Plus, X, Image as ImageIcon, FileText } from 'lucide-react';
-import { formatFileSize } from '../../../utils/appUtils';
+import { formatFileSize } from '../../../utils/fileHelpers';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../../constants/fileConstants';
 
 interface TokenCountFilesProps {

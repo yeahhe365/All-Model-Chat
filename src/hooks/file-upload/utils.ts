@@ -9,7 +9,7 @@ import {
     SUPPORTED_VIDEO_MIME_TYPES
 } from '../../constants/fileConstants';
 import { AppSettings, UploadedFile } from '../../types';
-import { isTextFile } from '../../utils/appUtils';
+import { isTextFile } from '../../utils/fileHelpers';
 
 const INLINE_MAX_REQUEST_PAYLOAD_BYTES = 100 * 1024 * 1024;
 const INLINE_MAX_PDF_PAYLOAD_BYTES = 50 * 1024 * 1024;

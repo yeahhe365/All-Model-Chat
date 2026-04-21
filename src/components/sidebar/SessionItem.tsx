@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { GripVertical, Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { SessionItemMenu } from './SessionItemMenu';
 import { LoadingDots } from '../shared/LoadingDots';
 

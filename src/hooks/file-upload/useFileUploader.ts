@@ -1,6 +1,7 @@
 import { useCallback, Dispatch, SetStateAction, useRef } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
-import { getKeyForRequest, logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { getKeyForRequest } from '../../utils/apiUtils';
 import { checkBatchNeedsApiKey, getFilesRequiringFileApi } from './utils';
 import { uploadFileItem } from './uploadFileItem';
 

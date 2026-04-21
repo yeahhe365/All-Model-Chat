@@ -2,7 +2,7 @@ import React from 'react';
 import { Check, Copy, Maximize2, ChevronDown, ChevronUp, Download, Expand, Sidebar, Play, Loader2 } from 'lucide-react';
 import { MESSAGE_BLOCK_BUTTON_CLASS } from '../../../../constants/appConstants';
 import { LanguageIcon } from '../../code-block/LanguageIcon';
-import { translations } from '../../../../utils/appUtils';
+import { translations } from '../../../../utils/translations';
 
 interface CodeHeaderProps {
     language: string;

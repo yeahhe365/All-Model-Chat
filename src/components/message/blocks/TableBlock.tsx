@@ -5,7 +5,7 @@ import { Maximize2, Minimize2, Download, FileSpreadsheet, FileText, Copy, Check 
 import { useWindowContext } from '../../../contexts/WindowContext';
 import { triggerDownload } from '../../../utils/export/core';
 import { useClickOutside } from '../../../hooks/useClickOutside';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { convertHtmlToMarkdown } from '../../../utils/htmlToMarkdown';
 
 interface TableBlockProps extends React.TableHTMLAttributes<HTMLTableElement> {

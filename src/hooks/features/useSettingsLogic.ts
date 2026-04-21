@@ -2,12 +2,13 @@
 import { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { AppSettings } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { translations, logService, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../utils/modelHelpers';
+import { translations } from '../../utils/translations';
 import { MediaResolution } from '../../types/settings';
-import { IconApiKey, IconData, IconAbout, IconKeyboard } from '../../components/icons/CustomIcons';
-import { LayoutPanelLeft, SlidersHorizontal } from 'lucide-react';
 
 export type SettingsTab = 'interface' | 'model' | 'account' | 'data' | 'shortcuts' | 'about';
+export type SettingsTabDescriptor = { id: SettingsTab; labelKey: string };
 
 const SETTINGS_TAB_STORAGE_KEY = 'chatSettingsLastTab';
 
@@ -177,13 +178,13 @@ export const useSettingsLogic = ({
         });
     };
 
-    const tabs = useMemo(() => [
-        { id: 'model' as SettingsTab, labelKey: 'settingsTabModel', icon: SlidersHorizontal },
-        { id: 'interface' as SettingsTab, labelKey: 'settingsTabInterface', icon: LayoutPanelLeft },
-        { id: 'account' as SettingsTab, labelKey: 'settingsTabAccount', icon: IconApiKey },
-        { id: 'data' as SettingsTab, labelKey: 'settingsTabData', icon: IconData },
-        { id: 'shortcuts' as SettingsTab, labelKey: 'settingsTabShortcuts', icon: IconKeyboard },
-        { id: 'about' as SettingsTab, labelKey: 'settingsTabAbout', icon: IconAbout },
+    const tabs = useMemo<SettingsTabDescriptor[]>(() => [
+        { id: 'model', labelKey: 'settingsTabModel' },
+        { id: 'interface', labelKey: 'settingsTabInterface' },
+        { id: 'account', labelKey: 'settingsTabAccount' },
+        { id: 'data', labelKey: 'settingsTabData' },
+        { id: 'shortcuts', labelKey: 'settingsTabShortcuts' },
+        { id: 'about', labelKey: 'settingsTabAbout' },
     ], []);
 
     const closeConfirm = () => setConfirmConfig(prev => ({ ...prev, isOpen: false }));

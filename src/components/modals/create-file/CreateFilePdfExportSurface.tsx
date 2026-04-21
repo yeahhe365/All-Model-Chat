@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { MarkdownRenderer } from '../../message/MarkdownRenderer';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { waitForElementToBecomeStable } from '../../../utils/export/pdf';
 
 interface CreateFilePdfExportSurfaceProps {

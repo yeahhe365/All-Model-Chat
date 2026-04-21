@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Download } from 'lucide-react';
 import { ChatMessage } from '../../../types';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { useMessageExport } from '../../../hooks/useMessageExport';
 import { useResponsiveValue } from '../../../hooks/useDevice';
 import { ExportModal } from './export/ExportModal';

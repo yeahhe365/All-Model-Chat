@@ -1,7 +1,9 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
-import { generateUniqueId, getKeyForRequest, logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { getKeyForRequest } from '../../utils/apiUtils';
+import { generateUniqueId } from '../../utils/chat/ids';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { getUploadLifecycleForGeminiState } from './utils';
 import { useI18n } from '../../contexts/I18nContext';

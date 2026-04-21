@@ -4,26 +4,20 @@ import { useChat } from '../chat/useChat';
 import { useAppUI } from '../core/useAppUI';
 import { useAppEvents } from '../core/useAppEvents';
 import { usePictureInPicture } from '../core/usePictureInPicture';
-import { getTranslator, applyThemeToDocument, logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { getTranslator } from '../../utils/translations';
+import { applyThemeToDocument } from '../../utils/uiUtils';
 import { useUIStore } from '../../stores/uiStore';
 import {
   DEFAULT_CHAT_SETTINGS,
-  DEFAULT_SYSTEM_INSTRUCTION,
 } from '../../constants/appConstants';
-import {
-  isBboxSystemInstruction,
-  isCanvasSystemInstruction,
-  isHdGuideSystemInstruction,
-  loadBboxSystemPrompt,
-  loadCanvasSystemPrompt,
-  loadHdGuideSystemPrompt,
-} from '../../constants/promptHelpers';
 import { AppSettings, ChatSettings, ModelOption, SideViewContent } from '../../types';
 import { useDataExport } from '../data-management/useDataExport';
 import { useDataImport } from '../data-management/useDataImport';
 import { useChatSessionExport } from '../data-management/useChatSessionExport';
 import { useAppInitialization } from './useAppInitialization';
 import { useAppTitle } from './useAppTitle';
+import { useAppPromptModes } from './useAppPromptModes';
 
 const focusChatInput = () => {
   setTimeout(() => {
@@ -67,10 +61,6 @@ export const useApp = () => {
   const setIsLogViewerOpen = useUIStore((state) => state.setIsLogViewerOpen);
 
   const [sidePanelContent, setSidePanelContent] = useState<SideViewContent | null>(null);
-  const [pendingCanvasPromptActivation, setPendingCanvasPromptActivation] = useState<{
-    systemInstruction: string;
-    targetSessionId: string | null;
-  } | null>(null);
 
   const handleOpenSidePanel = useCallback(
     (content: SideViewContent) => {
@@ -190,186 +180,21 @@ export const useApp = () => {
     [activeSessionId, setAppSettings, setCurrentChatSettings]
   );
 
-  useEffect(() => {
-    if (!pendingCanvasPromptActivation) {
-      return;
-    }
-
-    const targetMatches =
-      pendingCanvasPromptActivation.targetSessionId === null ||
-      pendingCanvasPromptActivation.targetSessionId === activeSessionId;
-
-    if (!targetMatches) {
-      return;
-    }
-
-    if (activeChat && isCanvasSystemInstruction(activeChat.settings.systemInstruction)) {
-      setPendingCanvasPromptActivation(null);
-      return;
-    }
-
-    if (!activeSessionId || !activeChat) {
-      return;
-    }
-
-    setCurrentChatSettings((prev) =>
-      isCanvasSystemInstruction(prev.systemInstruction)
-        ? prev
-        : {
-            ...prev,
-            systemInstruction: pendingCanvasPromptActivation.systemInstruction,
-          }
-    );
-  }, [activeChat, activeSessionId, pendingCanvasPromptActivation, setCurrentChatSettings]);
-
-  const activateCanvasPrompt = useCallback(
-    async (targetSessionId: string | null) => {
-      const newSystemInstruction = await loadCanvasSystemPrompt();
-
-      setPendingCanvasPromptActivation({
-        systemInstruction: newSystemInstruction,
-        targetSessionId,
-      });
-      setAppSettings((prev) => ({ ...prev, systemInstruction: newSystemInstruction }));
-
-      if (targetSessionId && activeChat && activeSessionId === targetSessionId) {
-        setCurrentChatSettings((prev) => ({
-          ...prev,
-          systemInstruction: newSystemInstruction,
-        }));
-      }
-
-      return newSystemInstruction;
-    },
-    [activeChat, activeSessionId, setAppSettings, setCurrentChatSettings]
-  );
-
-  const handleLoadCanvasPromptAndSave = useCallback(async () => {
-    const isCurrentlyCanvasPrompt = isCanvasSystemInstruction(currentChatSettings.systemInstruction);
-
-    if (isCurrentlyCanvasPrompt) {
-      setPendingCanvasPromptActivation(null);
-      setAppSettings((prev) => ({ ...prev, systemInstruction: DEFAULT_SYSTEM_INSTRUCTION }));
-      if (activeSessionId) {
-        setCurrentChatSettings((prev) => ({
-          ...prev,
-          systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-        }));
-      }
-    } else {
-      await activateCanvasPrompt(activeSessionId);
-    }
-
-    focusChatInput();
-  }, [
-    activateCanvasPrompt,
-    activeSessionId,
-    currentChatSettings.systemInstruction,
+  const {
+    handleLoadCanvasPromptAndSave,
+    handleToggleBBoxMode,
+    handleToggleGuideMode,
+    handleSuggestionClick,
+  } = useAppPromptModes({
+    appSettings,
     setAppSettings,
+    activeChat,
+    activeSessionId,
+    currentChatSettings,
     setCurrentChatSettings,
-  ]);
-
-  const handleToggleBBoxMode = useCallback(async () => {
-    const isCurrentlyBBox = isBboxSystemInstruction(currentChatSettings.systemInstruction);
-
-    if (isCurrentlyBBox) {
-      setAppSettings((prev) => ({
-        ...prev,
-        systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-        isCodeExecutionEnabled: false,
-      }));
-      if (activeSessionId) {
-        setCurrentChatSettings((prev) => ({
-          ...prev,
-          systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-          isCodeExecutionEnabled: false,
-        }));
-      }
-      return;
-    }
-
-    const bboxPrompt = await loadBboxSystemPrompt();
-    setAppSettings((prev) => ({
-      ...prev,
-      systemInstruction: bboxPrompt,
-      isCodeExecutionEnabled: true,
-    }));
-    if (activeSessionId) {
-      setCurrentChatSettings((prev) => ({
-        ...prev,
-        systemInstruction: bboxPrompt,
-        isCodeExecutionEnabled: true,
-      }));
-    }
-  }, [activeSessionId, currentChatSettings.systemInstruction, setAppSettings, setCurrentChatSettings]);
-
-  const handleToggleGuideMode = useCallback(async () => {
-    const isCurrentlyGuide = isHdGuideSystemInstruction(currentChatSettings.systemInstruction);
-
-    if (isCurrentlyGuide) {
-      setAppSettings((prev) => ({
-        ...prev,
-        systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-        isCodeExecutionEnabled: false,
-      }));
-      if (activeSessionId) {
-        setCurrentChatSettings((prev) => ({
-          ...prev,
-          systemInstruction: DEFAULT_SYSTEM_INSTRUCTION,
-          isCodeExecutionEnabled: false,
-        }));
-      }
-      return;
-    }
-
-    const guidePrompt = await loadHdGuideSystemPrompt();
-    setAppSettings((prev) => ({
-      ...prev,
-      systemInstruction: guidePrompt,
-      isCodeExecutionEnabled: true,
-    }));
-    if (activeSessionId) {
-      setCurrentChatSettings((prev) => ({
-        ...prev,
-        systemInstruction: guidePrompt,
-        isCodeExecutionEnabled: true,
-      }));
-    }
-  }, [activeSessionId, currentChatSettings.systemInstruction, setAppSettings, setCurrentChatSettings]);
-
-  const handleSuggestionClick = useCallback(
-    async (type: 'homepage' | 'organize' | 'follow-up', text: string) => {
-      const { isAutoSendOnSuggestionClick } = appSettings;
-
-      if (
-        type === 'organize' &&
-        !isCanvasSystemInstruction(currentChatSettings.systemInstruction)
-      ) {
-        await activateCanvasPrompt(activeSessionId);
-      }
-
-      if (type === 'follow-up' && (isAutoSendOnSuggestionClick ?? true)) {
-        handleSendMessage({ text });
-        return;
-      }
-
-      setCommandedInput({ text: `${text}\n`, id: Date.now() });
-      setTimeout(() => {
-        const textarea = document.querySelector(
-          'textarea[aria-label="Chat message input"]'
-        ) as HTMLTextAreaElement | null;
-        textarea?.focus();
-      }, 0);
-    },
-    [
-      activeSessionId,
-      currentChatSettings.systemInstruction,
-      handleSendMessage,
-      setCommandedInput,
-      activateCanvasPrompt,
-      appSettings,
-    ]
-  );
+    handleSendMessage,
+    setCommandedInput,
+  });
 
   const handleSetThinkingLevel = useCallback(
     (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => {

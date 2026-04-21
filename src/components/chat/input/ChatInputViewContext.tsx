@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext } from 'react';
 import { UploadedFile, ChatInputToolbarProps, ChatInputActionsProps } from '../../../types';
-import { Command } from './SlashCommandMenu';
+import type { SlashCommand as Command } from '../../../types/slashCommands';
 
 export interface ChatInputViewModel {
   toolbarProps: ChatInputToolbarProps;
@@ -105,6 +105,5 @@ export const useChatInputView = () => {
   return value;
 };
 
-export const useChatInputToolbarView = () => useChatInputView().toolbarProps;
 export const useChatInputActionsView = () => useChatInputView().actionsProps;
 export const useChatInputLayoutView = () => useChatInputView().layoutProps;

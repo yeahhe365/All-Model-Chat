@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { LogEntry, logService, TokenUsageStats } from '../../services/logService';
+import { logService } from '../../services/logService';
+import type { LogEntry, TokenUsageStats } from '../../types/logging';
 import { AppSettings, ChatSettings } from '../../types';
 import { X, Terminal, KeyRound, Coins } from 'lucide-react';
 import { Modal } from '../shared/Modal';

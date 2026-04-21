@@ -1,7 +1,8 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { SavedChatSession, ChatGroup } from '../../../types';
 import { dbService } from '../../../utils/db';
-import { logService, cleanupFilePreviewUrls } from '../../../utils/appUtils';
+import { logService } from '../../../services/logService';
+import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { removeSessionScopedLocalStorageEntries } from '../../../utils/sessionLocalStorage';
 
 interface UseHistoryClearerProps {

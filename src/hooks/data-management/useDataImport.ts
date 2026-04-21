@@ -2,7 +2,8 @@
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, SavedChatSession, SavedScenario, ChatGroup, ChatMessage } from '../../types';
 import { DEFAULT_APP_SETTINGS } from '../../constants/appConstants';
-import { generateUniqueId, logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { generateUniqueId } from '../../utils/chat/ids';
 import { mergeImportedScenarios } from '../../features/scenarios/scenarioLibrary';
 import { HarmBlockThreshold, HarmCategory, MediaResolution, type FilesApiConfig, type SafetySetting } from '../../types/settings';
 

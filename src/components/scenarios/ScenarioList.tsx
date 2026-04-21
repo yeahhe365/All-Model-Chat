@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { SavedScenario } from '../../types';
 import { Search, Layers, User, Shield, Inbox } from 'lucide-react';
 import { ScenarioItem } from './ScenarioItem';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 
 interface ScenarioListProps {
   scenarios: SavedScenario[];

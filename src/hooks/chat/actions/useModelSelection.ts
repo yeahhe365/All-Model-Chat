@@ -2,7 +2,8 @@
 import React, { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, SavedChatSession } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
-import { createNewSession, cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../../utils/appUtils';
+import { createNewSession } from '../../../utils/chat/session';
+import { cacheModelSettings, getCachedModelSettings, adjustThinkingBudget, getDefaultThinkingLevelForModel } from '../../../utils/modelHelpers';
 import { MediaResolution } from '../../../types/settings';
 
 interface UseModelSelectionProps {

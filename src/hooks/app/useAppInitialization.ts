@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 
 export const useAppInitialization = () => {
   useEffect(() => {

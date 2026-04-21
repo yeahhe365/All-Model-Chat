@@ -1,7 +1,8 @@
 
 import { useCallback } from 'react';
 import { AppSettings, SavedScenario, ChatGroup } from '../../types';
-import { logService, serializeSessionForPortableExport } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { serializeSessionForPortableExport } from '../../utils/chat/session';
 import { triggerDownload } from '../../utils/export/core';
 import { dbService } from '../../utils/db';
 import { buildScenarioExportPayload } from '../../features/scenarios/scenarioLibrary';

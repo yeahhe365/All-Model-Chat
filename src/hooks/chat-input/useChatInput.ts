@@ -3,7 +3,6 @@ import { UploadedFile, VideoMetadata } from '../../types';
 import { MediaResolution } from '../../types/settings';
 import { useI18n } from '../../contexts/I18nContext';
 import { useChatInputState } from './useChatInputState';
-import { useIsDesktop } from '../useDevice';
 import { useWindowContext } from '../../contexts/WindowContext';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import { useVoiceInput } from '../useVoiceInput';
@@ -12,15 +11,13 @@ import { useLiveAPI } from '../useLiveAPI';
 import { useTextAreaInsert } from '../useTextAreaInsert';
 import { processClipboardData } from '../../utils/clipboardUtils';
 import { generateFolderContext } from '../../utils/folderImportUtils';
-import { generateUniqueId, getKeyForRequest } from '../../utils/appUtils';
+import { getKeyForRequest } from '../../utils/apiUtils';
+import { generateUniqueId } from '../../utils/chat/ids';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
-import { useChatAreaInput } from '../../components/layout/chat-area/ChatAreaContext';
-import type { AttachmentAction } from '../../types';
+import { useChatAreaInput } from '../../contexts/ChatAreaContext';
 import { useChatStore } from '../../stores/chatStore';
-import { EXTENSION_TO_MIME } from '../../constants/fileConstants';
 import { captureScreenImage } from '../../utils/mediaUtils';
-import { isTextFile } from '../../utils/fileHelpers';
 import {
   areFilesStillProcessing,
   buildPendingChatInputSubmission,
@@ -29,7 +26,7 @@ import {
   QueuedChatInputSubmission,
   shouldFlushPendingSubmission,
 } from './pendingSubmissionUtils';
-import { useFileModalState } from '../ui/useFileModalState';
+import { useChatInputFileUi } from './useChatInputFileUi';
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
 
@@ -87,7 +84,6 @@ export const useChatInput = () => {
   } = inputState;
   const pendingSubmissionRef = useRef<PendingChatInputSubmission | null>(null);
   const [queuedSubmission, setQueuedSubmission] = useState<QueuedChatInputSubmission | null>(null);
-  const isDesktop = useIsDesktop();
   const { document: targetDocument } = useWindowContext();
   const insertText = useTextAreaInsert(textareaRef, setInputText);
 
@@ -102,36 +98,6 @@ export const useChatInput = () => {
     clientFunctions: liveClientFunctions,
   });
 
-  const [showCreateTextFileEditor, setShowCreateTextFileEditor] = useState(false);
-  const [editingFile, setEditingFile] = useState<UploadedFile | null>(null);
-  const [showRecorder, setShowRecorder] = useState(false);
-  const [showAddByIdInput, setShowAddByIdInput] = useState(false);
-  const [showAddByUrlInput, setShowAddByUrlInput] = useState(false);
-  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-  const [showTtsContextEditor, setShowTtsContextEditor] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
-  const [showTokenModal, setShowTokenModal] = useState(false);
-
-  const {
-    previewFile,
-    closePreview,
-    allImages: inputImages,
-    currentImageIndex,
-    handlePrevImage,
-    handleNextImage,
-    configuringFile,
-    setConfiguringFile,
-    openPreview,
-    openConfiguration,
-    isPreviewEditable,
-  } = useFileModalState<UploadedFile>(selectedFiles);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-  const zipInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-
   const handleScreenshot = useCallback(async () => {
     const blob = await captureScreenImage();
 
@@ -144,215 +110,14 @@ export const useChatInput = () => {
     inputState.justInitiatedFileOpRef.current = true;
     await onProcessFiles([file]);
   }, [inputState.justInitiatedFileOpRef, onProcessFiles]);
-
-  const handleAttachmentAction = useCallback(
-    (action: AttachmentAction) => {
-      setShowAddByIdInput(false);
-      setShowAddByUrlInput(false);
-
-      switch (action) {
-        case 'upload':
-          fileInputRef.current?.click();
-          break;
-        case 'gallery':
-          imageInputRef.current?.click();
-          break;
-        case 'folder':
-          folderInputRef.current?.click();
-          break;
-        case 'zip':
-          zipInputRef.current?.click();
-          break;
-        case 'camera':
-          cameraInputRef.current?.click();
-          break;
-        case 'recorder':
-          setShowRecorder(true);
-          break;
-        case 'id':
-          setShowAddByIdInput(true);
-          break;
-        case 'url':
-          setShowAddByUrlInput(true);
-          break;
-        case 'text':
-          setEditingFile(null);
-          setShowCreateTextFileEditor(true);
-          break;
-        case 'screenshot':
-          void handleScreenshot();
-          break;
-      }
-    },
-    [handleScreenshot],
-  );
-
-  const handleConfirmCreateTextFile = useCallback(
-    async (content: string | Blob, filename: string) => {
-      inputState.justInitiatedFileOpRef.current = true;
-
-      const sanitizeFilename = (name: string) => name.trim().replace(/[<>:"/\\|?*]+/g, '_');
-
-      let finalFilename = filename.trim() ? sanitizeFilename(filename) : `file-${Date.now()}.txt`;
-
-      if (!finalFilename.includes('.')) {
-        finalFilename += '.md';
-      }
-
-      const extension = `.${finalFilename.split('.').pop()?.toLowerCase()}`;
-      const mimeType = EXTENSION_TO_MIME[extension] || 'text/plain';
-      const newFile = new File([content], finalFilename, { type: mimeType });
-
-      setShowCreateTextFileEditor(false);
-      setEditingFile(null);
-      await onProcessFiles([newFile]);
-    },
-    [inputState.justInitiatedFileOpRef, onProcessFiles],
-  );
-
-  const handleAudioRecord = useCallback(
-    async (file: File) => {
-      inputState.justInitiatedFileOpRef.current = true;
-      setShowRecorder(false);
-      await onProcessFiles([file]);
-      inputState.textareaRef.current?.focus();
-    },
-    [inputState.justInitiatedFileOpRef, inputState.textareaRef, onProcessFiles],
-  );
-
-  const handleEditFile = useCallback((file: UploadedFile) => {
-    setEditingFile(file);
-    setShowCreateTextFileEditor(true);
-  }, []);
-
-  const handleSaveTextFile = useCallback(
-    async (content: string | Blob, filename: string) => {
-      if (editingFile) {
-        const size = content instanceof Blob ? content.size : content.length;
-        const type = content instanceof Blob ? content.type : 'text/markdown';
-
-        setSelectedFiles((prev) =>
-          prev.map((file) =>
-            file.id === editingFile.id
-              ? {
-                  ...file,
-                  name: filename.includes('.') ? filename : `${filename}.md`,
-                  textContent: typeof content === 'string' ? content : undefined,
-                  size,
-                  rawFile: new File([content], filename, { type }),
-                  dataUrl: content instanceof Blob ? URL.createObjectURL(content) : file.dataUrl,
-                }
-              : file,
-          ),
-        );
-        setShowCreateTextFileEditor(false);
-        setEditingFile(null);
-        return;
-      }
-
-      await handleConfirmCreateTextFile(content, filename);
-    },
-    [editingFile, handleConfirmCreateTextFile, setSelectedFiles],
-  );
-
-  const handleSavePreviewTextFile = useCallback(
-    (fileId: string, content: string, newName: string) => {
-      setSelectedFiles((prev) =>
-        prev.map((file) =>
-          file.id === fileId
-            ? {
-                ...file,
-                name: newName,
-                textContent: content,
-                size: content.length,
-                dataUrl: URL.createObjectURL(new File([content], newName, { type: 'text/plain' })),
-                rawFile: new File([content], newName, { type: 'text/plain' }),
-              }
-            : file,
-        ),
-      );
-    },
-    [setSelectedFiles],
-  );
-
-  const handleConfigureFile = useCallback((file: UploadedFile) => {
-    if (isTextFile(file)) {
-      openPreview(file, { editable: true });
-      return;
-    }
-
-    openConfiguration(file);
-  }, [openConfiguration, openPreview]);
-
-  const handlePreviewFile = useCallback((file: UploadedFile) => {
-    openPreview(file);
-  }, [openPreview]);
-
-  const modalsState = useMemo(() => ({
-    showCreateTextFileEditor,
-    setShowCreateTextFileEditor,
-    editingFile,
-    setEditingFile,
-    showRecorder,
-    setShowRecorder,
-    showAddByIdInput,
-    setShowAddByIdInput,
-    showAddByUrlInput,
-    setShowAddByUrlInput,
-    isHelpModalOpen,
-    setIsHelpModalOpen,
-    showTtsContextEditor,
-    setShowTtsContextEditor,
-    fileInputRef,
-    imageInputRef,
-    folderInputRef,
-    zipInputRef,
-    cameraInputRef,
-    handleAttachmentAction,
-    handleConfirmCreateTextFile,
-    handleAudioRecord,
-    handleEditFile,
-  }), [
-    editingFile,
-    handleAttachmentAction,
-    handleAudioRecord,
-    handleConfirmCreateTextFile,
-    handleEditFile,
-    isHelpModalOpen,
-    showAddByIdInput,
-    showAddByUrlInput,
-    showCreateTextFileEditor,
-    showRecorder,
-    showTtsContextEditor,
-  ]);
-
-  const localFileState = useMemo(() => ({
-    configuringFile,
-    setConfiguringFile,
-    previewFile,
-    closePreviewFile: closePreview,
-    isPreviewEditable,
-    isConverting,
-    setIsConverting,
-    showTokenModal,
-    setShowTokenModal,
-    handleSaveTextFile,
-    handleSavePreviewTextFile,
-    handleConfigureFile,
-    handlePreviewFile,
-  }), [
-    closePreview,
-    configuringFile,
-    handleConfigureFile,
-    handlePreviewFile,
-    handleSavePreviewTextFile,
-    handleSaveTextFile,
-    isConverting,
-    isPreviewEditable,
-    previewFile,
-    setConfiguringFile,
-    showTokenModal,
-  ]);
+  const { modalsState, localFileState } = useChatInputFileUi({
+    selectedFiles,
+    setSelectedFiles,
+    onProcessFiles,
+    onScreenshot: handleScreenshot,
+    justInitiatedFileOpRef: inputState.justInitiatedFileOpRef,
+    textareaRef: inputState.textareaRef,
+  });
 
   const voiceState = useVoiceInput({
     onTranscribeAudio,
@@ -1077,13 +842,12 @@ export const useChatInput = () => {
       queueCurrentSubmission,
       restoreQueuedSubmission,
       removeQueuedSubmission,
-      handlePrevImage,
-      handleNextImage,
-      inputImages,
-      currentImageIndex,
+      handlePrevImage: localFileState.handlePrevImage,
+      handleNextImage: localFileState.handleNextImage,
+      inputImages: localFileState.inputImages,
+      currentImageIndex: localFileState.currentImageIndex,
     }),
     [
-      currentImageIndex,
       handleAddFileByIdSubmit,
       handleAddUrl,
       handleFastSubmit,
@@ -1091,10 +855,8 @@ export const useChatInput = () => {
       handleFolderChange,
       handleInputChange,
       handleKeyDown,
-      handleNextImage,
       handlePaste,
       handlePasteAction,
-      handlePrevImage,
       handleSaveFileConfig,
       queueCurrentSubmission,
       removeQueuedSubmission,
@@ -1103,7 +865,10 @@ export const useChatInput = () => {
       handleToggleToolAndFocus,
       handleTranslate,
       handleZipChange,
-      inputImages,
+      localFileState.currentImageIndex,
+      localFileState.handleNextImage,
+      localFileState.handlePrevImage,
+      localFileState.inputImages,
       onCompositionEnd,
       onCompositionStart,
       removeSelectedFile,
@@ -1260,7 +1025,6 @@ export const useChatInput = () => {
     voiceState,
     slashCommandState,
     handlers,
-    isDesktop,
     targetDocument,
     canSend,
     canQueueMessage,

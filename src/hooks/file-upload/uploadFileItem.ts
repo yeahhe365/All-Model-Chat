@@ -1,7 +1,9 @@
 import React from 'react';
 import { AppSettings, UploadedFile, MediaResolution } from '../../types';
 import { ALL_SUPPORTED_MIME_TYPES } from '../../constants/fileConstants';
-import { generateUniqueId, fileToBlobUrl, logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { generateUniqueId } from '../../utils/chat/ids';
+import { fileToBlobUrl } from '../../utils/fileHelpers';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { formatSpeed, getEffectiveMimeType, getUploadLifecycleForGeminiState, shouldUseFileApi } from './utils';
 

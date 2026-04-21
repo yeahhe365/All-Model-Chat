@@ -1,9 +1,16 @@
 
 import { ChatMessage, SavedChatSession, ChatSettings, PersistedSessionFileRecord, UploadedFile } from '../../types';
 import { generateUniqueId } from './ids';
-import { logService } from '../../services/logService';
 import { base64ToBlob, blobToBase64 } from '../fileHelpers';
 import { getVisibleChatMessages } from './visibility';
+
+const logSessionWarning = (message: string, data?: unknown) => {
+    console.warn(`[session] ${message}`, data);
+};
+
+const logSessionError = (message: string, data?: unknown) => {
+    console.error(`[session] ${message}`, data);
+};
 
 export const createMessage = (
     role: 'user' | 'model' | 'error',
@@ -66,7 +73,7 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
                     
                     return { ...file, rawFile: newFile, dataUrl: newUrl };
                 } catch {
-                    logService.warn(`Failed to migrate legacy Base64 file: ${file.name}`);
+                    logSessionWarning(`Failed to migrate legacy Base64 file: ${file.name}`);
                     // If migration fails, keep as is, but it might lag
                 }
             }
@@ -82,7 +89,7 @@ export const rehydrateSessionFiles = (session: SavedChatSession): SavedChatSessi
                     const dataUrl = URL.createObjectURL(file.rawFile as Blob);
                     return { ...file, dataUrl: dataUrl };
                 } catch (error) {
-                    logService.error("Failed to create object URL for file on load", { fileId: file.id, error });
+                    logSessionError("Failed to create object URL for file on load", { fileId: file.id, error });
                     return { ...file, dataUrl: undefined, error: "Preview failed to load" };
                 }
             } else if (file.rawFile && !isValidRawFile) {
@@ -130,7 +137,7 @@ export const extractPersistedSessionFileRecords = (session: SavedChatSession): P
                     const base64Clean = file.dataUrl!.includes(',') ? file.dataUrl!.split(',')[1] : file.dataUrl!;
                     rawFile = base64ToBlob(base64Clean, file.type);
                 } catch (error) {
-                    logService.warn(`Failed to extract inline file payload for persistence: ${file.name}`, { error });
+                    logSessionWarning(`Failed to extract inline file payload for persistence: ${file.name}`, { error });
                 }
             }
 

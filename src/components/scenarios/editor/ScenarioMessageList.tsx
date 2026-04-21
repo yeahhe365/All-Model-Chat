@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { PreloadedMessage } from '../../../types';
 import { User, Bot, ArrowUp, ArrowDown, Edit3, Trash2, MessageSquare } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface ScenarioMessageListProps {
     messages: PreloadedMessage[];

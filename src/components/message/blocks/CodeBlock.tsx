@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { ChevronDown, ChevronUp, X, Terminal, AlertTriangle, FileOutput, RotateCcw } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 import { SideViewContent } from '../../../types';
 import { useCodeBlock } from '../../../hooks/ui/useCodeBlock';
 import { usePyodide } from '../../../hooks/usePyodide';

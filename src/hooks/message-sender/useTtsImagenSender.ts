@@ -4,7 +4,11 @@ import { AppSettings, SavedChatSession, ChatSettings as IndividualChatSettings }
 import type { ImagePersonGeneration } from '../../types/settings';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, pcmBase64ToWavUrl, showNotification, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound } from '../../utils/appUtils';
+import { pcmBase64ToWavUrl } from '../../utils/audio/audioProcessing';
+import { generateUniqueId } from '../../utils/chat/ids';
+import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
+import { performOptimisticSessionUpdate, createMessage, generateSessionTitle } from '../../utils/chat/session';
+import { showNotification, playCompletionSound } from '../../utils/uiUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;

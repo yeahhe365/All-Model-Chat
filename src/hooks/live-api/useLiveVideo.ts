@@ -1,6 +1,6 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 
 type VideoSource = 'camera' | 'screen' | null;
 

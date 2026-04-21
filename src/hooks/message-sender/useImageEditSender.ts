@@ -6,7 +6,13 @@ import { AppSettings, ChatMessage, SavedChatSession, UploadedFile, ChatSettings 
 import type { ImageOutputMode, ImagePersonGeneration } from '../../types/settings';
 import { useApiErrorHandler } from './useApiErrorHandler';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { generateUniqueId, buildContentParts, createChatHistoryForApi, logService, performOptimisticSessionUpdate, createMessage, createUploadedFileFromBase64, generateSessionTitle, playCompletionSound, shouldStripThinkingFromContext } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { buildContentParts, createChatHistoryForApi } from '../../utils/chat/builder';
+import { generateUniqueId } from '../../utils/chat/ids';
+import { createUploadedFileFromBase64 } from '../../utils/chat/parsing';
+import { performOptimisticSessionUpdate, createMessage, generateSessionTitle } from '../../utils/chat/session';
+import { shouldStripThinkingFromContext } from '../../utils/modelHelpers';
+import { playCompletionSound } from '../../utils/uiUtils';
 import { DEFAULT_CHAT_SETTINGS } from '../../constants/appConstants';
 import type { Part } from '@google/genai';
 import { appendApiPart } from '../chat-stream/processors';

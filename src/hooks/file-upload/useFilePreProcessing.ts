@@ -1,7 +1,9 @@
 // hooks/file-upload/useFilePreProcessing.ts
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import { AppSettings, UploadedFile } from '../../types';
-import { generateUniqueId, logService, isTextFile } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { generateUniqueId } from '../../utils/chat/ids';
+import { isTextFile } from '../../utils/fileHelpers';
 import { generateZipContext } from '../../utils/folderImportUtils';
 import { compressAudioToMp3 } from '../../utils/audioCompression';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';

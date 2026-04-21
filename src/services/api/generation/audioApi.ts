@@ -3,7 +3,7 @@ import type { GenerateContentConfig, ThinkingConfig } from '@google/genai';
 import { getConfiguredApiClient } from '../baseApi';
 import { logService } from "../../logService";
 import type { Part } from "@google/genai";
-import { blobToBase64 } from "../../../utils/appUtils";
+import { blobToBase64 } from '../../../utils/fileHelpers';
 import { calculateTokenStats } from '../../../utils/modelHelpers';
 import { buildExactPricingFromUsageMetadata } from '../../../utils/usagePricingTelemetry';
 import { AVAILABLE_TTS_VOICES } from '../../../constants/voiceOptions';

@@ -1,0 +1,459 @@
+import { useCallback, useMemo } from 'react';
+
+import type { UploadedFile } from '../../types';
+import type { AppViewModel } from '../../hooks/app/useApp';
+import { useUIStore } from '../../stores/uiStore';
+import { useChatStore } from '../../stores/chatStore';
+import { getShortcutDisplay } from '../../utils/shortcutUtils';
+import {
+  isBboxSystemInstruction,
+  isCanvasSystemInstruction,
+  isHdGuideSystemInstruction,
+} from '../../constants/promptHelpers';
+import type { ChatAreaProps } from './chat-area/ChatAreaProps';
+import { buildSettingsForModal, buildSidePanelKey } from './mainContentModels';
+
+interface UseMainContentViewModelOptions {
+  app: AppViewModel;
+}
+
+export const useMainContentViewModel = ({ app }: UseMainContentViewModelOptions) => {
+  const {
+    appSettings,
+    currentTheme,
+    chatState,
+    uiState,
+    pipState,
+    eventsState,
+    sidePanelContent,
+    handleOpenSidePanel,
+    handleCloseSidePanel,
+    isExportModalOpen,
+    setIsExportModalOpen,
+    exportStatus,
+    handleExportChat,
+    sessionTitle,
+    handleSaveSettings,
+    handleLoadCanvasPromptAndSave,
+    handleToggleBBoxMode,
+    handleToggleGuideMode,
+    handleSuggestionClick,
+    handleSetThinkingLevel,
+    getCurrentModelDisplayName,
+    handleExportSettings,
+    handleExportHistory,
+    handleExportAllScenarios,
+    handleImportSettings,
+    handleImportHistory,
+    handleImportAllScenarios,
+  } = app;
+  const { setAppSettings } = app;
+  const { setIsHistorySidebarOpen, setIsHistorySidebarOpenTransient } = uiState;
+  const { loadChatSession, handleSendMessage } = chatState;
+
+  const isSettingsModalOpen = useUIStore((state) => state.isSettingsModalOpen);
+  const setIsSettingsModalOpen = useUIStore((state) => state.setIsSettingsModalOpen);
+  const isPreloadedMessagesModalOpen = useUIStore((state) => state.isPreloadedMessagesModalOpen);
+  const setIsPreloadedMessagesModalOpen = useUIStore((state) => state.setIsPreloadedMessagesModalOpen);
+  const isLogViewerOpen = useUIStore((state) => state.isLogViewerOpen);
+  const setIsLogViewerOpen = useUIStore((state) => state.setIsLogViewerOpen);
+
+  const openSettingsModal = useCallback(() => {
+    setIsSettingsModalOpen(true);
+  }, [setIsSettingsModalOpen]);
+
+  const openScenariosModal = useCallback(() => {
+    setIsPreloadedMessagesModalOpen(true);
+  }, [setIsPreloadedMessagesModalOpen]);
+
+  const toggleHistorySidebar = useCallback(() => {
+    setIsHistorySidebarOpen((prev) => !prev);
+  }, [setIsHistorySidebarOpen]);
+
+  const closeHistorySidebar = useCallback(() => {
+    setIsHistorySidebarOpen(false);
+  }, [setIsHistorySidebarOpen]);
+
+  const selectSession = useCallback(
+    (id: string) => {
+      loadChatSession(id);
+    },
+    [loadChatSession],
+  );
+
+  const openExportModal = useCallback(() => {
+    setIsExportModalOpen(true);
+  }, [setIsExportModalOpen]);
+
+  const onSuggestionClick = useCallback(
+    (text: string) => {
+      handleSuggestionClick('homepage', text);
+    },
+    [handleSuggestionClick],
+  );
+
+  const onOrganizeInfoClick = useCallback(
+    (text: string) => {
+      handleSuggestionClick('organize', text);
+    },
+    [handleSuggestionClick],
+  );
+
+  const onFollowUpSuggestionClick = useCallback(
+    (text: string) => {
+      handleSuggestionClick('follow-up', text);
+    },
+    [handleSuggestionClick],
+  );
+
+  const onMessageSent = useCallback(() => {
+    useChatStore.getState().setCommandedInput(null);
+  }, []);
+
+  const onSendMessage = useCallback(
+    (text: string, options?: { isFastMode?: boolean; files?: UploadedFile[] }) => {
+      handleSendMessage({ text, ...options });
+    },
+    [handleSendMessage],
+  );
+
+  const onToggleQuadImages = useCallback(() => {
+    setAppSettings((prev) => ({
+      ...prev,
+      generateQuadImages: !prev.generateQuadImages,
+    }));
+  }, [setAppSettings]);
+
+  const onToggleGemmaReasoning = useCallback(() => {
+    const nextGemmaReasoningEnabled = !chatState.currentChatSettings.showThoughts;
+
+    setAppSettings((prev) => ({
+      ...prev,
+      showThoughts: nextGemmaReasoningEnabled,
+    }));
+
+    chatState.setCurrentChatSettings((prev) => ({
+      ...prev,
+      showThoughts: nextGemmaReasoningEnabled,
+    }));
+  }, [chatState.currentChatSettings.showThoughts, chatState.setCurrentChatSettings, setAppSettings]);
+
+  const messageActions: ChatAreaProps['chatArea']['messageActions'] = useMemo(
+    () => ({
+      setScrollContainerRef: chatState.setScrollContainerRef,
+      onEditMessage: chatState.handleEditMessage,
+      onDeleteMessage: chatState.handleDeleteMessage,
+      onRetryMessage: chatState.handleRetryMessage,
+      onUpdateMessageFile: chatState.handleUpdateMessageFile,
+      onSuggestionClick,
+      onOrganizeInfoClick,
+      onFollowUpSuggestionClick,
+      onGenerateCanvas: chatState.handleGenerateCanvas,
+      onContinueGeneration: chatState.handleContinueGeneration,
+      onQuickTTS: chatState.handleQuickTTS,
+      onOpenSidePanel: handleOpenSidePanel,
+    }),
+    [
+      chatState.handleContinueGeneration,
+      chatState.handleDeleteMessage,
+      chatState.handleEditMessage,
+      chatState.handleGenerateCanvas,
+      chatState.handleQuickTTS,
+      chatState.handleRetryMessage,
+      chatState.handleUpdateMessageFile,
+      chatState.setScrollContainerRef,
+      handleOpenSidePanel,
+      onFollowUpSuggestionClick,
+      onOrganizeInfoClick,
+      onSuggestionClick,
+    ],
+  );
+
+  const inputActions: ChatAreaProps['chatArea']['inputActions'] = useMemo(
+    () => ({
+      onMessageSent,
+      onSendMessage,
+      onStopGenerating: chatState.handleStopGenerating,
+      onCancelEdit: chatState.handleCancelEdit,
+      onProcessFiles: chatState.handleProcessAndAddFiles,
+      onAddFileById: chatState.handleAddFileById,
+      onCancelUpload: chatState.handleCancelFileUpload,
+      onTranscribeAudio: chatState.handleTranscribeAudio,
+      onToggleGoogleSearch: chatState.toggleGoogleSearch,
+      onToggleCodeExecution: chatState.toggleCodeExecution,
+      onToggleLocalPython: chatState.toggleLocalPython,
+      onToggleUrlContext: chatState.toggleUrlContext,
+      onToggleDeepSearch: chatState.toggleDeepSearch,
+      onClearChat: chatState.handleClearCurrentChat,
+      onOpenSettings: openSettingsModal,
+      onToggleCanvasPrompt: handleLoadCanvasPromptAndSave,
+      onTogglePinCurrentSession: chatState.handleTogglePinCurrentSession,
+      onRetryLastTurn: chatState.handleRetryLastTurn,
+      onEditLastUserMessage: chatState.handleEditLastUserMessage,
+      onToggleQuadImages,
+      setCurrentChatSettings: chatState.setCurrentChatSettings,
+      onAddUserMessage: chatState.handleAddUserMessage,
+      onLiveTranscript: chatState.handleLiveTranscript,
+      liveClientFunctions: chatState.liveClientFunctions,
+      onEditMessageContent: chatState.handleUpdateMessageContent,
+      onToggleBBox: handleToggleBBoxMode,
+      onToggleGuide: handleToggleGuideMode,
+    }),
+    [
+      chatState.handleAddFileById,
+      chatState.handleAddUserMessage,
+      chatState.handleCancelEdit,
+      chatState.handleCancelFileUpload,
+      chatState.handleClearCurrentChat,
+      chatState.handleEditLastUserMessage,
+      chatState.handleLiveTranscript,
+      chatState.handleProcessAndAddFiles,
+      chatState.handleRetryLastTurn,
+      chatState.handleStopGenerating,
+      chatState.handleTranscribeAudio,
+      chatState.handleTogglePinCurrentSession,
+      chatState.handleUpdateMessageContent,
+      chatState.liveClientFunctions,
+      chatState.setCurrentChatSettings,
+      chatState.toggleCodeExecution,
+      chatState.toggleDeepSearch,
+      chatState.toggleGoogleSearch,
+      chatState.toggleLocalPython,
+      chatState.toggleUrlContext,
+      handleLoadCanvasPromptAndSave,
+      handleToggleBBoxMode,
+      handleToggleGuideMode,
+      onMessageSent,
+      onSendMessage,
+      onToggleQuadImages,
+      openSettingsModal,
+    ],
+  );
+
+  const currentModelName = getCurrentModelDisplayName();
+
+  const settingsForModal = useMemo(
+    () =>
+      buildSettingsForModal({
+        appSettings,
+        activeSessionId: chatState.activeSessionId,
+        currentChatSettings: chatState.currentChatSettings,
+      }),
+    [appSettings, chatState.activeSessionId, chatState.currentChatSettings],
+  );
+
+  const sidebarProps = useMemo(
+    () => ({
+      isOpen: uiState.isHistorySidebarOpen,
+      onToggle: toggleHistorySidebar,
+      onAutoClose: () => setIsHistorySidebarOpenTransient(false),
+      sessions: chatState.savedSessions,
+      groups: chatState.savedGroups,
+      activeSessionId: chatState.activeSessionId,
+      loadingSessionIds: chatState.loadingSessionIds,
+      generatingTitleSessionIds: chatState.generatingTitleSessionIds,
+      onSelectSession: selectSession,
+      onNewChat: chatState.startNewChat,
+      onDeleteSession: chatState.handleDeleteChatHistorySession,
+      onRenameSession: chatState.handleRenameSession,
+      onTogglePinSession: chatState.handleTogglePinCurrentSession,
+      onDuplicateSession: chatState.handleDuplicateSession,
+      onOpenExportModal: openExportModal,
+      onAddNewGroup: chatState.handleAddNewGroup,
+      onDeleteGroup: chatState.handleDeleteGroup,
+      onRenameGroup: chatState.handleRenameGroup,
+      onMoveSessionToGroup: chatState.handleMoveSessionToGroup,
+      onToggleGroupExpansion: chatState.handleToggleGroupExpansion,
+      onOpenSettingsModal: openSettingsModal,
+      themeId: currentTheme.id,
+      newChatShortcut: getShortcutDisplay('general.newChat', appSettings),
+    }),
+    [
+      appSettings,
+      chatState.activeSessionId,
+      chatState.generatingTitleSessionIds,
+      chatState.handleAddNewGroup,
+      chatState.handleDeleteChatHistorySession,
+      chatState.handleDeleteGroup,
+      chatState.handleDuplicateSession,
+      chatState.handleMoveSessionToGroup,
+      chatState.handleRenameGroup,
+      chatState.handleRenameSession,
+      chatState.handleToggleGroupExpansion,
+      chatState.handleTogglePinCurrentSession,
+      chatState.loadingSessionIds,
+      chatState.savedGroups,
+      chatState.savedSessions,
+      chatState.startNewChat,
+      currentTheme.id,
+      openExportModal,
+      openSettingsModal,
+      selectSession,
+      setIsHistorySidebarOpenTransient,
+      toggleHistorySidebar,
+      uiState.isHistorySidebarOpen,
+    ],
+  );
+
+  const appModalsProps = useMemo(
+    () => ({
+      isSettingsModalOpen,
+      setIsSettingsModalOpen,
+      appSettings: settingsForModal,
+      availableModels: chatState.apiModels,
+      handleSaveSettings,
+      clearCacheAndReload: chatState.clearCacheAndReload,
+      clearAllHistory: chatState.clearAllHistory,
+      handleInstallPwa: eventsState.handleInstallPwa,
+      installState: eventsState.installState.state,
+      handleCheckForUpdates: eventsState.handleCheckForUpdates,
+      canCheckForUpdates: eventsState.canCheckForUpdates,
+      manualUpdateCheckState: eventsState.manualUpdateCheckState,
+      handleImportSettings,
+      handleExportSettings,
+      handleImportHistory,
+      handleExportHistory,
+      handleImportAllScenarios,
+      handleExportAllScenarios,
+      isPreloadedMessagesModalOpen,
+      setIsPreloadedMessagesModalOpen,
+      savedScenarios: chatState.savedScenarios,
+      handleSaveAllScenarios: chatState.handleSaveAllScenarios,
+      handleLoadPreloadedScenario: chatState.handleLoadPreloadedScenario,
+      isExportModalOpen,
+      setIsExportModalOpen,
+      handleExportChat,
+      exportStatus,
+      isLogViewerOpen,
+      setIsLogViewerOpen,
+      currentChatSettings: chatState.currentChatSettings,
+      setAvailableModels: chatState.setApiModels,
+    }),
+    [
+      chatState.apiModels,
+      chatState.clearAllHistory,
+      chatState.clearCacheAndReload,
+      chatState.currentChatSettings,
+      chatState.handleLoadPreloadedScenario,
+      chatState.handleSaveAllScenarios,
+      chatState.savedScenarios,
+      chatState.setApiModels,
+      eventsState.canCheckForUpdates,
+      eventsState.handleCheckForUpdates,
+      eventsState.handleInstallPwa,
+      eventsState.installState.state,
+      eventsState.manualUpdateCheckState,
+      exportStatus,
+      handleExportAllScenarios,
+      handleExportChat,
+      handleExportHistory,
+      handleExportSettings,
+      handleImportAllScenarios,
+      handleImportHistory,
+      handleImportSettings,
+      handleSaveSettings,
+      isExportModalOpen,
+      isLogViewerOpen,
+      isPreloadedMessagesModalOpen,
+      isSettingsModalOpen,
+      setIsExportModalOpen,
+      setIsLogViewerOpen,
+      setIsPreloadedMessagesModalOpen,
+      setIsSettingsModalOpen,
+      settingsForModal,
+    ],
+  );
+
+  const chatArea: ChatAreaProps['chatArea'] = useMemo(
+    () => ({
+      session: {
+        activeSessionId: chatState.activeSessionId,
+        sessionTitle,
+        currentChatSettings: chatState.currentChatSettings,
+        messages: chatState.messages,
+        isLoading: chatState.isLoading,
+        isEditing: !!chatState.editingMessageId,
+        showThoughts: chatState.currentChatSettings.showThoughts,
+      },
+      shell: {
+        isAppDraggingOver: chatState.isAppDraggingOver,
+        modelsLoadingError: null,
+        handleAppDragEnter: chatState.handleAppDragEnter,
+        handleAppDragOver: chatState.handleAppDragOver,
+        handleAppDragLeave: chatState.handleAppDragLeave,
+        handleAppDrop: chatState.handleAppDrop,
+      },
+      header: {
+        currentModelName,
+        availableModels: chatState.apiModels,
+        selectedModelId: chatState.currentChatSettings.modelId || appSettings.modelId,
+        isCanvasPromptActive: isCanvasSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isPipSupported: pipState.isPipSupported,
+        isPipActive: pipState.isPipActive,
+        onNewChat: chatState.startNewChat,
+        onOpenScenariosModal: openScenariosModal,
+        onToggleHistorySidebar: toggleHistorySidebar,
+        onLoadCanvasPrompt: handleLoadCanvasPromptAndSave,
+        onSelectModel: chatState.handleSelectModelInHeader,
+        onSetThinkingLevel: handleSetThinkingLevel,
+        onToggleGemmaReasoning,
+        onTogglePip: pipState.togglePip,
+      },
+      messageActions,
+      inputActions,
+      features: {
+        isImageEditModel: chatState.currentChatSettings.modelId?.includes('image-preview'),
+        isBBoxModeActive: isBboxSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        isGuideModeActive: isHdGuideSystemInstruction(chatState.currentChatSettings.systemInstruction),
+        generateQuadImages: appSettings.generateQuadImages ?? false,
+        isGoogleSearchEnabled: !!chatState.currentChatSettings.isGoogleSearchEnabled,
+        isCodeExecutionEnabled: !!chatState.currentChatSettings.isCodeExecutionEnabled,
+        isLocalPythonEnabled: !!chatState.currentChatSettings.isLocalPythonEnabled,
+        isUrlContextEnabled: !!chatState.currentChatSettings.isUrlContextEnabled,
+        isDeepSearchEnabled: !!chatState.currentChatSettings.isDeepSearchEnabled,
+      },
+    }),
+    [
+      appSettings,
+      chatState.activeSessionId,
+      chatState.apiModels,
+      chatState.currentChatSettings,
+      chatState.editingMessageId,
+      chatState.handleAppDragEnter,
+      chatState.handleAppDragLeave,
+      chatState.handleAppDragOver,
+      chatState.handleAppDrop,
+      chatState.handleSelectModelInHeader,
+      chatState.isAppDraggingOver,
+      chatState.isLoading,
+      chatState.messages,
+      chatState.startNewChat,
+      currentModelName,
+      handleLoadCanvasPromptAndSave,
+      handleSetThinkingLevel,
+      inputActions,
+      messageActions,
+      onToggleGemmaReasoning,
+      openScenariosModal,
+      pipState.isPipActive,
+      pipState.isPipSupported,
+      pipState.togglePip,
+      sessionTitle,
+      toggleHistorySidebar,
+    ],
+  );
+
+  const sidePanelKey = useMemo(() => buildSidePanelKey(sidePanelContent), [sidePanelContent]);
+
+  return {
+    chatArea,
+    sidebarProps,
+    appModalsProps,
+    sidePanelContent,
+    handleCloseSidePanel,
+    sidePanelKey,
+    overlayVisible: uiState.isHistorySidebarOpen,
+    currentThemeId: currentTheme.id,
+    closeHistorySidebar,
+  };
+};

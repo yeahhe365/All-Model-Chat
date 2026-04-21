@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
 import { SYSTEM_SCENARIO_IDS } from '../features/scenarios/scenarioLibrary';
 import type { SavedChatSession } from '../types';
-import { createNewSession } from '../utils/appUtils';
+import { createNewSession } from '../utils/chat/session';
 import { usePreloadedScenarios } from './usePreloadedScenarios';
 
 const { localStorageMock } = vi.hoisted(() => {
@@ -38,8 +38,11 @@ vi.mock('../utils/db', () => ({
   },
 }));
 
-vi.mock('../utils/appUtils', () => ({
+vi.mock('../utils/chat/ids', () => ({
   generateUniqueId: () => 'generated-id',
+}));
+
+vi.mock('../utils/chat/session', () => ({
   generateSessionTitle: () => 'Generated title',
   createNewSession: vi.fn((settings, messages, title) => ({
     id: 'new-session',
@@ -48,6 +51,9 @@ vi.mock('../utils/appUtils', () => ({
     settings,
     timestamp: Date.now(),
   })),
+}));
+
+vi.mock('../services/logService', () => ({
   logService: {
     error: vi.fn(),
     warn: vi.fn(),

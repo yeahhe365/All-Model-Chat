@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { buildHtmlPreviewSrcDoc } from '../../../utils/htmlPreview';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface HtmlPreviewContentProps {
     iframeRef: React.RefObject<HTMLIFrameElement>;

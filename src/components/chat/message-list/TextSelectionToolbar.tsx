@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 // Hooks
 import { useSelectionPosition } from '../../../hooks/text-selection/useSelectionPosition';

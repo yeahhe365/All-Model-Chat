@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { FileText, Download, Loader2, Edit3, Eye, X } from 'lucide-react';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface CreateFileHeaderProps {
     isEditing: boolean;

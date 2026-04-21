@@ -1,7 +1,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { UploadedFile, SavedChatSession, ChatSettings, ModelOption } from '../../types';
-import { logService, cleanupFilePreviewUrls } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { cleanupFilePreviewUrls } from '../../utils/fileHelpers';
 
 interface UseChatEffectsProps {
     activeSessionId: string | null;

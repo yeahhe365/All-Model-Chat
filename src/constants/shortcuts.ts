@@ -1,4 +1,4 @@
-import { translations } from '../utils/appUtils';
+import { translations } from '../utils/translations';
 
 interface ShortcutDefinition {
     id: string;

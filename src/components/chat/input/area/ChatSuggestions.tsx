@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, MousePointer2 } from 'lucide-react';
 import { useI18n } from '../../../../contexts/I18nContext';
 import { SUGGESTIONS_KEYS } from '../../../../constants/appConstants';
 import { SuggestionIcon } from './SuggestionIcon';
-import { translations } from '../../../../utils/appUtils';
+import { translations } from '../../../../utils/translations';
 
 interface ChatSuggestionsProps {
     show: boolean;

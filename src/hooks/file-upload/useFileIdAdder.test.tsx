@@ -15,9 +15,18 @@ const {
   getFileMetadataMock: vi.fn(),
 }));
 
-vi.mock('../../utils/appUtils', () => ({
+vi.mock('../../utils/chat/ids', () => ({
   generateUniqueId: generateUniqueIdMock,
+}));
+
+vi.mock('../../utils/apiUtils', () => ({
   getKeyForRequest: getKeyForRequestMock,
+  getApiKeyErrorTranslationKey: vi.fn((error: string) =>
+    error === 'API Key not configured.' ? 'apiRuntime_keyNotConfigured' : null
+  ),
+}));
+
+vi.mock('../../services/logService', () => ({
   logService: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 

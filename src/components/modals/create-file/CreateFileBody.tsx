@@ -1,7 +1,7 @@
 
 import React, { Suspense, lazy, useState } from 'react';
 import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
-import { translations } from '../../../utils/appUtils';
+import { translations } from '../../../utils/translations';
 
 interface CreateFileBodyProps {
     textContent: string;

@@ -2,7 +2,8 @@
 import React, { useMemo, useState } from 'react';
 import { ChatMessage, AppSettings, SideViewContent, UploadedFile } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
-import { parseThoughtProcess, getKeyForRequest } from '../../../utils/appUtils';
+import { getKeyForRequest } from '../../../utils/apiUtils';
+import { parseThoughtProcess } from '../../../utils/chat/parsing';
 import { geminiServiceInstance } from '../../../services/geminiService';
 import { DEFAULT_CHAT_SETTINGS } from '../../../constants/appConstants';
 import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';

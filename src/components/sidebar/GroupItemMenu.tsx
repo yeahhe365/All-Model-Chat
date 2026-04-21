@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { SquarePen, Trash2 } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 
 interface GroupItemMenuProps {
   menuRef: React.RefObject<HTMLDivElement>;

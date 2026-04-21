@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect } from 'react';
 import { AppSettings, SavedChatSession } from '../../types';
-import { getKeyForRequest, logService, generateSessionTitle } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
+import { getKeyForRequest } from '../../utils/apiUtils';
+import { generateSessionTitle } from '../../utils/chat/session';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { getVisibleChatMessages } from '../../utils/chat/visibility';
 

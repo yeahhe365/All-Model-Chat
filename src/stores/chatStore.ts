@@ -3,7 +3,9 @@ import { SavedChatSession, ChatGroup, ChatMessage, UploadedFile, InputCommand, C
 import type { SyncMessage } from '../types/sync';
 import type { ImageOutputMode, ImagePersonGeneration } from '../types/settings';
 import { dbService } from '../utils/db';
-import { logService, rehydrateSessionFiles, resolveSupportedModelId } from '../utils/appUtils';
+import { logService } from '../services/logService';
+import { rehydrateSessionFiles } from '../utils/chat/session';
+import { resolveSupportedModelId } from '../utils/modelHelpers';
 import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 import { DEFAULT_MODEL_ID } from '../constants/modelConstants';
 

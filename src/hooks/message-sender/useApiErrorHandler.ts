@@ -1,6 +1,6 @@
 
 import { useCallback } from 'react';
-import { logService } from '../../utils/appUtils';
+import { logService } from '../../services/logService';
 import { SavedChatSession } from '../../types';
 
 type SessionsUpdater = (updater: (prev: SavedChatSession[]) => SavedChatSession[]) => void;

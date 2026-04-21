@@ -1,7 +1,8 @@
 
 import { useCallback } from 'react';
 import { AppSettings, ChatSettings as IndividualChatSettings, UploadedFile } from '../../../types';
-import { getKeyForRequest, logService } from '../../../utils/appUtils';
+import { logService } from '../../../services/logService';
+import { getKeyForRequest } from '../../../utils/apiUtils';
 import { geminiServiceInstance } from '../../../services/geminiService';
 
 interface UseAudioActionsProps {

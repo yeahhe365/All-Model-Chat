@@ -2,7 +2,7 @@
 import React, { useRef, useEffect } from 'react';
 import { SavedScenario } from '../../types';
 import { X, Plus, Upload, Download, ArrowLeft } from 'lucide-react';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioList } from './ScenarioList';

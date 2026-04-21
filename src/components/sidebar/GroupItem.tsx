@@ -4,7 +4,7 @@ import { ChevronDown, MoreHorizontal } from 'lucide-react';
 import { ChatGroup, SavedChatSession } from '../../types';
 import { SessionItem } from './SessionItem';
 import { GroupItemMenu } from './GroupItemMenu';
-import { translations } from '../../utils/appUtils';
+import { translations } from '../../utils/translations';
 
 // Define a type for the props that are passed down to SessionItem
 export type SessionItemPassedProps = Omit<React.ComponentProps<typeof SessionItem>, 'session'>;

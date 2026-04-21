@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Filter, Download, Trash2, RefreshCw, Terminal } from 'lucide-react';
-import { LogEntry, LogLevel, LogCategory } from '../../services/logService';
+import type { LogEntry, LogLevel, LogCategory } from '../../types/logging';
 import { LOG_LEVEL_COLORS, CATEGORY_COLORS } from './constants';
 import { LogRow } from './LogRow';
 import { useI18n } from '../../contexts/I18nContext';
