@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
-const { mockExtractDocxText, mockSettingsState, mockT } = vi.hoisted(() => ({
+const { mockExtractDocxText, mockSettingsState, mockT, mockTextFileViewer } = vi.hoisted(() => ({
   mockExtractDocxText: vi.fn(),
   mockSettingsState: {
     appSettings: {
       customShortcuts: {},
+    },
+    currentTheme: {
+      id: 'pearl',
     },
   },
   mockT: vi.fn((key: string) => {
@@ -20,6 +23,17 @@ const { mockExtractDocxText, mockSettingsState, mockT } = vi.hoisted(() => ({
     };
     return messages[key] ?? key;
   }),
+  mockTextFileViewer: vi.fn(
+    ({ content, renderMode, themeId }: { content?: string | null; renderMode?: string; themeId?: string }) => (
+      <div
+        data-testid="text-file-viewer"
+        data-render-mode={renderMode}
+        data-theme-id={themeId}
+      >
+        {content ?? ''}
+      </div>
+    ),
+  ),
 }));
 
 vi.mock('../../contexts/I18nContext', () => ({
@@ -41,9 +55,7 @@ vi.mock('../shared/file-preview/FilePreviewHeader', () => ({
 }));
 
 vi.mock('../shared/file-preview/TextFileViewer', () => ({
-  TextFileViewer: ({ content }: { content?: string | null }) => (
-    <div data-testid="text-file-viewer">{content ?? ''}</div>
-  ),
+  TextFileViewer: mockTextFileViewer,
 }));
 
 vi.mock('../../utils/docxPreview', () => ({
@@ -67,6 +79,15 @@ describe('FilePreviewModal', () => {
     rawFile: new File(['fake-docx'], 'report.docx', {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     }),
+    uploadState: 'active',
+  });
+
+  const createMarkdownFile = (): UploadedFile => ({
+    id: 'md-1',
+    name: 'README.md',
+    type: '',
+    size: 256,
+    dataUrl: 'blob:markdown-preview',
     uploadState: 'active',
   });
 
@@ -155,5 +176,22 @@ describe('FilePreviewModal', () => {
 
     expect(onPrev).toHaveBeenCalledTimes(1);
     expect(onNext).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes .md uploads into markdown preview mode with the active theme id', async () => {
+    await act(async () => {
+      root.render(
+        <FilePreviewModal
+          file={createMarkdownFile()}
+          onClose={() => {}}
+        />,
+      );
+    });
+
+    const viewer = document.querySelector('[data-testid="text-file-viewer"]');
+
+    expect(viewer).not.toBeNull();
+    expect(viewer?.getAttribute('data-render-mode')).toBe('markdown');
+    expect(viewer?.getAttribute('data-theme-id')).toBe('pearl');
   });
 });

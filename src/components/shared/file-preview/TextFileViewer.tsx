@@ -3,10 +3,13 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { Loader2 } from 'lucide-react';
 import { UploadedFile } from '../../../types';
 import { useI18n } from '../../../contexts/I18nContext';
+import { LazyMarkdownRenderer } from '../../message/LazyMarkdownRenderer';
 
 interface TextFileViewerProps {
     file: UploadedFile;
     content?: string | null;
+    renderMode?: 'plain' | 'markdown';
+    themeId?: string;
     isEditable?: boolean;
     onChange?: (value: string) => void;
     onLoad?: (content: string) => void;
@@ -54,7 +57,7 @@ const VirtualTextViewer: React.FC<{ content: string }> = ({ content }) => {
         visibleLines.push(
             <div 
                 key={i} 
-                className="absolute left-1/2 -translate-x-1/2 w-full max-w-5xl px-8 whitespace-pre font-mono text-sm leading-[21px] text-white/90"
+                className="absolute left-1/2 -translate-x-1/2 w-full max-w-5xl px-8 whitespace-pre font-mono text-sm leading-[21px] text-[var(--theme-text-primary)]"
                 style={{ top: PADDING_Y + i * ROW_HEIGHT, height: ROW_HEIGHT }}
             >
                 {lines[i]}
@@ -78,6 +81,8 @@ const VirtualTextViewer: React.FC<{ content: string }> = ({ content }) => {
 export const TextFileViewer: React.FC<TextFileViewerProps> = ({ 
     file, 
     content, 
+    renderMode = 'plain',
+    themeId = 'pearl',
     isEditable = false, 
     onChange,
     onLoad
@@ -120,11 +125,12 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
     // Use virtualization for files larger than ~50KB to prevent freezing
     const isLargeFile = (displayContent?.length || 0) > 50000;
     const shouldShowLoading = hasProvidedContent ? false : isLoading;
+    const shouldRenderMarkdown = !isEditable && renderMode === 'markdown' && !shouldShowLoading;
 
     return (
-        <div className="w-full h-full relative group">
+        <div className="w-full h-full relative group bg-[var(--theme-bg-secondary)] text-[var(--theme-text-primary)]">
             {shouldShowLoading ? (
-                <div className="flex items-center justify-center h-full text-white/50">
+                <div className="flex items-center justify-center h-full text-[var(--theme-text-tertiary)]">
                     <Loader2 className="animate-spin mr-2" /> {t('filePreview_loading_text_content')}
                 </div>
             ) : isEditable ? (
@@ -132,15 +138,34 @@ export const TextFileViewer: React.FC<TextFileViewerProps> = ({
                     ref={textareaRef}
                     value={displayContent || ''}
                     onChange={(e) => onChange && onChange(e.target.value)}
-                    className="w-full h-full p-4 sm:p-8 pt-24 pb-24 bg-transparent text-sm font-mono text-white/90 whitespace-pre-wrap break-all outline-none resize-none custom-scrollbar"
+                    className="w-full h-full p-4 sm:p-8 pt-24 pb-24 bg-transparent text-sm font-mono text-[var(--theme-text-primary)] whitespace-pre-wrap break-all outline-none resize-none custom-scrollbar"
                     spellCheck={false}
                 />
+            ) : shouldRenderMarkdown ? (
+                <div className="w-full h-full p-4 sm:p-8 pt-24 pb-24 overflow-auto custom-scrollbar select-text cursor-text">
+                    <div className="markdown-body max-w-4xl mx-auto min-h-[50vh] rounded-xl border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] p-6 shadow-xl sm:p-8">
+                        <LazyMarkdownRenderer
+                            content={displayContent || ''}
+                            isLoading={false}
+                            onImageClick={() => {}}
+                            onOpenHtmlPreview={() => {}}
+                            onOpenSidePanel={() => {}}
+                            expandCodeBlocksByDefault={true}
+                            isMermaidRenderingEnabled={true}
+                            isGraphvizRenderingEnabled={true}
+                            allowHtml={true}
+                            t={t}
+                            themeId={themeId}
+                            fallbackMode="raw"
+                        />
+                    </div>
+                </div>
             ) : isLargeFile ? (
                 <VirtualTextViewer content={displayContent || ''} />
             ) : (
                 <div className="w-full h-full p-4 sm:p-8 pt-24 pb-24 overflow-auto custom-scrollbar select-text cursor-text">
-                    <div className="max-w-4xl mx-auto bg-white/5 rounded-lg p-6 backdrop-blur-md border border-white/10 shadow-xl min-h-[50vh]">
-                        <pre className="text-sm font-mono text-white/90 whitespace-pre-wrap break-all">
+                    <div className="max-w-4xl mx-auto min-h-[50vh] rounded-lg border border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] p-6 shadow-xl">
+                        <pre className="text-sm font-mono text-[var(--theme-text-primary)] whitespace-pre-wrap break-all">
                             {displayContent}
                         </pre>
                     </div>

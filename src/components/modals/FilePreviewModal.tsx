@@ -8,7 +8,7 @@ import { FilePreviewHeader } from '../shared/file-preview/FilePreviewHeader';
 import { ImageViewer } from '../shared/file-preview/ImageViewer';
 import { TextFileViewer } from '../shared/file-preview/TextFileViewer';
 import { IconYoutube } from '../icons/CustomIcons';
-import { copyFileToClipboard } from '../../utils/fileHelpers';
+import { copyFileToClipboard, isMarkdownFile, isTextFile } from '../../utils/fileHelpers';
 import { extractDocxText, isDocxFile } from '../../utils/docxPreview';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { isShortcutPressed } from '../../utils/shortcutUtils';
@@ -45,6 +45,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
 }) => {
   const { t } = useI18n();
   const appSettings = useSettingsStore((state) => state.appSettings);
+  const currentThemeId = useSettingsStore((state) => state.currentTheme.id);
   const isDocxCandidate = isDocxFile(file);
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [editedContent, setEditedContent] = useState(file.textContent ?? '');
@@ -117,13 +118,8 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
   const isYoutube = file.type === 'video/youtube-link';
   const isAudio = file.type.startsWith('audio/');
   const isDocx = !isImage && !isPdf && !isVideo && !isYoutube && !isAudio && isDocxCandidate;
-  const isText =
-      !isImage &&
-      !isDocx &&
-      (file.type.startsWith('text/') ||
-        file.type === 'application/json' ||
-        file.type.includes('javascript') ||
-        file.type.includes('xml'));
+  const isText = !isImage && !isDocx && !isPdf && !isVideo && !isYoutube && !isAudio && isTextFile(file);
+  const isMarkdown = isText && isMarkdownFile(file);
 
   useEffect(() => {
       let cancelled = false;
@@ -236,6 +232,8 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
           ) : isText || isDocx ? (
               <TextFileViewer
                   file={file}
+                  renderMode={isMarkdown ? 'markdown' : 'plain'}
+                  themeId={currentThemeId}
                   isEditable={isEditing}
                   onChange={setEditedContent}
                   onLoad={(content) => {
