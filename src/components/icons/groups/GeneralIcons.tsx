@@ -30,9 +30,9 @@ export const IconNewGroup: React.FC<IconProps> = ({
     className={className}
     data-testid="new-group-folder-icon"
   >
-    <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-    <path d="M12 10v6" />
-    <path d="M9 13h6" />
+    <path d="M3 7.5C3 6.67 3.67 6 4.5 6H9l2 2h8.5c.83 0 1.5.67 1.5 1.5V12" />
+    <path d="M3 7.5V18c0 .83.67 1.5 1.5 1.5h8" />
+    <path d="M18 15v6M15 18h6" />
   </svg>
 );
 
