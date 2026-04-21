@@ -1,5 +1,8 @@
 const GEMMA_THOUGHT_CHANNEL_REGEX = /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/gi;
+const GEMMA_THOUGHT_CHANNEL_PRESENCE_REGEX =
+  /<\|channel(?:\|thought>|>thought\s*)([\s\S]*?)\s*<channel\|>/i;
 const THINKING_BLOCK_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/gi;
+const THINKING_BLOCK_PRESENCE_REGEX = /<thinking>([\s\S]*?)<\/[^>]+>/i;
 
 const normalizeReasoningWhitespace = (text: string): string =>
   text
@@ -15,6 +18,10 @@ export const extractGemmaThoughtChannel = (
     return { content: '' };
   }
 
+  if (!GEMMA_THOUGHT_CHANNEL_PRESENCE_REGEX.test(text)) {
+    return { content: text };
+  }
+
   const thoughts: string[] = [];
   const content = text.replace(GEMMA_THOUGHT_CHANNEL_REGEX, (_match, innerContent: string) => {
     const normalizedThought = normalizeReasoningWhitespace(innerContent);
@@ -24,13 +31,29 @@ export const extractGemmaThoughtChannel = (
     return ' ';
   });
 
+  const extractedContent = normalizeReasoningWhitespace(content);
+  if (thoughts.length === 0) {
+    return { content: extractedContent };
+  }
+
   return {
-    content: normalizeReasoningWhitespace(content),
-    thoughts: thoughts.length > 0 ? thoughts.join('\n\n') : undefined,
+    content: extractedContent,
+    thoughts: thoughts.join('\n\n'),
   };
 };
 
 export const stripReasoningMarkup = (text: string): string => {
+  if (!text) {
+    return '';
+  }
+
+  const hadThinkingBlock = THINKING_BLOCK_PRESENCE_REGEX.test(text);
   const withoutThinkingBlocks = text.replace(THINKING_BLOCK_REGEX, ' ');
-  return extractGemmaThoughtChannel(withoutThinkingBlocks).content;
+  const { content } = extractGemmaThoughtChannel(withoutThinkingBlocks);
+
+  if (!hadThinkingBlock) {
+    return content;
+  }
+
+  return normalizeReasoningWhitespace(content);
 };

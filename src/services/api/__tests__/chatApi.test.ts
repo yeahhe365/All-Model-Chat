@@ -213,6 +213,50 @@ describe('chatApi media resolution routing', () => {
     );
   });
 
+  it('preserves streamed plain-text chunk boundaries when chunks start or end with newlines', async () => {
+    mockGenerateContentStream.mockResolvedValue(
+      (async function* () {
+        yield {
+          candidates: [
+            {
+              content: {
+                parts: [{ text: 'Hello\n' }],
+              },
+            },
+          ],
+        };
+
+        yield {
+          candidates: [
+            {
+              content: {
+                parts: [{ text: '\nworld' }],
+              },
+            },
+          ],
+        };
+      })(),
+    );
+
+    const onPart = vi.fn();
+
+    await sendStatelessMessageStreamApi(
+      'key',
+      'gemini-3-flash-preview',
+      [],
+      [{ text: 'Write two paragraphs.' }],
+      {},
+      new AbortController().signal,
+      onPart,
+      vi.fn(),
+      vi.fn(),
+      vi.fn(),
+    );
+
+    expect(onPart).toHaveBeenNthCalledWith(1, { text: 'Hello\n' });
+    expect(onPart).toHaveBeenNthCalledWith(2, { text: '\nworld' });
+  });
+
   it('extracts Gemma thought channels from official non-stream text responses', async () => {
     mockGenerateContent.mockResolvedValue({
       candidates: [
