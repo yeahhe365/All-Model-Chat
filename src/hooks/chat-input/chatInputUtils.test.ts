@@ -7,7 +7,7 @@ describe('buildChatInputSubmitText', () => {
       buildChatInputSubmitText({
         inputText: 'hello world',
         quotes: [],
-        modelId: 'gemini-2.5-flash-preview-tts',
+        modelId: 'gemini-3.1-flash-tts-preview',
         ttsContext: 'Use a calm narrator voice.',
       })
     ).toBe('Use a calm narrator voice.\n\n#### TRANSCRIPT\nhello world');

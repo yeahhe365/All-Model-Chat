@@ -144,20 +144,31 @@ describe('shouldStripThinkingFromContext', () => {
 });
 
 describe('supported model sanitization', () => {
-  it('filters removed 2.5 preview ids from custom model lists', () => {
+  it('keeps legacy Gemini 2.5 preview and TTS ids in custom model lists', () => {
     const models: ModelOption[] = [
       { id: 'gemini-2.5-flash-preview-09-2025', name: 'Old Flash' },
+      { id: 'gemini-2.5-flash-preview-tts', name: 'Removed Flash TTS' },
+      { id: 'gemini-2.5-pro-preview-tts', name: 'Removed Pro TTS' },
       { id: 'gemini-3.1-pro-preview', name: 'Gemini 3.1 Pro' },
     ];
 
     expect(sanitizeModelOptions(models).map((model) => model.id)).toEqual([
+      'gemini-2.5-flash-preview-09-2025',
+      'gemini-2.5-flash-preview-tts',
+      'gemini-2.5-pro-preview-tts',
       'gemini-3.1-pro-preview',
     ]);
   });
 
-  it('falls back only for explicitly removed preview ids', () => {
+  it('does not auto-fallback legacy preview and TTS ids', () => {
     expect(resolveSupportedModelId('gemini-2.5-flash-preview-09-2025', 'gemini-3-flash-preview')).toBe(
-      'gemini-3-flash-preview',
+      'gemini-2.5-flash-preview-09-2025',
+    );
+    expect(resolveSupportedModelId('gemini-2.5-flash-preview-tts', 'gemini-3.1-flash-tts-preview')).toBe(
+      'gemini-2.5-flash-preview-tts',
+    );
+    expect(resolveSupportedModelId('gemini-2.5-pro-preview-tts', 'gemini-3.1-flash-tts-preview')).toBe(
+      'gemini-2.5-pro-preview-tts',
     );
   });
 });

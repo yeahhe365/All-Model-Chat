@@ -65,16 +65,6 @@ const MODEL_REGISTRY: RegisteredModel[] = [
     groups: ['defaultPinned', 'connectionTest'],
   },
   {
-    id: 'gemini-2.5-pro-preview-tts',
-    name: 'Gemini 2.5 Pro TTS',
-    groups: ['tts'],
-  },
-  {
-    id: 'gemini-2.5-flash-preview-tts',
-    name: 'Gemini 2.5 Flash TTS',
-    groups: ['tts'],
-  },
-  {
     id: 'gemini-3.1-flash-tts-preview',
     name: 'Gemini 3.1 Flash TTS Preview',
     groups: ['tts'],

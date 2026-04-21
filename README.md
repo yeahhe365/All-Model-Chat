@@ -329,7 +329,7 @@ All-Model-Chat/
 | **Gemma 4** | gemma-4-31b-it, gemma-4-26b-a4b-it |
 | **Imagen 4.0** | imagen-4.0-fast-generate-001, imagen-4.0-generate-001, imagen-4.0-ultra-generate-001 |
 | **图片生成** | gemini-2.5-flash-image, gemini-3-pro-image-preview, gemini-3.1-flash-image-preview |
-| **TTS** | gemini-2.5-pro-preview-tts, gemini-2.5-flash-preview-tts (30+ 种语音) |
+| **TTS** | gemini-3.1-flash-tts-preview (30+ 种语音) |
 
 ---
 

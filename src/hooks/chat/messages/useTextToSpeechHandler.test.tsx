@@ -77,7 +77,7 @@ describe('useTextToSpeechHandler', () => {
     const { result, unmount } = renderHook(() =>
       useTextToSpeechHandler({
         appSettings: DEFAULT_APP_SETTINGS,
-        currentChatSettings: createChatSettings('gemini-2.5-pro-preview-tts'),
+        currentChatSettings: createChatSettings('gemini-3.1-flash-tts-preview'),
       }),
     );
 
@@ -86,7 +86,7 @@ describe('useTextToSpeechHandler', () => {
     expect(url).toBe('blob:wav-url');
     expect(generateSpeechMock).toHaveBeenCalledWith(
       'api-key',
-      'gemini-2.5-pro-preview-tts',
+      'gemini-3.1-flash-tts-preview',
       'hello world',
       DEFAULT_APP_SETTINGS.ttsVoice,
       expect.any(AbortSignal),

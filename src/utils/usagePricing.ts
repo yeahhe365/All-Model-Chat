@@ -58,16 +58,7 @@ const TTS_PRICING: Record<
     promptTextPerMillion: number;
     responseAudioPerMillion: number;
   } | null
-> = {
-  'gemini-2.5-flash-preview-tts': {
-    promptTextPerMillion: 0.5,
-    responseAudioPerMillion: 10,
-  },
-  'gemini-2.5-pro-preview-tts': {
-    promptTextPerMillion: 1,
-    responseAudioPerMillion: 20,
-  },
-};
+> = {};
 
 const sumTokensByRate = (
   details: ApiUsageModalityTokenCount[] | undefined,

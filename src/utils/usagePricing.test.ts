@@ -49,7 +49,7 @@ describe('calculateApiUsageRecordPriceUsd', () => {
     expect(calculateApiUsageRecordPriceUsd(record)).toBeNull();
   });
 
-  it('prices flash TTS exactly when text input and audio output token counts are stored', () => {
+  it('keeps removed Gemini 2.5 TTS pricing unavailable even when exact evidence is stored', () => {
     const record: ApiUsageRecord = {
       timestamp: Date.now(),
       modelId: 'gemini-2.5-flash-preview-tts',
@@ -64,7 +64,7 @@ describe('calculateApiUsageRecordPriceUsd', () => {
       },
     };
 
-    expect(calculateApiUsageRecordPriceUsd(record)).toBeCloseTo(10.5, 6);
+    expect(calculateApiUsageRecordPriceUsd(record)).toBeNull();
   });
 
   it('prices Imagen 4 exactly from generated image count', () => {

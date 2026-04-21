@@ -6,21 +6,13 @@ import type { UsageMetadata } from '@google/genai';
 
 // --- Model Sorting & Defaults ---
 
-const REMOVED_MODEL_IDS = [
-    'gemini-2.5-flash-preview-09-2025',
-    'gemini-2.5-flash-lite-preview-09-2025',
-] as const;
-
-const isRemovedModelId = (modelId: string | null | undefined): boolean =>
-    !!modelId && REMOVED_MODEL_IDS.includes(modelId as (typeof REMOVED_MODEL_IDS)[number]);
-
 export const sanitizeModelOptions = (models: ModelOption[]): ModelOption[] => {
     const seenIds = new Set<string>();
 
     return models.reduce<ModelOption[]>((sanitized, model) => {
         const normalizedId = model.id.trim();
 
-        if (!normalizedId || isRemovedModelId(normalizedId) || seenIds.has(normalizedId)) {
+        if (!normalizedId || seenIds.has(normalizedId)) {
             return sanitized;
         }
 
@@ -36,7 +28,7 @@ export const sanitizeModelOptions = (models: ModelOption[]): ModelOption[] => {
 };
 
 export const resolveSupportedModelId = (modelId: string | null | undefined, fallback: string): string =>
-    isRemovedModelId(modelId) ? fallback : (modelId || fallback);
+    modelId || fallback;
 
 const isNativeAudioModel = (modelId: string): boolean => {
     const lowerId = modelId.toLowerCase();

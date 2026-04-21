@@ -40,7 +40,7 @@ describe('generateSpeechApi request config', () => {
   it('uses the selected single-speaker voice for standard TTS prompts', async () => {
     await generateSpeechApi(
       'api-key',
-      'gemini-2.5-flash-preview-tts',
+      'gemini-3.1-flash-tts-preview',
       'Say cheerfully: Have a wonderful day!',
       'Aoede',
       new AbortController().signal,
@@ -63,7 +63,7 @@ describe('generateSpeechApi request config', () => {
   it('switches to multi-speaker voice config when the prompt declares speaker voices', async () => {
     await generateSpeechApi(
       'api-key',
-      'gemini-2.5-flash-preview-tts',
+      'gemini-3.1-flash-tts-preview',
       `# AUDIO PROFILE: Two hosts
 ### SPEAKER VOICES
 Joe: Kore

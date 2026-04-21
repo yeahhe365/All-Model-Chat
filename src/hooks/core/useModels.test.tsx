@@ -44,7 +44,7 @@ describe('useModels', () => {
     });
   });
 
-  it('filters removed Gemini 2.5 Flash preview models from persisted custom lists', () => {
+  it('keeps legacy Gemini 2.5 Flash preview models in persisted custom lists', () => {
     localStorage.setItem(
       'custom_model_list_v1',
       JSON.stringify([
@@ -55,7 +55,10 @@ describe('useModels', () => {
 
     const { result, unmount } = renderHook(() => useModels());
 
-    expect(result.current.apiModels.map((model) => model.id)).toEqual(['gemini-3-flash-preview']);
+    expect(result.current.apiModels.map((model) => model.id)).toEqual([
+      'gemini-2.5-flash-preview-09-2025',
+      'gemini-3-flash-preview',
+    ]);
     unmount();
   });
 

@@ -162,7 +162,7 @@ describe('settingsStore', () => {
       Object.defineProperty(navigator, 'language', { value: originalLang, configurable: true });
     });
 
-    it('falls back when stored settings reference removed Gemini 2.5 Flash preview models', async () => {
+    it('preserves stored settings that reference legacy Gemini 2.5 preview models', async () => {
       vi.mocked(dbService.getAppSettings).mockResolvedValue({
         modelId: 'gemini-2.5-flash-preview-09-2025',
         transcriptionModelId: 'gemini-2.5-flash-lite-preview-09-2025',
@@ -171,8 +171,8 @@ describe('settingsStore', () => {
       await useSettingsStore.getState().loadSettings();
 
       const state = useSettingsStore.getState();
-      expect(state.appSettings.modelId).toBe('gemini-3-flash-preview');
-      expect(state.appSettings.transcriptionModelId).toBe('gemini-3-flash-preview');
+      expect(state.appSettings.modelId).toBe('gemini-2.5-flash-preview-09-2025');
+      expect(state.appSettings.transcriptionModelId).toBe('gemini-2.5-flash-lite-preview-09-2025');
     });
   });
 
