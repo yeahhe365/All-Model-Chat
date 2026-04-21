@@ -3,7 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { UploadedFile, AppSettings } from '../../types';
 import { generateUniqueId, getKeyForRequest, buildContentParts } from '../../utils/appUtils';
 import { geminiServiceInstance } from '../../services/geminiService';
-import { buildGenerationConfig, toCountTokensConfig } from '../../services/api/baseApi';
+import {
+    appendFunctionDeclarationsToTools,
+    buildGenerationConfig,
+    toCountTokensConfig,
+} from '../../services/api/baseApi';
 import { createRunLocalPythonDeclaration } from '../../features/standard-chat/standardClientFunctions';
 import { useSettingsStore } from '../../stores/settingsStore';
 import {
@@ -129,18 +133,19 @@ export const useTokenCountLogic = ({
                 false,
             );
 
-            if (effectiveAppSettings.isLocalPythonEnabled) {
-                generationConfig.tools = [
-                    ...(generationConfig.tools ?? []),
-                    { functionDeclarations: [createRunLocalPythonDeclaration()] },
-                ];
-            }
+            const requestConfig = effectiveAppSettings.isLocalPythonEnabled
+                ? appendFunctionDeclarationsToTools(
+                    modelId,
+                    generationConfig,
+                    [createRunLocalPythonDeclaration()],
+                )
+                : generationConfig;
 
             const count = await geminiServiceInstance.countTokens(
                 keyResult.key,
                 modelId,
                 contentParts,
-                toCountTokensConfig(generationConfig),
+                toCountTokensConfig(requestConfig),
             );
             setTokenCount(count);
         } catch (err) {

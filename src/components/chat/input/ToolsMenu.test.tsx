@@ -144,4 +144,64 @@ describe('ToolsMenu', () => {
     expect(document.body.textContent).not.toContain('Code Execution');
     expect(document.body.textContent).not.toContain('URL Context');
   });
+
+  it('shows a combination notice when local Python and built-in tools are enabled on non-Gemini-3 models', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ToolsMenu
+            supportsBuiltInCustomToolCombination={false}
+            isGoogleSearchEnabled
+            onToggleGoogleSearch={() => {}}
+            isCodeExecutionEnabled={false}
+            onToggleCodeExecution={() => {}}
+            isLocalPythonEnabled
+            onToggleLocalPython={() => {}}
+            isUrlContextEnabled={false}
+            onToggleUrlContext={() => {}}
+            isDeepSearchEnabled={false}
+            onToggleDeepSearch={() => {}}
+            onAddYouTubeVideo={() => {}}
+            onCountTokens={() => {}}
+            disabled={false}
+            isNativeAudioModel={false}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(document.body.textContent).toContain(
+      "This model can't combine built-in tools with Pyodide in one request.",
+    );
+  });
+
+  it('does not show a combination notice for Gemini 3 models', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <ToolsMenu
+            supportsBuiltInCustomToolCombination
+            isGoogleSearchEnabled
+            onToggleGoogleSearch={() => {}}
+            isCodeExecutionEnabled={false}
+            onToggleCodeExecution={() => {}}
+            isLocalPythonEnabled
+            onToggleLocalPython={() => {}}
+            isUrlContextEnabled={false}
+            onToggleUrlContext={() => {}}
+            isDeepSearchEnabled={false}
+            onToggleDeepSearch={() => {}}
+            onAddYouTubeVideo={() => {}}
+            onCountTokens={() => {}}
+            disabled={false}
+            isNativeAudioModel={false}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    expect(document.body.textContent).not.toContain(
+      "This model can't combine built-in tools with Pyodide in one request.",
+    );
+  });
 });

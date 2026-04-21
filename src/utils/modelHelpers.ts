@@ -44,6 +44,9 @@ const isGemini31FlashImageModel = (modelId: string): boolean =>
 export const isGemmaModel = (modelId: string): boolean =>
     !!modelId && modelId.toLowerCase().includes('gemma');
 
+export const isGeminiRoboticsModel = (modelId: string): boolean =>
+    !!modelId && modelId.toLowerCase().includes('gemini-robotics-er');
+
 const isTtsModel = (modelId: string): boolean => modelId.toLowerCase().includes('tts');
 
 const isGemini3ImageModel = (modelId: string): boolean => (
@@ -63,9 +66,9 @@ export const isImageModel = (modelId: string): boolean => (
 
 export const sortModels = (models: ModelOption[]): ModelOption[] => {
     const getCategoryWeight = (id: string) => {
-        if (isTtsModel(id)) return 5;
-        if (isRealImagenModel(id)) return 4;
-        if (isImageModel(id)) return 3;
+        if (isTtsModel(id)) return 3;
+        if (isRealImagenModel(id)) return 5;
+        if (isImageModel(id)) return 4;
         if (isNativeAudioModel(id)) return 2;
         return 1;
     };
@@ -250,7 +253,7 @@ export const adjustThinkingBudget = (modelId: string, currentBudget: number): nu
     let newBudget = currentBudget;
 
     if (range) {
-        const isGemini3 = modelId.includes('gemini-3');
+        const isGemini3 = isGemini3Model(modelId);
         const isMandatory = MODELS_MANDATORY_THINKING.includes(modelId);
 
         // Case A: Mandatory Thinking Check
@@ -258,12 +261,7 @@ export const adjustThinkingBudget = (modelId: string, currentBudget: number): nu
             newBudget = isGemini3 ? -1 : range.max;
         }
 
-        // Case B: Auto (-1) Compatibility for non-G3 models
-        if (!isGemini3 && newBudget === -1) {
-            newBudget = range.max;
-        }
-
-        // Case C: Range Clamping for concrete budgets
+        // Case B: Range Clamping for concrete budgets
         if (newBudget > 0) {
             if (newBudget > range.max) newBudget = range.max;
             if (newBudget < range.min) newBudget = range.min;

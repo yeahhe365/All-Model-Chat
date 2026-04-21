@@ -2,25 +2,45 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { useState, useRef, useMemo } from 'react';
 import { ModelOption } from '../../types';
-import { Box, Volume2, Image as ImageIcon, Sparkles, MessageSquareText, Check, AudioWaveform } from 'lucide-react';
+import {
+    Banana,
+    Box,
+    Image as ImageIcon,
+    Sparkles,
+    Check,
+    AudioWaveform,
+    Layers3,
+    ScanEye,
+    Speech,
+} from 'lucide-react';
 import { useClickOutside } from '../../hooks/useClickOutside';
-import { getModelCapabilities, sortModels } from '../../utils/modelHelpers';
+import { getModelCapabilities, isGeminiRoboticsModel, sortModels } from '../../utils/modelHelpers';
 
 export const getModelIcon = (model: ModelOption | undefined) => {
     if (!model) return <Box size={15} className="text-[var(--theme-text-tertiary)]" strokeWidth={1.5} />;
     const { id, isPinned } = model;
     const normalizedId = id.toLowerCase();
-    const { isNativeAudioModel, isTtsModel, isImagenModel } = getModelCapabilities(id);
+    const {
+        isNativeAudioModel,
+        isTtsModel,
+        isRealImagenModel,
+        isGemini3ImageModel,
+        isFlashImageModel,
+        isGemmaModel,
+    } = getModelCapabilities(id);
     
     // Native Audio (Live)
     if (isNativeAudioModel) return <AudioWaveform size={15} className="text-amber-500 dark:text-amber-400 flex-shrink-0" strokeWidth={1.5} />;
 
-    if (isTtsModel) return <Volume2 size={15} className="text-purple-500 dark:text-purple-400 flex-shrink-0" strokeWidth={1.5} />;
-    if (isImagenModel) return <ImageIcon size={15} className="text-rose-500 dark:text-rose-400 flex-shrink-0" strokeWidth={1.5} />;
+    if (isTtsModel) return <Speech size={15} className="text-purple-500 dark:text-purple-400 flex-shrink-0" strokeWidth={1.5} />;
+    if (isRealImagenModel) return <ImageIcon size={15} className="text-rose-500 dark:text-rose-400 flex-shrink-0" strokeWidth={1.5} />;
+    if (isGemini3ImageModel || isFlashImageModel) return <Banana size={15} className="text-yellow-500 dark:text-yellow-400 flex-shrink-0" strokeWidth={1.5} />;
+    if (isGeminiRoboticsModel(id)) return <ScanEye size={15} className="text-emerald-500 dark:text-emerald-400 flex-shrink-0" strokeWidth={1.5} />;
+    if (isGemmaModel) return <Layers3 size={15} className="text-violet-500 dark:text-violet-400 flex-shrink-0" strokeWidth={1.5} />;
     
     // Google text models share the same chat icon in the picker.
-    if (normalizedId.includes('gemini') || normalizedId.includes('gemma')) {
-        return <MessageSquareText size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
+    if (normalizedId.includes('gemini')) {
+        return <Sparkles size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;
     }
 
     if (isPinned) return <Sparkles size={15} className="text-sky-500 dark:text-sky-400 flex-shrink-0" strokeWidth={1.5} />;

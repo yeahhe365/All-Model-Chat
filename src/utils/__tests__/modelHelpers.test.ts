@@ -31,7 +31,7 @@ describe('sortModels', () => {
     expect(result[0].name).toBe('A Model');
   });
 
-  it('sorts pinned by category weight: standard < native-audio < image < imagen < tts', () => {
+  it('sorts pinned by category weight: standard < native-audio < tts < image < imagen', () => {
     const models: ModelOption[] = [
       { id: 'gemini-tts', name: 'TTS', isPinned: true },
       { id: 'gemini-imagen', name: 'Imagen', isPinned: true },
@@ -43,9 +43,9 @@ describe('sortModels', () => {
     expect(result.map(m => m.id)).toEqual([
       'gemini-flash',
       'gemini-native-audio',
+      'gemini-tts',
       'gemini-image',
       'gemini-imagen',
-      'gemini-tts',
     ]);
   });
 
@@ -280,6 +280,10 @@ describe('adjustThinkingBudget', () => {
     expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 50000)).toBe(50000);
   });
 
+  it('clamps Gemini Robotics-ER 1.6 budgets to the documented max', () => {
+    expect(adjustThinkingBudget('gemini-robotics-er-1.6-preview', 50000)).toBe(24576);
+  });
+
   it('clamps to min when budget is below range', () => {
     expect(adjustThinkingBudget('gemini-3.1-pro-preview', 10)).toBe(128);
   });
@@ -290,6 +294,10 @@ describe('adjustThinkingBudget', () => {
 
   it('converts auto (-1) to max for non-Gemini-3 models', () => {
     expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', -1)).toBe(-1);
+  });
+
+  it('keeps auto (-1) for Gemini Robotics-ER 1.6', () => {
+    expect(adjustThinkingBudget('gemini-robotics-er-1.6-preview', -1)).toBe(-1);
   });
 
   it('keeps auto (-1) for Gemini 3 models', () => {

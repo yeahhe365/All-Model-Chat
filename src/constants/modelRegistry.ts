@@ -50,6 +50,14 @@ const MODEL_REGISTRY: RegisteredModel[] = [
     },
   },
   {
+    id: 'gemini-robotics-er-1.6-preview',
+    name: 'Gemini Robotics-ER 1.6 Preview',
+    groups: ['defaultPinned', 'connectionTest'],
+    groupLabels: {
+      connectionTest: 'Gemini Robotics-ER 1.6',
+    },
+  },
+  {
     id: 'gemma-4-31b-it',
     name: 'Gemma 4 31B IT',
     groups: ['defaultPinned', 'connectionTest'],

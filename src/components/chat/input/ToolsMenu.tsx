@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator } from 'lucide-react';
+import { SlidersHorizontal, Globe, Check, Terminal, Link, X, Telescope, Calculator, AlertTriangle } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
 import { IconYoutube, IconPython } from '../../icons/CustomIcons';
 import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
@@ -11,6 +11,7 @@ import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 interface ToolsMenuProps {
     isImageModel?: boolean;
     isGemini3ImageModel?: boolean;
+    supportsBuiltInCustomToolCombination?: boolean;
     isGemmaModel?: boolean;
     isGoogleSearchEnabled: boolean;
     onToggleGoogleSearch: () => void;
@@ -59,6 +60,7 @@ const ActiveToolBadge: React.FC<{
 export const ToolsMenu: React.FC<ToolsMenuProps> = ({
     isImageModel,
     isGemini3ImageModel,
+    supportsBuiltInCustomToolCombination = true,
     isGemmaModel,
     isGoogleSearchEnabled, onToggleGoogleSearch,
     isCodeExecutionEnabled, onToggleCodeExecution,
@@ -131,61 +133,80 @@ export const ToolsMenu: React.FC<ToolsMenuProps> = ({
         }
         return true;
     });
+
+    const hasBuiltInToolEnabled =
+        isGoogleSearchEnabled || isDeepSearchEnabled || isCodeExecutionEnabled || isUrlContextEnabled;
+    const showBuiltInCustomToolNotice =
+        !supportsBuiltInCustomToolCombination
+        && !isNativeAudioModel
+        && !isImageModel
+        && !!isLocalPythonEnabled
+        && hasBuiltInToolEnabled;
     
     if (filteredItems.length === 0) return null;
 
     return (
-      <div className="flex items-center">
-        <div className="relative" ref={containerRef}>
-            <button
-                ref={buttonRef}
-                type="button"
-                onClick={toggleMenu}
-                disabled={disabled}
-                className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`}
-                aria-label={t('tools_button')}
-                title={t('tools_button')}
-                aria-haspopup="true"
-                aria-expanded={isOpen}
-            >
-                <SlidersHorizontal size={menuIconSize} strokeWidth={2} />
-            </button>
-            {isOpen && targetWindow && createPortal(
-                <div 
-                    ref={menuRef}
-                    className="fixed w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 animate-in fade-in zoom-in-95 duration-100 custom-scrollbar" 
-                    style={menuPosition}
-                    role="menu"
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-center">
+            <div className="relative" ref={containerRef}>
+                <button
+                    ref={buttonRef}
+                    type="button"
+                    onClick={toggleMenu}
+                    disabled={disabled}
+                    className={`${CHAT_INPUT_BUTTON_CLASS} text-[var(--theme-icon-attach)] ${isOpen ? 'bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-primary)]' : 'bg-transparent hover:bg-[var(--theme-bg-tertiary)]'}`}
+                    aria-label={t('tools_button')}
+                    title={t('tools_button')}
+                    aria-haspopup="true"
+                    aria-expanded={isOpen}
                 >
-                    {filteredItems.map(item => (
-                      <button 
-                        key={item.labelKey} 
-                        onClick={item.action} 
-                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors ${item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`} 
-                        role="menuitem"
-                      >
-                        <div className="flex items-center gap-3.5">
-                            <span className={item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}>{item.icon}</span>
-                            <span className="font-medium">{t(item.labelKey)}</span>
-                        </div>
-                        {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
-                      </button>
-                    ))}
-                </div>,
-                targetWindow.document.body
-            )}
-        </div>
-        {/* Only show badges for tools that are relevant to the current mode */}
-        {!isNativeAudioModel && !isImageModel && isDeepSearchEnabled && <ActiveToolBadge label={t('deep_search_short')} onRemove={onToggleDeepSearch} removeAriaLabel="Disable Deep Search" icon={<Telescope size={14} strokeWidth={2} />} />}
-        
-        {/* In Live Mode, Web Search is a toggle button, so badge is redundant/confusing if inside tools menu logic, but let's hide it from here if the button shows status */}
-        {!isNativeAudioModel && isGoogleSearchEnabled && (!isImageModel || isGemini3ImageModel) && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
-        
-        {!isNativeAudioModel && !isImageModel && !isGemmaModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
+                    <SlidersHorizontal size={menuIconSize} strokeWidth={2} />
+                </button>
+                {isOpen && targetWindow && createPortal(
+                    <div 
+                        ref={menuRef}
+                        className="fixed w-60 bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-premium py-1.5 animate-in fade-in zoom-in-95 duration-100 custom-scrollbar" 
+                        style={menuPosition}
+                        role="menu"
+                    >
+                        {filteredItems.map(item => (
+                          <button 
+                            key={item.labelKey} 
+                            onClick={item.action} 
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center justify-between transition-colors ${item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-primary)]'}`} 
+                            role="menuitem"
+                          >
+                            <div className="flex items-center gap-3.5">
+                                <span className={item.isEnabled ? 'text-[var(--theme-text-link)]' : 'text-[var(--theme-text-secondary)]'}>{item.icon}</span>
+                                <span className="font-medium">{t(item.labelKey)}</span>
+                            </div>
+                            {item.isEnabled && <Check size={16} className="text-[var(--theme-text-link)]" strokeWidth={2} />}
+                          </button>
+                        ))}
+                    </div>,
+                    targetWindow.document.body
+                )}
+            </div>
+            {/* Only show badges for tools that are relevant to the current mode */}
+            {!isNativeAudioModel && !isImageModel && isDeepSearchEnabled && <ActiveToolBadge label={t('deep_search_short')} onRemove={onToggleDeepSearch} removeAriaLabel="Disable Deep Search" icon={<Telescope size={14} strokeWidth={2} />} />}
+            
+            {/* In Live Mode, Web Search is a toggle button, so badge is redundant/confusing if inside tools menu logic, but let's hide it from here if the button shows status */}
+            {!isNativeAudioModel && isGoogleSearchEnabled && (!isImageModel || isGemini3ImageModel) && <ActiveToolBadge label={t('web_search_short')} onRemove={onToggleGoogleSearch} removeAriaLabel="Disable Web Search" icon={<Globe size={14} strokeWidth={2} />} />}
+            
+            {!isNativeAudioModel && !isImageModel && !isGemmaModel && isCodeExecutionEnabled && <ActiveToolBadge label={t('code_execution_short')} onRemove={onToggleCodeExecution} removeAriaLabel="Disable Code Execution" icon={<Terminal size={14} strokeWidth={2} />} />}
 
-        {!isImageModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<IconPython size={14} strokeWidth={2} />} />}
-        
-        {!isNativeAudioModel && !isImageModel && !isGemmaModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
+            {!isImageModel && isLocalPythonEnabled && onToggleLocalPython && <ActiveToolBadge label={t('local_python_short')} onRemove={onToggleLocalPython} removeAriaLabel="Disable Local Python" icon={<IconPython size={14} strokeWidth={2} />} />}
+            
+            {!isNativeAudioModel && !isImageModel && !isGemmaModel && isUrlContextEnabled && <ActiveToolBadge label={t('url_context_short')} onRemove={onToggleUrlContext} removeAriaLabel="Disable URL Context" icon={<Link size={14} strokeWidth={2} />} />}
+        </div>
+        {showBuiltInCustomToolNotice && (
+            <div className="max-w-sm rounded-xl border border-[var(--theme-bg-danger)]/20 bg-[var(--theme-bg-danger)]/8 px-3 py-2 text-xs text-[var(--theme-text-secondary)]">
+                <div className="flex items-start gap-2">
+                    <AlertTriangle size={14} className="mt-0.5 flex-shrink-0 text-[var(--theme-text-danger)]" strokeWidth={2} />
+                    <span>{t('tools_local_python_combination_notice')}</span>
+                </div>
+            </div>
+        )}
       </div>
     );
 };

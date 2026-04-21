@@ -15,7 +15,7 @@ import {
 import { DEFAULT_CHAT_SETTINGS, MODELS_SUPPORTING_RAW_MODE } from '../../constants/appConstants';
 import { UploadedFile, ChatMessage, ChatSettings as IndividualChatSettings } from '../../types';
 import { StandardChatProps } from './types';
-import { buildGenerationConfig } from '../../services/api/baseApi';
+import { appendFunctionDeclarationsToTools, buildGenerationConfig } from '../../services/api/baseApi';
 import { geminiServiceInstance } from '../../services/geminiService';
 import { generateContentTurnApi } from '../../services/api/chatApi';
 import { isLikelyHtml } from '../../utils/codeUtils';
@@ -295,12 +295,11 @@ export const useStandardChat = ({
         personGeneration,
       );
 
-      if (standardFunctionDeclarations.length > 0) {
-        config.tools = [
-          ...(config.tools ?? []),
-          { functionDeclarations: standardFunctionDeclarations },
-        ];
-      }
+      const requestConfig = appendFunctionDeclarationsToTools(
+        activeModelId,
+        config,
+        standardFunctionDeclarations,
+      );
 
       const { streamOnError, streamOnComplete, streamOnPart, onThoughtChunk } =
         getStreamHandlers(
@@ -343,7 +342,7 @@ export const useStandardChat = ({
                 keyToUse,
                 activeModelId,
                 contents,
-                config,
+                requestConfig,
                 newAbortController.signal
               ),
           });
@@ -421,7 +420,7 @@ export const useStandardChat = ({
           activeModelId,
           historyForChat,
           finalParts,
-          config,
+          requestConfig,
           newAbortController.signal,
           streamOnPart,
           onThoughtChunk,
@@ -437,7 +436,7 @@ export const useStandardChat = ({
         activeModelId,
         historyForChat,
         finalParts,
-        config,
+        requestConfig,
         newAbortController.signal,
         streamOnError,
         (parts, thoughts, usage, grounding) => {
@@ -457,8 +456,10 @@ export const useStandardChat = ({
       aspectRatio,
       getStreamHandlers,
       handleGenerateCanvas,
+      imageOutputMode,
       imageSize,
       messages,
+      personGeneration,
       setSessionLoading,
       updateAndPersistSessions,
     ]

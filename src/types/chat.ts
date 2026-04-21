@@ -194,6 +194,7 @@ export interface ChatInputActionsProps {
   disabled: boolean;
   isImageModel?: boolean;
   isGemini3ImageModel?: boolean;
+  supportsBuiltInCustomToolCombination?: boolean;
   isGemmaModel?: boolean;
   isRealImagenModel?: boolean;
   isGoogleSearchEnabled: boolean;

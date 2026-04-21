@@ -8,6 +8,12 @@ describe('getDefaultModelOptions', () => {
     expect(models.some((model) => model.id === 'gemini-3.1-flash-live-preview')).toBe(true);
   });
 
+  it('includes Gemini Robotics-ER 1.6 in pinned defaults', () => {
+    const models = getDefaultModelOptions();
+
+    expect(models.some((model) => model.id === 'gemini-robotics-er-1.6-preview')).toBe(true);
+  });
+
   it('keeps only the supported TTS defaults pinned', () => {
     const models = getDefaultModelOptions();
     const ttsIds = models

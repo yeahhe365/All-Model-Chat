@@ -4,7 +4,7 @@ import { logService } from "../logService";
 import { dbService } from '../../utils/db';
 import type { AppSettings } from '../../types';
 import { ImageOutputMode, ImagePersonGeneration, SafetySetting, MediaResolution } from "../../types/settings";
-import { isGemini3Model, isGemmaModel } from "../../utils/appUtils";
+import { isGemini3Model, isGeminiRoboticsModel, isGemmaModel } from "../../utils/appUtils";
 import { DEFAULT_GEMINI_API_BASE_URL, normalizeGeminiApiBaseUrl } from "../../utils/apiProxyUrl";
 import { loadDeepSearchSystemPrompt, loadLocalPythonSystemPrompt } from "../../constants/promptHelpers";
 
@@ -430,7 +430,7 @@ export const buildGenerationConfig = async (
             thinkingLevel: gemmaThinkingLevel,
         };
     } else {
-        const modelSupportsThinking = modelId.includes('gemini-2.5');
+        const modelSupportsThinking = modelId.includes('gemini-2.5') || isGeminiRoboticsModel(modelId);
 
         if (modelSupportsThinking) {
             // Decouple thinking budget from showing thoughts.
@@ -461,6 +461,38 @@ export const buildGenerationConfig = async (
     }
     
     return generationConfig;
+};
+
+const hasBuiltInTools = (tools: GenerationConfig['tools'] | undefined): boolean =>
+    !!tools?.some((tool) => 'googleSearch' in tool || 'codeExecution' in tool || 'urlContext' in tool);
+
+export const appendFunctionDeclarationsToTools = (
+    modelId: string,
+    generationConfig: GenerationConfig,
+    functionDeclarations: FunctionDeclaration[],
+): GenerationConfig => {
+    if (functionDeclarations.length === 0) {
+        return generationConfig;
+    }
+
+    if (hasBuiltInTools(generationConfig.tools) && !isGemini3Model(modelId)) {
+        logService.warn(
+            'Skipping custom function declarations because built-in/custom tool combinations are only supported for Gemini 3 models.',
+            {
+                modelId,
+                functionDeclarationCount: functionDeclarations.length,
+            },
+        );
+        return generationConfig;
+    }
+
+    return {
+        ...generationConfig,
+        tools: [
+            ...(generationConfig.tools ?? []),
+            { functionDeclarations },
+        ],
+    };
 };
 
 export const toCountTokensConfig = (

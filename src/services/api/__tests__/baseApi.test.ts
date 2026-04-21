@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildGenerationConfig, toCountTokensConfig } from '../baseApi';
+import {
+  appendFunctionDeclarationsToTools,
+  buildGenerationConfig,
+  toCountTokensConfig,
+} from '../baseApi';
 import { MediaResolution } from '../../../types/settings';
 
 type MockGoogleGenAIConfig = {
@@ -34,6 +38,7 @@ vi.mock('../../logService', () => ({
 // Mock appUtils for model helpers
 vi.mock('../../../utils/appUtils', () => ({
   isGemini3Model: vi.fn((id: string) => id?.includes('gemini-3')),
+  isGeminiRoboticsModel: vi.fn((id: string) => id?.includes('gemini-robotics-er')),
   isGemmaModel: vi.fn((id: string) => id?.toLowerCase().includes('gemma')),
 }));
 
@@ -491,6 +496,26 @@ describe('buildGenerationConfig', () => {
     expect(config.thinkingConfig!.includeThoughts).toBe(true);
   });
 
+  it('includes thinkingBudget config for Gemini Robotics-ER 1.6', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, 1024,
+    );
+    expect(config.thinkingConfig).toEqual({
+      thinkingBudget: 1024,
+      includeThoughts: true,
+    });
+  });
+
+  it('preserves auto thinking for Gemini Robotics-ER 1.6', async () => {
+    const config = await buildGenerationConfig(
+      'gemini-robotics-er-1.6-preview', 'sys', baseConfig, false, -1,
+    );
+    expect(config.thinkingConfig).toEqual({
+      thinkingBudget: -1,
+      includeThoughts: true,
+    });
+  });
+
   it('adds googleSearch tool when enabled', async () => {
     const config = await buildGenerationConfig(
       'gemini-3-flash-preview', 'sys', baseConfig, false, 0,
@@ -695,5 +720,47 @@ describe('toCountTokensConfig', () => {
       systemInstruction: 'You are concise.',
       tools: [{ googleSearch: {} }],
     });
+  });
+});
+
+describe('appendFunctionDeclarationsToTools', () => {
+  it('keeps custom function declarations alongside built-in tools for Gemini 3 models', () => {
+    const config = appendFunctionDeclarationsToTools(
+      'gemini-3-flash-preview',
+      { tools: [{ googleSearch: {} }] },
+      [
+        {
+          name: 'run_local_python',
+          description: 'Execute Python locally.',
+        },
+      ],
+    );
+
+    expect(config.tools).toEqual([
+      { googleSearch: {} },
+      {
+        functionDeclarations: [
+          {
+            name: 'run_local_python',
+            description: 'Execute Python locally.',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('skips combining built-in tools with custom function declarations for non-Gemini-3 models', () => {
+    const config = appendFunctionDeclarationsToTools(
+      'gemini-robotics-er-1.6-preview',
+      { tools: [{ googleSearch: {} }] },
+      [
+        {
+          name: 'run_local_python',
+          description: 'Execute Python locally.',
+        },
+      ],
+    );
+
+    expect(config.tools).toEqual([{ googleSearch: {} }]);
   });
 });

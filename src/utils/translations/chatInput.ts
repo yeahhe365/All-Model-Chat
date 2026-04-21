@@ -52,6 +52,10 @@ export const chatInputTranslations = {
     code_execution_short: { en: 'Code', zh: '代码' },
     local_python_label: { en: 'Pyodide', zh: 'Pyodide' },
     local_python_short: { en: 'Pyodide', zh: 'Pyodide' },
+    tools_local_python_combination_notice: {
+        en: "This model can't combine built-in tools with Pyodide in one request. Use them separately for best results.",
+        zh: '这个模型不能在同一次请求里同时组合内置工具和 Pyodide。建议分开使用，以获得更稳定的结果。',
+    },
     url_context_label: { en: 'URL Context', zh: 'URL 上下文' },
     url_context_short: { en: 'URL', zh: 'URL' },
     tools_token_count_label: { en: 'Token Calculator', zh: 'Token 计算器' },

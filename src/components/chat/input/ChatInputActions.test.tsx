@@ -49,6 +49,7 @@ const baseProps = {
   isCodeExecutionEnabled: false,
   onToggleCodeExecution: vi.fn(),
   isLocalPythonEnabled: false,
+  supportsBuiltInCustomToolCombination: true,
   onToggleLocalPython: vi.fn(),
   isUrlContextEnabled: false,
   onToggleUrlContext: vi.fn(),
@@ -135,6 +136,21 @@ describe('ChatInputActions', () => {
 
     expect(toolsMenuMock).toHaveBeenCalledWith(
       expect.objectContaining({ isGemmaModel: true }),
+    );
+  });
+
+  it('forwards built-in/custom tool combination support into the tools menu', () => {
+    act(() => {
+      root.render(
+        <ChatInputActions
+          {...baseProps}
+          supportsBuiltInCustomToolCombination={false}
+        />,
+      );
+    });
+
+    expect(toolsMenuMock).toHaveBeenCalledWith(
+      expect.objectContaining({ supportsBuiltInCustomToolCombination: false }),
     );
   });
 });
