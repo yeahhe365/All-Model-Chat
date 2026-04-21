@@ -91,7 +91,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                 onClick={handleClick}
             />
             {isFromMessageList && (
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 flex gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity">
                     {/* Resolution / Configuration Control (Merged to prevent duplicates) */}
                     {canConfigure ? (
                         <button
@@ -189,7 +189,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                         }
                     }}
                     title="Configure"
-                    className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto"
                 >
                     <ConfigIcon size={16} strokeWidth={2} />
                 </button>
@@ -200,7 +200,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                     type="button"
                     onClick={handleDownloadFile}
                     title="Download"
-                    className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    className="p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto"
                 >
                     <Download size={16} strokeWidth={2} />
                 </button>
@@ -211,7 +211,7 @@ export const FileDisplay: React.FC<FileDisplayProps> = ({ file, onFileClick, isF
                     type="button"
                     onClick={handleCopyId}
                     title={idCopied ? "Copied!" : "Copy File ID"}
-                    className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}
+                    className={`p-1.5 rounded-lg hover:bg-[var(--theme-bg-tertiary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto ${idCopied ? 'text-[var(--theme-text-success)]' : ''}`}
                 >
                     {idCopied ? <Check size={16} strokeWidth={2} /> : <Copy size={16} strokeWidth={2} />}
                 </button>

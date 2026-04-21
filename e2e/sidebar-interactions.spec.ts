@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { devices, expect, test, type Page } from '@playwright/test';
 
 import { seedAppState } from './helpers/appHarness';
 
@@ -74,7 +74,10 @@ async function addSessions(page: Page, sessions: Array<ReturnType<typeof createS
   }, { nextSessions: sessions, dbName: DB_NAME, dbVersion: DB_VERSION });
 }
 
-async function seedSidebarFixture(page: Page, options?: { collapsed?: boolean }) {
+async function seedSidebarFixture(
+  page: Page,
+  options?: { collapsed?: boolean; mobileOpen?: boolean },
+) {
   const now = Date.now();
   const activeSession = createSession('sidebar-active', 'Active session', now);
   const targetSession = createSession('sidebar-target', 'Target session', now - 1_000);
@@ -90,16 +93,17 @@ async function seedSidebarFixture(page: Page, options?: { collapsed?: boolean })
     },
   });
 
-  await page.evaluate(({ collapsed, storageKey }) => {
+  await page.evaluate(({ collapsed, mobileOpen, storageKey }) => {
     localStorage.setItem(
       storageKey,
       JSON.stringify({
         desktopOpen: !collapsed,
-        mobileOpen: false,
+        mobileOpen,
       }),
     );
   }, {
     collapsed: options?.collapsed ?? false,
+    mobileOpen: options?.mobileOpen ?? false,
     storageKey: HISTORY_SIDEBAR_STORAGE_KEY,
   });
 
@@ -158,7 +162,7 @@ test('sidebar session menu still opens after a slight pointer move', async ({ pa
   await page.mouse.move(box.x + box.width / 2 + 6, box.y + box.height / 2 + 2);
   await page.mouse.up();
 
-  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
+  await expect(sessionRow.getByRole('button', { name: 'Edit', exact: true })).toBeVisible();
 });
 
 test('collapsed recent chats popover stays open while traversing from button to panel', async ({
@@ -195,4 +199,65 @@ test('collapsed recent chats popover stays open while traversing from button to 
 
   await page.mouse.move(panelBox.x + 24, panelBox.y + 24);
   await expect(panel).toBeVisible();
+});
+
+test('collapsed recent chats popover opened by click stays open until explicit dismissal', async ({
+  page,
+}) => {
+  const { activeSession } = await seedSidebarFixture(page, { collapsed: true });
+
+  await page.goto(`/chat/${activeSession.id}`);
+
+  const button = page.getByRole('button', { name: 'Recent Chats', exact: true });
+  await expect(button).toBeVisible();
+  await button.click();
+
+  const panel = page.getByRole('dialog', { name: 'Recent Chats', exact: true });
+  await expect(panel).toBeVisible();
+
+  const buttonBox = await button.boundingBox();
+  expect(buttonBox).not.toBeNull();
+
+  if (!buttonBox) {
+    throw new Error('Expected recent chats button to have a bounding box');
+  }
+
+  await page.mouse.move(buttonBox.x + buttonBox.width / 2, buttonBox.y + buttonBox.height / 2);
+  await page.mouse.move(buttonBox.x - 30, buttonBox.y - 20);
+  await page.waitForTimeout(180);
+  await expect(panel).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+});
+
+test.describe('mobile sidebar tap targets', () => {
+  const { defaultBrowserType: _defaultBrowserType, ...mobileDevice } = devices['iPhone 13'];
+
+  test.use(mobileDevice);
+
+  test('mobile tap on the right edge of a session row still opens that session', async ({
+    page,
+  }) => {
+    const { activeSession, targetSession } = await seedSidebarFixture(page, {
+      mobileOpen: true,
+    });
+
+    await page.goto(`/chat/${activeSession.id}`);
+
+    const history = page.getByRole('complementary', { name: 'History', exact: true });
+    await expect(history).toBeVisible();
+
+    const sessionRow = history.locator('li', { hasText: targetSession.title }).first();
+    const box = await sessionRow.boundingBox();
+    expect(box).not.toBeNull();
+
+    if (!box) {
+      throw new Error('Expected target session row to have a bounding box');
+    }
+
+    await page.touchscreen.tap(box.x + box.width - 12, box.y + box.height / 2);
+
+    await expect(page).toHaveURL(new RegExp(`/chat/${targetSession.id}$`));
+  });
 });

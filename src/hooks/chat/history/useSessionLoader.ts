@@ -1,4 +1,4 @@
-import { useCallback, Dispatch, SetStateAction, useEffect } from 'react';
+import { useCallback, Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import { AppSettings, SavedChatSession, ChatGroup, UploadedFile, ChatSettings, ChatMessage, InputCommand } from '../../../types';
 import { DEFAULT_CHAT_SETTINGS, ACTIVE_CHAT_SESSION_ID_KEY } from '../../../constants/appConstants';
 import { logService } from '../../../services/logService';
@@ -42,6 +42,7 @@ export const useSessionLoader = ({
     activeSessionId,
     savedSessions,
 }: UseSessionLoaderProps) => {
+    const sessionViewRequestIdRef = useRef(0);
 
     const sanitizeSessionModel = useCallback((session: SavedChatSession): SavedChatSession => ({
         ...session,
@@ -52,6 +53,8 @@ export const useSessionLoader = ({
     }), []);
 
     const startNewChat = useCallback((explicitTemplateSession?: SavedChatSession) => {
+        sessionViewRequestIdRef.current += 1;
+
         // If we are already on an empty chat, just focus input and don't create a duplicate
         if (activeChat && activeChat.messages.length === 0 && !activeChat.settings.systemInstruction) {
             logService.info('Already on an empty chat, reusing session.');
@@ -121,6 +124,9 @@ export const useSessionLoader = ({
     }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, sanitizeSessionModel]);
 
     const loadChatSession = useCallback(async (sessionId: string) => {
+        const requestId = sessionViewRequestIdRef.current + 1;
+        sessionViewRequestIdRef.current = requestId;
+
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUpRef.current = false;
         
@@ -137,6 +143,10 @@ export const useSessionLoader = ({
 
         try {
             const sessionToLoad = await dbService.getSession(sessionId);
+
+            if (requestId !== sessionViewRequestIdRef.current) {
+                return;
+            }
 
             if (sessionToLoad) {
                 const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(sessionToLoad));
@@ -172,6 +182,9 @@ export const useSessionLoader = ({
                 startNewChat();
             }
         } catch (error) {
+            if (requestId !== sessionViewRequestIdRef.current) {
+                return;
+            }
             logService.error("Error loading chat session:", error);
             startNewChat();
         }

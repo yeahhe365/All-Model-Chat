@@ -55,7 +55,7 @@ export const ToolResultBlock: React.FC<ToolResultBlockProps> = ({ className, chi
     return (
         <div className={`${className} group relative ${hasDownloadableText ? 'pr-8' : ''}`} {...props}>
             {hasDownloadableText && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <div className="absolute top-2 right-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-10">
                      <button 
                         onClick={handleDownload}
                         className={`${MESSAGE_BLOCK_BUTTON_CLASS} !bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-sm`}

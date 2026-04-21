@@ -53,7 +53,7 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
       onContextMenu={handleContextMenu}
       className={`group relative rounded-lg my-0.5 transition-transform duration-100 ease-out ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${newlyTitledSessionId === session.id ? 'title-update-animate' : ''} ${isRightClickAnimating ? 'scale-95 bg-[var(--theme-bg-tertiary)]' : ''} ${isActive ? 'z-20' : ''}`}
     >
-      <div className={`w-full flex items-center justify-between text-left pl-2.5 pr-1 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
+      <div className={`relative w-full text-left pl-2.5 pr-1 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
         {editingItem?.type === 'session' && editingItem.id === session.id ? (
           <input ref={editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
         ) : (
@@ -66,7 +66,7 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
                 onSelectSession(session.id);
               }
             }} 
-            className="flex items-center flex-grow min-w-0 no-underline text-inherit" 
+            className="flex w-full min-w-0 items-center pr-8 no-underline text-inherit" 
             aria-current={session.id === activeSessionId ? "page" : undefined}
           >
             {session.isPinned && <Pin size={12} className="mr-2 text-[var(--theme-text-link)] flex-shrink-0" strokeWidth={2} />}
@@ -78,9 +78,11 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
           </a>
         )}
         {loadingSessionIds.has(session.id) ? (
-          <LoadingDots />
+          <span className="absolute right-1 top-1/2 -translate-y-1/2">
+            <LoadingDots />
+          </span>
         ) : !generatingTitleSessionIds.has(session.id) && (
-          <button onClick={(e) => toggleMenu(e, session.id)} className="p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)]"><MoreHorizontal size={16} strokeWidth={2} /></button>
+          <button onClick={(e) => toggleMenu(e, session.id)} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-full text-[var(--theme-text-tertiary)] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)]"><MoreHorizontal size={16} strokeWidth={2} /></button>
         )}
       </div>
       {activeMenu === session.id && (

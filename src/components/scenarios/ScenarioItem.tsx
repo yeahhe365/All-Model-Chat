@@ -78,7 +78,7 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
         </div>
 
         {/* Footer Actions - Visible on Hover (Desktop) / Always (Mobile) */}
-        <div className="flex items-center justify-end gap-1 pt-3 border-t border-[var(--theme-border-secondary)]/50 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+        <div className="flex items-center justify-end gap-1 pt-3 border-t border-[var(--theme-border-secondary)]/50 opacity-100 pointer-events-auto sm:opacity-0 sm:pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200 translate-y-1 group-hover:translate-y-0">
             {isSystem && onView && (
                 <ActionButton onClick={onView} icon={Eye} label={t('scenarios_view_title', 'View')} scenario={scenario} />
             )}

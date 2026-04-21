@@ -53,6 +53,7 @@ test('loads the chat shell and executes a python code block through the browser 
   await expect(runButton).toBeVisible();
   await runButton.click();
 
-  await expect(page.getByText('Local Python Output')).toBeVisible();
-  await expect(page.getByText('hello from mocked pyodide')).toBeVisible();
+  const outputConsole = page.getByText('Local Python Output').locator('..').locator('..');
+  await expect(outputConsole.getByText('Local Python Output')).toBeVisible();
+  await expect(outputConsole.getByText('hello from mocked pyodide', { exact: true })).toBeVisible();
 });

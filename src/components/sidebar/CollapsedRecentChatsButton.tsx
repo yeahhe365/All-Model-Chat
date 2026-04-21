@@ -18,6 +18,8 @@ const PANEL_MARGIN = 16;
 const MAX_RECENT_ITEMS = 8;
 const CLOSE_DELAY_MS = 120;
 
+type PopoverOpenMode = 'hover' | 'focus' | 'click';
+
 export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProps> = ({
   sessions,
   activeSessionId,
@@ -29,6 +31,7 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
   const panelRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [openMode, setOpenMode] = useState<PopoverOpenMode | null>(null);
   const [panelPosition, setPanelPosition] = useState<CSSProperties>({});
 
   const recentSessions = useMemo(
@@ -50,6 +53,7 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
   const closePopover = useCallback(() => {
     clearCloseTimer();
     setIsOpen(false);
+    setOpenMode(null);
   }, [clearCloseTimer]);
 
   const computePanelPosition = useCallback((): CSSProperties => {
@@ -80,19 +84,32 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
     };
   }, [targetWindow]);
 
-  const openPopover = useCallback(() => {
+  const openPopover = useCallback((mode: PopoverOpenMode) => {
     clearCloseTimer();
     setPanelPosition(computePanelPosition());
     setIsOpen(true);
+    setOpenMode((currentMode) => {
+      if (currentMode === 'click' && mode !== 'click') {
+        return currentMode;
+      }
+
+      return mode;
+    });
   }, [clearCloseTimer, computePanelPosition]);
 
   const scheduleClose = useCallback(() => {
+    if (openMode === 'click') {
+      clearCloseTimer();
+      return;
+    }
+
     clearCloseTimer();
     closeTimerRef.current = targetWindow.setTimeout(() => {
       setIsOpen(false);
+      setOpenMode(null);
       closeTimerRef.current = null;
     }, CLOSE_DELAY_MS);
-  }, [clearCloseTimer, targetWindow]);
+  }, [clearCloseTimer, openMode, targetWindow]);
 
   useEffect(() => () => clearCloseTimer(), [clearCloseTimer]);
 
@@ -154,15 +171,26 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
         type="button"
         onClick={(event) => {
           event.stopPropagation();
-          if (isOpen) {
+          if (isOpen && openMode === 'click') {
             closePopover();
             return;
           }
-          openPopover();
+          openPopover('click');
         }}
-        onMouseEnter={openPopover}
-        onMouseLeave={scheduleClose}
-        onFocus={openPopover}
+        onMouseEnter={() => {
+          if (openMode === 'click') {
+            clearCloseTimer();
+            return;
+          }
+
+          openPopover('hover');
+        }}
+        onMouseLeave={() => {
+          if (openMode === 'hover') {
+            scheduleClose();
+          }
+        }}
+        onFocus={() => openPopover('focus')}
         onBlur={(event) => {
           const nextFocusTarget = event.relatedTarget as Node | null;
           if (
@@ -172,7 +200,9 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
           ) {
             return;
           }
-          scheduleClose();
+          if (openMode === 'focus') {
+            scheduleClose();
+          }
         }}
         className="flex items-center justify-center p-2.5 rounded-xl text-[var(--theme-icon-history)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors focus:outline-none focus:visible:ring-2 focus:visible:ring-[var(--theme-border-focus)]"
         title={t('history_recent_chats')}
@@ -189,8 +219,19 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
             ref={panelRef}
             style={panelPosition}
             className="overflow-hidden rounded-2xl border border-[var(--theme-border-primary)] bg-[var(--theme-bg-primary)] shadow-premium"
-            onMouseEnter={openPopover}
-            onMouseLeave={scheduleClose}
+            onMouseEnter={() => {
+              if (openMode === 'click') {
+                clearCloseTimer();
+                return;
+              }
+
+              openPopover('hover');
+            }}
+            onMouseLeave={() => {
+              if (openMode === 'hover') {
+                scheduleClose();
+              }
+            }}
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-label={t('history_recent_chats')}

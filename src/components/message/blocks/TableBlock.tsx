@@ -158,7 +158,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
             </div>
 
             {/* Floating Action Buttons */}
-            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200">
                 <button
                     onClick={handleCopyMarkdown}
                     className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"

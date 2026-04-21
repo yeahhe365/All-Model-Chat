@@ -105,7 +105,7 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                                 {!isEditing && !readOnly && (
                                     <div className={`
                                         absolute -top-3 ${isUser ? 'right-0' : 'left-0'} 
-                                        flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200
+                                        flex items-center gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200
                                         bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-lg rounded-full px-1.5 py-1 z-10 scale-95 group-hover:scale-100
                                     `}>
                                         <button onClick={() => onMoveMessage(index, -1)} disabled={index === 0} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowUp size={12} /></button>

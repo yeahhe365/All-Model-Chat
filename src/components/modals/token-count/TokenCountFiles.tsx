@@ -53,7 +53,7 @@ export const TokenCountFiles: React.FC<TokenCountFilesProps> = ({
                             <span className="text-[var(--theme-text-tertiary)]">({formatFileSize(file.size)})</span>
                             <button 
                                 onClick={() => onRemoveFile(file.id)}
-                                className="ml-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="ml-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity"
                             >
                                 <X size={12} />
                             </button>

@@ -82,7 +82,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
             onRemove(file.id);
           }
         }}
-        className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 scale-90 hover:scale-100"
+        className="absolute -top-2 -right-2 z-30 p-1 bg-[var(--theme-bg-secondary)] rounded-full shadow-sm border border-[var(--theme-border-secondary)] text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:border-[var(--theme-text-danger)] transition-all opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto scale-90 hover:scale-100"
         title={isCancellable ? "Cancel Upload" : "Remove File"}
         aria-label={isCancellable ? "Cancel Upload" : "Remove File"}
       >
@@ -164,7 +164,7 @@ export const SelectedFileDisplay: React.FC<SelectedFileDisplayProps> = ({ file, 
               type="button"
               onClick={handleCopyId}
               title={idCopied ? "ID Copied" : "Copy File ID"}
-              className={`absolute bottom-1 right-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100 scale-90 hover:scale-100 z-20 ${idCopied ? '!text-green-400 !opacity-100' : ''}`}
+              className={`absolute bottom-1 right-1 p-1.5 rounded-md bg-black/50 backdrop-blur-md text-white/80 hover:text-white hover:bg-black/70 transition-all opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto scale-90 hover:scale-100 z-20 ${idCopied ? '!text-green-400 !opacity-100 !pointer-events-auto' : ''}`}
             >
               {idCopied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={2} />}
             </button>
