@@ -1,10 +1,10 @@
 export const generalSettings = {
     settingsTitle: { en: 'Settings', zh: '设置' },
-    settingsTabInterface: { en: 'Workspace', zh: '工作区' },
+    settingsTabInterface: { en: 'Workspace', zh: '界面' },
     settingsTabModel: { en: 'Model Settings', zh: '模型配置' },
     settingsTabSafety: { en: 'Safety', zh: '安全' },
     settingsTabAccount: { en: 'API', zh: 'API' },
-    settingsTabData: { en: 'Storage', zh: '存储' },
+    settingsTabData: { en: 'Storage', zh: '数据管理' },
     settingsTabAbout: { en: 'About', zh: '关于' },
     settingsTabShortcuts: { en: 'Shortcuts', zh: '快捷键' },
     usageTitle: { en: 'API Usage', zh: 'API 用量' },

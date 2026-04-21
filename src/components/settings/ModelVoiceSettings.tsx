@@ -154,6 +154,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                 value={systemInstruction}
                 onChange={setSystemInstruction}
                 placeholder={t('chatBehavior_systemPrompt_placeholder')}
+                confirmLabel={t('settingsSaveAndClose')}
                 t={t}
             />
 

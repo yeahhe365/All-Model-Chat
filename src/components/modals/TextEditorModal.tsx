@@ -12,6 +12,7 @@ interface TextEditorModalProps {
   placeholder?: string;
   t: (key: string, fallback?: string) => string;
   readOnly?: boolean;
+  confirmLabel?: string;
 }
 
 type TextEditorModalContentProps = Omit<TextEditorModalProps, 'isOpen'>;
@@ -23,7 +24,8 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
   onChange,
   placeholder,
   t,
-  readOnly
+  readOnly,
+  confirmLabel,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -81,7 +83,7 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
             onClick={handleDone}
             className="px-6 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm transition-all flex items-center gap-2"
           >
-            <Check size={16} /> {t('close') || 'Done'}
+            <Check size={16} /> {confirmLabel || t('close') || 'Done'}
           </button>
         </div>
       )}
