@@ -95,6 +95,27 @@ describe('CollapsedRecentChatsButton', () => {
     expect(onParentClick).not.toHaveBeenCalled();
   });
 
+  it('uses the project history icon instead of the generic chat bubble icon', () => {
+    act(() => {
+      root.render(
+        <WindowProvider>
+          <I18nProvider>
+            <CollapsedRecentChatsButton
+              sessions={[createSession('1', '2026-04-20T09:00:00.000Z')]}
+              activeSessionId={null}
+              onSelectSession={vi.fn()}
+            />
+          </I18nProvider>
+        </WindowProvider>,
+      );
+    });
+
+    const button = container.querySelector('button[aria-label="最近聊天"]');
+    expect(button).not.toBeNull();
+    expect(button?.querySelector('svg')).not.toBeNull();
+    expect(button?.querySelector('svg.lucide-message-square-text')).toBeNull();
+  });
+
   it('closes after an outside click', () => {
     act(() => {
       root.render(

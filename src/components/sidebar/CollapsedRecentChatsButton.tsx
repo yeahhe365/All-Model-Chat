@@ -1,9 +1,9 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MessageSquareText } from 'lucide-react';
 
 import { useI18n } from '../../contexts/I18nContext';
 import { useWindowContext } from '../../contexts/WindowContext';
+import { IconHistory } from '../icons/CustomIcons';
 import type { SavedChatSession } from '../../types';
 
 interface CollapsedRecentChatsButtonProps {
@@ -180,7 +180,7 @@ export const CollapsedRecentChatsButton: React.FC<CollapsedRecentChatsButtonProp
         aria-haspopup="dialog"
         aria-expanded={isOpen}
       >
-        <MessageSquareText size={20} strokeWidth={2} />
+        <IconHistory size={20} strokeWidth={2} />
       </button>
 
       {isOpen &&

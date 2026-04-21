@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import { IconProps, defaultSize, defaultStroke, defaultColor } from '../iconUtils';
+import { IconProps, StrokeIcon, defaultSize, defaultStroke, defaultColor } from '../iconUtils';
 
 // New Chat Icon
 export const IconNewChat: React.FC<IconProps> = ({ size = defaultSize, strokeWidth = defaultStroke, className, color = defaultColor }) => (
@@ -42,6 +42,15 @@ export const IconSidebarToggle: React.FC<IconProps> = ({ size = defaultSize, str
     <line x1="4" x2="20" y1="8" y2="8" />
     <line x1="4" x2="14" y1="16" y2="16" />
   </svg>
+);
+
+// History / Recent Chats Icon
+export const IconHistory: React.FC<IconProps> = (props) => (
+  <StrokeIcon {...props}>
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+    <path d="M3 3v5h5" />
+    <path d="M12 7v5l4 2" />
+  </StrokeIcon>
 );
 
 // Stop Generation
