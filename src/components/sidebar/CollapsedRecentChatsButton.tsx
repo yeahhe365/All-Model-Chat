@@ -13,7 +13,7 @@ interface CollapsedRecentChatsButtonProps {
 }
 
 const PANEL_WIDTH = 320;
-const PANEL_GAP = 12;
+const PANEL_GAP = 0;
 const PANEL_MARGIN = 16;
 const MAX_RECENT_ITEMS = 8;
 const CLOSE_DELAY_MS = 120;

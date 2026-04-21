@@ -13,6 +13,7 @@ export const historyTranslations = {
     history_pin: { en: 'Pin', zh: '置顶' },
     history_unpin: { en: 'Unpin', zh: '取消置顶' },
     history_duplicate: { en: 'Duplicate', zh: '创建副本' },
+    history_drag_session: { en: 'Drag to move chat', zh: '拖动以移动聊天' },
     generatingTitle: { en: 'Generating title...', zh: '生成标题中...' },
     newGroup_title: { en: 'Untitled', zh: '无标题' },
     export_chat: { en: 'Export Chat', zh: '导出对话' },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pin, MoreHorizontal } from 'lucide-react';
+import { GripVertical, Pin, MoreHorizontal } from 'lucide-react';
 import { SavedChatSession } from '../../types';
 import { translations } from '../../utils/appUtils';
 import { SessionItemMenu } from './SessionItemMenu';
@@ -51,17 +51,26 @@ export const SessionItem: React.FC<SessionItemProps> = (props) => {
 
   return (
     <li
-      draggable="true"
-      onDragStart={(e) => handleDragStart(e, session.id)}
       onContextMenu={handleContextMenu}
-      className={`group relative rounded-lg my-0.5 cursor-grab active:cursor-grabbing transition-transform duration-100 ease-out ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${newlyTitledSessionId === session.id ? 'title-update-animate' : ''} ${isRightClickAnimating ? 'scale-95 bg-[var(--theme-bg-tertiary)]' : ''} ${isActive ? 'z-20' : ''}`}
+      className={`group relative rounded-lg my-0.5 transition-transform duration-100 ease-out ${session.id === activeSessionId ? 'bg-[var(--theme-bg-tertiary)]' : ''} ${newlyTitledSessionId === session.id ? 'title-update-animate' : ''} ${isRightClickAnimating ? 'scale-95 bg-[var(--theme-bg-tertiary)]' : ''} ${isActive ? 'z-20' : ''}`}
     >
       <div className={`w-full flex items-center justify-between text-left pl-2.5 pr-1 py-2 text-sm transition-colors rounded-lg ${session.id === activeSessionId ? 'text-[var(--theme-text-primary)]' : 'text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]'}`}>
+        <button
+          type="button"
+          draggable="true"
+          onDragStart={(e) => handleDragStart(e, session.id)}
+          className="mr-1 flex h-7 w-6 flex-shrink-0 cursor-grab items-center justify-center rounded-md text-[var(--theme-text-tertiary)] opacity-0 transition-opacity hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)] focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] group-hover:opacity-100 active:cursor-grabbing"
+          aria-label={t('history_drag_session', 'Drag to move chat')}
+          title={t('history_drag_session', 'Drag to move chat')}
+        >
+          <GripVertical size={14} strokeWidth={2} />
+        </button>
         {editingItem?.type === 'session' && editingItem.id === session.id ? (
           <input ref={editInputRef} type="text" value={editingItem.title} onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })} onBlur={handleRenameConfirm} onKeyDown={handleRenameKeyDown} className="flex-grow bg-transparent border border-[var(--theme-border-focus)] rounded-md px-1 py-0 text-sm w-full" />
         ) : (
           <a 
             href={`/chat/${session.id}`} 
+            draggable={false}
             onClick={(e) => {
               if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
                 e.preventDefault();
