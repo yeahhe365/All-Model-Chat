@@ -42,8 +42,8 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
   };
 
   return (
-    <>
-      <div className="px-2 pt-3">
+    <div className="px-2 pt-2 space-y-1" data-testid="sidebar-actions-stack">
+      <div>
         <a
           href="/"
           onClick={handleNewChatClick}
@@ -55,7 +55,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
           <span className="text-[var(--theme-text-primary)]">{t('newChat')}</span>
         </a>
       </div>
-      <div className="px-2 pt-2">
+      <div>
         {isSearching ? (
           <div className="flex items-center gap-2 w-full text-left px-3 h-9 text-sm bg-[var(--theme-bg-primary)] border border-[var(--theme-border-focus)] rounded-lg shadow-sm transition-all duration-200">
             <Search size={18} className="text-[var(--theme-icon-history)] flex-shrink-0" strokeWidth={2} />
@@ -89,7 +89,7 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
           </button>
         )}
       </div>
-      <div className="px-2 pt-2">
+      <div>
         <button
           onClick={onAddNewGroup}
           className="flex items-center gap-3 w-full text-left px-3 h-9 text-sm bg-transparent border border-transparent rounded-lg hover:bg-[var(--theme-bg-tertiary)] hover:border-[var(--theme-border-secondary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--theme-border-focus)] transition-colors"
@@ -100,6 +100,6 @@ export const SidebarActions: React.FC<SidebarActionsProps> = ({
           <span className="text-[var(--theme-text-primary)]">{t('newGroup_button', 'New Group')}</span>
         </button>
       </div>
-    </>
+    </div>
   );
 };

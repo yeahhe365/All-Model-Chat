@@ -111,6 +111,25 @@ describe('SidebarActions', () => {
     unmount();
   });
 
+  it('uses a tighter shared vertical stack for the primary sidebar actions', () => {
+    const { container, unmount } = render(
+      <SidebarActions
+        onNewChat={vi.fn()}
+        onAddNewGroup={vi.fn()}
+        isSearching={false}
+        searchQuery=""
+        setIsSearching={vi.fn()}
+        setSearchQuery={vi.fn()}
+        t={t}
+      />,
+    );
+
+    const actionStack = container.querySelector('[data-testid="sidebar-actions-stack"]');
+    expect(actionStack?.className).toContain('space-y-1');
+
+    unmount();
+  });
+
   it('clears the search query when Escape closes the search input', () => {
     const { container, unmount } = render(<SidebarActionsHarness />);
 
