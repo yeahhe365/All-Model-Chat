@@ -41,7 +41,6 @@ export const THINKING_BUDGET_RANGES: { [key: string]: { min: number; max: number
     'models/gemini-3-flash-preview': { min: 128, max: 32768 },
     'gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
     'models/gemini-3.1-flash-lite-preview': { min: 128, max: 32768 },
-    'gemini-2.5-flash-native-audio-preview-12-2025': { min: 0, max: 24576 },
 };
 
 export const DEFAULT_TEMPERATURE = 1.0;

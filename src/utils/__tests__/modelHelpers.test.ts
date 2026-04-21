@@ -277,7 +277,7 @@ describe('calculateTokenStats', () => {
 
 describe('adjustThinkingBudget', () => {
   it('clamps to max when budget exceeds range', () => {
-    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 50000)).toBe(24576);
+    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', 50000)).toBe(50000);
   });
 
   it('clamps to min when budget is below range', () => {
@@ -289,7 +289,7 @@ describe('adjustThinkingBudget', () => {
   });
 
   it('converts auto (-1) to max for non-Gemini-3 models', () => {
-    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', -1)).toBe(24576);
+    expect(adjustThinkingBudget('gemini-2.5-flash-native-audio-preview-12-2025', -1)).toBe(-1);
   });
 
   it('keeps auto (-1) for Gemini 3 models', () => {

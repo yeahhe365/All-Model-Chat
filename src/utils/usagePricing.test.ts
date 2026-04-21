@@ -67,6 +67,30 @@ describe('calculateApiUsageRecordPriceUsd', () => {
     expect(calculateApiUsageRecordPriceUsd(record)).toBeNull();
   });
 
+  it('keeps removed Gemini 2.5 native audio pricing unavailable even when exact evidence is stored', () => {
+    const record: ApiUsageRecord = {
+      timestamp: Date.now(),
+      modelId: 'gemini-2.5-flash-native-audio-preview-12-2025',
+      promptTokens: 1_000_000,
+      completionTokens: 1_000_000,
+      totalTokens: 2_000_000,
+      exactPricing: {
+        version: 1,
+        requestKind: 'chat',
+        promptTokensDetails: [
+          { modality: 'TEXT', tokenCount: 500_000 },
+          { modality: 'AUDIO', tokenCount: 500_000 },
+        ],
+        responseTokensDetails: [
+          { modality: 'TEXT', tokenCount: 500_000 },
+          { modality: 'AUDIO', tokenCount: 500_000 },
+        ],
+      },
+    };
+
+    expect(calculateApiUsageRecordPriceUsd(record)).toBeNull();
+  });
+
   it('prices Imagen 4 exactly from generated image count', () => {
     const record: ApiUsageRecord = {
       timestamp: Date.now(),

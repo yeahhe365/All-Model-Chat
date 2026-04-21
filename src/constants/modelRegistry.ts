@@ -50,11 +50,6 @@ const MODEL_REGISTRY: RegisteredModel[] = [
     },
   },
   {
-    id: 'gemini-2.5-flash-native-audio-preview-12-2025',
-    name: 'Gemini 2.5 Flash Native Audio',
-    groups: ['defaultPinned'],
-  },
-  {
     id: 'gemma-4-31b-it',
     name: 'Gemma 4 31B IT',
     groups: ['defaultPinned', 'connectionTest'],

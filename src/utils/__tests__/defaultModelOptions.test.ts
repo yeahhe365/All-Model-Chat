@@ -25,5 +25,6 @@ describe('getDefaultModelOptions', () => {
 
     expect(models.some((model) => model.id === 'gemini-2.5-flash-preview-09-2025')).toBe(false);
     expect(models.some((model) => model.id === 'gemini-2.5-flash-lite-preview-09-2025')).toBe(false);
+    expect(models.some((model) => model.id === 'gemini-2.5-flash-native-audio-preview-12-2025')).toBe(false);
   });
 });

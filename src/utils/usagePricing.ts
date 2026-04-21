@@ -34,11 +34,6 @@ const MODALITY_TEXT_PRICING: Record<
     response: { TEXT: 1.5 },
     tool: { TEXT: 0.25, IMAGE: 0.25, AUDIO: 0.5 },
   },
-  'gemini-2.5-flash-native-audio-preview-12-2025': {
-    prompt: { TEXT: 0.5, AUDIO: 3 },
-    response: { TEXT: 2, AUDIO: 12 },
-    tool: { TEXT: 0.5, AUDIO: 3 },
-  },
   'gemini-3.1-pro-preview': {
     prompt: { TEXT: 2 },
     cache: { TEXT: 0.2 },
