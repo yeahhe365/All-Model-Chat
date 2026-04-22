@@ -34,6 +34,7 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
     const [toolbarSize, setToolbarSize] = useState<{ width: number; height: number } | null>(null);
     const selectionBoundsRef = useRef<DOMRect | null>(null);
     const selectedTextRef = useRef('');
+    const toolbarNode = toolbarRef.current;
 
     // Monitor selection changes
     useEffect(() => {
@@ -139,10 +140,10 @@ export const useSelectionPosition = ({ containerRef, isAudioActive, toolbarRef }
             return;
         }
 
-        if (toolbarRef.current !== toolbarElement) {
-            setToolbarElement(toolbarRef.current);
+        if (toolbarNode !== toolbarElement) {
+            setToolbarElement(toolbarNode);
         }
-    }, [position, toolbarElement, toolbarRef, toolbarSize]);
+    }, [position, toolbarElement, toolbarNode, toolbarSize]);
 
     useLayoutEffect(() => {
         if (!position || !toolbarElement) {
