@@ -73,6 +73,20 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
           if (isEditing) return;
 
           if ((event.ctrlKey || event.metaKey) && event.key === 'c') {
+              const selection = window.getSelection();
+              const hasActiveSelection = !!selection && !selection.isCollapsed && selection.toString().length > 0;
+              const activeElement = document.activeElement as HTMLElement | null;
+              const isEditingFieldFocused = !!activeElement
+                && (
+                    activeElement.tagName === 'INPUT'
+                    || activeElement.tagName === 'TEXTAREA'
+                    || activeElement.isContentEditable
+                );
+
+              if (hasActiveSelection || isEditingFieldFocused) {
+                  return;
+              }
+
               event.preventDefault();
               void handleCopyShortcut();
               return;

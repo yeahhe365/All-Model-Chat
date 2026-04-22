@@ -18,6 +18,7 @@ interface CodeBlockProps {
   expandCodeBlocksByDefault: boolean;
   t: (key: keyof typeof translations) => string;
   onOpenSidePanel: (content: SideViewContent) => void;
+  showPreviewControls?: boolean;
 }
 
 export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
@@ -81,12 +82,13 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
     }, [files]);
 
     const displayInlineImage = image && !generatedFiles.some((file) => file.type.startsWith('image/'));
+    const showPreviewControls = (props.showPreviewControls ?? true) && showPreview;
 
     return (
         <div className="group relative my-3 rounded-lg border border-[var(--theme-border-primary)] bg-[var(--theme-bg-code-block)] shadow-sm">
             <CodeHeader 
                 language={finalLanguage}
-                showPreview={showPreview}
+                showPreview={showPreviewControls}
                 isOverflowing={isOverflowing}
                 isExpanded={isExpanded}
                 isCopied={isCopied}

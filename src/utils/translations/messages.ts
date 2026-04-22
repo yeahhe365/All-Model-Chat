@@ -105,6 +105,8 @@ export const messagesTranslations = {
     filePreview_loading_text_content: { en: 'Loading content...', zh: '正在加载内容...' },
     filePreview_failed_text_content: { en: 'Failed to load file content.', zh: '加载文件内容失败。' },
     filePreview_copy_failed: { en: 'Failed to copy to clipboard. Your browser might not support this feature or require permissions.', zh: '复制到剪贴板失败。您的浏览器可能不支持此功能或需要额外权限。' },
+    filePreview_large_markdown_notice: { en: 'Large Markdown file detected. Showing plain text first to keep the preview responsive.', zh: '检测到较大的 Markdown 文件。为保持预览流畅，当前先显示纯文本。' },
+    filePreview_render_markdown_anyway: { en: 'Render Markdown anyway', zh: '仍然渲染 Markdown' },
     filePreview_zoom_out: { en: 'Zoom Out', zh: '缩小' },
     filePreview_zoom_in: { en: 'Zoom In', zh: '放大' },
     filePreview_reset_view: { en: 'Reset View', zh: '重置视图' },

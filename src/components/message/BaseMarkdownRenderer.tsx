@@ -38,6 +38,7 @@ export interface MarkdownRendererProps {
   files?: UploadedFile[];
   diagramLoadMode?: 'deferred' | 'eager';
   diagramRenderDelayMs?: number;
+  interactiveMode?: 'enabled' | 'disabled';
 }
 
 type MarkdownCodeProps = React.ComponentPropsWithoutRef<'code'> & {
@@ -86,21 +87,30 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
   files,
   diagramLoadMode = 'deferred',
   diagramRenderDelayMs = 500,
+  interactiveMode = 'enabled',
   remarkPlugins,
   rehypePlugins,
 }) => {
+  const isInteractive = interactiveMode !== 'disabled';
+
   const components = useMemo(() => ({
     code: (props: MarkdownCodeProps) => {
       return <InlineCode {...props} />;
     },
     img: (props: MarkdownImageProps) => {
       const { src, alt, className, ...rest } = props;
+
+      const imageClassName = isInteractive
+        ? `${className || ''} cursor-pointer hover:opacity-90 transition-opacity`
+        : (className || '');
+
       return (
         <img
           src={src}
           alt={alt}
-          className={`${className || ''} cursor-pointer hover:opacity-90 transition-opacity`}
+          className={imageClassName}
           onClick={(e) => {
+            if (!isInteractive) return;
             e.stopPropagation();
             if (src && src.startsWith('data:image/')) {
               const mimeType = src.split(';')[0].split(':')[1];
@@ -217,6 +227,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
           className={codeClassName}
           onOpenHtmlPreview={onOpenHtmlPreview}
           expandCodeBlocksByDefault={expandCodeBlocksByDefault}
+          showPreviewControls={isInteractive}
           t={t}
           onOpenSidePanel={onOpenSidePanel}
         >
@@ -224,7 +235,7 @@ export const BaseMarkdownRenderer: React.FC<BaseMarkdownRendererProps> = React.m
         </CodeBlock>
       );
     }
-  }), [diagramLoadMode, diagramRenderDelayMs, onOpenHtmlPreview, expandCodeBlocksByDefault, onImageClick, isMermaidRenderingEnabled, isGraphvizRenderingEnabled, isLoading, t, themeId, onOpenSidePanel, files, messageId]);
+  }), [diagramLoadMode, diagramRenderDelayMs, expandCodeBlocksByDefault, files, isGraphvizRenderingEnabled, isInteractive, isLoading, isMermaidRenderingEnabled, messageId, onImageClick, onOpenHtmlPreview, onOpenSidePanel, t, themeId]);
 
   const processedContent = useMemo(() => {
     if (!content) return '';

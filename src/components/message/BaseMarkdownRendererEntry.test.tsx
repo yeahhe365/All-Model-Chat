@@ -93,4 +93,61 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(caption).not.toBeNull();
     expect(caption?.textContent).toBe('Monthly totals');
   });
+
+  it('hides markdown preview affordances when interactive mode is disabled', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'```html\n<html><body>Hello</body></html>\n```'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+          interactiveMode="disabled"
+        />,
+      );
+    });
+
+    expect(container.querySelector('[title="Open in Side Panel"]')).toBeNull();
+    expect(container.querySelector('[title="code_fullscreen_monitor"]')).toBeNull();
+    expect(container.querySelector('[title="code_fullscreen_modal"]')).toBeNull();
+  });
+
+  it('does not make markdown images clickable when interactive mode is disabled', () => {
+    const handleImageClick = vi.fn();
+
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content="![Diagram](data:image/png;base64,ZmFrZQ==)"
+          isLoading={false}
+          onImageClick={handleImageClick}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+          interactiveMode="disabled"
+        />,
+      );
+    });
+
+    const image = container.querySelector('img');
+
+    expect(image).not.toBeNull();
+    expect(image?.className).not.toContain('cursor-pointer');
+
+    act(() => {
+      image?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(handleImageClick).not.toHaveBeenCalled();
+  });
 });

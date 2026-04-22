@@ -3,7 +3,14 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UploadedFile } from '../../types';
 
-const { mockExtractDocxText, mockSettingsState, mockT, mockTextFileViewer } = vi.hoisted(() => ({
+const {
+  mockCopyFileToClipboard,
+  mockExtractDocxText,
+  mockSettingsState,
+  mockT,
+  mockTextFileViewer,
+} = vi.hoisted(() => ({
+  mockCopyFileToClipboard: vi.fn(),
   mockExtractDocxText: vi.fn(),
   mockSettingsState: {
     appSettings: {
@@ -30,7 +37,7 @@ const { mockExtractDocxText, mockSettingsState, mockT, mockTextFileViewer } = vi
         data-render-mode={renderMode}
         data-theme-id={themeId}
       >
-        {content ?? ''}
+        {content ?? 'Preview text content'}
       </div>
     ),
   ),
@@ -56,6 +63,17 @@ vi.mock('../shared/file-preview/FilePreviewHeader', () => ({
 
 vi.mock('../shared/file-preview/TextFileViewer', () => ({
   TextFileViewer: mockTextFileViewer,
+}));
+
+vi.mock('../../utils/fileHelpers', () => ({
+  copyFileToClipboard: mockCopyFileToClipboard,
+  isMarkdownFile: (file: { name: string; type: string }) =>
+    file.type === 'text/markdown'
+    || file.name.toLowerCase().endsWith('.md')
+    || file.name.toLowerCase().endsWith('.markdown'),
+  isTextFile: (file: { name: string; type: string }) =>
+    file.type.startsWith('text/')
+    || /\.(md|markdown|txt|json|js|ts|tsx|jsx|css|html)$/i.test(file.name),
 }));
 
 vi.mock('../../utils/docxPreview', () => ({
@@ -193,5 +211,38 @@ describe('FilePreviewModal', () => {
     expect(viewer).not.toBeNull();
     expect(viewer?.getAttribute('data-render-mode')).toBe('markdown');
     expect(viewer?.getAttribute('data-theme-id')).toBe('pearl');
+  });
+
+  it('does not hijack copy shortcuts when the user has selected preview text', async () => {
+    await act(async () => {
+      root.render(
+        <FilePreviewModal
+          file={createMarkdownFile()}
+          onClose={() => {}}
+        />,
+      );
+    });
+
+    const previewNode = document.querySelector('[data-testid="text-file-viewer"]');
+    const textNode = previewNode?.firstChild;
+
+    expect(textNode).not.toBeNull();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.setStart(textNode as Text, 0);
+    range.setEnd(textNode as Text, 6);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'c',
+        ctrlKey: true,
+        bubbles: true,
+      }));
+    });
+
+    expect(mockCopyFileToClipboard).not.toHaveBeenCalled();
   });
 });
