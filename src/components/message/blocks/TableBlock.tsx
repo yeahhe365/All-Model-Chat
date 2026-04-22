@@ -89,6 +89,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
     };
 
     const tFunc = t || ((key: string) => key === 'exportToCSV' ? 'Export to CSV' : 'Export to Excel');
+    const tableClassName = [className, 'min-w-full', 'w-max', 'text-left'].filter(Boolean).join(' ');
 
     // When fullscreen, we use a portal and a specific layout.
     if (isFullscreen) {
@@ -143,7 +144,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
                 <div className="w-full max-w-6xl mx-auto bg-[var(--theme-bg-primary)] rounded-lg shadow-xl overflow-hidden border border-[var(--theme-border-secondary)] markdown-body p-0 my-0">
                     <div className="overflow-x-auto">
-                        <table ref={tableRef} className={`${className || ''}`} {...props}>
+                        <table ref={tableRef} className={tableClassName} {...props}>
                             {children}
                         </table>
                     </div>
@@ -155,18 +156,19 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
     // Default inline view - Enclosed container with floating top-right actions
     return (
-        <div className="relative group my-4 w-full rounded-lg bg-[var(--theme-bg-primary)] overflow-hidden">
+        <div className="relative group my-4 w-full max-w-full rounded-xl border border-[var(--theme-border-secondary)]/70 bg-[var(--theme-bg-primary)]/40 overflow-visible">
             {/* Scrollable Table Container */}
-            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-[var(--theme-scrollbar-thumb)] scrollbar-track-transparent w-full">
-                <table ref={tableRef} className={`${className || ''} w-full text-left`} {...props}>
+            <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-[var(--theme-scrollbar-thumb)] scrollbar-track-transparent w-full">
+                <table ref={tableRef} className={tableClassName} {...props}>
                     {children}
                 </table>
             </div>
 
             {/* Floating Action Buttons */}
-            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200">
+            <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-100 pointer-events-auto transition-opacity duration-200 sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto">
                 <button
                     onClick={handleCopyMarkdown}
+                    aria-label="Copy table as markdown"
                     className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                     title={isCopied ? "Copied!" : "Copy Markdown"}
                 >
@@ -176,6 +178,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                  <div className="relative" ref={menuRef}>
                     <button
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                        aria-label="Download table"
                         className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                         title="Download"
                     >
@@ -203,6 +206,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
                 <button
                     onClick={toggleFullscreen}
+                    aria-label="Open table fullscreen"
                     className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                     title="Fullscreen"
                 >

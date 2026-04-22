@@ -18,10 +18,10 @@ describe('web manifest', () => {
     expect(manifest.scope).toBe('/');
   });
 
-  it('uses svg for browser tabs and png assets for installed surfaces', () => {
+  it('uses png icon assets for browser tabs and installed surfaces', () => {
     expect(manifest.icons.length).toBeGreaterThanOrEqual(3);
-    expect(indexHtml).toContain('rel="icon" id="favicon" href="/favicon.svg" type="image/svg+xml"');
-    expect(fs.existsSync(path.join(projectRoot, 'public', 'favicon.svg'))).toBe(true);
+    expect(indexHtml).toContain('rel="icon" id="favicon" href="/favicon.png" type="image/png"');
+    expect(fs.existsSync(path.join(projectRoot, 'public', 'favicon.png'))).toBe(true);
     expect(indexHtml).toContain('rel="apple-touch-icon" id="apple-touch-icon" href="/apple-touch-icon.png"');
     expect(fs.existsSync(path.join(projectRoot, 'public', 'apple-touch-icon.png'))).toBe(true);
 

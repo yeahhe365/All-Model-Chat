@@ -68,4 +68,29 @@ describe('BaseMarkdownRendererEntry', () => {
     expect(code?.textContent).toBe('遇到的**“不定式”**问题。');
     expect(container.querySelector('strong')).toBeNull();
   });
+
+  it('preserves html table captions when raw html is allowed', () => {
+    act(() => {
+      root.render(
+        <BaseMarkdownRendererEntry
+          content={'<table><caption>Monthly totals</caption><thead><tr><th>Name</th><th>Total</th></tr></thead><tbody><tr><td>Alice</td><td>42</td></tr></tbody></table>'}
+          isLoading={false}
+          onImageClick={vi.fn()}
+          onOpenHtmlPreview={vi.fn()}
+          expandCodeBlocksByDefault={false}
+          isMermaidRenderingEnabled={false}
+          isGraphvizRenderingEnabled={false}
+          allowHtml
+          t={(key) => key}
+          themeId="pearl"
+          onOpenSidePanel={vi.fn()}
+        />,
+      );
+    });
+
+    const caption = container.querySelector('caption');
+
+    expect(caption).not.toBeNull();
+    expect(caption?.textContent).toBe('Monthly totals');
+  });
 });

@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
+const FENCED_CODE_BLOCK_REGEX = /(```[\s\S]*?```|```[\s\S]*$)/g;
+const GFM_TABLE_REGEX = /(?:^|\n)\|[^\n]*\|\s*\n\|(?:\s*:?-{3,}:?\s*\|)+/;
+
+const hasStreamingSensitiveMarkdownTable = (text: string) => {
+    return text
+        .split(FENCED_CODE_BLOCK_REGEX)
+        .some((segment, index) => index % 2 === 0 && GFM_TABLE_REGEX.test(segment));
+};
+
 /**
  * A hook that provides a "typing effect" for streaming text.
  * It catches up to the target text smoothly instead of jumping in large chunks.
@@ -8,6 +17,8 @@ import { useState, useEffect, useRef } from 'react';
  */
 export const useSmoothStreaming = (text: string | undefined | null, isStreaming: boolean) => {
     const safeText = text || '';
+    const isDocumentHidden = typeof document !== 'undefined' && document.hidden;
+    const shouldBypassAnimation = isStreaming && (isDocumentHidden || hasStreamingSensitiveMarkdownTable(safeText));
     // If we are mounting with existing text and streaming, start from 0 to type it out
     const [displayedText, setDisplayedText] = useState(isStreaming ? '' : safeText);
     
@@ -17,15 +28,15 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
     
     // Throttle reference to limit React state updates (UI rendering)
     const lastRenderTimeRef = useRef<number>(0);
-    const shouldBypassAnimation = document.hidden && isStreaming;
 
     // Sync target text ref whenever input changes
     useEffect(() => {
         targetTextRef.current = safeText;
         
-        // Critical Fix: If tab is hidden, bypass animation to prevent backlog/crash
-        // Browser pauses rAF when hidden, but state updates can pile up or be ignored
-        if (document.hidden && isStreaming) {
+        // Skip character-level animation when the tab is hidden or the content contains
+        // markdown tables, because repeatedly reparsing partial table states creates
+        // visible structural jank in the chat bubble.
+        if (shouldBypassAnimation) {
             displayedTextRef.current = safeText;
             if (animationFrameRef.current) {
                 cancelAnimationFrame(animationFrameRef.current);
@@ -44,15 +55,15 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
                 animationFrameRef.current = null;
             }
         }
-    }, [safeText, isStreaming]);
+    }, [safeText, isStreaming, shouldBypassAnimation]);
 
     // Animation Loop
     useEffect(() => {
-        if (!isStreaming || document.hidden) return;
+        if (!isStreaming || shouldBypassAnimation) return;
 
         const animate = (time: DOMHighResTimeStamp) => {
-            // Extra safety: If hidden, stop animating immediately.
-            if (document.hidden) {
+            // Extra safety: If the page becomes hidden, stop animating immediately.
+            if (typeof document !== 'undefined' && document.hidden) {
                 animationFrameRef.current = null;
                 return;
             }
@@ -111,7 +122,7 @@ export const useSmoothStreaming = (text: string | undefined | null, isStreaming:
                 animationFrameRef.current = null;
             }
         };
-    }, [isStreaming, safeText]);
+    }, [isStreaming, safeText, shouldBypassAnimation]);
 
     return shouldBypassAnimation ? safeText : isStreaming ? displayedText : safeText;
 };

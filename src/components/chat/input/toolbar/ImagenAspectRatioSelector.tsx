@@ -49,6 +49,7 @@ export const ImagenAspectRatioSelector: React.FC<ImagenAspectRatioSelectorProps>
             onChange={(e) => setAspectRatio(e.target.value)}
             className="mb-0"
             wrapperClassName="relative w-[120px]"
+            direction="up"
         >
             {ratios.map(r => (
                 <option key={r} value={r}>

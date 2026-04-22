@@ -21,6 +21,7 @@ export const PersonGenerationSelector: React.FC<PersonGenerationSelectorProps> =
     onChange={(e) => setPersonGeneration(e.target.value as ImagePersonGeneration)}
     className="mb-0"
     wrapperClassName="relative w-[170px]"
+    direction="up"
   >
     <option value="ALLOW_ADULT">{t('personGeneration_allowAdult')}</option>
     <option value="ALLOW_ALL">{t('personGeneration_allowAll')}</option>

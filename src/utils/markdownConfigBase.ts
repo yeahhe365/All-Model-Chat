@@ -14,7 +14,7 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
       ...(defaultSchema.tagNames || []),
       'div', 'span', 'pre', 'code', 'section', 'header', 'footer', 'nav', 'article', 'aside', 'figure', 'figcaption',
       'svg', 'path', 'defs', 'symbol', 'use', 'g',
-      'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
+      'table', 'caption', 'colgroup', 'col', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th',
       'details', 'summary'
     ],
     attributes: {
@@ -25,6 +25,9 @@ export const getBaseRehypePlugins = (allowHtml: boolean): PluggableList => {
       div: [...(defaultSchema.attributes?.div || []), 'className', 'class', 'style', 'align'],
       p: [...(defaultSchema.attributes?.p || []), 'align'],
       img: [...(defaultSchema.attributes?.img || []), 'align', 'width', 'height', 'src'],
+      caption: ['align'],
+      colgroup: ['span', 'width'],
+      col: ['span', 'width'],
       td: ['align', 'colSpan', 'rowSpan', 'valign'],
       th: ['align', 'colSpan', 'rowSpan', 'valign'],
       details: ['open', 'className'],

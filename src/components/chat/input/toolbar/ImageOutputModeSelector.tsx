@@ -21,6 +21,7 @@ export const ImageOutputModeSelector: React.FC<ImageOutputModeSelectorProps> = (
     onChange={(e) => setImageOutputMode(e.target.value as ImageOutputMode)}
     className="mb-0"
     wrapperClassName="relative w-[150px]"
+    direction="up"
   >
     <option value="IMAGE_TEXT">{t('imageOutputMode_textAndImage')}</option>
     <option value="IMAGE_ONLY">{t('imageOutputMode_imageOnly')}</option>

@@ -36,6 +36,7 @@ export const MediaResolutionSelector: React.FC<MediaResolutionSelectorProps> = (
             onChange={(e) => setMediaResolution(e.target.value as MediaResolution)}
             className="mb-0"
             wrapperClassName="relative min-w-[180px] w-auto"
+            direction="up"
         >
             {options.map(option => (
                 <option key={option.value} value={option.value}>

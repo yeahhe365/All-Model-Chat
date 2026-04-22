@@ -122,4 +122,15 @@ describe('useSmoothStreaming', () => {
     expect(container.querySelector(OUTPUT_SELECTOR)).toHaveTextContent('abcdef');
     expect(scheduledFrames.size).toBe(0);
   });
+
+  it('bypasses character-by-character animation for markdown tables while streaming', () => {
+    const tableMarkdown = ['| Name | Score |', '| --- | --- |', '| Alice | 42 |'].join('\n');
+
+    act(() => {
+      root.render(<TestComponent text={tableMarkdown} isStreaming />);
+    });
+
+    expect(container.querySelector(OUTPUT_SELECTOR)?.textContent).toBe(tableMarkdown);
+    expect(scheduledFrames.size).toBe(0);
+  });
 });
