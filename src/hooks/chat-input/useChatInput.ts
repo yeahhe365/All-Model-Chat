@@ -758,11 +758,13 @@ export const useChatInput = () => {
           return;
         }
 
-        const trimmedInput = inputState.inputText.trim();
-        if (trimmedInput.startsWith('/')) {
-          event.preventDefault();
-          slashCommandState.handleSlashCommandExecution(trimmedInput);
-          return;
+        const rawInput = inputState.inputText;
+        if (rawInput.startsWith('/')) {
+          const handledSlashCommand = slashCommandState.handleSlashCommandExecution(rawInput);
+          if (handledSlashCommand) {
+            event.preventDefault();
+            return;
+          }
         }
 
         if (canSend) {

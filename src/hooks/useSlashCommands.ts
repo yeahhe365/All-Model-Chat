@@ -37,6 +37,15 @@ interface UseSlashCommandsProps {
   thinkingLevel?: 'LOW' | 'HIGH' | 'MINIMAL' | 'MEDIUM';
 }
 
+const CLOSED_SLASH_COMMAND_STATE: SlashCommandState = {
+  isOpen: false,
+  query: '',
+  filteredCommands: [],
+  selectedIndex: 0,
+};
+
+const INPUT_POPULATING_COMMANDS = new Set(['model', 'edit']);
+
 export const useSlashCommands = ({
   t,
   onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext,
@@ -47,65 +56,137 @@ export const useSlashCommands = ({
   currentModelId, onSetThinkingLevel, thinkingLevel
 }: UseSlashCommandsProps) => {
   
-  const [slashCommandState, setSlashCommandState] = useState<SlashCommandState>({
-    isOpen: false,
-    query: '',
-    filteredCommands: [],
-    selectedIndex: 0,
-  });
+  const [slashCommandState, setSlashCommandState] = useState<SlashCommandState>(CLOSED_SLASH_COMMAND_STATE);
 
-  const commands = useMemo<Command[]>(() => [
-    { name: 'model', description: t('help_cmd_model'), icon: 'bot', action: () => {
-        setInputText('/model ');
-        setTimeout(() => {
-            const textarea = textareaRef.current;
-            if (textarea) {
-                textarea.focus();
-                const textLength = textarea.value.length;
-                textarea.setSelectionRange(textLength, textLength);
-            }
-        }, 0);
-    } },
-    { name: 'help', description: t('help_cmd_help'), icon: 'help', action: () => setIsHelpModalOpen(true) },
-    { name: 'edit', description: t('help_cmd_edit'), icon: 'edit', action: onEditLastUserMessage },
-    { name: 'pin', description: t('help_cmd_pin'), icon: 'pin', action: onTogglePinCurrentSession },
-    { name: 'retry', description: t('help_cmd_retry'), icon: 'retry', action: onRetryLastTurn },
-    { name: 'online', description: t('help_cmd_search'), icon: 'search', action: onToggleGoogleSearch },
-    { name: 'deep', description: t('help_cmd_deep'), icon: 'deep', action: onToggleDeepSearch },
-    { name: 'code', description: t('help_cmd_code'), icon: 'code', action: onToggleCodeExecution },
-    { name: 'url', description: t('help_cmd_url'), icon: 'url', action: onToggleUrlContext },
-    { name: 'file', description: t('help_cmd_file'), icon: 'file', action: () => onAttachmentAction('upload') },
-    { name: 'clear', description: t('help_cmd_clear'), icon: 'clear', action: onClearChat },
-    { name: 'new', description: t('help_cmd_new'), icon: 'new', action: onNewChat },
-    { name: 'settings', description: t('help_cmd_settings'), icon: 'settings', action: onOpenSettings },
-    { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas', action: onToggleCanvasPrompt },
-    { name: 'pip', description: t('help_cmd_pip'), icon: 'pip', action: onTogglePip },
-    { name: 'fast', description: t('help_cmd_fast'), icon: 'fast', action: () => {
-        const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
-        const isGeminiRobotics = currentModelId.includes('gemini-robotics-er');
-        const targetLevel = (isGemini3Flash || isGeminiRobotics) ? 'MINIMAL' : 'LOW';
-        onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
-    }},
-  ], [t, onToggleGoogleSearch, onToggleDeepSearch, onToggleCodeExecution, onToggleUrlContext, onClearChat, onNewChat, onOpenSettings, onToggleCanvasPrompt, onTogglePinCurrentSession, onRetryLastTurn, onAttachmentAction, setInputText, textareaRef, setIsHelpModalOpen, onEditLastUserMessage, onTogglePip, onSetThinkingLevel, thinkingLevel, currentModelId]);
-  
-  const allCommandsForHelp = useMemo(() => ([
-    { name: '/model', description: t('help_cmd_model'), icon: 'bot' },
-    { name: '/help', description: t('help_cmd_help'), icon: 'help' },
-    { name: '/edit', description: t('help_cmd_edit'), icon: 'edit' },
-    { name: '/pin', description: t('help_cmd_pin'), icon: 'pin' },
-    { name: '/retry', description: t('help_cmd_retry'), icon: 'retry' },
-    { name: '/online', description: t('help_cmd_search'), icon: 'search' },
-    { name: '/deep', description: t('help_cmd_deep'), icon: 'deep' },
-    { name: '/code', description: t('help_cmd_code'), icon: 'code' },
-    { name: '/url', description: t('help_cmd_url'), icon: 'url' },
-    { name: '/file', description: t('help_cmd_file'), icon: 'file' },
-    { name: '/clear', description: t('help_cmd_clear'), icon: 'clear' },
-    { name: '/new', description: t('help_cmd_new'), icon: 'new' },
-    { name: '/settings', description: t('help_cmd_settings'), icon: 'settings' },
-    { name: '/canvas', description: t('help_cmd_canvas'), icon: 'canvas' },
-    { name: '/pip', description: t('help_cmd_pip'), icon: 'pip' },
-    { name: '/fast', description: t('help_cmd_fast'), icon: 'fast' },
-  ]), [t]);
+  const commandDefinitions = useMemo(
+    () => [
+      { name: 'model', description: t('help_cmd_model'), icon: 'bot' },
+      { name: 'help', description: t('help_cmd_help'), icon: 'help' },
+      { name: 'edit', description: t('help_cmd_edit'), icon: 'edit' },
+      { name: 'pin', description: t('help_cmd_pin'), icon: 'pin' },
+      { name: 'retry', description: t('help_cmd_retry'), icon: 'retry' },
+      { name: 'online', description: t('help_cmd_search'), icon: 'search' },
+      { name: 'deep', description: t('help_cmd_deep'), icon: 'deep' },
+      { name: 'code', description: t('help_cmd_code'), icon: 'code' },
+      { name: 'url', description: t('help_cmd_url'), icon: 'url' },
+      { name: 'file', description: t('help_cmd_file'), icon: 'file' },
+      { name: 'clear', description: t('help_cmd_clear'), icon: 'clear' },
+      { name: 'new', description: t('help_cmd_new'), icon: 'new' },
+      { name: 'settings', description: t('help_cmd_settings'), icon: 'settings' },
+      { name: 'canvas', description: t('help_cmd_canvas'), icon: 'canvas' },
+      { name: 'pip', description: t('help_cmd_pip'), icon: 'pip' },
+      { name: 'fast', description: t('help_cmd_fast'), icon: 'fast' },
+    ],
+    [t],
+  );
+
+  const commands = useMemo<Command[]>(
+    () =>
+      commandDefinitions.map(({ name, description, icon }) => {
+        switch (name) {
+          case 'model':
+            return {
+              name,
+              description,
+              icon,
+              action: () => {
+                setInputText('/model ');
+                setTimeout(() => {
+                  const textarea = textareaRef.current;
+                  if (textarea) {
+                    textarea.focus();
+                    const textLength = textarea.value.length;
+                    textarea.setSelectionRange(textLength, textLength);
+                  }
+                }, 0);
+              },
+            };
+          case 'help':
+            return { name, description, icon, action: () => setIsHelpModalOpen(true) };
+          case 'edit':
+            return { name, description, icon, action: onEditLastUserMessage };
+          case 'pin':
+            return { name, description, icon, action: onTogglePinCurrentSession };
+          case 'retry':
+            return { name, description, icon, action: onRetryLastTurn };
+          case 'online':
+            return { name, description, icon, action: onToggleGoogleSearch };
+          case 'deep':
+            return { name, description, icon, action: onToggleDeepSearch };
+          case 'code':
+            return { name, description, icon, action: onToggleCodeExecution };
+          case 'url':
+            return { name, description, icon, action: onToggleUrlContext };
+          case 'file':
+            return { name, description, icon, action: () => onAttachmentAction('upload') };
+          case 'clear':
+            return { name, description, icon, action: onClearChat };
+          case 'new':
+            return { name, description, icon, action: onNewChat };
+          case 'settings':
+            return { name, description, icon, action: onOpenSettings };
+          case 'canvas':
+            return { name, description, icon, action: onToggleCanvasPrompt };
+          case 'pip':
+            return { name, description, icon, action: onTogglePip };
+          case 'fast':
+            return {
+              name,
+              description,
+              icon,
+              action: () => {
+                const isGemini3Flash = currentModelId.includes('gemini-3') && currentModelId.includes('flash');
+                const isGeminiRobotics = currentModelId.includes('gemini-robotics-er');
+                const targetLevel = (isGemini3Flash || isGeminiRobotics) ? 'MINIMAL' : 'LOW';
+                onSetThinkingLevel(thinkingLevel === targetLevel ? 'HIGH' : targetLevel);
+              },
+            };
+          default:
+            return {
+              name,
+              description,
+              icon,
+              action: () => undefined,
+            };
+        }
+      }),
+    [
+      commandDefinitions,
+      currentModelId,
+      onAttachmentAction,
+      onClearChat,
+      onEditLastUserMessage,
+      onNewChat,
+      onOpenSettings,
+      onRetryLastTurn,
+      onSetThinkingLevel,
+      onToggleCanvasPrompt,
+      onToggleCodeExecution,
+      onToggleDeepSearch,
+      onToggleGoogleSearch,
+      onTogglePinCurrentSession,
+      onTogglePip,
+      onToggleUrlContext,
+      setInputText,
+      setIsHelpModalOpen,
+      textareaRef,
+      thinkingLevel,
+    ],
+  );
+
+  const allCommandsForHelp = useMemo(
+    () =>
+      commandDefinitions.map(({ name, description, icon }) => ({
+        name: `/${name}`,
+        description,
+        icon,
+      })),
+    [commandDefinitions],
+  );
+
+  const resetSlashCommandState = useCallback(() => {
+    setSlashCommandState(CLOSED_SLASH_COMMAND_STATE);
+  }, []);
 
   const handleCommandSelect = useCallback((command: Command) => {
     if (!command) return;
@@ -113,15 +194,14 @@ export const useSlashCommands = ({
     // Execute the command action immediately
     command.action();
     
-    setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
+    resetSlashCommandState();
 
-    const commandsThatPopulateInput = ['model', 'edit'];
     const isDynamicModelCommand = availableModels.some(m => m.name === command.name);
 
     // If the command is meant to clear the input (i.e. not a template command or dynamic model selection)
     // we explicitly clear the text.
     // Dynamic model commands handle their own clearing in their action definition (see handleInputChange).
-    if (!commandsThatPopulateInput.includes(command.name) && !isDynamicModelCommand) {
+    if (!INPUT_POPULATING_COMMANDS.has(command.name) && !isDynamicModelCommand) {
         // Use setTimeout to ensure the input clear happens after the event loop tick
         // This solves issues where Enter key press might interfere with state updates
         setTimeout(() => {
@@ -129,29 +209,18 @@ export const useSlashCommands = ({
             onMessageSent();
         }, 0);
     }
-  }, [onMessageSent, setInputText, availableModels]);
+  }, [availableModels, onMessageSent, resetSlashCommandState, setInputText]);
   
-  const handleInputChange = (value: string) => {
+  const handleInputChange = useCallback((value: string) => {
     setInputText(value);
   
     if (!value.startsWith('/')) {
-      setSlashCommandState(prev => ({ ...prev, isOpen: false }));
+      resetSlashCommandState();
       return;
     }
   
     const [commandPart, ...args] = value.split(' ');
     const commandName = commandPart.substring(1).toLowerCase();
-  
-    if (value.endsWith(' ') && value.trim() === `/${commandName}`) {
-      const matchedCommand = commands.find(cmd => cmd.name === commandName);
-      if (matchedCommand && matchedCommand.name !== 'model') {
-        matchedCommand.action();
-        setInputText('');
-        onMessageSent();
-        setSlashCommandState({ isOpen: false, query: '', filteredCommands: [], selectedIndex: 0 });
-        return;
-      }
-    }
   
     if (commandName === 'model') {
       const keyword = args.join(' ').toLowerCase();
@@ -183,33 +252,42 @@ export const useSlashCommands = ({
         selectedIndex: 0,
       });
     }
-  };
+  }, [availableModels, commands, onMessageSent, onSelectModel, resetSlashCommandState, setInputText]);
   
-  const handleSlashCommandExecution = (text: string) => {
-    const [commandWithSlash, ...args] = text.split(' ');
-    const keyword = args.join(' ').toLowerCase();
-    const commandName = commandWithSlash.substring(1);
+  const handleSlashCommandExecution = useCallback((text: string) => {
+    const exactCommandMatch = text.match(/^\/(\S+)$/);
+    if (exactCommandMatch) {
+      const commandName = exactCommandMatch[1].toLowerCase();
+      const command = commands.find(cmd => cmd.name === commandName);
+      if (!command) {
+        return false;
+      }
 
-    if (commandName === 'model' && keyword) {
-        const model = availableModels.find(m => m.name.toLowerCase().includes(keyword));
-        if (model) {
-            onSelectModel(model.id);
-            setInputText('');
-            onMessageSent();
-        }
-        return;
+      handleCommandSelect(command);
+      return true;
     }
 
-    const command = commands.find(cmd => cmd.name === commandName);
-    if (command && !keyword) {
-        command.action();
-        const commandsThatPopulateInput = ['model', 'edit'];
-        if (!commandsThatPopulateInput.includes(command.name)) {
-            setInputText('');
-            onMessageSent();
-        }
+    const modelCommandMatch = text.match(/^\/model\s+(.+)$/i);
+    if (!modelCommandMatch) {
+      return false;
     }
-  };
+
+    const keyword = modelCommandMatch[1].trim().toLowerCase();
+    if (!keyword) {
+      return false;
+    }
+
+    const model = availableModels.find(m => m.name.toLowerCase().includes(keyword));
+    if (!model) {
+      return false;
+    }
+
+    onSelectModel(model.id);
+    setInputText('');
+    onMessageSent();
+    resetSlashCommandState();
+    return true;
+  }, [availableModels, commands, handleCommandSelect, onMessageSent, onSelectModel, resetSlashCommandState, setInputText]);
 
   return {
     slashCommandState,

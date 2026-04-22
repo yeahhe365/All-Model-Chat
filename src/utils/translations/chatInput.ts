@@ -120,7 +120,6 @@ export const chatInputTranslations = {
     help_cmd_edit: { en: 'Edit your last message.', zh: '编辑您的上一条消息。' },
     help_cmd_pin: { en: 'Toggle pin for current chat', zh: '切换当前聊天的置顶状态' },
     help_cmd_retry: { en: 'Retry the last turn.', zh: '重试上一轮。' },
-    help_cmd_stop: { en: 'Stop the current generation.', zh: '停止当前生成。' },
     help_cmd_search: { en: 'Toggle web search', zh: '切换联网' },
     help_cmd_deep: { en: 'Toggle Deep Search', zh: '切换深度搜索' },
     help_cmd_code: { en: 'Toggle code execution', zh: '切换代码执行' },

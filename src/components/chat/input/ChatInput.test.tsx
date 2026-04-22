@@ -1,4 +1,4 @@
-import React, { act } from 'react';
+import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MediaResolution, type AppSettings, type ChatSettings, type InputCommand } from '../../../types';
@@ -37,27 +37,6 @@ vi.mock('../../../hooks/useVoiceInput', () => ({
     isTranscribing: false,
     handleVoiceInputClick: vi.fn(),
     handleCancelRecording: vi.fn(),
-  }),
-}));
-
-vi.mock('../../../hooks/useSlashCommands', () => ({
-  useSlashCommands: ({
-    setInputText,
-  }: {
-    setInputText: React.Dispatch<React.SetStateAction<string>>;
-  }) => ({
-    slashCommandState: {
-      isOpen: false,
-      filteredCommands: [],
-      selectedIndex: 0,
-    },
-    setSlashCommandState: vi.fn(),
-    handleInputChange: (value: string) => {
-      setInputText(value);
-    },
-    handleCommandSelect: vi.fn(),
-    handleSlashCommandExecution: vi.fn(),
-    allCommandsForHelp: [],
   }),
 }));
 
@@ -307,6 +286,10 @@ describe('ChatInput', () => {
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
+  const dispatchKeyDown = (element: HTMLTextAreaElement, key: string) => {
+    element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+  };
+
   beforeEach(() => {
     localStorage.clear();
     container = document.createElement('div');
@@ -356,6 +339,71 @@ describe('ChatInput', () => {
 
     expect(textarea?.value).toBe('Original message updated');
     expect(valueProbe?.textContent).toBe('Original message updated');
+  });
+
+  it('sends slash-prefixed text when it does not match an executable command', async () => {
+    const onSendMessage = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onSendMessage = onSendMessage;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, '/api/v1 docs');
+      dispatchKeyDown(textarea, 'Enter');
+    });
+
+    expect(onSendMessage).toHaveBeenCalledWith('/api/v1 docs', { isFastMode: false, files: undefined });
+  });
+
+  it('sends exact command text with trailing whitespace instead of auto-executing it', async () => {
+    const onSendMessage = vi.fn();
+    const providerValue = createProviderValue(null);
+    providerValue.input.isLoading = false;
+    providerValue.input.isEditing = false;
+    providerValue.input.editMode = 'resend';
+    providerValue.input.editingMessageId = null;
+    providerValue.input.onSendMessage = onSendMessage;
+
+    await act(async () => {
+      root.render(
+        <ChatAreaProvider value={providerValue}>
+          <ChatInput />
+        </ChatAreaProvider>,
+      );
+    });
+
+    const textarea = container.querySelector<HTMLTextAreaElement>('[data-testid="chat-input-textarea"]');
+    expect(textarea).not.toBeNull();
+
+    await act(async () => {
+      if (!textarea) {
+        return;
+      }
+
+      setTextareaValue(textarea, '/help ');
+      dispatchKeyDown(textarea, 'Enter');
+    });
+
+    expect(onSendMessage).toHaveBeenCalledWith('/help ', { isFastMode: false, files: undefined });
+    expect(providerValue.input.onClearChat).not.toHaveBeenCalled();
   });
 
   it('queues the next draft while loading and auto-sends it after loading finishes', async () => {
