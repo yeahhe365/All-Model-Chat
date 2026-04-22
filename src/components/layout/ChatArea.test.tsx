@@ -40,6 +40,23 @@ const mockState = vi.hoisted(() => ({
   },
 }));
 
+const dispatchTouchEvent = (
+  node: Element,
+  type: 'touchstart' | 'touchend',
+  touches: Array<{ clientX: number; clientY: number }>,
+) => {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, 'touches', {
+    configurable: true,
+    value: type === 'touchend' ? [] : touches,
+  });
+  Object.defineProperty(event, 'changedTouches', {
+    configurable: true,
+    value: touches,
+  });
+  node.dispatchEvent(event);
+};
+
 vi.mock('../../stores/settingsStore', () => ({
   useSettingsStore: (selector: (state: typeof mockState.settings) => unknown) => selector(mockState.settings),
 }));
@@ -198,6 +215,8 @@ const createChatAreaProps = (overrides: Partial<ChatAreaProps['chatArea']> = {})
 describe('ChatArea provider slice memoization', () => {
   let container: HTMLDivElement;
   let root: Root;
+  let matchMediaMatches = false;
+  let windowInnerWidth = 1024;
 
   beforeEach(() => {
     vi.stubGlobal(
@@ -208,6 +227,25 @@ describe('ChatArea provider slice memoization', () => {
         disconnect() {}
       },
     );
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: windowInnerWidth,
+    });
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: matchMediaMatches,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+        onchange: null,
+      })),
+    });
 
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -290,5 +328,36 @@ describe('ChatArea provider slice memoization', () => {
 
     expect(mockState.renders.messageList.mock.calls.length).toBeGreaterThan(messageListRenderCount);
     expect(mockState.renders.chatInput.mock.calls.length).toBe(chatInputRenderCount);
+  });
+
+  it('focuses the composer after a downward swipe in the chat area on mobile', () => {
+    matchMediaMatches = true;
+    windowInnerWidth = 390;
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: windowInnerWidth,
+    });
+
+    const composer = document.createElement('textarea');
+    composer.setAttribute('aria-label', 'Chat message input');
+    document.body.appendChild(composer);
+    const focusSpy = vi.spyOn(composer, 'focus');
+
+    const props = createChatAreaProps();
+
+    act(() => {
+      root.render(<ChatArea {...props} />);
+    });
+
+    const chatArea = container.querySelector('.chat-bg-enhancement');
+    expect(chatArea).not.toBeNull();
+
+    act(() => {
+      dispatchTouchEvent(chatArea!, 'touchstart', [{ clientX: 100, clientY: 160 }]);
+      dispatchTouchEvent(chatArea!, 'touchend', [{ clientX: 102, clientY: 250 }]);
+    });
+
+    expect(focusSpy).toHaveBeenCalledTimes(1);
   });
 });

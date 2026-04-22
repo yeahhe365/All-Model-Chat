@@ -6,12 +6,18 @@ import { createNewSession, rehydrateSessionFiles } from '../../../utils/chat/ses
 import { cleanupFilePreviewUrls } from '../../../utils/fileHelpers';
 import { resolveSupportedModelId } from '../../../utils/modelHelpers';
 import { dbService } from '../../../utils/db';
+import type { SetActiveSessionOptions } from '../../../stores/chatStore';
+
+type SessionLoaderHistoryOptions = Pick<SetActiveSessionOptions, 'history'>;
 
 interface UseSessionLoaderProps {
     appSettings: AppSettings;
     setSavedSessions: Dispatch<SetStateAction<SavedChatSession[]>>;
     setSavedGroups: Dispatch<SetStateAction<ChatGroup[]>>;
-    setActiveSessionId: Dispatch<SetStateAction<string | null>>;
+    setActiveSessionId: (
+        value: SetStateAction<string | null>,
+        options?: SetActiveSessionOptions,
+    ) => void;
     setActiveMessages: Dispatch<SetStateAction<ChatMessage[]>>; // Added setter
     setSelectedFiles: Dispatch<SetStateAction<UploadedFile[]>>;
     setEditingMessageId: Dispatch<SetStateAction<string | null>>;
@@ -81,8 +87,12 @@ export const useSessionLoader = ({
         });
     }, [activeChat, activeSessionId, sanitizeSessionModel, setSavedSessions]);
 
-    const startNewChat = useCallback((explicitTemplateSession?: SavedChatSession) => {
+    const startNewChat = useCallback((
+        explicitTemplateSession?: SavedChatSession,
+        options?: SessionLoaderHistoryOptions,
+    ) => {
         sessionViewRequestIdRef.current += 1;
+        const history = options?.history ?? 'push';
 
         // If we are already on an empty chat, just focus input and don't create a duplicate
         if (activeChat && activeChat.messages.length === 0 && !activeChat.settings.systemInstruction) {
@@ -139,7 +149,7 @@ export const useSessionLoader = ({
 
         // Update state: Set Active Messages to empty, Add new session metadata to list
         setActiveMessages([]);
-        setActiveSessionId(newSession.id);
+        setActiveSessionId(newSession.id, { history });
         
         updateAndPersistSessions(prev => [newSession, ...prev]);
 
@@ -153,9 +163,13 @@ export const useSessionLoader = ({
         }, 0);
     }, [appSettings, activeChat, updateAndPersistSessions, setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setCommandedInput, savedSessions, sanitizeSessionModel, retainOutgoingSessionRuntime]);
 
-    const loadChatSession = useCallback(async (sessionId: string) => {
+    const loadChatSession = useCallback(async (
+        sessionId: string,
+        options?: SessionLoaderHistoryOptions,
+    ) => {
         const requestId = sessionViewRequestIdRef.current + 1;
         sessionViewRequestIdRef.current = requestId;
+        const history = options?.history ?? 'push';
 
         logService.info(`Loading chat session: ${sessionId}`);
         userScrolledUpRef.current = false;
@@ -184,7 +198,7 @@ export const useSessionLoader = ({
                 
                 // Set Active Messages and ID
                 setActiveMessages(rehydrated.messages);
-                setActiveSessionId(rehydrated.id);
+                setActiveSessionId(rehydrated.id, { history });
                 
                 // Ensure metadata list contains this session (metadata only)
                 setSavedSessions(prev => {
@@ -210,14 +224,14 @@ export const useSessionLoader = ({
                 }, 0);
             } else {
                 logService.warn(`Session ${sessionId} not found. Starting new chat.`);
-                startNewChat();
+                startNewChat(undefined, { history });
             }
         } catch (error) {
             if (requestId !== sessionViewRequestIdRef.current) {
                 return;
             }
             logService.error("Error loading chat session:", error);
-            startNewChat();
+            startNewChat(undefined, { history });
         }
     }, [setActiveSessionId, setActiveMessages, setSelectedFiles, setEditingMessageId, startNewChat, userScrolledUpRef, activeSessionId, selectedFiles, fileDraftsRef, setSavedSessions, activeChat, sanitizeSessionModel, retainOutgoingSessionRuntime]);
 
@@ -252,7 +266,7 @@ export const useSessionLoader = ({
                     logService.info(`Loaded full content for active session: ${initialActiveId}`);
                     const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(fullActiveSession));
                     setActiveMessages(rehydrated.messages);
-                    setActiveSessionId(initialActiveId);
+                    setActiveSessionId(initialActiveId, { history: 'replace' });
                     
                     // Restore files draft
                     const draftFiles = fileDraftsRef.current[initialActiveId] || [];
@@ -311,7 +325,7 @@ export const useSessionLoader = ({
                         logService.info(`Reusing empty recent session: ${mostRecent.id}`);
                         const rehydrated = rehydrateSessionFiles(sanitizeSessionModel(fullSession));
                         setActiveMessages(rehydrated.messages);
-                        setActiveSessionId(rehydrated.id);
+                        setActiveSessionId(rehydrated.id, { history: 'replace' });
                         
                         // Restore files draft
                         const draftFiles = fileDraftsRef.current[rehydrated.id] || [];
@@ -325,13 +339,13 @@ export const useSessionLoader = ({
                     // Fallback: New Chat
                     logService.info('No active session found or empty session to reuse, starting fresh chat.');
                     // Pass the top session (if any) as template for inheritance
-                    startNewChat(sortedList.length > 0 ? sortedList[0] : undefined);
+                    startNewChat(sortedList.length > 0 ? sortedList[0] : undefined, { history: 'replace' });
                 }
             }
 
         } catch (error) {
             logService.error("Error loading chat history:", error);
-            startNewChat();
+            startNewChat(undefined, { history: 'replace' });
         }
     }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setActiveMessages, setSelectedFiles, fileDraftsRef, sanitizeSessionModel, sortSessionsByPinnedAndTimestamp]);
 
@@ -342,9 +356,9 @@ export const useSessionLoader = ({
             const sessionId = match ? match[1] : null;
             
             if (sessionId) {
-                loadChatSession(sessionId);
+                loadChatSession(sessionId, { history: 'none' });
             } else if (window.location.pathname === '/') {
-                startNewChat();
+                startNewChat(undefined, { history: 'none' });
             }
         };
 

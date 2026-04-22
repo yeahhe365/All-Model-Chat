@@ -10,6 +10,10 @@ import { ACTIVE_CHAT_SESSION_ID_KEY } from '../constants/appConstants';
 import { DEFAULT_MODEL_ID } from '../constants/modelConstants';
 
 type UpdaterOrValue<T> = T | ((prev: T) => T);
+export type SessionHistoryMode = 'auto' | 'push' | 'replace' | 'none';
+export interface SetActiveSessionOptions {
+  history?: SessionHistoryMode;
+}
 
 // ── Internal refs (not in Zustand state to avoid re-renders) ──
 // Typed as MutableRefObject so downstream hooks see the correct shape
@@ -65,21 +69,33 @@ function sanitizeSessionModel(session: SavedChatSession): SavedChatSession {
 }
 
 // ── URL & sessionStorage sync ──
-function syncActiveSessionToUrl(activeSessionId: string | null) {
+function syncActiveSessionToUrl(
+  activeSessionId: string | null,
+  historyMode: SessionHistoryMode = 'auto',
+) {
   if (activeSessionId) {
     try {
       sessionStorage.setItem(ACTIVE_CHAT_SESSION_ID_KEY, activeSessionId);
     } catch {
       // Ignore sessionStorage sync failures.
     }
+
+    if (historyMode === 'none') {
+      return;
+    }
+
     const targetPath = `/chat/${activeSessionId}`;
     try {
       if (window.location.pathname !== targetPath) {
-        if (window.location.pathname.startsWith('/chat/')) {
-          window.history.replaceState({ sessionId: activeSessionId }, '', targetPath);
-        } else {
-          window.history.pushState({ sessionId: activeSessionId }, '', targetPath);
-        }
+        const method =
+          historyMode === 'push'
+            ? 'pushState'
+            : historyMode === 'replace'
+              ? 'replaceState'
+              : window.location.pathname.startsWith('/chat/')
+                ? 'replaceState'
+                : 'pushState';
+        window.history[method]({ sessionId: activeSessionId }, '', targetPath);
       }
     } catch {
       // Ignore history sync failures.
@@ -90,9 +106,15 @@ function syncActiveSessionToUrl(activeSessionId: string | null) {
     } catch {
       // Ignore sessionStorage sync failures.
     }
+
+    if (historyMode === 'none') {
+      return;
+    }
+
     try {
       if (window.location.pathname !== '/') {
-        window.history.pushState({}, '', '/');
+        const method = historyMode === 'replace' ? 'replaceState' : 'pushState';
+        window.history[method]({}, '', '/');
       }
     } catch {
       // Ignore history sync failures.
@@ -133,7 +155,10 @@ interface ChatActions {
   // Session setters
   setSavedSessions: (v: UpdaterOrValue<SavedChatSession[]>) => void;
   setSavedGroups: (v: UpdaterOrValue<ChatGroup[]>) => void;
-  setActiveSessionId: (id: UpdaterOrValue<string | null>) => void;
+  setActiveSessionId: (
+    id: UpdaterOrValue<string | null>,
+    options?: SetActiveSessionOptions,
+  ) => void;
   setActiveMessages: (v: UpdaterOrValue<ChatMessage[]>) => void;
 
   // Auxiliary setters
@@ -196,11 +221,11 @@ export const useChatStore = create<ChatState & ChatActions>((set, get) => ({
     savedGroups: typeof v === 'function' ? v(s.savedGroups) : v,
   })),
 
-  setActiveSessionId: (value) => {
+  setActiveSessionId: (value, options) => {
     const nextValue =
       typeof value === 'function' ? value(get().activeSessionId) : value;
     set({ activeSessionId: nextValue });
-    syncActiveSessionToUrl(nextValue);
+    syncActiveSessionToUrl(nextValue, options?.history ?? 'auto');
   },
 
   setActiveMessages: (v) => set((s) => ({

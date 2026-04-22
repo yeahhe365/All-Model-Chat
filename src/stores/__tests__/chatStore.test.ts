@@ -98,6 +98,28 @@ describe('chatStore', () => {
       expect(useChatStore.getState().activeSessionId).toBe('sess-1');
     });
 
+    it('pushes a new browser history entry when explicitly navigating between chat sessions', () => {
+      window.location.pathname = '/chat/sess-1';
+
+      useChatStore.getState().setActiveSessionId('sess-2', { history: 'push' });
+
+      expect(window.history.pushState).toHaveBeenCalledWith(
+        { sessionId: 'sess-2' },
+        '',
+        '/chat/sess-2',
+      );
+      expect(window.history.replaceState).not.toHaveBeenCalled();
+    });
+
+    it('skips browser history writes when history sync is disabled', () => {
+      window.location.pathname = '/chat/sess-1';
+
+      useChatStore.getState().setActiveSessionId('sess-2', { history: 'none' });
+
+      expect(window.history.pushState).not.toHaveBeenCalled();
+      expect(window.history.replaceState).not.toHaveBeenCalled();
+    });
+
     it('clears active session when set to null', () => {
       useChatStore.getState().setActiveSessionId('sess-1');
       useChatStore.getState().setActiveSessionId(null);

@@ -188,7 +188,7 @@ describe('useSessionLoader', () => {
       await flushPromises();
     });
 
-    expect(setActiveSessionId).toHaveBeenLastCalledWith('newer-session');
+    expect(setActiveSessionId).toHaveBeenLastCalledWith('newer-session', { history: 'push' });
     expect((setActiveMessages.mock.calls.at(-1)?.[0] as ChatMessage[])[0]?.content).toBe(
       'Newer Session content',
     );
@@ -199,12 +199,82 @@ describe('useSessionLoader', () => {
       await flushPromises();
     });
 
-    expect(setActiveSessionId).toHaveBeenLastCalledWith('newer-session');
+    expect(setActiveSessionId).toHaveBeenLastCalledWith('newer-session', { history: 'push' });
     expect((setActiveMessages.mock.calls.at(-1)?.[0] as ChatMessage[])[0]?.content).toBe(
       'Newer Session content',
     );
 
     expect(setSavedGroups).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('pushes browser history when loading a different session from the UI', async () => {
+    mockGetSession.mockResolvedValueOnce(createSession('session-next', 'Next Session'));
+
+    const setActiveSessionId = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: { modelId: 'gemini-2.5-flash' } as any,
+        setSavedSessions: vi.fn(),
+        setSavedGroups: vi.fn(),
+        setActiveSessionId,
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        activeChat: undefined,
+        userScrolledUpRef: { current: false },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-current',
+        savedSessions: [] as SavedChatSession[],
+      }),
+    );
+
+    await act(async () => {
+      await result.current.loadChatSession('session-next');
+      await flushPromises();
+    });
+
+    expect(setActiveSessionId).toHaveBeenLastCalledWith('session-next', { history: 'push' });
+
+    unmount();
+  });
+
+  it('can restore a session in history replay mode without pushing another history entry', async () => {
+    mockGetSession.mockResolvedValueOnce(createSession('session-back', 'Back Session'));
+
+    const setActiveSessionId = vi.fn();
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: { modelId: 'gemini-2.5-flash' } as any,
+        setSavedSessions: vi.fn(),
+        setSavedGroups: vi.fn(),
+        setActiveSessionId,
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        activeChat: undefined,
+        userScrolledUpRef: { current: false },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-current',
+        savedSessions: [] as SavedChatSession[],
+      }),
+    );
+
+    await act(async () => {
+      await result.current.loadChatSession('session-back', { history: 'none' });
+      await flushPromises();
+    });
+
+    expect(setActiveSessionId).toHaveBeenLastCalledWith('session-back', { history: 'none' });
+
     unmount();
   });
 
