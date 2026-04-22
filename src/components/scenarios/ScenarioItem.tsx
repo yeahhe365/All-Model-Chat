@@ -3,6 +3,7 @@ import React from 'react';
 import { SavedScenario } from '../../types';
 import { Download, Edit3, Trash2, Shield, MessageSquare, Eye, Copy, Sparkles } from 'lucide-react';
 import { translations } from '../../utils/translations';
+import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../constants/appConstants';
 
 interface ScenarioItemProps {
   scenario: SavedScenario;
@@ -94,7 +95,7 @@ export const ScenarioItem: React.FC<ScenarioItemProps> = ({
                     <div className="w-px h-3 bg-[var(--theme-border-secondary)] mx-1" />
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(scenario.id); }}
-                        className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded-md transition-colors"
+                        className={SMALL_ICON_DANGER_BUTTON_CLASS}
                         title={t('scenarios_delete_title')}
                     >
                         <Trash2 size={14} />
@@ -119,7 +120,7 @@ const ActionButton = ({
 }) => (
     <button
         onClick={(e) => { e.stopPropagation(); onClick(scenario); }}
-        className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
+        className={SMALL_ICON_BUTTON_CLASS}
         title={label}
     >
         <Icon size={14} />

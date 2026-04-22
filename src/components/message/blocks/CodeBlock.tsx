@@ -139,7 +139,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = (props) => {
                     >
                          <button 
                             onClick={handleToggleExpand}
-                            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-tertiary)] border border-[var(--theme-border-secondary)] rounded-full text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] shadow-sm backdrop-blur-md transition-all hover:scale-105 active:scale-95"
+                            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-[var(--theme-bg-primary)] hover:bg-[var(--theme-bg-tertiary)] border border-[var(--theme-border-secondary)] rounded-full text-xs font-medium text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] shadow-sm backdrop-blur-md transition-all"
                             title="Collapse code block"
                         >
                             <ChevronUp size={12} strokeWidth={2} /> Show less

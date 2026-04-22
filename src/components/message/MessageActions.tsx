@@ -64,7 +64,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     const showRetryButton = (message.role === 'model' || (message.role === 'error' && message.generationStartTime));
     
     // Enhanced button styling: lighter default, distinct hover, rounded corners
-    const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100 hover:scale-105 active:scale-95";
+    const actionButtonClasses = "p-1.5 rounded-lg text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] opacity-80 hover:opacity-100";
     const actionsVisibilityClasses = isMobile
         ? 'opacity-100 translate-y-0 pointer-events-auto'
         : 'opacity-0 translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto';

@@ -71,7 +71,7 @@ export const CreateFileFooter: React.FC<CreateFileFooterProps> = ({
                   type="button"
                   onClick={onSave}
                   disabled={(!hasContent && !filenameBase.trim()) || isProcessing || isLoading || isExportingPdf || (isPdf && !isPdfPreviewReady)}
-                  className="h-9 px-3 sm:px-4 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transform active:scale-95 whitespace-nowrap flex-shrink-0"
+                  className="h-9 px-3 sm:px-4 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap flex-shrink-0"
                   title={isEditing ? t('save') : t('createText_create_button')}
                 >
                   {(isExportingPdf && isPdf) ? <Loader2 size={16} className="animate-spin" /> : (isEditing ? <Save size={16} strokeWidth={2} /> : <FilePlus size={16} strokeWidth={2} />)}

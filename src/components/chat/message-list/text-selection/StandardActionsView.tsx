@@ -27,7 +27,7 @@ export const StandardActionsView: React.FC<StandardActionsViewProps> = ({
     const insertLabel = t ? t('fill_input') : 'Insert';
     const copyLabel = isCopied ? (t ? t('copied') : 'Copied') : (t ? t('copy') : 'Copy');
     const searchLabel = t ? t('search') : 'Search';
-    const actionButtonClass = 'flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium text-[var(--theme-text-primary)] transition-all active:scale-95 hover:bg-[var(--theme-bg-tertiary)] sm:px-3';
+    const actionButtonClass = 'flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium text-[var(--theme-text-primary)] transition-all hover:bg-[var(--theme-bg-tertiary)] sm:px-3';
 
     return (
         <>

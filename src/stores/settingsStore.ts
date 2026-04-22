@@ -13,6 +13,7 @@ interface SettingsState {
   currentTheme: Theme;
   language: 'en' | 'zh';
   isSettingsLoaded: boolean;
+  pendingPreloadSettingsOverrides: Partial<AppSettings> | null;
 }
 
 interface SettingsActions {
@@ -56,6 +57,17 @@ function sanitizeAppSettings(settings: AppSettings): AppSettings {
 
 let settingsChannel: BroadcastChannel | null = null;
 
+function collectChangedSettings(
+  previous: AppSettings,
+  next: AppSettings,
+): Partial<AppSettings> {
+  const changedEntries = Object.keys(next)
+    .filter((key) => !Object.is(previous[key as keyof AppSettings], next[key as keyof AppSettings]))
+    .map((key) => [key, next[key as keyof AppSettings]]);
+
+  return Object.fromEntries(changedEntries) as Partial<AppSettings>;
+}
+
 function getSettingsChannel(): BroadcastChannel | null {
   if (typeof BroadcastChannel === 'undefined') {
     return null;
@@ -80,6 +92,7 @@ function buildDefaultSettingsState() {
 export const useSettingsStore = create<SettingsState & SettingsActions>((set) => ({
   ...buildDefaultSettingsState(),
   isSettingsLoaded: false,
+  pendingPreloadSettingsOverrides: null,
 
   setAppSettings: (v) => {
     set((state) => {
@@ -92,9 +105,24 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
         dbService.setAppSettings(sanitizedNext)
           .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
           .catch((e) => logService.error('Failed to save settings', { error: e }));
+        return {
+          appSettings: sanitizedNext,
+          currentTheme,
+          language,
+          pendingPreloadSettingsOverrides: null,
+        };
+      } else {
+        const changedSettings = collectChangedSettings(state.appSettings, sanitizedNext);
+        return {
+          appSettings: sanitizedNext,
+          currentTheme,
+          language,
+          pendingPreloadSettingsOverrides: {
+            ...(state.pendingPreloadSettingsOverrides ?? {}),
+            ...changedSettings,
+          },
+        };
       }
-
-      return { appSettings: sanitizedNext, currentTheme, language };
     });
   },
 
@@ -102,25 +130,58 @@ export const useSettingsStore = create<SettingsState & SettingsActions>((set) =>
     try {
       const defaultSettings = getDefaultAppSettings();
       const storedSettings = await dbService.getAppSettings();
+      const preloadOverrides = useSettingsStore.getState().pendingPreloadSettingsOverrides;
 
       if (storedSettings) {
-        const newSettings = sanitizeAppSettings({ ...defaultSettings, ...storedSettings });
+        const newSettings = sanitizeAppSettings({
+          ...defaultSettings,
+          ...storedSettings,
+          ...(preloadOverrides ?? {}),
+        });
         if (storedSettings.filesApiConfig) {
           newSettings.filesApiConfig = { ...DEFAULT_FILES_API_CONFIG, ...storedSettings.filesApiConfig };
+        }
+        if (preloadOverrides?.filesApiConfig) {
+          newSettings.filesApiConfig = {
+            ...newSettings.filesApiConfig,
+            ...preloadOverrides.filesApiConfig,
+          };
         }
         set({
           appSettings: newSettings,
           currentTheme: computeTheme(newSettings.themeId),
           language: resolveLanguage(newSettings.language),
           isSettingsLoaded: true,
+          pendingPreloadSettingsOverrides: null,
         });
+        if (preloadOverrides) {
+          dbService.setAppSettings(newSettings)
+            .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
+            .catch((e) => logService.error('Failed to save settings', { error: e }));
+        }
       } else {
-        set({
-          appSettings: defaultSettings,
-          currentTheme: computeTheme(defaultSettings.themeId),
-          language: resolveLanguage(defaultSettings.language),
-          isSettingsLoaded: true,
+        const newSettings = sanitizeAppSettings({
+          ...defaultSettings,
+          ...(preloadOverrides ?? {}),
         });
+        if (preloadOverrides?.filesApiConfig) {
+          newSettings.filesApiConfig = {
+            ...DEFAULT_FILES_API_CONFIG,
+            ...preloadOverrides.filesApiConfig,
+          };
+        }
+        set({
+          appSettings: newSettings,
+          currentTheme: computeTheme(newSettings.themeId),
+          language: resolveLanguage(newSettings.language),
+          isSettingsLoaded: true,
+          pendingPreloadSettingsOverrides: null,
+        });
+        if (preloadOverrides) {
+          dbService.setAppSettings(newSettings)
+            .then(() => getSettingsChannel()?.postMessage({ type: 'SETTINGS_UPDATED' }))
+            .catch((e) => logService.error('Failed to save settings', { error: e }));
+        }
       }
     } catch (error) {
       logService.error('Failed to load settings from IndexedDB', { error });

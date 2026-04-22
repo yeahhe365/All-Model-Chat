@@ -4,6 +4,7 @@ import { X, Loader2, Download } from 'lucide-react';
 import { Modal } from '../shared/Modal';
 import { useResponsiveValue } from '../../hooks/useDevice';
 import { ExportOptions } from '../message/buttons/export/ExportOptions';
+import { MODAL_CLOSE_BUTTON_CLASS } from '../../constants/appConstants';
 
 interface ExportChatModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export const ExportChatModal: React.FC<ExportChatModalProps> = ({ isOpen, onClos
                     <button 
                         onClick={onClose} 
                         disabled={isLoading}
-                        className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-secondary)] transition-colors p-1 rounded-full disabled:opacity-50" 
+                        className={`${MODAL_CLOSE_BUTTON_CLASS} disabled:opacity-50`} 
                         aria-label="Close export dialog"
                     >
                         <X size={22} />

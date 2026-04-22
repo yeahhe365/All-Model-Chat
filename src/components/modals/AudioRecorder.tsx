@@ -6,6 +6,7 @@ import { AudioPlayer } from '../shared/AudioPlayer';
 import { useAudioRecorder } from '../../hooks/useAudioRecorder';
 import { AudioVisualizer } from '../recorder/AudioVisualizer';
 import { RecorderControls } from '../recorder/RecorderControls';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
 
 interface AudioRecorderProps {
   onRecord: (file: File) => Promise<void>;
@@ -67,7 +68,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecord, onCancel
                 <h2 className="text-base font-semibold text-[var(--theme-text-primary)]">
                     {viewState === 'review' ? 'Preview Recording' : 'Voice Recorder'}
                 </h2>
-                <button onClick={onCancel} className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors">
+                <button onClick={onCancel} className={`text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] transition-colors rounded-full p-1 ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}>
                     <X size={20} />
                 </button>
             </div>

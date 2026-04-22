@@ -102,4 +102,30 @@ describe('MessageActions', () => {
     expect(actions?.className).not.toContain('opacity-0');
     expect(actions?.className).toContain('pointer-events-auto');
   });
+
+  it('keeps compact message action buttons free of scale transforms', () => {
+    act(() => {
+      root.render(
+        <I18nProvider>
+          <WindowProvider window={window} document={document}>
+            <MessageActions
+              message={message}
+              sessionTitle="Session"
+              messageIndex={0}
+              isGrouped={false}
+              onEditMessage={() => {}}
+              onDeleteMessage={() => {}}
+              onRetryMessage={() => {}}
+              onGenerateCanvas={() => {}}
+              onContinueGeneration={() => {}}
+              themeId="pearl"
+            />
+          </WindowProvider>
+        </I18nProvider>
+      );
+    });
+
+    const deleteButton = container.querySelector('button[aria-label="Delete"]');
+    expect(deleteButton?.className).not.toContain('scale');
+  });
 });

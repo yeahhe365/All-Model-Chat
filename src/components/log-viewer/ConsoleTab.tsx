@@ -4,6 +4,7 @@ import type { LogEntry, LogLevel, LogCategory } from '../../types/logging';
 import { LOG_LEVEL_COLORS, CATEGORY_COLORS } from './constants';
 import { LogRow } from './LogRow';
 import { useI18n } from '../../contexts/I18nContext';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
 
 interface ConsoleTabProps {
     logs: LogEntry[];
@@ -81,10 +82,10 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
 
             <div className="flex-grow" />
 
-            <button onClick={handleExport} className="flex items-center gap-1.5 text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] px-3 py-1.5 rounded-md transition-colors" title={t('logViewer_export_json')}>
+            <button onClick={handleExport} className={`flex items-center gap-1.5 text-xs bg-[var(--theme-bg-tertiary)] hover:bg-[var(--theme-bg-input)] text-[var(--theme-text-primary)] px-3 py-1.5 rounded-md transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`} title={t('logViewer_export_json')}>
                 <Download size={14} /> {t('logViewer_export_json')}
             </button>
-            <button onClick={onClear} className="flex items-center gap-1.5 text-xs bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/20 px-3 py-1.5 rounded-md transition-colors">
+            <button onClick={onClear} className={`flex items-center gap-1.5 text-xs bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/20 px-3 py-1.5 rounded-md transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}>
                 <Trash2 size={14} /> {t('logViewer_clear_button')}
             </button>
             </div>
@@ -106,7 +107,7 @@ export const ConsoleTab: React.FC<ConsoleTabProps> = ({ logs, isLoading, hasMore
                     <button 
                         onClick={onFetchMore} 
                         disabled={isLoading}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors disabled:opacity-50"
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors disabled:opacity-50 ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                     >
                         {isLoading ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />}
                         {t('logViewer_load_older')}

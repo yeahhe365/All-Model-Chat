@@ -14,7 +14,7 @@ import {
   IconFileEdit,
   IconZip
 } from '../../icons/CustomIcons';
-import { CHAT_INPUT_BUTTON_CLASS } from '../../../constants/appConstants';
+import { CHAT_INPUT_BUTTON_CLASS, MENU_ITEM_BUTTON_CLASS, MENU_ITEM_DEFAULT_STATE_CLASS } from '../../../constants/appConstants';
 import { usePortaledMenu } from '../../../hooks/ui/usePortaledMenu';
 
 interface AttachmentMenuProps {
@@ -90,7 +90,7 @@ export const AttachmentMenu: React.FC<AttachmentMenuProps> = ({ onAction, disabl
                     role="menu"
                 >
                     {filteredMenuItems.map(item => (
-                        <button key={item.action} onClick={() => handleAction(item.action)} className="w-full text-left px-4 py-2.5 text-sm text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3.5 transition-colors" role="menuitem">
+                        <button key={item.action} onClick={() => handleAction(item.action)} className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS} px-4 py-2.5 gap-3.5`} role="menuitem">
                             <span className="text-[var(--theme-text-secondary)]">{item.icon}</span>
                             <span className="font-medium">{t(item.labelKey)}</span>
                         </button>

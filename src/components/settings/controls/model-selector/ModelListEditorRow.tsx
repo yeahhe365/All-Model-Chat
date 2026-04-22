@@ -3,6 +3,7 @@ import { Pin, PinOff, Trash2 } from 'lucide-react';
 import { ModelOption } from '../../../../types';
 import { getModelIcon } from '../../../shared/ModelPicker';
 import { useI18n } from '../../../../contexts/I18nContext';
+import { SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../../constants/appConstants';
 
 interface ModelListEditorRowProps {
     model: ModelOption;
@@ -48,7 +49,7 @@ export const ModelListEditorRow: React.FC<ModelListEditorRowProps> = ({ model, i
             </button>
             <button
                 onClick={() => onDelete(index)}
-                className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 rounded transition-colors"
+                className={SMALL_ICON_DANGER_BUTTON_CLASS}
                 title={t('settingsRemoveModel')}
             >
                 <Trash2 size={14} />

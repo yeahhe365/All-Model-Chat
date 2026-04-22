@@ -45,7 +45,6 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({ message, onSuggest
                                 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-link)]
                                 transition-all duration-200 ease-out
                                 text-left shadow-sm hover:shadow-md
-                                active:scale-95
                             "
                         >
                             <span className="line-clamp-2">{suggestion}</span>

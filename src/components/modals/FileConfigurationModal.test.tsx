@@ -132,4 +132,24 @@ describe('FileConfigurationModal', () => {
     expect(source).not.toContain("const [mediaResolution, setMediaResolution] = useState<MediaResolution | ''>('')");
     expect(source).not.toMatch(/useEffect\(\(\) => \{\s*if \(isOpen && file\) \{\s*setStartOffset/s);
   });
+
+  it('adds visible keyboard focus styles to close and save controls', () => {
+    const file: UploadedFile = {
+      id: 'video-3',
+      name: 'demo.mp4',
+      type: 'video/mp4',
+      size: 128,
+      uploadState: 'active',
+    };
+
+    renderModal(file);
+
+    const closeButton = Array.from(document.querySelectorAll('button')).find(
+      (button) => button.className.includes('rounded-full'),
+    );
+    const saveButton = getButtonByText('Save');
+
+    expect(closeButton?.className).toContain('focus-visible:ring-2');
+    expect(saveButton?.className).toContain('focus-visible:ring-2');
+  });
 });

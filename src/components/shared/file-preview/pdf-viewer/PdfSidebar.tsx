@@ -41,7 +41,7 @@ export const PdfSidebar: React.FC<PdfSidebarProps> = ({
                                     className="cursor-pointer group flex flex-col items-center"
                                     onClick={() => onPageClick(pageNum)}
                                 >
-                                    <div className={`relative transition-all duration-200 ${currentPage === pageNum ? 'ring-2 ring-blue-500 shadow-lg scale-[1.02]' : 'hover:ring-2 hover:ring-white/30 hover:scale-[1.02]'}`}>
+                                    <div className={`relative transition-all duration-200 ${currentPage === pageNum ? 'ring-2 ring-blue-500 shadow-lg' : 'hover:ring-2 hover:ring-white/30'}`}>
                                         {shouldRenderThumbnail ? (
                                             <Page 
                                                 pageNumber={pageNum} 

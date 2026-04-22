@@ -41,4 +41,27 @@ describe('HelpModal', () => {
     expect(document.body.textContent).toContain('helpModal_no_results');
     expect(document.body.textContent).toContain('helpModal_tip');
   });
+
+  it('adds visible keyboard focus styles to close and copy actions', async () => {
+    const t = (key: string) => key;
+
+    await act(async () => {
+      root.render(
+        <HelpModal
+          isOpen
+          onClose={vi.fn()}
+          commands={[{ name: '/canvas', description: 'Toggle canvas', icon: 'canvas' } as any]}
+          t={t as any}
+        />,
+      );
+    });
+
+    const closeButton = document.body.querySelector('button[aria-label="helpModal_close_aria"]');
+    const copyButton = Array.from(document.body.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('/canvas'),
+    );
+
+    expect(closeButton?.className).toContain('focus-visible:ring-2');
+    expect(copyButton?.className).toContain('focus-visible:ring-2');
+  });
 });

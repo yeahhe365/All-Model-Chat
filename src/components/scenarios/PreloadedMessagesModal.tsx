@@ -7,6 +7,7 @@ import { Modal } from '../shared/Modal';
 import { ScenarioEditor } from './ScenarioEditor';
 import { ScenarioList } from './ScenarioList';
 import { useScenarioManager } from '../../hooks/features/useScenarioManager';
+import { MODAL_CLOSE_BUTTON_DANGER_HOVER_CLASS, SMALL_ICON_BUTTON_ROUND_CLASS } from '../../constants/appConstants';
 
 interface PreloadedMessagesModalProps {
   isOpen: boolean;
@@ -91,7 +92,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
             {view === 'editor' && (
                 <button 
                     onClick={actions.handleCancelEdit}
-                    className="p-1.5 -ml-2 text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors md:hidden"
+                    className={`${SMALL_ICON_BUTTON_ROUND_CLASS} -ml-2 text-[var(--theme-text-secondary)] md:hidden`}
                 >
                     <ArrowLeft size={20} />
                 </button>
@@ -154,7 +155,7 @@ export const PreloadedMessagesModal: React.FC<PreloadedMessagesModalProps> = ({
              <button 
                 ref={closeButtonRef} 
                 onClick={handleClose} 
-                className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-danger)]/10 hover:text-[var(--theme-text-danger)] rounded-xl transition-colors" 
+                className={`${MODAL_CLOSE_BUTTON_DANGER_HOVER_CLASS} rounded-xl`} 
                 aria-label={t('scenarios_close_aria')}
             >
                 <X size={22} />

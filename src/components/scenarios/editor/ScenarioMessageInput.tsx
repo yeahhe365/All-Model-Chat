@@ -71,7 +71,7 @@ export const ScenarioMessageInput: React.FC<ScenarioMessageInputProps> = ({
                 <button
                     onClick={onAdd}
                     disabled={!content.trim()}
-                    className="absolute right-2 bottom-2 p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95 transform"
+                    className="absolute right-2 bottom-2 p-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                 >
                     <Send size={18} strokeWidth={2.5} />
                 </button>

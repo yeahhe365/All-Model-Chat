@@ -44,6 +44,14 @@ export const useSessionLoader = ({
 }: UseSessionLoaderProps) => {
     const sessionViewRequestIdRef = useRef(0);
 
+    const sortSessionsByPinnedAndTimestamp = useCallback((sessions: SavedChatSession[]) => (
+        [...sessions].sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return b.timestamp - a.timestamp;
+        })
+    ), []);
+
     const sanitizeSessionModel = useCallback((session: SavedChatSession): SavedChatSession => ({
         ...session,
         settings: {
@@ -233,13 +241,38 @@ export const useSessionLoader = ({
             }
 
             // 3. Set List State (Metadata only)
-            const sortedList = metadataList.map(sanitizeSessionModel).sort((a,b) => {
-                if (a.isPinned && !b.isPinned) return -1;
-                if (!a.isPinned && b.isPinned) return 1;
-                return b.timestamp - a.timestamp;
-            });
+            const sortedList = sortSessionsByPinnedAndTimestamp(metadataList.map(sanitizeSessionModel));
             
-            setSavedSessions(sortedList);
+            setSavedSessions((prev) => {
+                if (prev.length === 0) {
+                    return sortedList;
+                }
+
+                const prevById = new Map(prev.map((session) => [session.id, session]));
+                const merged = sortedList.map((session) => {
+                    const existing = prevById.get(session.id);
+
+                    if (!existing) {
+                        return session;
+                    }
+
+                    prevById.delete(session.id);
+                    return {
+                        ...session,
+                        ...existing,
+                        settings: {
+                            ...session.settings,
+                            ...existing.settings,
+                        },
+                        messages: existing.messages ?? session.messages,
+                    };
+                });
+
+                return sortSessionsByPinnedAndTimestamp([
+                    ...merged,
+                    ...prevById.values(),
+                ]);
+            });
             setSavedGroups(groups.map(g => ({...g, isExpanded: g.isExpanded ?? true})));
 
             if (!initialActiveId) {
@@ -277,7 +310,7 @@ export const useSessionLoader = ({
             logService.error("Error loading chat history:", error);
             startNewChat();
         }
-    }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setActiveMessages, setSelectedFiles, fileDraftsRef, sanitizeSessionModel]);
+    }, [setSavedSessions, setSavedGroups, startNewChat, setActiveSessionId, setActiveMessages, setSelectedFiles, fileDraftsRef, sanitizeSessionModel, sortSessionsByPinnedAndTimestamp]);
 
     // Handle Browser Back/Forward navigation
     useEffect(() => {

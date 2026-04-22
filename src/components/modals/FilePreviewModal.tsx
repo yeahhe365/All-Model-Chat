@@ -161,7 +161,7 @@ const FilePreviewModalContent: React.FC<FilePreviewModalContentProps> = ({
    }, [file, isDocx, t]);
 
   const navButtonClass =
-      'absolute top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/60 text-white/70 hover:text-white rounded-full backdrop-blur-md transition-all active:scale-95 z-50 focus:outline-none';
+      'absolute top-1/2 -translate-y-1/2 p-2 bg-black/20 hover:bg-black/60 text-white/70 hover:text-white rounded-full backdrop-blur-md transition-all z-50 focus:outline-none';
 
   const getYoutubeEmbedUrl = (url: string) => {
       if (!url) return null;

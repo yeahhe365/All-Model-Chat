@@ -65,4 +65,45 @@ describe('Header', () => {
     expect(pipButton).not.toBeNull();
     expect(pipButton?.getAttribute('title')).toBe('pipEnter');
   });
+
+  it('keeps the canvas helper hit target stable while pressing', async () => {
+    await act(async () => {
+      root.render(
+        <Header
+          onNewChat={vi.fn()}
+          onOpenScenariosModal={vi.fn()}
+          onToggleHistorySidebar={vi.fn()}
+          isLoading={false}
+          currentModelName="Gemini 3 Flash"
+          availableModels={[]}
+          selectedModelId="gemini-3-flash-preview"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isHistorySidebarOpen={false}
+          onLoadCanvasPrompt={vi.fn()}
+          isCanvasPromptActive={false}
+          isPipSupported={true}
+          isPipActive={false}
+          onTogglePip={vi.fn()}
+          themeId="pearl"
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={true}
+          onToggleGemmaReasoning={vi.fn()}
+          newChatShortcut=""
+          pipShortcut=""
+        />,
+      );
+    });
+
+    const canvasButton = container.querySelector(
+      'button[aria-label="canvasHelperInactive_aria"]',
+    );
+
+    expect(canvasButton).not.toBeNull();
+    expect(canvasButton?.className).toContain('w-11');
+    expect(canvasButton?.className).toContain('h-11');
+    expect(canvasButton?.className).not.toContain('hover:scale-105');
+    expect(canvasButton?.className).not.toContain('active:scale-95');
+  });
 });

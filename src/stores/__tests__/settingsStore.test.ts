@@ -32,6 +32,7 @@ describe('settingsStore', () => {
       currentTheme: { id: 'pearl', name: 'Pearl', colors: {} } as any,
       language: 'en',
       isSettingsLoaded: false,
+      pendingPreloadSettingsOverrides: null,
     });
   });
 
@@ -102,6 +103,35 @@ describe('settingsStore', () => {
   });
 
   describe('loadSettings', () => {
+    it('preserves user edits made before settings finish loading', async () => {
+      const canvasPrompt = '<title>Canvas 助手：响应式视觉指南</title>\ncanvas prompt';
+      vi.mocked(dbService.getAppSettings).mockResolvedValue({
+        temperature: 0.5,
+        language: 'zh',
+      } as any);
+
+      useSettingsStore.getState().setAppSettings((prev) => ({
+        ...prev,
+        systemInstruction: canvasPrompt,
+      }));
+
+      await useSettingsStore.getState().loadSettings();
+
+      const state = useSettingsStore.getState();
+      expect(state.appSettings.temperature).toBe(0.5);
+      expect(state.appSettings.language).toBe('zh');
+      expect(state.appSettings.systemInstruction).toBe(canvasPrompt);
+      await vi.waitFor(() => {
+        expect(dbService.setAppSettings).toHaveBeenCalledWith(
+          expect.objectContaining({
+            temperature: 0.5,
+            language: 'zh',
+            systemInstruction: canvasPrompt,
+          }),
+        );
+      });
+    });
+
     it('loads settings from DB and merges with defaults', async () => {
       vi.mocked(dbService.getAppSettings).mockResolvedValue({
         temperature: 0.5,

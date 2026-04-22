@@ -20,7 +20,7 @@ interface ToolbarButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const ToolbarButton: React.FC<ToolbarButtonProps> = ({ children, className = '', active, danger, disabled, ...props }) => {
-    const baseClass = "p-1.5 rounded-lg transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center";
+    const baseClass = "p-1.5 rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center";
     
     let colorClass = "text-white/80 hover:text-white hover:bg-white/10";
     

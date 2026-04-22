@@ -169,4 +169,226 @@ describe('useAppPromptModes', () => {
 
     unmount();
   });
+
+  it('allows toggling the canvas prompt in a different session after switching away from an in-flight load', async () => {
+    const deferred = createDeferred<string>();
+    mockLoadCanvasSystemPrompt
+      .mockReturnValueOnce(deferred.promise)
+      .mockResolvedValue(CANVAS_PROMPT);
+
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+    const options = {
+      appSettings: {} as AppSettings,
+      setAppSettings,
+      activeChat: {
+        id: 'session-1',
+        title: 'Session 1',
+        timestamp: Date.now(),
+        messages: [],
+        settings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: '',
+        } as ChatSettings,
+      } as SavedChatSession,
+      activeSessionId: 'session-1' as string | null,
+      currentChatSettings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: '',
+      } as ChatSettings,
+      setCurrentChatSettings,
+      handleSendMessage: vi.fn(),
+      setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+    };
+
+    const { result, rerender, unmount } = renderHook(() => useAppPromptModes(options));
+
+    act(() => {
+      void result.current.handleLoadCanvasPromptAndSave();
+    });
+
+    options.activeChat = {
+      id: 'session-2',
+      title: 'Session 2',
+      timestamp: Date.now(),
+      messages: [],
+      settings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: '',
+      } as ChatSettings,
+    } as SavedChatSession;
+    options.activeSessionId = 'session-2';
+    options.currentChatSettings = {
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: '',
+    } as ChatSettings;
+    rerender();
+
+    await act(async () => {
+      await result.current.handleLoadCanvasPromptAndSave();
+    });
+
+    expect(mockLoadCanvasSystemPrompt).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      deferred.resolve(CANVAS_PROMPT);
+      await Promise.resolve();
+    });
+
+    unmount();
+  });
+
+  it('does not write the canvas prompt into the newly active session when an older load resolves late', async () => {
+    const deferred = createDeferred<string>();
+    mockLoadCanvasSystemPrompt.mockReturnValue(deferred.promise);
+
+    const setAppSettings = vi.fn();
+    const setCurrentChatSettings = vi.fn();
+    const options = {
+      appSettings: {} as AppSettings,
+      setAppSettings,
+      activeChat: {
+        id: 'session-1',
+        title: 'Session 1',
+        timestamp: Date.now(),
+        messages: [],
+        settings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: '',
+        } as ChatSettings,
+      } as SavedChatSession,
+      activeSessionId: 'session-1' as string | null,
+      currentChatSettings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: '',
+      } as ChatSettings,
+      setCurrentChatSettings,
+      handleSendMessage: vi.fn(),
+      setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+    };
+
+    const { result, rerender, unmount } = renderHook(() => useAppPromptModes(options));
+
+    act(() => {
+      void result.current.handleLoadCanvasPromptAndSave();
+    });
+
+    options.activeChat = {
+      id: 'session-2',
+      title: 'Session 2',
+      timestamp: Date.now(),
+      messages: [],
+      settings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: '',
+      } as ChatSettings,
+    } as SavedChatSession;
+    options.activeSessionId = 'session-2';
+    options.currentChatSettings = {
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: '',
+    } as ChatSettings;
+    rerender();
+
+    await act(async () => {
+      deferred.resolve(CANVAS_PROMPT);
+      await Promise.resolve();
+    });
+
+    expect(setCurrentChatSettings).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
+  it('keeps the canvas button active while app settings already contain the canvas prompt', () => {
+    const { result, unmount } = renderHook(() =>
+      useAppPromptModes({
+        appSettings: {
+          systemInstruction: CANVAS_PROMPT,
+        } as AppSettings,
+        setAppSettings: vi.fn(),
+        activeChat: {
+          id: 'session-1',
+          title: 'Session 1',
+          timestamp: Date.now(),
+          messages: [],
+          settings: {
+            modelId: 'gemini-3-flash-preview',
+            systemInstruction: '',
+          } as ChatSettings,
+        } as SavedChatSession,
+        activeSessionId: 'session-1',
+        currentChatSettings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: '',
+        } as ChatSettings,
+        setCurrentChatSettings: vi.fn(),
+        handleSendMessage: vi.fn(),
+        setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+      }),
+    );
+
+    expect(result.current.isCanvasPromptActive).toBe(true);
+
+    unmount();
+  });
+
+  it('stays inactive after disabling the canvas prompt once persisted settings are cleared', async () => {
+    const options = {
+      appSettings: {
+        systemInstruction: CANVAS_PROMPT,
+      } as AppSettings,
+      setAppSettings: vi.fn(),
+      activeChat: {
+        id: 'session-1',
+        title: 'Session 1',
+        timestamp: Date.now(),
+        messages: [],
+        settings: {
+          modelId: 'gemini-3-flash-preview',
+          systemInstruction: CANVAS_PROMPT,
+        } as ChatSettings,
+      } as SavedChatSession,
+      activeSessionId: 'session-1' as string | null,
+      currentChatSettings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: CANVAS_PROMPT,
+      } as ChatSettings,
+      setCurrentChatSettings: vi.fn(),
+      handleSendMessage: vi.fn(),
+      setCommandedInput: vi.fn() as unknown as (command: InputCommand) => void,
+    };
+
+    const { result, rerender, unmount } = renderHook(() => useAppPromptModes(options));
+
+    await act(async () => {
+      await result.current.handleLoadCanvasPromptAndSave();
+    });
+
+    expect(result.current.isCanvasPromptActive).toBe(false);
+
+    options.appSettings = {
+      systemInstruction: '',
+    } as AppSettings;
+    options.activeChat = {
+      ...options.activeChat,
+      settings: {
+        modelId: 'gemini-3-flash-preview',
+        systemInstruction: '',
+      } as ChatSettings,
+    } as SavedChatSession;
+    options.currentChatSettings = {
+      modelId: 'gemini-3-flash-preview',
+      systemInstruction: '',
+    } as ChatSettings;
+
+    rerender();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.isCanvasPromptActive).toBe(false);
+
+    unmount();
+  });
 });

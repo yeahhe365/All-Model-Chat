@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { SideViewContent } from '../../types';
 import { triggerDownload, sanitizeFilename } from '../../utils/export/core';
 import { useIsMobile } from '../../hooks/useDevice';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../constants/appConstants';
 
 interface PanelTabButtonProps {
     activeTab: 'code' | 'preview';
@@ -234,10 +235,10 @@ export const SidePanel: React.FC<SidePanelProps> = ({ content, onClose, themeId 
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-1 flex-shrink-0">
-                        <button onClick={handleDownload} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Download Code">
+                        <button onClick={handleDownload} className={`p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`} title="Download Code">
                             <Download size={16} strokeWidth={1.5} />
                         </button>
-                        <button onClick={onClose} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors" title="Close Panel">
+                        <button onClick={onClose} className={`p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`} title="Close Panel">
                             <X size={18} strokeWidth={1.5} />
                         </button>
                     </div>

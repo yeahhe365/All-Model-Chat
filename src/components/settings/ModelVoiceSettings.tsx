@@ -12,6 +12,7 @@ import { TextEditorModal } from '../modals/TextEditorModal';
 import { MediaResolution } from '../../types/settings';
 import { getModelCapabilities } from '../../utils/modelHelpers';
 import { useI18n } from '../../contexts/I18nContext';
+import { SMALL_ICON_BUTTON_CLASS } from '../../constants/appConstants';
 
 interface ModelVoiceSettingsProps {
   modelId: string;
@@ -163,7 +164,7 @@ export const ModelVoiceSettings: React.FC<ModelVoiceSettingsProps> = (props) => 
                     <button
                         type="button"
                         onClick={handleOpenExpand}
-                        className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-md transition-colors"
+                        className={SMALL_ICON_BUTTON_CLASS}
                         title={i18n('settingsExpandEditor')}
                     >
                         <Maximize2 size={14} />

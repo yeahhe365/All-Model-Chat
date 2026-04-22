@@ -103,6 +103,34 @@ describe('HeaderModelSelector', () => {
     expect(triggerButton?.querySelectorAll('svg')).toHaveLength(1);
   });
 
+  it('keeps compact header controls stable by avoiding scale transforms', async () => {
+    await act(async () => {
+      root.render(
+        <HeaderModelSelector
+          currentModelName="Gemini 3 Flash Preview"
+          availableModels={[{ id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Preview' }]}
+          selectedModelId="gemini-3-flash-preview"
+          onSelectModel={vi.fn()}
+          isSwitchingModel={false}
+          isLoading={false}
+          thinkingLevel="HIGH"
+          onSetThinkingLevel={vi.fn()}
+          showThoughts={true}
+          onToggleGemmaReasoning={vi.fn()}
+        />,
+      );
+    });
+
+    const triggerButton = container.querySelector('button[aria-haspopup="listbox"]');
+    const thinkingButton = container.querySelector('button[aria-label="headerThinkingToggleAria"]');
+
+    expect(triggerButton?.className).toContain('min-h-11');
+    expect(triggerButton?.className).not.toContain('scale');
+    expect(thinkingButton?.className).toContain('h-11');
+    expect(thinkingButton?.className).toContain('w-11');
+    expect(thinkingButton?.className).not.toContain('scale');
+  });
+
   it('renders the collapsed model name with stronger emphasis', async () => {
     await act(async () => {
       root.render(

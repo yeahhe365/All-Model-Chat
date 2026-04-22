@@ -3,6 +3,7 @@ import React, { useRef, useEffect } from 'react';
 import { PreloadedMessage } from '../../../types';
 import { User, Bot, ArrowUp, ArrowDown, Edit3, Trash2, MessageSquare } from 'lucide-react';
 import { translations } from '../../../utils/translations';
+import { SMALL_ICON_BUTTON_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface ScenarioMessageListProps {
     messages: PreloadedMessage[];
@@ -108,11 +109,11 @@ export const ScenarioMessageList: React.FC<ScenarioMessageListProps> = ({
                                         flex items-center gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200
                                         bg-[var(--theme-bg-primary)] border border-[var(--theme-border-secondary)] shadow-lg rounded-full px-1.5 py-1 z-10 scale-95 group-hover:scale-100
                                     `}>
-                                        <button onClick={() => onMoveMessage(index, -1)} disabled={index === 0} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowUp size={12} /></button>
-                                        <button onClick={() => onMoveMessage(index, 1)} disabled={index === messages.length - 1} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-primary)] text-[var(--theme-text-tertiary)] disabled:opacity-30 transition-colors"><ArrowDown size={12} /></button>
+                                        <button onClick={() => onMoveMessage(index, -1)} disabled={index === 0} className={`${SMALL_ICON_BUTTON_CLASS} rounded-full disabled:opacity-30`}><ArrowUp size={12} /></button>
+                                        <button onClick={() => onMoveMessage(index, 1)} disabled={index === messages.length - 1} className={`${SMALL_ICON_BUTTON_CLASS} rounded-full disabled:opacity-30`}><ArrowDown size={12} /></button>
                                         <div className="w-px h-3 bg-[var(--theme-border-secondary)] mx-0.5"></div>
-                                        <button onClick={() => setEditingMessageId(msg.id)} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-link)] text-[var(--theme-text-tertiary)] transition-colors"><Edit3 size={12} /></button>
-                                        <button onClick={() => onDeleteMessage(msg.id)} className="p-1.5 hover:bg-[var(--theme-bg-tertiary)] rounded-full hover:text-[var(--theme-text-danger)] text-[var(--theme-text-tertiary)] transition-colors"><Trash2 size={12} /></button>
+                                        <button onClick={() => setEditingMessageId(msg.id)} className={`${SMALL_ICON_BUTTON_CLASS} rounded-full hover:text-[var(--theme-text-link)]`}><Edit3 size={12} /></button>
+                                        <button onClick={() => onDeleteMessage(msg.id)} className={`${SMALL_ICON_DANGER_BUTTON_CLASS} rounded-full`}><Trash2 size={12} /></button>
                                     </div>
                                 )}
                             </div>

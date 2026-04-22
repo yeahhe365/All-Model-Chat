@@ -1,6 +1,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Loader2, Plus, X } from 'lucide-react';
+import { ICON_BUTTON_CLASS, FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../../../constants/appConstants';
 
 interface InputBarProps {
     value: string;
@@ -83,7 +84,7 @@ export const InputBar: React.FC<InputBarProps> = ({
                 <button
                     type="submit"
                     disabled={!value.trim() || disabled || isLoading}
-                    className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm active:scale-95 whitespace-nowrap"
+                    className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm whitespace-nowrap"
                 >
                     {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} strokeWidth={2.5} />}
                     <span className="hidden sm:inline">{submitLabel}</span>
@@ -93,7 +94,7 @@ export const InputBar: React.FC<InputBarProps> = ({
                     type="button"
                     onClick={onCancel}
                     disabled={disabled}
-                    className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors focus:outline-none"
+                    className={`${ICON_BUTTON_CLASS} ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                     aria-label="Cancel"
                 >
                     <X size={18} strokeWidth={2} />

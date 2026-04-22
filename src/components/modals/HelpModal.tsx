@@ -5,6 +5,7 @@ import { translations } from '../../utils/translations';
 import { CommandIcon } from '../icons/CommandIcon';
 import { CommandInfo } from '../../types';
 import { useCopyToClipboard } from '../../hooks/useCopyToClipboard';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS, FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '../../constants/appConstants';
 
 interface HelpModalProps {
     isOpen: boolean;
@@ -47,7 +48,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands,
                     </h2>
                     <button 
                         onClick={onClose} 
-                        className="text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors p-1.5 rounded-full" 
+                        className={`text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors p-1.5 rounded-full ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS}`} 
                         aria-label={t('helpModal_close_aria')}
                     >
                         <X size={20} />
@@ -87,7 +88,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, commands,
                                     <div className="flex-grow min-w-0 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
                                         <button
                                             onClick={() => handleCopy(command.name)}
-                                            className="flex items-center gap-2 text-left sm:w-40 flex-shrink-0 group/btn"
+                                            className={`flex items-center gap-2 text-left sm:w-40 flex-shrink-0 group/btn rounded-lg ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                                             title={t('helpModal_copy_title')}
                                         >
                                             <code className="font-mono text-sm font-semibold text-[var(--theme-text-link)] bg-[var(--theme-bg-input)] px-2 py-1 rounded-md border border-[var(--theme-border-secondary)] group-hover/btn:border-[var(--theme-text-link)] transition-colors truncate w-full">

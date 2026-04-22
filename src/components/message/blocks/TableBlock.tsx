@@ -7,6 +7,12 @@ import { triggerDownload } from '../../../utils/export/core';
 import { useClickOutside } from '../../../hooks/useClickOutside';
 import { translations } from '../../../utils/translations';
 import { convertHtmlToMarkdown } from '../../../utils/htmlToMarkdown';
+import {
+    FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS,
+    MENU_ITEM_BUTTON_CLASS,
+    MENU_ITEM_COMPACT_BUTTON_CLASS,
+    MENU_ITEM_DEFAULT_STATE_CLASS,
+} from '../../../constants/appConstants';
 
 interface TableBlockProps extends React.TableHTMLAttributes<HTMLTableElement> {
     t?: (key: keyof typeof translations) => string;
@@ -91,7 +97,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                 <div className="fixed top-4 right-4 flex gap-2 z-50">
                     <button
                         onClick={handleCopyMarkdown}
-                        className="p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all hover:scale-105 backdrop-blur-sm"
+                        className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all backdrop-blur-sm ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                         title={isCopied ? "Copied!" : "Copy Markdown"}
                     >
                         {isCopied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
@@ -100,7 +106,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                     <div className="relative" ref={menuRef}>
                          <button
                             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                            className="p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all hover:scale-105 backdrop-blur-sm"
+                            className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all backdrop-blur-sm ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                             title="Download"
                         >
                             <Download size={16} />
@@ -110,14 +116,14 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                             <div className="absolute right-0 top-full mt-2 w-48 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
                                 <button 
                                     onClick={handleDownloadCSV}
-                                    className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3 transition-colors text-[var(--theme-text-primary)]"
+                                    className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS} px-4 py-3 gap-3`}
                                 >
                                     <FileText size={16} className="text-blue-500" />
                                     <span>{tFunc('exportToCSV')}</span>
                                 </button>
                                 <button 
                                     onClick={handleDownloadExcel}
-                                    className="w-full text-left px-4 py-3 text-sm hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-3 transition-colors text-[var(--theme-text-primary)]"
+                                    className={`${MENU_ITEM_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS} px-4 py-3 gap-3`}
                                 >
                                     <FileSpreadsheet size={16} className="text-green-500" />
                                     <span>{tFunc('exportToExcel')}</span>
@@ -128,7 +134,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
                     <button
                         onClick={toggleFullscreen}
-                        className="p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all hover:scale-105 backdrop-blur-sm"
+                        className={`p-1.5 rounded-lg bg-[var(--theme-bg-primary)]/90 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] shadow-sm border border-[var(--theme-border-secondary)] transition-all backdrop-blur-sm ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                         title="Exit Fullscreen"
                     >
                         <Minimize2 size={16} />
@@ -161,7 +167,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
             <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-200">
                 <button
                     onClick={handleCopyMarkdown}
-                    className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+                    className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                     title={isCopied ? "Copied!" : "Copy Markdown"}
                 >
                     {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
@@ -170,7 +176,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                  <div className="relative" ref={menuRef}>
                     <button
                         onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-                        className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+                        className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                         title="Download"
                     >
                         <Download size={14} />
@@ -179,14 +185,14 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
                         <div className="absolute right-0 top-full mt-1 w-40 bg-[var(--theme-bg-secondary)] border border-[var(--theme-border-secondary)] rounded-lg shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 z-50">
                             <button 
                                 onClick={handleDownloadCSV}
-                                className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2 transition-colors text-[var(--theme-text-primary)]"
+                                className={`${MENU_ITEM_COMPACT_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}
                             >
                                 <FileText size={14} className="text-blue-500" />
                                 <span>{tFunc('exportToCSV')}</span>
                             </button>
                             <button 
                                 onClick={handleDownloadExcel}
-                                className="w-full text-left px-3 py-2 text-xs hover:bg-[var(--theme-bg-tertiary)] flex items-center gap-2 transition-colors text-[var(--theme-text-primary)]"
+                                className={`${MENU_ITEM_COMPACT_BUTTON_CLASS} ${MENU_ITEM_DEFAULT_STATE_CLASS}`}
                             >
                                 <FileSpreadsheet size={14} className="text-green-500" />
                                 <span>{tFunc('exportToExcel')}</span>
@@ -197,7 +203,7 @@ export const TableBlock: React.FC<TableBlockProps> = ({ children, className, t, 
 
                 <button
                     onClick={toggleFullscreen}
-                    className="p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors"
+                    className={`p-1.5 rounded-md text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                     title="Fullscreen"
                 >
                     <Maximize2 size={14} />

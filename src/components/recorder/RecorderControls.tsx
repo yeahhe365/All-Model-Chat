@@ -32,7 +32,7 @@ export const RecorderControls: React.FC<RecorderControlsProps> = ({
                 <button 
                     onClick={onStart} 
                     disabled={isInitializing}
-                    className="flex items-center gap-2 px-8 py-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-full font-medium transition-all hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-8 py-3 bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-full font-medium transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isInitializing ? <Loader2 size={20} className="animate-spin"/> : <Mic size={20} />}
                     Start Recording
@@ -51,7 +51,7 @@ export const RecorderControls: React.FC<RecorderControlsProps> = ({
                     </button>
                     <button 
                         onClick={onStop} 
-                        className="w-16 h-16 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow-xl shadow-red-500/30 transition-all hover:scale-105 active:scale-95 animate-pulse"
+                        className="w-16 h-16 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow-xl shadow-red-500/30 transition-all animate-pulse"
                         title="Stop Recording"
                     >
                         <Square size={24} fill="currentColor" />

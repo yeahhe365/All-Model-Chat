@@ -1,6 +1,7 @@
 import React from 'react';
 import { Clock3, PencilLine, Trash2 } from 'lucide-react';
 import { useI18n } from '../../../contexts/I18nContext';
+import { SMALL_ICON_BUTTON_ROUND_CLASS, SMALL_ICON_DANGER_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface QueuedSubmissionCardProps {
   title: string;
@@ -40,7 +41,7 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-full p-1.5 text-[var(--theme-text-tertiary)] transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]"
+          className={SMALL_ICON_BUTTON_ROUND_CLASS}
           aria-label={t('queuedSubmission_edit')}
           title={t('queuedSubmission_edit')}
         >
@@ -49,7 +50,7 @@ export const QueuedSubmissionCard: React.FC<QueuedSubmissionCardProps> = ({
         <button
           type="button"
           onClick={onRemove}
-          className="rounded-full p-1.5 text-[var(--theme-text-tertiary)] transition-colors hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-danger)]"
+          className={`${SMALL_ICON_DANGER_BUTTON_CLASS} rounded-full`}
           aria-label={t('queuedSubmission_remove')}
           title={t('queuedSubmission_remove')}
         >

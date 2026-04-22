@@ -105,7 +105,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, autoPlay = false,
         {/* Play/Pause Button */}
         <button
           onClick={togglePlay}
-          className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] transition-transform active:scale-95 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] flex-shrink-0"
+          className="flex items-center justify-center w-9 h-9 rounded-full bg-[var(--theme-bg-accent)] text-[var(--theme-text-accent)] hover:bg-[var(--theme-bg-accent-hover)] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--theme-border-focus)] flex-shrink-0"
           aria-label={isPlaying ? t('audioPlayer_pause') : t('audioPlayer_play')}
         >
           {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}

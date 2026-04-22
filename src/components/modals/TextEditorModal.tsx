@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { TextEditorModalShell } from './TextEditorModalShell';
+import { FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '../../constants/appConstants';
 
 interface TextEditorModalProps {
   isOpen: boolean;
@@ -58,7 +59,7 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
           <h2 className="text-lg font-semibold text-[var(--theme-text-primary)]">{title}</h2>
           <button
             onClick={handleDone}
-            className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors"
+            className={`p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS}`}
           >
             <X size={20} />
           </button>
@@ -81,7 +82,7 @@ const TextEditorModalContent: React.FC<TextEditorModalContentProps> = ({
         <div className="px-4 py-3 border-t border-[var(--theme-border-secondary)] bg-[var(--theme-bg-secondary)]/30 flex justify-end">
           <button
             onClick={handleDone}
-            className="px-6 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm transition-all flex items-center gap-2"
+            className={`px-6 py-2 text-sm font-medium bg-[var(--theme-bg-accent)] hover:bg-[var(--theme-bg-accent-hover)] text-[var(--theme-text-accent)] rounded-lg shadow-sm transition-all flex items-center gap-2 ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS}`}
           >
             <Check size={16} /> {confirmLabel || t('close') || 'Done'}
           </button>

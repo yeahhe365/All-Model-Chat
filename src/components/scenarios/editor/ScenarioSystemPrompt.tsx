@@ -2,6 +2,7 @@
 import React from 'react';
 import { Bot, Maximize2 } from 'lucide-react';
 import { translations } from '../../../utils/translations';
+import { SMALL_ICON_BUTTON_CLASS } from '../../../constants/appConstants';
 
 interface ScenarioSystemPromptProps {
     value: string;
@@ -25,7 +26,7 @@ export const ScenarioSystemPrompt: React.FC<ScenarioSystemPromptProps> = ({
                     <span className="flex items-center gap-2"><Bot size={14} /> {t('scenarios_system_prompt_label')}</span>
                     <button
                         onClick={onExpand}
-                        className="p-1 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-link)] hover:bg-[var(--theme-bg-tertiary)] rounded transition-colors"
+                        className={`${SMALL_ICON_BUTTON_CLASS} p-1 rounded hover:text-[var(--theme-text-link)]`}
                         title={t('expand')}
                     >
                         <Maximize2 size={12} />

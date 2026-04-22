@@ -9,6 +9,7 @@ import { useTokenCountLogic } from '../../hooks/features/useTokenCountLogic';
 import { TokenCountInput } from './token-count/TokenCountInput';
 import { TokenCountFiles } from './token-count/TokenCountFiles';
 import { TokenCountFooter } from './token-count/TokenCountFooter';
+import { MODAL_CLOSE_BUTTON_CLASS } from '../../constants/appConstants';
 
 interface TokenCountModalProps {
     isOpen: boolean;
@@ -55,7 +56,7 @@ export const TokenCountModal: React.FC<TokenCountModalProps> = (props) => {
                     <Calculator size={20} className="text-[var(--theme-text-link)]" />
                     {t('tokenModal_title')}
                 </h2>
-                <button onClick={onClose} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-full transition-colors">
+                <button onClick={onClose} className={MODAL_CLOSE_BUTTON_CLASS}>
                     <X size={20} />
                 </button>
             </div>

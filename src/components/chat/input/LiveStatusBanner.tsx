@@ -42,7 +42,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
 
                 <button 
                     onClick={onDisconnect}
-                    className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-accent)]/10"
                 >
                     {t('liveStatus_end_call')}
                 </button>
@@ -54,7 +54,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
         return (
             <div className="flex items-center justify-between p-3 mb-2 bg-[var(--theme-bg-danger)]/10 border border-[var(--theme-bg-danger)]/20 rounded-xl text-[var(--theme-text-danger)] animate-in fade-in slide-in-from-bottom-2">
                 <span className="text-xs font-medium truncate">{error}</span>
-                <button onClick={onDisconnect} className="p-1 hover:bg-[var(--theme-bg-danger)]/20 rounded-full">
+                <button onClick={onDisconnect} className="p-1 hover:bg-[var(--theme-bg-danger)]/20 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-danger)]/10">
                     <X size={14} />
                 </button>
             </div>
@@ -91,7 +91,7 @@ export const LiveStatusBanner: React.FC<LiveStatusBannerProps> = ({
 
             <button 
                 onClick={onDisconnect}
-                className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs font-medium bg-[var(--theme-bg-input)] hover:bg-[var(--theme-bg-danger)]/10 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-danger)] border border-[var(--theme-border-secondary)] rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-border-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--theme-bg-accent)]/10"
             >
                 {t('liveStatus_end_call')}
             </button>

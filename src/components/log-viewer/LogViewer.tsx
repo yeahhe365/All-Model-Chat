@@ -11,6 +11,7 @@ import { ApiUsageTab } from './ApiUsageTab';
 import { ConfirmationModal } from '../modals/ConfirmationModal';
 import { UsageOverviewTab } from './UsageOverviewTab';
 import { useI18n } from '../../contexts/I18nContext';
+import { FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS, FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS } from '../../constants/appConstants';
 
 export interface LogViewerProps {
   isOpen: boolean;
@@ -121,16 +122,16 @@ export const LogViewer: React.FC<LogViewerProps> = ({
           <h2 className="text-lg font-semibold text-[var(--theme-text-link)] flex items-center gap-2">
             <Terminal size={20} /> {t('logViewer_title')}
           </h2>
-          <button onClick={onClose} className="p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full transition-colors"><X size={22} /></button>
+          <button onClick={onClose} className={`p-1.5 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] rounded-full transition-colors ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS}`}><X size={22} /></button>
         </header>
 
         {/* Tabs */}
         <div className="border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] px-4 flex-shrink-0">
           <nav className="flex space-x-4">
-            <button onClick={() => setActiveTab('console')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'console' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+            <button onClick={() => setActiveTab('console')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS} ${activeTab === 'console' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                 <Terminal size={14} /> {t('logViewer_console_tab')}
             </button>
-            <button onClick={() => setActiveTab('usage')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'usage' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+            <button onClick={() => setActiveTab('usage')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS} ${activeTab === 'usage' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                 <Coins size={14} /> {t('logViewer_usage_tab')}
             </button>
           </nav>
@@ -152,14 +153,14 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             <>
               <div className="border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] px-4 flex-shrink-0">
                 <nav className="flex space-x-4">
-                  <button onClick={() => setActiveUsageTab('overview')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeUsageTab === 'overview' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                  <button onClick={() => setActiveUsageTab('overview')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS} ${activeUsageTab === 'overview' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                     <Coins size={14} /> {t('logViewer_overview_tab')}
                   </button>
-                  <button onClick={() => setActiveUsageTab('tokens')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeUsageTab === 'tokens' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                  <button onClick={() => setActiveUsageTab('tokens')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS} ${activeUsageTab === 'tokens' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                     <Coins size={14} /> {t('logViewer_tokens_tab')}
                   </button>
                   {appSettings.useCustomApiConfig && (
-                    <button onClick={() => setActiveUsageTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${activeUsageTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
+                    <button onClick={() => setActiveUsageTab('api')} className={`flex items-center gap-2 px-2 py-3 text-sm font-medium border-b-2 transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS} ${activeUsageTab === 'api' ? 'border-[var(--theme-border-focus)] text-[var(--theme-text-primary)]' : 'border-transparent text-[var(--theme-text-tertiary)]'}`}>
                       <KeyRound size={14} /> {t('logViewer_api_keys_tab')}
                     </button>
                   )}

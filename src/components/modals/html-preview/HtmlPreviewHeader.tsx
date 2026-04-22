@@ -3,6 +3,11 @@ import React from 'react';
 import { Loader2, Download, Minimize, X, ZoomIn, ZoomOut, RotateCw, Image as ImageIcon, Expand, Atom } from 'lucide-react';
 import { IconHtml5 } from '../../icons/CustomIcons';
 import { translations } from '../../../utils/translations';
+import {
+    FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS,
+    ICON_BUTTON_CLASS,
+    MODAL_CLOSE_BUTTON_DANGER_HOVER_CLASS,
+} from '../../../constants/appConstants';
 
 interface HtmlPreviewHeaderProps {
     title: string;
@@ -43,7 +48,7 @@ export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
     const HeaderIcon = isReactPreview ? Atom : IconHtml5;
     const iconBgClass = isReactPreview ? 'bg-cyan-500/10 text-cyan-500' : 'bg-orange-500/10';
     const subtitle = isReactPreview ? t('htmlPreview_react_app') : t('htmlPreview_title');
-    const iconBtnClass = "p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed";
+    const iconBtnClass = `${ICON_BUTTON_CLASS} ${FOCUS_VISIBLE_RING_SECONDARY_OFFSET_CLASS} disabled:opacity-30 disabled:cursor-not-allowed`;
 
     return (
         <header className="h-14 px-4 flex items-center justify-between gap-4 bg-[var(--theme-bg-primary)] border-b border-[var(--theme-border-secondary)] z-10 select-none">
@@ -100,7 +105,7 @@ export const HtmlPreviewHeader: React.FC<HtmlPreviewHeaderProps> = ({
                 </button>
                 
                 {!isTrueFullscreen && (
-                    <button onClick={onClose} className="p-2 text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-danger)]/10 hover:text-[var(--theme-text-danger)] rounded-lg transition-colors ml-1" title={t('htmlPreview_close')}>
+                    <button onClick={onClose} className={`${MODAL_CLOSE_BUTTON_DANGER_HOVER_CLASS} ml-1`} title={t('htmlPreview_close')}>
                         <X size={20} strokeWidth={1.5} />
                     </button>
                 )}

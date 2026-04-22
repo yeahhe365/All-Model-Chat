@@ -73,4 +73,28 @@ describe('TextEditorModal', () => {
     expect(onChange).toHaveBeenCalledWith('Updated text');
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('adds visible keyboard focus styles to the close and confirm actions', async () => {
+    await act(async () => {
+      root.render(
+        <WindowProvider>
+          <TextEditorModal
+            isOpen
+            onClose={vi.fn()}
+            title="Editor"
+            value="Original"
+            onChange={vi.fn()}
+            t={() => 'Done'}
+          />
+        </WindowProvider>,
+      );
+    });
+
+    const buttons = Array.from(document.body.querySelectorAll('button'));
+    const closeButton = buttons[0];
+    const doneButton = buttons.find((button) => button.textContent?.includes('Done'));
+
+    expect(closeButton?.className).toContain('focus-visible:ring-2');
+    expect(doneButton?.className).toContain('focus-visible:ring-2');
+  });
 });

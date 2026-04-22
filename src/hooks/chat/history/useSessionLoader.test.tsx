@@ -55,6 +55,7 @@ vi.mock('../../../utils/modelHelpers', () => ({
 }));
 
 import { useSessionLoader } from './useSessionLoader';
+import { dbService } from '../../../utils/db';
 
 const renderHook = <T,>(callback: () => T) => {
   const container = document.createElement('div');
@@ -204,6 +205,62 @@ describe('useSessionLoader', () => {
     );
 
     expect(setSavedGroups).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('does not overwrite newer in-memory session settings when initial metadata resolves late', async () => {
+    const metadataDeferred = createDeferred<SavedChatSession[]>();
+    const groupsDeferred = createDeferred<any[]>();
+
+    vi.mocked(dbService.getAllSessionMetadata).mockReturnValueOnce(metadataDeferred.promise as Promise<any>);
+    vi.mocked(dbService.getAllGroups).mockReturnValueOnce(groupsDeferred.promise as Promise<any>);
+    mockGetSession.mockResolvedValue(null);
+
+    const setSavedSessions = vi.fn();
+    const setSavedGroups = vi.fn();
+
+    const staleSession = createSession('session-1', 'Stale Session');
+    staleSession.messages = [];
+    staleSession.settings.systemInstruction = '<title>Canvas 助手：响应式视觉指南</title>\nstale';
+
+    const freshSession = createSession('session-1', 'Fresh Session');
+    freshSession.messages = [];
+    freshSession.settings.systemInstruction = '';
+
+    const { result, unmount } = renderHook(() =>
+      useSessionLoader({
+        appSettings: { modelId: 'gemini-2.5-flash' } as any,
+        setSavedSessions,
+        setSavedGroups,
+        setActiveSessionId: vi.fn(),
+        setActiveMessages: vi.fn(),
+        setSelectedFiles: vi.fn(),
+        setEditingMessageId: vi.fn(),
+        setCommandedInput: vi.fn(),
+        updateAndPersistSessions: vi.fn(),
+        activeChat: undefined,
+        userScrolledUpRef: { current: false },
+        selectedFiles: [] as UploadedFile[],
+        fileDraftsRef: { current: {} as Record<string, UploadedFile[]> },
+        activeSessionId: 'session-1',
+        savedSessions: [freshSession] as SavedChatSession[],
+      }),
+    );
+
+    await act(async () => {
+      void result.current.loadInitialData();
+      metadataDeferred.resolve([staleSession]);
+      groupsDeferred.resolve([]);
+      await flushPromises();
+    });
+
+    const updater = setSavedSessions.mock.calls[0]?.[0];
+    expect(typeof updater).toBe('function');
+
+    const mergedSessions = updater([freshSession]);
+    expect(mergedSessions).toHaveLength(1);
+    expect(mergedSessions[0].settings.systemInstruction).toBe('');
+
     unmount();
   });
 });

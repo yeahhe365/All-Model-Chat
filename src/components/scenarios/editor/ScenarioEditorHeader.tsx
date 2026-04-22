@@ -2,6 +2,7 @@
 import React from 'react';
 import { ChevronLeft, Settings2, Save } from 'lucide-react';
 import { translations } from '../../../utils/translations';
+import { ICON_BUTTON_CLASS, FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS } from '../../../constants/appConstants';
 
 interface ScenarioEditorHeaderProps {
     title: string;
@@ -29,7 +30,7 @@ export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
             <div className="flex items-center gap-3 sm:gap-4">
                 <button 
                     onClick={onCancel}
-                    className="hidden md:flex items-center gap-1.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] px-3 py-1.5 rounded-lg transition-colors"
+                    className={`hidden md:flex items-center gap-1.5 text-sm font-medium text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] px-3 py-1.5 rounded-lg transition-colors ${FOCUS_VISIBLE_RING_PRIMARY_OFFSET_CLASS}`}
                 >
                     <ChevronLeft size={16} /> Back
                 </button>
@@ -48,7 +49,7 @@ export const ScenarioEditorHeader: React.FC<ScenarioEditorHeaderProps> = ({
                 {/* Mobile System Prompt Trigger */}
                 <button
                     onClick={onOpenSystemPrompt}
-                    className="md:hidden p-2 text-[var(--theme-text-secondary)] hover:text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-tertiary)] rounded-lg transition-colors"
+                    className={`md:hidden ${ICON_BUTTON_CLASS}`}
                     title={t('scenarios_system_prompt_label')}
                 >
                     <Settings2 size={20} />

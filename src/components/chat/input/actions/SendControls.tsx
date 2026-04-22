@@ -184,7 +184,7 @@ export const SendControls: React.FC<SendControlsProps> = ({
                 onClick={handleClick}
                 onContextMenu={handleContextMenu}
                 disabled={!isStop && isDisabled}
-                className={`${CHAT_INPUT_BUTTON_CLASS} ${bgClass} ${shapeClass} relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm active:scale-95`}
+                className={`${CHAT_INPUT_BUTTON_CLASS} ${bgClass} ${shapeClass} relative overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-sm`}
                 aria-label={label}
                 title={title}
             >

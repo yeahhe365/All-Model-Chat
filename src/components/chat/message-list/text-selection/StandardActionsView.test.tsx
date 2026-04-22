@@ -65,4 +65,24 @@ describe('StandardActionsView', () => {
     expect(container.textContent).toContain('Search');
     expect(container.textContent).not.toContain('Input');
   });
+
+  it('keeps selection action buttons free of scale transforms', () => {
+    const t = getTranslator('en');
+
+    act(() => {
+      root.render(
+        <StandardActionsView
+          onQuote={vi.fn()}
+          onInsert={vi.fn()}
+          onCopy={vi.fn()}
+          onSearch={vi.fn()}
+          isCopied={false}
+          t={t}
+        />,
+      );
+    });
+
+    const quoteButton = container.querySelector('button[aria-label="Quote"]');
+    expect(quoteButton?.className).not.toContain('scale');
+  });
 });
