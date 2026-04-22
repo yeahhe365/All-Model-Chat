@@ -37,6 +37,9 @@ export const dataSettings = {
     settingsViewLogsAndUsage: { en: 'Open Logs & Usage', zh: '打开日志与用量' },
     settingsViewLogs_aria: { en: 'Open Application Logs', zh: '查看应用日志' },
     settingsViewLogs_title: { en: 'Open Application Logs (Ctrl+Alt+L)', zh: '查看应用日志 (Ctrl+Alt+L)' },
+    settingsLocalAppData: { en: 'Current Local App Data', zh: '当前本地应用数据' },
+    settingsLocalAppData_loading: { en: 'Calculating local storage usage…', zh: '正在计算本地存储占用…' },
+    settingsLocalAppData_error: { en: 'Unable to estimate local storage usage right now.', zh: '暂时无法估算本地存储占用。' },
     settingsClearLogs: { en: 'Clear Logs', zh: '清空日志' },
     settingsClearLogs_confirm: { en: 'Are you sure you want to clear all system logs?', zh: '您确定要清空所有系统日志吗？' },
 };

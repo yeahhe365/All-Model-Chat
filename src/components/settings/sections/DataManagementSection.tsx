@@ -4,6 +4,7 @@ import { useI18n } from '../../../contexts/I18nContext';
 import { Settings, MessageSquare, Bot, AlertTriangle, Upload, Download, Trash2, Database, RefreshCw } from 'lucide-react';
 import type { LogViewerProps } from '../../log-viewer/LogViewer';
 import type { PwaInstallState } from '../../../pwa/install';
+import { useAppDataSize } from '../../../hooks/data-management/useAppDataSize';
 
 interface DataManagementSectionProps {
   onClearHistory: () => void;
@@ -72,6 +73,12 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
   const settingsImportRef = useRef<HTMLInputElement>(null);
   const historyImportRef = useRef<HTMLInputElement>(null);
   const scenariosImportRef = useRef<HTMLInputElement>(null);
+  const {
+    formattedTotalSize,
+    hasError: hasAppDataSizeError,
+    isLoading: isAppDataSizeLoading,
+    refresh: refreshAppDataSize,
+  } = useAppDataSize();
 
   const btnClass = "px-3 py-1.5 text-xs font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--theme-bg-secondary)] border flex items-center gap-1.5";
   const outlineBtnClass = `${btnClass} bg-transparent border-[var(--theme-border-secondary)] text-[var(--theme-text-secondary)] hover:bg-[var(--theme-bg-tertiary)] hover:text-[var(--theme-text-primary)]`;
@@ -84,6 +91,12 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
       : installState === 'manual'
         ? t('settingsInstallApp_manual_title')
         : undefined;
+  const localAppDataDescription =
+    isAppDataSizeLoading
+      ? t('settingsLocalAppData_loading')
+      : hasAppDataSizeError
+        ? t('settingsLocalAppData_error')
+        : formattedTotalSize;
 
   return (
     <div className="space-y-6">
@@ -106,6 +119,15 @@ export const DataManagementSection: React.FC<DataManagementSectionProps> = ({
           </DataCard>
           
           <DataCard title={t('settingsSystemTools')} icon={<Settings size={14} strokeWidth={1.5} />}>
+              <ActionRow label={t('settingsLocalAppData')} description={localAppDataDescription}>
+                <button
+                  onClick={() => void refreshAppDataSize()}
+                  disabled={isAppDataSizeLoading}
+                  className={`${outlineBtnClass} disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <RefreshCw size={12} strokeWidth={1.5} /> {t('refresh')}
+                </button>
+              </ActionRow>
               <ActionRow label={t('settingsViewLogsAndUsage')}>
                 <button onClick={() => onOpenLogViewer({ initialTab: 'usage', initialUsageTab: 'overview' })} className={outlineBtnClass}>{t('settingsViewLogsAndUsage')}</button>
                 <button onClick={onClearLogs} className={`${outlineBtnClass} text-[var(--theme-text-danger)] hover:bg-[var(--theme-bg-danger)]/10 hover:text-[var(--theme-text-danger)] border-[var(--theme-bg-danger)]/30`}>

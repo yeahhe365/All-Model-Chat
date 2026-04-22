@@ -39,9 +39,6 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
     onReset,
     onInstallPwa,
     installState,
-    onCheckForUpdates,
-    canCheckForUpdates,
-    manualUpdateCheckState,
     onImportSettings,
     onExportSettings,
     onImportHistory,
@@ -166,11 +163,7 @@ export const SettingsContent: React.FC<SettingsContentProps> = ({
             )}
             {activeTab === 'about' && (
                 <div className={animClass}>
-                    <AboutSection
-                        onCheckForUpdates={onCheckForUpdates}
-                        canCheckForUpdates={canCheckForUpdates}
-                        manualUpdateCheckState={manualUpdateCheckState}
-                    />
+                    <AboutSection />
                 </div>
             )}
         </div>

@@ -1,13 +1,9 @@
 import { translations } from '../../utils/translations';
 import type { PwaInstallState } from '../../pwa/install';
-import type { ManualUpdateCheckState } from '../../pwa/register';
 
 export interface SettingsTransferProps {
     onInstallPwa: () => void;
     installState: PwaInstallState;
-    onCheckForUpdates?: () => Promise<void> | void;
-    canCheckForUpdates?: boolean;
-    manualUpdateCheckState?: ManualUpdateCheckState;
     onImportSettings: (file: File) => void;
     onExportSettings: () => void;
     onImportHistory: (file: File) => void;

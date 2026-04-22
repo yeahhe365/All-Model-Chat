@@ -5,12 +5,29 @@ import { I18nProvider } from '../../../contexts/I18nContext';
 import { useSettingsStore } from '../../../stores/settingsStore';
 import { DataManagementSection } from './DataManagementSection';
 
+const { estimateAppDataSizeMock } = vi.hoisted(() => ({
+  estimateAppDataSizeMock: vi.fn(),
+}));
+
+vi.mock('../../../utils/db', async () => {
+  const actual = await vi.importActual<typeof import('../../../utils/db')>('../../../utils/db');
+
+  return {
+    ...actual,
+    dbService: {
+      ...actual.dbService,
+      estimateAppDataSize: estimateAppDataSizeMock,
+    },
+  };
+});
+
 describe('DataManagementSection', () => {
   let container: HTMLDivElement;
   let root: Root;
   const initialState = useSettingsStore.getState();
 
   beforeEach(() => {
+    estimateAppDataSizeMock.mockReset();
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -89,5 +106,47 @@ describe('DataManagementSection', () => {
 
     expect(installButton?.hasAttribute('disabled')).toBe(false);
     expect(container.textContent).toContain('Use your browser menu to install this app.');
+  });
+
+  it('shows the current local app data size and offers a refresh action', async () => {
+    estimateAppDataSizeMock.mockResolvedValue({
+      totalBytes: 2048,
+      indexedDbBytes: 1536,
+      localStorageBytes: 512,
+    });
+
+    await act(async () => {
+      useSettingsStore.setState({ language: 'en' });
+      root.render(
+        <I18nProvider>
+          <DataManagementSection
+            onClearHistory={vi.fn()}
+            onClearCache={vi.fn()}
+            onOpenLogViewer={vi.fn()}
+            onClearLogs={vi.fn()}
+            installState="installed"
+            onInstallPwa={vi.fn()}
+            onImportSettings={vi.fn()}
+            onExportSettings={vi.fn()}
+            onImportHistory={vi.fn()}
+            onExportHistory={vi.fn()}
+            onImportScenarios={vi.fn()}
+            onExportScenarios={vi.fn()}
+            onReset={vi.fn()}
+          />
+        </I18nProvider>,
+      );
+    });
+
+    await vi.waitFor(() => {
+      expect(container.textContent).toContain('Current Local App Data');
+      expect(container.textContent).toContain('2.0 KB');
+    });
+
+    const refreshButtons = Array.from(container.querySelectorAll('button')).filter(
+      (button) => button.textContent?.includes('Refresh'),
+    );
+
+    expect(refreshButtons).toHaveLength(1);
   });
 });

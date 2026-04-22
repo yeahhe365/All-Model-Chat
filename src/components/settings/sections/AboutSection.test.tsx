@@ -122,18 +122,12 @@ describe('AboutSection', () => {
     expect(releaseLink?.getAttribute('title')).toBe('有新版本：1.8.9');
   });
 
-  it('renders a manual update check button and status copy', async () => {
-    const onCheckForUpdates = vi.fn();
-
+  it('does not render the manual update check controls in the about panel', async () => {
     await act(async () => {
       useSettingsStore.setState({ language: 'zh' });
       root.render(
         <I18nProvider>
-          <AboutSection
-            canCheckForUpdates
-            onCheckForUpdates={onCheckForUpdates}
-            manualUpdateCheckState="up-to-date"
-          />
+          <AboutSection />
         </I18nProvider>,
       );
     });
@@ -141,16 +135,11 @@ describe('AboutSection', () => {
     const checkButton = Array.from(container.querySelectorAll('button')).find((button) =>
       button.textContent?.includes('检查更新'),
     );
-    const releaseLink = container.querySelector('a[href="https://github.com/yeahhe365/All-Model-Chat/releases"]');
 
-    expect(checkButton).toBeDefined();
-    expect(releaseLink?.parentElement?.contains(checkButton ?? null)).toBe(true);
-    expect(container.textContent).toContain('已是最新');
-
-    await act(async () => {
-      checkButton?.click();
-    });
-
-    expect(onCheckForUpdates).toHaveBeenCalledTimes(1);
+    expect(checkButton).toBeUndefined();
+    expect(container.textContent).not.toContain('检查更新');
+    expect(container.textContent).not.toContain('已是最新');
+    expect(container.textContent).not.toContain('发现可用更新');
+    expect(container.textContent).not.toContain('暂时无法检查更新');
   });
 });
