@@ -264,4 +264,68 @@ describe('useApp', () => {
 
     unmount();
   });
+
+  it('resets Gemini thinking budget when switching to a fast thinking preset', () => {
+    currentAppSettings = {
+      ...currentAppSettings,
+      modelId: 'gemini-3-flash-preview',
+      thinkingBudget: 4096,
+      thinkingLevel: 'HIGH',
+    } as AppSettings;
+
+    currentChatState.activeChat = {
+      ...hydratedSession,
+      settings: {
+        ...hydratedSession.settings,
+        modelId: 'gemini-3-flash-preview',
+        thinkingBudget: 4096,
+        thinkingLevel: 'HIGH',
+      } as SavedChatSession['settings'],
+    };
+
+    const { result, unmount } = renderHook(() => useApp());
+
+    act(() => {
+      result.current.handleSetThinkingLevel('MINIMAL');
+    });
+
+    expect(currentAppSettings.thinkingLevel).toBe('MINIMAL');
+    expect(currentAppSettings.thinkingBudget).toBe(-1);
+    expect(currentChatState.activeChat?.settings.thinkingLevel).toBe('MINIMAL');
+    expect(currentChatState.activeChat?.settings.thinkingBudget).toBe(-1);
+
+    unmount();
+  });
+
+  it('keeps Gemini header thinking toggles in level mode when switching back to high thinking', () => {
+    currentAppSettings = {
+      ...currentAppSettings,
+      modelId: 'gemini-3.1-pro-preview',
+      thinkingBudget: 2048,
+      thinkingLevel: 'LOW',
+    } as AppSettings;
+
+    currentChatState.activeChat = {
+      ...hydratedSession,
+      settings: {
+        ...hydratedSession.settings,
+        modelId: 'gemini-3.1-pro-preview',
+        thinkingBudget: 2048,
+        thinkingLevel: 'LOW',
+      } as SavedChatSession['settings'],
+    };
+
+    const { result, unmount } = renderHook(() => useApp());
+
+    act(() => {
+      result.current.handleSetThinkingLevel('HIGH');
+    });
+
+    expect(currentAppSettings.thinkingLevel).toBe('HIGH');
+    expect(currentAppSettings.thinkingBudget).toBe(-1);
+    expect(currentChatState.activeChat?.settings.thinkingLevel).toBe('HIGH');
+    expect(currentChatState.activeChat?.settings.thinkingBudget).toBe(-1);
+
+    unmount();
+  });
 });

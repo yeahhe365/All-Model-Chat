@@ -18,6 +18,8 @@ import { useChatSessionExport } from '../data-management/useChatSessionExport';
 import { useAppInitialization } from './useAppInitialization';
 import { useAppTitle } from './useAppTitle';
 import { useAppPromptModes } from './useAppPromptModes';
+import { DEFAULT_THINKING_BUDGET } from '../../constants/modelConstants';
+import { getModelCapabilities } from '../../utils/modelHelpers';
 
 const focusChatInput = () => {
   setTimeout(() => {
@@ -212,13 +214,24 @@ export const useApp = () => {
 
   const handleSetThinkingLevel = useCallback(
     (level: 'MINIMAL' | 'LOW' | 'MEDIUM' | 'HIGH') => {
-      setAppSettings((prev) => ({ ...prev, thinkingLevel: level }));
+      const activeModelId = currentChatSettings.modelId || appSettings.modelId;
+      const shouldUseThinkingPresets = getModelCapabilities(activeModelId).supportsThinkingLevel;
+
+      setAppSettings((prev) => ({
+        ...prev,
+        thinkingLevel: level,
+        ...(shouldUseThinkingPresets ? { thinkingBudget: DEFAULT_THINKING_BUDGET } : {}),
+      }));
       if (activeSessionId) {
-        setCurrentChatSettings((prev) => ({ ...prev, thinkingLevel: level }));
+        setCurrentChatSettings((prev) => ({
+          ...prev,
+          thinkingLevel: level,
+          ...(shouldUseThinkingPresets ? { thinkingBudget: DEFAULT_THINKING_BUDGET } : {}),
+        }));
       }
       focusChatInput();
     },
-    [activeSessionId, setAppSettings, setCurrentChatSettings]
+    [activeSessionId, appSettings.modelId, currentChatSettings.modelId, setAppSettings, setCurrentChatSettings]
   );
 
   const getCurrentModelDisplayName = useCallback(() => {
